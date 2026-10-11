@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import {
@@ -11,6 +11,7 @@ import {
   HeartPulse,
   Building2,
   AlertTriangle,
+  ChevronLeft,
   ChevronRight,
   Crown,
   Gauge,
@@ -887,6 +888,64 @@ export default function PremiumCommandCenter(): JSX.Element {
   const [clubId, setClubId] = useState<string | null>(null)
   const [premiumLoading, setPremiumLoading] = useState(true)
   const [isPremium, setIsPremium] = useState(false)
+  const tabScrollRef = useRef<HTMLDivElement | null>(null)
+  const [tabScroll, setTabScroll] = useState({ left: false, right: false })
+
+  const updateTabScroll = useCallback(() => {
+    const el = tabScrollRef.current
+    if (!el) return
+    const maxScrollLeft = Math.max(0, el.scrollWidth - el.clientWidth)
+    setTabScroll(previous => {
+      const left = el.scrollLeft > 2
+      const right = el.scrollLeft < maxScrollLeft - 2
+      return previous.left === left && previous.right === right
+        ? previous
+        : { left, right }
+    })
+  }, [])
+
+  // The tab row is always one line; check both viewport and translated
+  // content width so scrolling is offered only when there is overflow.
+  useEffect(() => {
+    const el = tabScrollRef.current
+    if (!el) return
+
+    updateTabScroll()
+    const observer = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(updateTabScroll)
+      : null
+    observer?.observe(el)
+    if (el.firstElementChild) observer?.observe(el.firstElementChild)
+    window.addEventListener('resize', updateTabScroll)
+
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', updateTabScroll)
+    }
+  }, [isPremium, clubId, updateTabScroll])
+
+  // When a tab is selected through a button, URL or another page, bring it
+  // into view without horizontally scrolling the whole game dashboard.
+  useEffect(() => {
+    const el = tabScrollRef.current
+    const selectedTab = el?.querySelector<HTMLButtonElement>('[aria-current="page"]')
+    if (!el || !selectedTab) return
+
+    const viewport = el.getBoundingClientRect()
+    const selected = selectedTab.getBoundingClientRect()
+    const delta = selected.left < viewport.left
+      ? selected.left - viewport.left - 8
+      : selected.right > viewport.right
+        ? selected.right - viewport.right + 8
+        : 0
+    if (delta !== 0) el.scrollBy({ left: delta, behavior: 'smooth' })
+  }, [tab, isPremium, clubId])
+
+  const scrollTabs = useCallback((direction: -1 | 1) => {
+    const el = tabScrollRef.current
+    if (!el) return
+    el.scrollBy({ left: direction * Math.max(180, el.clientWidth * 0.65), behavior: 'smooth' })
+  }, [])
   const [workspace, setWorkspace] = useState<Workspace | null>(null)
   const [templates, setTemplates] = useState<PremiumTemplate[]>([])
   const [automationRules, setAutomationRules] = useState<AutomationRule[]>([])
@@ -1520,26 +1579,56 @@ export default function PremiumCommandCenter(): JSX.Element {
             </Card>
           ) : null}
 
-          <div className="flex flex-wrap items-end gap-x-6 gap-y-2 border-b border-slate-200">
-            {TABS.map(item => {
-              const active = tab === item.key
+          <div className="flex w-full min-w-0 items-center gap-2">
+            <button
+              type="button"
+              aria-label={t('tabs.scrollLeft', { defaultValue: 'Scroll tabs left' })}
+              title={t('tabs.scrollLeft', { defaultValue: 'Scroll tabs left' })}
+              onClick={() => scrollTabs(-1)}
+              disabled={!tabScroll.left}
+              className="flex h-10 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-default disabled:opacity-30"
+            >
+              <ChevronLeft size={18} aria-hidden="true" />
+            </button>
+            <nav
+              ref={tabScrollRef}
+              onScroll={updateTabScroll}
+              aria-label={t('title')}
+              className="min-w-0 flex-1 overflow-x-auto overflow-y-hidden [scrollbar-width:thin]"
+            >
+              <div className="flex w-max min-w-full flex-nowrap items-center gap-1 rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+                {TABS.map(item => {
+                  const active = tab === item.key
 
-              return (
-                <button
-                  key={item.key}
-                  type="button"
-                  onClick={() => changeTab(item.key)}
-                  className={[
-                    'border-b-2 px-0 pb-3 text-sm font-medium transition-colors',
-                    active
-                      ? 'border-yellow-400 text-slate-900'
-                      : 'border-transparent text-slate-500 hover:text-slate-700',
-                  ].join(' ')}
-                >
-                  {t(`tabs.${item.key}`)}
-                </button>
-              )
-            })}
+                  return (
+                    <button
+                      key={item.key}
+                      type="button"
+                      aria-current={active ? 'page' : undefined}
+                      onClick={() => changeTab(item.key)}
+                      className={[
+                        'shrink-0 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-600',
+                        active
+                          ? 'bg-yellow-400 text-black'
+                          : 'text-gray-600 hover:bg-gray-100 hover:text-slate-900',
+                      ].join(' ')}
+                    >
+                      {t(`tabs.${item.key}`)}
+                    </button>
+                  )
+                })}
+              </div>
+            </nav>
+            <button
+              type="button"
+              aria-label={t('tabs.scrollRight', { defaultValue: 'Scroll tabs right' })}
+              title={t('tabs.scrollRight', { defaultValue: 'Scroll tabs right' })}
+              onClick={() => scrollTabs(1)}
+              disabled={!tabScroll.right}
+              className="flex h-10 w-9 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 shadow-sm transition-colors hover:bg-slate-50 disabled:cursor-default disabled:opacity-30"
+            >
+              <ChevronRight size={18} aria-hidden="true" />
+            </button>
           </div>
 
           {loading && !workspace ? (
