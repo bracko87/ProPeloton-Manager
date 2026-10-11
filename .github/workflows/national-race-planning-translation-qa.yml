@@ -61,7 +61,7 @@ jobs:
           const chart=fs.readFileSync('src/pages/dashboard/training/PremiumRiderDevelopmentPanel.tsx','utf8')
           if(!chart.includes("development.noHistoryTitle"))throw Error('Missing no-history chart state')
           const prep=fs.readFileSync('src/pages/dashboard/race-preparation/UnifiedNationalRacePreparationPanel.tsx','utf8')
-          if(!prep.includes("national.nationalRacesDescription"))throw Error('National race text missing')
+          if(!prep.includes("nationalRacesDescription"))throw Error('National race text missing')
           NODE
       - name: Install dependencies
         run: npm ci
