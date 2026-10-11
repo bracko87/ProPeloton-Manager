@@ -417,5 +417,11 @@
     "finish": "Für jetzt beenden",
     "skip": "Tutorial überspringen",
     "close": "Tutorial schließen"
+  },
+  "legacyUi": {
+    "activeStatuses": "Aktive Statuswerte",
+    "maintenanceTitle": "Wartungsbedürftige Ausrüstung",
+    "loadingMaintenance": "Wartung wird geladen…",
+    "searchEquipment": "Ausrüstung suchen…"
   }
 }
