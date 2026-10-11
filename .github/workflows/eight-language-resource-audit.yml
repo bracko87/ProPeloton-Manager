@@ -1,0 +1,87 @@
+name: Eight-Language Full Resource Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/eight-language-resource-audit.yml'
+      - 'src/i18n/locales/**/*.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Scan every page namespace and translation placeholder
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          const locales=['sr-Latn','hr','de','es','it','fr','ru']
+          const root='src/i18n/locales/'
+          const base=fs.readdirSync(root+'en').filter(n=>n.endsWith('.json'))
+          const flat=(o,p='',r={})=>{
+            for(const [k,v] of Object.entries(o||{})){
+              const key=p?p+'.'+k:k
+              if(typeof v==='string')r[key]=v
+              else if(v&&typeof v==='object'&&!Array.isArray(v))flat(v,key,r)
+            }
+            return r
+          }
+          const ph=s=>[...s.matchAll(/\{\{\s*([^{}]+?)\s*\}\}/g)].map(x=>x[1]).sort().join(',')
+          const stats=[]
+          const examples=[]
+          let missingTotal=0,mismatchTotal=0
+          for(const lang of locales){
+            let missing=0,mismatch=0,englishIdentical=0
+            for(const file of base){
+              const en=flat(JSON.parse(fs.readFileSync(root+'en/'+file,'utf8')))
+              const path=root+lang+'/'+file
+              if(!fs.existsSync(path)){
+                missing+=Object.keys(en).length
+                examples.push(lang+': missing namespace '+file)
+                continue
+              }
+              const local=flat(JSON.parse(fs.readFileSync(path,'utf8')))
+              for(const [key,value]of Object.entries(en)){
+                if(!(key in local) || !local[key].trim()){
+                  missing++
+                  if(examples.length<60)examples.push(lang+'/'+file+': missing '+key)
+                }else{
+                  if(ph(value)!==ph(local[key])){
+                    mismatch++
+                    if(examples.length<60)examples.push(lang+'/'+file+': placeholder mismatch '+key)
+                  }
+                  // Identical is only a review candidate: names, technical words,
+                  // brands and short labels often SHOULD remain identical.
+                  if(value===local[key] && value.length>18 && /[a-zA-Z]/.test(value)){
+                    englishIdentical++
+                  }
+                }
+              }
+            }
+            missingTotal+=missing;mismatchTotal+=mismatch
+            stats.push({lang,missing,mismatch,englishIdentical})
+            console.log(lang+': missing='+missing+' interpolations='+mismatch+' English-identical long strings='+englishIdentical)
+          }
+          const lines=['## Full eight-language resource audit','', '| Language | Missing keys | Interpolation mismatches | English-identical long strings to review |','|---|---:|---:|---:|',...stats.map(s=>'| '+s.lang+' | '+s.missing+' | '+s.mismatch+' | '+s.englishIdentical+' |'),'','English-identical strings are review candidates, not automatic translation errors.','', '### First items needing review',...examples.map(x=>'- '+x)]
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,lines.join('\n')+'\n')
+          if(missingTotal || mismatchTotal){
+            console.error('Audit found '+missingTotal+' missing keys and '+mismatchTotal+' mismatched placeholders. See job summary.')
+            process.exitCode=1
+          }
+          NODE
+      - name: Install dependencies
+        run: npm ci
+      - name: Existing i18n validation
+        run: npm run check:i18n --if-present
+      - name: Production build
+        run: npm run build
