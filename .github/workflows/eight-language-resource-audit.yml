@@ -54,11 +54,11 @@ jobs:
               for(const [key,value]of Object.entries(en)){
                 if(!(key in local) || !local[key].trim()){
                   missing++
-                  if(examples.length<60)examples.push(lang+'/'+file+': missing '+key)
+                  if(examples.length<300)examples.push(lang+'/'+file+': missing '+key)
                 }else{
                   if(ph(value)!==ph(local[key])){
                     mismatch++
-                    if(examples.length<60)examples.push(lang+'/'+file+': placeholder mismatch '+key)
+                    if(examples.length<300)examples.push(lang+'/'+file+': placeholder mismatch '+key)
                   }
                   // Identical is only a review candidate: names, technical words,
                   // brands and short labels often SHOULD remain identical.
