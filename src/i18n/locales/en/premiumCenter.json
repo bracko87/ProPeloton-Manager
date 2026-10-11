@@ -19,7 +19,9 @@
     "national": "National Competitions Command",
     "scouting": "Scouting Intelligence",
     "staff": "Staff, Training & Recovery",
-    "infrastructure": "Infrastructure & Logistics Planner"
+    "infrastructure": "Infrastructure & Logistics Planner",
+    "scrollLeft": "Scroll tabs left",
+    "scrollRight": "Scroll tabs right"
   },
   "common": {
     "refresh": "Refresh",
