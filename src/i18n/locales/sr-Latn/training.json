@@ -386,5 +386,16 @@
     "coastal": "primorski",
     "mixed": "mešovit",
     "tt_friendly": "pogodan za hronometar"
+  },
+  "legacyUi": {
+    "noCurrentCamp": "Trenutno nema trening kampa",
+    "ridersBooked": "Prijavljeni vozači",
+    "riders": "Vozači",
+    "staff": "Osoblje",
+    "trainingProgram": "Program treninga",
+    "rider": "Vozač",
+    "riderProgress": "Napredak vozača",
+    "staffBoostSummary": "Pregled bonusa osoblja",
+    "campStaffBoosts": "Osoblje kampa i bonusi"
   }
 }
