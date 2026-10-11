@@ -321,7 +321,13 @@ export default function PremiumRiderDevelopmentPanel({
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="text-base font-semibold text-slate-900">{t('development.leaders')}</div>
               <div className="mt-1 text-sm text-slate-500">{t('development.leadersHint')}</div>
-              <div className="mt-4 h-[300px]">
+{rows.every(row => Number(row.weeks_recorded || 0) === 0) ? (
+                <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
+                  <p className="text-sm font-semibold text-slate-700">{t('development.noHistoryTitle')}</p>
+                  <p className="mt-2 max-w-sm text-xs leading-5 text-slate-500">{t('development.noHistoryDescription')}</p>
+                </div>
+              ) : (
+                            <div className="mt-4 h-[300px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={developmentLeaders} layout="vertical" margin={{ left: 18, right: 16 }}>
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} />
@@ -334,7 +340,7 @@ export default function PremiumRiderDevelopmentPanel({
                   </BarChart>
                 </ResponsiveContainer>
               </div>
-            </section>
+              )}            </section>
 
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-start justify-between gap-3">
