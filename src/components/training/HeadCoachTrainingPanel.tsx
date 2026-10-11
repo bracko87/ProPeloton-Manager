@@ -716,7 +716,7 @@ export default function HeadCoachTrainingPanel({
 
                       <p className="mt-2 text-xs text-slate-500">
                         {enabled
-                          ? 'Head Coach choices are reflected in the standard rider training controls below.'
+                          ? t('coach.choicesVisible')
                           : 'Existing Team Defaults and Rider Overrides control this team.'}
                       </p>
                     </div>
