@@ -513,5 +513,15 @@
     "continueMenu": "Weiter zum Menü",
     "finishNow": "Fertig für jetzt",
     "skip": "Tutorial überspringen"
+  },
+  "legacyUi": {
+    "planningTitle": "Zentrum für Finanzplanung",
+    "saved": "Gespeichert",
+    "selectPreset": "Vorlage auswählen",
+    "noSchedules": "Keine Zeitpläne für Vereinsrichtlinien gespeichert.",
+    "presetApplied": "Vorlage auf die Richtlinien des aktiven Vereins angewendet.",
+    "selectPresetDate": "Vorlage und Spieldatum auswählen.",
+    "scheduleSaved": "Automatischer Richtlinien-Zeitplan gespeichert.",
+    "limitsSaved": "Finanzplanungsgrenzen gespeichert."
   }
 }
