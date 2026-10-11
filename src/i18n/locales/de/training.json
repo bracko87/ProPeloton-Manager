@@ -386,5 +386,16 @@
     "coastal": "Küste",
     "mixed": "Gemischt",
     "tt_friendly": "Zeitfahrgeeignet"
+  },
+  "legacyUi": {
+    "noCurrentCamp": "Kein aktuelles Trainingslager gefunden",
+    "ridersBooked": "Angemeldete Fahrer",
+    "riders": "Fahrer",
+    "staff": "Personal",
+    "trainingProgram": "Trainingsprogramm",
+    "rider": "Fahrer",
+    "riderProgress": "Fahrerfortschritt",
+    "staffBoostSummary": "Übersicht der Personalboni",
+    "campStaffBoosts": "Trainingslagerpersonal und Boni"
   }
 }
