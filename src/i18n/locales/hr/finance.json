@@ -513,5 +513,15 @@
     "continueMenu": "Nastavi na Meni",
     "finishNow": "Završi za sada",
     "skip": "Preskoči vodič"
+  },
+  "legacyUi": {
+    "planningTitle": "Centar za financijsko planiranje",
+    "saved": "Spremljeno",
+    "selectPreset": "Odaberi predložak",
+    "noSchedules": "Nema spremljenih rasporeda financijskih pravila.",
+    "presetApplied": "Predložak je primijenjen na pravila aktivnog kluba.",
+    "selectPresetDate": "Odaberi predložak i datum u igri.",
+    "scheduleSaved": "Raspored automatskih pravila je spremljen.",
+    "limitsSaved": "Ograničenja financijskog planiranja su spremljena."
   }
 }
