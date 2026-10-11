@@ -825,19 +825,19 @@ export default function WorldNationsEventPage(): JSX.Element {
         <div className="space-y-6">
           <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
             <div className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Live race
+              {t('world.eventPage.liveRace')}
             </div>
             <div className="mt-3 text-lg font-semibold text-slate-950">
-              {data.race_id ? 'Race page available' : 'Replay unavailable'}
+              {data.race_id ? t('world.eventPage.racePageAvailable') : t('world.eventPage.replayUnavailable')}
             </div>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               {data.race_id
-                ? 'Open the generated race page for live race status, replay and race controls.'
-                : 'Replay is not available yet.'}
+                ? t('world.eventPage.openRacePageHelp')
+                : t('world.eventPage.replayNotYet')}
             </p>
             {!data.race_id ? (
               <p className="mt-2 text-xs font-medium leading-5 text-slate-500">
-                Replay becomes available after race generation at the scheduled race time.
+                {t('world.eventPage.replayAfterGeneration')}
               </p>
             ) : null}
 
@@ -846,11 +846,11 @@ export default function WorldNationsEventPage(): JSX.Element {
                 to={`/dashboard/races/${data.race_id}`}
                 className="mt-5 block w-full rounded-2xl bg-slate-950 px-4 py-3 text-center text-sm font-semibold text-white hover:bg-slate-800"
               >
-                Open race page
+                {t('world.eventPage.openRacePage')}
               </Link>
             ) : (
               <div className="mt-5 rounded-2xl bg-slate-100 px-4 py-3 text-center text-sm font-semibold text-slate-400">
-                Replay unavailable
+                {t('world.eventPage.replayUnavailable')}
               </div>
             )}
           </section>
@@ -915,11 +915,11 @@ export default function WorldNationsEventPage(): JSX.Element {
               {t('world.eventPage.raceInformation')}
             </div>
             <div className="mt-1 text-lg font-semibold text-slate-950">
-              Participants and results
+              {t('world.eventPage.participantsResults')}
             </div>
           </div>
           <span className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
-            {raceInformationOpen ? 'Hide' : 'Show'}
+            {raceInformationOpen ? t('world.eventPage.hide') : t('world.eventPage.show')}
           </span>
         </button>
 
@@ -934,7 +934,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                 activeTab === 'teams' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
               ].join(' ')}
             >
-              Teams & riders
+              {t('world.eventPage.teamsAndRiders')}
             </button>
             <button
               type="button"
@@ -944,7 +944,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                 activeTab === 'results' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500',
               ].join(' ')}
             >
-              Results
+              {t('world.eventPage.results')}
             </button>
           </div>
 
@@ -953,9 +953,9 @@ export default function WorldNationsEventPage(): JSX.Element {
               {raceFavorites.length > 0 ? (
                 <div className="overflow-hidden rounded-2xl border border-sky-100 bg-sky-50/40">
                   <div className="border-b border-sky-100 px-4 py-3">
-                    <div className="text-sm font-semibold text-sky-950">Top 5 race favorites</div>
+                    <div className="text-sm font-semibold text-sky-950">{t('world.eventPage.topFavorites')}</div>
                     <div className="text-xs text-sky-700">
-                      Calculated from rider skills, this season results, race profile and assigned role.
+                      {t('world.eventPage.favoritesExplanation')}
                     </div>
                   </div>
                   <div className="grid gap-2 p-3 lg:grid-cols-5">
@@ -996,7 +996,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                               />
                             ) : null}
                             <span className="truncate">
-                              {nation ? nationDisplayName(nation.association_name, nation.country_code) : 'National Team'}
+                              {nation ? nationDisplayName(nation.association_name, nation.country_code) : t('world.eventPage.nationalTeam')}
                             </span>
                           </div>
                           <div className="mt-2">
@@ -1059,7 +1059,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                                   className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
                                 />
                               ) : null}
-                              <span>National Team</span>
+                              <span>{t('world.eventPage.nationalTeam')}</span>
                             </div>
                             {team.national_coach_kind === 'test_ai' && team.national_coach_name ? (
                               <div className="mt-1 text-xs text-slate-500">
@@ -1072,7 +1072,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                             <div className="border-b border-slate-100 md:border-b-0 md:border-r">
                               <div className="border-b border-slate-100 p-5">
                                 <div className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                                  Team logo
+                                  {t('world.eventPage.teamLogo')}
                                 </div>
                                 <div className="mt-3 flex min-h-[120px] items-center justify-center rounded-2xl border border-slate-200 bg-slate-50 p-4">
                                   {nationalFlag ? (
@@ -1087,7 +1087,7 @@ export default function WorldNationsEventPage(): JSX.Element {
 
                               <div className="p-5">
                                 <div className="text-center text-xs font-semibold uppercase tracking-[0.14em] text-slate-400">
-                                  Team jersey
+                                  {t('world.eventPage.teamJersey')}
                                 </div>
                                 <div className="mt-3 flex h-[190px] items-center justify-center overflow-hidden rounded-2xl border border-slate-200 bg-white p-2">
                                   {team.jersey_url ? (
@@ -1108,12 +1108,12 @@ export default function WorldNationsEventPage(): JSX.Element {
 
                             <div className="p-5">
                               <div className="font-semibold text-slate-900">
-                                Riders participating in this race
+                                {t('world.eventPage.participatingRiders')}
                               </div>
                               <div className="mt-1 text-sm text-slate-500">
                                 {riders.length > 0
-                                  ? `${riders.length} assigned rider${riders.length === 1 ? '' : 's'}`
-                                  : 'No riders submitted yet.'}
+                                  ? t('world.eventPage.assignedRiders', { count: riders.length })
+                                  : t('world.eventPage.noRidersSubmitted')}
                               </div>
 
                               <div className="mt-3 space-y-2">
@@ -1166,9 +1166,9 @@ export default function WorldNationsEventPage(): JSX.Element {
             <div className="mt-6">
               {!resultsVisible ? (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 text-sm text-slate-600">
-                  <div className="font-semibold text-slate-900">Results are not published yet.</div>
+                  <div className="font-semibold text-slate-900">{t('world.eventPage.resultsNotPublished')}</div>
                   <div className="mt-1">
-                    Classification and stage results follow the same publication gate as regular races and stay hidden until the replay/result publication window is complete.
+                    {t('world.eventPage.publicationExplanation')}
                   </div>
                 </div>
               ) : (
@@ -1176,10 +1176,10 @@ export default function WorldNationsEventPage(): JSX.Element {
                 <div className="rounded-2xl bg-slate-50 p-4">
                   <div>
                     <div className="font-semibold text-slate-950">
-                      National team classification
+                      {t('world.eventPage.nationalTeamClassification')}
                     </div>
                     <div className="mt-0.5 text-xs text-slate-500">
-                      Current group standing
+                      {t('world.eventPage.currentGroupStanding')}
                     </div>
                   </div>
 
