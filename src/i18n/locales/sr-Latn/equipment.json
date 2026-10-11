@@ -417,5 +417,11 @@
     "finish": "Završi za sada",
     "skip": "Preskoči tutorijal",
     "close": "Zatvori tutorijal"
+  },
+  "legacyUi": {
+    "activeStatuses": "Aktivni statusi",
+    "maintenanceTitle": "Oprema kojoj je potrebno održavanje",
+    "loadingMaintenance": "Učitavanje održavanja…",
+    "searchEquipment": "Pretraži opremu…"
   }
 }
