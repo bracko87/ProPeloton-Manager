@@ -282,7 +282,9 @@
     "latestWeek": "Letzte Woche",
     "editChartRiders": "Fahrer bearbeiten",
     "doneEditingRiders": "Fertig",
-    "editChartRidersHint": "Ersetze jeden angezeigten Fahrer durch einen anderen Kaderfahrer, der noch nicht im Diagramm ist."
+    "editChartRidersHint": "Ersetze jeden angezeigten Fahrer durch einen anderen Kaderfahrer, der noch nicht im Diagramm ist.",
+    "noHistoryTitle": "Noch keine aufgezeichnete Fahrerentwicklung",
+    "noHistoryDescription": "Für diese Fahrer liegen noch keine wöchentlichen Entwicklungsdaten vor. Das Diagramm erscheint, sobald die Wochenverarbeitung echte Trainingsfortschritte erfasst. Es werden keine Werte erfunden."
   },
   "templates": {
     "title": "Vorlagen & Smart Prefill",
