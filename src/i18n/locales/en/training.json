@@ -171,7 +171,11 @@
     "safetyTitle": "Priority and safety rules",
     "safetyText": "Races, active camps, existing daily activity, injuries, sickness and training-blocking medical cases take priority. A coach on a course or another assignment may have reduced or zero availability.",
     "disabledTitle": "When automation is disabled",
-    "disabledText": "The existing Team Defaults and persistent Rider Overrides control regular training exactly as before."
+    "disabledText": "The existing Team Defaults and persistent Rider Overrides control regular training exactly as before.",
+    "enableSuccess": "{{team}} Head Coach management enabled. Today's decisions appear below under Rider Overrides.",
+    "disableSuccess": "{{team}} Head Coach management disabled. Team Defaults and persistent rider overrides are active again.",
+    "loadFailed": "Could not load Head Coach management.",
+    "choicesVisible": "Head Coach choices appear in the standard rider training controls below."
   },
   "camps": {
     "currentTitle": "Current / Planned Training Camp",
