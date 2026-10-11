@@ -101,5 +101,15 @@
     "title": "Uskoro ćete biti odjavljeni",
     "body": "Igra je neaktivna skoro 30 minuta. Bićete automatski odjavljeni za približno jedan minut.",
     "stay": "Ostani prijavljen"
+  },
+  "legacyUi": {
+    "close": "Zatvori",
+    "previous": "Prethodno",
+    "next": "Sljedeće",
+    "previousSlide": "Prethodni slajd",
+    "nextSlide": "Sljedeći slajd",
+    "closeNavigation": "Zatvori navigaciju",
+    "previousPage": "Idi na prethodnu stranicu",
+    "nextPage": "Idi na sljedeću stranicu"
   }
 }
