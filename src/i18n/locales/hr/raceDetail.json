@@ -383,5 +383,14 @@
   },
   "dates": {
     "compactSeason": "Sezona {{season}}"
+  },
+  "legacyUi": {
+    "rider": "Vozač",
+    "preRaceAvailability": "Dostupnost prije utrke",
+    "stageUses": "Korištenje na etapi: prije / potrošeno / poslije",
+    "riderTeam": "Vozač / ekipa",
+    "stageResult": "Rezultat etape",
+    "generalClassification": "Generalni poredak",
+    "invalidRaceId": "Neispravan ili nedostajući ID utrke."
   }
 }
