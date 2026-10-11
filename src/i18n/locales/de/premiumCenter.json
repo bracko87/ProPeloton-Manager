@@ -19,7 +19,9 @@
     "national": "Nationale Wettbewerbe",
     "scouting": "Scouting-Analyse",
     "staff": "Personal, Training & Regeneration",
-    "infrastructure": "Infrastruktur & Logistikplanung"
+    "infrastructure": "Infrastruktur & Logistikplanung",
+    "scrollLeft": "Tabs nach links scrollen",
+    "scrollRight": "Tabs nach rechts scrollen"
   },
   "common": {
     "refresh": "Aktualisieren",
