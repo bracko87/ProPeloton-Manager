@@ -535,5 +535,15 @@
     "continueFinance": "Weiter zur Finanzierung",
     "finish": "Fertig für jetzt",
     "skip": "Tutorial überspringen"
+  },
+  "legacyUi": {
+    "riderColon": "Fahrer:",
+    "loadingNegotiation": "Transferverhandlung wird geladen…",
+    "rider": "Fahrer",
+    "preferredMinimumSalary": "Gewünschtes Mindestgehalt",
+    "preferredContract": "Bevorzugter Vertrag",
+    "riderResponse": "Antwort des Fahrers",
+    "salary": "Gehalt",
+    "country": "Land"
   }
 }
