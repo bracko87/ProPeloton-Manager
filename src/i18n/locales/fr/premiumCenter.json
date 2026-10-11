@@ -282,7 +282,9 @@
     "latestWeek": "Dernière semaine",
     "editChartRiders": "Modifier les coureurs",
     "doneEditingRiders": "Terminé",
-    "editChartRidersHint": "Remplacez n’importe quel coureur affiché par un autre coureur de l’effectif qui n’est pas déjà dans le graphique."
+    "editChartRidersHint": "Remplacez n’importe quel coureur affiché par un autre coureur de l’effectif qui n’est pas déjà dans le graphique.",
+    "noHistoryTitle": "Aucune progression des coureurs enregistrée",
+    "noHistoryDescription": "Aucun historique hebdomadaire de développement n'est encore disponible pour ces coureurs. Le graphique apparaîtra lorsque le traitement hebdomadaire enregistrera les progrès réels. Aucune valeur n'est inventée."
   },
   "templates": {
     "title": "Modèles et Smart Prefill",
