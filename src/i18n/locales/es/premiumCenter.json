@@ -19,7 +19,9 @@
     "national": "Competiciones nacionales",
     "scouting": "Inteligencia de ojeadores",
     "staff": "Personal, entrenamiento y recuperación",
-    "infrastructure": "Infraestructura y logística"
+    "infrastructure": "Infraestructura y logística",
+    "scrollLeft": "Desplazar pestañas a la izquierda",
+    "scrollRight": "Desplazar pestañas a la derecha"
   },
   "common": {
     "refresh": "Actualizar",
