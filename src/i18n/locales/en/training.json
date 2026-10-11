@@ -123,7 +123,14 @@
     "createOverride": "Create Override",
     "clearTodayOverride": "Clear Today Override",
     "clearOverride": "Clear Override",
-    "trainingDevelopment": "Training Development"
+    "trainingDevelopment": "Training Development",
+    "manualTrainingHelp": "Set individual training here. Manual rider controls and Team Defaults remain available without Premium.",
+    "savedOneDayOverride": "Saved a one-day training override for {{name}}. The Head Coach resumes control next game day.",
+    "savedOverride": "Saved regular training override for {{name}}.",
+    "removedTodayOverride": "Removed today's manual override for {{name}}. The Head Coach plan was restored.",
+    "removedOverride": "Removed regular training override for {{name}}.",
+    "saveOverrideFailed": "Failed to save rider training override.",
+    "clearOverrideFailed": "Failed to remove rider training override."
   },
   "coach": {
     "title": "Head Coach Management",
