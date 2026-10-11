@@ -19,7 +19,9 @@
     "national": "Compétitions nationales",
     "scouting": "Analyse du recrutement",
     "staff": "Personnel, entraînement et récupération",
-    "infrastructure": "Infrastructures et logistique"
+    "infrastructure": "Infrastructures et logistique",
+    "scrollLeft": "Faire défiler les onglets vers la gauche",
+    "scrollRight": "Faire défiler les onglets vers la droite"
   },
   "common": {
     "refresh": "Actualiser",
