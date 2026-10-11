@@ -171,7 +171,11 @@
     "safetyTitle": "Norme prioritarie e di sicurezza",
     "safetyText": "Le corse, i campi attivi, le attività quotidiane esistenti, le lesioni, le malattie e i casi di blocco della formazione medica hanno la priorità. Un allenatore su un corso o un altro incarico può avere disponibilità ridotta o zero.",
     "disabledTitle": "Quando l'automazione è disabilitata",
-    "disabledText": "Gli attuali Team Default e Rider persistente Sovrascrive controllare l'allenamento regolare esattamente come prima."
+    "disabledText": "Gli attuali Team Default e Rider persistente Sovrascrive controllare l'allenamento regolare esattamente come prima.",
+    "enableSuccess": "Gestione del capoallenatore attivata per {{team}}. Le decisioni di oggi compaiono sotto nelle modifiche individuali.",
+    "disableSuccess": "Gestione del capoallenatore disattivata per {{team}}. Tornano attivi i valori di squadra e le modifiche permanenti.",
+    "loadFailed": "Impossibile caricare la gestione del capoallenatore.",
+    "choicesVisible": "Le decisioni del capoallenatore compaiono nei controlli standard di allenamento qui sotto."
   },
   "camps": {
     "currentTitle": "Campo di formazione attuale / programmato",
