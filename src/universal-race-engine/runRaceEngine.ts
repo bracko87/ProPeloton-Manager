@@ -32833,20 +32833,21 @@ export function resolveUniversalPhase10Incidents({
   }
   let nextGlobalEligibleSecond = 0
 
+  // Incident ticks progress strictly forward. Keep a monotone cursor instead
+  // of rescanning all replay frames thousands of times per mountain stage.
+  let incidentCheckpointCursor = 0
   const checkpointForFraction = (fraction: number): UniversalReplayCheckpoint => {
     const checkpoints = baseReplayTimeline.checkpoints
-    let selected = checkpoints[0]
-    for (const checkpoint of checkpoints) {
-      if (checkpoint.raceProgress.fraction <= fraction + 0.000001) {
-        selected = checkpoint
-      } else {
-        break
-      }
-    }
-    if (!selected) {
+    if (checkpoints.length === 0) {
       throw new Error('Phase 10 requires at least one replay checkpoint.')
     }
-    return selected
+    while (
+      incidentCheckpointCursor + 1 < checkpoints.length &&
+      checkpoints[incidentCheckpointCursor + 1].raceProgress.fraction <= fraction + 0.000001
+    ) {
+      incidentCheckpointCursor += 1
+    }
+    return checkpoints[incidentCheckpointCursor]
   }
 
   // A long mountain stage can evaluate thousands of 30-second incident ticks.
