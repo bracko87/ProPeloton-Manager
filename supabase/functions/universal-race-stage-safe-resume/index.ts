@@ -1052,6 +1052,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     next={...checkpoint};
   } else if(step===10){
     const replayTimeline=checkpoint.replayTimeline as any;
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_sync",stageId,step}));
     const replaySynchronization=buildUniversalReplaySynchronizationSummary(
       calculationInput,
       checkpoint.riderReadiness as any,
@@ -1069,6 +1070,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     if(hardReplayBlockingIssues.length>0){
       throw new Error(`Universal replay synchronization failed: ${hardReplayBlockingIssues.join(", ")}`);
     }
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_post",stageId,step}));
     const postStageUpdate=buildUniversalPostStageUpdateSummary(
       calculationInput,
       checkpoint.difficulty as any,
@@ -1103,6 +1105,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       checkpoint.finishResolution as any,
     );
     await heartbeat(supabase,stageId,runId,"step10_acceptance_ready",{});
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_result",stageId,step}));
     let result: UniversalRaceEngineResult={
       engineKey:PPM_UNIVERSAL_RACE_ENGINE_KEY,
       engineVersion:PPM_UNIVERSAL_RACE_ENGINE_VERSION,
@@ -1136,6 +1139,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     };
     try { result=applyAtomicIntermediatePointReplayPublication(input,result); } catch {}
     await heartbeat(supabase,stageId,runId,"step10_preparing_output",{});
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_output",stageId,step}));
     let output=buildOutputWithReplayProgressGuarantee(input,result);
     await heartbeat(supabase,stageId,runId,"step10_output_ready",{});
     output=addFinishRankAlias(output);
@@ -1156,6 +1160,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         totalSteps:11,
       },
     };
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_submit",stageId,step}));
     await heartbeat(supabase,stageId,runId,"safe_mode_submitting",{step,elapsed_ms:performance.now()-started});
     // Submit the potentially 60+MB replay result in bounded chunks. A single
     // Supabase RPC body otherwise duplicates the payload and kills the isolate.
