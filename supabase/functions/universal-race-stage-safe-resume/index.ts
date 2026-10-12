@@ -1180,25 +1180,70 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   }
 
   const nextStep=step===9&&Number(next.step9ReplayCursor??0)>0?9:step+1;
-  const checkpointOutput=JSON.stringify(next);
-  let save:JsonObject;
-  if(checkpointOutput.length>2_000_000){
-    // Never send a 40-60MB JSON field as one Edge-to-PostgREST request.
-    // Small writes keep the Edge isolate beneath its memory ceiling.
-    let cursor=0,chunkIndex=0;
-    while(cursor<checkpointOutput.length){
-      let end=Math.min(checkpointOutput.length,cursor+700_000);
-      if(end<checkpointOutput.length){
-        const last=checkpointOutput.charCodeAt(end-1),first=checkpointOutput.charCodeAt(end);
-        if(last>=0xD800&&last<=0xDBFF&&first>=0xDC00&&first<=0xDFFF)end-=1;
-      }
-      const transferred=await rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
-        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
-        p_chunk_index:chunkIndex,p_chunk_text:checkpointOutput.slice(cursor,end),
-      });
-      if(transferred.status!=="saved_chunk")throw new Error(`Checkpoint chunk ${chunkIndex} failed: ${JSON.stringify(transferred)}`);
-      cursor=end;chunkIndex+=1;
+  // Large replay checkpoints must be serialized incrementally; JSON.stringify
+  // of the entire object duplicates tens of MB in the isolate heap.
+  async function* serializedPieces(value:any):AsyncGenerator<string>{
+    yield "{";
+    let firstKey=true;
+    for(const [key,field] of Object.entries(value)){
+      if(field===undefined)continue;
+      if(!firstKey)yield ",";
+      firstKey=false;
+      yield JSON.stringify(key)+":";
+      if(key==="replayTimeline"&&field&&typeof field==="object"&&
+         Array.isArray((field as any).checkpoints)){
+        yield "{";
+        let firstTimeline=true;
+        for(const [tkey,tvalue] of Object.entries(field as any)){
+          if(tvalue===undefined)continue;
+          if(!firstTimeline)yield ",";
+          firstTimeline=false;
+          yield JSON.stringify(tkey)+":";
+          if(tkey==="checkpoints"){
+            yield "[";
+            let firstCheckpoint=true;
+            for(const frame of tvalue as any[]){
+              if(!firstCheckpoint)yield ",";
+              firstCheckpoint=false;
+              yield JSON.stringify(frame);
+            }
+            yield "]";
+          }else yield JSON.stringify(tvalue);
+        }
+        yield "}";
+      }else yield JSON.stringify(field);
     }
+    yield "}";
+  }
+  let save:JsonObject;
+  if(step>=8){
+    let chunkIndex=0;
+    let buffer="";
+    const sendChunk=async(piece:string)=>{
+      const result=await rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
+        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+        p_chunk_index:chunkIndex,p_chunk_text:piece,
+      });
+      if(result.status!=="saved_chunk")throw new Error(`Checkpoint chunk ${chunkIndex} failed: ${JSON.stringify(result)}`);
+      chunkIndex++;
+    };
+    for await(const piece of serializedPieces(next)){
+      if(piece.length>650_000){
+        if(buffer){await sendChunk(buffer);buffer="";}
+        for(let offset=0;offset<piece.length;){
+          let end=Math.min(piece.length,offset+650_000);
+          if(end<piece.length){
+            const c=piece.charCodeAt(end-1),n=piece.charCodeAt(end);
+            if(c>=0xD800&&c<=0xDBFF&&n>=0xDC00&&n<=0xDFFF)end--;
+          }
+          await sendChunk(piece.slice(offset,end));offset=end;
+        }
+      }else if(buffer.length+piece.length>650_000){
+        await sendChunk(buffer);
+        buffer=piece;
+      }else buffer+=piece;
+    }
+    if(buffer)await sendChunk(buffer);
     save=await rpc<JsonObject>(supabase,"universal_race_stage_finalize_checkpoint_chunks_v1",{
       p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
       p_chunk_count:chunkIndex,p_next_step:nextStep,p_phase:`safe_mode_step_${step}_complete`,
@@ -1206,7 +1251,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   }else{
     save=await rpc<JsonObject>(supabase,"universal_race_stage_save_safe_step_v2",{
       p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
-      p_next_step:nextStep,p_checkpoint_text:checkpointOutput,
+      p_next_step:nextStep,p_checkpoint_text:JSON.stringify(next),
       p_phase:`safe_mode_step_${step}_complete`,
     });
   }
