@@ -1152,11 +1152,37 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       },
     };
     await heartbeat(supabase,stageId,runId,"safe_mode_submitting",{step,elapsed_ms:performance.now()-started});
-    const submit=await submitWithRetry(supabase,{
-      p_stage_id:stageId,
-      p_simulation_run_id:runId,
-      p_input_snapshot:input,
-      p_universal_result:output,
+    // Submit the potentially 60+MB replay result in bounded chunks. A single
+    // Supabase RPC body otherwise duplicates the payload and kills the isolate.
+    let outputChunkIndex=0;
+    let outputBuffer="";
+    const uploadOutputChunk=async(piece:string)=>{
+      const saved=await rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
+        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+        p_chunk_index:outputChunkIndex,p_chunk_text:piece,
+      });
+      if(saved.status!=="saved_chunk")throw new Error(`Output chunk ${outputChunkIndex} rejected: ${JSON.stringify(saved)}`);
+      outputChunkIndex++;
+    };
+    for await(const piece of serializedPieces(output)){
+      if(piece.length>650_000){
+        if(outputBuffer){await uploadOutputChunk(outputBuffer);outputBuffer="";}
+        for(let offset=0;offset<piece.length;){
+          let end=Math.min(piece.length,offset+650_000);
+          if(end<piece.length){
+            const c=piece.charCodeAt(end-1),n=piece.charCodeAt(end);
+            if(c>=0xD800&&c<=0xDBFF&&n>=0xDC00&&n<=0xDFFF)end--;
+          }
+          await uploadOutputChunk(piece.slice(offset,end));offset=end;
+        }
+      }else if(outputBuffer.length+piece.length>650_000){
+        await uploadOutputChunk(outputBuffer);outputBuffer=piece;
+      }else outputBuffer+=piece;
+    }
+    if(outputBuffer)await uploadOutputChunk(outputBuffer);
+    const submit=await rpc<JsonObject>(supabase,"universal_race_stage_submit_chunked_calculation_v1",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+      p_chunk_count:outputChunkIndex,p_input_snapshot:input,
     });
     if(scenarioPreserved){
       try{
@@ -1190,7 +1216,9 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       if(!firstKey)yield ",";
       firstKey=false;
       yield JSON.stringify(key)+":";
-      if(key==="replayTimeline"&&field&&typeof field==="object"&&
+      if(key==="universalResult"&&field&&typeof field==="object"){
+        yield* serializedPieces(field);
+      }else if(key==="replayTimeline"&&field&&typeof field==="object"&&
          Array.isArray((field as any).checkpoints)){
         yield "{";
         let firstTimeline=true;
