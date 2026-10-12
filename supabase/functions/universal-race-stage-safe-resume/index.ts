@@ -926,8 +926,12 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       const step9TeamIds=(Array.isArray(calculationInput?.teams)?calculationInput.teams:[])
         .map((team:any)=>String(team?.teamId??""))
         .filter(Boolean);
-      let step9PreviousCheckpoint:any=null;
-      for(const replayCheckpoint of (replayTimeline as any).checkpoints){
+      const step9ReplayCheckpoints=(replayTimeline as any).checkpoints as any[];
+      const step9Start=Math.max(0,Math.trunc(finite(checkpoint.step9ReplayCursor,0)));
+      const step9End=Math.min(step9ReplayCheckpoints.length,step9Start+40);
+      let step9PreviousCheckpoint:any=step9Start>0?step9ReplayCheckpoints[step9Start-1]:null;
+      for(let step9Index=step9Start;step9Index<step9End;step9Index++){
+        const replayCheckpoint=step9ReplayCheckpoints[step9Index];
         normalizeCheckpointPhysicalGroups(replayCheckpoint);
         const checkpointKm=finite(replayCheckpoint?.raceProgress?.kmFromStart,0);
         const dnfRiderIds=new Set(
@@ -1019,6 +1023,11 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
           }
         }
         step9PreviousCheckpoint=replayCheckpoint;
+      }
+      if(step9End<step9ReplayCheckpoints.length){
+        checkpoint.step9ReplayCursor=step9End;
+      }else{
+        delete checkpoint.step9ReplayCursor;
       }
     }
     // Checkpoint normalized replay separately from final validation/publication.
@@ -1157,7 +1166,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     p_stage_id:stageId,
     p_simulation_run_id:runId,
     p_lease_token:leaseToken,
-    p_next_step:step+1,
+    p_next_step:step===9&&Number(next.step9ReplayCursor??0)>0?9:step+1,
     p_checkpoint_text:JSON.stringify(next),
     p_phase:`safe_mode_step_${step}_complete`,
   });
