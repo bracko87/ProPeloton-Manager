@@ -1358,7 +1358,17 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     });
   }
   if(save.status!=="saved") throw new Error(`Safe-mode checkpoint save failed: ${JSON.stringify(save)}`);
-  return {status:"step_completed",stage_id:stageId,simulation_run_id:runId,step,next_step:step+1,elapsed_ms:performance.now()-started};
+  if(nextStep>=9){
+    // Separate the large checkpoint commit from replay shard construction:
+    // a combined DB transaction timed out before stage 15 could save.
+    const prepared=object(await rpc(supabase,"universal_race_stage_prepare_checkpoint_shards_v1",{
+      p_stage_id:stageId,
+    }));
+    if(prepared.status!=="prepared"){
+      throw new Error(`Replay checkpoint shard preparation failed: ${JSON.stringify(prepared)}`);
+    }
+  }
+  return {status:"step_completed",stage_id:stageId,simulation_run_id:runId,step,next_step:nextStep,elapsed_ms:performance.now()-started};
 }
 
 Deno.serve(async (request: Request) => {
