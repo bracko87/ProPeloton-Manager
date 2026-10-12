@@ -508,7 +508,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   checkpointText=null;
   delete claim.checkpoint_text;
   delete claim.checkpoint_pgp_base64;
-  if(claim.checkpoint_sharded===true&&step===10){
+  if(claim.checkpoint_sharded===true&&step>=9){
     // The database holds the original checkpoint unchanged. Read lightweight
     // metadata and one bounded replay page at a time instead of materializing
     // 50+ MB of JSON and decompression buffers in one Edge invocation.
