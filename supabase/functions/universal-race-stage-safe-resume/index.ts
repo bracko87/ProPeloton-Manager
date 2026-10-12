@@ -482,10 +482,16 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   const runId=text(claim.simulation_run_id);
   const leaseToken=text(claim.lease_token);
   const step=Math.max(0,Math.trunc(finite(claim.step,0)));
-  const checkpointText=text(claim.checkpoint_text) || "{}";
+  // Do not retain multiple full-size copies of large replay checkpoint text.
+  // Keeping both the RPC claim string and the parsed replay exceeds the Edge
+  // isolate heap for mountain stages even when CPU work is bounded.
+  let checkpointText:string|null=typeof claim.checkpoint_text==="string"
+    ? claim.checkpoint_text : "{}";
   let checkpoint: JsonObject;
   try { checkpoint=object(JSON.parse(checkpointText)); }
   catch { throw new Error("Safe-mode checkpoint text is invalid JSON."); }
+  checkpointText=null;
+  delete claim.checkpoint_text;
   if(!stageId || !runId || !leaseToken) throw new Error("Safe-mode claim missing identity or lease.");
 
   const started=performance.now();
