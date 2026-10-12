@@ -32849,12 +32849,41 @@ export function resolveUniversalPhase10Incidents({
     return selected
   }
 
+  // A long mountain stage can evaluate thousands of 30-second incident ticks.
+  // Index immutable commands and checkpoint riders once instead of linearly
+  // rescanning every rider and group on every individual candidate.
+  const commandByRiderId = new Map(
+    roadCommandResolution.riders.map((row) => [row.riderId, row] as const),
+  )
+  const checkpointRiderIndex = new WeakMap<UniversalReplayCheckpoint, Map<string, UniversalReplayRiderState>>()
+  const checkpointGroupIndex = new WeakMap<UniversalReplayCheckpoint, Map<string, UniversalReplayGroupState>>()
+  const riderIndexFor = (checkpoint: UniversalReplayCheckpoint) => {
+    let index = checkpointRiderIndex.get(checkpoint)
+    if (!index) {
+      index = new Map(checkpoint.riderStates.map((row) => [row.riderId, row] as const))
+      checkpointRiderIndex.set(checkpoint, index)
+    }
+    return index
+  }
+  const groupIndexFor = (checkpoint: UniversalReplayCheckpoint) => {
+    let index = checkpointGroupIndex.get(checkpoint)
+    if (!index) {
+      index = new Map()
+      for (const group of checkpoint.groups) {
+        for (const riderId of group.riderIds) {
+          if (!index.has(riderId)) index.set(riderId, group)
+        }
+      }
+      checkpointGroupIndex.set(checkpoint, index)
+    }
+    return index
+  }
   const commandIntensityFor = (
     riderId: string,
     phase: RoadRacePhaseNumber,
   ): number => {
     if (!roadCommandResolution.active) return 1
-    const rider = roadCommandResolution.riders.find((row) => row.riderId === riderId)
+    const rider = commandByRiderId.get(riderId)
     const phaseRow = rider?.phases.find((row) => row.phaseNumber === phase)
     return phaseRow?.commandEffect.roleAdjustedEffortMultiplier ?? 1
   }
@@ -32864,7 +32893,7 @@ export function resolveUniversalPhase10Incidents({
     checkpoint: UniversalReplayCheckpoint,
   ): number => {
     const readiness = readinessByRiderId.get(riderId)
-    const state = checkpoint.riderStates.find((row) => row.riderId === riderId)
+    const state = riderIndexFor(checkpoint).get(riderId)
     if (!readiness || !state) return 0
     const startEnergy = Math.max(1, readiness.fatigueBalance.startEnergy)
     const energySpent = Math.max(0, startEnergy - state.energy)
@@ -33049,7 +33078,7 @@ export function resolveUniversalPhase10Incidents({
     racingStates.forEach((state) => {
       const rider = riderById.get(state.riderId)
       if (!rider) return
-      const group = checkpoint.groups.find((row) => row.riderIds.includes(state.riderId))
+      const group = groupIndexFor(checkpoint).get(state.riderId)
       const groupSize = group?.riderIds.length ?? 1
       const runtimeFatigue = runtimeFatigueFor(state.riderId, checkpoint)
       const sourceRider = sourceRiderById.get(state.riderId)
