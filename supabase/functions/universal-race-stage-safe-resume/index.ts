@@ -928,7 +928,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         .filter(Boolean);
       const step9ReplayCheckpoints=(replayTimeline as any).checkpoints as any[];
       const step9Start=Math.max(0,Math.trunc(finite(checkpoint.step9ReplayCursor,0)));
-      const step9End=Math.min(step9ReplayCheckpoints.length,step9Start+40);
+      const step9End=Math.min(step9ReplayCheckpoints.length,step9Start+16);
       let step9PreviousCheckpoint:any=step9Start>0?step9ReplayCheckpoints[step9Start-1]:null;
       for(let step9Index=step9Start;step9Index<step9End;step9Index++){
         const replayCheckpoint=step9ReplayCheckpoints[step9Index];
