@@ -1,6 +1,7 @@
 
 /// <reference lib="deno.ns" />
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
+import * as openpgp from "npm:openpgp@6.2.2";
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
   PPM_UNIVERSAL_RACE_ENGINE_VERSION,
@@ -487,11 +488,21 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   // isolate heap for mountain stages even when CPU work is bounded.
   let checkpointText:string|null=typeof claim.checkpoint_text==="string"
     ? claim.checkpoint_text : "{}";
+  if(typeof claim.checkpoint_pgp_base64==="string"&&claim.checkpoint_pgp_base64.length>0){
+    const encoded=claim.checkpoint_pgp_base64;
+    const compressedBytes=Uint8Array.from(atob(encoded),(char)=>char.charCodeAt(0));
+    const message=await openpgp.readMessage({binaryMessage:compressedBytes});
+    const decrypted=await openpgp.decrypt({
+      message,passwords:[`safe_checkpoint:${stageId}`],format:"utf8",
+    });
+    checkpointText=String(decrypted.data);
+  }
   let checkpoint: JsonObject;
   try { checkpoint=object(JSON.parse(checkpointText)); }
   catch { throw new Error("Safe-mode checkpoint text is invalid JSON."); }
   checkpointText=null;
   delete claim.checkpoint_text;
+  delete claim.checkpoint_pgp_base64;
   if(!stageId || !runId || !leaseToken) throw new Error("Safe-mode claim missing identity or lease.");
 
   const started=performance.now();
@@ -934,7 +945,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         .filter(Boolean);
       const step9ReplayCheckpoints=(replayTimeline as any).checkpoints as any[];
       const step9Start=Math.max(0,Math.trunc(finite(checkpoint.step9ReplayCursor,0)));
-      const step9End=Math.min(step9ReplayCheckpoints.length,step9Start+16);
+      const step9End=Math.min(step9ReplayCheckpoints.length,step9Start+1024);
       let step9PreviousCheckpoint:any=step9Start>0?step9ReplayCheckpoints[step9Start-1]:null;
       for(let step9Index=step9Start;step9Index<step9End;step9Index++){
         const replayCheckpoint=step9ReplayCheckpoints[step9Index];
@@ -1168,14 +1179,37 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     throw new Error(`Unsupported safe-mode step ${step}`);
   }
 
-  const save=await rpc<JsonObject>(supabase,"universal_race_stage_save_safe_step_v2",{
-    p_stage_id:stageId,
-    p_simulation_run_id:runId,
-    p_lease_token:leaseToken,
-    p_next_step:step===9&&Number(next.step9ReplayCursor??0)>0?9:step+1,
-    p_checkpoint_text:JSON.stringify(next),
-    p_phase:`safe_mode_step_${step}_complete`,
-  });
+  const nextStep=step===9&&Number(next.step9ReplayCursor??0)>0?9:step+1;
+  const checkpointOutput=JSON.stringify(next);
+  let save:JsonObject;
+  if(checkpointOutput.length>2_000_000){
+    // Never send a 40-60MB JSON field as one Edge-to-PostgREST request.
+    // Small writes keep the Edge isolate beneath its memory ceiling.
+    let cursor=0,chunkIndex=0;
+    while(cursor<checkpointOutput.length){
+      let end=Math.min(checkpointOutput.length,cursor+700_000);
+      if(end<checkpointOutput.length){
+        const last=checkpointOutput.charCodeAt(end-1),first=checkpointOutput.charCodeAt(end);
+        if(last>=0xD800&&last<=0xDBFF&&first>=0xDC00&&first<=0xDFFF)end-=1;
+      }
+      const transferred=await rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
+        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+        p_chunk_index:chunkIndex,p_chunk_text:checkpointOutput.slice(cursor,end),
+      });
+      if(transferred.status!=="saved_chunk")throw new Error(`Checkpoint chunk ${chunkIndex} failed: ${JSON.stringify(transferred)}`);
+      cursor=end;chunkIndex+=1;
+    }
+    save=await rpc<JsonObject>(supabase,"universal_race_stage_finalize_checkpoint_chunks_v1",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+      p_chunk_count:chunkIndex,p_next_step:nextStep,p_phase:`safe_mode_step_${step}_complete`,
+    });
+  }else{
+    save=await rpc<JsonObject>(supabase,"universal_race_stage_save_safe_step_v2",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+      p_next_step:nextStep,p_checkpoint_text:checkpointOutput,
+      p_phase:`safe_mode_step_${step}_complete`,
+    });
+  }
   if(save.status!=="saved") throw new Error(`Safe-mode checkpoint save failed: ${JSON.stringify(save)}`);
   return {status:"step_completed",stage_id:stageId,simulation_run_id:runId,step,next_step:step+1,elapsed_ms:performance.now()-started};
 }
