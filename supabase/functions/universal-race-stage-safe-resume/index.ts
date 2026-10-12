@@ -944,22 +944,32 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
           .filter((command:any)=>!dnfRiderIds.has(String(command?.riderId??"")));
 
         if(Array.isArray(replayCheckpoint?.riderStates)){
+          // Single-pass team aggregation: avoid rescanning every rider for every
+          // team and status at each replay kilometre (large mountain stages).
+          const teamStatesById=new Map<string,any>();
+          for(const teamId of step9TeamIds){
+            teamStatesById.set(teamId,{
+              teamId,activeRiderIds:[],racingRiderCount:0,finishedRiderCount:0,
+              dnsRiderCount:0,dnfRiderCount:0,otlRiderCount:0,
+            });
+          }
+          for(const rider of replayCheckpoint.riderStates){
+            const aggregate=teamStatesById.get(String(rider?.teamId??""));
+            if(!aggregate) continue;
+            const status=String(rider?.status??"");
+            if(status==="racing"||status==="finished"){
+              aggregate.activeRiderIds.push(String(rider?.riderId??""));
+            }
+            const counter=({
+              racing:"racingRiderCount",finished:"finishedRiderCount",
+              dns:"dnsRiderCount",dnf:"dnfRiderCount",otl:"otlRiderCount",
+            } as Record<string,string>)[status];
+            if(counter) aggregate[counter]+=1;
+          }
           replayCheckpoint.teamStates=step9TeamIds.map((teamId:string)=>{
-            const teamRiders=replayCheckpoint.riderStates.filter(
-              (row:any)=>String(row?.teamId??"")===teamId
-            );
-            return {
-              teamId,
-              activeRiderIds:teamRiders
-                .filter((row:any)=>row?.status==="racing"||row?.status==="finished")
-                .map((row:any)=>String(row?.riderId??""))
-                .sort(),
-              racingRiderCount:teamRiders.filter((row:any)=>row?.status==="racing").length,
-              finishedRiderCount:teamRiders.filter((row:any)=>row?.status==="finished").length,
-              dnsRiderCount:teamRiders.filter((row:any)=>row?.status==="dns").length,
-              dnfRiderCount:teamRiders.filter((row:any)=>row?.status==="dnf").length,
-              otlRiderCount:teamRiders.filter((row:any)=>row?.status==="otl").length,
-            };
+            const aggregate=teamStatesById.get(teamId);
+            aggregate.activeRiderIds.sort();
+            return aggregate;
           });
         }
 
