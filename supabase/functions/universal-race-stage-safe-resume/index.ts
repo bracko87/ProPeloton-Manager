@@ -486,20 +486,25 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   // Do not retain multiple full-size copies of large replay checkpoint text.
   // Keeping both the RPC claim string and the parsed replay exceeds the Edge
   // isolate heap for mountain stages even when CPU work is bounded.
+  console.log(JSON.stringify({event:"safe_claim_decode",phase:"claim_received",stageId,step}));
   let checkpointText:string|null=typeof claim.checkpoint_text==="string"
     ? claim.checkpoint_text : "{}";
   if(typeof claim.checkpoint_pgp_base64==="string"&&claim.checkpoint_pgp_base64.length>0){
     const encoded=claim.checkpoint_pgp_base64;
     const compressedBytes=Uint8Array.from(atob(encoded),(char)=>char.charCodeAt(0));
     const message=await openpgp.readMessage({binaryMessage:compressedBytes});
+    console.log(JSON.stringify({event:"safe_claim_decode",phase:"before_decrypt",stageId,step,compressedBytes:compressedBytes.length}));
     const decrypted=await openpgp.decrypt({
       message,passwords:[`safe_checkpoint:${stageId}`],format:"utf8",
     });
     checkpointText=String(decrypted.data);
+    console.log(JSON.stringify({event:"safe_claim_decode",phase:"after_decrypt",stageId,step,bytes:checkpointText.length}));
   }
   let checkpoint: JsonObject;
+  console.log(JSON.stringify({event:"safe_claim_decode",phase:"before_parse",stageId,step}));
   try { checkpoint=object(JSON.parse(checkpointText)); }
   catch { throw new Error("Safe-mode checkpoint text is invalid JSON."); }
+  console.log(JSON.stringify({event:"safe_claim_decode",phase:"after_parse",stageId,step}));
   checkpointText=null;
   delete claim.checkpoint_text;
   delete claim.checkpoint_pgp_base64;
