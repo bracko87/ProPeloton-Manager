@@ -727,6 +727,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         row.activeCommands=[];
       }
     }
+    console.log(JSON.stringify({event:"step8_phase10",state:"begin",stageId,frames:phase10BaseReplayTimeline?.checkpoints?.length}));
     const phase10Resolution=resolveUniversalPhase10Incidents({
       input:calculationInput,
       sourceInput:input,
@@ -736,6 +737,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       baseFinishResolution:checkpoint.baseFinishResolution as any,
       baseReplayTimeline:phase10BaseReplayTimeline as any,
     });
+    console.log(JSON.stringify({event:"step8_phase10",state:"finished",stageId,frames:phase10Resolution?.replayTimeline?.checkpoints?.length}));
     const replayRiderById=new Map(
       (Array.isArray(calculationInput?.riders)?calculationInput.riders:[])
         .map((rider:any)=>[String(rider?.riderId??""),rider] as const)
