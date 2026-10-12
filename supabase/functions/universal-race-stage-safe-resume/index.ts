@@ -531,6 +531,35 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       replayFrames.push(...page.frames);
     }
     if(replayFrames.length!==frameCount)throw new Error("Incomplete replay frames: "+replayFrames.length+"/"+frameCount);
+    // JSONB shards canonicalize object key ordering. The deterministic
+    // synchronization contract compares JSON.stringify on replay commands and
+    // final physical groups, so restore their engine-defined property order
+    // WITHOUT changing any actual field values or masking mismatches.
+    for(const frame of replayFrames){
+      if(Array.isArray(frame?.activeCommands)){
+        frame.activeCommands=frame.activeCommands.map((command:any)=>({
+          riderId:command.riderId,
+          teamId:command.teamId,
+          phaseNumber:command.phaseNumber,
+          stageRole:command.stageRole,
+          savedCommand:command.savedCommand,
+          resolvedCommand:command.resolvedCommand,
+          resolvedSource:command.resolvedSource,
+          behaviour:command.behaviour,
+        }));
+      }
+    }
+    const finalFrame=replayFrames[replayFrames.length-1];
+    if(finalFrame&&Array.isArray(finalFrame.groups)){
+      finalFrame.groups=finalFrame.groups.map((group:any)=>({
+        groupCode:group.groupCode,
+        displayCode:group.displayCode,
+        physicalLineageId:group.physicalLineageId??null,
+        physicalPosition:group.physicalPosition,
+        colorKey:group.colorKey,
+        riderIds:group.riderIds,
+      }));
+    }
     replayTimeline.checkpoints=replayFrames;
     checkpoint.replayTimeline=replayTimeline;
     console.log(JSON.stringify({event:"safe_claim_decode",phase:"sharded_frames_loaded",stageId,step,frames:replayFrames.length}));
