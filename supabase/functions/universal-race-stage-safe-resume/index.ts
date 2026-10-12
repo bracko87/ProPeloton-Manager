@@ -791,22 +791,23 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       let previousReplayCheckpoint:any=null;
       for(const replayCheckpoint of phase10Resolution.replayTimeline.checkpoints){
         if(Array.isArray(replayCheckpoint?.riderStates)){
-          replayCheckpoint.teamStates=teamIds.map((teamId:string)=>{
-            const teamRiders=replayCheckpoint.riderStates.filter(
-              (row:any)=>String(row?.teamId??"")===teamId
-            );
-            return {
-              teamId,
-              activeRiderIds:teamRiders
-                .filter((row:any)=>row?.status==="racing"||row?.status==="finished")
-                .map((row:any)=>String(row?.riderId??""))
-                .sort(),
-              racingRiderCount:teamRiders.filter((row:any)=>row?.status==="racing").length,
-              finishedRiderCount:teamRiders.filter((row:any)=>row?.status==="finished").length,
-              dnsRiderCount:teamRiders.filter((row:any)=>row?.status==="dns").length,
-              dnfRiderCount:teamRiders.filter((row:any)=>row?.status==="dnf").length,
-              otlRiderCount:teamRiders.filter((row:any)=>row?.status==="otl").length,
-            };
+          const teamAggregates=new Map<string,any>();
+          for(const teamId of teamIds)teamAggregates.set(teamId,{
+            teamId,activeRiderIds:[],racingRiderCount:0,finishedRiderCount:0,
+            dnsRiderCount:0,dnfRiderCount:0,otlRiderCount:0,
+          });
+          for(const state of replayCheckpoint.riderStates){
+            const team=teamAggregates.get(String(state?.teamId??""));
+            if(!team)continue;
+            const status=String(state?.status??"");
+            if(status==="racing"||status==="finished")team.activeRiderIds.push(String(state?.riderId??""));
+            const counter=({racing:"racingRiderCount",finished:"finishedRiderCount",dns:"dnsRiderCount",dnf:"dnfRiderCount",otl:"otlRiderCount"} as Record<string,string>)[status];
+            if(counter)team[counter]++;
+          }
+          replayCheckpoint.teamStates=teamIds.map((id:string)=>{
+            const team=teamAggregates.get(id);
+            team.activeRiderIds.sort();
+            return team;
           });
         }
         if(previousReplayCheckpoint&&Array.isArray(replayCheckpoint?.riderStates)){
