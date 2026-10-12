@@ -1063,6 +1063,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       replayTimeline as any,
       checkpoint.roadRaceResolution as any,
     );
+    await heartbeat(supabase,stageId,runId,"step10_replay_synchronized",{checkpoint_count:Array.isArray(replayTimeline?.checkpoints)?replayTimeline.checkpoints.length:0});
     const replayPublicationPolicy=classifyUniversalReplaySynchronizationForPublication(replaySynchronization);
     const hardReplayBlockingIssues=replayPublicationPolicy.blockingIssues.filter((issue)=>!isRecoverableReplayOnlyIssue(issue));
     if(hardReplayBlockingIssues.length>0){
@@ -1080,6 +1081,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       replayTimeline as any,
       replaySynchronization,
     );
+    await heartbeat(supabase,stageId,runId,"step10_post_stage_ready",{});
     const phase9Acceptance=buildUniversalPhase9AcceptanceReport(input,calculationInput,phase9Modifiers,postStageUpdate);
     if(!phase9Acceptance.passed) throw new Error(`Phase 9 acceptance audit failed: ${phase9Acceptance.warnings.join(", ")}`);
     const phase78Acceptance=buildUniversalPhase78AcceptanceReport(
@@ -1100,6 +1102,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       checkpoint.groupAndTimeResolution as any,
       checkpoint.finishResolution as any,
     );
+    await heartbeat(supabase,stageId,runId,"step10_acceptance_ready",{});
     let result: UniversalRaceEngineResult={
       engineKey:PPM_UNIVERSAL_RACE_ENGINE_KEY,
       engineVersion:PPM_UNIVERSAL_RACE_ENGINE_VERSION,
@@ -1132,7 +1135,9 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       calibrationSummary,
     };
     try { result=applyAtomicIntermediatePointReplayPublication(input,result); } catch {}
+    await heartbeat(supabase,stageId,runId,"step10_preparing_output",{});
     let output=buildOutputWithReplayProgressGuarantee(input,result);
+    await heartbeat(supabase,stageId,runId,"step10_output_ready",{});
     output=addFinishRankAlias(output);
     output={
       ...output,
