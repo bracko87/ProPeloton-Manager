@@ -1,7 +1,7 @@
 
 /// <reference lib="deno.ns" />
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
-import * as openpgp from "npm:openpgp@6.2.2";
+import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
   PPM_UNIVERSAL_RACE_ENGINE_VERSION,
