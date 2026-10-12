@@ -16445,6 +16445,7 @@ export function resolveRoadPhase4Finish(
   // workloads so one Phase-4 recovery slice fits inside the Edge CPU window.
   // Normal stages keep the original 1 km physical sampling.
   const phase4TrajectoryStepKm =
+    input.riders.length >= 150 && input.stage.elevationGainM >= 5000 ? 4 :
     input.riders.length >= 120 && input.stage.elevationGainM >= 2500 ? 2 : 1
 
   /**
