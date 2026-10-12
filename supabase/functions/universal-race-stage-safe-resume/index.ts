@@ -1011,6 +1011,11 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         step9PreviousCheckpoint=replayCheckpoint;
       }
     }
+    // Checkpoint normalized replay separately from final validation/publication.
+    // This bounds each Edge invocation's CPU work and permits deterministic resume.
+    next={...checkpoint};
+  } else if(step===10){
+    const replayTimeline=checkpoint.replayTimeline as any;
     const replaySynchronization=buildUniversalReplaySynchronizationSummary(
       calculationInput,
       checkpoint.riderReadiness as any,
@@ -1107,7 +1112,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         modelVersion:"checkpointed_safe_mode_v2",
         checkpointed:true,
         sourceCommit:SOURCE_COMMIT,
-        totalSteps:10,
+        totalSteps:11,
       },
     };
     await heartbeat(supabase,stageId,runId,"safe_mode_submitting",{step,elapsed_ms:performance.now()-started});
@@ -1131,7 +1136,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
     });
     await heartbeat(supabase,stageId,runId,"calculated_hidden",{
-      safe_mode:true,checkpointed:true,total_steps:10,elapsed_ms:performance.now()-started,
+      safe_mode:true,checkpointed:true,total_steps:11,elapsed_ms:performance.now()-started,
     });
     return {status:"completed",stage_id:stageId,simulation_run_id:runId,step,submit,elapsed_ms:performance.now()-started};
   } else {
