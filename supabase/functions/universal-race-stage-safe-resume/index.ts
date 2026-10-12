@@ -508,6 +508,33 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   checkpointText=null;
   delete claim.checkpoint_text;
   delete claim.checkpoint_pgp_base64;
+  if(claim.checkpoint_sharded===true&&step===10){
+    // The database holds the original checkpoint unchanged. Read lightweight
+    // metadata and one bounded replay page at a time instead of materializing
+    // 50+ MB of JSON and decompression buffers in one Edge invocation.
+    const head=object(await rpc<JsonObject>(supabase,"universal_race_stage_read_checkpoint_shards_v1",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+      p_start:-1,p_limit:8,
+    }));
+    if(head.status!=="ready")throw new Error("Safe checkpoint shards unavailable: "+JSON.stringify(head));
+    checkpoint=object(head.checkpoint);
+    const replayTimeline=object(checkpoint.replayTimeline);
+    const replayFrames:any[]=[];
+    const frameCount=Math.max(0,Math.trunc(finite(head.frames,0)));
+    if(frameCount===0)throw new Error("Sharded replay has zero frames");
+    for(let index=0;index<frameCount;index+=8){
+      const page=object(await rpc<JsonObject>(supabase,"universal_race_stage_read_checkpoint_shards_v1",{
+        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+        p_start:index,p_limit:8,
+      }));
+      if(page.status!=="page"||!Array.isArray(page.frames))throw new Error("Replay page "+index+" unavailable");
+      replayFrames.push(...page.frames);
+    }
+    if(replayFrames.length!==frameCount)throw new Error("Incomplete replay frames: "+replayFrames.length+"/"+frameCount);
+    replayTimeline.checkpoints=replayFrames;
+    checkpoint.replayTimeline=replayTimeline;
+    console.log(JSON.stringify({event:"safe_claim_decode",phase:"sharded_frames_loaded",stageId,step,frames:replayFrames.length}));
+  }
   if(!stageId || !runId || !leaseToken) throw new Error("Safe-mode claim missing identity or lease.");
 
   const started=performance.now();
