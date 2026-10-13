@@ -22,7 +22,7 @@ import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalR
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
 const SOURCE_COMMIT = "d94e821969ddda49d28d79b51b18409074e0ecb7";
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
-const WORKER_BUILD = "race_director_v2_split_claim_payload_2026_09_15";
+const WORKER_BUILD = "race_director_v2_accelerated_checkpointed_2026_10_13";
 const MAX_CALCULATIONS_PER_TICK = 1;
 const MAX_PUBLICATIONS_PER_TICK = 4;
 const encoder = new TextEncoder();
@@ -684,6 +684,8 @@ async function runLifecycleTick(supabase: SupabaseClient): Promise<JsonObject> {
     before,
     calculations,
     after,
+    accelerated_checkpointed_route: useCheckpointedTestEngine,
+    game_speed: Number(clockSettings.speed_multiplier),
     processed_at_real: new Date().toISOString(),
   };
 }
