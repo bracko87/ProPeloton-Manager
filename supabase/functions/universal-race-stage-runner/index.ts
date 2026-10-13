@@ -632,10 +632,46 @@ p_deviations: [],
 
 async function runLifecycleTick(supabase: SupabaseClient): Promise<JsonObject> {
   const before = object(await rpc<unknown>(supabase, "universal_race_stage_process_lifecycle_v1", { p_max_publications: MAX_PUBLICATIONS_PER_TICK }));
+  // x12+ is the testing clock. The monolithic TypeScript engine repeatedly
+  // exceeds Edge isolate memory (HTTP 546). On accelerated clocks, use the
+  // already-proven bounded, checkpointed full race engine from the outset.
+  // Production x2 keeps its original primary calculation path unchanged.
+  const { data: clockSettings, error: clockError } = await supabase
+    .from("game_clock_config")
+    .select("speed_multiplier")
+    .eq("id", true)
+    .maybeSingle();
+  if (clockError || !clockSettings) throw new Error("Unable to read live game-clock speed before claiming a stage.");
+  const useCheckpointedTestEngine = Number(clockSettings.speed_multiplier) >= 6;
   const calculations: JsonObject[] = [];
   for (let index = 0; index < MAX_CALCULATIONS_PER_TICK; index += 1) {
     const claim = object(await rpc<unknown>(supabase, "universal_race_stage_claim_next_due_v2", { p_worker_id: "supabase_edge_phase11b_split_payload_v2" }));
     if (claim.status !== "claimed") break;
+    if (useCheckpointedTestEngine) {
+      const stageId = String(claim.stage_id ?? "");
+      const simulationRunId = String(claim.simulation_run_id ?? "");
+      if (!stageId || !simulationRunId) throw new Error("Accelerated claim is missing stage identity.");
+      const delegated = object(await rpc<unknown>(supabase,"universal_race_stage_enable_safe_mode_v1",{
+        p_stage_id:stageId,
+        p_simulation_run_id:simulationRunId,
+        p_reason:"accelerated_clock_checkpointed_calculation",
+        p_workload_score:0,
+      }));
+      if (delegated.status !== "safe_mode_enabled") {
+        throw new Error("Checkpointed calculation was not accepted: "+JSON.stringify(delegated));
+      }
+      // The safe-mode worker is serialised by database leases and the existing
+      // per-minute cron. Its self-triggered steps require no heavy runner heap.
+      const kick = object(await rpc<unknown>(supabase,"universal_race_stage_kick_safe_worker_v1"));
+      calculations.push({
+        status:"checkpointed_calculation_queued",
+        stage_id:stageId,
+        simulation_run_id:simulationRunId,
+        game_speed:Number(clockSettings.speed_multiplier),
+        kick_status:kick.status,
+      });
+      continue;
+    }
     calculations.push(await calculateClaimedStage(supabase, claim));
   }
   const after = object(await rpc<unknown>(supabase, "universal_race_stage_process_lifecycle_v1", { p_max_publications: MAX_PUBLICATIONS_PER_TICK }));
