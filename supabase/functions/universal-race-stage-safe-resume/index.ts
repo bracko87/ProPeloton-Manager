@@ -41,7 +41,7 @@ import {
   buildUniversalRaceCalibrationSummary,
   type UniversalRaceEngineResult,
 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7d2fc2fc0ef01e0fbc2d3eedc645ee84fc7e1298/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7d2fc2fc0ef01e0fbc2d3eedc645ee84fc7e1298/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/271f79db6fdf5b6117be5c7c9f947e6faf6d78af/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7d2fc2fc0ef01e0fbc2d3eedc645ee84fc7e1298/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
