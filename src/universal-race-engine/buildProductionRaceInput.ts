@@ -425,6 +425,14 @@ function buildProfileCompetitionMarkers(
   return array(profile.route_markers)
     .flatMap((row, index): ProductionProfileCompetitionMarker[] => {
       const rawType = String(row.type ?? row.point_type ?? '').trim().toLowerCase()
+      // Route diagrams may use the legacy "sprint" icon for a non-scoring
+      // individual time-trial split. Timing gates are not intermediate
+      // competitions and must never be reconciled with sprint scoring rows.
+      // Only an explicitly labelled time gate is exempt: genuine unmatched
+      // sprint and KOM markers must still fail closed.
+      const markerLabel = String(row.label ?? row.title ?? '').trim().toLowerCase()
+      const timeGateLabel = /^(?:(?:intermediate|mid[ -]?course)\s+)?(?:time[ -]?(?:check|split|checkpoint)|timing[ -]?(?:gate|check|split|point))$/.test(markerLabel)
+      if (timeGateLabel || ['time_check','time_split','timing_gate','timing_check'].includes(rawType)) return []
       const family =
         rawType.includes('kom') || rawType.includes('climb') || rawType.includes('mountain')
           ? 'kom'
