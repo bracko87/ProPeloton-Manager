@@ -191,7 +191,7 @@ begin
     'inserted_points', v_inserted
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.sync_race_stage_points_from_stage_json_v1(p_stage_id uuid, p_force boolean DEFAULT false)
@@ -530,7 +530,7 @@ begin
     v_inserted_count
   );
 end;
-$function$
+$function$;
 
 
 
