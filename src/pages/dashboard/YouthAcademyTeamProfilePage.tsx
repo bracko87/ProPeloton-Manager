@@ -12,6 +12,7 @@ type PublicYouthAcademyProfile = {
   club_tier: string
   reputation: number
   capacity: number
+  is_active?: boolean
   is_mine: boolean
   starts: number
   wins: number
@@ -63,6 +64,11 @@ export default function YouthAcademyTeamProfilePage(): JSX.Element {
             <p className="mt-1 text-sm text-slate-600">
               {profile.country_code} · {profile.division?.class ?? 'Youth Academy'} · {profile.division?.division ?? ''}
             </p>
+            {profile.is_active === false ? (
+              <p className="mt-2 text-xs font-semibold text-amber-700">
+                Historical U16 Academy · not active in current Youth competitions
+              </p>
+            ) : null}
             <Link to={`/dashboard/teams/${profile.club_id}`} className="mt-2 inline-block text-sm font-semibold text-sky-700 hover:underline">
               {t('profile.parentClub', { defaultValue: 'View parent club profile' })} →
             </Link>
