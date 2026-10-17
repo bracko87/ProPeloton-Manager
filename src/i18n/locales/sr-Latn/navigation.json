@@ -161,5 +161,7 @@
   "premiumCenter": "Premium centar",
   "nationalAssociation": "Nacionalni savez",
   "youthAcademy": "Omladinska akademija",
-  "hiddenRaces": "Skrivene trke"
+  "hiddenRaces": "Skrivene trke",
+  "collapseSidebar": "Skupi bočni meni",
+  "expandSidebar": "Proširi bočni meni"
 }
