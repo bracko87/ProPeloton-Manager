@@ -390,7 +390,7 @@
     "jerseyDurability": "Kit riutilizzabile durevole. Ogni kit ha 10 stage prima che diventi consumato.",
     "jerseyPositive1": "Prontità gara: +0,5% di preparazione setup",
     "jerseyPositive2": "Supporto comfort: +0,25% controllo fatica",
-    "jerseyNegative1": "Missing jersey kit: rider races in normal team clothing and the team receives a proportional performance penalty",
+    "jerseyNegative1": "Maglia mancante: il corridore gareggia con l'abbigliamento standard della squadra e la squadra subisce una penalità proporzionale alle prestazioni.",
     "jerseyNegative2": "I kit indossati non sono più utilizzabili",
     "rainStage": "Facoltativo in Stage Plans: Nessuno o tutti i ciclisti.",
     "rainDurability": "Articolo durevole e riutilizzabile. Ogni giacca ha 25 utilizzi di tappa. Un utilizzo viene conteggiato ogni volta che la giacca viene assegnata o usata in una tappa.",
