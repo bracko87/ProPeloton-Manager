@@ -830,5 +830,22 @@
     "repairSpeed": "Repair speed:",
     "repairNow": "Repair to 100% now:",
     "physicalProtectionContext": "Protection applies to the frames, wheelsets, tires, groupsets, helmets and shoes actually allocated to riders for the stage. It does not reduce this van's own wear."
+  },
+  "assetBonusText": {
+    "tourFatigueProtection": "Tour Fatigue Protection {{value}}",
+    "recoveryComfort": "Recovery Comfort {{value}}",
+    "raceSupportCoverage": "Race Support Coverage {{value}}",
+    "feedingSupport": "Feeding Support {{value}}",
+    "mechanicalResponse": "Mechanical Response {{value}}",
+    "tacticalCommunication": "Tactical Communication {{value}}",
+    "incidentResponse": "Incident Response {{value}}",
+    "raceFatigueProtection": "Race Fatigue Protection {{value}}",
+    "raceSupportQuality": "Race Support Quality {{value}}",
+    "mechanicalReliability": "Mechanical Reliability {{value}}",
+    "equipmentProtection": "Equipment Protection {{value}}",
+    "fieldEquipmentRecovery": "Field Equipment Recovery {{value}}",
+    "healthProtection": "Health Protection {{value}}",
+    "fatigueControl": "Fatigue Control {{value}}",
+    "recoverySupport": "Recovery Support {{value}}"
   }
 }
