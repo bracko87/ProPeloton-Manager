@@ -684,6 +684,46 @@
         "unlock": "Otključava peto mesto za skauta / analitičara i elitni kvalitet izveštaja.",
         "effect": "Kapacitet skauta 5; limit elitnog kvaliteta izveštaja; skauti elitnog kvaliteta mogu otkriti tačne vrednosti"
       }
+    },
+    "sprint_performance_circuit": {
+      "level0": {
+        "unlock": "Nema dodatnih otključavanja.",
+        "effect": "Na ovom nivou nema aktivnog bonusa."
+      },
+      "level1": {
+        "unlock": "Zahteva Trening centar nivo 2.",
+        "effect": "Razvoj sprinta +4% za Prvi tim, +8% za U23 i +12% za U16; napredak kroz sprint trke za U23 i U16 +5%."
+      }
+    },
+    "climbing_performance_center": {
+      "level0": {
+        "unlock": "Nema dodatnih otključavanja.",
+        "effect": "Na ovom nivou nema aktivnog bonusa."
+      },
+      "level1": {
+        "unlock": "Zahteva Trening centar nivo 2.",
+        "effect": "Razvoj penjanja +4% za Prvi tim, +8% za U23 i +12% za U16; napredak kroz brdske trke za U23 i U16 +5%."
+      }
+    },
+    "team_time_trial_center": {
+      "level0": {
+        "unlock": "Nema dodatnih otključavanja.",
+        "effect": "Na ovom nivou nema aktivnog bonusa."
+      },
+      "level1": {
+        "unlock": "Zahteva Trening centar nivo 2.",
+        "effect": "Razvoj hronometra +4% za Prvi tim, +7% za U23 i +10% za U16; napredak U23/U16 kroz ekipni hronometar +5%; efikasnost tempa ekipnog hronometra +5%."
+      }
+    },
+    "team_residential_campus": {
+      "level0": {
+        "unlock": "Nema dodatnih otključavanja.",
+        "effect": "Na ovom nivou nema aktivnog bonusa."
+      },
+      "level1": {
+        "unlock": "Zahteva Akademiju mladih nivo 1.",
+        "effect": "Klupski smeštaj za Prvi tim, U23, U16 i stalno osoblje ne naplaćuje se; efikasnost oporavka U23/U16 +5%; hoteli tokom gostujućih trka i kampova i dalje se naplaćuju."
+      }
     }
   }
 }
