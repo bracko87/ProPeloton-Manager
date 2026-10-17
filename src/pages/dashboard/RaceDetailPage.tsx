@@ -8156,9 +8156,7 @@ function RaceResultsHub({
                   onClick={() => setFullStandingModal('race')}
                   disabled={fullGeneralClassificationRows.length === 0}
                   className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-40"
-                >
-                  Full race standing
-                </button>
+                >{t('results.fullRaceStanding')}</button>
               </div>
             </div>
 
@@ -17484,7 +17482,7 @@ function UniversalRaceReplayPage({
                           <div className="border-l border-slate-200 px-2 text-center">Group</div>
                           <div className="border-l border-slate-200 px-2.5">Rider</div>
                           <div className="border-l border-slate-200 px-2.5">Energy</div>
-                          <div className="border-l border-slate-200 px-2 text-right">Stage result</div>
+                          <div className="border-l border-slate-200 px-2 text-right">{t('results.stageResultColumn')}</div>
                           <div className="border-l border-slate-200 px-2.5">General classification</div>
                         </div>
 
@@ -19976,12 +19974,8 @@ export default function RaceDetailPage({
                       unavailable or injured riders are removed from the startlist.
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                      <span className="rounded-full bg-sky-100 px-2.5 py-1 text-sky-800">
-                        National champions only
-                      </span>
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-800">
-                        All team costs covered
-                      </span>
+                      <span className="rounded-full bg-sky-100 px-2.5 py-1 text-sky-800">{t('summary.nationalChampionsOnly')}</span>
+                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-emerald-800">{t('summary.allTeamCostsCovered')}</span>
                       <span className="rounded-full bg-slate-100 px-2.5 py-1 text-slate-700">
                         No prize money
                       </span>
