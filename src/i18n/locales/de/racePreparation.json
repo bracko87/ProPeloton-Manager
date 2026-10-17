@@ -562,7 +562,13 @@
     "weatherRiskCold": "Kälte unter 15°C",
     "weatherRiskWind": "starker Wind",
     "weatherRiskCondition": "schlechte Wetterbedingungen",
-    "leaderShort": "Kapitän"
+    "leaderShort": "Kapitän",
+    "stageCanceled": "Etappe abgesagt",
+    "teamTacticPlans": "Teamtaktikpläne",
+    "timeTrialSupplies": "Etappenmaterial beim Zeitfahren",
+    "currentClassifications": "Aktuelle Rennwertungen",
+    "raceSharpness": "Rennform",
+    "racePagePreview": "Vorschau der Rennseite"
   },
   "legacyUi": {
     "stagePlanLock": "Stage-Plan-Sperre",
