@@ -22,12 +22,15 @@ import {
   Sparkles,
   Trophy,
   GraduationCap,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import BugReportButton from '../dashboard/BugReportButton'
 
 interface SidebarProps {
   collapsed?: boolean
+  onToggle?: () => void
 }
 
 interface NavItem {
@@ -143,6 +146,7 @@ function isPathActive(pathname: string, item: NavItem): boolean {
 
 export default function Sidebar({
   collapsed = false,
+  onToggle,
 }: SidebarProps): JSX.Element {
   const { t } = useTranslation('navigation')
   const navigate = useNavigate()
@@ -207,10 +211,19 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`flex-shrink-0 bg-[#0b0f14] text-white ${
+      className={`relative flex-shrink-0 bg-[#0b0f14] text-white ${
         collapsed ? 'w-24' : 'w-80'
       } transition-all duration-300`}
     >
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
+        title={collapsed ? t('expandSidebar') : t('collapseSidebar')}
+        className="absolute -right-3 top-28 z-30 flex h-8 w-7 items-center justify-center rounded-r-lg border border-slate-600 bg-[#0b0f14] text-white shadow-md hover:bg-slate-700"
+      >
+        {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+      </button>
       <div className="h-full flex flex-col">
         <div className="px-4 py-6 flex items-center border-b border-white/5">
           <div
@@ -280,6 +293,7 @@ export default function Sidebar({
               <NavLink
                 key={item.to}
                 to={item.to}
+                title={collapsed ? t(item.labelKey) : undefined}
                 className={linkClass(active)}
               >
                 <Icon size={18} className="mt-0.5 flex-shrink-0" />
