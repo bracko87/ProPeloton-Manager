@@ -284,7 +284,9 @@
     "doneEditingRiders": "Done",
     "editChartRidersHint": "Replace any plotted rider with another squad rider who is not already in the chart.",
     "noHistoryTitle": "No recorded rider development yet",
-    "noHistoryDescription": "No weekly development history is available for these riders. The chart will populate after completed game-week processing records actual training gains. No values have been invented."
+    "noHistoryDescription": "No weekly development history is available for these riders. The chart will populate after completed game-week processing records actual training gains. No values have been invented.",
+    "noProgressTitle": "No skill changes recorded yet",
+    "noProgressDescription": "Weekly skill snapshots are available, but the recorded attributes have not changed. Rider ratings are shown as recorded; the game must process real development before progress can appear."
   },
   "templates": {
     "title": "Templates & Smart Prefill",
