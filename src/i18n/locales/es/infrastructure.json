@@ -684,6 +684,46 @@
         "unlock": "Desbloquea una quinta plaza de Ojeador / Analista y calidad de informe Élite.",
         "effect": "Capacidad de ojeadores 5; límite Élite de calidad de informe; los ojeadores de calidad élite pueden revelar valores exactos"
       }
+    },
+    "sprint_performance_circuit": {
+      "level0": {
+        "unlock": "Sin desbloqueos adicionales.",
+        "effect": "No hay bonificaciones activas en este nivel."
+      },
+      "level1": {
+        "unlock": "Requiere Centro de entrenamiento nivel 2.",
+        "effect": "Desarrollo de sprint +4% primer equipo, +8% U23, +12% U16; desarrollo en carreras de sprint U23/U16 +5%."
+      }
+    },
+    "climbing_performance_center": {
+      "level0": {
+        "unlock": "Sin desbloqueos adicionales.",
+        "effect": "No hay bonificaciones activas en este nivel."
+      },
+      "level1": {
+        "unlock": "Requiere Centro de entrenamiento nivel 2.",
+        "effect": "Desarrollo de escalada +4% primer equipo, +8% U23, +12% U16; desarrollo en carreras de montaña U23/U16 +5%."
+      }
+    },
+    "team_time_trial_center": {
+      "level0": {
+        "unlock": "Sin desbloqueos adicionales.",
+        "effect": "No hay bonificaciones activas en este nivel."
+      },
+      "level1": {
+        "unlock": "Requiere Centro de entrenamiento nivel 2.",
+        "effect": "Desarrollo de contrarreloj +4% primer equipo, +7% U23, +10% U16; desarrollo TTT U23/U16 +5%; eficiencia del ritmo de contrarreloj por equipos +5%."
+      }
+    },
+    "team_residential_campus": {
+      "level0": {
+        "unlock": "Sin desbloqueos adicionales.",
+        "effect": "No hay bonificaciones activas en este nivel."
+      },
+      "level1": {
+        "unlock": "Requiere Academia juvenil nivel 1.",
+        "effect": "Alojamiento en la sede para primer equipo, U23, U16 y personal permanente sin coste; recuperación U23/U16 +5%; los hoteles de carreras y concentraciones siguen siendo de pago."
+      }
     }
   }
 }
