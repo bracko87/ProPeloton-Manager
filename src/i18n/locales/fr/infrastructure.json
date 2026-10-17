@@ -830,5 +830,22 @@
     "repairSpeed": "Vitesse de réparation :",
     "repairNow": "Réparation à 100 % maintenant :",
     "physicalProtectionContext": "La protection s'applique aux cadres, roues, pneus, groupes, casques et chaussures des coureurs engagés. Elle ne diminue pas l'usure du fourgon lui-même."
+  },
+  "assetBonusText": {
+    "tourFatigueProtection": "Protection fatigue sur les tours {{value}}",
+    "recoveryComfort": "Confort de récupération {{value}}",
+    "raceSupportCoverage": "Couverture d'assistance en course {{value}}",
+    "feedingSupport": "Soutien du ravitaillement {{value}}",
+    "mechanicalResponse": "Réponse mécanique {{value}}",
+    "tacticalCommunication": "Communication tactique {{value}}",
+    "incidentResponse": "Intervention en cas d'incident {{value}}",
+    "raceFatigueProtection": "Protection fatigue en course {{value}}",
+    "raceSupportQuality": "Qualité du soutien en course {{value}}",
+    "mechanicalReliability": "Fiabilité mécanique {{value}}",
+    "equipmentProtection": "Protection du matériel {{value}}",
+    "fieldEquipmentRecovery": "Récupération du matériel en course {{value}}",
+    "healthProtection": "Protection de santé {{value}}",
+    "fatigueControl": "Contrôle de fatigue {{value}}",
+    "recoverySupport": "Soutien de récupération {{value}}"
   }
 }
