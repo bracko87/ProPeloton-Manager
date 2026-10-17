@@ -25,7 +25,9 @@
     "cancelApplication": "Cancelar la aplicación",
     "cancelling": "Cancelando...",
     "raceDate": "Fecha de la carrera",
-    "raceDates": "Fechas de la carrera"
+    "raceDates": "Fechas de la carrera",
+    "nationalChampionsOnly": "Solo campeones nacionales",
+    "allTeamCostsCovered": "Todos los gastos del equipo cubiertos"
   },
   "status": {
     "applicationsNotOpen": "Aplicaciones no abiertas",
@@ -241,7 +243,8 @@
     "pts": "Pts",
     "bonus": "Bonificación",
     "leader": "Líder",
-    "winner": "Ganador"
+    "winner": "Ganador",
+    "stageResultColumn": "Resultado de etapa"
   },
   "rewards": {
     "eyebrow": "Recompensas de carreras",
