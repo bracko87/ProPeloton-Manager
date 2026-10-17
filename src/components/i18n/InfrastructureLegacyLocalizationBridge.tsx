@@ -159,7 +159,7 @@ const options: LegacyLocalizationBridgeOptions = {
     // numeric benefit as well, instead of displaying a Serbian/German prefix
     // followed by an untranslated English race-engine stat.
     if (key.endsWith('assetDetailCopy.benefitsCurrent') && params.value) {
-      const parsed = params.value.match(/^(.*?)(\\s+[+-]?\\d+(?:\\.\\d+)?%?)$/)
+      const parsed = params.value.match(/^(.*?)(\s+[+-]?\d+(?:\.\d+)?%?)$/)
       if (parsed) {
         const statKey = ASSET_BONUS_KEYS[parsed[1].trim()]
         if (statKey) {
