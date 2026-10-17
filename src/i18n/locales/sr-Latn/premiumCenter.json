@@ -284,7 +284,9 @@
     "doneEditingRiders": "Gotovo",
     "editChartRidersHint": "Zameni bilo kog prikazanog vozača drugim vozačem iz tima koji još nije na grafikonu.",
     "noHistoryTitle": "Još nema zabeleženog razvoja vozača",
-    "noHistoryDescription": "Za ove vozače još nema nedeljne istorije razvoja. Grafikon će se prikazati kada obrada završene nedelje u igri zabeleži stvarni napredak. Nisu prikazane izmišljene vrednosti."
+    "noHistoryDescription": "Za ove vozače još nema nedeljne istorije razvoja. Grafikon će se prikazati kada obrada završene nedelje u igri zabeleži stvarni napredak. Nisu prikazane izmišljene vrednosti.",
+    "noProgressTitle": "Još nema zabeleženih promena veština",
+    "noProgressDescription": "Nedeljni snimci veština postoje, ali zabeležene vrednosti nisu promenjene. Ocene su prikazane prema podacima; napredak će se pojaviti tek kada igra obradi stvarni razvoj."
   },
   "templates": {
     "title": "Šabloni i Smart Prefill",
