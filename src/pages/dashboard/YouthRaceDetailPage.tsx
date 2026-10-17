@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router'
+import { Link, useNavigate, useParams } from 'react-router'
 import { supabase } from '@/lib/supabase'
 
 type CompetitionClass = 'regional' | 'continental' | 'world'
@@ -336,7 +336,7 @@ function YouthStandingTable({
                 {row.position ?? (row.result_status && row.result_status !== 'finished' ? row.result_status.toUpperCase() : index + 1)}
               </td>
               <td className="max-w-[220px] truncate px-3 py-2 font-medium text-slate-950" title={row.rider_name}>
-                {row.rider_name}
+                <Link to={`/dashboard/youth-academy/riders/${row.rider_id}`} className="font-semibold text-sky-800 hover:underline">{row.rider_name}</Link>
               </td>
               <td className="px-3 py-2">
                 <span className="relative block h-9 w-full min-w-[130px] max-w-[220px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" title={row.academy_name}>
@@ -517,6 +517,17 @@ export default function YouthRaceDetailPage(): JSX.Element {
   const { race } = payload
   const raceDays = Math.max(1, Number(race.race_days ?? 1))
   const isFinished = race.status === 'completed'
+  // Completed races are immutable. Published rider results, not current roster
+  // or a stale selected-lineup count, determine the historical starters.
+  const publishedRidersByAcademy = new Map<string, YouthRaceDetailPayload['rider_results']>()
+  if (isFinished) {
+    for (const rider of payload.rider_results ?? []) {
+      const group = publishedRidersByAcademy.get(rider.academy_id) ?? []
+      if (!group.some(existing => existing.rider_id === rider.rider_id)) group.push(rider)
+      publishedRidersByAcademy.set(rider.academy_id, group)
+    }
+  }
+  const finishedTeamsWithResults = [...publishedRidersByAcademy.values()].filter(group => group.length > 0).length
   const selectedResultStage = payload.stages.find(item => item.stage_number === selectedStageNumber)
   const selectedStageHasSprint = Number(selectedResultStage?.sprint_points_total ?? 0) > 0
   const selectedStageHasMountain = Number(selectedResultStage?.mountain_points_total ?? 0) > 0
@@ -770,19 +781,30 @@ export default function YouthRaceDetailPage(): JSX.Element {
       ) : null}
 
       {tab === 'teams' ? (
-        <Section title="Participating teams">
+        <Section title={isFinished ? 'Registered teams & recorded starters' : 'Participating teams'}>
+          {isFinished ? (
+            <div className="mb-4 rounded-xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-slate-700">
+              <strong>{payload.teams.length} registered teams</strong> · {finishedTeamsWithResults} with published rider results · {Math.max(0,payload.teams.length-finishedTeamsWithResults)} without a recorded starter.
+              <p className="mt-1 text-xs text-slate-600">This race predates the new U16 eligibility rules. Historical results are preserved. A registration does not prove that riders started.</p>
+            </div>
+          ) : (
+            <p className="mb-3 text-xs text-slate-600">A valid U16 start list requires at least four eligible riders. Incomplete squads will be withdrawn before the race starts.</p>
+          )}
           <div className="space-y-2">
             {payload.teams.filter(team => isFinished || team.entry_status !== 'withdrawn').map((team, index) => {
               const flag = flagUrl(team.country_code)
+              const actualRiders = publishedRidersByAcademy.get(team.academy_id) ?? []
+              const nationalLegacy = /(?:national|nacional)\\s*team|team\\s+national/i.test(team.club_name)
               return (
                 <div
                   key={team.academy_id}
-                  className={`flex flex-wrap items-center justify-between gap-3 rounded-lg border px-3 py-3 ${
+                  className={`rounded-lg border px-3 py-3 ${
                     team.is_mine
                       ? 'border-yellow-300 bg-yellow-50/60'
                       : 'border-slate-200 bg-white'
                   }`}
                 >
+                  <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
                   <div className="flex min-w-0 items-center gap-3">
                     <span className="w-7 text-center text-xs font-semibold text-slate-500">
                       {team.team_position ? `#${team.team_position}` : index + 1}
@@ -790,19 +812,42 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     <JerseyThumb url={team.jersey_url} name={team.club_name} />
                     {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
                     <div className="min-w-0">
-                      <div className="truncate text-sm font-medium text-slate-900">
-                        {team.club_name}
-                        {team.is_mine ? ' · My Academy' : ''}
-                      </div>
+                      <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} className="block truncate text-sm font-semibold text-sky-800 hover:underline">
+                        {team.club_name}{team.is_mine ? ' · My Academy' : ''}
+                      </Link>
                       <div className="mt-0.5 text-xs text-slate-500">
-                        {team.entry_status === 'withdrawn' ? 'Withdrawn / did not start' : `${team.lineup_count} riders selected`}
+                        {isFinished ? (
+                          actualRiders.length > 0 ? `${actualRiders.length} recorded starter${actualRiders.length === 1 ? '' : 's'}` : 'No rider result recorded — registered only'
+                        ) : team.entry_status === 'withdrawn' ? 'Withdrawn / did not start'
+                          : `${team.lineup_count} / ${race.lineup_size} riders selected`}
                       </div>
+                      {isFinished && actualRiders.length > 0 && actualRiders.length < 4 ? (
+                        <div className="mt-1 text-xs font-semibold text-amber-700">Historical exception: fewer than four starters</div>
+                      ) : null}
+                      {isFinished && nationalLegacy ? (
+                        <div className="mt-1 text-xs font-semibold text-amber-700">Historical national-team entry · not eligible for future U16 races</div>
+                      ) : null}
+                      {!isFinished && team.lineup_count < 4 ? (
+                        <div className="mt-1 text-xs text-amber-700">Not yet eligible to start</div>
+                      ) : null}
                     </div>
                   </div>
                   {isFinished && team.prize_cash > 0 ? (
                     <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
                       {money(team.prize_cash)}
                     </span>
+                  ) : null}
+                  </div>
+                  {isFinished && actualRiders.length > 0 ? (
+                    <div className="mt-3 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {actualRiders.map(rider => (
+                        <Link key={rider.rider_id} to={`/dashboard/youth-academy/riders/${rider.rider_id}`}
+                          className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-sky-800 hover:bg-sky-50 hover:underline">
+                          <span className="min-w-0 truncate">{rider.rider_name}</span>
+                          <span className="shrink-0 text-xs text-slate-500">{rider.position ? `#${rider.position}` : rider.result_status.toUpperCase()}</span>
+                        </Link>
+                      ))}
+                    </div>
                   ) : null}
                 </div>
               )
