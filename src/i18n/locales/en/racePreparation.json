@@ -593,7 +593,13 @@
     "weatherRiskCold": "cold below 15°C",
     "weatherRiskWind": "strong wind",
     "weatherRiskCondition": "bad-weather condition",
-    "leaderShort": "Leader"
+    "leaderShort": "Leader",
+    "stageCanceled": "Stage canceled",
+    "teamTacticPlans": "Team tactic plans",
+    "timeTrialSupplies": "Stage Supplies on Time Trials",
+    "currentClassifications": "Current race classifications",
+    "raceSharpness": "Race Sharpness",
+    "racePagePreview": "Race Page Preview"
   },
   "national": {
     "host": "Host {{country}}",
