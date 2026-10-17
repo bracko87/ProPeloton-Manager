@@ -119,7 +119,24 @@
     "raceSuppliesPurchase": "Покупка гоночных запасов",
     "racePreparationCost": "Расходы на подготовку к гонке",
     "clubHouseStaffPayrollSaving": "Экономия на зарплатах персонала — клубный дом",
-    "staffPayrollSaving": "Экономия на зарплатах персонала"
+    "staffPayrollSaving": "Экономия на зарплатах персонала",
+    "clubHouseMonthlyMaintenance": "Ежемесячное содержание клубной базы",
+    "taxMonthlyAdjustment": "Ежемесячная налоговая корректировка",
+    "taxMonthlyRefund": "Ежемесячный возврат налога",
+    "riderTransferFeePaid": "Оплаченный трансфер",
+    "freeAgentTransferSigning": "Плата за подписание свободного гонщика",
+    "emergencyLoanDisbursement": "Выдача экстренного кредита",
+    "loanPrincipalRepayment": "Погашение основного долга",
+    "loanInterest": "Проценты по кредиту",
+    "raceEntryFine": "Штраф за заявку на гонку",
+    "equipmentPurchaseDetailed": "Покупка снаряжения",
+    "trainingCampBookingDetailed": "Бронирование тренировочного сбора",
+    "trainingCampRefundDetailed": "Возврат средств за сбор",
+    "racePrizeCorrection": "Коррекция призовых за гонку",
+    "raceSupplies": "Расходные материалы для гонки",
+    "teamPolicyCost": "Затраты на политику команды",
+    "competitionRewardDetailed": "Приз за соревнование",
+    "startingBalanceAdjustment": "Корректировка начального баланса"
   },
   "financeCategories": {
     "income": "Поступления",
@@ -523,5 +540,27 @@
     "selectPresetDate": "Выберите дату предварительного ввода и игры.",
     "scheduleSaved": "Автоматическое расписание сохранёно.",
     "limitsSaved": "Сэкономлено средств, выделяемых на финансовое планирование."
+  },
+  "transactionDetails": {
+    "details": "Подробности операции",
+    "reference": "Ссылка",
+    "forSubject": "Для: {{name}}",
+    "forPeriod": "Период: {{period}}",
+    "forRiders": "Гонщиков: {{count}}",
+    "raceRank": "Место: {{rank}}",
+    "clubHouseLevel": "Клубная база, уровень {{level}}",
+    "explainClubMaintenance": "Ежемесячные расходы на содержание базы клуба.",
+    "explainTaxAdjustment": "Налоговый перерасчёт за завершённый игровой месяц.",
+    "explainTaxWithholding": "Налог, удержанный с призовых.",
+    "explainRiderSalary": "Еженедельная выплата зарплат {{count}} гонщикам.",
+    "explainRacePrize": "Призовые за выступление {{name}}.",
+    "explainRacePreparation": "Расходы на подготовку и поездку для {{name}}.",
+    "explainSponsor": "Платёж от спонсора {{name}}.",
+    "explainAsset": "Покупка или доставка {{name}}.",
+    "explainSubject": "Платёж, связанный с {{name}}.",
+    "explainOther": "Финансовая операция, зарегистрированная игрой.",
+    "paginationShowing": "Показано {{start}}-{{end}} из {{total}} {{label}}.",
+    "paginationPage": "Страница {{page}} / {{total}}",
+    "unknownGameDate": "Неизвестная игровая дата"
   }
 }
