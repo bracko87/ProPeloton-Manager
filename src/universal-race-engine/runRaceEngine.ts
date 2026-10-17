@@ -16446,7 +16446,7 @@ export function resolveRoadPhase4Finish(
   // Normal stages keep the original 1 km physical sampling.
   const phase4TrajectoryStepKm =
     input.riders.length >= 150 && input.stage.elevationGainM >= 5000 ? 4 :
-    input.riders.length >= 120 && input.stage.elevationGainM >= 2500 ? 2 : 1
+    input.riders.length >= 120 && input.stage.elevationGainM >= 2000 ? 2 : 1
 
   /**
    * V5.3 authoritative P/C movement. A rider starts only six seconds detached
