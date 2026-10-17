@@ -1,0 +1,46 @@
+name: Infrastructure, Finance and Premium UI build gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/infrastructure-finance-ui-build-gate.yml'
+      - 'src/pages/dashboard/Infrastructure.tsx'
+      - 'src/pages/dashboard/infrastructure/**'
+      - 'src/pages/dashboard/finance/**'
+      - 'src/pages/dashboard/training/PremiumRiderDevelopmentPanel.tsx'
+      - 'src/components/i18n/InfrastructureLegacyLocalizationBridge.tsx'
+      - 'src/components/layout/MainLayout.tsx'
+      - 'src/components/layout/Sidebar.tsx'
+      - 'src/i18n/locales/**/infrastructure.json'
+      - 'src/i18n/locales/**/finance.json'
+      - 'src/i18n/locales/**/navigation.json'
+      - 'src/i18n/locales/**/premiumCenter.json'
+      - 'scripts/check-i18n.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate translations and production bundle
+        run: npm run build
+      - name: Check generated app files
+        run: |
+          test -s dist/index.html
+          test -s dist/main.js
