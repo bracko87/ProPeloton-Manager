@@ -122,7 +122,7 @@ export function AssetProductionValuesAccordion({
     'Field Equipment Recovery': 'fieldRecovery', 'Health Protection': 'healthProtection',
   }
   const translateMetric = (line: string): string => {
-    const match = line.match(/^(.+?)\\s+([+-]?\\d+(?:\\.\\d+)?%?)$/)
+    const match = line.match(/^(.+?)\s+([+-]?\d+(?:\.\d+)?%?)$/)
     if (!match) return line
     const key = metricKeys[match[1]]
     return key ? `${t(`assetDetailCopy.${key}`)} ${match[2]}` : line
