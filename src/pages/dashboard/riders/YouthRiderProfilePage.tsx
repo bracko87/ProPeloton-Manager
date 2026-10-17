@@ -282,6 +282,7 @@ export default function YouthRiderProfilePage(): JSX.Element {
       ) : null}
 
       {!profile.public_only ? (
+      <>
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card title={t('profile.readiness')}>
           <div className="text-2xl font-semibold">{profile.readiness}%</div>
