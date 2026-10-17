@@ -119,7 +119,24 @@
     "raceSuppliesPurchase": "Race Supplies Purchase",
     "racePreparationCost": "Race Preparation Cost",
     "clubHouseStaffPayrollSaving": "Club House Staff Payroll Saving",
-    "staffPayrollSaving": "Staff Payroll Saving"
+    "staffPayrollSaving": "Staff Payroll Saving",
+    "clubHouseMonthlyMaintenance": "Club House Monthly Maintenance",
+    "taxMonthlyAdjustment": "Monthly Tax Adjustment",
+    "taxMonthlyRefund": "Monthly Tax Refund",
+    "riderTransferFeePaid": "Transfer Fee Paid",
+    "freeAgentTransferSigning": "Free Agent Signing Fee",
+    "emergencyLoanDisbursement": "Emergency Loan Disbursement",
+    "loanPrincipalRepayment": "Loan Principal Repayment",
+    "loanInterest": "Loan Interest",
+    "raceEntryFine": "Race Entry Fine",
+    "equipmentPurchaseDetailed": "Equipment Purchase",
+    "trainingCampBookingDetailed": "Training Camp Booking",
+    "trainingCampRefundDetailed": "Training Camp Refund",
+    "racePrizeCorrection": "Race Prize Correction",
+    "raceSupplies": "Race Supplies",
+    "teamPolicyCost": "Team Policy Cost",
+    "competitionRewardDetailed": "Competition Reward",
+    "startingBalanceAdjustment": "Starting Balance Adjustment"
   },
   "financeCategories": {
     "income": "Income",
@@ -523,5 +540,27 @@
     "selectPresetDate": "Select a preset and game date.",
     "scheduleSaved": "Automatic policy schedule saved.",
     "limitsSaved": "Finance planning limits saved."
+  },
+  "transactionDetails": {
+    "details": "Transaction details",
+    "reference": "Reference",
+    "forSubject": "For: {{name}}",
+    "forPeriod": "Period: {{period}}",
+    "forRiders": "Riders: {{count}}",
+    "raceRank": "Position: {{rank}}",
+    "clubHouseLevel": "Club House level {{level}}",
+    "explainClubMaintenance": "Monthly upkeep for the Club House.",
+    "explainTaxAdjustment": "Tax settlement for the completed game month.",
+    "explainTaxWithholding": "Tax withheld from prize income.",
+    "explainRiderSalary": "Weekly salary payment for {{count}} riders.",
+    "explainRacePrize": "Race prize money earned by {{name}}.",
+    "explainRacePreparation": "Race operations and travel expenses for {{name}}.",
+    "explainSponsor": "Payment received from sponsor {{name}}.",
+    "explainAsset": "Purchase or delivery of {{name}}.",
+    "explainSubject": "Payment connected to {{name}}.",
+    "explainOther": "Financial operation recorded by the game.",
+    "paginationShowing": "Showing {{start}}-{{end}} of {{total}} {{label}}.",
+    "paginationPage": "Page {{page}} / {{total}}",
+    "unknownGameDate": "Unknown game date"
   }
 }
