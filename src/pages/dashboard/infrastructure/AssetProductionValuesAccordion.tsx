@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 
 import type { InfrastructureAssetConfigRow } from './infrastructureTypes'
 import { formatCash, toNumber } from './infrastructureHelpers'
@@ -99,12 +100,33 @@ export function AssetProductionValuesAccordion({
   configRows,
   embedded = false,
 }: Props): JSX.Element | null {
+  const { t } = useTranslation('infrastructure')
   const [isOpen, setIsOpen] = useState(false)
   const sortedConfig = useMemo(
     () => [...configRows].sort((a, b) => a.asset_level - b.asset_level),
     [configRows],
   )
   const copy = COPY[assetKey]
+  const titles: Record<SupportedAssetKey, string> = {
+    team_bus: 'busByLevel', equipment_van: 'equipmentByLevel', mobile_workshop: 'workshopByLevel', medical_van: 'medicalByLevel',
+  }
+  const descriptions: Record<SupportedAssetKey, string> = {
+    team_bus: 'busByLevelHint', equipment_van: 'equipmentByLevelHint', mobile_workshop: 'workshopByLevelHint', medical_van: 'medicalByLevelHint',
+  }
+  const badges: Record<SupportedAssetKey, string> = {
+    team_bus: 'oneBus', equipment_van: 'oneVan', mobile_workshop: 'oneWorkshop', medical_van: 'oneMedical',
+  }
+  const metricKeys: Record<string, string> = {
+    'Fatigue Control': 'fatigueControl', 'Recovery Support': 'recoverySupport',
+    'Mechanical Reliability': 'mechanicalReliability', 'Equipment Protection': 'equipmentProtection',
+    'Field Equipment Recovery': 'fieldRecovery', 'Health Protection': 'healthProtection',
+  }
+  const translateMetric = (line: string): string => {
+    const match = line.match(/^(.+?)\\s+([+-]?\\d+(?:\\.\\d+)?%?)$/)
+    if (!match) return line
+    const key = metricKeys[match[1]]
+    return key ? `${t(`assetDetailCopy.${key}`)} ${match[2]}` : line
+  }
 
   if (sortedConfig.length === 0) return null
 
@@ -124,14 +146,14 @@ export function AssetProductionValuesAccordion({
       >
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-wide text-blue-600">
-            Production race-engine values
+            {t('assetDetailCopy.productionRaceEngineValues')}
           </div>
-          <div className="mt-0.5 text-sm font-semibold text-gray-900">{copy.title}</div>
-          <div className="mt-0.5 text-xs text-gray-500">{copy.description}</div>
+          <div className="mt-0.5 text-sm font-semibold text-gray-900">{t(`assetDetailCopy.${titles[assetKey]}`, { defaultValue: copy.title })}</div>
+          <div className="mt-0.5 text-xs text-gray-500">{t(`assetDetailCopy.${descriptions[assetKey]}`, { defaultValue: copy.description })}</div>
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-600 sm:inline-flex">
-            {copy.badge}
+            {t(`assetDetailCopy.${badges[assetKey]}`, { defaultValue: copy.badge })}
           </span>
           <span className="text-lg text-slate-500" aria-hidden="true">{isOpen ? '⌃' : '⌄'}</span>
         </div>
@@ -149,7 +171,9 @@ export function AssetProductionValuesAccordion({
         >
           {sortedConfig.map(config => {
             const canonical = canonicalLines(assetKey, config.asset_level)
-            const raw = rawBenefits(config.effect_summary)
+            // Canonical numeric values mirror the race engine; repeated raw English
+            // config prose is omitted when these values are available.
+            const raw = canonical.length > 0 ? [] : rawBenefits(config.effect_summary)
 
             return (
               <div
@@ -159,9 +183,9 @@ export function AssetProductionValuesAccordion({
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
-                      Level {config.asset_level}
+                      {t('assetDetailCopy.levelLabel', { level: config.asset_level })}
                     </div>
-                    <div className="mt-1 text-sm font-semibold text-gray-900">{config.asset_name}</div>
+                    <div className="mt-1 text-sm font-semibold text-gray-900">{t(`assetTiers.${assetKey}.level${config.asset_level}.name`, { defaultValue: config.asset_name })}</div>
                   </div>
                   <div className="text-xs font-semibold text-gray-700">{formatCash(config.cost_cash)}</div>
                 </div>
@@ -169,7 +193,7 @@ export function AssetProductionValuesAccordion({
                 {canonical.length > 0 && (
                   <div className="mt-3 space-y-1.5">
                     {canonical.map(line => (
-                      <div key={line} className="text-xs font-medium leading-4 text-gray-700">{line}</div>
+                      <div key={line} className="text-xs font-medium leading-4 text-gray-700">{translateMetric(line)}</div>
                     ))}
                   </div>
                 )}
@@ -177,7 +201,7 @@ export function AssetProductionValuesAccordion({
                 {raw.length > 0 && (
                   <div className="mt-3 border-t border-gray-200 pt-2">
                     <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
-                      Configured effects
+                      {t('assetDetailCopy.configuredEffects')}
                     </div>
                     <div className="space-y-1">
                       {raw.map(line => (
@@ -188,9 +212,9 @@ export function AssetProductionValuesAccordion({
                 )}
 
                 <div className="mt-3 border-t border-gray-200 pt-2 text-[11px] leading-4 text-gray-500">
-                  <div>Delivery: {toNumber(config.delivery_game_days, 0)} game days</div>
-                  <div>120 km wear: {formatPercent(config.condition_loss_per_race_day)}</div>
-                  <div>Repair: {formatCash(config.repair_cost_per_condition_point ?? 0)} / condition point</div>
+                  <div>{t('assetDetailCopy.deliveryDayValue', { days: toNumber(config.delivery_game_days, 0) })}</div>
+                  <div>{t('assetDetailCopy.wear120Value', { wear: formatPercent(config.condition_loss_per_race_day) })}</div>
+                  <div>{t('assetDetailCopy.repairPointValue', { cost: formatCash(config.repair_cost_per_condition_point ?? 0) })}</div>
                 </div>
               </div>
             )
