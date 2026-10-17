@@ -25,7 +25,9 @@
     "cancelApplication": "Отмена приложения",
     "cancelling": "Отмена...",
     "raceDate": "Дата гонки",
-    "raceDates": "Даты гонки"
+    "raceDates": "Даты гонки",
+    "nationalChampionsOnly": "Только национальные чемпионы",
+    "allTeamCostsCovered": "Все расходы команд покрыты"
   },
   "status": {
     "applicationsNotOpen": "Заявления не открыты",
@@ -241,7 +243,8 @@
     "pts": "ПТ",
     "bonus": "Благодарность",
     "leader": "Руководитель",
-    "winner": "Победитель"
+    "winner": "Победитель",
+    "stageResultColumn": "Результат этапа"
   },
   "rewards": {
     "eyebrow": "Награды за гонку",
