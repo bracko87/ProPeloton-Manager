@@ -593,7 +593,13 @@
     "weatherRiskCold": "froid sous 15°C",
     "weatherRiskWind": "vent fort",
     "weatherRiskCondition": "conditions météo défavorables",
-    "leaderShort": "Leader"
+    "leaderShort": "Leader",
+    "stageCanceled": "Étape annulée",
+    "teamTacticPlans": "Plans tactiques de l'équipe",
+    "timeTrialSupplies": "Matériel pour le contre-la-montre",
+    "currentClassifications": "Classements actuels",
+    "raceSharpness": "Préparation à la course",
+    "racePagePreview": "Aperçu de la page de course"
   },
   "national": {
     "host": "Pays hôte : {{country}}",
