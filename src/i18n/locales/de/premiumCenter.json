@@ -284,7 +284,9 @@
     "doneEditingRiders": "Fertig",
     "editChartRidersHint": "Ersetze jeden angezeigten Fahrer durch einen anderen Kaderfahrer, der noch nicht im Diagramm ist.",
     "noHistoryTitle": "Noch keine aufgezeichnete Fahrerentwicklung",
-    "noHistoryDescription": "Für diese Fahrer liegen noch keine wöchentlichen Entwicklungsdaten vor. Das Diagramm erscheint, sobald die Wochenverarbeitung echte Trainingsfortschritte erfasst. Es werden keine Werte erfunden."
+    "noHistoryDescription": "Für diese Fahrer liegen noch keine wöchentlichen Entwicklungsdaten vor. Das Diagramm erscheint, sobald die Wochenverarbeitung echte Trainingsfortschritte erfasst. Es werden keine Werte erfunden.",
+    "noProgressTitle": "Noch keine Änderungen der Fahrerwerte",
+    "noProgressDescription": "Wöchentliche Werte liegen vor, aber die erfassten Fähigkeiten haben sich nicht verändert. Angezeigt werden nur echte Daten; Fortschritte erscheinen erst nach tatsächlicher Verarbeitung."
   },
   "templates": {
     "title": "Vorlagen & Smart Prefill",
