@@ -27,6 +27,24 @@ const srResource = {
   },
 }
 
+const ASSET_BONUS_KEYS: Record<string, string> = {
+  'Tour Fatigue Protection': 'tourFatigueProtection',
+  'Recovery Comfort': 'recoveryComfort',
+  'Race Support Coverage': 'raceSupportCoverage',
+  'Feeding Support': 'feedingSupport',
+  'Mechanical Response': 'mechanicalResponse',
+  'Tactical Communication': 'tacticalCommunication',
+  'Incident Response': 'incidentResponse',
+  'Race Fatigue Protection': 'raceFatigueProtection',
+  'Race Support Quality': 'raceSupportQuality',
+  'Mechanical Reliability': 'mechanicalReliability',
+  'Equipment Protection': 'equipmentProtection',
+  'Field Equipment Recovery': 'fieldEquipmentRecovery',
+  'Health Protection': 'healthProtection',
+  'Fatigue Control': 'fatigueControl',
+  'Recovery Support': 'recoverySupport',
+}
+
 const ASSET_KEYS: Record<string, string> = {
   'Team Car': 'infrastructure:assets.teamCar',
   'Team Bus': 'infrastructure:assets.teamBus',
@@ -137,6 +155,21 @@ const options: LegacyLocalizationBridgeOptions = {
     'Calculating quote...': 'assetModal.calculating',
   },
   transformParams: (key, params, t) => {
+    // When the UI says "Current: [reduced effect]", translate the embedded
+    // numeric benefit as well, instead of displaying a Serbian/German prefix
+    // followed by an untranslated English race-engine stat.
+    if (key.endsWith('assetDetailCopy.benefitsCurrent') && params.value) {
+      const parsed = params.value.match(/^(.*?)(\\s+[+-]?\\d+(?:\\.\\d+)?%?)$/)
+      if (parsed) {
+        const statKey = ASSET_BONUS_KEYS[parsed[1].trim()]
+        if (statKey) {
+          params.value = t(`infrastructure:assetBonusText.${statKey}`, {
+            value: parsed[2].trim(),
+          })
+        }
+      }
+    }
+
     if (params.asset && ASSET_KEYS[params.asset]) {
       params.asset = t(
         ASSET_KEYS[params.asset],
