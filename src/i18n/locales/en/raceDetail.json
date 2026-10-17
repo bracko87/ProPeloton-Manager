@@ -25,7 +25,9 @@
     "cancelApplication": "Cancel application",
     "cancelling": "Cancelling…",
     "raceDate": "Race date",
-    "raceDates": "Race dates"
+    "raceDates": "Race dates",
+    "nationalChampionsOnly": "National champions only",
+    "allTeamCostsCovered": "All team costs covered"
   },
   "status": {
     "applicationsNotOpen": "Applications not open",
@@ -241,7 +243,8 @@
     "pts": "Pts",
     "bonus": "Bonus",
     "leader": "Leader",
-    "winner": "Winner"
+    "winner": "Winner",
+    "stageResultColumn": "Stage result"
   },
   "rewards": {
     "eyebrow": "Race rewards",
