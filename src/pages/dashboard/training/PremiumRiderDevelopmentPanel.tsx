@@ -122,7 +122,37 @@ export default function PremiumRiderDevelopmentPanel({
         setRows([])
       } else {
         const payload = (data ?? {}) as WorkspacePayload
-        setRows(Array.isArray(payload.rider_development) ? payload.rider_development : [])
+        // The legacy summary table is empty in production. Request genuine recorded
+        // weekly skill differences using the premium-gated snapshots RPC instead.
+        const sourceRows = Array.isArray(payload.rider_development) ? payload.rider_development : []
+        const { data: history, error: historyError } = await supabase.rpc(
+          'premium_get_rider_skill_history_v1',
+          { p_club_id: clubId },
+        )
+        if (!active) return
+        if (historyError) {
+          setError(historyError.message)
+          setRows(sourceRows)
+        } else {
+          const byRider = new Map(
+            ((history ?? []) as Array<{
+              rider_id: string
+              development_8w: number
+              weeks_recorded: number
+            }>).map(row => [row.rider_id, row]),
+          )
+          setRows(sourceRows.map(row => {
+            const recorded = byRider.get(row.rider_id)
+            return {
+              ...row,
+              development_8w: Number(recorded?.development_8w ?? 0),
+              weeks_recorded: Number(recorded?.weeks_recorded ?? 0),
+              // The source snapshots contain skill values, not historical
+              // overall rating: do not display an invented overall delta.
+              overall_delta_8w: 0,
+            }
+          }))
+        }
       }
 
       setLoading(false)
@@ -321,7 +351,7 @@ export default function PremiumRiderDevelopmentPanel({
             <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               <div className="text-base font-semibold text-slate-900">{t('development.leaders')}</div>
               <div className="mt-1 text-sm text-slate-500">{t('development.leadersHint')}</div>
-{!developmentLeaders.some(row => Math.abs(row.development) > 0 || Math.abs(row.overallChange) > 0) ? (
+{!developmentLeaders.some(row => Math.abs(row.development) > 0) ? (
                 <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
                   <p className="text-sm font-semibold text-slate-700">{t('development.noHistoryTitle')}</p>
                   <p className="mt-2 max-w-sm text-xs leading-5 text-slate-500">{t('development.noHistoryDescription')}</p>
@@ -336,7 +366,6 @@ export default function PremiumRiderDevelopmentPanel({
                     <Tooltip />
                     <Legend />
                     <Bar dataKey="development" name={t('development.eightWeekDevelopment')} fill="#eab308" radius={[0, 4, 4, 0]} />
-                    <Bar dataKey="overallChange" name={t('development.overallChange')} fill="#0f172a" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
