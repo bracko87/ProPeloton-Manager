@@ -892,6 +892,7 @@ export default function YouthAcademyPage(): JSX.Element {
   const [raceCalendar, setRaceCalendar] = useState<YouthRaceCalendarPayload | null>(null)
   const [raceMonthData, setRaceMonthData] = useState<YouthRaceMonthPayload | null>(null)
   const [youthRankings, setYouthRankings] = useState<YouthRankingsPayload | null>(null)
+  const [youthRankingsCachedAt, setYouthRankingsCachedAt] = useState(0)
   const [calendarMonth, setCalendarMonth] = useState(0)
   const [calendarClassFilter, setCalendarClassFilter] = useState<'all' | YouthCompetitionClass>('all')
   const [calendarScope, setCalendarScope] = useState<'all' | 'my_opportunities'>('all')
@@ -1408,13 +1409,16 @@ export default function YouthAcademyPage(): JSX.Element {
   }
 
   const loadYouthRankings = async (): Promise<void> => {
-    setPhase3Loading(true)
+    // Reuse recent standings when switching academy tabs; invalidate naturally after 60 seconds.
+    if (youthRankings && Date.now() - youthRankingsCachedAt < 60_000) return
+    if (!youthRankings) setPhase3Loading(true)
     try {
       const { data: payload, error: rankingsError } = await supabase.rpc(
         'get_my_youth_rankings_v1'
       )
       if (rankingsError) throw rankingsError
       setYouthRankings(payload as YouthRankingsPayload)
+      setYouthRankingsCachedAt(Date.now())
     } catch (rankingsError: any) {
       console.error('Youth rankings load failed:', rankingsError)
       setError(rankingsError?.message ?? t('errors.rankingsLoad'))
