@@ -2335,21 +2335,21 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
           )}
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-2 sm:items-center self-start">
+        <div className="flex flex-nowrap gap-2 items-center self-start shrink-0">
           <button
             type="button"
             onClick={refreshPageData}
             disabled={refreshing}
-            className="px-4 py-2 rounded-lg bg-white border border-gray-100 shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+            className="shrink-0 whitespace-nowrap px-4 py-2 rounded-lg bg-white border border-gray-100 shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
           >
             {refreshing ? t('page.refreshing') : t('page.refresh')}
           </button>
 
-          <div className="inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm">
+          <div className="inline-flex flex-nowrap shrink-0 rounded-lg bg-white border border-gray-100 p-1 shadow-sm">
             <button
               type="button"
               onClick={() => handleInfrastructureTabChange('facilities')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === 'facilities'
                   ? 'bg-yellow-400 text-black'
                   : 'text-gray-600 hover:bg-gray-100'
@@ -2361,7 +2361,7 @@ export default function InfrastructurePage({ clubId }: { clubId?: string }) {
             <button
               type="button"
               onClick={() => handleInfrastructureTabChange('assets')}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeTab === 'assets'
                   ? 'bg-yellow-400 text-black'
                   : 'text-gray-600 hover:bg-gray-100'
