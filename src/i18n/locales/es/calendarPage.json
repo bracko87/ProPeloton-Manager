@@ -58,7 +58,7 @@
     "raceCount": "{{count}} carreras en esta temporada",
     "raceCountOne": "{{count}} carrera en esta temporada",
     "openRace": "Carrera abierta",
-    "sponsorGoal": "",
+    "sponsorGoal": "Objetivo del patrocinador",
     "sponsorObjectiveTarget": "Objetivo del patrocinador",
     "stage": "Etapa",
     "stageBadge": "{{race}} · Etapa {{stage}}",
