@@ -8,6 +8,8 @@
  */
 
 import React, { useEffect, useMemo, useState } from 'react'
+import appI18n from '../../../i18n'
+import { getLedgerTypeLabel, getLedgerExplanation } from './transactionPresentation'
 import { useTranslation } from 'react-i18next'
 import { supabase } from './supabase'
 import {
@@ -129,7 +131,7 @@ function formatGameDateRange(start: string, end: string): string {
 
   return `${pad2(s.getUTCDate())}/${pad2(s.getUTCMonth() + 1)} → ${pad2(
     e.getUTCDate()
-  )}/${pad2(e.getUTCMonth() + 1)}, Season ${season}`
+  )}/${pad2(e.getUTCMonth() + 1)}, ${appI18n.t('finance:common.season')} ${season}`
 }
 
 function toNumber(v: unknown): number {
@@ -244,7 +246,7 @@ function TablePagination({
   return (
     <div className="border-t bg-gray-50 p-3 flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
       <div className="text-xs text-gray-600">
-        Showing {firstVisible}-{lastVisible} of {totalItems} {itemLabel}.
+        {t('transactionDetails.paginationShowing', { start: firstVisible, end: lastVisible, total: totalItems, label: itemLabel })}
       </div>
 
       <div className="flex items-center gap-2">
@@ -263,7 +265,7 @@ function TablePagination({
         </button>
 
         <div className="text-xs text-gray-600 min-w-[72px] text-center">
-          Page {safePage} / {totalPages}
+          {t('transactionDetails.paginationPage', { page: safePage, total: totalPages })}
         </div>
 
         <button
@@ -317,11 +319,7 @@ export function TaxTab({
   }
 
   function getTransactionTypeLabel(row: StatementRowV2): string {
-    if (row.type === 'tax_withholding') {
-      return t('transactionLabels.taxWithholding')
-    }
-
-    return row.type_name || row.type
+    return getLedgerTypeLabel(t, row)
   }
 
   function getFinanceCategoryLabel(category: string): string {
@@ -548,7 +546,7 @@ export function TaxTab({
       }
     }
 
-    return 'Unknown'
+    return t('transactionDetails.unknownGameDate')
   }
 
   function getReferenceText(row: StatementRowV2): string {
@@ -712,6 +710,9 @@ export function TaxTab({
 
                       <td className="py-2 pr-4">
                         {getTransactionTypeLabel(row)}
+                        <div className="mt-1 text-xs font-normal text-gray-500">
+                          {getLedgerExplanation(t, row)}
+                        </div>
                       </td>
 
                       <td className="py-2 pr-4">
