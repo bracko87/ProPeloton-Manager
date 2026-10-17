@@ -161,5 +161,7 @@
   "premiumCenter": "Premium Center",
   "nationalAssociation": "National Association",
   "youthAcademy": "Youth Academy",
-  "hiddenRaces": "Hidden Races"
+  "hiddenRaces": "Hidden Races",
+  "collapseSidebar": "Collapse sidebar",
+  "expandSidebar": "Expand sidebar"
 }
