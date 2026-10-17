@@ -8448,9 +8448,7 @@ useEffect(() => {
                 {lockInfo.statusLabel}
               </span>
               {selectedStageWeatherCanceled ? (
-                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-200">
-                  Stage canceled
-                </span>
+                <span className="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 ring-1 ring-red-200">{t('screen.stageCanceled')}</span>
               ) : null}
               {isU23ManagedRace ? (
                 <span className="inline-flex items-center rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
@@ -9914,9 +9912,7 @@ function RoleExplanationTooltip({ stage }: { stage?: JsonRecord | null }) {
       label="Team tactic and rider role help"
       panelWidthClass="w-[28rem]"
     >
-      <div className="mb-3 text-sm font-semibold text-slate-900">
-        Team tactic plans
-      </div>
+      <div className="mb-3 text-sm font-semibold text-slate-900">{t('screen.teamTacticPlans')}</div>
       <div className="space-y-2">
         {STAGE_TACTIC_PLAN_OPTIONS.map((option) => (
           <div key={option.value}>
@@ -11617,9 +11613,7 @@ function StageRaceSuppliesCard({
           >
             {suppliesDisabledForTT ? (
               <>
-                <div className="text-sm font-semibold text-slate-900">
-                  Stage Supplies on Time Trials
-                </div>
+                <div className="text-sm font-semibold text-slate-900">{t('screen.timeTrialSupplies')}</div>
                 <p className="mt-2">
                   Stage supplies are disabled for Prologue, ITT and TTT stages.
                 </p>
@@ -11785,9 +11779,7 @@ function StageRaceSuppliesCard({
           >
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <div className="text-sm font-semibold text-slate-900">
-                  Race Jersey Kit
-                </div>
+                <div className="text-sm font-semibold text-slate-900">{t('screen.raceJerseyKit')}</div>
                 <div className="mt-1 text-xs text-slate-500">
                   Strongly recommended for all selected riders. A shortage does not
                   block the stage; riders without a kit race with the team penalty.
@@ -13087,9 +13079,7 @@ function RiderHoverCard({ rider }: { rider: JsonRecord }) {
 
               <div className="mt-3 rounded-xl border border-yellow-200 bg-yellow-50 p-3">
                 <div className="mb-2 flex items-center justify-between gap-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">
-                    Current race classifications
-                  </div>
+                  <div className="text-[11px] font-semibold uppercase tracking-wide text-amber-800">{t('screen.currentClassifications')}</div>
                   <div className="text-[10px] font-semibold text-amber-700">
                     {classificationLive && afterStageNumber > 0
                       ? `After Stage ${afterStageNumber}`
@@ -13419,9 +13409,7 @@ function RaceSharpnessDetailBox({
     <div className={`rounded-xl border px-3 py-2 ${toneClass}`}>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <div className="text-[10px] font-semibold uppercase tracking-wide opacity-70">
-            Race Sharpness
-          </div>
+          <div className="text-[10px] font-semibold uppercase tracking-wide opacity-70">{t('screen.raceSharpness')}</div>
           <div className="mt-0.5 text-sm font-bold">
             {percent}/100 · {localizeRacePrepBackendText(sharpness.race_sharpness_label)}
           </div>
@@ -13727,7 +13715,7 @@ function RacePreviewModal({
     <div className="fixed inset-0 z-50 bg-slate-950/60 p-3 sm:p-4">
       <div className="mx-auto flex h-[calc(100vh-1.5rem)] w-full max-w-[min(1680px,calc(100vw-2rem))] flex-col overflow-hidden rounded-3xl bg-slate-100 shadow-2xl sm:h-[calc(100vh-2rem)]">
         <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-3">
-          <div className="font-semibold text-slate-900">Race Page Preview</div>
+          <div className="font-semibold text-slate-900">{t('screen.racePagePreview')}</div>
 
           <button
             type="button"
