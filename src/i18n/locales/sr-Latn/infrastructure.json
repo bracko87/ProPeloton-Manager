@@ -830,5 +830,22 @@
     "repairSpeed": "Brzina popravke:",
     "repairNow": "Popravka na 100% sada:",
     "physicalProtectionContext": "Zaštita se primenjuje na ramove, točkove, gume, pogonske grupe, kacige i obuću dodeljenu vozačima. Ne smanjuje habanje samog kombija."
+  },
+  "assetBonusText": {
+    "tourFatigueProtection": "Zaštita od umora na turama {{value}}",
+    "recoveryComfort": "Udobnost oporavka {{value}}",
+    "raceSupportCoverage": "Pokrivenost podrške na trci {{value}}",
+    "feedingSupport": "Podrška ishrani {{value}}",
+    "mechanicalResponse": "Mehanička podrška {{value}}",
+    "tacticalCommunication": "Taktička komunikacija {{value}}",
+    "incidentResponse": "Reakcija na incidente {{value}}",
+    "raceFatigueProtection": "Zaštita od umora na trci {{value}}",
+    "raceSupportQuality": "Kvalitet podrške na trci {{value}}",
+    "mechanicalReliability": "Mehanička pouzdanost {{value}}",
+    "equipmentProtection": "Zaštita opreme {{value}}",
+    "fieldEquipmentRecovery": "Oporavak opreme na terenu {{value}}",
+    "healthProtection": "Zaštita zdravlja {{value}}",
+    "fatigueControl": "Kontrola umora {{value}}",
+    "recoverySupport": "Podrška oporavku {{value}}"
   }
 }
