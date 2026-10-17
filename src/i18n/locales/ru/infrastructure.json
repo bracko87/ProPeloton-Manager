@@ -830,5 +830,22 @@
     "repairSpeed": "Скорость ремонта:",
     "repairNow": "Ремонт до 100 % сейчас:",
     "physicalProtectionContext": "Защита касается рам, колёс, шин, трансмиссий, шлемов и обуви гонщиков на этапе. Она не уменьшает износ самого фургона."
+  },
+  "assetBonusText": {
+    "tourFatigueProtection": "Защита от усталости в многодневках {{value}}",
+    "recoveryComfort": "Комфорт восстановления {{value}}",
+    "raceSupportCoverage": "Охват поддержки в гонке {{value}}",
+    "feedingSupport": "Поддержка питания {{value}}",
+    "mechanicalResponse": "Механическая помощь {{value}}",
+    "tacticalCommunication": "Тактическая связь {{value}}",
+    "incidentResponse": "Реагирование на происшествия {{value}}",
+    "raceFatigueProtection": "Защита от усталости в гонке {{value}}",
+    "raceSupportQuality": "Качество поддержки в гонке {{value}}",
+    "mechanicalReliability": "Механическая надёжность {{value}}",
+    "equipmentProtection": "Защита снаряжения {{value}}",
+    "fieldEquipmentRecovery": "Восстановление снаряжения на гонке {{value}}",
+    "healthProtection": "Защита здоровья {{value}}",
+    "fatigueControl": "Контроль усталости {{value}}",
+    "recoverySupport": "Поддержка восстановления {{value}}"
   }
 }
