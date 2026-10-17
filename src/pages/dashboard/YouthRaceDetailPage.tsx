@@ -462,11 +462,11 @@ export default function YouthRaceDetailPage(): JSX.Element {
   const saveLineup = async (): Promise<void> => {
     if (!raceId || !payload || !canManageSquad || saving) return
     if (
-      selectedRiders.length < 3 ||
+      selectedRiders.length < 4 ||
       selectedRiders.length > Number(payload.race.lineup_size ?? 0)
     ) {
       setError(
-        `Select between 3 and ${payload.race.lineup_size} riders for this Youth race.`
+        `Select between 4 and ${payload.race.lineup_size} riders for this Youth race.`
       )
       return
     }
@@ -772,7 +772,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
       {tab === 'teams' ? (
         <Section title="Participating teams">
           <div className="space-y-2">
-            {payload.teams.map((team, index) => {
+            {payload.teams.filter(team => isFinished || team.entry_status !== 'withdrawn').map((team, index) => {
               const flag = flagUrl(team.country_code)
               return (
                 <div
@@ -795,7 +795,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                         {team.is_mine ? ' · My Academy' : ''}
                       </div>
                       <div className="mt-0.5 text-xs text-slate-500">
-                        {team.lineup_count} riders selected
+                        {team.entry_status === 'withdrawn' ? 'Withdrawn / did not start' : `${team.lineup_count} riders selected`}
                       </div>
                     </div>
                   </div>
@@ -906,7 +906,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   type="button"
                   disabled={
                     saving ||
-                    selectedRiders.length < 3 ||
+                    selectedRiders.length < 4 ||
                     selectedRiders.length > race.lineup_size ||
                     invalidSelectedRiders.length > 0
                   }
