@@ -40,6 +40,7 @@ with legacy as (
 )
 update public.clubs c
 set is_ai=false,
+    is_active=false,
     inactivity_status='season_end_removal_pending',
     season_end_transition_pending=true,
     inactivity_season_end_action='replace_with_ai_pool_team',
