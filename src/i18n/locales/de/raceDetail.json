@@ -25,7 +25,9 @@
     "cancelApplication": "Anmeldung zurückziehen",
     "cancelling": "Wird zurückgezogen…",
     "raceDate": "Renndatum",
-    "raceDates": "Renndaten"
+    "raceDates": "Renndaten",
+    "nationalChampionsOnly": "Nur nationale Meister",
+    "allTeamCostsCovered": "Alle Teamkosten gedeckt"
   },
   "status": {
     "applicationsNotOpen": "Anmeldungen noch nicht geöffnet",
@@ -241,7 +243,8 @@
     "pts": "Pkt.",
     "bonus": "Bonus",
     "leader": "Führender",
-    "winner": "Sieger"
+    "winner": "Sieger",
+    "stageResultColumn": "Etappenergebnis"
   },
   "rewards": {
     "eyebrow": "Rennbelohnungen",
