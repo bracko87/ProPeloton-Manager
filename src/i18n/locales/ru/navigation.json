@@ -161,5 +161,7 @@
   "premiumCenter": "Premium-центр",
   "nationalAssociation": "Национальная ассоциация",
   "youthAcademy": "Молодёжная академия",
-  "hiddenRaces": "Скрытые гонки"
+  "hiddenRaces": "Скрытые гонки",
+  "collapseSidebar": "Свернуть боковое меню",
+  "expandSidebar": "Развернуть боковое меню"
 }
