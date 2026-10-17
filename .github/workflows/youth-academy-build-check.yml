@@ -6,6 +6,9 @@ on:
     paths:
       - 'src/pages/dashboard/YouthAcademy.tsx'
       - 'src/pages/dashboard/YouthRaceDetailPage.tsx'
+      - 'src/pages/dashboard/riders/YouthRiderProfilePage.tsx'
+      - 'src/pages/dashboard/YouthAcademyTeamProfilePage.tsx'
+      - 'src/pages/dashboard/WorldChampionshipExpectedField.tsx'
       - 'src/App.tsx'
       - 'src/components/i18n/LocaleDateFormattingBridge.tsx'
       - 'src/i18n/locales/**/youthAcademy.json'
@@ -16,6 +19,9 @@ on:
     paths:
       - 'src/pages/dashboard/YouthAcademy.tsx'
       - 'src/pages/dashboard/YouthRaceDetailPage.tsx'
+      - 'src/pages/dashboard/riders/YouthRiderProfilePage.tsx'
+      - 'src/pages/dashboard/YouthAcademyTeamProfilePage.tsx'
+      - 'src/pages/dashboard/WorldChampionshipExpectedField.tsx'
       - 'src/App.tsx'
       - 'src/components/i18n/LocaleDateFormattingBridge.tsx'
       - 'src/i18n/locales/**/youthAcademy.json'
