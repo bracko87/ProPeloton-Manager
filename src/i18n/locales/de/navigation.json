@@ -161,5 +161,7 @@
   "premiumCenter": "Premium-Zentrale",
   "nationalAssociation": "Nationalverband",
   "youthAcademy": "Jugendakademie",
-  "hiddenRaces": "Verborgene Rennen"
+  "hiddenRaces": "Verborgene Rennen",
+  "collapseSidebar": "Seitenmenü einklappen",
+  "expandSidebar": "Seitenmenü ausklappen"
 }
