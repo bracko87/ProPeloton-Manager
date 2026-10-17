@@ -226,7 +226,7 @@
     "makeOffer": "Hacer oferta",
     "startNegotiation": "Iniciar negociación",
     "lockedLabel": "☆ Shortlist",
-    "shortlistedLabel": "",
+    "shortlistedLabel": "En la lista de seguimiento",
     "shortlistLabel": "• Lista de favoritos",
     "shortlistCoin": "• Lista de favoritos · Coins {{coins}}",
     "availablePremium": "Disponible para managers Free y Premium",
