@@ -3,6 +3,22 @@ import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../lib/supabase'
 
+type YouthScoutingStatus = {
+  activated?: boolean
+  premium?: boolean
+  read_only?: boolean
+  scout?: { id: string; name?: string } | null
+  free_runs_remaining?: number
+  can_run?: boolean
+  can_run_free?: boolean
+  can_run_coin?: boolean
+  weekly_runs_used?: number
+  weekly_run_limit?: number
+  next_run_coin_cost?: number
+  coin_balance?: number
+  scouting_range?: string
+}
+
 type YouthRiderProfilePayload = {
   id: string
   public_only?: boolean
@@ -15,6 +31,9 @@ type YouthRiderProfilePayload = {
     stipend: number
     accommodation: number
     compensation: number
+    assessment_band?: string
+    confidence?: number
+    status?: string
   } | null
   display_name: string
   country_code: string
@@ -102,6 +121,12 @@ export default function YouthRiderProfilePage(): JSX.Element {
   const [offerBusy, setOfferBusy] = useState(false)
   const [offerMessage, setOfferMessage] = useState<string | null>(null)
   const [offerValues, setOfferValues] = useState({ stipend: 100, accommodation: 0, compensation: 0 })
+  const [scoutingStatus, setScoutingStatus] = useState<YouthScoutingStatus | null>(null)
+  const [scoutingLoading, setScoutingLoading] = useState(false)
+  const [scoutingBusy, setScoutingBusy] = useState(false)
+  const [scoutingMessage, setScoutingMessage] = useState<string | null>(null)
+  const [offerOpen, setOfferOpen] = useState(false)
+  const [offerSubmitted, setOfferSubmitted] = useState(false)
 
   useEffect(() => {
     let alive = true
@@ -146,6 +171,62 @@ export default function YouthRiderProfilePage(): JSX.Element {
       alive = false
     }
   }, [riderId, t])
+
+  // Public profiles can be viewed by other managers, but their private
+  // scouting and contracting tools are unlocked only by their own Youth Academy.
+  useEffect(() => {
+    if (!profile?.public_only || profile.is_mine) {
+      setScoutingStatus(null)
+      return
+    }
+    let active = true
+    setScoutingLoading(true)
+    void supabase.rpc('get_my_youth_scouting_v1').then(({ data, error: scoutError }) => {
+      if (!active) return
+      setScoutingStatus(scoutError ? null : data as YouthScoutingStatus)
+      setScoutingMessage(scoutError?.message ?? null)
+      setScoutingLoading(false)
+    })
+    return () => { active = false }
+  }, [profile?.id, profile?.public_only, profile?.is_mine])
+
+  useEffect(() => {
+    const report = profile?.scouting_report
+    if (!report?.id) return
+    setOfferValues({
+      stipend: Number(report.stipend ?? 100),
+      accommodation: Number(report.accommodation ?? 0),
+      compensation: Number(report.compensation ?? 0),
+    })
+  }, [profile?.scouting_report?.id])
+
+  const scoutThisRider = async (): Promise<void> => {
+    if (!riderId || !profile?.public_only || profile.is_mine || scoutingBusy) return
+    setScoutingBusy(true)
+    setScoutingMessage(null)
+    const usesCoins = (scoutingStatus?.free_runs_remaining ?? 0) <= 0
+    const { error: scoutError } = await supabase.rpc('scout_youth_rider_direct_v1', {
+      p_youth_rider_id: riderId,
+      p_use_coins: usesCoins,
+    })
+    if (scoutError) {
+      setScoutingMessage(scoutError.message)
+    } else {
+      const [{ data: fresh, error: refreshError }, { data: budget }] = await Promise.all([
+        supabase.rpc('get_public_youth_rider_profile_v1', { p_youth_rider_id: riderId }),
+        supabase.rpc('get_my_youth_scouting_v1'),
+      ])
+      if (refreshError || !fresh) {
+        setScoutingMessage(refreshError?.message ?? 'Scouting completed. Reload this page to view the report.')
+      } else {
+        setProfile(fresh as YouthRiderProfilePayload)
+        setOfferOpen(true)
+        setScoutingMessage('Youth scouting report completed. You can now prepare a contract and development compensation offer.')
+      }
+      if (budget) setScoutingStatus(budget as YouthScoutingStatus)
+    }
+    setScoutingBusy(false)
+  }
 
   const attributes = useMemo(
     () =>
@@ -195,7 +276,8 @@ export default function YouthRiderProfilePage(): JSX.Element {
       p_accommodation_weekly: Math.max(0, Math.round(offerValues.accommodation)),
       p_compensation_offer: Math.max(0, Math.round(offerValues.compensation)),
     })
-    setOfferMessage(offerError?.message ?? 'Recruitment offer submitted. The academy, rider and family must approve; success is not guaranteed.')
+    setOfferMessage(offerError?.message ?? 'Contract/transfer offer submitted. The current Academy and the rider/family decide separately; acceptance is deliberately difficult.')
+    if (!offerError) setOfferSubmitted(true)
     setOfferBusy(false)
   }
 
@@ -248,36 +330,81 @@ export default function YouthRiderProfilePage(): JSX.Element {
       ) : null}
 
       {profile.public_only && !profile.is_mine && profile.status === 'academy' ? (
-        <Card title="Recruit this U16 rider">
+        <Card title="U16 scouting and recruitment">
           <p className="text-sm text-slate-600">
-            Youth transfers require scouting, approval from the current Academy and the rider's family. A large offer does not guarantee a move.
+            Scout this specific rider before negotiating. Existing U16 Academy riders
+            can only transfer if their current club approves and their family accepts.
+            High compensation never guarantees a transfer.
           </p>
-          {profile.scouting_report ? (
-            <div className="mt-3 space-y-3">
-              <div className="grid gap-3 sm:grid-cols-3">
-                {([
-                  ['stipend', 'Weekly support'],
-                  ['accommodation', 'Weekly accommodation'],
-                  ['compensation', 'Academy compensation'],
-                ] as const).map(([key, label]) => (
-                  <label key={key} className="text-xs text-slate-600">{label}
-                    <input type="number" min="0" step="1" value={offerValues[key]}
-                      onChange={event => setOfferValues(current => ({ ...current, [key]: Number(event.target.value) }))}
-                      className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-sm text-slate-950" />
-                  </label>
-                ))}
-              </div>
-              <button type="button" disabled={offerBusy} onClick={() => void submitScoutedOffer()}
-                className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-60">
-                {offerBusy ? 'Submitting…' : 'Submit U16 recruitment offer'}
+
+          {!profile.scouting_report ? (
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button type="button" disabled={scoutingBusy || scoutingLoading || !scoutingStatus?.can_run}
+                onClick={() => void scoutThisRider()}
+                className="rounded-full bg-yellow-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-400 disabled:cursor-not-allowed disabled:opacity-50">
+                {scoutingBusy ? 'Scouting…' : scoutingLoading ? 'Checking scouting…'
+                  : (scoutingStatus?.free_runs_remaining ?? 0) > 0
+                    ? 'Scout this U16 rider · Free weekly search'
+                    : `Scout this U16 rider · ${scoutingStatus?.next_run_coin_cost ?? 0} Coins`}
+              </button>
+              <button type="button" disabled
+                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-400"
+                title="A valid scouting report is required before any offer">
+                Make contract/transfer offer · Scout first
               </button>
             </div>
           ) : (
-            <Link to="/dashboard/youth-academy?tab=scouting" className="mt-3 inline-block rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-200">
-              Scout this rider to unlock an offer →
-            </Link>
+            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
+              <p className="text-sm font-semibold text-emerald-900">Scouting report available</p>
+              <p className="mt-1 text-xs text-emerald-800">
+                {profile.scouting_report.assessment_band ?? 'Assessed youth rider'}
+                {profile.scouting_report.confidence != null
+                  ? ` · ${profile.scouting_report.confidence}% confidence` : ''}
+                {' · '}Suggested weekly support: {money(profile.scouting_report.stipend)}
+                {' · '}Suggested development compensation: {money(profile.scouting_report.compensation)}
+              </p>
+              <button type="button" onClick={() => setOfferOpen(value => !value)}
+                className="mt-3 rounded-full bg-yellow-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-400">
+                {offerOpen ? 'Hide contract/transfer offer' : 'Make contract/transfer offer'}
+              </button>
+              {offerOpen ? (
+                <div className="mt-4 space-y-3 border-t border-emerald-200 pt-4">
+                  <p className="text-xs text-slate-700">Propose financial support and compensation to the source Academy. The offer is not an automatic transfer.</p>
+                  <div className="grid gap-3 sm:grid-cols-3">
+                    {([
+                      ['stipend', 'Weekly stipend ($)'],
+                      ['accommodation', 'Weekly accommodation ($)'],
+                      ['compensation', 'Development compensation ($)'],
+                    ] as const).map(([key, label]) => (
+                      <label key={key} className="text-xs text-slate-700">{label}
+                        <input type="number" min="0" step="1" value={offerValues[key]}
+                          onChange={event => setOfferValues(current => ({ ...current, [key]: Number(event.target.value) }))}
+                          className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-sm text-slate-950"/>
+                      </label>
+                    ))}
+                  </div>
+                  <button type="button" disabled={offerBusy || offerSubmitted}
+                    onClick={() => void submitScoutedOffer()}
+                    className="rounded-full bg-sky-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+                    {offerBusy ? 'Submitting…' : offerSubmitted ? 'Offer submitted' : 'Submit contract/transfer offer'}
+                  </button>
+                </div>
+              ) : null}
+            </div>
           )}
-          {offerMessage ? <p className="mt-2 text-sm text-slate-700">{offerMessage}</p> : null}
+
+          {!profile.scouting_report && !scoutingLoading ? (
+            <div className="mt-3 text-xs text-slate-600">
+              {!scoutingStatus?.activated ? 'Activate your Youth Academy to scout U16 riders. ' :
+                scoutingStatus?.read_only ? 'Premium access is required for Youth scouting. ' :
+                !scoutingStatus?.scout ? 'Hire an active Youth Scout first. ' :
+                !scoutingStatus.can_run ? 'All four scouting searches have been used this game week. ' :
+                `Your scouting range: ${scoutingStatus.scouting_range ?? 'local'} · searches used: ${scoutingStatus.weekly_runs_used ?? 0}/${scoutingStatus.weekly_run_limit ?? 4}. `}
+              <Link to="/dashboard/youth-academy?tab=scouting" className="font-semibold text-sky-700 hover:underline">Youth scouting settings →</Link>
+            </div>
+          ) : null}
+          {scoutingMessage ? <p role="status" className="mt-3 text-sm text-slate-700">{scoutingMessage}</p> : null}
+          {offerMessage ? <p role="status" className="mt-3 text-sm text-slate-700">{offerMessage}</p> : null}
         </Card>
       ) : null}
 
