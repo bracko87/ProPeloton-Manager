@@ -2552,13 +2552,13 @@ export function AssetsSection({
     >
       <div className="space-y-4">
       <div className="rounded-lg bg-white border border-gray-100 p-2 shadow-sm">
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1">
           {assetSubTabs.map(tab => (
             <button
               key={tab.key}
               type="button"
               onClick={() => setActiveAssetSubTab(tab.key)}
-              className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+              className={`shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition ${
                 activeAssetSubTab === tab.key
                   ? 'bg-yellow-400 text-black'
                   : 'text-gray-600 hover:bg-gray-100'
