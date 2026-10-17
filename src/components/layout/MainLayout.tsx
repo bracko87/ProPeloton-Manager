@@ -78,7 +78,15 @@ const LAST_ACTIVITY_STORAGE_KEY = 'ppm-last-user-activity'
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const { t } = useTranslation('appShell')
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return window.localStorage.getItem('ppm-sidebar-collapsed') === 'true' }
+    catch { return false }
+  })
+
+  useEffect(() => {
+    try { window.localStorage.setItem('ppm-sidebar-collapsed', String(collapsed)) }
+    catch { /* Browser storage may be disabled. */ }
+  }, [collapsed])
   const [coinBalance, setCoinBalance] = useState(0)
 
   /*
@@ -632,7 +640,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   return (
     <div className="min-h-screen flex bg-gray-100">
-      <Sidebar collapsed={collapsed} />
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
 
       <div className="flex-1 flex flex-col min-w-0">
         <Header
