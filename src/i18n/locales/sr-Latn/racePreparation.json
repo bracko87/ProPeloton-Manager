@@ -562,7 +562,13 @@
     "weatherRiskCold": "hladnoća ispod 15°C",
     "weatherRiskWind": "jak vetar",
     "weatherRiskCondition": "nepovoljni vremenski uslovi",
-    "leaderShort": "Vođa"
+    "leaderShort": "Vođa",
+    "stageCanceled": "Etapa otkazana",
+    "teamTacticPlans": "Planovi taktike tima",
+    "timeTrialSupplies": "Oprema za etapu hronometra",
+    "currentClassifications": "Trenutne klasifikacije trke",
+    "raceSharpness": "Spremnost za trku",
+    "racePagePreview": "Pregled stranice trke"
   },
   "legacyUi": {
     "stagePlanLock": "Zaključavanje Stage Plan-a",
