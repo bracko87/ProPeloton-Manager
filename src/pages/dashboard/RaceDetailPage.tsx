@@ -23,6 +23,7 @@ import {
   useSearchParams,
 } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import { WorldChampionshipExpectedField } from './WorldChampionshipExpectedField'
 import i18n from '@/i18n'
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
@@ -8069,6 +8070,12 @@ function RaceResultsHub({
 
       {activeTab === 'participants' ? (
         <div className="mt-6">
+          {race.metadata?.world_road_championship === true ? (
+            <WorldChampionshipExpectedField
+              raceId={race.id}
+              onOpenRiderProfile={openRiderProfileFromRaceInfo}
+            />
+          ) : null}
           {showPendingApplicationInfo ? (
             <ApplicationPendingInfoCard
               quote={inlineApplicationQuote}
