@@ -25,7 +25,9 @@
     "cancelApplication": "Otkaži prijavu",
     "cancelling": "Otkazivanje…",
     "raceDate": "Datum trke",
-    "raceDates": "Datumi trke"
+    "raceDates": "Datumi trke",
+    "nationalChampionsOnly": "Samo nacionalni šampioni",
+    "allTeamCostsCovered": "Svi troškovi timova su pokriveni"
   },
   "status": {
     "applicationsNotOpen": "Prijave još nisu otvorene",
@@ -243,7 +245,8 @@
     "pts": "Bod.",
     "bonus": "Bonus",
     "leader": "Lider",
-    "winner": "Pobednik"
+    "winner": "Pobednik",
+    "stageResultColumn": "Rezultat etape"
   },
   "rewards": {
     "eyebrow": "Nagrade trke",
