@@ -830,5 +830,22 @@
     "repairSpeed": "Reparaturgeschwindigkeit:",
     "repairNow": "Jetzt auf 100 % reparieren:",
     "physicalProtectionContext": "Der Schutz gilt für eingesetzte Rahmen, Laufräder, Reifen, Schaltungen, Helme und Schuhe der Fahrer. Der Verschleiß des Transporters selbst bleibt unverändert."
+  },
+  "assetBonusText": {
+    "tourFatigueProtection": "Ermüdungsschutz bei Rundfahrten {{value}}",
+    "recoveryComfort": "Erholungskomfort {{value}}",
+    "raceSupportCoverage": "Rennunterstützung {{value}}",
+    "feedingSupport": "Verpflegungsunterstützung {{value}}",
+    "mechanicalResponse": "Mechanischer Einsatz {{value}}",
+    "tacticalCommunication": "Taktische Kommunikation {{value}}",
+    "incidentResponse": "Unfallhilfe {{value}}",
+    "raceFatigueProtection": "Ermüdungsschutz im Rennen {{value}}",
+    "raceSupportQuality": "Qualität der Rennunterstützung {{value}}",
+    "mechanicalReliability": "Mechanische Zuverlässigkeit {{value}}",
+    "equipmentProtection": "Ausrüstungsschutz {{value}}",
+    "fieldEquipmentRecovery": "Ausrüstungswiederherstellung im Einsatz {{value}}",
+    "healthProtection": "Gesundheitsschutz {{value}}",
+    "fatigueControl": "Ermüdungskontrolle {{value}}",
+    "recoverySupport": "Erholungsunterstützung {{value}}"
   }
 }
