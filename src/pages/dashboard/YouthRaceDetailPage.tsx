@@ -794,7 +794,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
             {payload.teams.filter(team => isFinished || team.entry_status !== 'withdrawn').map((team, index) => {
               const flag = flagUrl(team.country_code)
               const actualRiders = publishedRidersByAcademy.get(team.academy_id) ?? []
-              const nationalLegacy = /(?:national|nacional)\\s*team|team\\s+national/i.test(team.club_name)
+              const nationalLegacy = /(?:national|nacional)\s*team|team\s+national/i.test(team.club_name)
               return (
                 <div
                   key={team.academy_id}
