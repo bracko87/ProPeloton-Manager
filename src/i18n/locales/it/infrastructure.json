@@ -830,5 +830,22 @@
     "repairSpeed": "Velocità riparazione:",
     "repairNow": "Riparazione al 100 % ora:",
     "physicalProtectionContext": "La protezione vale per telai, ruote, gomme, gruppi, caschi e scarpe assegnati ai corridori. Non riduce l'usura del furgone stesso."
+  },
+  "assetBonusText": {
+    "tourFatigueProtection": "Protezione fatica nei tour {{value}}",
+    "recoveryComfort": "Comfort recupero {{value}}",
+    "raceSupportCoverage": "Copertura assistenza gara {{value}}",
+    "feedingSupport": "Supporto rifornimento {{value}}",
+    "mechanicalResponse": "Risposta meccanica {{value}}",
+    "tacticalCommunication": "Comunicazione tattica {{value}}",
+    "incidentResponse": "Intervento in caso di incidente {{value}}",
+    "raceFatigueProtection": "Protezione fatica gara {{value}}",
+    "raceSupportQuality": "Qualità assistenza gara {{value}}",
+    "mechanicalReliability": "Affidabilità meccanica {{value}}",
+    "equipmentProtection": "Protezione attrezzatura {{value}}",
+    "fieldEquipmentRecovery": "Ripristino attrezzatura in gara {{value}}",
+    "healthProtection": "Protezione salute {{value}}",
+    "fatigueControl": "Controllo fatica {{value}}",
+    "recoverySupport": "Supporto recupero {{value}}"
   }
 }
