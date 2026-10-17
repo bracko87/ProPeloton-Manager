@@ -830,5 +830,22 @@
     "repairSpeed": "Velocidad de reparación:",
     "repairNow": "Reparación al 100 % ahora:",
     "physicalProtectionContext": "La protección se aplica a cuadros, ruedas, neumáticos, transmisiones, cascos y zapatillas de los ciclistas asignados. No reduce el desgaste de esta furgoneta."
+  },
+  "assetBonusText": {
+    "tourFatigueProtection": "Protección contra fatiga en vueltas {{value}}",
+    "recoveryComfort": "Comodidad de recuperación {{value}}",
+    "raceSupportCoverage": "Cobertura de apoyo en carrera {{value}}",
+    "feedingSupport": "Apoyo de alimentación {{value}}",
+    "mechanicalResponse": "Respuesta mecánica {{value}}",
+    "tacticalCommunication": "Comunicación táctica {{value}}",
+    "incidentResponse": "Respuesta ante incidentes {{value}}",
+    "raceFatigueProtection": "Protección contra fatiga en carrera {{value}}",
+    "raceSupportQuality": "Calidad de apoyo de carrera {{value}}",
+    "mechanicalReliability": "Fiabilidad mecánica {{value}}",
+    "equipmentProtection": "Protección del equipamiento {{value}}",
+    "fieldEquipmentRecovery": "Recuperación del equipamiento en carrera {{value}}",
+    "healthProtection": "Protección de salud {{value}}",
+    "fatigueControl": "Control de fatiga {{value}}",
+    "recoverySupport": "Apoyo de recuperación {{value}}"
   }
 }
