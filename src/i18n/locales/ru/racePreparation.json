@@ -593,7 +593,13 @@
     "weatherRiskCold": "холод ниже 15°C",
     "weatherRiskWind": "сильный ветер",
     "weatherRiskCondition": "неблагоприятные погодные условия",
-    "leaderShort": "Лидер"
+    "leaderShort": "Лидер",
+    "stageCanceled": "Этап отменён",
+    "teamTacticPlans": "Тактические планы команды",
+    "timeTrialSupplies": "Снаряжение для гонки на время",
+    "currentClassifications": "Текущие классификации гонки",
+    "raceSharpness": "Гоночная готовность",
+    "racePagePreview": "Предпросмотр страницы гонки"
   },
   "national": {
     "host": "Страна-организатор: {{country}}",
