@@ -684,6 +684,46 @@
         "unlock": "Otključava peto mjesto za scouta / analitičara i elitnu kvalitetu izvještaja.",
         "effect": "Kapacitet scouta 5; ograničenje elitne kvalitete izvještaja; scouti elitne kvalitete mogu otkriti točne vrijednosti"
       }
+    },
+    "sprint_performance_circuit": {
+      "level0": {
+        "unlock": "Nema dodatnih otključavanja.",
+        "effect": "Na ovoj razini nema aktivnog bonusa."
+      },
+      "level1": {
+        "unlock": "Zahtijeva Trening centar razine 2.",
+        "effect": "Razvoj sprinta +4% za prvu momčad, +8% U23 i +12% U16; napredak na sprinterskim utrkama U23/U16 +5%."
+      }
+    },
+    "climbing_performance_center": {
+      "level0": {
+        "unlock": "Nema dodatnih otključavanja.",
+        "effect": "Na ovoj razini nema aktivnog bonusa."
+      },
+      "level1": {
+        "unlock": "Zahtijeva Trening centar razine 2.",
+        "effect": "Razvoj penjanja +4% za prvu momčad, +8% U23 i +12% U16; napredak na brdskim utrkama U23/U16 +5%."
+      }
+    },
+    "team_time_trial_center": {
+      "level0": {
+        "unlock": "Nema dodatnih otključavanja.",
+        "effect": "Na ovoj razini nema aktivnog bonusa."
+      },
+      "level1": {
+        "unlock": "Zahtijeva Trening centar razine 2.",
+        "effect": "Razvoj kronometra +4% za prvu momčad, +7% U23 i +10% U16; razvoj na ekipnom kronometru U23/U16 +5%; učinkovitost tempa ekipnog kronometra +5%."
+      }
+    },
+    "team_residential_campus": {
+      "level0": {
+        "unlock": "Nema dodatnih otključavanja.",
+        "effect": "Na ovoj razini nema aktivnog bonusa."
+      },
+      "level1": {
+        "unlock": "Zahtijeva Akademiju mladih razine 1.",
+        "effect": "Smještaj u klupskoj bazi za prvu momčad, U23, U16 i stalno osoblje besplatan; oporavak U23/U16 +5%; hoteli na gostovanjima i kampovima i dalje se naplaćuju."
+      }
     }
   }
 }
