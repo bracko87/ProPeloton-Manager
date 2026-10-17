@@ -684,6 +684,46 @@
         "unlock": "Sblocca un quinto slot Scout / Analista e qualità rapporto Élite.",
         "effect": "Capacità scout 5; limite qualità rapporto Élite; gli scout di qualità élite possono rivelare valori esatti"
       }
+    },
+    "sprint_performance_circuit": {
+      "level0": {
+        "unlock": "Nessuno sblocco aggiuntivo.",
+        "effect": "Nessun bonus attivo a questo livello."
+      },
+      "level1": {
+        "unlock": "Richiede Centro allenamento livello 2.",
+        "effect": "Sviluppo sprint +4% prima squadra, +8% U23, +12% U16; sviluppo in gare sprint U23/U16 +5%."
+      }
+    },
+    "climbing_performance_center": {
+      "level0": {
+        "unlock": "Nessuno sblocco aggiuntivo.",
+        "effect": "Nessun bonus attivo a questo livello."
+      },
+      "level1": {
+        "unlock": "Richiede Centro allenamento livello 2.",
+        "effect": "Sviluppo salita +4% prima squadra, +8% U23, +12% U16; sviluppo in gare di montagna U23/U16 +5%."
+      }
+    },
+    "team_time_trial_center": {
+      "level0": {
+        "unlock": "Nessuno sblocco aggiuntivo.",
+        "effect": "Nessun bonus attivo a questo livello."
+      },
+      "level1": {
+        "unlock": "Richiede Centro allenamento livello 2.",
+        "effect": "Sviluppo cronometro +4% prima squadra, +7% U23, +10% U16; sviluppo TTT U23/U16 +5%; efficienza del ritmo nella cronosquadre +5%."
+      }
+    },
+    "team_residential_campus": {
+      "level0": {
+        "unlock": "Nessuno sblocco aggiuntivo.",
+        "effect": "Nessun bonus attivo a questo livello."
+      },
+      "level1": {
+        "unlock": "Richiede Accademia giovanile livello 1.",
+        "effect": "Alloggio in sede gratuito per prima squadra, U23, U16 e staff permanente; recupero U23/U16 +5%; gli hotel per gare in trasferta e ritiri restano a pagamento."
+      }
     }
   }
 }
