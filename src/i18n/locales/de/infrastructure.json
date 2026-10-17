@@ -684,6 +684,46 @@
         "unlock": "Schaltet einen fünften Scout-/Analystenplatz sowie Elite-Berichtsqualität frei.",
         "effect": "Scout-Kapazität 5; Obergrenze für Elite-Berichtsqualität; Scouts mit Elite-Qualität können exakte Werte anzeigen"
       }
+    },
+    "sprint_performance_circuit": {
+      "level0": {
+        "unlock": "Keine zusätzlichen Freischaltungen.",
+        "effect": "Auf dieser Stufe ist kein Bonus aktiv."
+      },
+      "level1": {
+        "unlock": "Erfordert Trainingszentrum Stufe 2.",
+        "effect": "Sprinttraining +4% Profiteam, +8% U23, +12% U16; sprintbezogene Rennentwicklung U23/U16 +5%."
+      }
+    },
+    "climbing_performance_center": {
+      "level0": {
+        "unlock": "Keine zusätzlichen Freischaltungen.",
+        "effect": "Auf dieser Stufe ist kein Bonus aktiv."
+      },
+      "level1": {
+        "unlock": "Erfordert Trainingszentrum Stufe 2.",
+        "effect": "Bergtraining +4% Profiteam, +8% U23, +12% U16; bergbezogene Rennentwicklung U23/U16 +5%."
+      }
+    },
+    "team_time_trial_center": {
+      "level0": {
+        "unlock": "Keine zusätzlichen Freischaltungen.",
+        "effect": "Auf dieser Stufe ist kein Bonus aktiv."
+      },
+      "level1": {
+        "unlock": "Erfordert Trainingszentrum Stufe 2.",
+        "effect": "Zeitfahrtraining +4% Profiteam, +7% U23, +10% U16; TTT-Rennentwicklung U23/U16 +5%; Effizienz beim Mannschaftszeitfahren +5%."
+      }
+    },
+    "team_residential_campus": {
+      "level0": {
+        "unlock": "Keine zusätzlichen Freischaltungen.",
+        "effect": "Auf dieser Stufe ist kein Bonus aktiv."
+      },
+      "level1": {
+        "unlock": "Erfordert Jugendakademie Stufe 1.",
+        "effect": "Unterkunft am Vereinssitz für Profiteam, U23, U16 und feste Mitarbeiter kostenlos; Erholungseffizienz U23/U16 +5%; Hotels bei Auswärtsrennen und Trainingslagern bleiben kostenpflichtig."
+      }
     }
   }
 }
