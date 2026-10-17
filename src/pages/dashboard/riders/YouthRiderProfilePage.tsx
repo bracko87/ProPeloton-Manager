@@ -5,6 +5,17 @@ import { supabase } from '../../../lib/supabase'
 
 type YouthRiderProfilePayload = {
   id: string
+  public_only?: boolean
+  academy_id?: string
+  academy_name?: string
+  club_id?: string
+  is_mine?: boolean
+  scouting_report?: {
+    id: string
+    stipend: number
+    accommodation: number
+    compensation: number
+  } | null
   display_name: string
   country_code: string
   birth_date: string
@@ -88,6 +99,9 @@ export default function YouthRiderProfilePage(): JSX.Element {
   const [profile, setProfile] = useState<YouthRiderProfilePayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [offerBusy, setOfferBusy] = useState(false)
+  const [offerMessage, setOfferMessage] = useState<string | null>(null)
+  const [offerValues, setOfferValues] = useState({ stipend: 100, accommodation: 0, compensation: 0 })
 
   useEffect(() => {
     let alive = true
@@ -110,8 +124,15 @@ export default function YouthRiderProfilePage(): JSX.Element {
       if (!alive) return
 
       if (profileError) {
-        setError(profileError.message)
-        setProfile(null)
+        // Public U16 profiles exclude exact attributes, hidden potential and private agreements.
+        // The existing full profile RPC remains accessible only to the rider's own manager.
+        const { data: publicData, error: publicError } = await supabase.rpc(
+          'get_public_youth_rider_profile_v1',
+          { p_youth_rider_id: riderId }
+        )
+        if (!alive) return
+        setError(publicError?.message ?? null)
+        setProfile(publicError ? null : publicData as YouthRiderProfilePayload | null)
       } else {
         setProfile(data as YouthRiderProfilePayload)
       }
@@ -164,6 +185,20 @@ export default function YouthRiderProfilePage(): JSX.Element {
     )
   }
 
+  const submitScoutedOffer = async (): Promise<void> => {
+    if (!profile.scouting_report?.id || profile.is_mine || offerBusy) return
+    setOfferBusy(true)
+    setOfferMessage(null)
+    const { error: offerError } = await supabase.rpc('submit_youth_recruitment_offer_v1', {
+      p_report_id: profile.scouting_report.id,
+      p_stipend_weekly: Math.max(50, Math.round(offerValues.stipend)),
+      p_accommodation_weekly: Math.max(0, Math.round(offerValues.accommodation)),
+      p_compensation_offer: Math.max(0, Math.round(offerValues.compensation)),
+    })
+    setOfferMessage(offerError?.message ?? 'Recruitment offer submitted. The academy, rider and family must approve; success is not guaranteed.')
+    setOfferBusy(false)
+  }
+
   const flag = flagUrl(profile.country_code)
   const summary = profile.race_summary ?? {}
 
@@ -191,7 +226,7 @@ export default function YouthRiderProfilePage(): JSX.Element {
                 {profile.display_name}
               </h1>
               <p className="mt-1 text-sm text-slate-500">
-                {profile.age} · {humanize(profile.role)} · {profile.assessment_band}
+                {profile.age} · {humanize(profile.role)}{profile.public_only ? '' : ` · ${profile.assessment_band}`}
               </p>
             </div>
           </div>
@@ -202,6 +237,51 @@ export default function YouthRiderProfilePage(): JSX.Element {
         </div>
       </div>
 
+      {profile.academy_id ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
+          <div>
+            <span className="text-xs text-slate-500">U16 Academy</span>
+            <div className="font-semibold">{profile.academy_name}</div>
+          </div>
+          <Link to={`/dashboard/youth-academy/teams/${profile.academy_id}`} className="text-sm font-semibold text-sky-700 hover:underline">View U16 team →</Link>
+        </div>
+      ) : null}
+
+      {profile.public_only && !profile.is_mine && profile.status === 'academy' ? (
+        <Card title="Recruit this U16 rider">
+          <p className="text-sm text-slate-600">
+            Youth transfers require scouting, approval from the current Academy and the rider's family. A large offer does not guarantee a move.
+          </p>
+          {profile.scouting_report ? (
+            <div className="mt-3 space-y-3">
+              <div className="grid gap-3 sm:grid-cols-3">
+                {([
+                  ['stipend', 'Weekly support'],
+                  ['accommodation', 'Weekly accommodation'],
+                  ['compensation', 'Academy compensation'],
+                ] as const).map(([key, label]) => (
+                  <label key={key} className="text-xs text-slate-600">{label}
+                    <input type="number" min="0" step="1" value={offerValues[key]}
+                      onChange={event => setOfferValues(current => ({ ...current, [key]: Number(event.target.value) }))}
+                      className="mt-1 w-full rounded-lg border border-slate-200 p-2 text-sm text-slate-950" />
+                  </label>
+                ))}
+              </div>
+              <button type="button" disabled={offerBusy} onClick={() => void submitScoutedOffer()}
+                className="rounded-full bg-yellow-400 px-4 py-2 text-sm font-semibold text-slate-950 disabled:opacity-60">
+                {offerBusy ? 'Submitting…' : 'Submit U16 recruitment offer'}
+              </button>
+            </div>
+          ) : (
+            <Link to="/dashboard/youth-academy?tab=scouting" className="mt-3 inline-block rounded-full bg-yellow-100 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-200">
+              Scout this rider to unlock an offer →
+            </Link>
+          )}
+          {offerMessage ? <p className="mt-2 text-sm text-slate-700">{offerMessage}</p> : null}
+        </Card>
+      ) : null}
+
+      {!profile.public_only ? (
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <Card title={t('profile.readiness')}>
           <div className="text-2xl font-semibold">{profile.readiness}%</div>
@@ -240,9 +320,10 @@ export default function YouthRiderProfilePage(): JSX.Element {
           })}
         </div>
       </Card>
+      </>) : null}
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <Card title={t('profile.supportAgreement')}>
+        {!profile.public_only ? <Card title={t('profile.supportAgreement')}>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <div className="text-xs text-slate-500">{t('profile.weeklyStipend')}</div>
@@ -265,7 +346,7 @@ export default function YouthRiderProfilePage(): JSX.Element {
               <div className="mt-1 font-semibold">{profile.agreement?.ends_on ?? '—'}</div>
             </div>
           </div>
-        </Card>
+        </Card> : null}
 
         <Card title={t('profile.raceSummary')}>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
