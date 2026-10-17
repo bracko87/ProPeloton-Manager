@@ -3415,7 +3415,7 @@
       "category": "Corridori",
       "title": "Accademia Giovanile: guida U16 completa",
       "subtitle": "Attivazione, staff, scouting, reclutamento, budget, equipaggiamento, gare, sviluppo e passaggio di categoria.",
-      "overview": "L'Accademia Giovanile è un programma U16 esclusivo Premium con 16 posti. Si sblocca dopo 30 giorni reali O 60 giorni di gioco, costa 50 Coins di attivazione e 50 Coins per ogni stagione successiva. Le operazioni usano denaro normale del club tramite un budget separato.",
+      "overview": "L'Accademia Giovanile è un programma U16 esclusivo Premium con 16 posti. Si sblocca dopo 90 giorni di gioco, costa 50 Coins di attivazione e 50 Coins per ogni stagione successiva. Le operazioni usano denaro normale del club tramite un budget separato.",
       "facts": {
         "0": {
           "label": "Capacità",
@@ -3423,7 +3423,7 @@
         },
         "1": {
           "label": "Sblocco",
-          "value": "Premium + 30 giorni reali O 60 giorni di gioco"
+          "value": "Premium a pagamento + 90 giorni di gioco"
         },
         "2": {
           "label": "Attivazione / rinnovo",
@@ -3459,25 +3459,25 @@
         }
       },
       "details": {
-        "0": "Solo i manager Premium possono attivarla. Si applica anche il requisito di 30 giorni reali O 60 giorni di gioco. I 50 Coins di attivazione sono separati dal budget dell'Accademia.",
-        "1": "L'accesso costa 50 Coins di attivazione e 50 Coins per ogni stagione successiva. Premium deve essere attivo. Se manca Premium o il rinnovo della stagione corrente, l'Accademia resta salvata ma la gestione è in sola lettura.",
+        "0": "Solo i manager con Premium a pagamento possono attivarla. È inoltre necessario raggiungere 90 giorni di gioco. I 50 Coins di attivazione sono separati dal budget dell'Accademia.",
+        "1": "L'accesso costa 50 Coins di attivazione e 50 Coins per ogni stagione successiva. Il Premium a pagamento deve essere attivo. Se manca Premium o il rinnovo della stagione corrente, l'Accademia resta salvata ma la gestione è in sola lettura.",
         "2": "Se Premium scade o una nuova stagione non è ancora stata rinnovata, Accademia e dati restano salvati. Ciclisti, staff, cronologia, budget e record non vengono eliminati.",
-        "3": "The Academy starts with six local riders and has a hard cap of 16. Infrastructure can improve U16 development, recovery or operating efficiency, but it does not raise the 16-rider capacity.",
-        "4": "Youth Rider profiles show riding attributes, readiness, fatigue, development focus, support agreement and race history. Exact hidden potential is intentionally not exposed; use Talent Assessment bands and scouting confidence instead.",
-        "5": "The included starter staff are the Youth Academy Director and U16 Head Coach. A maximum of one Youth Scout can be hired from the normal Staff Market. Youth roles use the same quality ladder as senior staff and can take dedicated staff courses paid from the Academy budget.",
-        "6": "Youth staff have role-specific effects. Director quality supports Academy management and eligible equipment purchasing. U16 Head Coach quality affects training, workload, development and race selection. Youth Scout quality affects which prospects are found, assessment confidence and how many reports a search can produce.",
-        "7": "The Youth Scout has one free prospect search per in-game week. After that, up to three additional searches can be bought in the same game week: Local 2 coins, Regional 5, Continental 8 and Worldwide 12. Stronger scouts can return more reports and identify stronger prospects more effectively; they do not create artificial talent.",
-        "8": "Scouting reach also has a normal club-cash programme cost per season: Local $5,000, Regional $20,000, Continental $50,000 and Worldwide $120,000. Coin charges apply only to extra searches after the weekly free search.",
-        "9": "Recruitment can target unattached prospects or riders already in another Academy. Offers may include weekly stipend, accommodation support and compensation. Recruitment and negotiation responsibility can remain with the manager or be delegated where the Academy settings allow it.",
-        "10": "Responsibilities are configured by decision area. Recruitment and negotiations can be delegated to the Academy Director. Training, race participation and race lineups can be delegated to the U16 Head Coach. Equipment remains visible and controllable through the Academy workflow.",
-        "11": "The Academy has its own seasonal budget and ledger. The initial allocation is paid from senior-club cash and remains recorded as history. Senior-to-Youth transfers reduce senior cash and increase Academy funds. Youth-to-senior transfers are limited to unspent and uncommitted Academy money.",
-        "12": "Academy equipment includes its own items, assets, race supplies and race setups. Equipment and Academy assets use the Academy budget, and condition or availability can affect what is usable.",
-        "13": "Youth competition is results-based and organised into World Class, Continental West/East and Regional classes. The Calendar can show all monthly races or only Academy opportunities. Invitations, wildcards and monthly participation plans control access and planned race volume.",
+        "3": "L'Accademia inizia con sei corridori locali e ha un limite massimo di 16 atleti. Le infrastrutture possono migliorare lo sviluppo U16, il recupero e l'efficienza operativa, ma non aumentano la capacità di 16 corridori.",
+        "4": "I profili dei corridori Youth mostrano gli attributi, la condizione fisica, la fatica, il focus di sviluppo, l'accordo di sostegno e lo storico delle gare. Il potenziale esatto nascosto non è visibile: usa le fasce di valutazione del talento e l'affidabilità dello scouting.",
+        "5": "Lo staff iniziale comprende il Direttore dell'Accademia e l'Allenatore capo U16. È possibile assumere al massimo uno Youth Scout dal normale Mercato staff. I ruoli giovanili usano gli stessi livelli di qualità dello staff senior e possono seguire corsi dedicati, finanziati dal budget dell'Accademia.",
+        "6": "Lo staff giovanile ha effetti specifici per ruolo. La qualità del Direttore supporta la gestione dell'Accademia e gli acquisti di attrezzature consentiti. L'Allenatore capo U16 influisce su allenamento, carico di lavoro, sviluppo e selezione per le gare. La qualità dello Youth Scout determina quali talenti vengono individuati, l'affidabilità delle valutazioni e il numero di rapporti prodotti.",
+        "7": "Lo Youth Scout ha una ricerca gratuita di prospetti per settimana di gioco. Successivamente è possibile acquistare fino a tre ricerche aggiuntive nella stessa settimana: Locale 2 Coins, Regionale 5, Continentale 8 e Mondiale 12. Gli scout migliori possono trovare più prospetti e individuare talenti più forti, senza crearne artificialmente.",
+        "8": "La portata dello scouting comporta anche un normale costo stagionale a carico del club: Locale $5.000, Regionale $20.000, Continentale $50.000 e Mondiale $120.000. I Coins si pagano soltanto per le ricerche aggiuntive dopo quella settimanale gratuita.",
+        "9": "Il reclutamento può riguardare giovani svincolati o già tesserati presso un'altra Accademia. Le offerte possono includere indennità settimanale, sostegno per l'alloggio e compensazione. Il manager può gestire personalmente il reclutamento e le trattative oppure delegarli, se le impostazioni lo consentono.",
+        "10": "Le responsabilità si configurano per area decisionale. Reclutamento e trattative possono essere delegati al Direttore dell'Accademia. Allenamento, partecipazione alle gare e formazioni possono essere delegati all'Allenatore capo U16. Le attrezzature restano visibili e gestibili tramite l'Accademia.",
+        "11": "L'Accademia ha un budget stagionale e un registro finanziario propri. L'assegnazione iniziale proviene dalla cassa della squadra senior e rimane registrata nello storico. I trasferimenti dalla squadra senior riducono la sua liquidità e aumentano quella dell'Accademia. I trasferimenti inversi sono limitati ai fondi non spesi e non impegnati.",
+        "12": "L'attrezzatura dell'Accademia comprende oggetti, strutture, forniture per le gare e configurazioni di gara proprie. Attrezzature e strutture utilizzano il budget dell'Accademia; condizioni e disponibilità possono influire su ciò che è utilizzabile.",
+        "13": "Le competizioni giovanili sono basate sui risultati e organizzate in Classe Mondiale, Continentale Ovest/Est e Regionale. Il Calendario può mostrare tutte le gare del mese oppure soltanto quelle dell'Accademia. Inviti, wildcard e piani mensili di partecipazione determinano l'accesso e il volume di gare pianificato.",
         "14": "La gerarchia stagionale è definita: World Class ha 16 Accademie e le ultime quattro retrocedono. Continental West ed East hanno 20 squadre ciascuna; i due campioni sono promossi direttamente. Le posizioni 2ª, 3ª e 4ª di entrambe le divisioni formano un playoff a sei squadre, con le migliori due promosse in World Class. Il vincitore di ciascuna delle sei divisioni Regionali sale nel gruppo Continental corrispondente.",
-        "15": "Different Youth squads can race on overlapping dates, but the same rider cannot be selected for overlapping events. Always check readiness, fatigue and lineup status before confirming Youth race participation.",
-        "16": "Race income goes directly to the Youth Academy fund rather than senior-team cash. Racing should therefore be treated as both development and a limited Academy-finance source, not as a replacement for adequate season funding.",
-        "17": "The Overview page includes recent development form, rider readiness/fatigue, staff coverage, infrastructure effects, previous and next races and the latest result. Use it as the Academy dashboard, then open the specialist tabs for the final decision.",
-        "18": "At age 16, a rider requires a graduation decision. Depending on eligibility and available space, the rider can follow the supported pathway, move to the Developing Team, or be released."
+        "15": "Squadre Youth diverse possono gareggiare nelle stesse date, ma un singolo corridore non può essere selezionato per eventi sovrapposti. Controlla sempre condizione fisica, fatica e formazione prima di confermare la partecipazione.",
+        "16": "I proventi delle gare confluiscono direttamente nel fondo dell'Accademia, non nella cassa della squadra senior. Le gare sono quindi sia uno strumento di sviluppo sia una fonte limitata di finanziamento, ma non sostituiscono un adeguato budget stagionale.",
+        "17": "La pagina Panoramica mostra l'andamento recente dello sviluppo, la condizione fisica e la fatica dei corridori, la copertura dello staff, gli effetti delle infrastrutture, le gare precedenti e successive e l'ultimo risultato. Usala come dashboard dell'Accademia e apri poi le sezioni specifiche per le decisioni finali.",
+        "18": "Al compimento dei 16 anni, per il corridore è necessaria una decisione sul percorso futuro. A seconda dell'idoneità e dei posti disponibili, può proseguire nel percorso previsto, passare al Team di Sviluppo oppure essere svincolato."
       },
       "tips": {
         "0": "I 50 coin sono solo la quota d'ingresso; mantieni denaro sufficiente per budget e operazioni.",
@@ -3490,13 +3490,13 @@
         "7": "Se Premium scade durante una stagione già rinnovata, riattiva Premium per riprendere l'accesso. All'inizio di una nuova stagione sono richiesti anche 50 Coins per il rinnovo."
       },
       "relatedLinks": {
-        "0": "Open Youth Academy",
-        "1": "Open Youth Riders",
-        "2": "Open Youth Scouting",
-        "3": "Open Youth Calendar",
-        "4": "Open Staff",
-        "5": "Open Infrastructure",
-        "6": "Open Pro Packages"
+        "0": "Apri Accademia Giovanile",
+        "1": "Apri corridori Youth",
+        "2": "Apri scouting Youth",
+        "3": "Apri calendario Youth",
+        "4": "Apri staff",
+        "5": "Apri infrastrutture",
+        "6": "Apri pacchetti Pro"
       }
     }
   }
