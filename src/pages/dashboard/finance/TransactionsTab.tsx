@@ -19,6 +19,7 @@
  * - Do not backfill old game_date values from created_at.
  */
 
+import { getLedgerTypeLabel, getLedgerExplanation, getLedgerContext } from './transactionPresentation'
 import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from './supabase'
@@ -326,7 +327,7 @@ function TransactionsTable({
               className="p-3 pr-4 text-right whitespace-nowrap"
               style={{ width: '1%' }}
             >
-              {t('transactions.transaction')}
+              {t('transactionDetails.reference')}
             </th>
           </tr>
         </thead>
@@ -350,20 +351,16 @@ function TransactionsTable({
                     {formatStatementGameDate(r)}
                   </td>
 
-                  <td className="p-3 font-medium text-gray-800 whitespace-nowrap">
-                    <span title={r.type || undefined}>
-                      {!r.type
-                        ? t('transactions.transaction')
-                        : transactionTypeLabelKeyMap[
-                            r.type as keyof typeof transactionTypeLabelKeyMap
-                          ]
-                          ? t(
-                              transactionTypeLabelKeyMap[
-                                r.type as keyof typeof transactionTypeLabelKeyMap
-                              ],
-                            )
-                          : prettifyTransactionType(r.type)}
-                    </span>
+                  <td className="p-3 font-medium text-gray-800">
+                    <div title={r.type || undefined}>
+                      {getLedgerTypeLabel(t, r)}
+                    </div>
+                    <div className="mt-1 max-w-xl text-xs font-normal text-gray-500">
+                      {getLedgerExplanation(t, r)}
+                    </div>
+                    {getLedgerContext(t, r).map((detail, index) => (
+                      <div key={index} className="mt-0.5 text-xs font-normal text-gray-400">{detail}</div>
+                    ))}
                   </td>
 
                   <td className={`p-3 font-semibold whitespace-nowrap ${amountColorClass}`}>
