@@ -25,7 +25,7 @@
   },
   "common": {
     "refresh": "Aktualisieren",
-    "mainClubMissing": "Dein Hauptclub konnte nicht ermittelt werden.",
+    "mainClubMissing": "Ihr Hauptclub konnte nicht ermittelt werden.",
     "seasonDate": "Saison {{season}} · {{day}} {{month}}",
     "gameDays": "{{count}} Spieltage",
     "current": "Aktuell",
