@@ -284,7 +284,9 @@
     "doneEditingRiders": "Listo",
     "editChartRidersHint": "Sustituye cualquier corredor del gráfico por otro de la plantilla que aún no aparezca.",
     "noHistoryTitle": "Todavía no hay desarrollo de corredores registrado",
-    "noHistoryDescription": "Aún no hay historial semanal de desarrollo de estos corredores. El gráfico aparecerá cuando el procesamiento semanal registre mejoras reales. No se han inventado valores."
+    "noHistoryDescription": "Aún no hay historial semanal de desarrollo de estos corredores. El gráfico aparecerá cuando el procesamiento semanal registre mejoras reales. No se han inventado valores.",
+    "noProgressTitle": "Aún no hay cambios registrados",
+    "noProgressDescription": "Existen registros semanales, pero las habilidades no han cambiado. Solo se muestran datos reales; el progreso aparecerá cuando el juego procese el desarrollo."
   },
   "templates": {
     "title": "Plantillas y Smart Prefill",
