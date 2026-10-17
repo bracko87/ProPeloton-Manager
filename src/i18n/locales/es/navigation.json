@@ -161,5 +161,7 @@
   "premiumCenter": "Centro Premium",
   "nationalAssociation": "Asociación Nacional",
   "youthAcademy": "Academia Juvenil",
-  "hiddenRaces": "Carreras ocultas"
+  "hiddenRaces": "Carreras ocultas",
+  "collapseSidebar": "Contraer menú lateral",
+  "expandSidebar": "Expandir menú lateral"
 }
