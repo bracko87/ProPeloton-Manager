@@ -55,6 +55,7 @@ import DevelopingTeamPage from './pages/dashboard/DevelopingTeam'
 import YouthAcademyPage from './pages/dashboard/YouthAcademy'
 import YouthRaceDetailPage from './pages/dashboard/YouthRaceDetailPage'
 import YouthRiderProfilePage from './pages/dashboard/riders/YouthRiderProfilePage'
+import YouthAcademyTeamProfilePage from './pages/dashboard/YouthAcademyTeamProfilePage'
 import StaffPage from './pages/dashboard/Staff'
 import CalendarPage from './pages/dashboard/CalendarPage'
 import RaceDetailPage from './pages/dashboard/RaceDetailPage'
@@ -519,6 +520,10 @@ export default function App(): JSX.Element {
               element={<YouthRaceDetailPage />}
             />
 
+            <Route
+              path="youth-academy/teams/:academyId"
+              element={<YouthAcademyTeamProfilePage />}
+            />
             <Route
               path="youth-academy/riders/:riderId"
               element={<YouthRiderProfilePage />}
