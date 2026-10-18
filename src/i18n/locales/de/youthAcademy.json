@@ -588,7 +588,8 @@
     "race": "Rennen",
     "class": "Klasse",
     "result": "Ergebnis",
-    "points": "Punkte"
+    "points": "Punkte",
+    "physicalGrowth": "Größe und Gewicht von U16-Fahrern können sich beim Saisonwechsel altersabhängig entwickeln, höchstens einmal je Saison. Beim Aufstieg in den Seniorenbereich werden die zuletzt erfassten Jugendwerte übernommen und bleiben anschließend konstant. Diese Werte sind von der Entwicklung der Fahrerfähigkeiten getrennt."
   },
   "manual": {
     "title": "Hilfe zur Jugendakademie?",
