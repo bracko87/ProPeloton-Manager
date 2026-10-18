@@ -6854,7 +6854,7 @@ function RaceParticipantsGrid({
                 onClick={() => onOpenTeamProfile(team.club_id ?? team.team_id)}
                 className="group block w-full border-b border-slate-100 px-5 py-4 text-left transition hover:bg-slate-50"
               >
-                <div className="truncate text-base font-semibold text-slate-950 transition group-hover:text-slate-700">
+                <div className="truncate text-base font-semibold text-slate-950 transition group-hover:text-slate-700" translate="no">
                   {teamName}
                 </div>
 
