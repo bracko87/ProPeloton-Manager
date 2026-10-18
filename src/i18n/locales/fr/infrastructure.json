@@ -727,6 +727,7 @@
     }
   },
   "assetDetailCopy": {
+    "statusLabel": "Statut",
     "yourCars": "Vos voitures d'équipe",
     "yourBuses": "Vos bus d'équipe",
     "yourMedicalVans": "Vos véhicules médicaux",
