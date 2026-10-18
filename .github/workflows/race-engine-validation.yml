@@ -10,6 +10,7 @@ on:
       - '.github/workflows/race-engine-validation.yml'
   push:
     branches:
+      - main
       - fix/race-engine-replay-sync-gap-exhaustion
     paths:
       - 'src/universal-race-engine/**'
@@ -43,6 +44,12 @@ jobs:
 
       - name: Production build
         run: npm run build
+
+      - name: Test prospective summit calibration on French Tour profiles
+        run: >-
+          npx --yes vitest@3.2.4 run
+          src/universal-race-engine/summitFinishSelectivityV1.test.ts
+          --reporter=dot
 
       - name: Run World Nations three-day TypeScript E2E
         run: >-
