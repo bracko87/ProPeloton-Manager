@@ -3,6 +3,7 @@
  */
 
 import React from 'react'
+import NationalChampionBadge from './NationalChampionBadge'
 import { useTranslation } from 'react-i18next'
 import i18n from '../../i18n'
 import enSharedRiderModal from '../../i18n/locales/en/sharedRiderModal.json'
@@ -214,6 +215,9 @@ export default function RiderProfileModal({
               )}
             </div>
           </div>
+          {rider.id ? (
+            <NationalChampionBadge riderId={rider.id} className="mx-3" />
+          ) : null}
 
           <button
             type="button"
@@ -343,11 +347,7 @@ export default function RiderProfileModal({
               </button>
             </div>
 
-            {showRiderHistory ? (
-              <div className="mt-6 rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-600">
-                {t('common.historyPlaceholder')}
-              </div>
-            ) : null}
+            {showRiderHistory && rider.id ? <NationalChampionBadge riderId={rider.id} placement="history" className="mt-6" /> : null}
           </div>
         </div>
       </div>
