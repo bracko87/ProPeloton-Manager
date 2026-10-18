@@ -865,6 +865,11 @@
     "workshopOnePerEvent": "Solo se asigna un taller móvil por carrera. Los bonos se fijan al enviar el plan para garantizar resultados reproducibles."
   },
   "assetBonusText": {
+    "medicalResponse": "Respuesta médica {{value}}",
+    "minorInjuryRisk": "Riesgo de lesiones leves {{value}}",
+    "hydration": "Hidratación {{value}}",
+    "heatHydration": "Calor/hidratación {{value}}",
+    "medicalRecovery": "Recuperación {{value}}",
     "tourFatigueProtection": "Protección contra fatiga en vueltas {{value}}",
     "recoveryComfort": "Comodidad de recuperación {{value}}",
     "raceSupportCoverage": "Cobertura de apoyo en carrera {{value}}",
