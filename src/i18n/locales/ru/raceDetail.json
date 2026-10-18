@@ -207,7 +207,20 @@
     "nationalRiderCount": "Подтверждено гонщиков: {{count}}",
     "noNationalRiders": "В стартовом списке национального чемпионата пока нет подтверждённых гонщиков.",
     "riderKit": "Форма текущей команды",
-    "freeAgent": "Без команды"
+    "freeAgent": "Без команды",
+    "worldChampionshipFieldTitle": "Чемпионат мира по шоссейному велоспорту — стартовый список и страны",
+    "worldChampionshipFieldDescription": "Один гонщик от страны. Подтверждённые национальные чемпионы указаны первыми. Страны, где отбор ещё идёт, отображаются серым цветом до определения чемпиона.",
+    "worldChampionshipConfirmed": "подтверждённых гонщиков",
+    "worldChampionshipAwaiting": "ожидают национального чемпиона",
+    "worldChampionshipNoSlots": "Места для национальных чемпионов пока не запланированы.",
+    "country": "Страна",
+    "rider": "Гонщик",
+    "status": "Статус",
+    "worldChampionshipWaiting": "Отбор продолжается",
+    "worldChampionshipUnavailable": "Не подтверждён",
+    "worldChampionshipConfirmedLabel": "Подтверждён",
+    "worldChampionshipInvited": "Ожидает подтверждения",
+    "worldChampionshipTbd": "Участник пока неизвестен"
   },
   "results": {
     "classifications": "гоночные классификации",
