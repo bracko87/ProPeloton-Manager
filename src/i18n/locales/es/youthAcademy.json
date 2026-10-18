@@ -588,7 +588,8 @@
     "race": "Carrera",
     "class": "Clase",
     "result": "Resultado",
-    "points": "Puntos"
+    "points": "Puntos",
+    "physicalGrowth": "La altura y el peso de los corredores U16 pueden aumentar con la edad al cambiar de temporada, como máximo una vez por temporada. Al ascender al equipo sénior se conservan las últimas medidas juveniles, que después permanecen estables. Estos valores son independientes del desarrollo de habilidades."
   },
   "manual": {
     "title": "¿Necesitas ayuda con la Academia Juvenil?",
