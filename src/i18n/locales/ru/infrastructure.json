@@ -727,6 +727,7 @@
     }
   },
   "assetDetailCopy": {
+    "statusLabel": "Статус",
     "yourCars": "Ваши командные автомобили",
     "yourBuses": "Ваши командные автобусы",
     "yourMedicalVans": "Ваши медицинские автомобили",
