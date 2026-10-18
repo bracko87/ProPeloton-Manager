@@ -764,5 +764,16 @@
     "difference": "Difference {{value}}",
     "explanation": "Values are shown on the outside, attributes are centered, and mirrored bars show the difference for each rider. Green means higher, red means lower.",
     "vs": "vs"
+  },
+  "championshipMedals": {
+    "nationalRoad": "National Road Championship",
+    "worldRoad": "World Road Championship",
+    "gold": "Gold",
+    "silver": "Silver",
+    "bronze": "Bronze",
+    "season": "Season",
+    "current": "Current season championship medals",
+    "career": "Career championship achievements",
+    "viewRace": "View race"
   }
 }
