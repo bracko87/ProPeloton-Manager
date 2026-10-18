@@ -16,6 +16,11 @@ const effectKeys: Record<string, string> = {
   'Health Protection': 'healthProtection',
   'Fatigue Control': 'fatigueControl',
   'Recovery Support': 'recoverySupport',
+  'Medical response': 'medicalResponse',
+  'Minor injury risk': 'minorInjuryRisk',
+  'Hydration': 'hydration',
+  'Heat/hydration': 'heatHydration',
+  'Recovery': 'medicalRecovery',
 }
 
 const defaultVehicleNames: Record<string, string> = {
