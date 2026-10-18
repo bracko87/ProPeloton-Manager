@@ -1,3 +1,4 @@
+import { calculateSummitFinishSelectivityV1 } from './summitFinishSelectivityV1.ts'
 import {
   applyRoadScenarioFinishFragmentationV1,
   applyRoadScenarioGapGuidanceV1,
@@ -366,6 +367,8 @@ export interface UniversalStageInput {
   readonly distanceKm: number
   readonly elevationGainM: number
   readonly summitFinish: boolean
+  /** Prospective-only mountain calibration. Never set on historical races. */
+  readonly summitFinishSelectivityV1?: boolean
   readonly terrainPercentages: UniversalTerrainPercentagesInput
   readonly profilePoints: readonly UniversalStageProfilePointInput[]
   readonly timeTrialRules?: UniversalTimeTrialRulesInput | null
@@ -16735,6 +16738,21 @@ export function resolveRoadPhase4Finish(
       .map((row) => row.holdScore)
       .sort((left, right) => left - right)
     const hillyAttrition = input.stage.terrainType === 'hilly'
+    const summitCalibration = input.stage.summitFinishSelectivityV1 === true
+      ? calculateSummitFinishSelectivityV1({
+          stageDistanceKm: input.stage.distanceKm,
+          stageElevationGainM: input.stage.elevationGainM,
+          climbStartKm: effort.kmStart,
+          climbEndKm: effort.kmEnd,
+          climbDistanceKm: effort.distanceKm,
+          averageGradientPercent: effort.averageGradientPercent,
+          climbElevationGainM: effort.elevationGainM,
+          climbHardness: effort.hardness,
+          summitFinish: input.stage.summitFinish,
+          holdScores: candidateRows.map((row) => row.holdScore),
+        })
+      : null
+    const calibratedSummit = summitCalibration?.active === true
     const majorHighMountainSelection =
       effort.elevationGainM >= 800 &&
       (input.stage.summitFinish ||
@@ -16768,17 +16786,30 @@ export function resolveRoadPhase4Finish(
         ? clamp(12 - effort.hardness * 5, 6, 12)
         : clamp(10.5 - effort.hardness * 7, 3.5, 10.5)
     const requiredHoldScore = deterministicRound(
-      referenceHoldScore - holdWindow,
+      calibratedSummit ? summitCalibration!.requiredHoldScore : referenceHoldScore - holdWindow,
       6,
     )
     const minimumEnergyToHold = deterministicRound(
-      majorHighMountainSelection
+      calibratedSummit ? summitCalibration!.minimumEnergyToHold : majorHighMountainSelection
         ? clamp(7 + effort.hardness * 9, 8, 18)
         : hillyAttrition
           ? clamp(2.5 + effort.hardness * 7, 2.5, 9.5)
           : clamp(3.5 + effort.hardness * 10.5, 3.5, 14),
       6,
     )
+
+    // Tempo is set by the athletes physically holding the summit pace, not
+    // by the average of riders who are already cracking. Rider-specific
+    // travel-time integration below determines each separation and rejoin.
+    const sustainedTempoRiderIds = calibratedSummit
+      ? candidateRows.filter((row) =>
+          row.holdScore + 0.000001 >= requiredHoldScore &&
+          row.energyAtSummit + 0.000001 >= minimumEnergyToHold,
+        ).map((row) => row.row.riderId)
+      : []
+    const physicalPaceRiderIds = sustainedTempoRiderIds.length > 0
+      ? sustainedTempoRiderIds
+      : candidateRows.map((row) => row.row.riderId)
 
     const outcomeRows: UniversalRoadProfileClimbSelectionRider[] = candidateRows.map(
       ({ row, rider, energyAtClimbStart, energyAtSummit, holdScore }) => {
@@ -16819,7 +16850,7 @@ export function resolveRoadPhase4Finish(
         )
         const physicalTrajectory = buildPhysicalDetachedTrajectory(
           row.riderId,
-          candidateRows.map((candidate) => candidate.row.riderId),
+          physicalPaceRiderIds,
           contactLossKm,
           recoveryCorridorEndKm,
           PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
