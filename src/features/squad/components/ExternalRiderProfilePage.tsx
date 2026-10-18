@@ -3,6 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { supabase } from "../../../lib/supabase";
 import RiderShortlistButton from "../../../pages/dashboard/transfers/RiderShortlistButton";
+import RiderPowerProfile from "../../../components/riders/RiderPowerProfile";
+import type { RiderPowerSkills } from "../../../lib/riderPower";
 
 import type { RiderDetails } from "../types";
 
@@ -2177,6 +2179,23 @@ export default function ExternalRiderProfilePage({
     t("common.rider");
 
   const effectiveIsScouted = Boolean(secureProfile?.scoutReport);
+  // Do not expose exact estimated watts from the hidden, unscouted attributes.
+  // Secure scouting reports may provide ranges rather than exact values.
+  const powerAttributes = secureProfile?.isOwnRider
+    ? secureProfile.publicView?.attributes
+    : secureProfile?.scoutReport?.report?.attributes;
+  const powerKeys = ['sprint', 'climbing', 'time_trial', 'endurance', 'flat', 'resistance'] as const;
+  const precisePowerSkills: RiderPowerSkills | null = powerAttributes &&
+    powerKeys.every(key => normalizeNullableNumber(powerAttributes[key]?.exact) !== null)
+    ? {
+      sprint: Number(powerAttributes.sprint.exact),
+      climbing: Number(powerAttributes.climbing.exact),
+      time_trial: Number(powerAttributes.time_trial.exact),
+      endurance: Number(powerAttributes.endurance.exact),
+      flat: Number(powerAttributes.flat.exact),
+      resistance: Number(powerAttributes.resistance.exact),
+    }
+    : null;
   const visibleOverallValue = getSecureOverallLabel(secureProfile);
   const canUseModernSkillView = Boolean(secureProfile?.isOwnRider);
   const effectiveSkillViewMode: RiderSkillViewMode = canUseModernSkillView ? skillViewMode : "basic";
@@ -3072,6 +3091,7 @@ export default function ExternalRiderProfilePage({
               </div>
 
               <div className="space-y-4">
+                <RiderPowerProfile riderId={selectedRider.id} skills={precisePowerSkills} scoutingRestricted={!precisePowerSkills} />
                 <SectionCard title={t("external.basicInformation")}>
                   <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
                     <div className="divide-y divide-slate-100">

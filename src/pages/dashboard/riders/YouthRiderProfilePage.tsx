@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../lib/supabase'
+import RiderPowerProfile from '../../../components/riders/RiderPowerProfile'
 
 type YouthScoutingStatus = {
   activated?: boolean
@@ -319,6 +320,18 @@ export default function YouthRiderProfilePage(): JSX.Element {
         </div>
       </div>
 
+      <RiderPowerProfile
+        riderId={profile.id}
+        scoutingRestricted={Boolean(profile.public_only && !profile.scouting_report)}
+        skills={profile.public_only && !profile.scouting_report ? null : {
+          sprint: profile.attributes?.sprint,
+          climbing: profile.attributes?.climbing,
+          time_trial: profile.attributes?.time_trial,
+          endurance: profile.attributes?.endurance,
+          flat: profile.attributes?.flat,
+          resistance: profile.attributes?.resistance,
+        }}
+      />
       {profile.academy_id ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
           <div>

@@ -13,6 +13,7 @@ import {
 } from 'recharts'
 import appI18n from '../../../i18n'
 import { supabase } from '../../../lib/supabase'
+import { estimateRiderPower, type RiderPowerEstimate, type RiderPowerSkills } from '../../../lib/riderPower'
 
 type RiderDevelopment = {
   rider_id: string
@@ -103,6 +104,8 @@ export default function PremiumRiderDevelopmentPanel({
   const [statusFilter, setStatusFilter] = useState('all')
   const [potentialRiderIds, setPotentialRiderIds] = useState<string[]>([])
   const [showPotentialRiderEditor, setShowPotentialRiderEditor] = useState(false)
+  const [powerSummaries, setPowerSummaries] = useState<Array<{ id: string; name: string; power: RiderPowerEstimate }>>([])
+  const [selectedPowerRiderId, setSelectedPowerRiderId] = useState('')
 
   useEffect(() => {
     let active = true
@@ -164,6 +167,35 @@ export default function PremiumRiderDevelopmentPanel({
       active = false
     }
   }, [clubId])
+
+  // Premium power profiles reuse real rider skills; never invent historical watts.
+  useEffect(() => {
+    let active = true
+    const ids = rows.map(row => row.rider_id).slice(0, 50)
+    if (!ids.length) { setPowerSummaries([]); return () => { active = false } }
+    void Promise.all([
+      supabase.from('riders').select('id,sprint,climbing,time_trial,endurance,flat,resistance').in('id',ids),
+      supabase.rpc('get_rider_physiques_v1',{ p_rider_ids: ids }),
+    ]).then(([skillsResult, physiqueResult]) => {
+      if (!active) return
+      if (skillsResult.error || physiqueResult.error) { setPowerSummaries([]); return }
+      const physiques = new Map(
+        ((physiqueResult.data ?? []) as Array<{rider_id:string;weight_kg:number}>)
+          .map(row => [row.rider_id,row.weight_kg])
+      )
+      const names = new Map(rows.map(row => [row.rider_id,row.display_name]))
+      const summaries = ((skillsResult.data ?? []) as Array<RiderPowerSkills & {id:string}>)
+        .flatMap(rider => {
+          const estimate=estimateRiderPower(rider,physiques.get(rider.id))
+          return estimate ? [{id:rider.id,name:names.get(rider.id) || rider.id,power:estimate}] : []
+        })
+        .sort((a,b) => b.power.wPerKg-a.power.wPerKg)
+      setPowerSummaries(summaries)
+    })
+    return () => { active = false }
+  }, [rows])
+
+  const displayedPowerRider = powerSummaries.find(row => row.id===selectedPowerRiderId) ?? powerSummaries[0]
 
   const roles = useMemo(
     () => Array.from(new Set(rows.map(row => row.role).filter((value): value is string => Boolean(value)))).sort(),
@@ -338,6 +370,50 @@ export default function PremiumRiderDevelopmentPanel({
         </div>
       ) : (
         <>
+          <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="text-base font-semibold text-slate-900">{t('power.title')}</div>
+            <p className="mt-1 text-xs leading-5 text-slate-600">{t('power.explanation')}</p>
+            {displayedPowerRider ? (
+              <>
+                <label className="mt-3 block text-xs font-semibold text-slate-600" htmlFor="premium-power-rider">{t('power.selectRider')}</label>
+                <select id="premium-power-rider" value={displayedPowerRider.id}
+                  onChange={event => setSelectedPowerRiderId(event.target.value)}
+                  className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-sm sm:max-w-md">
+                  {powerSummaries.map(row => <option key={row.id} value={row.id}>{row.name}</option>)}
+                </select>
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                  {([
+                    [t('power.ftp'), `${displayedPowerRider.power.ftp} W`],
+                    [t('power.wkg'), `${displayedPowerRider.power.wPerKg.toFixed(2)} W/kg`],
+                    [t('power.peak'), `${displayedPowerRider.power.fiveSeconds} W`],
+                    [t('power.fiveMin'), `${displayedPowerRider.power.fiveMinutes} W`],
+                  ] as [string,string][]).map(([label,value]) =>
+                    <div key={label} className="rounded-lg bg-slate-50 p-3">
+                      <div className="text-xs text-slate-500">{label}</div>
+                      <div className="mt-1 font-semibold text-slate-900">{value}</div>
+                    </div>
+                  )}
+                </div>
+                <div className="mt-4 h-[260px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={[
+                      {duration:t('power.fiveSec'),watts:displayedPowerRider.power.fiveSeconds},
+                      {duration:t('power.oneMin'),watts:displayedPowerRider.power.oneMinute},
+                      {duration:t('power.fiveMin'),watts:displayedPowerRider.power.fiveMinutes},
+                      {duration:t('power.ftp'),watts:displayedPowerRider.power.ftp},
+                    ]}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="duration" tick={{fontSize:11}} />
+                      <YAxis tick={{fontSize:11}} />
+                      <Tooltip formatter={(value:number) => [`${value} W`,t('power.estimated')]} />
+                      <Bar dataKey="watts" fill="#0f766e" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </>
+            ) : <p className="mt-3 text-sm text-slate-500">{t('power.unavailable')}</p>}
+            <p className="mt-2 text-xs leading-5 text-slate-500">{t('power.noEngineChange')}</p>
+          </section>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
             <StatCard label={t('development.avgOverall')} value={formatNumber(metrics.averageOverall)} />
             <StatCard label={t('development.avgPotential')} value={formatNumber(metrics.averagePotential)} />

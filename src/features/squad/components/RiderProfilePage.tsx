@@ -17,6 +17,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import appI18n from '../../../i18n'
 import { supabase } from '../../../lib/supabase'
 import RiderComparePanel from './RiderComparePanel'
+import RiderPowerProfile from '../../../components/riders/RiderPowerProfile'
 
 import type {
   RenewalNegotiationData,
@@ -5604,6 +5605,7 @@ export default function RiderProfilePage({
               </div>
 
               <div className="space-y-4">
+                <RiderPowerProfile riderId={selectedRider.id} skills={selectedRider} />
                 <SectionCard title={t('ownedProfile.basicInformation')}>
                   <div className="grid grid-cols-1 gap-x-6 md:grid-cols-2">
                     <div className="divide-y divide-slate-100">
