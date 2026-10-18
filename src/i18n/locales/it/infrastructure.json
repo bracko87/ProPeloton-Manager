@@ -727,6 +727,7 @@
     }
   },
   "assetDetailCopy": {
+    "statusLabel": "Stato",
     "yourCars": "Le tue auto di squadra",
     "yourBuses": "I tuoi autobus di squadra",
     "yourMedicalVans": "I tuoi veicoli medici",
