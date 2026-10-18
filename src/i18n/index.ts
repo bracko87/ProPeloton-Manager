@@ -1,3 +1,4 @@
+import { POWER_TRANSLATIONS } from './powerTranslations'
 import i18n from 'i18next'
 import { initReactI18next } from 'react-i18next'
 import { enforceCoinsCurrencyName } from './coinsTerminology'
@@ -697,6 +698,17 @@ const resources = {
 
 // Ensure in-game Coins are never translated or declined by any language pack.
 // This also covers existing translations and newly added resource strings.
+// Register complete power-profile translations before initialization.
+for (const [language, dictionaries] of Object.entries(POWER_TRANSLATIONS)) {
+  const scoped = (resources as unknown as Record<string, {
+    riderProfile: Record<string, unknown>
+    premiumCenter: Record<string, unknown>
+  }>)[language]
+  if (!scoped) continue
+  Object.assign(scoped.riderProfile, dictionaries.riderProfile)
+  Object.assign(scoped.premiumCenter, dictionaries.premiumCenter)
+}
+
 enforceCoinsCurrencyName(resources as unknown as Record<string, unknown>)
 
 const initialLanguage = getStoredLanguage()
