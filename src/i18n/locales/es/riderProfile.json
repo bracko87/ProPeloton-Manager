@@ -775,5 +775,9 @@
     "current": "Medallas de la temporada actual",
     "career": "Logros de campeonatos en su carrera",
     "viewRace": "Ver carrera"
+  },
+  "powerProfile": {
+    "youthSummary": "La altura y el peso de los jóvenes pueden cambiar mientras crecen; los adultos conservan sus medidas finales.",
+    "youthTransferMeaning": "Las medidas U16 cambian como máximo una vez por temporada según la edad. Al ascender se transfieren las últimas medidas juveniles. Los vatios siguen reflejando las habilidades visibles y el peso."
   }
 }
