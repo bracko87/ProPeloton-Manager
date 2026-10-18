@@ -11,6 +11,7 @@ import {
   toNumber,
 } from './infrastructureHelpers'
 import { getInfrastructureAssetImageUrl } from './infrastructureAssetImages'
+import { localizeAssetBenefit, localizeDefaultVehicleName } from './localizeAssetCopy'
 
 type TeamBusSupportPanelProps = {
   configRows: InfrastructureAssetConfigRow[]
@@ -271,7 +272,7 @@ function TeamBusProfileModal({
                       key={benefit}
                       className="flex flex-col gap-1 rounded-xl border border-blue-100 bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <span className="text-sm font-medium text-gray-800">{benefit}</span>
+                      <span className="text-sm font-medium text-gray-800">{localizeAssetBenefit(benefit, t)}</span>
                       <span className={`text-xs font-semibold ${reduced ? 'text-amber-700' : 'text-emerald-700'}`}>
                         {reduced ? t('assetDetailCopy.benefitsCurrent', { value: currentBenefit }) : t('assetDetailCopy.fullValueActive')}
                       </span>
@@ -402,7 +403,7 @@ export function TeamBusSupportPanel({
             </div>
             <h3 className="mt-1 text-base font-semibold text-gray-900">{t('assetDetailCopy.teamBusLevelSupport')}</h3>
             <p className="mt-1 max-w-3xl text-xs leading-5 text-gray-500">
-              Exact prices, benefits, delivery, wear and maintenance values below come from the production Team Bus configuration used by Race Planning.
+              {t('assetDetailCopy.busByLevelHint')}
             </p>
           </div>
           <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
@@ -425,21 +426,21 @@ export function TeamBusSupportPanel({
                     <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">
                       Level {config.asset_level}
                     </div>
-                    <div className="mt-1 text-sm font-semibold text-gray-900">{config.asset_name}</div>
+                    <div className="mt-1 text-sm font-semibold text-gray-900">{t(`assetTiers.team_bus.level${config.asset_level}.name`, { defaultValue: config.asset_name })}</div>
                   </div>
                   <div className="text-xs font-semibold text-gray-700">{formatCash(config.cost_cash)}</div>
                 </div>
 
                 <div className="mt-3 space-y-1.5">
                   {benefits.map(benefit => (
-                    <div key={benefit} className="text-xs leading-4 text-gray-600">{benefit}</div>
+                    <div key={benefit} className="text-xs leading-4 text-gray-600">{localizeAssetBenefit(benefit, t)}</div>
                   ))}
                 </div>
 
                 <div className="mt-3 border-t border-gray-200 pt-2 text-[11px] leading-4 text-gray-500">
-                  <div>Delivery: {toNumber(config.delivery_game_days, 0)} game days</div>
-                  <div>120 km wear: {formatPercent(baseWear)}</div>
-                  <div>Repair: {formatCash(config.repair_cost_per_condition_point ?? 0)} / condition point</div>
+                  <div>{t('assetDetailCopy.deliveryDayValue', { days: toNumber(config.delivery_game_days, 0) })}</div>
+                  <div>{t('assetDetailCopy.wear120Value', { wear: formatPercent(baseWear) })}</div>
+                  <div>{t('assetDetailCopy.repairPointValue', { cost: formatCash(config.repair_cost_per_condition_point ?? 0) })}</div>
                 </div>
               </div>
             )
@@ -454,7 +455,7 @@ export function TeamBusSupportPanel({
                 {t('assetDetailCopy.openBusDetails')}
               </p>
             </div>
-            <div className="text-xs font-semibold text-gray-500">{rosterRows.length} owned</div>
+            <div className="text-xs font-semibold text-gray-500">{rosterRows.length} {t('common.owned')}</div>
           </div>
 
           {rosterRows.length === 0 ? (
@@ -465,7 +466,7 @@ export function TeamBusSupportPanel({
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
               {rosterRows.map(bus => {
                 const config = configRows.find(row => row.asset_level === bus.asset_level)
-                const name = config?.asset_name || bus.asset_name || `Team Bus Level ${bus.asset_level}`
+                const name = t(`assetTiers.team_bus.level${bus.asset_level}.name`, { defaultValue: config?.asset_name || bus.asset_name || `Team Bus Level ${bus.asset_level}` })
                 const baseWear = toNumber(
                   bus.condition_loss_per_race_day ?? config?.condition_loss_per_race_day,
                   0,
@@ -479,16 +480,16 @@ export function TeamBusSupportPanel({
                     <TeamBusImage level={bus.asset_level} name={name} />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="truncate text-sm font-semibold text-gray-900">{bus.display_name || name}</div>
+                        <div className="truncate text-sm font-semibold text-gray-900">{localizeDefaultVehicleName(bus.display_name, t) || name}</div>
                         <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">
-                          Lv {bus.asset_level}
+                          {t('assetDetailCopy.levelLabel', { level: bus.asset_level })}
                         </span>
                       </div>
                       <div className="mt-1 text-xs text-gray-500">{name}</div>
                       <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
-                        <span>Condition {formatPercent(toNumber(bus.condition_percent, 0))}</span>
-                        <span>Effectiveness {formatEffectiveness(bus.condition_factor)}</span>
-                        <span>120 km wear {formatPercent(baseWear)}</span>
+                        <span>{t('common.condition')} {formatPercent(toNumber(bus.condition_percent, 0))}</span>
+                        <span>{t('assetDetailCopy.effectiveness')} {formatEffectiveness(bus.condition_factor)}</span>
+                        <span>{t('assetDetailCopy.wear120Value', { wear: formatPercent(baseWear) })}</span>
                       </div>
                     </div>
                     <button
