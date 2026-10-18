@@ -588,7 +588,8 @@
     "race": "Gara",
     "class": "Classe",
     "result": "Risultato",
-    "points": "Punti"
+    "points": "Punti",
+    "physicalGrowth": "Altezza e peso dei corridori U16 possono aumentare in base all'età al cambio di stagione, al massimo una volta per stagione. Nel passaggio alla squadra senior vengono mantenute le ultime misure giovanili, che poi restano stabili. Questi valori sono separati dallo sviluppo delle abilità."
   },
   "manual": {
     "title": "Serve aiuto con l'Accademia Giovanile?",
