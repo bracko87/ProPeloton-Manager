@@ -207,7 +207,20 @@
     "nationalRiderCount": "{{count}} bestätigte Fahrer",
     "noNationalRiders": "Für die Nationale Meisterschaft sind noch keine Fahrer bestätigt.",
     "riderKit": "Trikot des aktuellen Teams",
-    "freeAgent": "Vereinslos"
+    "freeAgent": "Vereinslos",
+    "worldChampionshipFieldTitle": "Straßen-Weltmeisterschaft – Startliste und erwartete Nationen",
+    "worldChampionshipFieldDescription": "Ein Fahrer pro Land. Bestätigte nationale Meister stehen zuerst. Länder mit laufender Qualifikation bleiben grau, bis ihr Meister feststeht.",
+    "worldChampionshipConfirmed": "bestätigte Fahrer",
+    "worldChampionshipAwaiting": "warten auf ihren nationalen Meister",
+    "worldChampionshipNoSlots": "Noch keine Startplätze aus nationalen Meisterschaften geplant.",
+    "country": "Land",
+    "rider": "Fahrer",
+    "status": "Status",
+    "worldChampionshipWaiting": "Qualifikation läuft",
+    "worldChampionshipUnavailable": "Nicht bestätigt",
+    "worldChampionshipConfirmedLabel": "Bestätigt",
+    "worldChampionshipInvited": "Bestätigung ausstehend",
+    "worldChampionshipTbd": "Teilnehmer noch unbekannt"
   },
   "results": {
     "classifications": "Rennwertungen",
