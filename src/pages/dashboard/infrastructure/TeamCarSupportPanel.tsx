@@ -13,6 +13,7 @@ import {
   toNumber,
 } from './infrastructureHelpers'
 import { getInfrastructureAssetImageUrl } from './infrastructureAssetImages'
+import { localizeAssetBenefit, localizeDefaultVehicleName } from './localizeAssetCopy'
 
 type TeamCarSupportPanelProps = {
   configRows: InfrastructureAssetConfigRow[]
@@ -438,7 +439,7 @@ function TeamCarProfileModal({
                   <p className="mt-1 text-xs text-gray-500">{t('assetDetailCopy.productionDescription')}</p>
                 </div>
                 <div className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-800">
-                  {formatEffectiveness(factor)} effectiveness
+                  {t('assetDetailCopy.effectiveBadge', { percent: formatEffectiveness(factor) })}
                 </div>
               </div>
 
@@ -451,9 +452,9 @@ function TeamCarProfileModal({
                       key={benefit}
                       className="flex flex-col gap-1 rounded-xl border border-blue-100 bg-white px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
                     >
-                      <span className="text-sm font-medium text-gray-800">{benefit}</span>
+                      <span className="text-sm font-medium text-gray-800">{localizeAssetBenefit(benefit, t)}</span>
                       <span className={`text-xs font-semibold ${reduced ? 'text-amber-700' : 'text-emerald-700'}`}>
-                        {reduced ? `Current: ${currentBenefit}` : t('assetDetailCopy.fullValueActive')}
+                        {reduced ? t('assetDetailCopy.benefitsCurrent', { value: localizeAssetBenefit(currentBenefit, t) }) : t('assetDetailCopy.fullValueActive')}
                       </span>
                     </div>
                   )
@@ -469,7 +470,7 @@ function TeamCarProfileModal({
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.raceReadyMinimum')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(minimumCondition, 0)}</div></div>
               </div>
               <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-600">
-                {conditionBand(condition)}. Effectiveness bands: 80–100% = 100%; 60–79% = 90%; 40–59% = 75%; 30–39% = 60%; below 30% cannot be assigned.
+                {t('assetDetailCopy.effectivenessBandsCar')}
               </div>
             </section>
 
@@ -490,7 +491,7 @@ function TeamCarProfileModal({
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.repairPerCondition')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(repairCostPerPoint)}</div></div>
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.currentRepairEstimate')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(currentRepairCost)}</div></div>
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.currentRepairTime')}</div><div className="mt-1 font-semibold text-gray-900">{currentRepairDays === 0 ? t('assetDetailCopy.noRepairNeeded') : `${currentRepairDays} game day${currentRepairDays === 1 ? '' : 's'}`}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.currentRepairTime')}</div><div className="mt-1 font-semibold text-gray-900">{currentRepairDays === 0 ? t('assetDetailCopy.noRepairNeeded') : t('common.gameDays', { count: currentRepairDays })}</div></div>
               </div>
               <p className="mt-3 text-xs leading-5 text-gray-500">
                 A completed repair restores the car to 100% condition. Repairs use {formatPercent(repairPointsPerDay, 0)} condition points per game day and can only start while the car is available and not locked to a race.
@@ -542,7 +543,7 @@ export function TeamCarSupportPanel({
             <h3 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.yourCars')}</h3>
             <p className="mt-0.5 text-xs text-gray-500">{t('assetDetailCopy.openCarDetails')}</p>
           </div>
-          <div className="text-xs font-semibold text-gray-500">{rosterRows.length} owned</div>
+          <div className="text-xs font-semibold text-gray-500">{rosterRows.length} {t('common.owned')}</div>
         </div>
 
         {rosterRows.length === 0 ? (
@@ -551,7 +552,7 @@ export function TeamCarSupportPanel({
           <div className="mt-3 grid gap-3 lg:grid-cols-2">
             {rosterRows.map(car => {
               const config = configRows.find(row => row.asset_level === car.asset_level)
-              const name = config?.asset_name || car.asset_name || `Team Car Level ${car.asset_level}`
+              const name = t(`assetTiers.team_car.level${car.asset_level}.name`, { defaultValue: config?.asset_name || car.asset_name || `Team Car Level ${car.asset_level}` })
               const baseWear = toNumber(car.condition_loss_per_race_day ?? config?.condition_loss_per_race_day, 0)
 
               return (
@@ -559,14 +560,14 @@ export function TeamCarSupportPanel({
                   <TeamCarImage level={car.asset_level} name={name} />
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <div className="truncate text-sm font-semibold text-gray-900">{car.display_name || name}</div>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">Lv {car.asset_level}</span>
+                      <div className="truncate text-sm font-semibold text-gray-900">{localizeDefaultVehicleName(car.display_name, t) || name}</div>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-600">{t('assetDetailCopy.levelLabel', { level: car.asset_level })}</span>
                     </div>
                     <div className="mt-1 text-xs text-gray-500">{name}</div>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
-                      <span>Condition {formatPercent(toNumber(car.condition_percent, 0))}</span>
-                      <span>Effectiveness {formatEffectiveness(car.condition_factor)}</span>
-                      <span>120 km wear {formatPercent(baseWear)}</span>
+                      <span>{t('common.condition')} {formatPercent(toNumber(car.condition_percent, 0))}</span>
+                      <span>{t('assetDetailCopy.effectiveness')} {formatEffectiveness(car.condition_factor)}</span>
+                      <span>{t('assetDetailCopy.wear120Value', { wear: formatPercent(baseWear) })}</span>
                     </div>
                   </div>
                   <button
@@ -610,17 +611,17 @@ export function TeamCarSupportPanel({
                   <div key={`team_car_engine_level_${config.asset_level}`} className="rounded-xl border border-gray-100 bg-gray-50 p-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Level {config.asset_level}</div>
-                        <div className="mt-1 text-sm font-semibold text-gray-900">{config.asset_name}</div>
+                        <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">{t('assetDetailCopy.levelLabel', { level: config.asset_level })}</div>
+                        <div className="mt-1 text-sm font-semibold text-gray-900">{t(`assetTiers.team_car.level${config.asset_level}.name`, { defaultValue: config.asset_name })}</div>
                       </div>
                       <div className="text-xs font-semibold text-gray-700">{formatCash(config.cost_cash)}</div>
                     </div>
                     <div className="mt-3 space-y-1.5">
-                      {benefits.map(benefit => <div key={benefit} className="text-xs leading-4 text-gray-600">{benefit}</div>)}
+                      {benefits.map(benefit => <div key={benefit} className="text-xs leading-4 text-gray-600">{localizeAssetBenefit(benefit, t)}</div>)}
                     </div>
                     <div className="mt-3 border-t border-gray-200 pt-2 text-[11px] leading-4 text-gray-500">
-                      <div>120 km wear: {formatPercent(baseWear)}</div>
-                      <div>Repair: {formatCash(config.repair_cost_per_condition_point ?? 0)} / condition point</div>
+                      <div>{t('assetDetailCopy.wear120Value', { wear: formatPercent(baseWear) })}</div>
+                      <div>{t('assetDetailCopy.repairPointValue', { cost: formatCash(config.repair_cost_per_condition_point ?? 0) })}</div>
                     </div>
                   </div>
                 )
