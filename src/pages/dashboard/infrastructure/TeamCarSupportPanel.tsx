@@ -482,7 +482,7 @@ function TeamCarProfileModal({
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.longStageCeiling')}</div><div className="mt-1 font-semibold text-gray-900">{formatPercent(longStageWear)}</div></div>
               </div>
               <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-600">
-                The race engine applies wear after every stage. The configured level value is the 120 km reference; distance scales it from 60% to 160%. At the current condition this car supports about {referenceStages} reference stages before reaching the {formatPercent(minimumCondition, 0)} service threshold.
+                {t('assetDetailCopy.vehicleWearExplanation', { stages: referenceStages, threshold: formatPercent(minimumCondition, 0) })}
               </div>
             </section>
 
@@ -494,7 +494,7 @@ function TeamCarProfileModal({
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.currentRepairTime')}</div><div className="mt-1 font-semibold text-gray-900">{currentRepairDays === 0 ? t('assetDetailCopy.noRepairNeeded') : t('common.gameDays', { count: currentRepairDays })}</div></div>
               </div>
               <p className="mt-3 text-xs leading-5 text-gray-500">
-                A completed repair restores the car to 100% condition. Repairs use {formatPercent(repairPointsPerDay, 0)} condition points per game day and can only start while the car is available and not locked to a race.
+                {t('assetDetailCopy.vehicleRepairExplanation', { speed: formatPercent(repairPointsPerDay, 0) })}
               </p>
             </section>
           </div>
