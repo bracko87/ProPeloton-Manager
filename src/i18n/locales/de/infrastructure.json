@@ -865,6 +865,11 @@
     "workshopOnePerEvent": "Nur eine mobile Werkstatt pro Rennen. Der Bonus wird bei Abgabe des Rennplans für reproduzierbare Ergebnisse eingefroren."
   },
   "assetBonusText": {
+    "medicalResponse": "Medizinische Versorgung {{value}}",
+    "minorInjuryRisk": "Risiko leichter Verletzungen {{value}}",
+    "hydration": "Flüssigkeitsversorgung {{value}}",
+    "heatHydration": "Hitze/Flüssigkeitsversorgung {{value}}",
+    "medicalRecovery": "Erholung {{value}}",
     "tourFatigueProtection": "Ermüdungsschutz bei Rundfahrten {{value}}",
     "recoveryComfort": "Erholungskomfort {{value}}",
     "raceSupportCoverage": "Rennunterstützung {{value}}",
