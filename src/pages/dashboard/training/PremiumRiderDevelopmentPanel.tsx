@@ -405,7 +405,7 @@ export default function PremiumRiderDevelopmentPanel({
                       <CartesianGrid strokeDasharray="3 3" />
                       <XAxis dataKey="duration" tick={{fontSize:11}} />
                       <YAxis tick={{fontSize:11}} />
-                      <Tooltip formatter={(value:number) => [`${value} W`,t('power.estimated')]} />
+                      <Tooltip formatter={(value) => [`${value} W`,t('power.estimated')]} />
                       <Bar dataKey="watts" fill="#0f766e" />
                     </BarChart>
                   </ResponsiveContainer>

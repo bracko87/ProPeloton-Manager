@@ -21,7 +21,13 @@ describe('read-only power estimates', () => {
     expect(estimateRiderPower(null,65)).toBeNull()
     expect(estimateRiderPower({...climber,climbing:NaN},62)).toBeNull()
   })
-  it('keeps the power-duration curve ordered',()=>{
+  it('makes body mass relevant to watts per kilogram',()=>{
+    const lighter=estimateRiderPower(climber,60)!
+    const heavier=estimateRiderPower(climber,80)!
+    expect(lighter.wPerKg).toBeGreaterThan(heavier.wPerKg)
+    expect(heavier.ftp).toBeGreaterThan(lighter.ftp)
+  })
+    it('keeps the power-duration curve ordered',()=>{
     const e=estimateRiderPower(climber,62)!
     expect(e.fiveSeconds).toBeGreaterThan(e.oneMinute)
     expect(e.oneMinute).toBeGreaterThan(e.fiveMinutes)

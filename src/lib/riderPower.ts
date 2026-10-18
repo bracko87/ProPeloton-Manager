@@ -28,7 +28,9 @@ export function estimateRiderPower(
   if (!values.every(v => typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= 100)) return null
   const [sprint,climbing,timeTrial,endurance,flat,resistance] = values.map(clampSkill)
   const threshold = 0.30*endurance + 0.23*timeTrial + 0.18*flat + 0.19*climbing + 0.10*resistance
-  const ftp = Math.round(weightKg*(1.8+0.049*threshold))
+  // Blend a mass-independent power contribution with the rider's absolute power capacity.
+  // Do NOT scale FTP proportionally with mass: doing so would cancel weight out of W/kg.
+  const ftp = Math.round(120 + 1.62*weightKg + 1.62*threshold)
   const fiveMinutes = Math.max(Math.round(ftp*1.08),Math.round(weightKg*(2.05 + 0.055*(0.5*climbing+0.3*endurance+0.2*timeTrial))))
   const oneMinute = Math.max(Math.round(fiveMinutes*1.16),Math.round(weightKg*(2.6 + 0.085*(0.67*sprint+0.33*resistance))))
   const fiveSeconds = Math.max(Math.round(oneMinute*1.22),Math.round(weightKg*(3.7+0.148*sprint)))
