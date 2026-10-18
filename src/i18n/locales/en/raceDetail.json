@@ -207,7 +207,20 @@
     "nationalRiderCount": "{{count}} confirmed riders",
     "noNationalRiders": "No confirmed riders are on the National Championship startlist yet.",
     "riderKit": "Current team jersey",
-    "freeAgent": "Free agent"
+    "freeAgent": "Free agent",
+    "worldChampionshipFieldTitle": "World Road Championship — start list and expected nations",
+    "worldChampionshipFieldDescription": "One rider per country. Confirmed national champions are listed first. Countries still running qualification remain grey until their champion is known.",
+    "worldChampionshipConfirmed": "confirmed riders",
+    "worldChampionshipAwaiting": "awaiting a national champion",
+    "worldChampionshipNoSlots": "No national championship slots are scheduled yet.",
+    "country": "Country",
+    "rider": "Rider",
+    "status": "Status",
+    "worldChampionshipWaiting": "Qualification ongoing",
+    "worldChampionshipUnavailable": "Not confirmed",
+    "worldChampionshipConfirmedLabel": "Confirmed",
+    "worldChampionshipInvited": "Awaiting confirmation",
+    "worldChampionshipTbd": "Participant not yet known"
   },
   "results": {
     "classifications": "Race classifications",
