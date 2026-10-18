@@ -13,7 +13,6 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams } from 'react-router'
 import RiderProfileModal from '../../../components/riders/RiderProfileModal'
-import NationalChampionBadge from '../../../components/riders/NationalChampionBadge'
 import { supabase } from '../../../lib/supabase'
 
 type RiderPopupRow = {
@@ -210,7 +209,6 @@ export default function RiderProfilePublicPage() {
 
   return (
     <>
-      <NationalChampionBadge riderId={riderId ?? rider.id} />
       <RiderProfileModal
         rider={rider}
         isOpen
