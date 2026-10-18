@@ -18756,6 +18756,18 @@ describe('Phase 11G organic race physics and replay continuity', () => {
       const climbSelections=result.roadRaceResolution.phase4Finish!.profileClimbSelections
       expect(climbSelections.length,stage.name).toBeGreaterThan(0)
       expect(climbSelections.some((selection)=>Math.abs(selection.kmEnd-stage.distance)<.56),stage.name).toBe(true)
+      const topTen=finishing
+        .slice()
+        .sort((left,right)=>(left.officialTimeSeconds??Infinity)-(right.officialTimeSeconds??Infinity)||left.riderId.localeCompare(right.riderId))
+        .slice(0,10)
+        .map((row)=>({riderId:row.riderId,gapSeconds:Math.round((row.officialTimeSeconds??winnerTime)-winnerTime)}))
+      const frontGroup=finishing.filter((row)=>Math.abs((row.officialTimeSeconds??Infinity)-winnerTime)<.5).length
+      console.info('FRENCH_TOUR_SUMMIT_SIMULATION',JSON.stringify({
+        name:stage.name,syntheticField:input.riders.length,
+        finished:finishing.length,frontGroup,topTen,
+        profilePhysicalSelections:climbSelections.length,
+        replaySynchronized:result.replaySynchronization.synchronized,
+      }))
     }
   })
 
