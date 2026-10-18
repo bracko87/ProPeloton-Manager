@@ -865,6 +865,11 @@
     "workshopOnePerEvent": "Un'unica officina mobile per gara. I bonus vengono fissati all'invio del piano per risultati riproducibili."
   },
   "assetBonusText": {
+    "medicalResponse": "Assistenza medica {{value}}",
+    "minorInjuryRisk": "Rischio di infortuni lievi {{value}}",
+    "hydration": "Idratazione {{value}}",
+    "heatHydration": "Caldo/idratazione {{value}}",
+    "medicalRecovery": "Recupero {{value}}",
     "tourFatigueProtection": "Protezione fatica nei tour {{value}}",
     "recoveryComfort": "Comfort recupero {{value}}",
     "raceSupportCoverage": "Copertura assistenza gara {{value}}",
