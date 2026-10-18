@@ -865,6 +865,11 @@
     "workshopOnePerEvent": "Only one Mobile Workshop can be assigned to an event. Submitted Race Plans freeze the Workshop benefit at submission time for deterministic race replays."
   },
   "assetBonusText": {
+    "medicalResponse": "Medical response {{value}}",
+    "minorInjuryRisk": "Minor injury risk {{value}}",
+    "hydration": "Hydration {{value}}",
+    "heatHydration": "Heat/hydration {{value}}",
+    "medicalRecovery": "Recovery {{value}}",
     "tourFatigueProtection": "Tour Fatigue Protection {{value}}",
     "recoveryComfort": "Recovery Comfort {{value}}",
     "raceSupportCoverage": "Race Support Coverage {{value}}",
