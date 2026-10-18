@@ -1,10 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
-import { Medal, Trophy } from 'lucide-react'
+import { Medal } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
-
-const WORLD_CHAMPIONSHIP_LOGO =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Others/world%20championship%20logo.webp'
 
 type ChampionshipHonour = {
   season_number: number
@@ -15,210 +12,92 @@ type ChampionshipHonour = {
   awarded_on?: string | null
   is_current_season?: boolean
 }
-
 type ChampionshipHonoursPayload = {
   current_season: number
   honours: ChampionshipHonour[]
 }
+type Placement = 'banner' | 'history'
 
-function flagUrl(code?: string | null): string | null {
-  const normalized = code?.trim().toLowerCase()
-  return normalized && /^[a-z]{2}$/.test(normalized)
-    ? `https://flagcdn.com/w40/${normalized}.png`
-    : null
+function honourTitle(h: ChampionshipHonour): string {
+  const race = h.honor_type === 'world_road' ? 'World Road Championship' : 'National Road Championship'
+  const medal = h.rank === 1 ? 'Gold' : h.rank === 2 ? 'Silver' : 'Bronze'
+  return `${race} — ${medal} · Season ${h.season_number}${h.country_code ? ` · ${h.country_code}` : ''}`
+}
+const medalStyle: Record<number, string> = {
+  1: 'border-yellow-600/50 bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-600 text-amber-950',
+  2: 'border-slate-400 bg-gradient-to-br from-white via-slate-200 to-slate-400 text-slate-900',
+  3: 'border-orange-700/40 bg-gradient-to-br from-amber-100 via-orange-300 to-orange-600 text-amber-950',
 }
 
-function medalLabel(rank: number): string {
-  if (rank === 1) return 'Champion'
-  if (rank === 2) return 'Silver'
-  return 'Bronze'
-}
-
-function medalClass(rank: number): string {
-  if (rank === 1) {
-    return 'border-amber-300 bg-gradient-to-r from-amber-50 via-yellow-50 to-white text-amber-950'
-  }
-
-  if (rank === 2) {
-    return 'border-slate-300 bg-gradient-to-r from-slate-50 via-white to-slate-50 text-slate-900'
-  }
-
-  return 'border-orange-300 bg-gradient-to-r from-orange-50 via-amber-50 to-white text-orange-950'
-}
-
+/** Banner honours belong inside the yellow rider header. Older honours only
+ * appear under rider History; no oversized cards above the profile. */
 export default function NationalChampionBadge({
   riderId,
+  placement = 'banner',
   className = '',
 }: {
   riderId: string
+  placement?: Placement
   className?: string
 }): JSX.Element | null {
   const [payload, setPayload] = useState<ChampionshipHonoursPayload | null>(null)
-
   useEffect(() => {
     let alive = true
-
-    const load = async (): Promise<void> => {
-      const { data, error } = await supabase.rpc(
-        'get_rider_championship_honours_v1',
-        { p_rider_id: riderId },
-      )
-
+    setPayload(null)
+    void supabase.rpc('get_rider_championship_honours_v1', {
+      p_rider_id: riderId,
+    }).then(({ data, error }) => {
       if (!alive || error) return
-
-      const value = (data ?? null) as ChampionshipHonoursPayload | null
-      setPayload(
-        value && Array.isArray(value.honours)
-          ? value
-          : { current_season: 0, honours: [] },
-      )
-    }
-
-    void load()
-
-    return () => {
-      alive = false
-    }
+      const next = data as ChampionshipHonoursPayload | null
+      setPayload(next && Array.isArray(next.honours) ? next : { current_season: 0, honours: [] })
+    })
+    return () => { alive = false }
   }, [riderId])
 
-  const currentHonours = useMemo(
-    () =>
-      (payload?.honours ?? []).filter(
-        honour =>
-          honour.is_current_season === true ||
-          honour.season_number === payload?.current_season,
-      ),
-    [payload],
-  )
-
-  const historicalHonours = useMemo(
-    () =>
-      (payload?.honours ?? []).filter(
-        honour =>
-          honour.is_current_season !== true &&
-          honour.season_number !== payload?.current_season,
-      ),
-    [payload],
-  )
-
-  if ((payload?.honours?.length ?? 0) === 0) return null
-
-  return (
-    <div
-      className={[
-        'mx-4 mt-4 space-y-2 md:mx-6',
-        className,
-      ].join(' ')}
-    >
-      {currentHonours.map((honour, index) => {
-        const isWorld = honour.honor_type === 'world_road'
-        const flag = flagUrl(honour.country_code)
-        const title = isWorld
-          ? honour.rank === 1
-            ? 'World Road Champion'
-            : `World Road Championship ${medalLabel(honour.rank)}`
-          : honour.rank === 1
-            ? 'National Road Champion'
-            : `National Road Championship ${medalLabel(honour.rank)}`
-
-        return (
-          <div
-            key={`${honour.honor_type}-${honour.season_number}-${honour.country_code ?? 'world'}-${honour.rank}-${index}`}
-            className={[
-              'flex flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-3 shadow-sm',
-              medalClass(honour.rank),
-            ].join(' ')}
-          >
-            <div className="flex items-center gap-3">
-              {isWorld ? (
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/80 bg-white p-1 shadow-sm">
-                  <img
-                    src={WORLD_CHAMPIONSHIP_LOGO}
-                    alt="World Road Championship"
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/80 shadow-sm">
-                  {honour.rank === 1 ? (
-                    <Trophy className="h-5 w-5" />
-                  ) : (
-                    <Medal className="h-5 w-5" />
-                  )}
-                </div>
-              )}
-
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-black">{title}</span>
-                  {!isWorld && flag ? (
-                    <img
-                      src={flag}
-                      alt={honour.country_code ?? ''}
-                      className="h-4 w-6 rounded-sm border border-black/10 object-cover"
-                    />
-                  ) : null}
-                  {!isWorld && !flag && honour.country_code ? (
-                    <span className="text-xs font-bold">
-                      {honour.country_code}
-                    </span>
-                  ) : null}
-                </div>
-                <div className="mt-0.5 text-xs opacity-75">
-                  Season {honour.season_number} · #{honour.rank}
-                </div>
-              </div>
+  const current = useMemo(() => (payload?.honours ?? [])
+    .filter(h => h.is_current_season === true || h.season_number === payload?.current_season)
+    .sort((a,b) => (a.honor_type === 'world_road' ? -1 : 1) - (b.honor_type === 'world_road' ? -1 : 1) || a.rank-b.rank)
+    .slice(0,4), [payload])
+  const past = useMemo(() => (payload?.honours ?? [])
+    .filter(h => h.season_number !== payload?.current_season && !h.is_current_season)
+    .sort((a,b) => b.season_number-a.season_number || a.rank-b.rank), [payload])
+  if (placement === 'banner') {
+    if (!current.length) return null
+    return (
+      <div className={`flex flex-wrap items-center gap-2 ${className}`} aria-label="Current season championship medals">
+        {current.map((h,index) => (
+          <div key={`${h.honor_type}-${h.season_number}-${h.rank}-${index}`}
+            className="group relative inline-flex" tabIndex={0} role="img" aria-label={honourTitle(h)} title={honourTitle(h)}>
+            <div className={`flex h-12 w-12 items-center justify-center rounded-xl border shadow-sm sm:h-14 sm:w-14 ${medalStyle[h.rank] ?? medalStyle[3]}`}>
+              <Medal className="h-7 w-7" strokeWidth={2.4} aria-hidden="true"/>
+              <span className="sr-only">{honourTitle(h)}</span>
             </div>
-
-            {honour.source_race_id ? (
-              <Link
-                to={`/dashboard/races/${honour.source_race_id}`}
-                className="text-sm font-bold underline-offset-2 hover:underline"
-              >
-                View championship
-              </Link>
+            <div role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-max max-w-[260px] -translate-x-1/2 rounded-lg bg-slate-950 px-3 py-2 text-center text-xs font-semibold text-white shadow-xl group-hover:block group-focus:block">
+              {honourTitle(h)}
+              {h.awarded_on ? <div className="mt-1 font-normal">{h.awarded_on}</div> : null}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  if (!past.length) return null
+  return (
+    <section className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${className}`}>
+      <h3 className="text-sm font-semibold text-slate-900">Career championship achievements</h3>
+      <div className="mt-3 space-y-2">
+        {past.map((h,index) => (
+          <div key={`${h.honor_type}-${h.season_number}-${h.rank}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
+            <span className="flex items-center gap-2">
+              <Medal className={`h-5 w-5 ${h.rank === 1 ? 'text-amber-500' : h.rank === 2 ? 'text-slate-500' : 'text-orange-600'}`} />
+              {honourTitle(h)}
+            </span>
+            {h.source_race_id ? (
+              <Link className="text-xs font-semibold text-sky-700 hover:underline" to={`/dashboard/races/${h.source_race_id}`}>View race</Link>
             ) : null}
           </div>
-        )
-      })}
-
-      {historicalHonours.length > 0 ? (
-        <details className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-600 shadow-sm">
-          <summary className="cursor-pointer font-semibold text-slate-700">
-            Career championship honours · {historicalHonours.length}
-          </summary>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {historicalHonours.map((honour, index) => {
-              const isWorld = honour.honor_type === 'world_road'
-              const label = isWorld
-                ? `World Road · ${medalLabel(honour.rank)} · S${honour.season_number}`
-                : `${honour.country_code ?? 'National'} · ${medalLabel(honour.rank)} · S${honour.season_number}`
-
-              return (
-                <span
-                  key={`history-${honour.honor_type}-${honour.season_number}-${honour.country_code ?? 'world'}-${honour.rank}-${index}`}
-                  className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-1 font-semibold text-slate-600"
-                >
-                  {isWorld ? (
-                    <img
-                      src={WORLD_CHAMPIONSHIP_LOGO}
-                      alt=""
-                      className="h-4 w-4 object-contain"
-                    />
-                  ) : flagUrl(honour.country_code) ? (
-                    <img
-                      src={flagUrl(honour.country_code) ?? undefined}
-                      alt=""
-                      className="h-3 w-4 rounded-sm object-cover"
-                    />
-                  ) : null}
-                  {label}
-                </span>
-              )
-            })}
-          </div>
-        </details>
-      ) : null}
-    </div>
+        ))}
+      </div>
+    </section>
   )
 }
