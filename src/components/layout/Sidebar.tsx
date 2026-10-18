@@ -220,7 +220,7 @@ export default function Sidebar({
         onClick={onToggle}
         aria-label={collapsed ? t('expandSidebar') : t('collapseSidebar')}
         title={collapsed ? t('expandSidebar') : t('collapseSidebar')}
-        className="absolute -right-3 top-28 z-30 flex h-8 w-7 items-center justify-center rounded-r-lg border border-slate-600 bg-[#0b0f14] text-white shadow-md hover:bg-slate-700"
+        className="absolute -right-3 top-12 z-30 flex h-8 w-7 items-center justify-center rounded-r-lg border border-slate-600 bg-[#0b0f14] text-white shadow-md hover:bg-slate-700"
       >
         {collapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
       </button>
