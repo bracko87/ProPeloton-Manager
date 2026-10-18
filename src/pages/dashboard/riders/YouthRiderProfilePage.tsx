@@ -353,6 +353,9 @@ export default function YouthRiderProfilePage(): JSX.Element {
           resistance: profile.attributes?.resistance,
         }}
       />
+      <p className="rounded-lg border border-sky-100 bg-sky-50 px-4 py-3 text-xs leading-5 text-slate-700">
+        {t('profile.physicalGrowth', { defaultValue: 'U16 height and weight can grow at season transitions according to age. Each rider grows at most once per season. When promoted to the senior team, the rider keeps the last recorded youth measurements; adult measurements then remain stable. These values are separate from rider skill development.' })}
+      </p>
       {profile.academy_id ? (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-4">
           <div>
