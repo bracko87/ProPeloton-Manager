@@ -764,5 +764,16 @@
     "difference": "Razlika {{value}}",
     "explanation": "Vrijednosti su prikazane spolja, atributi su u sredini, a ogledalne trake prikazuju razliku za svakog vozača. Zelena znači više, crvena manje.",
     "vs": "vs"
+  },
+  "championshipMedals": {
+    "nationalRoad": "Državno prvenstvo u cestovnom biciklizmu",
+    "worldRoad": "Svjetsko prvenstvo u cestovnom biciklizmu",
+    "gold": "Zlato",
+    "silver": "Srebro",
+    "bronze": "Bronca",
+    "season": "Sezona",
+    "current": "Medalje u aktualnoj sezoni",
+    "career": "Prvenstvena postignuća u karijeri",
+    "viewRace": "Pogledaj utrku"
   }
 }
