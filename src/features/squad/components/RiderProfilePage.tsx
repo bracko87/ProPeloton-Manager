@@ -4632,7 +4632,7 @@ export default function RiderProfilePage({
   useEffect(() => {
     let mounted = true
     async function loadPerformanceAnalysis() {
-      if (!isPremium || !selectedRider?.id || !focusedTrainingRider?.rider_id) {
+      if (!isPremium || !selectedRider?.id) {
         setPerformanceAnalysis(null)
         setPerformanceAnalysisError(null)
         setPerformanceAnalysisLoading(false)
@@ -4658,7 +4658,7 @@ export default function RiderProfilePage({
     return () => {
       mounted = false
     }
-  }, [isPremium, selectedRider?.id, focusedTrainingRider?.rider_id, t])
+  }, [isPremium, selectedRider?.id, t])
 
   useEffect(() => {
     const riderIdForMedicalSupport = selectedRider?.id ?? null
