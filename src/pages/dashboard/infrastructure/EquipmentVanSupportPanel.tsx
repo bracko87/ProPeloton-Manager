@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import type { InfrastructureAssetConfigRow } from './infrastructureTypes'
 import { formatCash, formatGameDate, toNumber } from './infrastructureHelpers'
 import { getInfrastructureAssetImageUrl } from './infrastructureAssetImages'
+import { localizeDefaultVehicleName } from './localizeAssetCopy'
 
 type EquipmentVanRosterRow = {
   van_id?: string | null
@@ -159,7 +160,7 @@ function EquipmentVanProfileModal({
     missing <= 0 || repairPointsPerDay <= 0
       ? 0
       : Math.max(1, Math.ceil(missing / repairPointsPerDay))
-  const name = config.asset_name || van.asset_name || `Equipment Van Level ${van.asset_level}`
+  const name = t(`assetTiers.equipment_van.level${van.asset_level}.name`, { defaultValue: config.asset_name || van.asset_name || `Equipment Van Level ${van.asset_level}` })
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -217,7 +218,7 @@ function EquipmentVanProfileModal({
               <div>
                 <div className="text-xs text-gray-400">{t('assetDetailCopy.statusLabel')}</div>
                 <div className="mt-1 font-semibold capitalize text-gray-900">
-                  {String(van.status).replaceAll('_', ' ')}
+                  {t(`assetStatus.${van.status}`, { defaultValue: String(van.status).replaceAll('_', ' ') })}
                 </div>
               </div>
               <div>
@@ -233,7 +234,7 @@ function EquipmentVanProfileModal({
               <div>
                 <div className="text-xs text-gray-400">{t('assetDetailCopy.lastUsed')}</div>
                 <div className="mt-1 font-semibold text-gray-900">
-                  {van.last_used_game_date ? formatGameDate(van.last_used_game_date) : 'Not used yet'}
+                  {van.last_used_game_date ? formatGameDate(van.last_used_game_date) : t('assetDetailCopy.notUsedYet')}
                 </div>
               </div>
             </div>
@@ -288,7 +289,7 @@ function EquipmentVanProfileModal({
             </section>
 
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
-              <h4 className="text-sm font-semibold text-gray-900">Condition & wear</h4>
+              <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.conditionWear')}</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl bg-gray-50 p-3">
                   <div className="text-xs text-gray-400">{t('assetDetailCopy.currentCondition')}</div>
@@ -322,7 +323,7 @@ function EquipmentVanProfileModal({
                 <div className="rounded-xl bg-gray-50 p-3">
                   <div className="text-xs text-gray-400">{t('assetDetailCopy.repairTime')}</div>
                   <div className="mt-1 font-semibold text-gray-900">
-                    {repairDays === 0 ? 'No repair needed' : `${repairDays} game day${repairDays === 1 ? '' : 's'}`}
+                    {repairDays === 0 ? t('assetDetailCopy.noRepairNeeded') : `${repairDays} game day${repairDays === 1 ? '' : 's'}`}
                   </div>
                 </div>
                 <div className="rounded-xl bg-gray-50 p-3">
@@ -385,7 +386,7 @@ export function EquipmentVanSupportPanel({
                 <EquipmentVanImage level={config.asset_level} name={config.asset_name} />
                 <div className="min-w-0">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Level {config.asset_level}</div>
-                  <div className="mt-1 font-semibold text-gray-900">{config.asset_name}</div>
+                  <div className="mt-1 font-semibold text-gray-900">{t(`assetTiers.equipment_van.level${config.asset_level}.name`, { defaultValue: config.asset_name })}</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">{formatCash(config.cost_cash)}</div>
                   <div className="mt-1 text-xs text-gray-500">Delivery: {toNumber(config.delivery_game_days, 0)} game days</div>
                 </div>
@@ -453,7 +454,7 @@ export function EquipmentVanSupportPanel({
       )}
 
       <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600">
-        Condition scaling: 90–100% = 100%; 75–89% = 95%; 60–74% = 85%; 45–59% = 70%; 30–44% = 50%; below 30% = 0% and cannot be newly assigned. Only one Equipment Van can be assigned to an event.
+        {t('assetDetailCopy.conditionEffectivenessScale')} Only one Equipment Van can be assigned to an event.
       </div>
 
       {selectedVan && selectedConfig && (
