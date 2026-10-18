@@ -11,10 +11,12 @@ export default function RiderPowerProfile({
   riderId,
   skills,
   scoutingRestricted = false,
+  isYouth = false,
 }: {
   riderId: string
   skills: RiderPowerSkills | null
   scoutingRestricted?: boolean
+  isYouth?: boolean
 }): JSX.Element {
   const { t } = useTranslation('riderProfile')
   const [physique, setPhysique] = useState<{ height_cm: number; weight_kg: number } | null>(null)
@@ -48,7 +50,7 @@ export default function RiderPowerProfile({
           ⓘ
         </button>
       </div>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{t('powerProfile.summary')}</p>
+      <p className="mt-1 text-xs leading-5 text-slate-500">{isYouth ? t('powerProfile.youthSummary', { defaultValue: 'Youth height and weight can change as riders grow; adults keep their final measurements.' }) : t('powerProfile.summary')}</p>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {([
           [t('powerProfile.height'), physique ? `${physique.height_cm} cm` : '—'],
@@ -80,7 +82,7 @@ export default function RiderPowerProfile({
           {t(scoutingRestricted ? 'powerProfile.scoutingHidden' : 'powerProfile.unavailable')}
         </p>
       )}
-      <p className="mt-3 text-xs leading-5 text-slate-600">{t('powerProfile.transferMeaning')}</p>
+      <p className="mt-3 text-xs leading-5 text-slate-600">{isYouth ? t('powerProfile.youthTransferMeaning', { defaultValue: 'U16 physiques are updated once per season based on age. When a rider graduates, their latest height and weight carry into the senior profile. Watts are still calculated from visible skills and weight.' }) : t('powerProfile.transferMeaning')}</p>
       {infoOpen && (
         <div className="mt-3 rounded-lg border border-blue-100 bg-blue-50 p-3 text-xs leading-5 text-slate-800">
           <strong>{t('powerProfile.helpTitle')}</strong>
