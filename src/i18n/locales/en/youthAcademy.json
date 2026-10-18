@@ -588,7 +588,8 @@
     "race": "Race",
     "class": "Class",
     "result": "Result",
-    "points": "Points"
+    "points": "Points",
+    "physicalGrowth": "U16 height and weight can grow at season transitions according to age. Each rider grows at most once per season. When promoted to the senior team, the rider keeps the last recorded youth measurements; adult measurements then remain stable. These values are separate from rider skill development."
   },
   "manual": {
     "title": "Need help with the Youth Academy?",
