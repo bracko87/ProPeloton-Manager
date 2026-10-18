@@ -764,5 +764,16 @@
     "difference": "Veränderung {{value}}",
     "explanation": "Die Werte werden außen angezeigt, die Attribute zentriert und die gespiegelten Balken zeigen den Unterschied für jeden Fahrer. Grün bedeutet höher, rot bedeutet niedriger.",
     "vs": "vs."
+  },
+  "championshipMedals": {
+    "nationalRoad": "Nationale Straßenmeisterschaft",
+    "worldRoad": "Straßen-Weltmeisterschaft",
+    "gold": "Gold",
+    "silver": "Silber",
+    "bronze": "Bronze",
+    "season": "Saison",
+    "current": "Meisterschaftsmedaillen dieser Saison",
+    "career": "Meisterschaftserfolge in der Karriere",
+    "viewRace": "Rennen ansehen"
   }
 }
