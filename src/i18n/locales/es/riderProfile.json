@@ -764,5 +764,16 @@
     "difference": "Diferencia {{value}}",
     "explanation": "Los valores se muestran en el exterior, los atributos se centran, y las barras de espejo muestran la diferencia para cada ciclista. Verde significa más alto, rojo significa más bajo.",
     "vs": "vs."
+  },
+  "championshipMedals": {
+    "nationalRoad": "Campeonato Nacional de Ruta",
+    "worldRoad": "Campeonato Mundial de Ruta",
+    "gold": "Oro",
+    "silver": "Plata",
+    "bronze": "Bronce",
+    "season": "Temporada",
+    "current": "Medallas de la temporada actual",
+    "career": "Logros de campeonatos en su carrera",
+    "viewRace": "Ver carrera"
   }
 }
