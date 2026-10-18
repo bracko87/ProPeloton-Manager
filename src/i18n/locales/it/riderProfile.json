@@ -764,5 +764,16 @@
     "difference": "Differenza {{value}}",
     "explanation": "I valori sono mostrati all'esterno, gli attributi sono centrati, e le barre specchiate mostrano la differenza per ogni ciclista. Verde significa più alto, rosso significa più basso.",
     "vs": "vs"
+  },
+  "championshipMedals": {
+    "nationalRoad": "Campionato Nazionale su Strada",
+    "worldRoad": "Campionato del Mondo su Strada",
+    "gold": "Oro",
+    "silver": "Argento",
+    "bronze": "Bronzo",
+    "season": "Stagione",
+    "current": "Medaglie della stagione in corso",
+    "career": "Successi nei campionati in carriera",
+    "viewRace": "Vedi gara"
   }
 }
