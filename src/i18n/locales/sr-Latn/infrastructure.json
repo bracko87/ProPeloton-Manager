@@ -865,6 +865,11 @@
     "workshopOnePerEvent": "Samo jedna mobilna radionica može biti dodeljena trci. Bonus se zaključava pri predaji plana trke da bi ponavljanje rezultata bilo dosledno."
   },
   "assetBonusText": {
+    "medicalResponse": "Medicinska reakcija {{value}}",
+    "minorInjuryRisk": "Rizik lakše povrede {{value}}",
+    "hydration": "Hidratacija {{value}}",
+    "heatHydration": "Vrućina/hidratacija {{value}}",
+    "medicalRecovery": "Oporavak {{value}}",
     "tourFatigueProtection": "Zaštita od umora na turama {{value}}",
     "recoveryComfort": "Udobnost oporavka {{value}}",
     "raceSupportCoverage": "Pokrivenost podrške na trci {{value}}",
