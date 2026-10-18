@@ -764,5 +764,16 @@
     "difference": "Différence {{value}}",
     "explanation": "Les valeurs sont affichées à l'extérieur, les attributs sont centrés et les barres miroirs montrent la différence pour chaque coureur. Vert signifie plus haut, rouge signifie plus bas.",
     "vs": "vs"
+  },
+  "championshipMedals": {
+    "nationalRoad": "Championnat national sur route",
+    "worldRoad": "Championnat du monde sur route",
+    "gold": "Or",
+    "silver": "Argent",
+    "bronze": "Bronze",
+    "season": "Saison",
+    "current": "Médailles de la saison en cours",
+    "career": "Palmarès des championnats",
+    "viewRace": "Voir la course"
   }
 }
