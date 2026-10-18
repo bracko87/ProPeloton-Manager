@@ -207,7 +207,20 @@
     "nationalRiderCount": "{{count}} corridori confermati",
     "noNationalRiders": "Non ci sono ancora corridori confermati nella lista di partenza del Campionato Nazionale.",
     "riderKit": "Maglia della squadra attuale",
-    "freeAgent": "Senza squadra"
+    "freeAgent": "Senza squadra",
+    "worldChampionshipFieldTitle": "Mondiale su strada — lista di partenza e nazioni attese",
+    "worldChampionshipFieldDescription": "Un corridore per Paese. I campioni nazionali confermati sono elencati per primi. Le nazioni con qualificazioni ancora in corso restano grigie finché non viene definito il campione.",
+    "worldChampionshipConfirmed": "corridori confermati",
+    "worldChampionshipAwaiting": "in attesa del campione nazionale",
+    "worldChampionshipNoSlots": "Nessun posto dei campionati nazionali ancora programmato.",
+    "country": "Paese",
+    "rider": "Corridore",
+    "status": "Stato",
+    "worldChampionshipWaiting": "Qualificazioni in corso",
+    "worldChampionshipUnavailable": "Non confermato",
+    "worldChampionshipConfirmedLabel": "Confermato",
+    "worldChampionshipInvited": "In attesa di conferma",
+    "worldChampionshipTbd": "Partecipante non ancora noto"
   },
   "results": {
     "classifications": "Classificazioni delle corse",
