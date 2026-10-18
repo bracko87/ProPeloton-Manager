@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { Medal } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -18,11 +19,6 @@ type ChampionshipHonoursPayload = {
 }
 type Placement = 'banner' | 'history'
 
-function honourTitle(h: ChampionshipHonour): string {
-  const race = h.honor_type === 'world_road' ? 'World Road Championship' : 'National Road Championship'
-  const medal = h.rank === 1 ? 'Gold' : h.rank === 2 ? 'Silver' : 'Bronze'
-  return `${race} — ${medal} · Season ${h.season_number}${h.country_code ? ` · ${h.country_code}` : ''}`
-}
 const medalStyle: Record<number, string> = {
   1: 'border-yellow-600/50 bg-gradient-to-br from-yellow-200 via-amber-400 to-amber-600 text-amber-950',
   2: 'border-slate-400 bg-gradient-to-br from-white via-slate-200 to-slate-400 text-slate-900',
@@ -40,6 +36,18 @@ export default function NationalChampionBadge({
   placement?: Placement
   className?: string
 }): JSX.Element | null {
+  const { t } = useTranslation('riderProfile')
+  const honourTitle = (h: ChampionshipHonour): string => {
+    const race = h.honor_type === 'world_road'
+      ? t('championshipMedals.worldRoad', { defaultValue: 'World Road Championship' })
+      : t('championshipMedals.nationalRoad', { defaultValue: 'National Road Championship' })
+    const medal = h.rank === 1
+      ? t('championshipMedals.gold', { defaultValue: 'Gold' })
+      : h.rank === 2
+        ? t('championshipMedals.silver', { defaultValue: 'Silver' })
+        : t('championshipMedals.bronze', { defaultValue: 'Bronze' })
+    return `${race} — ${medal} · ${t('championshipMedals.season', { defaultValue: 'Season' })} ${h.season_number}${h.country_code ? ` · ${h.country_code}` : ''}`
+  }
   const [payload, setPayload] = useState<ChampionshipHonoursPayload | null>(null)
   useEffect(() => {
     let alive = true
@@ -64,7 +72,7 @@ export default function NationalChampionBadge({
   if (placement === 'banner') {
     if (!current.length) return null
     return (
-      <div className={`flex flex-wrap items-center gap-2 ${className}`} aria-label="Current season championship medals">
+      <div className={`flex flex-wrap items-center gap-2 ${className}`} aria-label={t('championshipMedals.current', { defaultValue: 'Current season championship medals' })}>
         {current.map((h,index) => (
           <div key={`${h.honor_type}-${h.season_number}-${h.rank}-${index}`}
             className="group relative inline-flex" tabIndex={0} role="img" aria-label={honourTitle(h)} title={honourTitle(h)}>
@@ -84,7 +92,7 @@ export default function NationalChampionBadge({
   if (!past.length) return null
   return (
     <section className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${className}`}>
-      <h3 className="text-sm font-semibold text-slate-900">Career championship achievements</h3>
+      <h3 className="text-sm font-semibold text-slate-900">{t('championshipMedals.career', { defaultValue: 'Career championship achievements' })}</h3>
       <div className="mt-3 space-y-2">
         {past.map((h,index) => (
           <div key={`${h.honor_type}-${h.season_number}-${h.rank}-${index}`} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm">
@@ -93,7 +101,7 @@ export default function NationalChampionBadge({
               {honourTitle(h)}
             </span>
             {h.source_race_id ? (
-              <Link className="text-xs font-semibold text-sky-700 hover:underline" to={`/dashboard/races/${h.source_race_id}`}>View race</Link>
+              <Link className="text-xs font-semibold text-sky-700 hover:underline" to={`/dashboard/races/${h.source_race_id}`}>{t('championshipMedals.viewRace', { defaultValue: 'View race' })}</Link>
             ) : null}
           </div>
         ))}
