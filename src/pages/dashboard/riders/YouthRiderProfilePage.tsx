@@ -343,6 +343,7 @@ export default function YouthRiderProfilePage(): JSX.Element {
 
       <RiderPowerProfile
         riderId={profile.id}
+        isYouth
         scoutingRestricted={Boolean(profile.public_only && !profile.scouting_report)}
         skills={profile.public_only && !profile.scouting_report ? null : {
           sprint: profile.attributes?.sprint,
