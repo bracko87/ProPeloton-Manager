@@ -326,7 +326,7 @@ function TeamBusProfileModal({
               </div>
 
               <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-600">
-                The universal race engine now uses this bus level's configured wear after every stage. Distance scales the 120 km reference from 60% to 160%. At the current condition this bus supports about {referenceStages} reference stages before reaching the {formatPercent(minimumCondition, 0)} assignment threshold.
+                {t('assetDetailCopy.vehicleWearExplanation', { stages: referenceStages, threshold: formatPercent(minimumCondition, 0) })}
               </div>
             </section>
 
@@ -355,7 +355,7 @@ function TeamBusProfileModal({
                 </div>
               </div>
               <p className="mt-3 text-xs leading-5 text-gray-500">
-                A completed repair restores the bus to 100% condition. Repairs restore {formatPercent(repairPointsPerDay, 0)} condition points per game day and can only start while the bus is available and not locked to a race.
+                {t('assetDetailCopy.vehicleRepairExplanation', { speed: formatPercent(repairPointsPerDay, 0) })}
               </p>
             </section>
           </div>
