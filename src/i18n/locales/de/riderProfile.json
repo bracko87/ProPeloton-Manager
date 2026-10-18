@@ -775,5 +775,9 @@
     "current": "Meisterschaftsmedaillen dieser Saison",
     "career": "Meisterschaftserfolge in der Karriere",
     "viewRace": "Rennen ansehen"
+  },
+  "powerProfile": {
+    "youthSummary": "Größe und Gewicht von Nachwuchsfahrern können sich mit dem Wachstum ändern; Erwachsene behalten ihre endgültigen Maße.",
+    "youthTransferMeaning": "Die Körpermaße von U16-Fahrern ändern sich höchstens einmal pro Saison altersabhängig. Beim Aufstieg werden die letzten Nachwuchswerte übernommen. Die Wattwerte basieren weiterhin auf sichtbaren Fähigkeiten und Gewicht."
   }
 }
