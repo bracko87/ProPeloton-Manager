@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import React, { useMemo, useState } from 'react'
 
 import type { InfrastructureAssetConfigRow, MedicalVanRosterRow } from './infrastructureTypes'
@@ -86,6 +87,7 @@ function MedicalVanImage({ level, name, large = false }: { level: number; name: 
 }
 
 export function MedicalVanSupportPanel({ configRows, rosterRows }: Props): JSX.Element {
+  const { t } = useTranslation('infrastructure')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const configByLevel = useMemo(
     () => new Map(configRows.map(config => [config.asset_level, config])),
@@ -100,10 +102,10 @@ export function MedicalVanSupportPanel({ configRows, rosterRows }: Props): JSX.E
         <div className="border-b border-gray-100 px-4 py-4 sm:px-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-rose-500">Medical Van</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-rose-500">{t('assets.medicalVan')}</div>
               <h3 className="mt-1 text-lg font-semibold text-gray-900">Race medical & recovery support</h3>
               <p className="mt-1 max-w-4xl text-sm text-gray-500">
-                Medical Vans now use their real production condition, wear and canonical race bonuses. Only one Medical Van can be assigned per event.
+                {t('assetDetailCopy.medicalInfo')}
               </p>
             </div>
             <div className="rounded-full border border-rose-100 bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-800">
@@ -120,12 +122,12 @@ export function MedicalVanSupportPanel({ configRows, rosterRows }: Props): JSX.E
                 <div className="text-xs text-gray-400">Level {config.asset_level}</div>
                 <div className="mt-0.5 font-semibold text-gray-900">{config.asset_name}</div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                  <div className="rounded-lg bg-white px-2 py-2"><div className="text-[10px] text-gray-400">Health</div><div className="font-semibold text-rose-700">{tier.healthProtection}</div></div>
-                  <div className="rounded-lg bg-white px-2 py-2"><div className="text-[10px] text-gray-400">Fatigue</div><div className="font-semibold text-amber-700">{tier.fatigueControl}</div></div>
-                  <div className="rounded-lg bg-white px-2 py-2"><div className="text-[10px] text-gray-400">Recovery</div><div className="font-semibold text-emerald-700">{tier.recoverySupport}</div></div>
+                  <div className="rounded-lg bg-white px-2 py-2"><div className="text-[10px] text-gray-400">{t('assetDetailCopy.health')}</div><div className="font-semibold text-rose-700">{tier.healthProtection}</div></div>
+                  <div className="rounded-lg bg-white px-2 py-2"><div className="text-[10px] text-gray-400">{t('assetDetailCopy.fatigue')}</div><div className="font-semibold text-amber-700">{tier.fatigueControl}</div></div>
+                  <div className="rounded-lg bg-white px-2 py-2"><div className="text-[10px] text-gray-400">{t('assetDetailCopy.recovery')}</div><div className="font-semibold text-emerald-700">{tier.recoverySupport}</div></div>
                 </div>
                 <div className="mt-3 text-[11px] leading-4 text-gray-500">{tier.rawEffects}</div>
-                <div className="mt-3 flex items-center justify-between text-xs"><span className="text-gray-400">Catalogue</span><span className="font-semibold text-gray-900">{formatCash(config.cost_cash)}</span></div>
+                <div className="mt-3 flex items-center justify-between text-xs"><span className="text-gray-400">{t('assetDetailCopy.catalogueShort')}</span><span className="font-semibold text-gray-900">{formatCash(config.cost_cash)}</span></div>
               </div>
             )
           })}
@@ -138,7 +140,7 @@ export function MedicalVanSupportPanel({ configRows, rosterRows }: Props): JSX.E
 
       {rosterRows.length > 0 && (
         <section className="mb-5 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm sm:p-5">
-          <h3 className="text-sm font-semibold text-gray-900">Your Medical Vans</h3>
+          <h3 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.yourMedicalVans')}</h3>
           <div className="mt-3 space-y-3">
             {rosterRows.map(van => {
               const condition = toNumber(van.condition_percent, 0)
@@ -155,15 +157,15 @@ export function MedicalVanSupportPanel({ configRows, rosterRows }: Props): JSX.E
                       <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold capitalize text-slate-600">{String(van.status).replaceAll('_', ' ')}</span>
                     </div>
                     <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-                      <span>Condition <strong className="text-gray-800">{percent(condition)}</strong></span>
-                      <span>Effectiveness <strong className="text-gray-800">{percent(factor * 100, 0)}</strong></span>
+                      <span>{t('common.condition')} <strong className="text-gray-800">{percent(condition)}</strong></span>
+                      <span>{t('assetDetailCopy.effectiveness')} <strong className="text-gray-800">{percent(factor * 100, 0)}</strong></span>
                       <span>HP <strong className="text-rose-700">{number(engine.tier.healthProtection)}</strong></span>
                       <span>FC <strong className="text-amber-700">{number(engine.tier.fatigueControl)}</strong></span>
-                      <span>Recovery <strong className="text-emerald-700">{number(engine.tier.recoverySupport)}</strong></span>
+                      <span>{t('assetDetailCopy.recovery')} <strong className="text-emerald-700">{number(engine.tier.recoverySupport)}</strong></span>
                     </div>
                     {van.current_assignment_label && <div className="mt-1 text-[11px] text-gray-400">Assigned: {van.current_assignment_label}</div>}
                   </div>
-                  <button type="button" onClick={() => setSelectedId(van.van_id)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">Details</button>
+                  <button type="button" onClick={() => setSelectedId(van.van_id)} className="rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">{t('common.details')}</button>
                 </div>
               )
             })}
@@ -189,7 +191,7 @@ export function MedicalVanSupportPanel({ configRows, rosterRows }: Props): JSX.E
                   <div className="text-xs font-semibold uppercase tracking-wide text-rose-500">Medical Van · Level {selected.asset_level}</div>
                   <h3 className="mt-1 text-xl font-semibold text-gray-900">{selected.display_name || selectedConfig.asset_name}</h3>
                 </div>
-                <button type="button" onClick={() => setSelectedId(null)} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Close</button>
+                <button type="button" onClick={() => setSelectedId(null)} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">{t('common.close')}</button>
               </div>
 
               <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[0.9fr_1.1fr]">
@@ -197,11 +199,11 @@ export function MedicalVanSupportPanel({ configRows, rosterRows }: Props): JSX.E
                   <MedicalVanImage level={selected.asset_level} name={selectedConfig.asset_name} large />
                   <div className="grid grid-cols-2 gap-3 rounded-xl bg-gray-50 p-4 text-xs">
                     <div><div className="text-gray-400">Catalogue price</div><div className="mt-1 font-semibold text-gray-900">{formatCash(selectedConfig.cost_cash)}</div></div>
-                    <div><div className="text-gray-400">Original purchase</div><div className="mt-1 font-semibold text-gray-900">{formatCash(selected.purchase_cost_cash)}</div></div>
-                    <div><div className="text-gray-400">Race days</div><div className="mt-1 font-semibold text-gray-900">{toNumber(selected.total_race_days, 0)}</div></div>
-                    <div><div className="text-gray-400">Distance</div><div className="mt-1 font-semibold text-gray-900">{number(toNumber(selected.total_distance_km, 0), 0)} km</div></div>
-                    <div><div className="text-gray-400">Last used</div><div className="mt-1 font-semibold text-gray-900">{selected.last_used_game_date ? formatGameDate(selected.last_used_game_date) : 'Not used yet'}</div></div>
-                    <div><div className="text-gray-400">Status</div><div className="mt-1 font-semibold capitalize text-gray-900">{String(selected.status).replaceAll('_', ' ')}</div></div>
+                    <div><div className="text-gray-400">{t('assetDetailCopy.originalPurchase')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(selected.purchase_cost_cash)}</div></div>
+                    <div><div className="text-gray-400">{t('assetDetailCopy.raceDays')}</div><div className="mt-1 font-semibold text-gray-900">{toNumber(selected.total_race_days, 0)}</div></div>
+                    <div><div className="text-gray-400">{t('assetDetailCopy.distance')}</div><div className="mt-1 font-semibold text-gray-900">{number(toNumber(selected.total_distance_km, 0), 0)} km</div></div>
+                    <div><div className="text-gray-400">{t('assetDetailCopy.lastUsed')}</div><div className="mt-1 font-semibold text-gray-900">{selected.last_used_game_date ? formatGameDate(selected.last_used_game_date) : 'Not used yet'}</div></div>
+                    <div><div className="text-gray-400">{t('assetDetailCopy.statusLabel')}</div><div className="mt-1 font-semibold capitalize text-gray-900">{String(selected.status).replaceAll('_', ' ')}</div></div>
                   </div>
                 </div>
 
@@ -209,16 +211,16 @@ export function MedicalVanSupportPanel({ configRows, rosterRows }: Props): JSX.E
                   <div className="rounded-xl border border-rose-100 bg-rose-50 p-4">
                     <div className="flex items-center justify-between gap-3"><div className="font-semibold text-gray-900">Current race effect</div><div className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-rose-800">{percent(factor * 100, 0)} effective</div></div>
                     <div className="mt-3 grid grid-cols-3 gap-2 text-center">
-                      <div className="rounded-lg bg-white p-2"><div className="text-[10px] text-gray-400">Health Protection</div><div className="font-semibold text-rose-700">{number(engine.tier.healthProtection)}</div></div>
-                      <div className="rounded-lg bg-white p-2"><div className="text-[10px] text-gray-400">Fatigue Control</div><div className="font-semibold text-amber-700">{number(engine.tier.fatigueControl)}</div></div>
-                      <div className="rounded-lg bg-white p-2"><div className="text-[10px] text-gray-400">Recovery Support</div><div className="font-semibold text-emerald-700">{number(engine.tier.recoverySupport)}</div></div>
+                      <div className="rounded-lg bg-white p-2"><div className="text-[10px] text-gray-400">{t('assetDetailCopy.healthProtection')}</div><div className="font-semibold text-rose-700">{number(engine.tier.healthProtection)}</div></div>
+                      <div className="rounded-lg bg-white p-2"><div className="text-[10px] text-gray-400">{t('assetDetailCopy.fatigueControl')}</div><div className="font-semibold text-amber-700">{number(engine.tier.fatigueControl)}</div></div>
+                      <div className="rounded-lg bg-white p-2"><div className="text-[10px] text-gray-400">{t('assetDetailCopy.recoverySupport')}</div><div className="font-semibold text-emerald-700">{number(engine.tier.recoverySupport)}</div></div>
                     </div>
-                    <div className="mt-3 text-xs leading-5 text-rose-900">Health consequence risk multiplier: <strong>{number(engine.healthRisk, 3)}</strong>. This does not prevent the incident itself; it reduces the chance that an eligible moderate/major incident becomes a lasting health case.</div>
+                    <div className="mt-3 text-xs leading-5 text-rose-900">{t('assetDetailCopy.healthRiskLabel')} <strong>{number(engine.healthRisk, 3)}</strong>. This does not prevent the incident itself; it reduces the chance that an eligible moderate/major incident becomes a lasting health case.</div>
                   </div>
 
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-xl border border-gray-100 p-4 text-xs"><div className="font-semibold text-gray-900">Fatigue & recovery engine</div><div className="mt-2 space-y-1 text-gray-500"><div>In-stage energy multiplier: <strong className="text-gray-800">{number(engine.energy, 3)}</strong></div><div>Post-stage fatigue multiplier: <strong className="text-gray-800">{number(engine.postFatigue, 3)}</strong></div><div>Recovery bonus: <strong className="text-gray-800">+{number(engine.recovery)}</strong></div></div></div>
-                    <div className="rounded-xl border border-gray-100 p-4 text-xs"><div className="font-semibold text-gray-900">Wear & repair</div><div className="mt-2 space-y-1 text-gray-500"><div>Reference wear / 120 km: <strong className="text-gray-800">{percent(wear)}</strong></div><div>Repair / point: <strong className="text-gray-800">{formatCash(selected.repair_cost_per_condition_point ?? selectedConfig.repair_cost_per_condition_point ?? 0)}</strong></div><div>Repair speed: <strong className="text-gray-800">{number(repairSpeed, 0)} pts/day</strong></div><div>Repair to 100% now: <strong className="text-gray-800">{formatCash(repairCost)} · {repairDays} day{repairDays === 1 ? '' : 's'}</strong></div></div></div>
+                    <div className="rounded-xl border border-gray-100 p-4 text-xs"><div className="font-semibold text-gray-900">Fatigue & recovery engine</div><div className="mt-2 space-y-1 text-gray-500"><div>{t('assetDetailCopy.stageEnergy')} <strong className="text-gray-800">{number(engine.energy, 3)}</strong></div><div>{t('assetDetailCopy.postFatigue')} <strong className="text-gray-800">{number(engine.postFatigue, 3)}</strong></div><div>{t('assetDetailCopy.bonusRecovery')} <strong className="text-gray-800">+{number(engine.recovery)}</strong></div></div></div>
+                    <div className="rounded-xl border border-gray-100 p-4 text-xs"><div className="font-semibold text-gray-900">Wear & repair</div><div className="mt-2 space-y-1 text-gray-500"><div>Reference wear / 120 km: <strong className="text-gray-800">{percent(wear)}</strong></div><div>{t('assetDetailCopy.repairPointLabel')} <strong className="text-gray-800">{formatCash(selected.repair_cost_per_condition_point ?? selectedConfig.repair_cost_per_condition_point ?? 0)}</strong></div><div>{t('assetDetailCopy.repairSpeed')} <strong className="text-gray-800">{number(repairSpeed, 0)} pts/day</strong></div><div>{t('assetDetailCopy.repairNow')} <strong className="text-gray-800">{formatCash(repairCost)} · {repairDays} day{repairDays === 1 ? '' : 's'}</strong></div></div></div>
                   </div>
 
                   <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs leading-5 text-slate-600">
