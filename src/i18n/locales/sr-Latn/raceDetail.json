@@ -209,7 +209,20 @@
     "nationalRiderCount": "{{count}} potvrđenih vozača",
     "noNationalRiders": "Još nema potvrđenih vozača na startnoj listi Nacionalnog prvenstva.",
     "riderKit": "Dres trenutnog tima",
-    "freeAgent": "Slobodan vozač"
+    "freeAgent": "Slobodan vozač",
+    "worldChampionshipFieldTitle": "Svetsko prvenstvo na drumu — startna lista i očekivane reprezentacije",
+    "worldChampionshipFieldDescription": "Po jedan vozač iz svake zemlje. Potvrđeni nacionalni šampioni su prvi na listi. Zemlje u kojima kvalifikacije još traju prikazane su sivom bojom dok se ne sazna šampion.",
+    "worldChampionshipConfirmed": "potvrđenih vozača",
+    "worldChampionshipAwaiting": "čeka nacionalnog šampiona",
+    "worldChampionshipNoSlots": "Još nema zakazanih mesta za nacionalne šampione.",
+    "country": "Država",
+    "rider": "Vozač",
+    "status": "Status",
+    "worldChampionshipWaiting": "Kvalifikacije u toku",
+    "worldChampionshipUnavailable": "Nije potvrđeno",
+    "worldChampionshipConfirmedLabel": "Potvrđen",
+    "worldChampionshipInvited": "Čeka se potvrda",
+    "worldChampionshipTbd": "Učesnik još nije poznat"
   },
   "results": {
     "classifications": "Klasifikacije trke",
