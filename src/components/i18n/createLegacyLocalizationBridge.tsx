@@ -101,7 +101,8 @@ function compileTemplate(
     )
 
     params.push(match[1])
-    pattern += '(.+?)'
+    // A season number must be numeric: never translate 'Serbian National Team' as a season.
+    pattern += match[1] === 'season' ? '(\\d+)' : '(.+?)'
     cursor = match.index + match[0].length
   }
 
