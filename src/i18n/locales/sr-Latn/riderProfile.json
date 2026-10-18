@@ -764,5 +764,16 @@
     "difference": "Razlika {{value}}",
     "explanation": "Vrednosti su prikazane spolja, atributi su u sredini, a ogledalne trake prikazuju razliku za svakog vozača. Zelena znači više, crvena manje.",
     "vs": "vs"
+  },
+  "championshipMedals": {
+    "nationalRoad": "Nacionalno prvenstvo u drumskom biciklizmu",
+    "worldRoad": "Svetsko prvenstvo u drumskom biciklizmu",
+    "gold": "Zlato",
+    "silver": "Srebro",
+    "bronze": "Bronza",
+    "season": "Sezona",
+    "current": "Medalje u tekućoj sezoni",
+    "career": "Dostignuća na prvenstvima tokom karijere",
+    "viewRace": "Pogledaj trku"
   }
 }
