@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import type {
@@ -126,6 +127,7 @@ function TeamBusProfileModal({
   config,
   onClose,
 }: TeamBusProfileModalProps): JSX.Element {
+  const { t } = useTranslation('infrastructure')
   const condition = toNumber(bus.condition_percent, 0)
   const factor = toNumber(bus.condition_factor, 0)
   const baseWear = toNumber(
@@ -158,7 +160,7 @@ function TeamBusProfileModal({
   const shortStageWear = wearForDistance(baseWear, 0.6)
   const longStageWear = wearForDistance(baseWear, 1.6)
   const benefits = splitBenefits(config.effect_summary)
-  const name = config.asset_name || bus.asset_name || `Team Bus Level ${bus.asset_level}`
+  const name = t(`assetTiers.team_bus.level${bus.asset_level}.name`, { defaultValue: config.asset_name || bus.asset_name || `Team Bus Level ${bus.asset_level}` })
   const cataloguePrice = toNumber(config.cost_cash, 0)
   const historicalPurchasePrice = toNumber(bus.purchase_cost_cash, cataloguePrice)
 
@@ -186,7 +188,7 @@ function TeamBusProfileModal({
         <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-gray-100 bg-white px-4 py-4 sm:px-6">
           <div>
             <div className="text-xs font-semibold uppercase tracking-wide text-gray-400">
-              Team Bus · Level {bus.asset_level}
+              {t('assets.teamBus')} · {t('common.level')} {bus.asset_level}
             </div>
             <h3 className="mt-1 text-xl font-semibold text-gray-900">{name}</h3>
             {bus.display_name && bus.display_name !== name && (
@@ -199,7 +201,7 @@ function TeamBusProfileModal({
             onClick={onClose}
             className="shrink-0 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50"
           >
-            Close
+            {t('common.close')}
           </button>
         </div>
 
@@ -209,27 +211,27 @@ function TeamBusProfileModal({
 
             <div className="grid grid-cols-2 gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm">
               <div>
-                <div className="text-xs text-gray-400">Current catalogue price</div>
+                <div className="text-xs text-gray-400">{t('assetDetailCopy.cataloguePrice')}</div>
                 <div className="mt-1 font-semibold text-gray-900">{formatCash(cataloguePrice)}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">Original purchase value</div>
+                <div className="text-xs text-gray-400">{t('assetDetailCopy.originalPurchaseValue')}</div>
                 <div className="mt-1 font-semibold text-gray-900">{formatCash(historicalPurchasePrice)}</div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">Status</div>
+                <div className="text-xs text-gray-400">{t('assetDetailCopy.statusLabel')}</div>
                 <div className="mt-1 font-semibold capitalize text-gray-900">
-                  {String(bus.status).replaceAll('_', ' ')}
+                  {t(`assetStatus.${bus.status}`, { defaultValue: String(bus.status).replaceAll('_', ' ') })}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">Race days used</div>
+                <div className="text-xs text-gray-400">{t('assetDetailCopy.raceDaysUsed')}</div>
                 <div className="mt-1 font-semibold text-gray-900">
                   {toNumber(bus.total_race_days, 0).toLocaleString('en-US')}
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">Distance covered</div>
+                <div className="text-xs text-gray-400">{t('assetDetailCopy.distanceCovered')}</div>
                 <div className="mt-1 font-semibold text-gray-900">
                   {toNumber(bus.total_distance_km, 0).toLocaleString('en-US', {
                     maximumFractionDigits: 0,
@@ -237,9 +239,9 @@ function TeamBusProfileModal({
                 </div>
               </div>
               <div>
-                <div className="text-xs text-gray-400">Last used</div>
+                <div className="text-xs text-gray-400">{t('assetDetailCopy.lastUsed')}</div>
                 <div className="mt-1 font-semibold text-gray-900">
-                  {bus.last_used_game_date ? formatGameDate(bus.last_used_game_date) : 'Not used yet'}
+                  {bus.last_used_game_date ? formatGameDate(bus.last_used_game_date) : t('assetDetailCopy.notUsedYet')}
                 </div>
               </div>
             </div>
@@ -249,13 +251,13 @@ function TeamBusProfileModal({
             <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-900">Race-plan benefits</h4>
+                  <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.racePlanBenefits')}</h4>
                   <p className="mt-1 text-xs text-gray-500">
-                    These are the production values that feed canonical Fatigue Control and Recovery Support.
+                    {t('assetDetailCopy.raceProductionContext')}
                   </p>
                 </div>
                 <div className="rounded-full border border-blue-200 bg-white px-3 py-1 text-xs font-semibold text-blue-800">
-                  {formatEffectiveness(factor)} effectiveness
+                  {t('assetDetailCopy.effectiveBadge', { percent: formatEffectiveness(factor) })}
                 </div>
               </div>
 
@@ -271,7 +273,7 @@ function TeamBusProfileModal({
                     >
                       <span className="text-sm font-medium text-gray-800">{benefit}</span>
                       <span className={`text-xs font-semibold ${reduced ? 'text-amber-700' : 'text-emerald-700'}`}>
-                        {reduced ? `Current: ${currentBenefit}` : 'Full value active'}
+                        {reduced ? t('assetDetailCopy.benefitsCurrent', { value: currentBenefit }) : t('assetDetailCopy.fullValueActive')}
                       </span>
                     </div>
                   )
@@ -279,45 +281,45 @@ function TeamBusProfileModal({
               </div>
 
               <div className="mt-3 rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-xs leading-5 text-gray-600">
-                Only one Team Bus can be assigned to an event. Fatigue Protection maps to Fatigue Control; Recovery Comfort maps to Recovery Support. Team-wide engine caps are applied after all preparation sources are combined.
+                {t('assetDetailCopy.teamBusInfo')}
               </div>
             </section>
 
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
-              <h4 className="text-sm font-semibold text-gray-900">Condition</h4>
+              <h4 className="text-sm font-semibold text-gray-900">{t('common.condition')}</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Current condition</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.currentCondition')}</div>
                   <div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(condition)}</div>
                 </div>
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Current effectiveness</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.currentEffectiveness')}</div>
                   <div className="mt-1 text-lg font-semibold text-gray-900">{formatEffectiveness(factor)}</div>
                 </div>
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Race-ready minimum</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.raceReadyMinimum')}</div>
                   <div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(minimumCondition, 0)}</div>
                 </div>
               </div>
 
               <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2.5 text-xs leading-5 text-gray-600">
-                {conditionBand(condition)}. Effectiveness bands: 70–100% = 100%; 50–69% = 85%; 30–49% = 65%; below 30% cannot be assigned and provides no new Race Plan benefit.
+                {t('assetDetailCopy.effectivenessBandsBus')}
               </div>
             </section>
 
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
-              <h4 className="text-sm font-semibold text-gray-900">Wear per stage</h4>
+              <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.wearPerStage')}</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Short stage floor</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.shortStageFloor')}</div>
                   <div className="mt-1 font-semibold text-gray-900">{formatPercent(shortStageWear)}</div>
                 </div>
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">120 km reference</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.reference120')}</div>
                   <div className="mt-1 font-semibold text-gray-900">{formatPercent(baseWear)}</div>
                 </div>
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Long stage ceiling</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.longStageCeiling')}</div>
                   <div className="mt-1 font-semibold text-gray-900">{formatPercent(longStageWear)}</div>
                 </div>
               </div>
@@ -328,26 +330,26 @@ function TeamBusProfileModal({
             </section>
 
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
-              <h4 className="text-sm font-semibold text-gray-900">Maintenance & delivery</h4>
+              <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.maintenanceDelivery')}</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-4">
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Repair / condition point</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.repairPerCondition')}</div>
                   <div className="mt-1 font-semibold text-gray-900">{formatCash(repairCostPerPoint)}</div>
                 </div>
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Current full repair estimate</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.currentRepairEstimate')}</div>
                   <div className="mt-1 font-semibold text-gray-900">{formatCash(currentRepairCost)}</div>
                 </div>
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">Current repair time</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.currentRepairTime')}</div>
                   <div className="mt-1 font-semibold text-gray-900">
-                    {currentRepairDays === 0 ? 'No repair needed' : `${currentRepairDays} game day${currentRepairDays === 1 ? '' : 's'}`}
+                    {currentRepairDays === 0 ? t('assetDetailCopy.noRepairNeeded') : t('common.gameDays', { count: currentRepairDays })}
                   </div>
                 </div>
                 <div className="rounded-xl bg-gray-50 p-3">
-                  <div className="text-xs text-gray-400">New delivery time</div>
+                  <div className="text-xs text-gray-400">{t('assetDetailCopy.newDeliveryTime')}</div>
                   <div className="mt-1 font-semibold text-gray-900">
-                    {toNumber(config.delivery_game_days, 0)} game days
+                    {t('common.gameDays', { count: toNumber(config.delivery_game_days, 0) })}
                   </div>
                 </div>
               </div>
@@ -366,6 +368,7 @@ export function TeamBusSupportPanel({
   configRows,
   rosterRows,
 }: TeamBusSupportPanelProps): JSX.Element {
+  const { t } = useTranslation('infrastructure')
   const [selectedBusId, setSelectedBusId] = useState<string | null>(null)
 
   const sortedConfig = useMemo(
@@ -395,15 +398,15 @@ export function TeamBusSupportPanel({
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">
-              Production race-engine values
+              {t('assetDetailCopy.productionRaceEngineValues')}
             </div>
-            <h3 className="mt-1 text-base font-semibold text-gray-900">Team Bus fatigue & recovery support</h3>
+            <h3 className="mt-1 text-base font-semibold text-gray-900">{t('assetDetailCopy.teamBusLevelSupport')}</h3>
             <p className="mt-1 max-w-3xl text-xs leading-5 text-gray-500">
               Exact prices, benefits, delivery, wear and maintenance values below come from the production Team Bus configuration used by Race Planning.
             </p>
           </div>
           <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
-            1 bus per event
+            {t('assetDetailCopy.oneBus')}
           </span>
         </div>
 
@@ -446,9 +449,9 @@ export function TeamBusSupportPanel({
         <div className="mt-5 border-t border-gray-100 pt-4">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <h4 className="text-sm font-semibold text-gray-900">Your Team Buses</h4>
+              <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.yourBuses')}</h4>
               <p className="mt-0.5 text-xs text-gray-500">
-                Open Details to see condition-adjusted production benefits and maintenance values for an individual bus.
+                {t('assetDetailCopy.openBusDetails')}
               </p>
             </div>
             <div className="text-xs font-semibold text-gray-500">{rosterRows.length} owned</div>
@@ -456,7 +459,7 @@ export function TeamBusSupportPanel({
 
           {rosterRows.length === 0 ? (
             <div className="mt-3 rounded-xl border border-dashed border-gray-200 bg-gray-50 px-3 py-4 text-sm text-gray-500">
-              No Team Buses owned yet.
+              {t('assetDetailCopy.noBuses')}
             </div>
           ) : (
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
@@ -494,7 +497,7 @@ export function TeamBusSupportPanel({
                       disabled={!config}
                       className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-50"
                     >
-                      Details
+                      {t('common.details')}
                     </button>
                   </div>
                 )
