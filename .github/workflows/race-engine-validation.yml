@@ -51,6 +51,13 @@ jobs:
           src/universal-race-engine/summitFinishSelectivityV1.test.ts
           --reporter=dot
 
+      - name: Run simulation-only French Tour 2000 summit stages through engine
+        run: >-
+          npx --yes vitest@3.2.4 run
+          src/universal-race-engine/runRaceEngine.test.ts
+          --reporter=verbose
+          -t "runs simulation-only French Tour 2000 summit profiles through the full physical engine"
+
       - name: Run World Nations three-day TypeScript E2E
         run: >-
           npx --yes vitest@3.2.4 run
