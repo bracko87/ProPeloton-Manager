@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import type { InfrastructureAssetConfigRow } from './infrastructureTypes'
 import { formatCash, formatGameDate, toNumber } from './infrastructureHelpers'
 import { getInfrastructureAssetImageUrl } from './infrastructureAssetImages'
+import { localizeDefaultVehicleName } from './localizeAssetCopy'
 
 type MobileWorkshopRosterRow = {
   workshop_id?: string | null
@@ -100,7 +101,7 @@ function DetailModal({ workshop, config, onClose }: { workshop: MobileWorkshopRo
   const missing = Math.max(0, 100 - condition)
   const repairCost = Math.ceil(missing * repairCostPerPoint)
   const repairDays = missing <= 0 ? 0 : Math.max(1, Math.ceil(missing / Math.max(repairPointsPerDay, 1)))
-  const name = config.asset_name || workshop.asset_name || `Mobile Workshop Level ${workshop.asset_level}`
+  const name = t(`assetTiers.mobile_workshop.level${workshop.asset_level}.name`, { defaultValue: config.asset_name || workshop.asset_name || `Mobile Workshop Level ${workshop.asset_level}` })
 
   useEffect(() => {
     const handler = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
@@ -126,10 +127,10 @@ function DetailModal({ workshop, config, onClose }: { workshop: MobileWorkshopRo
             <div className="grid grid-cols-2 gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm">
               <div><div className="text-xs text-gray-400">{t('assetDetailCopy.cataloguePrice')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(config.cost_cash)}</div></div>
               <div><div className="text-xs text-gray-400">{t('assetDetailCopy.originalPurchaseValue')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(workshop.purchase_cost_cash ?? config.cost_cash)}</div></div>
-              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.statusLabel')}</div><div className="mt-1 font-semibold capitalize text-gray-900">{String(workshop.status).replaceAll('_', ' ')}</div></div>
+              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.statusLabel')}</div><div className="mt-1 font-semibold capitalize text-gray-900">{t(`assetStatus.${workshop.status}`, { defaultValue: String(workshop.status).replaceAll('_', ' ') })}</div></div>
               <div><div className="text-xs text-gray-400">{t('assetDetailCopy.raceDaysUsed')}</div><div className="mt-1 font-semibold text-gray-900">{toNumber(workshop.total_race_days, 0)}</div></div>
               <div><div className="text-xs text-gray-400">{t('assetDetailCopy.distanceCovered')}</div><div className="mt-1 font-semibold text-gray-900">{toNumber(workshop.total_distance_km, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} km</div></div>
-              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.lastUsed')}</div><div className="mt-1 font-semibold text-gray-900">{workshop.last_used_game_date ? formatGameDate(workshop.last_used_game_date) : 'Not used yet'}</div></div>
+              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.lastUsed')}</div><div className="mt-1 font-semibold text-gray-900">{workshop.last_used_game_date ? formatGameDate(workshop.last_used_game_date) : t('assetDetailCopy.notUsedYet')}</div></div>
             </div>
           </div>
 
@@ -147,13 +148,13 @@ function DetailModal({ workshop, config, onClose }: { workshop: MobileWorkshopRo
             </section>
 
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
-              <h4 className="text-sm font-semibold text-gray-900">Condition & own wear</h4>
+              <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.conditionOwnWear')}</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.currentCondition')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(condition)}</div></div>
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.effectiveness')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(factor * 100, 0)}</div></div>
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.workshopWear')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(wear)}</div></div>
               </div>
-              <p className="mt-3 text-xs leading-5 text-gray-500">90–100% = 100% effectiveness; 75–89% = 95%; 60–74% = 85%; 45–59% = 70%; 30–44% = 50%; below 30% = 0% and cannot be newly assigned.</p>
+              <p className="mt-3 text-xs leading-5 text-gray-500">{t('assetDetailCopy.conditionEffectivenessScale')}</p>
             </section>
 
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
@@ -161,7 +162,7 @@ function DetailModal({ workshop, config, onClose }: { workshop: MobileWorkshopRo
               <div className="mt-4 grid gap-3 sm:grid-cols-4">
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.repairPerPoint')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(repairCostPerPoint)}</div></div>
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.repairEstimate')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(repairCost)}</div></div>
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.repairTime')}</div><div className="mt-1 font-semibold text-gray-900">{repairDays === 0 ? 'No repair needed' : `${repairDays} game day${repairDays === 1 ? '' : 's'}`}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.repairTime')}</div><div className="mt-1 font-semibold text-gray-900">{repairDays === 0 ? t('assetDetailCopy.noRepairNeeded') : `${repairDays} game day${repairDays === 1 ? '' : 's'}`}</div></div>
                 <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.newDelivery')}</div><div className="mt-1 font-semibold text-gray-900">{toNumber(config.delivery_game_days, 0)} game days</div></div>
               </div>
             </section>
@@ -200,7 +201,7 @@ export function MobileWorkshopSupportPanel({ configRows, rosterRows }: Props): J
                 <WorkshopImage level={config.asset_level} name={config.asset_name} />
                 <div className="min-w-0">
                   <div className="text-[11px] font-semibold uppercase tracking-wide text-gray-400">Level {config.asset_level}</div>
-                  <div className="mt-1 font-semibold text-gray-900">{config.asset_name}</div>
+                  <div className="mt-1 font-semibold text-gray-900">{t(`assetTiers.mobile_workshop.level${config.asset_level}.name`, { defaultValue: config.asset_name })}</div>
                   <div className="mt-1 text-sm font-semibold text-gray-900">{formatCash(config.cost_cash)}</div>
                   <div className="mt-1 text-xs text-gray-500">Delivery: {toNumber(config.delivery_game_days, 0)} game days</div>
                 </div>
