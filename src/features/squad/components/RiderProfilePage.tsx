@@ -18,6 +18,7 @@ import appI18n from '../../../i18n'
 import { supabase } from '../../../lib/supabase'
 import RiderComparePanel from './RiderComparePanel'
 import RiderPowerProfile from '../../../components/riders/RiderPowerProfile'
+import NationalChampionBadge from '../../../components/riders/NationalChampionBadge'
 
 import type {
   RenewalNegotiationData,
@@ -5469,6 +5470,11 @@ export default function RiderProfilePage({
             ) : null}
           </div>
 
+          {selectedRider?.id ? (
+            <div className="flex flex-1 flex-wrap items-center justify-center gap-2">
+              <NationalChampionBadge riderId={selectedRider.id} />
+            </div>
+          ) : null}
           <div className="w-full lg:max-w-xl">
             <div className="flex items-center justify-end rounded-2xl px-2">
               {[
@@ -5887,6 +5893,7 @@ export default function RiderProfilePage({
                     )}
                   </SectionCard>
                 <RiderCareerHonoursCard rows={careerHonours} loading={overviewLoading} raceLinkState={getRaceDetailReturnState()} />
+                {selectedRider?.id ? <NationalChampionBadge riderId={selectedRider.id} placement="history" /> : null}
               </>
             </div>
           )}
