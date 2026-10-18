@@ -588,7 +588,8 @@
     "race": "Trka",
     "class": "Klasa",
     "result": "Rezultat",
-    "points": "Bodovi"
+    "points": "Bodovi",
+    "physicalGrowth": "Visina i težina U16 vozača mogu da rastu na prelazu između sezona, u skladu sa uzrastom. Svaki vozač raste najviše jednom po sezoni. Posle prelaska u seniorski tim zadržava poslednje zabeležene mere iz akademije, a mere odraslog vozača ostaju stalne. Ove vrednosti su odvojene od razvoja veština."
   },
   "manual": {
     "title": "Treba ti pomoć za Omladinsku akademiju?",
