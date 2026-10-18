@@ -123,7 +123,21 @@ export function getLedgerContext(t: FinanceT, entry: LedgerEntry): string[] {
     (textValue(m.period_start) && textValue(m.period_end)
       ? `${m.period_start} — ${m.period_end}`
       : null)
-  if (period) out.push(t('transactionDetails.forPeriod', { period }))
+  if (period) {
+    const month = /^(\d{4})-(0[1-9]|1[0-2])$/.exec(period)
+    const start = /^(\d{4})-(0[1-9]|1[0-2])-(\d{2})$/.exec(String(m.period_start ?? ''))
+    const end = /^(\d{4})-(0[1-9]|1[0-2])-(\d{2})$/.exec(String(m.period_end ?? ''))
+    // Calendar years are internal; the financial statement displays seasons.
+    const season = month ? Number(month[1]) - 1999 : start ? Number(start[1]) - 1999 : 0
+    const gamePeriod = season > 0 && season < 1000
+      ? month
+        ? `${t('common.season')} ${season} · ${month[2]}`
+        : start && end && start[1] === end[1]
+          ? `${t('common.season')} ${season} · ${start[3]}/${start[2]} – ${end[3]}/${end[2]}`
+          : period
+      : period
+    out.push(t('transactionDetails.forPeriod', { period: gamePeriod }))
+  }
   if (m.club_house_level != null)
     out.push(t('transactionDetails.clubHouseLevel', { level: m.club_house_level }))
   if (m.rank != null && ['race_prize','tax_withholding'].includes(entry.type))
