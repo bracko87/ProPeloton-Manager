@@ -2003,6 +2003,29 @@ function RichRiderPerformanceAnalysisPage({
     ),
   }))
 
+  // Display actual weekly recorded values alongside the chart, not just a
+  // graph that can look empty when very few data points are available.
+  const lastSnapshot = visibleSkillHistory.at(-1)
+  const previousSnapshot = visibleSkillHistory.length > 1 ? visibleSkillHistory.at(-2) : null
+  const firstEightWeekSnapshot = visibleSkillHistory.length > 0
+    ? visibleSkillHistory[Math.max(0, visibleSkillHistory.length - 9)]
+    : null
+  const progressionSkills = [
+    { key: 'sprint', label: rp('skills.sprint') },
+    { key: 'climbing', label: rp('skills.climbing') },
+    { key: 'time_trial', label: rp('skills.timeTrial') },
+    { key: 'endurance', label: rp('skills.endurance') },
+    { key: 'flat', label: rp('skills.flat') },
+    { key: 'recovery', label: rp('skills.recovery') },
+    { key: 'resistance', label: rp('skills.resistance') },
+    { key: 'race_iq', label: rp('skills.raceIq') },
+    { key: 'teamwork', label: rp('skills.teamwork') },
+  ] as const
+  const eightWeekTotal = lastSnapshot && firstEightWeekSnapshot
+    ? progressionSkills.reduce((sum, item) => sum +
+      (lastSnapshot[item.key] - firstEightWeekSnapshot[item.key]), 0)
+    : null
+
   const loadedSkillSnapshotCount = visibleSkillHistory.length
 
   const monthlyCareerTrendLabels = monthlyPointsHistory.map((row) =>
@@ -2412,6 +2435,48 @@ function RichRiderPerformanceAnalysisPage({
             </div>
           </div>
 
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="text-xs text-slate-500">{rp('skills.last52Weeks')}</div>
+              <div className="mt-1 text-lg font-bold text-slate-900">{visibleSkillHistory.length} recorded weeks</div>
+              <div className="text-xs text-slate-500">{lastSnapshot?.week_start_date ?? 'No history yet'}</div>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="text-xs text-slate-500">Last recorded week</div>
+              <div className="mt-1 text-lg font-bold text-slate-900">{lastSnapshot?.week_label ?? '—'}</div>
+              <div className="text-xs text-slate-500">Weekly snapshots from your actual rider development</div>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-white p-3">
+              <div className="text-xs text-slate-500">Last up to 8 weeks · all nine skills</div>
+              <div className={`mt-1 text-lg font-bold ${eightWeekTotal != null && eightWeekTotal>0 ? 'text-emerald-700' : eightWeekTotal != null && eightWeekTotal<0 ? 'text-rose-700' : 'text-slate-900'}`}>
+                {eightWeekTotal == null ? '—' : `${eightWeekTotal>0?'+':''}${eightWeekTotal}`}
+              </div>
+              <div className="text-xs text-slate-500">Sum of recorded skill-point changes</div>
+            </div>
+          </div>
+          <div className="mt-4 overflow-x-auto rounded-xl border border-slate-200">
+            <table className="min-w-[570px] w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500"><tr>
+                <th className="px-3 py-2">Skill</th><th className="px-3 py-2 text-right">Current</th>
+                <th className="px-3 py-2 text-right">Previous week</th><th className="px-3 py-2 text-right">Change</th>
+              </tr></thead>
+              <tbody className="divide-y divide-slate-100">
+                {progressionSkills.map(item => {
+                  const last = lastSnapshot?.[item.key]
+                  const prev = previousSnapshot?.[item.key]
+                  const diff = last != null && prev != null ? last-prev : null
+                  return <tr key={item.key}>
+                    <td className="px-3 py-2 font-medium text-slate-700">{item.label}</td>
+                    <td className="px-3 py-2 text-right font-semibold">{last ?? '—'}</td>
+                    <td className="px-3 py-2 text-right">{prev ?? '—'}</td>
+                    <td className={`px-3 py-2 text-right font-semibold ${diff != null && diff>0 ? 'text-emerald-700' : diff != null && diff<0 ? 'text-rose-700' : 'text-slate-600'}`}>
+                      {diff == null ? '—' : `${diff>0?'+':''}${diff}`}
+                    </td>
+                  </tr>
+                })}
+              </tbody>
+            </table>
+          </div>
           <div className="mt-4">
             <MultiLineTrendChart
               series={skillHistorySeries}
@@ -4957,13 +5022,16 @@ export default function RiderProfilePage({
   useEffect(() => {
     let mounted = true
     async function loadSkillProgressHistory() {
-      if (!focusedTrainingRider?.rider_id || !isPremium) {
+      // The owner of a rider can view Premium development even when the separate
+      // training configuration hasn't been loaded or is unavailable.
+      if (!selectedRider?.id || !isPremium) {
         setSkillProgressHistory([])
         return
       }
+      setSkillProgressHistory([])
       try {
         const { data, error } = await supabase.rpc('get_rider_skill_progress_history_v1', {
-          p_rider_id: focusedTrainingRider.rider_id,
+          p_rider_id: selectedRider.id,
           p_weeks: 60,
           p_game_date: gameDate ?? null,
         })
@@ -4992,7 +5060,7 @@ export default function RiderProfilePage({
     return () => {
       mounted = false
     }
-  }, [focusedTrainingRider?.rider_id, isPremium, gameDate])
+  }, [selectedRider?.id, isPremium, gameDate])
 
   useEffect(() => {
     let mounted = true
