@@ -775,5 +775,9 @@
     "current": "Medalje u tekućoj sezoni",
     "career": "Dostignuća na prvenstvima tokom karijere",
     "viewRace": "Pogledaj trku"
+  },
+  "powerProfile": {
+    "youthSummary": "Visina i težina mladih vozača mogu se menjati tokom rasta; odrasli vozači zadržavaju konačne mere.",
+    "youthTransferMeaning": "Fizički podaci U16 vozača menjaju se najviše jednom po sezoni, u skladu sa uzrastom. Pri prelasku u seniore prenose se poslednje mere iz akademije. Vati se i dalje zasnivaju na vidljivim veštinama i težini."
   }
 }
