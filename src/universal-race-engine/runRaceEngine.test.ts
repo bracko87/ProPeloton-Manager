@@ -18692,4 +18692,71 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(completedJobs.every((job) => job.classificationSize > 0)).toBe(true)
   })
 
+
+  it('runs simulation-only French Tour 2000 summit profiles through the full physical engine', () => {
+    // Stored French Tour 2000 elevations and distances, synthetic 24-rider
+    // field, isolated fixture IDs. No Supabase or official race writes.
+    const stages = [
+      {
+        number: 5, name: 'Hautacam', distance: 171.5, elevation: 3650,
+        elevationPoints: [[0,180],[16,240],[35,620],[43,450],[60,520],
+          [75,880],[86,1370],[102,720],[116,920],[128,1480],
+          [144,820],[158,760],[164,1050],[168,1300],[171.5,1520]],
+      },
+      {
+        number: 16, name: 'Mont Ventoux', distance: 171.5, elevation: 2929,
+        elevationPoints: [[0,35],[40,55],[50,55],[90,95],[100,95],
+          [110,100],[140,120],[150.5,300],[159.5,900],[171.5,1909]],
+      },
+      {
+        number: 19, name: 'La Plagne', distance: 93.1, elevation: 3431,
+        elevationPoints: [[0,350],[8,360],[18,500],[30,1748],[37,1200],
+          [42,1100],[54,1968],[64,820],[70,750],[74,700],
+          [81.1,850],[93.1,2052]],
+      },
+    ] as const
+    for (const stage of stages) {
+      const base = createExpandedFieldInput(24)
+      const stageId = `simulation-only-french-tour-stage-${stage.number}`
+      const input: UniversalRaceEngineInput = {
+        ...base,
+        engine: {
+          ...base.engine,
+          deterministicSeed: `french-2000-summit-calibration-${stage.number}`,
+        },
+        race: { raceId: 'simulation-only-french-tour-2000', raceType: 'stage_race', stageCount: 21 },
+        stage: {
+          ...base.stage,
+          raceId: 'simulation-only-french-tour-2000',
+          stageId,stageNumber:stage.number,stageFormat:'road_race',
+          terrainType:'mountain',finishType:'summit_finish',profileType:'climber',
+          distanceKm:stage.distance,elevationGainM:stage.elevation,
+          summitFinish:true,summitFinishSelectivityV1:true,
+          terrainPercentages:{flat:12,hilly:18,mountain:70,cobbled:0},
+          profilePoints:stage.elevationPoints.map(([km,elevationM])=>({km,elevationM})),
+        },
+        points:base.points.map((point)=>({
+          ...point, stageId,
+          kmFromStart: point.pointType==='FINISH'
+            ? stage.distance
+            : point.pointType==='KOM' ? stage.distance*.64
+              : point.pointType==='INTERMEDIATE_SPRINT' ? stage.distance*.34 : 0,
+        })),
+      }
+      const result=runRaceEngine(input)
+      expect(result.validationPassed,stage.name).toBe(true)
+      expect(result.finishResolution.complete,stage.name).toBe(true)
+      expect(result.finishResolution.winnerRiderId,stage.name).toBeTruthy()
+      expect(result.replaySynchronization.synchronized,stage.name).toBe(true)
+      const finishing=result.finishResolution.classification
+        .filter((row)=>row.status==='finished')
+      const winnerTime=Math.min(...finishing.map((row)=>row.officialTimeSeconds??Infinity))
+      expect(Number.isFinite(winnerTime),stage.name).toBe(true)
+      expect(finishing.every((row)=>(row.officialTimeSeconds??0)>=winnerTime),stage.name).toBe(true)
+      const climbSelections=result.roadRaceResolution.phase4Finish!.profileClimbSelections
+      expect(climbSelections.length,stage.name).toBeGreaterThan(0)
+      expect(climbSelections.some((selection)=>Math.abs(selection.kmEnd-stage.distance)<.56),stage.name).toBe(true)
+    }
+  })
+
 })
