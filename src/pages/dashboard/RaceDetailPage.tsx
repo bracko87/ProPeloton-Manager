@@ -8043,7 +8043,7 @@ function RaceResultsHub({
                   : 'text-slate-500',
               ].join(' ')}
             >
-              {isNationalChampionshipRace(race)
+              {isNationalChampionshipRace(race) || race.metadata?.world_road_championship === true
                 ? t('participants.individualRiders')
                 : t('participants.teamsRiders')}
             </button>
@@ -8075,8 +8075,7 @@ function RaceResultsHub({
               raceId={race.id}
               onOpenRiderProfile={openRiderProfileFromRaceInfo}
             />
-          ) : null}
-          {showPendingApplicationInfo ? (
+          ) : showPendingApplicationInfo ? (
             <ApplicationPendingInfoCard
               quote={inlineApplicationQuote}
               loading={inlineApplicationQuoteLoading}
