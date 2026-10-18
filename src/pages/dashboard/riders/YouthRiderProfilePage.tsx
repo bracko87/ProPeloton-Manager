@@ -20,6 +20,16 @@ type YouthScoutingStatus = {
   scouting_range?: string
 }
 
+type YouthDirectEligibility = {
+  available: boolean
+  can_scout: boolean
+  own_rider?: boolean
+  home_country?: string
+  target_country?: string
+  current_range?: string
+  required_range?: string
+}
+
 type YouthRiderProfilePayload = {
   id: string
   public_only?: boolean
@@ -123,6 +133,7 @@ export default function YouthRiderProfilePage(): JSX.Element {
   const [offerMessage, setOfferMessage] = useState<string | null>(null)
   const [offerValues, setOfferValues] = useState({ stipend: 100, accommodation: 0, compensation: 0 })
   const [scoutingStatus, setScoutingStatus] = useState<YouthScoutingStatus | null>(null)
+  const [directEligibility, setDirectEligibility] = useState<YouthDirectEligibility | null>(null)
   const [scoutingLoading, setScoutingLoading] = useState(false)
   const [scoutingBusy, setScoutingBusy] = useState(false)
   const [scoutingMessage, setScoutingMessage] = useState<string | null>(null)
@@ -178,14 +189,20 @@ export default function YouthRiderProfilePage(): JSX.Element {
   useEffect(() => {
     if (!profile?.public_only || profile.is_mine) {
       setScoutingStatus(null)
+      setDirectEligibility(null)
       return
     }
     let active = true
     setScoutingLoading(true)
-    void supabase.rpc('get_my_youth_scouting_v1').then(({ data, error: scoutError }) => {
+    setDirectEligibility(null)
+    void Promise.all([
+      supabase.rpc('get_my_youth_scouting_v1'),
+      supabase.rpc('get_youth_direct_scout_eligibility_v1', { p_youth_rider_id: profile.id }),
+    ]).then(([scoutResult, eligibilityResult]) => {
       if (!active) return
-      setScoutingStatus(scoutError ? null : data as YouthScoutingStatus)
-      setScoutingMessage(scoutError?.message ?? null)
+      setScoutingStatus(scoutResult.error ? null : scoutResult.data as YouthScoutingStatus)
+      setDirectEligibility(eligibilityResult.error ? null : eligibilityResult.data as YouthDirectEligibility)
+      setScoutingMessage(scoutResult.error?.message ?? eligibilityResult.error?.message ?? null)
       setScoutingLoading(false)
     })
     return () => { active = false }
@@ -203,6 +220,10 @@ export default function YouthRiderProfilePage(): JSX.Element {
 
   const scoutThisRider = async (): Promise<void> => {
     if (!riderId || !profile?.public_only || profile.is_mine || scoutingBusy) return
+    if (directEligibility?.available && !directEligibility.can_scout) {
+      setScoutingMessage(`Outside your ${directEligibility.current_range ?? 'current'} scouting range. This rider requires ${directEligibility.required_range ?? 'world'} scouting. Update the Youth Academy scouting range before searching.`)
+      return
+    }
     setScoutingBusy(true)
     setScoutingMessage(null)
     const usesCoins = (scoutingStatus?.free_runs_remaining ?? 0) <= 0
@@ -352,7 +373,7 @@ export default function YouthRiderProfilePage(): JSX.Element {
 
           {!profile.scouting_report ? (
             <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button type="button" disabled={scoutingBusy || scoutingLoading || !scoutingStatus?.can_run}
+              <button type="button" disabled={scoutingBusy || scoutingLoading || !scoutingStatus?.can_run || directEligibility?.can_scout !== true}
                 onClick={() => void scoutThisRider()}
                 className="rounded-full bg-yellow-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-400 disabled:cursor-not-allowed disabled:opacity-50">
                 {scoutingBusy ? 'Scouting…' : scoutingLoading ? 'Checking scouting…'
@@ -406,6 +427,13 @@ export default function YouthRiderProfilePage(): JSX.Element {
             </div>
           )}
 
+          {!profile.scouting_report && directEligibility?.available && !directEligibility.can_scout ? (
+            <div role="status" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              This rider from {directEligibility.target_country ?? 'another country'} is outside your current {humanize(directEligibility.current_range)} scouting range.
+              Upgrade the Youth Academy scouting programme to <strong>{humanize(directEligibility.required_range)}</strong> before you can scout and negotiate.
+              <Link to="/dashboard/youth-academy?tab=settings" className="ml-2 font-semibold text-sky-800 underline">Change scouting range →</Link>
+            </div>
+          ) : null}
           {!profile.scouting_report && !scoutingLoading ? (
             <div className="mt-3 text-xs text-slate-600">
               {!scoutingStatus?.activated ? 'Activate your Youth Academy to scout U16 riders. ' :
