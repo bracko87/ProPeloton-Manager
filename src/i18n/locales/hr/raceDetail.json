@@ -207,7 +207,20 @@
     "nationalRiderCount": "{{count}} potvrđenih vozača",
     "noNationalRiders": "Još nema potvrđenih vozača na startnoj listi Nacionalnog prvenstva.",
     "riderKit": "Dres trenutačne ekipe",
-    "freeAgent": "Slobodan vozač"
+    "freeAgent": "Slobodan vozač",
+    "worldChampionshipFieldTitle": "Svjetsko prvenstvo na cesti — startna lista i očekivane zemlje",
+    "worldChampionshipFieldDescription": "Po jedan vozač iz svake zemlje. Potvrđeni državni prvaci prikazuju se prvi. Zemlje čije kvalifikacije još traju sive su dok se ne sazna prvak.",
+    "worldChampionshipConfirmed": "potvrđenih vozača",
+    "worldChampionshipAwaiting": "čeka državnog prvaka",
+    "worldChampionshipNoSlots": "Još nema planiranih mjesta za državne prvake.",
+    "country": "Država",
+    "rider": "Vozač",
+    "status": "Status",
+    "worldChampionshipWaiting": "Kvalifikacije u tijeku",
+    "worldChampionshipUnavailable": "Nije potvrđeno",
+    "worldChampionshipConfirmedLabel": "Potvrđen",
+    "worldChampionshipInvited": "Čeka potvrdu",
+    "worldChampionshipTbd": "Sudionik još nije poznat"
   },
   "results": {
     "classifications": "Klasifikacije utrke",
