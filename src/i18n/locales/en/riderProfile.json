@@ -775,5 +775,9 @@
     "current": "Current season championship medals",
     "career": "Career championship achievements",
     "viewRace": "View race"
+  },
+  "powerProfile": {
+    "youthSummary": "Youth height and weight can change as riders grow; adults keep their final measurements.",
+    "youthTransferMeaning": "U16 physiques change at most once per season based on age. At graduation, the last youth measurements carry into the senior profile. Watts continue to reflect visible skills and weight."
   }
 }
