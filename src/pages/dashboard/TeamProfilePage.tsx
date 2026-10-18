@@ -1483,7 +1483,7 @@ export default function TeamProfilePage(): JSX.Element {
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-3">
                         <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">
-                          {profile.club_name}
+                          <span translate="no">{profile.club_name}</span>
                         </h1>
                         <CountryFlagBadge countryCode={profile.country_code} className="h-5 w-7" />
                       </div>
