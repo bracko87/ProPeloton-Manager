@@ -900,7 +900,15 @@ export function buildProductionUniversalRaceEngineInput(
       profileType: text(profile.profile_type) ?? text(stage.profile_type), finishType,
       sprintZoneKm: normalizeSprintZoneKm(stage, stageFormat, finishType),
       distanceKm, elevationGainM: Math.max(0, numberValue(profile.elevation_gain_m ?? stage.elevation_gain_m, 0)),
-      summitFinish, terrainPercentages: buildTerrainPercentages(stage, profile, terrainType),
+      summitFinish,
+      // Explicit start-date gate: never change simulations of completed races.
+      summitFinishSelectivityV1:
+        stageFormat === 'road_race' &&
+        terrainType === 'mountain' &&
+        summitFinish &&
+        /^\d{4}-\d{2}-\d{2}/.test(text(race.start_date) ?? '') &&
+        (text(race.start_date) ?? '').slice(0, 10) >= '2000-08-03',
+      terrainPercentages: buildTerrainPercentages(stage, profile, terrainType),
       profilePoints: buildProfilePoints(profile, distanceKm), timeTrialRules: null,
     },
     points: buildReconciledStagePoints(
