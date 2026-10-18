@@ -775,5 +775,9 @@
     "current": "Médailles de la saison en cours",
     "career": "Palmarès des championnats",
     "viewRace": "Voir la course"
+  },
+  "powerProfile": {
+    "youthSummary": "La taille et le poids des jeunes coureurs peuvent évoluer avec la croissance ; les adultes conservent leurs mesures finales.",
+    "youthTransferMeaning": "Les mesures U16 changent au maximum une fois par saison selon l'âge. Au passage chez les seniors, les dernières mesures juniors sont reprises. Les watts reflètent toujours les compétences visibles et le poids."
   }
 }
