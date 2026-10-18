@@ -865,6 +865,11 @@
     "workshopOnePerEvent": "Un seul atelier mobile par course. Le bonus est figé à la soumission du plan pour garantir des résultats reproductibles."
   },
   "assetBonusText": {
+    "medicalResponse": "Assistance médicale {{value}}",
+    "minorInjuryRisk": "Risque de blessure légère {{value}}",
+    "hydration": "Hydratation {{value}}",
+    "heatHydration": "Chaleur/hydratation {{value}}",
+    "medicalRecovery": "Récupération {{value}}",
     "tourFatigueProtection": "Protection fatigue sur les tours {{value}}",
     "recoveryComfort": "Confort de récupération {{value}}",
     "raceSupportCoverage": "Couverture d'assistance en course {{value}}",
