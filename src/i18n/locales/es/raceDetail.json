@@ -207,7 +207,20 @@
     "nationalRiderCount": "{{count}} ciclistas confirmados",
     "noNationalRiders": "Aún no hay ciclistas confirmados en la lista de salida del Campeonato Nacional.",
     "riderKit": "Maillot del equipo actual",
-    "freeAgent": "Sin equipo"
+    "freeAgent": "Sin equipo",
+    "worldChampionshipFieldTitle": "Mundial de Ruta — lista de salida y países previstos",
+    "worldChampionshipFieldDescription": "Un corredor por país. Los campeones nacionales confirmados aparecen primero. Los países con clasificaciones pendientes se muestran en gris hasta conocer a su campeón.",
+    "worldChampionshipConfirmed": "corredores confirmados",
+    "worldChampionshipAwaiting": "esperan a su campeón nacional",
+    "worldChampionshipNoSlots": "Aún no hay plazas de campeonatos nacionales programadas.",
+    "country": "País",
+    "rider": "Corredor",
+    "status": "Estado",
+    "worldChampionshipWaiting": "Clasificación en curso",
+    "worldChampionshipUnavailable": "No confirmado",
+    "worldChampionshipConfirmedLabel": "Confirmado",
+    "worldChampionshipInvited": "Pendiente de confirmación",
+    "worldChampionshipTbd": "Participante aún desconocido"
   },
   "results": {
     "classifications": "Clasificaciones raciales",
