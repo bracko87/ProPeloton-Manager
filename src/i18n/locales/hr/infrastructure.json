@@ -727,6 +727,7 @@
     }
   },
   "assetDetailCopy": {
+    "statusLabel": "Status",
     "yourCars": "Vaši timski automobili",
     "yourBuses": "Vaši timski autobusi",
     "yourMedicalVans": "Vaša medicinska vozila",
