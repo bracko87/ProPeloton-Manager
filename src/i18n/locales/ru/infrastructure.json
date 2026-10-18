@@ -865,6 +865,11 @@
     "workshopOnePerEvent": "Одна мобильная мастерская на гонку. Бонус фиксируется при подаче плана для воспроизводимых результатов."
   },
   "assetBonusText": {
+    "medicalResponse": "Медицинская помощь {{value}}",
+    "minorInjuryRisk": "Риск лёгкой травмы {{value}}",
+    "hydration": "Гидратация {{value}}",
+    "heatHydration": "Жара/гидратация {{value}}",
+    "medicalRecovery": "Восстановление {{value}}",
     "tourFatigueProtection": "Защита от усталости в многодневках {{value}}",
     "recoveryComfort": "Комфорт восстановления {{value}}",
     "raceSupportCoverage": "Охват поддержки в гонке {{value}}",
