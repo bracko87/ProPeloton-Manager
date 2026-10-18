@@ -588,7 +588,8 @@
     "race": "Course",
     "class": "Classe",
     "result": "Résultat",
-    "points": "Points"
+    "points": "Points",
+    "physicalGrowth": "La taille et le poids des coureurs U16 peuvent évoluer selon l'âge au changement de saison, au maximum une fois par saison. Lors du passage chez les seniors, les dernières mesures juniors sont conservées puis restent stables. Ces valeurs sont indépendantes de la progression des compétences."
   },
   "manual": {
     "title": "Besoin d'aide pour l'Académie Jeunes ?",
