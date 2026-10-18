@@ -865,6 +865,11 @@
     "workshopOnePerEvent": "Samo jedna mobilna radionica po utrci. Bonus se zaključava pri predaji plana radi ponovljivih rezultata."
   },
   "assetBonusText": {
+    "medicalResponse": "Medicinska podrška {{value}}",
+    "minorInjuryRisk": "Rizik lakše ozljede {{value}}",
+    "hydration": "Hidratacija {{value}}",
+    "heatHydration": "Vrućina/hidratacija {{value}}",
+    "medicalRecovery": "Oporavak {{value}}",
     "tourFatigueProtection": "Zaštita od umora na etapnim utrkama {{value}}",
     "recoveryComfort": "Udobnost oporavka {{value}}",
     "raceSupportCoverage": "Pokrivenost podrške na utrci {{value}}",
