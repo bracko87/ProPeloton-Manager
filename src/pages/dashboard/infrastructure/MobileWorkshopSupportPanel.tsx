@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import React, { useEffect, useMemo, useState } from 'react'
 
 import type { InfrastructureAssetConfigRow } from './infrastructureTypes'
@@ -86,6 +87,7 @@ function WorkshopImage({ level, name, large = false }: { level: number; name: st
 }
 
 function DetailModal({ workshop, config, onClose }: { workshop: MobileWorkshopRosterRow; config: InfrastructureAssetConfigRow; onClose: () => void }): JSX.Element {
+  const { t } = useTranslation('infrastructure')
   const condition = toNumber(workshop.condition_percent, 0)
   const factor = toNumber(workshop.condition_factor, conditionFactor(condition))
   const baseMr = MECHANICAL_RELIABILITY_BY_LEVEL[workshop.asset_level] ?? 0
@@ -115,31 +117,31 @@ function DetailModal({ workshop, config, onClose }: { workshop: MobileWorkshopRo
             <h3 className="mt-1 text-xl font-semibold text-gray-900">{name}</h3>
             {workshop.display_name && workshop.display_name !== name && <div className="mt-1 text-sm text-gray-500">{workshop.display_name}</div>}
           </div>
-          <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">Close</button>
+          <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-50">{t('common.close')}</button>
         </div>
 
         <div className="grid gap-6 p-4 sm:p-6 lg:grid-cols-[minmax(320px,0.9fr)_minmax(0,1.1fr)]">
           <div className="space-y-4">
             <WorkshopImage level={workshop.asset_level} name={name} large />
             <div className="grid grid-cols-2 gap-3 rounded-2xl border border-gray-100 bg-gray-50 p-4 text-sm">
-              <div><div className="text-xs text-gray-400">Current catalogue price</div><div className="mt-1 font-semibold text-gray-900">{formatCash(config.cost_cash)}</div></div>
-              <div><div className="text-xs text-gray-400">Original purchase value</div><div className="mt-1 font-semibold text-gray-900">{formatCash(workshop.purchase_cost_cash ?? config.cost_cash)}</div></div>
-              <div><div className="text-xs text-gray-400">Status</div><div className="mt-1 font-semibold capitalize text-gray-900">{String(workshop.status).replaceAll('_', ' ')}</div></div>
-              <div><div className="text-xs text-gray-400">Race days used</div><div className="mt-1 font-semibold text-gray-900">{toNumber(workshop.total_race_days, 0)}</div></div>
-              <div><div className="text-xs text-gray-400">Distance covered</div><div className="mt-1 font-semibold text-gray-900">{toNumber(workshop.total_distance_km, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} km</div></div>
-              <div><div className="text-xs text-gray-400">Last used</div><div className="mt-1 font-semibold text-gray-900">{workshop.last_used_game_date ? formatGameDate(workshop.last_used_game_date) : 'Not used yet'}</div></div>
+              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.cataloguePrice')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(config.cost_cash)}</div></div>
+              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.originalPurchaseValue')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(workshop.purchase_cost_cash ?? config.cost_cash)}</div></div>
+              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.statusLabel')}</div><div className="mt-1 font-semibold capitalize text-gray-900">{String(workshop.status).replaceAll('_', ' ')}</div></div>
+              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.raceDaysUsed')}</div><div className="mt-1 font-semibold text-gray-900">{toNumber(workshop.total_race_days, 0)}</div></div>
+              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.distanceCovered')}</div><div className="mt-1 font-semibold text-gray-900">{toNumber(workshop.total_distance_km, 0).toLocaleString('en-US', { maximumFractionDigits: 0 })} km</div></div>
+              <div><div className="text-xs text-gray-400">{t('assetDetailCopy.lastUsed')}</div><div className="mt-1 font-semibold text-gray-900">{workshop.last_used_game_date ? formatGameDate(workshop.last_used_game_date) : 'Not used yet'}</div></div>
             </div>
           </div>
 
           <div className="space-y-4">
             <section className="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 sm:p-5">
-              <h4 className="text-sm font-semibold text-gray-900">Production race benefits</h4>
-              <p className="mt-1 text-xs leading-5 text-gray-500">This is event-side technical support. Mechanical Reliability affects race mechanicals; Field Equipment Recovery offsets part of the condition loss suffered by the physical equipment used on the stage.</p>
+              <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.productionRaceBenefits')}</h4>
+              <p className="mt-1 text-xs leading-5 text-gray-500">{t('assetDetailCopy.technicalSupportSummary')}</p>
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-blue-100 bg-white p-3"><div className="text-xs text-gray-400">Mechanical Reliability</div><div className="mt-1 text-xl font-semibold text-gray-900">{currentMr.toLocaleString('en-US', { maximumFractionDigits: 2 })}<span className="ml-1 text-xs font-medium text-gray-400">/ base {baseMr}</span></div></div>
-                <div className="rounded-xl border border-emerald-100 bg-white p-3"><div className="text-xs text-gray-400">Field Equipment Recovery</div><div className="mt-1 text-xl font-semibold text-gray-900">{formatPercent(currentRecovery)}<span className="ml-1 text-xs font-medium text-gray-400">/ base {formatPercent(baseRecovery)}</span></div></div>
-                <div className="rounded-xl border border-blue-100 bg-white p-3"><div className="text-xs text-gray-400">Mechanical incident risk</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(mechanicalRiskMultiplier(currentMr) * 100, 1)} of baseline</div></div>
-                <div className="rounded-xl border border-blue-100 bg-white p-3"><div className="text-xs text-gray-400">Mechanical time loss</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(mechanicalTimeLossMultiplier(currentMr) * 100, 1)} of baseline</div></div>
+                <div className="rounded-xl border border-blue-100 bg-white p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.mechanicalReliability')}</div><div className="mt-1 text-xl font-semibold text-gray-900">{currentMr.toLocaleString('en-US', { maximumFractionDigits: 2 })}<span className="ml-1 text-xs font-medium text-gray-400">/ base {baseMr}</span></div></div>
+                <div className="rounded-xl border border-emerald-100 bg-white p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.fieldRecovery')}</div><div className="mt-1 text-xl font-semibold text-gray-900">{formatPercent(currentRecovery)}<span className="ml-1 text-xs font-medium text-gray-400">/ base {formatPercent(baseRecovery)}</span></div></div>
+                <div className="rounded-xl border border-blue-100 bg-white p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.mechanicalRisk')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(mechanicalRiskMultiplier(currentMr) * 100, 1)} of baseline</div></div>
+                <div className="rounded-xl border border-blue-100 bg-white p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.mechanicalTimeLoss')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(mechanicalTimeLossMultiplier(currentMr) * 100, 1)} of baseline</div></div>
               </div>
               <div className="mt-3 rounded-xl border border-blue-100 bg-white px-3 py-2.5 text-xs leading-5 text-gray-600">Field recovery applies to allocated frames, wheelsets, tires, groupsets, helmets and shoes, including incident damage. It does not reduce this Mobile Workshop's own wear. Equipment Van protection and Mobile Workshop recovery combine multiplicatively.</div>
             </section>
@@ -147,20 +149,20 @@ function DetailModal({ workshop, config, onClose }: { workshop: MobileWorkshopRo
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
               <h4 className="text-sm font-semibold text-gray-900">Condition & own wear</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Current condition</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(condition)}</div></div>
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Effectiveness</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(factor * 100, 0)}</div></div>
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">120 km Workshop wear</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(wear)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.currentCondition')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(condition)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.effectiveness')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(factor * 100, 0)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.workshopWear')}</div><div className="mt-1 text-lg font-semibold text-gray-900">{formatPercent(wear)}</div></div>
               </div>
               <p className="mt-3 text-xs leading-5 text-gray-500">90–100% = 100% effectiveness; 75–89% = 95%; 60–74% = 85%; 45–59% = 70%; 30–44% = 50%; below 30% = 0% and cannot be newly assigned.</p>
             </section>
 
             <section className="rounded-2xl border border-gray-100 bg-white p-4 sm:p-5">
-              <h4 className="text-sm font-semibold text-gray-900">Maintenance & delivery</h4>
+              <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.maintenanceDelivery')}</h4>
               <div className="mt-4 grid gap-3 sm:grid-cols-4">
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Repair / point</div><div className="mt-1 font-semibold text-gray-900">{formatCash(repairCostPerPoint)}</div></div>
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Full repair estimate</div><div className="mt-1 font-semibold text-gray-900">{formatCash(repairCost)}</div></div>
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">Repair time</div><div className="mt-1 font-semibold text-gray-900">{repairDays === 0 ? 'No repair needed' : `${repairDays} game day${repairDays === 1 ? '' : 's'}`}</div></div>
-                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">New delivery</div><div className="mt-1 font-semibold text-gray-900">{toNumber(config.delivery_game_days, 0)} game days</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.repairPerPoint')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(repairCostPerPoint)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.repairEstimate')}</div><div className="mt-1 font-semibold text-gray-900">{formatCash(repairCost)}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.repairTime')}</div><div className="mt-1 font-semibold text-gray-900">{repairDays === 0 ? 'No repair needed' : `${repairDays} game day${repairDays === 1 ? '' : 's'}`}</div></div>
+                <div className="rounded-xl bg-gray-50 p-3"><div className="text-xs text-gray-400">{t('assetDetailCopy.newDelivery')}</div><div className="mt-1 font-semibold text-gray-900">{toNumber(config.delivery_game_days, 0)} game days</div></div>
               </div>
             </section>
           </div>
@@ -171,6 +173,7 @@ function DetailModal({ workshop, config, onClose }: { workshop: MobileWorkshopRo
 }
 
 export function MobileWorkshopSupportPanel({ configRows, rosterRows }: Props): JSX.Element | null {
+  const { t } = useTranslation('infrastructure')
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const configs = useMemo(() => [...configRows].sort((a, b) => a.asset_level - b.asset_level), [configRows])
   const configByLevel = useMemo(() => new Map(configs.map(row => [row.asset_level, row])), [configs])
@@ -182,9 +185,9 @@ export function MobileWorkshopSupportPanel({ configRows, rosterRows }: Props): J
   return (
     <div className="mt-6 space-y-5 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
       <div>
-        <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">Production engine</div>
-        <h3 className="mt-1 text-lg font-semibold text-gray-900">Mobile Workshop benefits</h3>
-        <p className="mt-1 max-w-4xl text-sm leading-5 text-gray-500">Mobile Workshops are race-event field-service assets. They improve Mechanical Reliability and recover part of stage equipment condition loss. Home-base maintenance speed and cost remain the job of the permanent Mechanics Workshop facility and mechanic staff.</p>
+        <div className="text-xs font-semibold uppercase tracking-wide text-blue-600">{t('assetDetailCopy.productionEngine')}</div>
+        <h3 className="mt-1 text-lg font-semibold text-gray-900">{t('assetDetailCopy.workshopBenefits')}</h3>
+        <p className="mt-1 max-w-4xl text-sm leading-5 text-gray-500">{t('assetDetailCopy.mobileWorkshopInfo')}</p>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -203,8 +206,8 @@ export function MobileWorkshopSupportPanel({ configRows, rosterRows }: Props): J
                 </div>
               </div>
               <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
-                <div className="rounded-xl border border-blue-100 bg-blue-50 p-3"><div className="text-blue-600">Mechanical Reliability</div><div className="mt-1 text-lg font-semibold text-blue-900">{mr}</div></div>
-                <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><div className="text-emerald-600">Field Equipment Recovery</div><div className="mt-1 text-lg font-semibold text-emerald-900">{formatPercent(recovery)}</div></div>
+                <div className="rounded-xl border border-blue-100 bg-blue-50 p-3"><div className="text-blue-600">{t('assetDetailCopy.mechanicalReliability')}</div><div className="mt-1 text-lg font-semibold text-blue-900">{mr}</div></div>
+                <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3"><div className="text-emerald-600">{t('assetDetailCopy.fieldRecovery')}</div><div className="mt-1 text-lg font-semibold text-emerald-900">{formatPercent(recovery)}</div></div>
               </div>
               <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-gray-600">
                 <div className="rounded-lg bg-white p-2.5">Mechanical risk: {formatPercent(mechanicalRiskMultiplier(mr) * 100, 1)}</div>
@@ -219,7 +222,7 @@ export function MobileWorkshopSupportPanel({ configRows, rosterRows }: Props): J
 
       {rosterRows.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-900">Owned Mobile Workshops</h4>
+          <h4 className="text-sm font-semibold text-gray-900">{t('assetDetailCopy.ownedWorkshops')}</h4>
           <div className="mt-3 grid gap-3 lg:grid-cols-2">
             {rosterRows.map(workshop => {
               const rawId = workshop.workshop_id ?? workshop.mobile_workshop_id ?? workshop.id
@@ -236,7 +239,7 @@ export function MobileWorkshopSupportPanel({ configRows, rosterRows }: Props): J
                     <div className="mt-1 text-xs font-medium text-gray-700">Current: {mr.toLocaleString('en-US', { maximumFractionDigits: 2 })} MR · {formatPercent(recovery)} field recovery</div>
                     {workshop.current_assignment_label && <div className="mt-1 text-xs text-blue-600">Assigned: {workshop.current_assignment_label}</div>}
                   </div>
-                  {rawId && <button type="button" onClick={() => setSelectedId(String(rawId))} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">Details</button>}
+                  {rawId && <button type="button" onClick={() => setSelectedId(String(rawId))} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">{t('common.details')}</button>}
                 </div>
               )
             })}
@@ -244,7 +247,7 @@ export function MobileWorkshopSupportPanel({ configRows, rosterRows }: Props): J
         </div>
       )}
 
-      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600">Only one Mobile Workshop can be assigned to an event. Submitted Race Plans freeze the Workshop benefit at submission time for deterministic race replays.</div>
+      <div className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs leading-5 text-slate-600">{t('assetDetailCopy.workshopOnePerEvent')}</div>
 
       {selected && selectedConfig && <DetailModal workshop={selected} config={selectedConfig} onClose={() => setSelectedId(null)} />}
     </div>
