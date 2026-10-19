@@ -27404,11 +27404,9 @@ export function buildUniversalReplayTimeline(
       phase3.phaseBoundary.startKm,
       phase3.phaseBoundary.endKm,
     )
-    // Riders who entered Phase 3 in a physical front group were already
-    // separated at the phase boundary. The first gap-trajectory sample may be
-    // later on the road; using it as a launch kilometre silently returns
-    // those riders to P before an authoritative physical catch occurs.
-    const leadingLaunchKm = phase3.phaseBoundary.startKm
+    const leadingLaunchKm =
+      phase3.physicalGapTrajectory[0]?.kmFromStart ??
+      phase3.phaseBoundary.endKm
     const leadingActive =
       phase3.physicalEscapeRiderIdsAtStart.length > 0 &&
       km >= leadingLaunchKm - 0.000001 &&
@@ -37916,6 +37914,33 @@ export function runRaceEngine(
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
   if (!replayPublicationPolicy.publishable) {
+    // Temporary Slice 15 root-cause trace. Remove before any merge.
+    if (replayPublicationPolicy.blockingIssues.some((issue) => issue.includes('race-status-55'))) {
+      const p2 = roadRaceResolution.phase2Development
+      const p3 = roadRaceResolution.phase3Decisive
+      console.error('SLICE15_MODEL=' + JSON.stringify({
+        phase2: p2 ? {
+          endKm: p2.phaseBoundary.endKm,
+          secondaryEndRiders: p2.secondaryFrontRiderIdsAtEnd,
+          secondaryStartRiders: p2.secondaryFrontRiderIdsAtLaunch,
+          secondaryCatchKm: p2.secondaryFrontCatchKm,
+          secondaryMergeKm: p2.secondaryFrontMergeKm,
+        } : null,
+        phase3: p3 ? {
+          startKm: p3.phaseBoundary.startKm,
+          endKm: p3.phaseBoundary.endKm,
+          startRiders: p3.physicalEscapeRiderIdsAtStart,
+          endRiders: p3.physicalEscapeRiderIdsAtEnd,
+          startGap: p3.physicalStartGapSeconds,
+          catchKm: p3.physicalCatchKm,
+          firstGapSample: p3.physicalGapTrajectory[0] ?? null,
+          frontLineages: p3.frontLineages.map((row) => ({
+            launchKm: row.launchKm, riderIds: row.riderIdsAtLaunch,
+            catchKm: row.catchKm, caught: row.caughtByPeloton, mergeKm: row.mergeKm
+          }))
+        } : null
+      }))
+    }
     throw new Error(
       `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
     )
