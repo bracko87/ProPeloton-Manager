@@ -568,6 +568,7 @@
     "day": "Dan {{number}}"
   },
   "ownedAnalysis": {
+    "racePlacement": "Pozicija:",
     "performanceCentre": "Centar učinka",
     "riderPerformanceCentre": "Centar učinka vozača",
     "centreDescription": "Objedinjen trenerski, trkački, trening, razvojni i finansijski pregled za vozača {{rider}}.",
