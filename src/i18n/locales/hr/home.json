@@ -50,7 +50,8 @@
     "registeredUsers": "Registrovani korisnici",
     "totalTeams": "Ukupno timova",
     "totalRacesTours": "Ukupno utrka i tura",
-    "totalStages": "Ukupno etapa"
+    "totalStages": "Ukupno etapa",
+    "onlineUsers": "Korisnici na mreži"
   },
   "features": {
     "title": "Glavne funkcije",
