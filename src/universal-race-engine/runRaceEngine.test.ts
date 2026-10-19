@@ -5553,7 +5553,7 @@ describe('Phase 3 Race Phase 4 chase and finish resolution', () => {
         rider.riderId === 'rider-4'
           ? {
               ...rider,
-              fatigueBeforeStage: 95,
+              fatigueBeforeStage: 97,
               raceSharpness: 0,
               endurance: 62,
               resistance: 62,
@@ -5575,7 +5575,7 @@ describe('Phase 3 Race Phase 4 chase and finish resolution', () => {
     )!
 
     expect(phase3State.energyAfterPhase).toBeGreaterThan(3)
-    expect(riderState.energyAtFinish).toBeLessThan(6)
+    expect(riderState.energyAtFinish, `actual Phase 4 energy: ${riderState.energyAtFinish}; phase3: ${phase3State.energyAfterPhase}`).toBeLessThan(5)
     expect(riderState.contactLossReason).toBe('energy_depleted')
     expect(riderState.contactLossKm).not.toBeNull()
     expect(riderState.finalGapSeconds).toBeGreaterThan(5)
