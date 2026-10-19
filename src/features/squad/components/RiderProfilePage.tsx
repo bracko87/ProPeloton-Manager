@@ -2287,7 +2287,7 @@ function RichRiderPerformanceAnalysisPage({
                         </div>
                         <div className="shrink-0 text-right">
                           <div className="text-xs font-normal text-slate-600">
-                            {rp('common.position')} {position ?? '—'}
+                            {rp('ownedAnalysis.racePlacement')} {position ?? '—'}
                           </div>
                           <div className="text-xs text-slate-500">
                             {rp('ownedAnalysis.pointsShort', {
