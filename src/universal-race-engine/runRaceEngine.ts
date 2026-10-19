@@ -27526,8 +27526,15 @@ export function buildUniversalReplayTimeline(
         !activeFrontRiderSet.has(riderId),
     )
     if (pelotonRiderIds.length > 0) {
+      // A surviving Phase-3 front must use its own physical gap trajectory.
+      // Global replay anchors can otherwise collapse F into P at a sampled
+      // status point before Phase-3's authoritative catch kilometre.
       const pelotonGapSeconds = leadingRiderIds.length > 0
-        ? gapAtKm(km)
+        ? getRoadGapFromTrajectory(
+            phase3.physicalGapTrajectory,
+            km,
+            phase3.physicalEndGapSeconds,
+          )
         : activeLineageStates.length > 0
           ? Math.max(
               ...activeLineageStates.map(
@@ -37914,34 +37921,6 @@ export function runRaceEngine(
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
   if (!replayPublicationPolicy.publishable) {
-    // Temporary Slice 15 root-cause trace. Remove before any merge.
-    if (replayPublicationPolicy.blockingIssues.some((issue) => issue.includes('race-status-55'))) {
-      const p2 = roadRaceResolution.phase2Development
-      const p3 = roadRaceResolution.phase3Decisive
-      console.error('SLICE15_MODEL=' + JSON.stringify({
-        phase2: p2 ? {
-          endKm: p2.phaseBoundary.endKm,
-          secondaryEndRiders: p2.secondaryFrontRiderIdsAtEnd,
-          secondaryStartRiders: p2.secondaryFrontRiderIdsAtLaunch,
-          secondaryCatchKm: p2.secondaryFrontCatchKm,
-          secondaryMergeKm: p2.secondaryFrontMergeKm,
-        } : null,
-        phase3: p3 ? {
-          startKm: p3.phaseBoundary.startKm,
-          endKm: p3.phaseBoundary.endKm,
-          startRiders: p3.physicalEscapeRiderIdsAtStart,
-          endRiders: p3.physicalEscapeRiderIdsAtEnd,
-          startGap: p3.physicalStartGapSeconds,
-          catchKm: p3.physicalCatchKm,
-          firstGapSample: p3.physicalGapTrajectory[0] ?? null,
-          gapSamples: p3.physicalGapTrajectory.slice(0, 40),
-          frontLineages: p3.frontLineages.map((row) => ({
-            launchKm: row.launchKm, riderIds: row.riderIdsAtLaunch,
-            catchKm: row.catchKm, caught: row.caughtByPeloton, mergeKm: row.mergeKm
-          }))
-        } : null
-      }))
-    }
     throw new Error(
       `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
     )
