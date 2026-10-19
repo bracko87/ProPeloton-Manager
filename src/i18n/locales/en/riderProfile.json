@@ -773,8 +773,14 @@
     "bronze": "Bronze",
     "season": "Season",
     "current": "Current season championship medals",
-    "career": "Career championship achievements",
-    "viewRace": "View race"
+    "career": "Championship and Association achievements",
+    "viewRace": "View race",
+    "nationalAssociation": "National Association Championship",
+    "careerSummary": "National, international and association honours across all seasons, including the current one.",
+    "tableAchievement": "Achievement",
+    "tableMedal": "Medal",
+    "tableCountry": "Country",
+    "tableRace": "Race"
   },
   "powerProfile": {
     "youthSummary": "Youth height and weight can change as riders grow; adults keep their final measurements.",
