@@ -14647,7 +14647,6 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
     // this source-level test validates the deployed SQL producer.
     expect(runnerSource).toContain('payload.phase9_inputs')
     expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
-    expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
     expect(runnerSource).toContain('buildProductionUniversalRaceEngineInput(sources)')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
