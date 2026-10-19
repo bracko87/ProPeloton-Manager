@@ -2154,6 +2154,10 @@ function RichRiderPerformanceAnalysisPage({
         </div>
       </div>
 
+      {/* The Premium Performance tab uses the same rider power model as
+          Overview and the Rider Development Lab, never a race-engine modifier. */}
+      <RiderPowerProfile riderId={rider.id} skills={rider} />
+
       <div className="grid grid-cols-1 gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <AnalysisCard
           title={rp('ownedAnalysis.performanceRadar')}
@@ -2282,8 +2286,8 @@ function RichRiderPerformanceAnalysisPage({
                           </div>
                         </div>
                         <div className="shrink-0 text-right">
-                          <div className="text-sm font-semibold text-slate-950">
-                            P{position ?? '—'}
+                          <div className="text-xs font-normal text-slate-600">
+                            {rp('common.position')} {position ?? '—'}
                           </div>
                           <div className="text-xs text-slate-500">
                             {rp('ownedAnalysis.pointsShort', {
