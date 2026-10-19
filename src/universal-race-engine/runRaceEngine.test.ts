@@ -12140,7 +12140,12 @@ describe('Phase 7 final replay-to-result synchronization — Task 7.5', () => {
       'utf8',
     )
 
-    expect(source).toContain('get_universal_race_stage_replay_payload_v1')
+    // The replay page now reads the authorized persisted race snapshot.
+    expect(source).toContain('get_authorized_race_stage_replay_payload_v1')
+    expect(source).toContain("nextAuthoritativePayload?.status === 'available'")
+    expect(source).toContain('authoritativeInput?.race?.raceId === race.id')
+    expect(source).toContain('authoritativeInput?.stage?.stageId === stage.id')
+    expect(source).toContain('result.replayProgressGuarantee?.canProgress === true')
     expect(source).toContain('production_authoritative_run')
     expect(source).toContain('production_authoritative_pending')
     expect(source).toContain(
