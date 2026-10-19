@@ -157,6 +157,36 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [])
 
+  // Maintain a truthful online-users count only while an authenticated tab is
+  // visible. This lightweight presence ping does NOT change referral rewards
+  // or trigger manager inactivity/reactivation workflows.
+  useEffect(() => {
+    if (!user?.id || typeof document === 'undefined') return
+
+    let disposed = false
+    const recordPresence = async () => {
+      if (disposed || document.visibilityState !== 'visible') return
+
+      const { error } = await supabase.rpc('mark_online_presence_v1')
+      if (error && !disposed) {
+        console.warn('Could not update online presence:', error.message)
+      }
+    }
+
+    void recordPresence()
+    const timer = window.setInterval(() => void recordPresence(), 120_000)
+    const onResume = () => void recordPresence()
+    document.addEventListener('visibilitychange', onResume)
+    window.addEventListener('focus', onResume)
+
+    return () => {
+      disposed = true
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onResume)
+      window.removeEventListener('focus', onResume)
+    }
+  }, [user?.id])
+
   return (
     <AuthContext.Provider value={{ user, loading, refreshUser }}>
       {children}
