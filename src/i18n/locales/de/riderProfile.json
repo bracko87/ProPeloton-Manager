@@ -568,6 +568,7 @@
     "day": "Tag {{number}}"
   },
   "ownedAnalysis": {
+    "racePlacement": "Platzierung:",
     "performanceCentre": "Leistungszentrum",
     "riderPerformanceCentre": "Fahrerleistungszentrum",
     "centreDescription": "Kombinierte Ansicht zu Coaching, Rennen, Training, Entwicklung und Finanzen für {{rider}}.",
