@@ -37919,6 +37919,24 @@ export function runRaceEngine(
       const inspectIds = new Set(['expanded-rider-11', 'expanded-rider-23', 'expanded-rider-05', 'expanded-rider-17'])
       console.error('SLICE15_STATUS55_TRACE=' + JSON.stringify({
         failures: replayPublicationPolicy.blockingIssues,
+        phase2: {
+          endKm: phase2RoadRaceResolution.phaseBoundary.endKm,
+          secondaryStartRiders: phase2RoadRaceResolution.secondaryFrontRiderIdsAtLaunch,
+          secondaryEndRiders: phase2RoadRaceResolution.secondaryFrontRiderIdsAtEnd,
+          secondaryCatchKm: phase2RoadRaceResolution.secondaryFrontCatchKm,
+          secondaryMergeKm: phase2RoadRaceResolution.secondaryFrontMergeKm,
+        },
+        phase3: {
+          startKm: phase3RoadRaceResolution.phaseBoundary.startKm,
+          endKm: phase3RoadRaceResolution.phaseBoundary.endKm,
+          initialEscapeRiders: phase3RoadRaceResolution.physicalEscapeRiderIdsAtStart,
+          physicalCatchKm: phase3RoadRaceResolution.physicalCatchKm,
+          trajectoryFirst: phase3RoadRaceResolution.physicalGapTrajectory[0] ?? null,
+          frontLineages: phase3RoadRaceResolution.frontLineages.map((l) => ({
+            riders: l.riderIdsAtLaunch, launchKm: l.launchKm,
+            caught: l.caughtByPeloton, catchKm: l.catchKm, mergeKm: l.mergeKm
+          }))
+        },
         checkpoints: replayTimeline.checkpoints
           .filter((checkpoint) => {
             const fraction = checkpoint.raceProgress.kmFromStart / Math.max(1, calculationInput.stage.distanceKm)
