@@ -5553,7 +5553,7 @@ describe('Phase 3 Race Phase 4 chase and finish resolution', () => {
         rider.riderId === 'rider-4'
           ? {
               ...rider,
-              fatigueBeforeStage: 95,
+              fatigueBeforeStage: 96,
               raceSharpness: 0,
               endurance: 62,
               resistance: 62,
