@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - staging
     paths:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
