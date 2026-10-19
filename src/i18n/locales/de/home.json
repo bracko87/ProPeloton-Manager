@@ -50,7 +50,8 @@
     "registeredUsers": "Registrierte Benutzer",
     "totalTeams": "Teams insgesamt",
     "totalRacesTours": "Rennen & Rundfahrten insgesamt",
-    "totalStages": "Etappen insgesamt"
+    "totalStages": "Etappen insgesamt",
+    "onlineUsers": "Online-Nutzer"
   },
   "features": {
     "title": "Kernfunktionen",
