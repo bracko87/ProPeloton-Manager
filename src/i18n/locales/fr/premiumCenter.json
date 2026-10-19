@@ -249,6 +249,8 @@
     "openSponsorDetail": "Ouvrir les détails du sponsor"
   },
   "development": {
+    "pendingProgress": "Progression des compétences en attente",
+    "pendingProgressHint": "La progression réellement gagnée attend la prochaine mise à jour hebdomadaire du jeu. Il ne s'agit pas encore d'une hausse permanente.",
     "title": "Rider Development Lab",
     "description": "Suivez le développement enregistré sur les huit dernières semaines tout en maintenant les compétences actuelles disponibles pour tous les managers. Il s'agit d'une analyse historique, pas d'un rapport du Head Coach.",
     "rider": "Coureur",
