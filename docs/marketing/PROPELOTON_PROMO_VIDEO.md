@@ -1,17 +1,17 @@
 # ProPeloton Manager — first promo video production brief (draft v1)
 
-**Status:** **First 30.000-second MP4 REVIEW DRAFT PRODUCED** from four owner-provided real gameplay recordings and selected user screenshots. Video and source package were delivered as downloadable ChatGPT conversation artifacts on 2026-10-19 (not uploaded to the GitHub repository). **Still not approved or published.** **Working branch:** staging. **Owner review:** required before final polish or public release.
+**Status:** **Second 45.000-second MP4 REVIEW DRAFT PRODUCED** on 2026-10-19 following owner feedback; original 30s draft remains archived as V1. Both edits use real gameplay. The revised MP4 and 45s source ZIP were delivered as ChatGPT conversation artifacts (not uploaded to GitHub). **Still not approved or published.** **Working branch:** staging. **Owner review required.**
 
 ## Editorial direction
 
-Primary deliverable: **28–30 seconds maximum**, English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Companion cut: 15s, with later 9:16 and square reframing. No 45–60s edit unless separately requested. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
+Current primary deliverable: **45 seconds exactly** (revised by owner after reviewing original 30s draft), English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Optional companion cut: 15s, with later 9:16 and square reframing. Original 30s cut remains available. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
 
 **Working tagline:** **Build Your Team. Write Your Cycling Story.**
 CTA: **Play at propelotonmanager.com** (not a Steam Wishlist link until a Steam store page exists).
 
 No voice-over in the 30-second v1 (better clarity and easy multi-language repurposing). Do not include an optional narration draft in the first edit.
 
-## Shot list — 30 seconds maximum
+## Archived V1 shot list — 30 seconds (superseded by 45-second draft V2)
 
 | Time (s) | Visual: REAL game only | On-screen copy | Asset requirement |
 |---|---|---|---|
@@ -93,4 +93,30 @@ This document is production planning only, on staging. It neither publishes a vi
 - **Audio:** original procedural instrumental synthesized for this video; no third-party samples or external copyrighted commercial song used. No narration.
 - **Brand caveat:** high-resolution logo not supplied separately; closing slate uses branded typography as a first draft. Replace with the official transparent logo if provided, then ensure all copy/CTA are approved.
 - **Next:** owner watches first draft and provides timing/music/text comments, then one polish revision. Produce high-bitrate final master and vertical/social variants only after approval. No automatic promotional publishing; do not claim Steam store availability.
+
+
+## Revised V2 shot list — 45 seconds (owner requested)
+
+The 45.000-second draft uses **1,350 frames at 30 fps** and the original owner-supplied gameplay recordings and screenshots. Files created in conversation: `ProPeloton_Manager_Promo_Draft_v2_45s.mp4`, `ProPeloton_Manager_Promo_Draft_v2_45s_preview.jpg`, `ProPeloton_Promo_Source_Package_v2_45s.zip`. No GitHub upload and no public publication.
+
+| Time (s) | Visual | Message or effect |
+|---|---|---|
+| 0–3 | Actual race replay | THE RACE IS ON |
+| 3–7 | Overview video | BUILD YOUR CYCLING TEAM |
+| 7–11 | Rider development video | EVERY RIDER MATTERS |
+| 11–14 | Transfer market screenshot | SCOUT. SIGN. DEVELOP. |
+| 14–18 | Training video | TRAIN YOUR CHAMPIONS |
+| 18–20 | Equipment screenshot | PREPARE TO COMPETE |
+| **20–24** | **Eight distinct screenshots, 0.5s each** | **Drum-only, original electronic “dun-dun” rhythm timed to every cut; EVERY DECISION COUNTS** |
+| 24–27 | Race Preparation screenshot | PLAN EVERY RACE |
+| 27–29.5 | Race Detail screenshot | KNOW THE COURSE |
+| 29.5–36 | Actual race replay | COMPETE FOR VICTORY |
+| 36–38 | Team Ranking screenshot | RISE THROUGH THE RANKS |
+| 38–39.7 | Finance screenshot | BUILD YOUR CLUB |
+| 39.7–41.5 | Youth Academy infrastructure screenshot | GROW YOUR LEGACY |
+| 41.5–45 | Branded closing title | PLAY AT PROPELOTONMANAGER.COM |
+
+**Revision details:** Removed all previous `NN/09` scene counter graphics. Added gold-and-black framing, kinetic yellow flash on scene transitions, gentle still-image motion, and continuous `PROPELOTONMANAGER.COM` URL at the top right of every gameplay shot, plus larger URL on end card. Synthesized a new original 45-second 120-BPM soundtrack with an isolated 20–24-second percussion-only passage. No third-party copyrighted track, no generated/fabricated in-game screens. No narration. The source ZIP contains four recordings, used screenshots, scene overlays, music WAV, shotlist JSON and FFmpeg/Python render scripts (not a native Canva file).
+
+**V2 technical QC:** 1920×1080 H.264 30 fps, AAC audio, **45.000 seconds exactly (1,350 frames)**; approx. 9.3 MB review export. This is a review export; check music volume/readability, obtain owner approval, then create the final high-bitrate commercial master if requested. Original high-resolution PPM logo asset still not provided separately. Nothing published and no production game code/data touched.
 
