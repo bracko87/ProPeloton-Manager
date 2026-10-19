@@ -773,8 +773,14 @@
     "bronze": "Bronce",
     "season": "Temporada",
     "current": "Medallas de la temporada actual",
-    "career": "Logros de campeonatos en su carrera",
-    "viewRace": "Ver carrera"
+    "career": "Logros en campeonatos y asociaciones",
+    "viewRace": "Ver carrera",
+    "nationalAssociation": "Campeonato de la Asociación Nacional",
+    "careerSummary": "Logros nacionales, internacionales y de asociaciones de todas las temporadas, incluida la actual.",
+    "tableAchievement": "Logro",
+    "tableMedal": "Medalla",
+    "tableCountry": "País",
+    "tableRace": "Carrera"
   },
   "powerProfile": {
     "youthSummary": "La altura y el peso de los jóvenes pueden cambiar mientras crecen; los adultos conservan sus medidas finales.",
