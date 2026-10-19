@@ -50,7 +50,8 @@
     "registeredUsers": "Utenti registrati",
     "totalTeams": "Squadre totali",
     "totalRacesTours": "Gare e tour totali",
-    "totalStages": "Tappe totali"
+    "totalStages": "Tappe totali",
+    "onlineUsers": "Utenti online"
   },
   "features": {
     "title": "Funzioni principali",
