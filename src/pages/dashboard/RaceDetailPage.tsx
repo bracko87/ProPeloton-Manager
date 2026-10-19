@@ -17039,6 +17039,24 @@ function UniversalRaceReplayPage({
           ) : null}
 
 
+          {result && resultsVisible ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+              <h3 className="font-semibold">Phase 7 + Phase 8 acceptance audit</h3>
+              <p>Phase 8 rider updates from the same final race result</p>
+              <button type="button" onClick={downloadPhase78AcceptanceReport} className="mt-2 rounded-lg border border-slate-300 px-3 py-2 hover:bg-slate-50">
+                Download Phase 7 + Phase 8 JSON report
+              </button>
+              <h3 className="mt-4 font-semibold">Phase 9 weather, preparation and resource audit</h3>
+              <p>Equipment, asset and supply usage calculated for this race</p>
+              <p>Rider effects from weather and preparation in the same race result</p>
+              <button type="button" onClick={downloadPhase9AcceptanceReport} className="mt-2 rounded-lg border border-slate-300 px-3 py-2 hover:bg-slate-50">
+                Download Phase 9 JSON report
+              </button>
+            </section>
+          ) : result ? (
+            <p className="text-xs text-slate-500">Report unlocks at finish · Phase 9 report unlocks at finish</p>
+          ) : null}
+
           {result &&
           !result.intermediatePointFinalization.synchronization.synchronized ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
