@@ -37914,6 +37914,28 @@ export function runRaceEngine(
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
   if (!replayPublicationPolicy.publishable) {
+    // Temporary Slice 15 tracing on an isolated feature branch. Remove before merge.
+    if (replayPublicationPolicy.blockingIssues.some((issue) => issue.includes('race-status-55'))) {
+      const inspectIds = new Set(['expanded-rider-11', 'expanded-rider-23', 'expanded-rider-05', 'expanded-rider-17'])
+      console.error('SLICE15_STATUS55_TRACE=' + JSON.stringify({
+        failures: replayPublicationPolicy.blockingIssues,
+        checkpoints: replayTimeline.checkpoints
+          .filter((checkpoint) => {
+            const fraction = checkpoint.raceProgress.kmFromStart / Math.max(1, calculationInput.stage.distanceKm)
+            return (fraction >= 0.38 && fraction <= 0.56) ||
+              checkpoint.commentary.some((event) => event.eventType === 'catch')
+          })
+          .map((checkpoint) => ({
+            id: checkpoint.checkpointId,
+            km: checkpoint.raceProgress.kmFromStart,
+            eventTypes: checkpoint.commentary.map((entry) => entry.eventType),
+            riders: checkpoint.riderStates.filter((row) => inspectIds.has(row.riderId))
+              .map((row) => ({ id: row.riderId, code: row.displayCode, energy: row.energy })),
+            frontGroups: checkpoint.groups.filter((group) => group.displayCode.startsWith('F'))
+              .map((group) => ({ code: group.displayCode, lineage: group.physicalLineageId, riders: group.riderIds })),
+          })),
+      }))
+    }
     throw new Error(
       `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
     )
