@@ -17223,8 +17223,8 @@ describe('Phase 11G organic race physics and replay continuity', () => {
       'utf8',
     )
     expect(source).toContain("checkpointIdSuffix: 'finish-group-transition'")
-    expect(source).toContain("eventType: 'group_split'")
-    expect(source).toContain("title: 'Final gaps open on the line'")
+    expect(source).toContain("eventType: allTransitionsAreFrontCaughtByPeloton ? 'catch' : 'group_split'")
+    expect(source).toContain("title: allTransitionsAreFrontCaughtByPeloton ? 'Front group caught on the line' : 'Final gaps open on the line'")
   })
 
   it('accepts immutable GC, points and mountain standings and rejects duplicate rider standings', () => {
