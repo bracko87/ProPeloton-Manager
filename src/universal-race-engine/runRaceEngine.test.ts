@@ -16439,7 +16439,13 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
 
     expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
     expect(pageSource).not.toContain('isRioTourDevelopmentReplayUnlocked')
-    expect(pageSource).toContain('get_universal_race_stage_replay_payload_v1')
+    // All tours consume the same authorized, persisted result: no Rio-only unlock.
+    expect(pageSource).toContain('get_authorized_race_stage_replay_payload_v1')
+    expect(pageSource).toContain("nextAuthoritativePayload?.status === 'available'")
+    expect(pageSource).toContain('authoritativeInput?.stage?.stageId === stage.id')
+    expect(pageSource).toContain('authoritativeResult?.stageId === stage.id')
+    expect(pageSource).toContain('result.replaySynchronization.synchronized ||')
+    expect(pageSource).toContain('result.replayProgressGuarantee?.canProgress === true')
     expect(
       pageSource.includes('Replay unavailable') ||
         pageSource.includes("t('replay.unavailable')") ||
