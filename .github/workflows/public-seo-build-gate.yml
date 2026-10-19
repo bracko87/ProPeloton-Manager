@@ -1,0 +1,45 @@
+name: Public SEO production build gate
+
+on:
+  push:
+    branches: [staging]
+    paths:
+      - 'index.html'
+      - 'public/**'
+      - 'scripts/build.mjs'
+      - 'scripts/check-seo-public-pages.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/public-seo-build-gate.yml'
+  pull_request:
+    branches: [staging]
+    paths:
+      - 'index.html'
+      - 'public/**'
+      - 'scripts/build.mjs'
+      - 'scripts/check-seo-public-pages.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/public-seo-build-gate.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and validate public SEO
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Production build including localization check
+        run: npm run build
+      - name: Verify public pages, sitemap, schema and emitted assets
+        run: node scripts/check-seo-public-pages.mjs
