@@ -249,6 +249,8 @@
     "openSponsorDetail": "Abrir detalles del patrocinador"
   },
   "development": {
+    "pendingProgress": "Progreso pendiente de habilidades",
+    "pendingProgressHint": "El progreso ganado espera el próximo cálculo semanal del juego. Aún no es un aumento permanente de atributos.",
     "title": "Rider Development Lab",
     "description": "Sigue el desarrollo registrado durante las últimas ocho semanas manteniendo las habilidades actuales disponibles para todos los managers. Es análisis histórico, no un informe del Head Coach.",
     "rider": "Corredor",
