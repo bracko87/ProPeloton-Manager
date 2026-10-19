@@ -160,16 +160,10 @@ export default function YouthRiderProfilePage(): JSX.Element {
 
       if (!alive) return
 
-      if (profileError) {
-        // Public U16 profiles exclude exact attributes, hidden potential and private agreements.
-        // The existing full profile RPC remains accessible only to the rider's own manager.
-        const { data: publicData, error: publicError } = await supabase.rpc(
-          'get_public_youth_rider_profile_v1',
-          { p_youth_rider_id: riderId }
-        )
-        if (!alive) return
-        setError(publicError?.message ?? null)
-        setProfile(publicError ? null : publicData as YouthRiderProfilePayload | null)
+      if (profileError || !data) {
+        // Only riders belonging to the manager's own U16 Academy have profiles.
+        setError(profileError?.message ?? 'Only riders from your own Youth Academy can be viewed.')
+        setProfile(null)
       } else {
         setProfile(data as YouthRiderProfilePayload)
       }
@@ -367,91 +361,6 @@ export default function YouthRiderProfilePage(): JSX.Element {
         </div>
       ) : null}
 
-      {profile.public_only && !profile.is_mine && profile.status === 'academy' ? (
-        <Card title="U16 scouting and recruitment">
-          <p className="text-sm text-slate-600">
-            Scout this specific rider before negotiating. Existing U16 Academy riders
-            can only transfer if their current club approves and their family accepts.
-            High compensation never guarantees a transfer.
-          </p>
-
-          {!profile.scouting_report ? (
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button type="button" disabled={scoutingBusy || scoutingLoading || !scoutingStatus?.can_run || directEligibility?.can_scout !== true}
-                onClick={() => void scoutThisRider()}
-                className="rounded-full bg-yellow-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-400 disabled:cursor-not-allowed disabled:opacity-50">
-                {scoutingBusy ? 'Scouting…' : scoutingLoading ? 'Checking scouting…'
-                  : (scoutingStatus?.free_runs_remaining ?? 0) > 0
-                    ? 'Scout this U16 rider · Free weekly search'
-                    : `Scout this U16 rider · ${scoutingStatus?.next_run_coin_cost ?? 0} Coins`}
-              </button>
-              <button type="button" disabled
-                className="rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-400"
-                title="A valid scouting report is required before any offer">
-                Make contract/transfer offer · Scout first
-              </button>
-            </div>
-          ) : (
-            <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-              <p className="text-sm font-semibold text-emerald-900">Scouting report available</p>
-              <p className="mt-1 text-xs text-emerald-800">
-                {profile.scouting_report.assessment_band ?? 'Assessed youth rider'}
-                {profile.scouting_report.confidence != null
-                  ? ` · ${profile.scouting_report.confidence}% confidence` : ''}
-                {' · '}Suggested weekly support: {money(profile.scouting_report.stipend)}
-                {' · '}Suggested development compensation: {money(profile.scouting_report.compensation)}
-              </p>
-              <button type="button" onClick={() => setOfferOpen(value => !value)}
-                className="mt-3 rounded-full bg-yellow-300 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-yellow-400">
-                {offerOpen ? 'Hide contract/transfer offer' : 'Make contract/transfer offer'}
-              </button>
-              {offerOpen ? (
-                <div className="mt-4 space-y-3 border-t border-emerald-200 pt-4">
-                  <p className="text-xs text-slate-700">Propose financial support and compensation to the source Academy. The offer is not an automatic transfer.</p>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    {([
-                      ['stipend', 'Weekly stipend ($)'],
-                      ['accommodation', 'Weekly accommodation ($)'],
-                      ['compensation', 'Development compensation ($)'],
-                    ] as const).map(([key, label]) => (
-                      <label key={key} className="text-xs text-slate-700">{label}
-                        <input type="number" min="0" step="1" value={offerValues[key]}
-                          onChange={event => setOfferValues(current => ({ ...current, [key]: Number(event.target.value) }))}
-                          className="mt-1 w-full rounded-lg border border-slate-200 bg-white p-2 text-sm text-slate-950"/>
-                      </label>
-                    ))}
-                  </div>
-                  <button type="button" disabled={offerBusy || offerSubmitted}
-                    onClick={() => void submitScoutedOffer()}
-                    className="rounded-full bg-sky-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-                    {offerBusy ? 'Submitting…' : offerSubmitted ? 'Offer submitted' : 'Submit contract/transfer offer'}
-                  </button>
-                </div>
-              ) : null}
-            </div>
-          )}
-
-          {!profile.scouting_report && directEligibility?.available && !directEligibility.can_scout ? (
-            <div role="status" className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
-              This rider from {directEligibility.target_country ?? 'another country'} is outside your current {humanize(directEligibility.current_range)} scouting range.
-              Upgrade the Youth Academy scouting programme to <strong>{humanize(directEligibility.required_range)}</strong> before you can scout and negotiate.
-              <Link to="/dashboard/youth-academy?tab=settings" className="ml-2 font-semibold text-sky-800 underline">Change scouting range →</Link>
-            </div>
-          ) : null}
-          {!profile.scouting_report && !scoutingLoading ? (
-            <div className="mt-3 text-xs text-slate-600">
-              {!scoutingStatus?.activated ? 'Activate your Youth Academy to scout U16 riders. ' :
-                scoutingStatus?.read_only ? 'Premium access is required for Youth scouting. ' :
-                !scoutingStatus?.scout ? 'Hire an active Youth Scout first. ' :
-                !scoutingStatus.can_run ? 'All four scouting searches have been used this game week. ' :
-                `Your scouting range: ${scoutingStatus.scouting_range ?? 'local'} · searches used: ${scoutingStatus.weekly_runs_used ?? 0}/${scoutingStatus.weekly_run_limit ?? 4}. `}
-              <Link to="/dashboard/youth-academy?tab=scouting" className="font-semibold text-sky-700 hover:underline">Youth scouting settings →</Link>
-            </div>
-          ) : null}
-          {scoutingMessage ? <p role="status" className="mt-3 text-sm text-slate-700">{scoutingMessage}</p> : null}
-          {offerMessage ? <p role="status" className="mt-3 text-sm text-slate-700">{offerMessage}</p> : null}
-        </Card>
-      ) : null}
 
       {!profile.public_only ? (
       <>
