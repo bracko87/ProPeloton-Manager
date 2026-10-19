@@ -111,3 +111,12 @@ html > body * {
 button[data-tutorial-target='header-membership'].bg-white\/45 {
   display: none;
 }
+
+/* Race start-list cards: use the same compact nationality flag proportions as
+   Squad/Transfers (24 × 16 px), including missing-image placeholders.
+   Race title flags and national team jerseys retain their intended sizes. */
+button.group img[src^="https://flagcdn.com/w40/"].h-6.w-9,
+button.group span[aria-label][title].h-6.w-9 {
+  width: 1.5rem;
+  height: 1rem;
+}
