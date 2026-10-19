@@ -1,6 +1,6 @@
 # ProPeloton Manager — first promo video production brief (draft v1)
 
-**Status:** Tool comparison and creative/edit plan complete. **MP4 NOT produced** yet; do not advertise as final before actual real-gameplay footage is acquired, edited and approved. **Working branch:** staging. **Owner review:** required before publication.
+**Status:** **First 30.000-second MP4 REVIEW DRAFT PRODUCED** from four owner-provided real gameplay recordings and selected user screenshots. Video and source package were delivered as downloadable ChatGPT conversation artifacts on 2026-10-19 (not uploaded to the GitHub repository). **Still not approved or published.** **Working branch:** staging. **Owner review:** required before final polish or public release.
 
 ## Editorial direction
 
@@ -83,3 +83,14 @@ References:
 ## Task boundary
 
 This document is production planning only, on staging. It neither publishes a video nor changes the game engine, assets, database, GitHub production, Supabase storage or live environment. Final MP4 is still owed.
+
+
+## First video draft — actual output (2026-10-19)
+
+- **Rendered successfully:** `ProPeloton_Manager_Promo_Draft_30s.mp4` (conversation artifact), **30.000 seconds exactly**, H.264 1920×1080 at 30 fps, AAC 48 kHz stereo; about 6.1 MiB preview size. This is a *review encode*, not yet the separately required high-bitrate delivery/Steam master.
+- **Source edit bundle:** `ProPeloton_Promo_Source_Package.zip` (conversation artifact), includes user-supplied four footage files, the three still screenshots actually used, branded title PNG overlays, exact 900-frame shot list and an original synthesized WAV music bed.
+- **Real-game footage used:** race simulation (recording 4, split opening and climax), Overview/dashboard (recording 1), Rider development (recording 2), Training (recording 3), and screenshots for Transfers, Race Preparation, Infrastructure.
+- **Audio:** original procedural instrumental synthesized for this video; no third-party samples or external copyrighted commercial song used. No narration.
+- **Brand caveat:** high-resolution logo not supplied separately; closing slate uses branded typography as a first draft. Replace with the official transparent logo if provided, then ensure all copy/CTA are approved.
+- **Next:** owner watches first draft and provides timing/music/text comments, then one polish revision. Produce high-bitrate final master and vertical/social variants only after approval. No automatic promotional publishing; do not claim Steam store availability.
+
