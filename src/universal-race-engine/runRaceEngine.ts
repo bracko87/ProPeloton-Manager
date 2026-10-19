@@ -30363,6 +30363,16 @@ export function buildUniversalReplayTimeline(
     const finalTransitionRiderIds = eligibleStarterIds
       .filter((riderId) => beforeCodes.get(riderId) !== finalCodes.get(riderId))
       .sort()
+    // A physical F-to-P catch recorded in the authoritative final groups must
+    // be described as a catch, rather than an unsupported generic split.
+    // Only use this when every changed rider was in F and actually finishes
+    // inside P; mixed or other group transitions remain ordinary splits.
+    const allTransitionsAreFrontCaughtByPeloton =
+      finalTransitionRiderIds.length > 0 &&
+      finalTransitionRiderIds.every((riderId) =>
+        beforeCodes.get(riderId)?.startsWith('F') === true &&
+        finalCodes.get(riderId) === 'P',
+      )
     if (finalTransitionRiderIds.length > 0) {
       eventDefinitions.push({
         checkpointIdSuffix: 'finish-group-transition',
@@ -30372,8 +30382,8 @@ export function buildUniversalReplayTimeline(
         sortOrder: 990,
         groups: finalGroups,
         energyByRiderId: phase4EnergyByRiderId,
-        eventType: 'group_split',
-        title: 'Final gaps open on the line',
+        eventType: allTransitionsAreFrontCaughtByPeloton ? 'catch' : 'group_split',
+        title: allTransitionsAreFrontCaughtByPeloton ? 'Front group caught on the line' : 'Final gaps open on the line',
         description: `${replayRiderSubject(finalTransitionRiderIds)} ${finalTransitionRiderIds.length === 1 ? 'changes' : 'change'} physical finishing group as the final gaps are established.`,
         riderIds: finalTransitionRiderIds,
         teamIds: Array.from(
