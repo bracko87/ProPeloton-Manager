@@ -12201,7 +12201,14 @@ describe('Phase 7 final replay-page closeout', () => {
 
     expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
-    expect(source).toContain('get_universal_race_stage_replay_payload_v1')
+    expect(source).toContain(
+      "raceDetailReadRpc('get_authorized_race_stage_replay_payload_v1'",
+    )
+    expect(source).toContain('result.replaySynchronization.synchronized ||')
+    expect(source).toContain('result.replayProgressGuarantee?.canProgress === true')
+    expect(source).toContain(
+      "error: 'Replay data could not be synchronized.'",
+    )
     expect(source).toContain('[1, 2, 4, 8].map')
     expect(source).toContain('Finish replay')
     expect(
