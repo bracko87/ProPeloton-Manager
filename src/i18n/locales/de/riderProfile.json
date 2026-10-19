@@ -773,8 +773,14 @@
     "bronze": "Bronze",
     "season": "Saison",
     "current": "Meisterschaftsmedaillen dieser Saison",
-    "career": "Meisterschaftserfolge in der Karriere",
-    "viewRace": "Rennen ansehen"
+    "career": "Meisterschafts- und Verbandsleistungen",
+    "viewRace": "Rennen ansehen",
+    "nationalAssociation": "Nationalverbandsmeisterschaft",
+    "careerSummary": "Erfolge bei nationalen, internationalen und Verbandswettbewerben aus allen Saisons, einschließlich der aktuellen.",
+    "tableAchievement": "Erfolg",
+    "tableMedal": "Medaille",
+    "tableCountry": "Land",
+    "tableRace": "Rennen"
   },
   "powerProfile": {
     "youthSummary": "Größe und Gewicht von Nachwuchsfahrern können sich mit dem Wachstum ändern; Erwachsene behalten ihre endgültigen Maße.",
