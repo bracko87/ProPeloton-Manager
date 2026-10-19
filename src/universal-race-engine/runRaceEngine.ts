@@ -37920,19 +37920,19 @@ export function runRaceEngine(
       console.error('SLICE15_STATUS55_TRACE=' + JSON.stringify({
         failures: replayPublicationPolicy.blockingIssues,
         phase2: {
-          endKm: phase2RoadRaceResolution.phaseBoundary.endKm,
-          secondaryStartRiders: phase2RoadRaceResolution.secondaryFrontRiderIdsAtLaunch,
-          secondaryEndRiders: phase2RoadRaceResolution.secondaryFrontRiderIdsAtEnd,
-          secondaryCatchKm: phase2RoadRaceResolution.secondaryFrontCatchKm,
-          secondaryMergeKm: phase2RoadRaceResolution.secondaryFrontMergeKm,
+          endKm: roadRaceResolution.phase2.phaseBoundary.endKm,
+          secondaryStartRiders: roadRaceResolution.phase2.secondaryFrontRiderIdsAtLaunch,
+          secondaryEndRiders: roadRaceResolution.phase2.secondaryFrontRiderIdsAtEnd,
+          secondaryCatchKm: roadRaceResolution.phase2.secondaryFrontCatchKm,
+          secondaryMergeKm: roadRaceResolution.phase2.secondaryFrontMergeKm,
         },
         phase3: {
-          startKm: phase3RoadRaceResolution.phaseBoundary.startKm,
-          endKm: phase3RoadRaceResolution.phaseBoundary.endKm,
-          initialEscapeRiders: phase3RoadRaceResolution.physicalEscapeRiderIdsAtStart,
-          physicalCatchKm: phase3RoadRaceResolution.physicalCatchKm,
-          trajectoryFirst: phase3RoadRaceResolution.physicalGapTrajectory[0] ?? null,
-          frontLineages: phase3RoadRaceResolution.frontLineages.map((l) => ({
+          startKm: roadRaceResolution.phase3.phaseBoundary.startKm,
+          endKm: roadRaceResolution.phase3.phaseBoundary.endKm,
+          initialEscapeRiders: roadRaceResolution.phase3.physicalEscapeRiderIdsAtStart,
+          physicalCatchKm: roadRaceResolution.phase3.physicalCatchKm,
+          trajectoryFirst: roadRaceResolution.phase3.physicalGapTrajectory[0] ?? null,
+          frontLineages: roadRaceResolution.phase3.frontLineages.map((l) => ({
             riders: l.riderIdsAtLaunch, launchKm: l.launchKm,
             caught: l.caughtByPeloton, catchKm: l.catchKm, mergeKm: l.mergeKm
           }))
