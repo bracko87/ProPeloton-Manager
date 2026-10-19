@@ -82,17 +82,6 @@ begin
         and e.entry_source='national_team'
     );
 
-  update public.race_preparations pr
-  set club_id=m.new_club_id
-  from pg_temp.na_identity_split_v1 m
-  where pr.club_id=m.old_club_id
-    and exists (
-      select 1 from public.nations_group_events ng
-      join public.race_team_entries e on e.race_id=ng.race_id
-      where ng.race_id=pr.race_id and e.club_id=m.old_club_id
-        and e.entry_source='national_team'
-    );
-
   update public.race_team_entries e
   set club_id=m.new_club_id,participating_club_id=m.new_club_id,
       updated_at=now()
@@ -101,6 +90,17 @@ begin
     and e.entry_source='national_team'
     and exists(select 1 from public.nations_group_events ng
                where ng.race_id=e.race_id);
+
+  update public.race_preparations pr
+  set club_id=m.new_club_id
+  from pg_temp.na_identity_split_v1 m
+  where pr.club_id=m.old_club_id
+    and exists (
+      select 1 from public.nations_group_events ng
+      join public.race_team_entries e on e.race_id=ng.race_id
+      where ng.race_id=pr.race_id and e.club_id=m.new_club_id
+        and e.entry_source='national_team'
+    );
 
   update public.national_association_race_team_identities i
   set technical_club_id=m.new_club_id,
