@@ -41,7 +41,7 @@ begin
       raise exception 'Original AI national team assets missing for %',v.country_code;
     end if;
 
-    select count(*), max(c.id)
+    select count(*), (array_agg(c.id))[1]
       into v_matches,v_club_id
     from public.clubs c
     where c.country_code=v.country_code
