@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router";
 import { supabase } from "../../../lib/supabase";
 import RiderShortlistButton from "../../../pages/dashboard/transfers/RiderShortlistButton";
 import RiderPowerProfile from "../../../components/riders/RiderPowerProfile";
+import NationalChampionBadge from "../../../components/riders/NationalChampionBadge";
 import type { RiderPowerSkills } from "../../../lib/riderPower";
 
 import type { RiderDetails } from "../types";
@@ -2895,6 +2896,12 @@ export default function ExternalRiderProfilePage({
             ) : null}
           </div>
 
+          {selectedRider?.id ? (
+            <div className="flex flex-1 flex-wrap items-center justify-center gap-2">
+              <NationalChampionBadge riderId={selectedRider.id} placement="banner" />
+            </div>
+          ) : null}
+
           <div className="w-full lg:max-w-xl">
             <div className="flex items-center justify-end rounded-2xl px-2">
               {[
@@ -3396,6 +3403,12 @@ export default function ExternalRiderProfilePage({
                     description="Premium adds career honours, recent-results history and deeper external-rider analysis."
                   />
                 )}
+
+                {/* National, world and association medals are public career records.
+                    The external rider profile must match the owned rider profile. */}
+                {selectedRider?.id ? (
+                  <NationalChampionBadge riderId={selectedRider.id} placement="history" />
+                ) : null}
               </div>
             )
           )}
