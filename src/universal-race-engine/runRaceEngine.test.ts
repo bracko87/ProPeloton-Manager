@@ -5816,9 +5816,16 @@ describe('Phase 3 Race Phase 4 chase and finish resolution', () => {
               .finalGapSeconds,
         )
         .map((gap) => Math.round(gap))
-      expect(Math.max(...sourceGaps) - Math.min(...sourceGaps)).toBeLessThanOrEqual(
-        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
-      )
+      // Phase 5 merges a connected chase line transitively: the group may
+      // span more than five seconds end-to-end, but each adjacent rider gap
+      // must still be within the configured physical merge tolerance.
+      const orderedSourceGaps = [...sourceGaps].sort((left, right) => left - right)
+      for (let index = 1; index < orderedSourceGaps.length; index += 1) {
+        expect(orderedSourceGaps[index] - orderedSourceGaps[index - 1]).toBeLessThanOrEqual(
+          PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+        )
+      }
+      expect(group.gapSeconds).toBe(orderedSourceGaps[0])
     }
   })
 
