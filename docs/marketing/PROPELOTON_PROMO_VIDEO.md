@@ -1,10 +1,10 @@
 # ProPeloton Manager — first promo video production brief (draft v1)
 
-**Status:** **Second 45.000-second MP4 REVIEW DRAFT PRODUCED** on 2026-10-19 following owner feedback; original 30s draft remains archived as V1. Both edits use real gameplay. The revised MP4 and 45s source ZIP were delivered as ChatGPT conversation artifacts (not uploaded to GitHub). **Still not approved or published.** **Working branch:** staging. **Owner review required.**
+**Status:** **V3 57.000-second MP4 REVIEW DRAFT PRODUCED** on 2026-10-19 after owner rejected the eight-cut percussive montage and yellow flashing transitions. V1 30s and V2 45s retained as historical drafts; V3 uses the same authentic user footage with longer readable shots. Video, preview, and editable source bundle delivered as ChatGPT conversation artifacts (not uploaded to GitHub). **Still not approved or published.** **Working branch:** staging. **Owner review required.**
 
 ## Editorial direction
 
-Current primary deliverable: **45 seconds exactly** (revised by owner after reviewing original 30s draft), English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Optional companion cut: 15s, with later 9:16 and square reframing. Original 30s cut remains available. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
+Current primary deliverable: **57 seconds exactly** (owner revised after viewing V2 to request 45–60 seconds with no flash effects and much longer individual scenes), English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Optional companion cut: 15s, with later 9:16 and square reframing. Original 30s cut remains available. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
 
 **Working tagline:** **Build Your Team. Write Your Cycling Story.**
 CTA: **Play at propelotonmanager.com** (not a Steam Wishlist link until a Steam store page exists).
@@ -120,3 +120,34 @@ The 45.000-second draft uses **1,350 frames at 30 fps** and the original owner-s
 
 **V2 technical QC:** 1920×1080 H.264 30 fps, AAC audio, **45.000 seconds exactly (1,350 frames)**; approx. 9.3 MB review export. This is a review export; check music volume/readability, obtain owner approval, then create the final high-bitrate commercial master if requested. Original high-resolution PPM logo asset still not provided separately. Nothing published and no production game code/data touched.
 
+
+
+## Revised V3 shot list — 57 seconds (current review version)
+
+**Owner feedback:** Remove the fast, visually harsh 20–24s eight-screenshot, drums-only section and yellow transition flash effects. Slow the pacing; shots of 1–3 seconds were too brief. Keep game branding, authentic UI, background music, and persistent website CTA.
+
+**Created and verified** on 2026-10-19:
+- `ProPeloton_Manager_Promo_Draft_v3_57s.mp4` — 57.000 seconds, 1710 video frames, 30fps, H.264 1920×1080, AAC audio, about 8.9 MB.
+- `ProPeloton_Manager_Promo_Draft_v3_57s_preview.jpg` — 12-shot visual contact sheet.
+- `ProPeloton_Promo_Source_Package_v3_57s.zip` — authentic user gameplay originals, selected still images, titles, original generated WAV, timing list and reproducible Python + FFmpeg source (not a native Canva project).
+
+| Time | Visual | Duration |
+|---|---|---:|
+| 00–04 | Authentic race simulation | 4s |
+| 04–09 | Overview video, team building | 5s |
+| 09–14 | Rider development video | 5s |
+| 14–19 | Real transfer-market screenshot | 5s |
+| 19–24 | Training video | 5s |
+| 24–28 | Equipment screenshot | 4s |
+| 28–33 | Race Preparation screenshot | 5s |
+| 33–41 | Authentic full race replay clip | **8s** |
+| 41–45 | Team Ranking screenshot | 4s |
+| 45–49 | Finance/Sponsors screenshot | 4s |
+| 49–53 | Youth Academy/Infrastructure screenshot | 4s |
+| 53–57 | Branded title and URL closing card | 4s |
+
+**Visuals:** No rapid 0.5s screenshots. No gold flash/wipe effect overlays. No scene/slide counters. Hold normal black-and-yellow title bars, original real-game imagery, subtle pan in stills, and `propelotonmanager.com` in every gameplay shot; prominent CTA in final scene. No voice-over.
+
+**Sound:** New in-house synthesised 57-second stereo instrumental with stable rhythmic backing instead of drum-only break; no transition stingers or abrupt accented percussion. No third-party music library used. Sound should be reviewed at normal listening volume before public release.
+
+**Technical QC:** ffprobe confirms 57.000000s, 1920×1080, H.264, 30 fps and AAC. Scene-by-scene contact sheet inspected; remaining unresolved element is the separately supplied official high-resolution logo. This draft remains **unpublished and unapproved**; high-bitrate distribution master/social versions follow owner acceptance. Do not touch production gameplay or move from staging to main for this documentary update.
