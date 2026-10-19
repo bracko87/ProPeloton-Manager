@@ -1,0 +1,37 @@
+name: Isolated pre-mountain legacy baseline audit
+
+on:
+  push:
+    branches:
+      - audit/pre-mountain-legacy-baseline
+    paths:
+      - '.github/workflows/pre-mountain-legacy-baseline.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  legacy-baseline:
+    name: Compare legacy failures before summit changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout fixed pre-mountain snapshot
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify baseline source revision
+        shell: bash
+        run: |
+          git log -2 --pretty=format:'%h %s%n'
+          git diff HEAD^ HEAD --name-only
+          test "$(git rev-parse HEAD^)" = "3748c8ebaf996c0fd0e57f03a37c812ca74bda41"
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run complete pre-mountain legacy race-engine suite
+        run: npx --yes vitest@3.2.4 run src/universal-race-engine/runRaceEngine.test.ts --reporter=dot
