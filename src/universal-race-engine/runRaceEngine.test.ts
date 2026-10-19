@@ -16941,10 +16941,10 @@ describe('Phase 11G organic race physics and replay continuity', () => {
 
 
 
-  it('publishes the active Phase 11L V6 scenario-director build marker', () => {
+  it('publishes the active Phase 11P5 V1 natural-chase build marker', () => {
     const result = runRaceEngine(createValidInput())
     expect(result.phase78Acceptance.engineBuild).toBe(
-      'phase11l-v6-scenario-director-flat-hilly-2026-09-13',
+      'phase11p5-v1-natural-chase-rhythm-2026-09-25',
     )
   })
 
