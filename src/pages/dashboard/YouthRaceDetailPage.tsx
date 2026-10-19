@@ -336,7 +336,7 @@ function YouthStandingTable({
                 {row.position ?? (row.result_status && row.result_status !== 'finished' ? row.result_status.toUpperCase() : index + 1)}
               </td>
               <td className="max-w-[220px] truncate px-3 py-2 font-medium text-slate-950" title={row.rider_name}>
-                <Link to={`/dashboard/youth-academy/riders/${row.rider_id}`} className="font-semibold text-sky-800 hover:underline">{row.rider_name}</Link>
+                {row.rider_name}
               </td>
               <td className="px-3 py-2">
                 <span className="relative block h-9 w-full min-w-[130px] max-w-[220px] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" title={row.academy_name}>
@@ -812,9 +812,13 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     <JerseyThumb url={team.jersey_url} name={team.club_name} />
                     {flag ? <img src={flag} alt="" className="h-4 w-6 rounded-sm object-cover" /> : null}
                     <div className="min-w-0">
-                      <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} className="block truncate text-sm font-semibold text-sky-800 hover:underline">
-                        {team.club_name}{team.is_mine ? ' · My Academy' : ''}
-                      </Link>
+                      {team.is_mine ? (
+                        <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} className="block truncate text-sm font-semibold text-sky-800 hover:underline">
+                          {team.club_name} · My Academy
+                        </Link>
+                      ) : (
+                        <span className="block truncate text-sm font-semibold text-slate-900">{team.club_name}</span>
+                      )}
                       <div className="mt-0.5 text-xs text-slate-500">
                         {isFinished ? (
                           actualRiders.length > 0 ? `${actualRiders.length} recorded starter${actualRiders.length === 1 ? '' : 's'}` : 'No rider result recorded — registered only'
@@ -841,11 +845,18 @@ export default function YouthRaceDetailPage(): JSX.Element {
                   {isFinished && actualRiders.length > 0 ? (
                     <div className="mt-3 grid gap-2 border-t border-slate-100 pt-3 sm:grid-cols-2 lg:grid-cols-3">
                       {actualRiders.map(rider => (
+                        team.is_mine ? (
                         <Link key={rider.rider_id} to={`/dashboard/youth-academy/riders/${rider.rider_id}`}
                           className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-sky-800 hover:bg-sky-50 hover:underline">
                           <span className="min-w-0 truncate">{rider.rider_name}</span>
                           <span className="shrink-0 text-xs text-slate-500">{rider.position ? `#${rider.position}` : rider.result_status.toUpperCase()}</span>
                         </Link>
+                      ) : (
+                        <div key={rider.rider_id} className="flex min-w-0 items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-2 text-sm text-slate-700">
+                          <span className="min-w-0 truncate">{rider.rider_name}</span>
+                          <span className="shrink-0 text-xs text-slate-500">{rider.position ? `#${rider.position}` : rider.result_status.toUpperCase()}</span>
+                        </div>
+                      )
                       ))}
                     </div>
                   ) : null}
