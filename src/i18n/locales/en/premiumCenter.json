@@ -249,6 +249,8 @@
     "openSponsorDetail": "Open sponsor details"
   },
   "development": {
+    "pendingProgress": "Pending skill progress",
+    "pendingProgressHint": "Earned progress awaiting the next in-game weekly conversion. This is not yet a permanent attribute increase.",
     "title": "Rider Development Lab",
     "description": "Follow recorded development over the latest eight-week window while keeping current rider skills available to every manager. This is historical analysis, not a Head Coach advisory report.",
     "rider": "Rider",
