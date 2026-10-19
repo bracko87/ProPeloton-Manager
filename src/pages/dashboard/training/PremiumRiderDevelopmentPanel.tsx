@@ -30,6 +30,9 @@ type RiderDevelopment = {
   development_8w: number
   overall_delta_8w: number
   weeks_recorded: number
+  /** Real progress stored in the bank, not yet converted into attributes. */
+  pending_progress?: number
+  ready_attribute_points?: number
   ui_state?: string | null
   ui_label?: string | null
 }
@@ -128,10 +131,13 @@ export default function PremiumRiderDevelopmentPanel({
         // The legacy summary table is empty in production. Request genuine recorded
         // weekly skill differences using the premium-gated snapshots RPC instead.
         const sourceRows = Array.isArray(payload.rider_development) ? payload.rider_development : []
-        const { data: history, error: historyError } = await supabase.rpc(
-          'premium_get_rider_skill_history_v1',
-          { p_club_id: clubId },
-        )
+        const [
+          { data: history, error: historyError },
+          { data: pending, error: pendingError },
+        ] = await Promise.all([
+          supabase.rpc('premium_get_rider_skill_history_v1', { p_club_id: clubId }),
+          supabase.rpc('premium_get_rider_pending_progress_v1', { p_club_id: clubId }),
+        ])
         if (!active) return
         if (historyError) {
           setError(historyError.message)
@@ -144,9 +150,23 @@ export default function PremiumRiderDevelopmentPanel({
               weeks_recorded: number
             }>).map(row => [row.rider_id, row]),
           )
+          const pendingByRider = new Map(
+            ((pending ?? []) as Array<{
+              rider_id: string
+              pending_progress: number
+              ready_attribute_points: number
+            }>).map(row => [row.rider_id, row]),
+          )
+          if (pendingError) {
+            console.warn('Earned rider progress bank is unavailable:', pendingError.message)
+          }
           setRows(sourceRows.map(row => {
             const recorded = byRider.get(row.rider_id)
+            const pendingValues = pendingByRider.get(row.rider_id)
             return {
+              ...row,
+              pending_progress: pendingError ? undefined : Number(pendingValues?.pending_progress ?? 0),
+              ready_attribute_points: pendingError ? undefined : Number(pendingValues?.ready_attribute_points ?? 0),
               ...row,
               development_8w: Number(recorded?.development_8w ?? 0),
               weeks_recorded: Number(recorded?.weeks_recorded ?? 0),
@@ -261,6 +281,7 @@ export default function PremiumRiderDevelopmentPanel({
     const potential = rows.map(row => Number(row.potential ?? 0)).filter(value => value > 0)
     const fatigue = rows.map(row => Number(row.fatigue ?? 0))
     const totalDevelopment = rows.reduce((sum, row) => sum + Number(row.development_8w || 0), 0)
+    const pendingProgress = rows.reduce((sum, row) => sum + Number(row.pending_progress || 0), 0)
     const improving = rows.filter(row => Number(row.development_8w || 0) > 0).length
     const coverage = rows.length
       ? Math.round((rows.filter(row => Number(row.weeks_recorded || 0) > 0).length / rows.length) * 100)
@@ -271,6 +292,7 @@ export default function PremiumRiderDevelopmentPanel({
       averagePotential: average(potential),
       averageFatigue: average(fatigue),
       totalDevelopment,
+      pendingProgress,
       improving,
       coverage,
     }
@@ -421,6 +443,7 @@ export default function PremiumRiderDevelopmentPanel({
             <StatCard label={t('development.improvingRiders')} value={metrics.improving} helper={t('development.ofRiders', { count: rows.length })} />
             <StatCard label={t('development.avgFatigue')} value={formatNumber(metrics.averageFatigue, 0)} />
             <StatCard label={t('development.coverage')} value={`${metrics.coverage}%`} />
+            <StatCard label={t('development.pendingProgress')} value={metrics.pendingProgress.toLocaleString(undefined, { maximumFractionDigits: 2 })} helper={t('development.pendingProgressHint')} />
           </div>
 
           <div className="grid gap-5 xl:grid-cols-2">
@@ -445,6 +468,7 @@ export default function PremiumRiderDevelopmentPanel({
                         <tr>
                           <th className="px-3 py-2">{t('development.rider')}</th>
                           <th className="px-3 py-2 text-right">{t('development.eightWeekDevelopment')}</th>
+                          <th className="px-3 py-2 text-right" title={t('development.pendingProgressHint')}>{t('development.pendingProgress')}</th>
                           <th className="px-3 py-2 text-right">{t('development.coverage')}</th>
                         </tr>
                       </thead>
@@ -457,6 +481,7 @@ export default function PremiumRiderDevelopmentPanel({
                               </Link>
                             </td>
                             <td className="px-3 py-2 text-right tabular-nums">{formatDelta(Number(rider.development_8w || 0))}</td>
+                            <td className="px-3 py-2 text-right tabular-nums">{rider.pending_progress === undefined ? '—' : Number(rider.pending_progress).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                             <td className="px-3 py-2 text-right tabular-nums">{Number(rider.weeks_recorded || 0)}</td>
                           </tr>
                         ))}
