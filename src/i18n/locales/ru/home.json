@@ -50,7 +50,8 @@
     "registeredUsers": "Зарегистрированные пользователи",
     "totalTeams": "Всего групп",
     "totalRacesTours": "Общее число рас и экскурсий",
-    "totalStages": "Всего этапов"
+    "totalStages": "Всего этапов",
+    "onlineUsers": "Пользователи онлайн"
   },
   "features": {
     "title": "Основные характеристики",
