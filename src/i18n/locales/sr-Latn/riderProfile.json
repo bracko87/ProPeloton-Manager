@@ -773,8 +773,14 @@
     "bronze": "Bronza",
     "season": "Sezona",
     "current": "Medalje u tekućoj sezoni",
-    "career": "Dostignuća na prvenstvima tokom karijere",
-    "viewRace": "Pogledaj trku"
+    "career": "Dostignuća na prvenstvima i u nacionalnom savezu",
+    "viewRace": "Pogledaj trku",
+    "nationalAssociation": "Prvenstvo nacionalnog saveza",
+    "careerSummary": "Nacionalna, svetska i savezna dostignuća iz svih sezona, uključujući tekuću.",
+    "tableAchievement": "Dostignuće",
+    "tableMedal": "Medalja",
+    "tableCountry": "Država",
+    "tableRace": "Trka"
   },
   "powerProfile": {
     "youthSummary": "Visina i težina mladih vozača mogu se menjati tokom rasta; odrasli vozači zadržavaju konačne mere.",
