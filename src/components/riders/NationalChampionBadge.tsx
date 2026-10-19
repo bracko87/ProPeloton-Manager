@@ -93,7 +93,7 @@ export default function NationalChampionBadge({
                 <img src={`https://flagcdn.com/w80/${h.country_code!.toLowerCase()}.png`}
                   className="h-6 w-9 rounded-sm border border-white/60 object-cover shadow-sm"
                   loading="lazy" alt="" aria-hidden="true" />
-              ) : <Medal className="h-7 w-7" strokeWidth={2.4} aria-hidden="true" />}
+              ) : <span className="text-xs font-black tracking-wide" aria-hidden="true">{h.country_code?.toUpperCase() ?? 'NC'}</span>}
               <span className="sr-only">{honourTitle(h)}</span>
             </div>
             <div role="tooltip" className="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-max max-w-[260px] -translate-x-1/2 rounded-lg bg-slate-950 px-3 py-2 text-center text-xs font-semibold text-white shadow-xl group-hover:block group-focus:block">
@@ -109,35 +109,35 @@ export default function NationalChampionBadge({
   return (
     <section className={`rounded-xl border border-slate-200 bg-white p-4 shadow-sm ${className}`}>
       <h3 className="text-sm font-semibold text-slate-900">
-        {t('championshipMedals.career', { defaultValue: 'Championship and Association achievements' })}
+        {t('championshipMedals.career')}
       </h3>
       <p className="mt-1 text-xs text-slate-500">
-        {t('championshipMedals.careerSummary', { defaultValue: 'National, international and association honours, including the current season.' })}
+        {t('championshipMedals.careerSummary')}
       </p>
       <div className="mt-3 overflow-x-auto rounded-xl border border-slate-200">
         <table className="w-full min-w-[520px] text-left text-sm">
           <thead className="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-3 py-2">Season</th>
-              <th className="px-3 py-2">Achievement</th>
-              <th className="px-3 py-2">Medal</th>
-              <th className="px-3 py-2">Country</th>
-              <th className="px-3 py-2">Race</th>
+              <th className="px-3 py-2">{t('championshipMedals.season')}</th>
+              <th className="px-3 py-2">{t('championshipMedals.tableAchievement')}</th>
+              <th className="px-3 py-2">{t('championshipMedals.tableMedal')}</th>
+              <th className="px-3 py-2">{t('championshipMedals.tableCountry')}</th>
+              <th className="px-3 py-2">{t('championshipMedals.tableRace')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {career.map((h, index) => (
               <tr key={`${h.honor_type}-${h.season_number}-${h.rank}-${index}`}>
-                <td className="px-3 py-2 font-semibold">Season {h.season_number}</td>
+                <td className="px-3 py-2 font-semibold">{t('championshipMedals.season')} {h.season_number}</td>
                 <td className="px-3 py-2">{h.honor_type === 'world_road'
-                  ? 'World Road Championship'
+                  ? t('championshipMedals.worldRoad')
                   : h.honor_type === 'national_association'
-                    ? 'National Association Championship'
-                    : 'National Road Championship'}</td>
+                    ? t('championshipMedals.nationalAssociation')
+                    : t('championshipMedals.nationalRoad')}</td>
                 <td className="px-3 py-2 font-semibold">
                   <span className="inline-flex items-center gap-1.5">
                     <Medal size={16} className={h.rank === 1 ? 'text-amber-500' : h.rank === 2 ? 'text-slate-500' : 'text-orange-600'}/>
-                    {h.rank === 1 ? 'Gold' : h.rank === 2 ? 'Silver' : 'Bronze'}
+                    {h.rank === 1 ? t('championshipMedals.gold') : h.rank === 2 ? t('championshipMedals.silver') : t('championshipMedals.bronze')}
                   </span>
                 </td>
                 <td className="px-3 py-2">{h.country_code ?? '—'}</td>
