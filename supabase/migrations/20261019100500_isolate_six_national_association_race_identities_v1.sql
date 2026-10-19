@@ -92,7 +92,7 @@ begin
     );
 
   update public.race_preparations pr
-  set club_id=m.new_club_id
+  set club_id=m.new_club_id,participating_club_id=m.new_club_id
   from pg_temp.na_identity_split_v1 m
   where pr.club_id=m.old_club_id
     and exists (
