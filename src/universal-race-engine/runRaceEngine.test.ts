@@ -15108,7 +15108,7 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
 
   it('moves every live sub-5% rider out of B, F and P instead of showing impossible group contact', () => {
     const results = [
-      runRaceEngine(createPhase11hLateClimbEnergyInput(45)),
+      runRaceEngine(createPhase11hLateClimbEnergyInput(60)),
       runRaceEngine(createPhase11gMixedStressInput(5)),
     ]
     let inspectedLowReserveStates = 0
