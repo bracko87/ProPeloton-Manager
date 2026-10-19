@@ -568,6 +568,7 @@
     "day": "Day {{number}}"
   },
   "ownedAnalysis": {
+    "racePlacement": "Position:",
     "performanceCentre": "Performance Centre",
     "riderPerformanceCentre": "Rider Performance Centre",
     "centreDescription": "A combined coaching, racing, training, development and financial view for {{rider}}.",
