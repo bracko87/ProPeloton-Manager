@@ -27,7 +27,7 @@ const cacheBustedIndexPlugin = {
         // Keep the esbuild live-reload endpoint in local development only.
         // Crawlers should never discover /esbuild from production HTML.
         const productionHtml = isProd
-          ? stamped.replace(/<script data-dev-reload>[\\s\\S]*?<\\/script>\\s*/g, '')
+          ? stamped.replace(/<script data-dev-reload>[\s\S]*?<\/script>\s*/g, '')
           : stamped
         await writeFile(indexPath, productionHtml, 'utf8')
       } catch (error) {
