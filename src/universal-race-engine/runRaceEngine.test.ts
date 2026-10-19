@@ -16817,15 +16817,15 @@ describe('Phase 11B production lifecycle cutover', () => {
     expect(pageSource).toContain('get_authorized_race_stage_replay_payload_v1')
     expect(pageSource).toContain('production_authoritative_run')
     expect(pageSource).toContain('production_authoritative_pending')
-    expect(pageSource.match(/runRaceEngine\\(/g) ?? []).toHaveLength(0)
+    expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
-    expect(runnerSource.match(/runRaceEngine\\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
     expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
     expect(runnerSource).toContain('universal_race_stage_process_lifecycle_v1')
     expect(runnerSource).toContain('x-universal-race-worker-secret')
     expect(retiredNetlifySource).toContain("status: 'retired'")
     expect(retiredNetlifySource).toContain("authoritative_scheduler: 'supabase_cron'")
-    expect(retiredNetlifySource.match(/runRaceEngine\\(/g) ?? []).toHaveLength(0)
+    expect(retiredNetlifySource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 
 
