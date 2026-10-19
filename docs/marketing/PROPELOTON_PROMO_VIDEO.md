@@ -4,25 +4,26 @@
 
 ## Editorial direction
 
-Primary deliverable: **52 seconds**, English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Companion cuts: 30s and 15s; later 9:16 and square reframing. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
+Primary deliverable: **28–30 seconds maximum**, English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Companion cut: 15s, with later 9:16 and square reframing. No 45–60s edit unless separately requested. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
 
 **Working tagline:** **Build Your Team. Write Your Cycling Story.**
 CTA: **Play at propelotonmanager.com** (not a Steam Wishlist link until a Steam store page exists).
 
-No voice in v1 (better clarity and easy multi-language repurposing). If review says add it, use professional licensed English TTS from Descript or an approved provider; keep voice script below 60 words.
+No voice-over in the 30-second v1 (better clarity and easy multi-language repurposing). Do not include an optional narration draft in the first edit.
 
-## Shot list — 52 seconds
+## Shot list — 30 seconds maximum
 
 | Time (s) | Visual: REAL game only | On-screen copy | Asset requirement |
 |---|---|---|---|
-| 0:00–0:05 | Open on live Overview immediately with light camera crop/scale, logo bug unobtrusively | **BUILD YOUR TEAM** | Overview screen capture; avoid brand-only intro |
-| 0:05–0:11 | Squad roster -> rider profile (2 shots) | **EVERY RIDER MATTERS** | Squad screenshot/clip + Rider Profile |
-| 0:11–0:17 | Transfers -> Training (2 shots) | **SCOUT. SIGN. DEVELOP.** | Transfers + Training screens |
-| 0:17–0:24 | Calendar -> Race Preparation (2 shots) | **PLAN EVERY RACE** | Calendar + race lineup/tactics |
-| 0:24–0:35 | Most energetic moment: **actual real race replay** and official stage result; show UI | **MAKE THE TACTICAL CALL** | **Required** 8–11s authentic replay + classification |
-| 0:35–0:41 | Equipment/Infrastructure/club finances (2 shots) | **GROW YOUR CLUB** | Real functioning pages |
-| 0:41–0:47 | U23 or U16 / National Championships if visually ready (1–2 shots) | **BUILD A LASTING LEGACY** | Real verified UI, not mocked-up |
-| 0:47–0:52 | PPM actual brand lockup + gameplay strip/blur | **BUILD YOUR TEAM. WRITE YOUR CYCLING STORY.** and **propelotonmanager.com** | Logo, project URL, studio credit small |
+| 0:00–0:04 | Begin immediately on live Overview UI; small branded logo overlay | **BUILD YOUR CYCLING TEAM** | Overview capture; no slow cinematic intro |
+| 0:04–0:08 | Squad → rider profile / transfers | **SCOUT. SIGN. DEVELOP.** | Real Squad/Rider/Transfer footage or stills |
+| 0:08–0:12 | Training → equipment | **BUILD YOUR CHAMPIONS** | Real functioning screens |
+| 0:12–0:17 | Calendar → Race Preparation and tactic controls | **PLAN EVERY RACE** | Real race lineup/strategy footage |
+| 0:17–0:24 | High-energy authentic race replay → stage result | **COMPETE FOR VICTORY** | Required real replay; target about 7 seconds |
+| 0:24–0:27 | Infrastructure/finance or visible club progression | **GROW YOUR LEGACY** | Real in-game UI |
+| 0:27–0:30 | Authentic ProPeloton logo, title, URL (last frame remains legible) | **PLAY PROPELOTON MANAGER** · **propelotonmanager.com** | Actual logo and domain |
+
+**Editorial rules:** Deliver a 28–30-second master, never over 30 seconds. No voice-over in v1; short punchy music-only pacing. Start on gameplay by second 1. In first pass, choose the clearest readable screenshots and one actual replay sequence; omit U16, U23 or other extra features rather than overload the runtime. The 15-second cut will reuse the same master shots.
 
 Aim for 70%+ authentic gameplay/UI; keep transitions ~0.25–0.4s and overlays away from key tables, map, replay and race results. All screen recordings should show the actual app; no AI-generated fake riders, race screens, menus or mechanics.
 
@@ -42,7 +43,7 @@ Starting reference filenames from that source:
 
 **Source verification:** URL references exist in production repository. Individual files could not be retrieved through automated public download in the authoring environment. Earlier user screenshot archive contains some PPM UI screenshots, but several were unrelated Famioo captures; do not accidentally include unrelated screenshots or browser/debug decorations.
 
-**Capture still needed for final quality:** one clean 10–15 sec replay sequence, 5–10 sec mouse-free Overview, Squad, Transfers, Training, Calendar and Race Preparation, plus U23/YAs only if visually ready. Capture preferably 1920×1080/30 fps with English UI, no browser chrome, personal data, unstable screens or misleading tests. We may animate authentic stills until motion clips are ready, but never present still zooms as if they were interactive gameplay.
+**Capture still needed for final quality:** one clean 7–10 sec replay sequence, 5–10 sec mouse-free Overview, Squad, Transfers, Training, Calendar and Race Preparation, plus U23/YAs only if visually ready. Capture preferably 1920×1080/30 fps with English UI, no browser chrome, personal data, unstable screens or misleading tests. We may animate authentic stills until motion clips are ready, but never present still zooms as if they were interactive gameplay.
 
 ## AI-assisted editor comparison (research date: 2026-10-19)
 
@@ -67,12 +68,6 @@ References:
 - Runway pricing: https://runway.com/pricing
 - Steam trailer guidance: https://partner.steamgames.com/doc/store/trailer
 
-## Optional narration version
-
-> Build your cycling team. Scout talented riders and shape their future. Plan every race, choose your tactics and take on the world's toughest challenges. Build a club that lasts. ProPeloton Manager — write your cycling story.
-
-Narration intentionally optional and not included in v1.
-
 ## Editing / acceptance checklist
 
 - [ ] Producer has verified all image/video files are original **ProPeloton Manager** (not Famioo, Tennis Legacy, Google admin screens, or fictional AI UI).
@@ -81,7 +76,7 @@ Narration intentionally optional and not included in v1.
 - [ ] Real action/gameplay shown in first 5 seconds, and bulk of footage is genuine gameplay.
 - [ ] Music cleared explicitly for commercial game promotion and paid ads; license stored.
 - [ ] MP4 1920×1080, 30fps, H.264, high bitrate, audio 48 kHz AAC; all text legible muted.
-- [ ] 52s main version, 30s and 15s recuts from same master, crop guides for vertical.
+- [ ] Main version strictly 28–30 seconds, plus an optional 15s recut from the same master; crop guides for vertical.
 - [ ] Final human review of pacing, CTA, voice/music, UI integrity and privacy.
 - [ ] Do **not** submit to Steam until actual downloadable Steam build/store requirements are settled.
 
