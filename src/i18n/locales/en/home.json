@@ -50,7 +50,8 @@
     "registeredUsers": "Registered Users",
     "totalTeams": "Total Teams",
     "totalRacesTours": "Total Races & Tours",
-    "totalStages": "Total Stages"
+    "totalStages": "Total Stages",
+    "onlineUsers": "Online Users"
   },
   "features": {
     "title": "Core Features",
