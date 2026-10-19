@@ -27404,9 +27404,11 @@ export function buildUniversalReplayTimeline(
       phase3.phaseBoundary.startKm,
       phase3.phaseBoundary.endKm,
     )
-    const leadingLaunchKm =
-      phase3.physicalGapTrajectory[0]?.kmFromStart ??
-      phase3.phaseBoundary.endKm
+    // Riders who entered Phase 3 in a physical front group were already
+    // separated at the phase boundary. The first gap-trajectory sample may be
+    // later on the road; using it as a launch kilometre silently returns
+    // those riders to P before an authoritative physical catch occurs.
+    const leadingLaunchKm = phase3.phaseBoundary.startKm
     const leadingActive =
       phase3.physicalEscapeRiderIdsAtStart.length > 0 &&
       km >= leadingLaunchKm - 0.000001 &&
@@ -37914,46 +37916,6 @@ export function runRaceEngine(
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
   if (!replayPublicationPolicy.publishable) {
-    // Temporary Slice 15 tracing on an isolated feature branch. Remove before merge.
-    if (replayPublicationPolicy.blockingIssues.some((issue) => issue.includes('race-status-55'))) {
-      const inspectIds = new Set(['expanded-rider-11', 'expanded-rider-23', 'expanded-rider-05', 'expanded-rider-17'])
-      console.error('SLICE15_STATUS55_TRACE=' + JSON.stringify({
-        failures: replayPublicationPolicy.blockingIssues,
-        phase2: {
-          endKm: roadRaceResolution.phase2.phaseBoundary.endKm,
-          secondaryStartRiders: roadRaceResolution.phase2.secondaryFrontRiderIdsAtLaunch,
-          secondaryEndRiders: roadRaceResolution.phase2.secondaryFrontRiderIdsAtEnd,
-          secondaryCatchKm: roadRaceResolution.phase2.secondaryFrontCatchKm,
-          secondaryMergeKm: roadRaceResolution.phase2.secondaryFrontMergeKm,
-        },
-        phase3: {
-          startKm: roadRaceResolution.phase3.phaseBoundary.startKm,
-          endKm: roadRaceResolution.phase3.phaseBoundary.endKm,
-          initialEscapeRiders: roadRaceResolution.phase3.physicalEscapeRiderIdsAtStart,
-          physicalCatchKm: roadRaceResolution.phase3.physicalCatchKm,
-          trajectoryFirst: roadRaceResolution.phase3.physicalGapTrajectory[0] ?? null,
-          frontLineages: roadRaceResolution.phase3.frontLineages.map((l) => ({
-            riders: l.riderIdsAtLaunch, launchKm: l.launchKm,
-            caught: l.caughtByPeloton, catchKm: l.catchKm, mergeKm: l.mergeKm
-          }))
-        },
-        checkpoints: replayTimeline.checkpoints
-          .filter((checkpoint) => {
-            const fraction = checkpoint.raceProgress.kmFromStart / Math.max(1, calculationInput.stage.distanceKm)
-            return (fraction >= 0.38 && fraction <= 0.56) ||
-              checkpoint.commentary.some((event) => event.eventType === 'catch')
-          })
-          .map((checkpoint) => ({
-            id: checkpoint.checkpointId,
-            km: checkpoint.raceProgress.kmFromStart,
-            eventTypes: checkpoint.commentary.map((entry) => entry.eventType),
-            riders: checkpoint.riderStates.filter((row) => inspectIds.has(row.riderId))
-              .map((row) => ({ id: row.riderId, code: row.displayCode, energy: row.energy })),
-            frontGroups: checkpoint.groups.filter((group) => group.displayCode.startsWith('F'))
-              .map((group) => ({ code: group.displayCode, lineage: group.physicalLineageId, riders: group.riderIds })),
-          })),
-      }))
-    }
     throw new Error(
       `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
     )
