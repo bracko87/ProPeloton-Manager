@@ -16800,83 +16800,32 @@ describe('Phase 11B production lifecycle cutover', () => {
     expect(() => runRaceEngine(productionInput)).not.toThrow()
   })
 
-  it('installs one disabled Phase 11B lifecycle, one scheduled backend calculation path, exact-once persistence and a read-only production replay', () => {
+  it('keeps the current Phase 11B worker-only engine execution and authorized read-only replay', () => {
     const pageSource = readFileSync(
-      new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url),
-      'utf8',
-    )
-    const migrationSource = readFileSync(
-      new URL(
-        '../../supabase/migrations/20260818_phase11b_universal_production_cutover.sql',
-        import.meta.url,
-      ),
-      'utf8',
+      new URL('../pages/dashboard/RaceDetailPage.tsx', import.meta.url), 'utf8',
     )
     const runnerSource = readFileSync(
-      new URL(
-        '../../supabase/functions/universal-race-stage-runner/index.ts',
-        import.meta.url,
-      ),
-      'utf8',
-    )
-    const cutoverSource = readFileSync(
-      new URL(
-        '../../supabase/migrations/20260907193333_cutover_universal_race_worker_to_supabase_v1.sql',
-        import.meta.url,
-      ),
-      'utf8',
+      new URL('../../supabase/functions/universal-race-stage-runner/index.ts', import.meta.url), 'utf8',
     )
     const retiredNetlifySource = readFileSync(
-      new URL(
-        '../../netlify/functions/universal-race-stage-runner.ts',
-        import.meta.url,
-      ),
-      'utf8',
+      new URL('../../netlify/functions/universal-race-stage-runner.ts', import.meta.url), 'utf8',
     )
 
-    expect(pageSource).toContain('get_universal_race_stage_replay_payload_v1')
-    expect(pageSource).toContain("production_authoritative_run")
-    expect(pageSource).toContain("production_authoritative_pending")
+    // Historic cutover migrations were removed from source control. This
+    // checks active application/worker boundaries, not the deployed SQL,
+    // actual cron registration or exact-once persistence in Supabase.
+    expect(pageSource).toContain('get_authorized_race_stage_replay_payload_v1')
+    expect(pageSource).toContain('production_authoritative_run')
+    expect(pageSource).toContain('production_authoritative_pending')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
-
     expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
     expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
-    expect(runnerSource).toContain('universal_race_stage_claim_next_due_v1')
     expect(runnerSource).toContain('universal_race_stage_process_lifecycle_v1')
     expect(runnerSource).toContain('x-universal-race-worker-secret')
-    expect(runnerSource).toContain('verify_universal_race_worker_secret_v1')
-    expect(runnerSource).not.toContain('workerSecret(request) === serviceRoleKey')
-
-    expect(cutoverSource).toContain('select cron.schedule(')
-    expect(cutoverSource).toContain("'universal-race-stage-runner-supabase-v1'")
-    expect(cutoverSource).toContain("'* * * * *'")
-    expect(cutoverSource).toContain('/functions/v1/universal-race-stage-runner')
-    expect(cutoverSource).toContain("'x-universal-race-worker-secret'")
     expect(retiredNetlifySource).toContain("status: 'retired'")
     expect(retiredNetlifySource).toContain("authoritative_scheduler: 'supabase_cron'")
     expect(retiredNetlifySource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
-
-    expect(migrationSource).toContain('typescript_lifecycle_enabled = false')
-    expect(migrationSource).toContain(
-      'create or replace function public.universal_race_stage_claim_next_due_v1',
-    )
-    expect(migrationSource).toContain(
-      'create or replace function public.universal_race_stage_finalize_v1',
-    )
-    expect(migrationSource).toContain('universal_phase11b_calculated_hidden_v1')
-    expect(migrationSource).toContain('race_engine_apply_stage_fatigue_v1')
-    expect(migrationSource).toContain('apply_race_stage_supply_usage_v1')
-    expect(migrationSource).toContain('race_engine_apply_stage_equipment_asset_wear_v1')
-    expect(migrationSource).toContain('health_create_rider_case_v1')
-    expect(migrationSource).toContain('race_engine_write_cumulative_classifications_v1')
-    expect(migrationSource).toContain("'race_engine_ts_v1'")
-    expect(migrationSource).toContain("'deterministic_road_race_v1'")
-    expect(migrationSource).toContain(
-      "set_config('app.race_engine_writer_family', 'typescript', true)",
-    )
-    expect(migrationSource).not.toContain('cron.schedule')
-    expect(migrationSource).not.toContain('order by team.team_id')
   })
 
 
