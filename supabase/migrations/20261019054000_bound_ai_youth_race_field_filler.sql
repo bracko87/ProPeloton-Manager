@@ -1,11 +1,7 @@
--- Forward youth daily tick timeout prevention.
--- Preserve the complete ranking/selection order and winner calculations.
--- Reject AI re-entry into previously withdrawn races; evaluate at most three
--- eligible youth riders per candidate, since three is the minimum to fill.
--- Speed up the per-academy monthly participation lookup.
+-- Bound forward daily youth race filler work and preserve intentional withdrawals.
+-- Same deterministic candidate sort; stop rider eligibility evaluations at three.
 CREATE INDEX IF NOT EXISTS youth_race_entries_academy_status_race_idx
   ON public.youth_race_entries (academy_id,status,race_id);
-
 CREATE OR REPLACE FUNCTION private.fill_youth_race_field_v2(p_race_id uuid, p_game_date date, p_final_fill boolean DEFAULT false)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -77,20 +73,14 @@ begin
     where a.is_active
       and a.is_ai
       and c.deleted_at is null
+      -- Do not automatically re-enter AI teams with withdrawn entries.
       and not exists(
         select 1
         from public.youth_race_entries e
         where e.race_id=r.id
           and e.academy_id=a.id
-          -- Never re-enter an AI academy after its earlier invitation was
-      -- accepted and the official entry was withdrawn.
-      and not exists(
-        select 1
-        from public.youth_race_entries e
-        where e.race_id=r.id and e.academy_id=a.id
       )
-      -- The field needs only three eligible riders. Stop evaluating costly
-      -- health, camp and overlapping-race checks after the third match.
+      -- Only three eligible riders are required; stop checks after three.
       and (
         select count(*)
         from (
