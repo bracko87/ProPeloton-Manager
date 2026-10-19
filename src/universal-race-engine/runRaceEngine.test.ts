@@ -14669,7 +14669,8 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
 
     expect(pageSource).toContain('directDatabaseWritePerformed: false')
     expect(pageSource).toContain('persistenceAppliedByThisPage: false')
-    expect(pageSource).toContain('get_universal_race_stage_replay_payload_v1')
+    expect(pageSource).toContain("raceDetailReadRpc('get_authorized_race_stage_replay_payload_v1'")
+    expect(pageSource).not.toContain('get_universal_race_stage_replay_payload_v1')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
   })
