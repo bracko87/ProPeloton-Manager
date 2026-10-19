@@ -1,10 +1,10 @@
 # ProPeloton Manager — first promo video production brief (draft v1)
 
-**Status:** **V3 57.000-second MP4 REVIEW DRAFT PRODUCED** on 2026-10-19 after owner rejected the eight-cut percussive montage and yellow flashing transitions. V1 30s and V2 45s retained as historical drafts; V3 uses the same authentic user footage with longer readable shots. Video, preview, and editable source bundle delivered as ChatGPT conversation artifacts (not uploaded to GitHub). **Still not approved or published.** **Working branch:** staging. **Owner review required.**
+**Status:** **V4 74.000-second MP4 REVIEW DRAFT PRODUCED** on 2026-10-19 following owner request to start slowly with screenshots and introduce all four real gameplay videos later. V1 30s, V2 45s, and V3 57s are preserved as historical drafts. The MP4, contact sheet, and ZIP source bundle were delivered as ChatGPT conversation artifacts (not uploaded to GitHub). **Still not approved or published. Working branch:** staging. **Owner review required.**
 
 ## Editorial direction
 
-Current primary deliverable: **57 seconds exactly** (owner revised after viewing V2 to request 45–60 seconds with no flash effects and much longer individual scenes), English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Optional companion cut: 15s, with later 9:16 and square reframing. Original 30s cut remains available. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
+Current primary deliverable: **74 seconds exactly** (owner lifted the length restriction for V4, requesting screenshots first, actual video clips later, and no percussion-only section), English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Optional companion cut: 15s, with later 9:16 and square reframing. Original 30s cut remains available. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
 
 **Working tagline:** **Build Your Team. Write Your Cycling Story.**
 CTA: **Play at propelotonmanager.com** (not a Steam Wishlist link until a Steam store page exists).
@@ -151,3 +151,36 @@ The 45.000-second draft uses **1,350 frames at 30 fps** and the original owner-s
 **Sound:** New in-house synthesised 57-second stereo instrumental with stable rhythmic backing instead of drum-only break; no transition stingers or abrupt accented percussion. No third-party music library used. Sound should be reviewed at normal listening volume before public release.
 
 **Technical QC:** ffprobe confirms 57.000000s, 1920×1080, H.264, 30 fps and AAC. Scene-by-scene contact sheet inspected; remaining unresolved element is the separately supplied official high-resolution logo. This draft remains **unpublished and unapproved**; high-bitrate distribution master/social versions follow owner acceptance. Do not touch production gameplay or move from staging to main for this documentary update.
+
+
+## Revised V4 shot list — 74 seconds (current review version)
+
+**Owner instructions:** *Start with images slowly; only then continue with videos. Remove the "dun dun dun" drums-only part altogether. Keep everything else. Duration may be extended.*
+
+**Delivered 2026-10-19 as conversation artifacts (not pushed to GitHub):**
+- `ProPeloton_Manager_Promo_Draft_v4_74s.mp4` — 74.000s, 2,220 video frames, H.264 1920×1080 30fps with stereo AAC 48 kHz; size ~9.97 MB compressed **review** export.
+- `ProPeloton_Manager_Promo_Draft_v4_74s_preview.jpg` — complete 13-scene preview contact sheet.
+- `ProPeloton_Promo_Source_Package_v4_74s.zip` — source screenshots, four real footage files, brand overlays, 74s original synthesized WAV and reproducible Python/FFmpeg source (not a native Canva project).
+
+### Definitive V4 timeline
+
+| Time | Visual | Format |
+|---|---|---|
+| 00–06 | Real Rider Profile screenshot — Build Your Cycling Team | image 6s; gentle 1.1s fade-in |
+| 06–12 | Transfer Market — Scout. Sign. Develop. | image 6s |
+| 12–17 | Team Staff — Manage Your Staff | image 5s |
+| 17–22 | Equipment — Prepare to Compete | image 5s |
+| 22–28 | Race Preparation — Plan Every Race | image 6s |
+| 28–33 | Race Detail — Know the Course | image 5s |
+| 33–38 | Finance & Sponsors — Build Your Club | image 5s |
+| 38–43 | Youth Academy — Grow Your Legacy | image 5s |
+| **43–48.6** | Actual gameplay video 1 — Your Club. Your Call. | **moving video 5.6s** |
+| **48.6–54.1** | Actual gameplay video 2 — Every Rider Matters | **moving video 5.5s** |
+| **54.1–59.8** | Actual gameplay video 3 — Train Your Champions | **moving video 5.7s** |
+| **59.8–68** | Actual gameplay video 4 — Compete for Victory | **moving race replay 8.2s** |
+| 68–74 | Branded title & `propelotonmanager.com` | ending 6s |
+
+**Confirmed production behavior:** Screenshots first (43s), videos later (~25s), end card last (6s); every screenshot stays 5–6s; gentle still panning, no slide counters, no gold flash, no half-second rapid montage. The original continuous 74s music bed uses drums as part of normal instrumentation but **never isolates a drums-only interlude**. All source imagery and recorded game UI are authentic owner-provided materials; no invented AI-generated gameplay. Yellow/black visual identity and site URL persist. No narration.
+
+**Technical QC:** ffprobe verified exactly 74.000000 seconds, 2,220 H.264 frames at 30 fps, 1920×1080, AAC 48kHz stereo, MP4 faststart. Review encode averages about 1.1 Mbit/s, so **not** the final high-bitrate promotional delivery master. Await owner review and high-resolution official PPM logo before full-quality 8+ Mbps final encode and publication. No gameplay code/database changes; `main` and deployed site remain unchanged.
+
