@@ -24,7 +24,12 @@ const cacheBustedIndexPlugin = {
           '__PPM_BUILD_VERSION__',
           buildVersion,
         )
-        await writeFile(indexPath, stamped, 'utf8')
+        // Keep the esbuild live-reload endpoint in local development only.
+        // Crawlers should never discover /esbuild from production HTML.
+        const productionHtml = isProd
+          ? stamped.replace(/<script data-dev-reload>[\s\S]*?<\/script>\s*/g, '')
+          : stamped
+        await writeFile(indexPath, productionHtml, 'utf8')
       } catch (error) {
         console.error('Failed to stamp cache-busting build version:', error)
         throw error
