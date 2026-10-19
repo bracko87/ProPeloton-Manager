@@ -2,6 +2,31 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 
+// Keep the neutral kit identical to the National Championship qualification list.
+const NATIONAL_FREE_AGENT_JERSEY_URL =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/AI%20Teams%20Kits/Genkit53.png'
+
+function WorldRiderJerseyStrip({ url, name }: { url: string | null | undefined; name: string }): JSX.Element {
+  const preferredUrl = url?.trim() || NATIONAL_FREE_AGENT_JERSEY_URL
+  const [imageUrl, setImageUrl] = useState(preferredUrl)
+
+  useEffect(() => {
+    setImageUrl(preferredUrl)
+  }, [preferredUrl])
+
+  return (
+    <div className="relative h-9 w-full max-w-[240px] overflow-hidden rounded-lg border border-slate-200 bg-white"
+      title={name}>
+      <img src={imageUrl} alt="" aria-hidden="true" loading="lazy" referrerPolicy="no-referrer"
+        className="absolute inset-0 h-full w-full scale-[5] object-contain"
+        style={{ objectPosition: '50% 37%', transformOrigin: '50% 37%' }}
+        onError={() => setImageUrl(current => current !== NATIONAL_FREE_AGENT_JERSEY_URL
+          ? NATIONAL_FREE_AGENT_JERSEY_URL : current)} />
+      <span className="sr-only">{name}</span>
+    </div>
+  )
+}
+
 type ExpectedChampion = {
   country_code: string
   champion_rider_id: string | null
@@ -147,15 +172,15 @@ export function WorldChampionshipExpectedField({
                       )}
                       <div className={`mt-1 text-xs ${confirmed ? 'text-emerald-700' : unavailable ? 'text-rose-600' : 'text-slate-500'}`}>{status}</div>
                     </td>
-                    <td className="px-4 py-3">{row.champion_club_name && row.champion_rider_id ? row.champion_club_name : '—'}</td>
+                    <td className="px-4 py-3">{row.champion_rider_id
+                      ? row.champion_club_name?.trim() || t('participants.freeAgent', { defaultValue: 'Free Agent' })
+                      : '—'}</td>
                     <td className="px-4 py-2">
-                      {row.champion_jersey_url && row.champion_rider_id ? (
-                        <div className="relative h-9 w-full max-w-[240px] overflow-hidden rounded-lg border border-slate-200 bg-white">
-                          <img src={row.champion_jersey_url} alt={`${row.champion_club_name ?? 'Rider'} jersey`}
-                            className="absolute inset-0 h-full w-full scale-[5] object-contain"
-                            style={{ objectPosition: '50% 37%', transformOrigin: '50% 37%' }}
-                            loading="lazy" />
-                        </div>
+                      {row.champion_rider_id ? (
+                        <WorldRiderJerseyStrip
+                          url={row.champion_club_name?.trim() ? row.champion_jersey_url : null}
+                          name={row.champion_club_name?.trim() || t('participants.freeAgent', { defaultValue: 'Free Agent' })}
+                        />
                       ) : <span className="text-slate-400">—</span>}
                     </td>
                   </tr>
