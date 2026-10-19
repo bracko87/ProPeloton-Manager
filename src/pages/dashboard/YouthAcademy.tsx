@@ -6337,7 +6337,7 @@ export default function YouthAcademyPage(): JSX.Element {
                             {team.rank}
                           </td>
                           <td className="px-4 py-3">
-                            <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} aria-label={team.academy_name} className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1 hover:border-sky-400">
+                            {team.is_mine ? <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} aria-label={team.academy_name} className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1 hover:border-sky-400"> : <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1">}
                               {resolveClubLogoUrl(team.logo_path) ? (
                                 <img
                                   src={resolveClubLogoUrl(team.logo_path) ?? ''}
@@ -6347,11 +6347,11 @@ export default function YouthAcademyPage(): JSX.Element {
                               ) : (
                                 <span className="text-[9px] text-slate-400">—</span>
                               )}
-                            </Link>
+                            {team.is_mine ? </Link> : </div>}
                           </td>
                           <td className="px-4 py-3 text-sm font-semibold text-slate-900">
                             <div className="flex items-center gap-2">
-                              <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} className="hover:text-sky-700 hover:underline">{team.academy_name}</Link>
+                              {team.is_mine ? <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} className="hover:text-sky-700 hover:underline">{team.academy_name}</Link> : <span>{team.academy_name}</span>}
                               {team.is_mine ? (
                                 <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-[11px] font-medium text-yellow-800">
                                   {t('rankings.yourAcademy', {
@@ -6505,7 +6505,7 @@ export default function YouthAcademyPage(): JSX.Element {
                             {flag ? (
                               <img src={flag} alt="" className="h-4 w-6 object-cover" />
                             ) : null}
-                            <Link to={`/dashboard/youth-academy/riders/${row.rider_id}`} className="font-semibold text-sky-800 hover:underline">{row.rider_name}</Link>
+                            {row.is_mine ? <Link to={`/dashboard/youth-academy/riders/${row.rider_id}`} className="font-semibold text-sky-800 hover:underline">{row.rider_name}</Link> : <span className="font-semibold text-slate-800">{row.rider_name}</span>}
                           </div>
                         </td>
                         <td className="px-4 py-3 text-sm">{row.academy_name}</td>
