@@ -50,6 +50,9 @@ import {
   calculatePhase5OpeningBreakawayGapSeconds,
   calculatePhase5DevelopmentBreakawayGapSeconds,
   calculateDeterministicUnitRoll,
+  calculateAllRiderReadiness,
+  buildRoadCommandResolution,
+  resolveRoadPhase1Opening,
   calculateUniversalFatigueIncidentRiskMultiplier,
   calculateUniversalRoadPhysicalGapStep,
   calculateUniversalRoadDetachedGapAtKm,
@@ -7597,8 +7600,10 @@ describe('Phase 5 dynamic chase activation and stage-profile survival targets', 
           deterministicSeed: `phase11n-opening-window-regression-${seedIndex}`,
         },
       }
-      const first = runRaceEngine(input).roadRaceResolution.phase1Opening!
-      const repeated = runRaceEngine(input).roadRaceResolution.phase1Opening!
+      const readiness = calculateAllRiderReadiness(input.riders)
+      const commands = buildRoadCommandResolution(input, readiness)
+      const first = resolveRoadPhase1Opening(input, readiness, commands).phase1Opening!
+      const repeated = resolveRoadPhase1Opening(input, readiness, commands).phase1Opening!
       const opportunityEndKm = Math.min(
         first.phaseBoundary.endKm,
         first.neutralizedDistanceKm + first.opportunityWindowKm,
