@@ -27526,8 +27526,15 @@ export function buildUniversalReplayTimeline(
         !activeFrontRiderSet.has(riderId),
     )
     if (pelotonRiderIds.length > 0) {
+      // A surviving Phase-3 front must use its own physical gap trajectory.
+      // Global replay anchors can otherwise collapse F into P at a sampled
+      // status point before Phase-3's authoritative catch kilometre.
       const pelotonGapSeconds = leadingRiderIds.length > 0
-        ? gapAtKm(km)
+        ? getRoadGapFromTrajectory(
+            phase3.physicalGapTrajectory,
+            km,
+            phase3.physicalEndGapSeconds,
+          )
         : activeLineageStates.length > 0
           ? Math.max(
               ...activeLineageStates.map(
