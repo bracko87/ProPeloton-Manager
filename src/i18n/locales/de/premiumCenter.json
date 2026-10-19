@@ -249,6 +249,8 @@
     "openSponsorDetail": "Sponsorendetails öffnen"
   },
   "development": {
+    "pendingProgress": "Ausstehender Fähigkeitenfortschritt",
+    "pendingProgressHint": "Bereits erarbeiteter Fortschritt wartet auf die nächste Spielwochen-Abrechnung. Das ist noch keine dauerhafte Attributsteigerung.",
     "title": "Fahrerentwicklungs-Lab",
     "description": "Verfolge die aufgezeichnete Entwicklung über die letzten acht Wochen, während aktuelle Fahrerwerte allen Managern verfügbar bleiben. Dies ist historische Analyse und kein Head-Coach-Bericht.",
     "rider": "Fahrer",
