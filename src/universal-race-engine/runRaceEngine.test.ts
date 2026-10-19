@@ -16506,26 +16506,28 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
 
 
 describe('Phase 11 replay progress guarantee', () => {
-  it('keeps raw replay synchronization truthful while classifying known presentation issues as publishable', () => {
+  it('keeps raw replay synchronization truthful and blocks physical-transfer corruption', () => {
     const result = runRaceEngine(createValidInput())
+    const presentationIssues = [
+      'duplicate_group_display_code:stage-1|replay|post-catch-peloton-split',
+      'group_gap_identity_mismatch:stage-1|replay|post-catch-peloton-split',
+    ]
+    const physicalIssue =
+      'front_group_transfer_without_physical_transition:rider-1:P->F1:stage-1|replay|phase-3-end'
     const degraded = {
       ...result.replaySynchronization,
       synchronized: false,
-      issues: [
-        'duplicate_group_display_code:stage-1|replay|post-catch-peloton-split',
-        'group_gap_identity_mismatch:stage-1|replay|post-catch-peloton-split',
-        'front_group_transfer_without_physical_transition:rider-1:P->F1:stage-1|replay|phase-3-end',
-      ],
+      issues: [...presentationIssues, physicalIssue],
     }
 
-    const policy =
-      classifyUniversalReplaySynchronizationForPublication(degraded)
+    const policy = classifyUniversalReplaySynchronizationForPublication(degraded)
 
     expect(degraded.synchronized).toBe(false)
-    expect(policy.publishable).toBe(true)
-    expect(policy.replayQuality).toBe('degraded')
-    expect(policy.blockingIssues).toEqual([])
-    expect(policy.nonBlockingIssues).toEqual(degraded.issues)
+    expect(isUniversalReplayIssueNonBlocking(physicalIssue)).toBe(false)
+    expect(policy.publishable).toBe(false)
+    expect(policy.replayQuality).toBe('blocked')
+    expect(policy.blockingIssues).toContain(physicalIssue)
+    expect([...policy.blockingIssues, ...policy.nonBlockingIssues].sort()).toEqual([...degraded.issues].sort())
   })
 
   it('never bypasses incident identity, official result, rider identity, point or result-visibility corruption', () => {
