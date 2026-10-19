@@ -249,6 +249,8 @@
     "openSponsorDetail": "Otvori detalje sponzora"
   },
   "development": {
+    "pendingProgress": "Razvojni poeni na čekanju",
+    "pendingProgressHint": "Stvarno ostvareni razvojni poeni čekaju sledeći nedeljni obračun u igri. Ovo još nije trajno povećanje veština.",
     "title": "Rider Development Lab",
     "description": "Prati zabeleženi razvoj tokom poslednjih osam nedelja uz dostupne trenutne veštine svim menadžerima. Ovo je istorijska analiza, a ne Head Coach savetnički izveštaj.",
     "rider": "Vozač",
