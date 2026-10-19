@@ -773,8 +773,14 @@
     "bronze": "Bronze",
     "season": "Saison",
     "current": "Médailles de la saison en cours",
-    "career": "Palmarès des championnats",
-    "viewRace": "Voir la course"
+    "career": "Palmarès des championnats et fédérations",
+    "viewRace": "Voir la course",
+    "nationalAssociation": "Championnat de l'association nationale",
+    "careerSummary": "Palmarès national, international et fédéral de toutes les saisons, y compris la saison en cours.",
+    "tableAchievement": "Résultat",
+    "tableMedal": "Médaille",
+    "tableCountry": "Pays",
+    "tableRace": "Course"
   },
   "powerProfile": {
     "youthSummary": "La taille et le poids des jeunes coureurs peuvent évoluer avec la croissance ; les adultes conservent leurs mesures finales.",
