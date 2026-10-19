@@ -14642,16 +14642,10 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
       new URL('../../supabase/functions/universal-race-stage-runner/index.ts', import.meta.url),
       'utf8',
     )
-    const migrationSource = readFileSync(
-      new URL(
-        '../../supabase/migrations/20260818_phase11b_universal_production_cutover.sql',
-        import.meta.url,
-      ),
-      'utf8',
-    )
-
-    expect(migrationSource).toContain('race_engine_get_stage_phase9_inputs_v1')
-    expect(migrationSource).toContain("'phase9_inputs'")
+    // The historical 20260818 migration is no longer in this repository.
+    // Verify the active runner's canonical payload adapter without implying that
+    // this source-level test validates the deployed SQL producer.
+    expect(runnerSource).toContain('payload.phase9_inputs')
     expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
     expect(runnerSource).toContain('buildProductionUniversalRaceEngineInput(sources)')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
