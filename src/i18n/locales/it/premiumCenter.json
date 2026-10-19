@@ -249,6 +249,8 @@
     "openSponsorDetail": "Apri dettagli sponsor"
   },
   "development": {
+    "pendingProgress": "Progressi abilità in attesa",
+    "pendingProgressHint": "I progressi realmente acquisiti attendono l'elaborazione della prossima settimana di gioco. Non sono ancora aumenti permanenti delle abilità.",
     "title": "Rider Development Lab",
     "description": "Segui lo sviluppo registrato nelle ultime otto settimane mantenendo le abilità attuali disponibili a tutti i manager. È analisi storica, non un report del Head Coach.",
     "rider": "Corridore",
