@@ -953,7 +953,7 @@ function SmallCountryFlag({ code }: { code?: string | null }) {
   if (!flagUrl || !normalized || hasError) {
     return (
       <span
-        className="inline-block h-3 w-4 shrink-0 rounded-[2px] border border-slate-200 bg-slate-100 align-middle"
+        className="inline-block h-6 w-9 shrink-0 rounded-[2px] border border-slate-200 bg-slate-100 align-middle"
         title={normalized ?? 'Unknown country'}
         aria-label={normalized ?? 'Unknown country'}
       />
@@ -965,7 +965,7 @@ function SmallCountryFlag({ code }: { code?: string | null }) {
       src={flagUrl}
       alt={normalized}
       title={normalized}
-      className="inline-block h-3 w-4 shrink-0 rounded-[2px] border border-slate-200 object-cover align-middle"
+      className="inline-block h-6 w-9 shrink-0 rounded-[2px] border border-slate-200 object-cover align-middle"
       loading="lazy"
       onError={() => setHasError(true)}
     />
@@ -6493,6 +6493,15 @@ type NationalRiderClubKit = {
   jerseyUrl: string | null
 }
 
+function isWorldRoadChampionshipRace(race: Race): boolean {
+  // Some archived race records omit the metadata flag even though the dedicated
+  // championship edition still exists. Name is an intentional fallback.
+  return race.metadata?.world_road_championship === true ||
+    race.metadata?.world_road_championship === 'true' ||
+    Boolean(race.metadata?.world_road_championship_edition_id) ||
+    /^World Road Championship Grand Finale$/i.test(race.name ?? '')
+}
+
 function isNationalChampionshipRace(race: Race): boolean {
   const metadata = getRecord(race.metadata)
   return (
@@ -8043,7 +8052,7 @@ function RaceResultsHub({
                   : 'text-slate-500',
               ].join(' ')}
             >
-              {isNationalChampionshipRace(race) || race.metadata?.world_road_championship === true
+              {isNationalChampionshipRace(race) || isWorldRoadChampionshipRace(race)
                 ? t('participants.individualRiders')
                 : t('participants.teamsRiders')}
             </button>
@@ -8070,7 +8079,7 @@ function RaceResultsHub({
 
       {activeTab === 'participants' ? (
         <div className="mt-6">
-          {race.metadata?.world_road_championship === true ? (
+          {isWorldRoadChampionshipRace(race) ? (
             <WorldChampionshipExpectedField
               raceId={race.id}
               onOpenRiderProfile={openRiderProfileFromRaceInfo}
@@ -19919,7 +19928,7 @@ export default function RaceDetailPage({
             </div>
 
             <div className="flex items-center gap-3">
-              {race.metadata?.world_road_championship === true ? (
+              {isWorldRoadChampionshipRace(race) ? (
                 race.logo_url ? (
                   <img
                     src={race.logo_url}
@@ -19955,7 +19964,7 @@ export default function RaceDetailPage({
               </div>
             ) : null}
 
-            {race.metadata?.world_road_championship === true ? (
+            {isWorldRoadChampionshipRace(race) ? (
               <div className="mt-4 max-w-4xl rounded-2xl border border-sky-200 bg-gradient-to-r from-sky-50 via-white to-amber-50 px-4 py-4">
                 <div className="flex items-start gap-3">
                   {race.logo_url ? (
