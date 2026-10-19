@@ -428,13 +428,41 @@ export default function PremiumRiderDevelopmentPanel({
               <div className="text-base font-semibold text-slate-900">{t('development.leaders')}</div>
               <div className="mt-1 text-sm text-slate-500">{t('development.leadersHint')}</div>
 {!developmentLeaders.some(row => Math.abs(row.development) > 0) ? (
-                <div className="flex h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 p-5 text-center">
-                  <p className="text-sm font-semibold text-slate-700">
-                    {metrics.coverage > 0 ? t('development.noProgressTitle') : t('development.noHistoryTitle')}
-                  </p>
-                  <p className="mt-2 max-w-sm text-xs leading-5 text-slate-500">
-                    {metrics.coverage > 0 ? t('development.noProgressDescription') : t('development.noHistoryDescription')}
-                  </p>
+                <div className="mt-4 space-y-3">
+                  <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                    <p className="text-sm font-semibold text-slate-700">
+                      {metrics.coverage > 0 ? t('development.noProgressTitle') : t('development.noHistoryTitle')}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-slate-500">
+                      {metrics.coverage > 0 ? t('development.noProgressDescription') : t('development.noHistoryDescription')}
+                    </p>
+                  </div>
+                  {/* Even with zero genuine skill changes, show every active rider
+                      and their actual recorded coverage, never a fake bar. */}
+                  <div className="max-h-[330px] overflow-auto rounded-lg border border-slate-200">
+                    <table className="min-w-full text-left text-xs">
+                      <thead className="sticky top-0 bg-slate-50 text-slate-600">
+                        <tr>
+                          <th className="px-3 py-2">{t('development.rider')}</th>
+                          <th className="px-3 py-2 text-right">{t('development.eightWeekDevelopment')}</th>
+                          <th className="px-3 py-2 text-right">{t('development.coverage')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {rows.map(rider => (
+                          <tr key={rider.rider_id} className="border-t border-slate-100">
+                            <td className="px-3 py-2 font-medium text-slate-800">
+                              <Link to={`/dashboard/my-riders/${rider.rider_id}`} className="hover:underline">
+                                {rider.display_name}
+                              </Link>
+                            </td>
+                            <td className="px-3 py-2 text-right tabular-nums">{formatDelta(Number(rider.development_8w || 0))}</td>
+                            <td className="px-3 py-2 text-right tabular-nums">{Number(rider.weeks_recorded || 0)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               ) : (
                             <div className="mt-4 h-[300px]">
