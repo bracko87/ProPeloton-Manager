@@ -773,8 +773,14 @@
     "bronze": "Bronzo",
     "season": "Stagione",
     "current": "Medaglie della stagione in corso",
-    "career": "Successi nei campionati in carriera",
-    "viewRace": "Vedi gara"
+    "career": "Successi in campionati e federazioni",
+    "viewRace": "Vedi gara",
+    "nationalAssociation": "Campionato dell'Associazione Nazionale",
+    "careerSummary": "Successi nazionali, internazionali e federali di tutte le stagioni, compresa quella attuale.",
+    "tableAchievement": "Risultato",
+    "tableMedal": "Medaglia",
+    "tableCountry": "Paese",
+    "tableRace": "Gara"
   },
   "powerProfile": {
     "youthSummary": "Altezza e peso dei giovani corridori possono cambiare con la crescita; gli adulti mantengono le misure definitive.",
