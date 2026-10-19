@@ -37934,6 +37934,7 @@ export function runRaceEngine(
           startGap: p3.physicalStartGapSeconds,
           catchKm: p3.physicalCatchKm,
           firstGapSample: p3.physicalGapTrajectory[0] ?? null,
+          gapSamples: p3.physicalGapTrajectory.slice(0, 40),
           frontLineages: p3.frontLineages.map((row) => ({
             launchKm: row.launchKm, riderIds: row.riderIdsAtLaunch,
             catchKm: row.catchKm, caught: row.caughtByPeloton, mergeKm: row.mergeKm
