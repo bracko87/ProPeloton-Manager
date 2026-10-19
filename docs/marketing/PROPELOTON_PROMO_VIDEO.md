@@ -1,10 +1,10 @@
 # ProPeloton Manager — first promo video production brief (draft v1)
 
-**Status:** **V4 74.000-second MP4 REVIEW DRAFT PRODUCED** on 2026-10-19 following owner request to start slowly with screenshots and introduce all four real gameplay videos later. V1 30s, V2 45s, and V3 57s are preserved as historical drafts. The MP4, contact sheet, and ZIP source bundle were delivered as ChatGPT conversation artifacts (not uploaded to GitHub). **Still not approved or published. Working branch:** staging. **Owner review required.**
+**Status:** **V5 74.000-second MP4 REVIEW DRAFT PRODUCED** on 2026-10-19 after owner requested lively split-screen, four-tile collage, dynamic cycling visuals, two staggered replay angles and more aggressive interactive music. V1–V4 retained as previous drafts. MP4, preview and source ZIP delivered as ChatGPT conversation artifacts (not uploaded to GitHub). **Still unapproved and unpublished. Working branch:** staging. **Owner review required.**
 
 ## Editorial direction
 
-Current primary deliverable: **74 seconds exactly** (owner lifted the length restriction for V4, requesting screenshots first, actual video clips later, and no percussion-only section), English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Optional companion cut: 15s, with later 9:16 and square reframing. Original 30s cut remains available. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
+Current primary deliverable: **74 seconds exactly** (V5 maintains the 74s runtime but changes pacing through visually varied mosaics, diagonals and cycling imagery), English, 1920×1080, 30 fps, 16:9, H.264 MP4, AAC audio, high bitrate (>=8 Mbps; Steam recommends >=5 Mbps). Design for readability with sound muted. Optional companion cut: 15s, with later 9:16 and square reframing. Original 30s cut remains available. Overall direction: dark navy/black and yellow from current PPM brand, clean contemporary sports typography, short overlays, subtle motion, no fictitious UI, no generic AI-rendered gameplay.
 
 **Working tagline:** **Build Your Team. Write Your Cycling Story.**
 CTA: **Play at propelotonmanager.com** (not a Steam Wishlist link until a Steam store page exists).
@@ -184,3 +184,36 @@ The 45.000-second draft uses **1,350 frames at 30 fps** and the original owner-s
 
 **Technical QC:** ffprobe verified exactly 74.000000 seconds, 2,220 H.264 frames at 30 fps, 1920×1080, AAC 48kHz stereo, MP4 faststart. Review encode averages about 1.1 Mbit/s, so **not** the final high-bitrate promotional delivery master. Await owner review and high-resolution official PPM logo before full-quality 8+ Mbps final encode and publication. No gameplay code/database changes; `main` and deployed site remain unchanged.
 
+
+## V5 — More dynamic mixed-format sports trailer (current review, 2026-10-19)
+
+User requested after viewing V4: screenshots on a half or 80%-width panel, cycling-themed imagery in a fixed corner; some 2-up and 4-up grids; nonrectangular yellow/black dividing stripes; two simultaneous staggered segments from the same race video; finish-line celebration; more aggressive, interactive soundtrack. Avoid the old irritating flashes, fast 0.5-second montage and drums-only break.
+
+**Delivered:**
+- `ProPeloton_Manager_Promo_Draft_v5_74s.mp4` — **74.000s**, 2,220 frames H.264 1920×1080 30fps, AAC soundtrack, ~32.2 MB.
+- `ProPeloton_Manager_Promo_Draft_v5_74s_preview.jpg` — 13-scene contact sheet, no slide counters in the video.
+- `ProPeloton_Promo_Source_Package_v5_74s.zip` — authentic user source screenshots and four videos, one original AI-created cycling cinematic diptych, scene timing JSON, original self-synthesized 132-BPM soundtrack, reproducible FFmpeg/Pillow/Python rendering code.
+
+**Accuracy note:** All depictions of actual gameplay are from owner-provided real game recordings/screenshots. The gold-hour *wheel close-up* and *victorious cyclist at a finish line* are explicitly **AI-generated decorative/cinematic visuals**, not real game replay footage and not game screenshots. No trademarked real-team apparel in those decorative visuals. They appear alongside real game screens to increase sports energy, without a fictional game interface or fake race engine results.
+
+| Time | Picture | Presentation |
+|---|---|---|
+| 00–05 | Rider profile and dynamic cycling-wheel visual | Unequal angled split |
+| 05–11 | Rider, transfers, staff, and scouting | 4-panel grid |
+| 11–16 | Rider profile and cycling-wheel visual | ~70/30 angled panel |
+| 16–22 | Transfer market and equipment market | Dual angled panel |
+| 22–28 | Staff, finance, youth academy, statistics | 4-panel grid |
+| 28–33 | Race preparation and race detail | Full screen plus inset |
+| 33–38.5 | Real gameplay video 1 and cycling-wheel graphic | ~75/25 layout |
+| 38.5–44 | Real gameplay video 2 and rider graphic | Split gameplay |
+| 44–49.5 | Real gameplay video 3 and cycling-wheel graphic | Split gameplay |
+| 49.5–57.5 | Real race replay video 4 and cycling-wheel graphic | Major race section |
+| 57.5–62 | Two moments of actual race video 4 (staggered 3.6s) | Double-screen race display |
+| 62–68 | AI cycling celebration and genuine in-game ranking inset | Cinematic hybrid |
+| 68–74 | Branded end slate + persistent site URL | Call to action |
+
+**Music:** Original synthesized stereo **132 BPM** electronic-sports track: more insistent steady kick/snare/hi-hat rhythm, gritty bass, harmonized pad and brighter melodic figures; dynamic swells for act changes. Melodic backing continues throughout; **no isolated percussion or strobe transitions**. No borrowed copyrighted music or third-party stock video.
+
+**QA completed:** Local ffprobe reports H.264 1920×1080 30fps 2220 frames, AAC audio, exact duration 74.000s, MP4 faststart; rendered 13-frame contact sheet inspected; ZIP archive integrity passed. This is a review render, not the final high-bitrate platform-specific distribution master. The source ZIP is reproducible code/assets, **not an editable native Canva project**. Official high-quality game logo still desirable before final release.
+
+**Approval required:** Await owner review and any changes. Nothing published to website or social platforms; no game code/data changed. All production actions remain subject to branch/release policy.
