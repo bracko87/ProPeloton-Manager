@@ -7585,15 +7585,50 @@ describe('Phase 5 dynamic chase activation and stage-profile survival targets', 
     )
   })
 
-  it('places opening attempts after a short neutral section and before five kilometres', () => {
-    const source = readFileSync(
-      new URL('./runRaceEngine.ts', import.meta.url),
-      'utf8',
-    )
+  it('keeps Phase 11N opening attempts within a deterministic corridor after neutralization', () => {
+    const observedFirstWaveKm = new Set<number>()
 
-    expect(source).toContain('1.5 + openingTimingRoll * 1.5')
-    expect(source).toContain('neutralizedDistanceKm + 0.75')
-    expect(source).toContain('neutralizedDistanceKm + 1.75')
+    for (let seedIndex = 0; seedIndex < 8; seedIndex += 1) {
+      const base = createValidInput()
+      const input: UniversalRaceEngineInput = {
+        ...base,
+        engine: {
+          ...base.engine,
+          deterministicSeed: `phase11n-opening-window-regression-${seedIndex}`,
+        },
+      }
+      const first = runRaceEngine(input).roadRaceResolution.phase1Opening!
+      const repeated = runRaceEngine(input).roadRaceResolution.phase1Opening!
+      const opportunityEndKm = Math.min(
+        first.phaseBoundary.endKm,
+        first.neutralizedDistanceKm + first.opportunityWindowKm,
+      )
+
+      expect(first.neutralizedDistanceKm).toBeGreaterThanOrEqual(1.5)
+      expect(first.neutralizedDistanceKm).toBeLessThanOrEqual(4.5)
+      expect(first.opportunityWindowKm).toBeGreaterThanOrEqual(6)
+      expect(first.opportunityWindowKm).toBeLessThanOrEqual(16)
+      expect(first.firstWaveAttemptKm).not.toBeNull()
+      expect(first.firstWaveAttemptKm!).toBeGreaterThanOrEqual(
+        first.neutralizedDistanceKm + 0.75 - 0.000001,
+      )
+      expect(first.firstWaveAttemptKm!).toBeLessThanOrEqual(
+        Math.min(opportunityEndKm, first.neutralizedDistanceKm + 4) + 0.000001,
+      )
+      expect(first.firstWaveAttemptKm).toBe(repeated.firstWaveAttemptKm)
+      expect(first.secondWaveAttemptKm).toBe(repeated.secondWaveAttemptKm)
+      if (first.secondWaveAttemptKm !== null) {
+        expect(first.secondWaveAttemptKm).toBeGreaterThanOrEqual(
+          first.firstWaveAttemptKm!,
+        )
+        expect(first.secondWaveAttemptKm).toBeLessThanOrEqual(
+          opportunityEndKm + 0.000001,
+        )
+      }
+      observedFirstWaveKm.add(first.firstWaveAttemptKm!)
+    }
+
+    expect(observedFirstWaveKm.size).toBeGreaterThan(1)
   })
 
   it('hands the actual Phase 3 physical escape gap into the retained 70 percent late chase', () => {
