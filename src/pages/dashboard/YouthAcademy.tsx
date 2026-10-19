@@ -6337,7 +6337,9 @@ export default function YouthAcademyPage(): JSX.Element {
                             {team.rank}
                           </td>
                           <td className="px-4 py-3">
-                            {team.is_mine ? <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} aria-label={team.academy_name} className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1 hover:border-sky-400"> : <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1">}
+                            {team.is_mine ? (
+                              <Link to={`/dashboard/youth-academy/teams/${team.academy_id}`} aria-label={team.academy_name} className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1 hover:border-sky-400">
+
                               {resolveClubLogoUrl(team.logo_path) ? (
                                 <img
                                   src={resolveClubLogoUrl(team.logo_path) ?? ''}
@@ -6347,7 +6349,21 @@ export default function YouthAcademyPage(): JSX.Element {
                               ) : (
                                 <span className="text-[9px] text-slate-400">—</span>
                               )}
-                            {team.is_mine ? </Link> : </div>}
+                                                          </Link>
+                            ) : (
+                              <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded border border-slate-200 bg-white p-1">
+
+                              {resolveClubLogoUrl(team.logo_path) ? (
+                                <img
+                                  src={resolveClubLogoUrl(team.logo_path) ?? ''}
+                                  alt=""
+                                  className="h-full w-full object-contain"
+                                />
+                              ) : (
+                                <span className="text-[9px] text-slate-400">—</span>
+                              )}
+                                                          </div>
+                            )}
                           </td>
                           <td className="px-4 py-3 text-sm font-semibold text-slate-900">
                             <div className="flex items-center gap-2">
