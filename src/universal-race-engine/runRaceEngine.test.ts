@@ -18177,7 +18177,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
       summitRejoined.every((row) =>
         row.contactLossKm !== null &&
         row.rejoinKm! > row.contactLossKm &&
-        row.rejoinKm! <= hard.stage.distanceKm &&
+        row.rejoinKm! <= summitSelection.kmEnd &&
         !summitRemained.has(row.riderId),
       ),
     ).toBe(true)
