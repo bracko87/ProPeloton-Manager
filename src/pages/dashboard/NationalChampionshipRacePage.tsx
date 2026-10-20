@@ -684,7 +684,7 @@ export default function NationalChampionshipRacePage(): JSX.Element {
               <img
                 src={data.flag_url}
                 alt={data.country_name}
-                className="h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+                className="h-7 w-11 shrink-0 rounded-sm border border-slate-200 object-cover"
               />
               <h1 className="text-3xl font-bold tracking-tight text-slate-950">
                 {title}
