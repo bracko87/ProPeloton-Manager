@@ -34755,7 +34755,16 @@ export function resolveUniversalPhase10Incidents({
   }
   const replayTimeline: UniversalReplayTimeline = {
     ...phase10SourceReplayTimeline,
-    checkpoints: synchronizedFinishCheckpoints,
+    checkpoints: synchronizedFinishCheckpoints.map((checkpoint, checkpointIndex) => ({
+      ...checkpoint,
+      checkpointIndex,
+      checkpointKind: checkpoint.checkpointId.endsWith('|replay|phase10-finish-group-transition')
+        ? 'event' as const : checkpoint.checkpointKind,
+    })),
+    eventCheckpointCount: synchronizedFinishCheckpoints.filter(checkpoint =>
+      checkpoint.checkpointKind === 'event' ||
+      checkpoint.checkpointId.endsWith('|replay|phase10-finish-group-transition'),
+    ).length,
   }
 
   const statusByRiderId = Object.fromEntries(
