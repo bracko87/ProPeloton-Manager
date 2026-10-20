@@ -12412,6 +12412,7 @@ type UniversalReplayInputSource =
 
 type UniversalAuthoritativeReplayPayload = {
   status?: string | null
+  reason?: string | null
   stage_id?: string | null
   race_id?: string | null
   simulation_run_id?: string | null
@@ -14712,7 +14713,7 @@ function UniversalRaceReplayPage({
           setLoadError(null)
         } else if (status === 'not_available') {
           setLoadError(
-            String((nextAuthoritativePayload as Record<string, unknown> | null)?.reason ?? '') === 'replay_archived'
+            nextAuthoritativePayload?.reason === 'replay_archived'
               ? 'Replay archived: detailed playback is no longer stored. Official race results remain available.'
               : 'Replay is not available yet.'
           )
