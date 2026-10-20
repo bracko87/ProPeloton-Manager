@@ -34700,9 +34700,62 @@ export function resolveUniversalPhase10Incidents({
       }
     },
   )
+  // Phase 10 may adjudicate genuine incident-induced finish groups after the
+  // base replay has already published winner-finish. Make that physical finish
+  // transition explicit before final-results instead of silently changing the
+  // road state when ranks and times become visible.
+  const physicallyEqual = (
+    left: readonly UniversalReplayGroupState[],
+    right: readonly UniversalReplayGroupState[],
+  ): boolean => JSON.stringify(left.map(g => ({
+    displayCode:g.displayCode,physicalLineageId:g.physicalLineageId ?? null,
+    physicalPosition:g.physicalPosition,riderIds:[...g.riderIds].sort(),
+  })).sort((a,b)=>a.displayCode.localeCompare(b.displayCode))) ===
+    JSON.stringify(right.map(g => ({
+      displayCode:g.displayCode,physicalLineageId:g.physicalLineageId ?? null,
+      physicalPosition:g.physicalPosition,riderIds:[...g.riderIds].sort(),
+    })).sort((a,b)=>a.displayCode.localeCompare(b.displayCode)))
+  const synchronizedFinishCheckpoints: UniversalReplayCheckpoint[] = []
+  for (const checkpoint of replayCheckpoints) {
+    const previous = synchronizedFinishCheckpoints.at(-1)
+    if (
+      input.stage.stageFormat === 'road_race' &&
+      checkpoint.finalResultsVisible && previous &&
+      Math.abs(previous.raceProgress.kmFromStart - input.stage.distanceKm) <= 0.000001 &&
+      !physicallyEqual(previous.groups, checkpoint.groups)
+    ) {
+      const priorCodes = new Map(previous.groups.flatMap(g=>g.riderIds.map(id=>[id,g.displayCode] as const)))
+      const finalCodes = new Map(checkpoint.groups.flatMap(g=>g.riderIds.map(id=>[id,g.displayCode] as const)))
+      const changedRiderIds = input.riders.map(r=>r.riderId)
+        .filter(id=>priorCodes.get(id)!==finalCodes.get(id)).sort()
+      synchronizedFinishCheckpoints.push({
+        ...previous,
+        checkpointId:`${input.stage.stageId}|replay|phase10-finish-group-transition`,
+        groups:checkpoint.groups,
+        gaps:checkpoint.gaps.map(g=>({...g,officialTimeSeconds:null})),
+        riderStates:previous.riderStates.map(state=>{
+          const group=checkpoint.groups.find(g=>g.riderIds.includes(state.riderId))
+          const gap=checkpoint.gaps.find(g=>g.displayCode===group?.displayCode)
+          return {...state,groupCode:group?.groupCode??null,
+            displayCode:group?.displayCode??null,
+            gapSeconds:gap?.gapSeconds??null,
+            officialTimeSeconds:null,finishRank:null}
+        }),
+        commentary:[{
+          commentaryId:`${input.stage.stageId}:phase10-finish-physical-transition`,
+          eventType:'group_split',title:'Final gaps open on the line',
+          description:'The incident-adjusted physical finish groups are confirmed on the line.',
+          riderIds:changedRiderIds,
+          teamIds:Array.from(new Set(changedRiderIds.map(id=>riderById.get(id)?.teamId)
+            .filter((id):id is string=>Boolean(id)))).sort(),
+        }],
+      })
+    }
+    synchronizedFinishCheckpoints.push(checkpoint)
+  }
   const replayTimeline: UniversalReplayTimeline = {
     ...phase10SourceReplayTimeline,
-    checkpoints: replayCheckpoints,
+    checkpoints: synchronizedFinishCheckpoints,
   }
 
   const statusByRiderId = Object.fromEntries(
