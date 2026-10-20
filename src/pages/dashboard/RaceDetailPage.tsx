@@ -925,7 +925,7 @@ function RaceTitleFlag({ code }: { code?: string | null }) {
 
   if (!flagUrl || !normalized || hasError) {
     return (
-      <span className="inline-block h-4 w-6 shrink-0 rounded border border-slate-200 bg-slate-100" />
+      <span className="inline-block h-7 w-11 shrink-0 rounded border border-slate-200 bg-slate-100" />
     )
   }
 
@@ -934,7 +934,7 @@ function RaceTitleFlag({ code }: { code?: string | null }) {
       src={flagUrl}
       alt={normalized}
       title={normalized}
-      className="inline-block h-4 w-6 shrink-0 rounded border border-slate-200 object-cover"
+      className="inline-block h-7 w-11 shrink-0 rounded border border-slate-200 object-cover"
       loading="lazy"
       onError={() => setHasError(true)}
     />
@@ -11214,7 +11214,9 @@ function StageReplayAccessCard({
     : replayAvailability.status === 'not_open'
       ? t('replay.notOpen')
       : replayAvailability.status === 'not_available'
-        ? t('replay.notAvailable')
+        ? replayAvailability.reason === 'replay_archived'
+          ? 'Replay archived: detailed playback is no longer stored. Official race results remain available.'
+          : t('replay.notAvailable')
         : replayAvailability.status === 'error'
           ? t('replay.temporaryUnavailable')
           : userParticipated
@@ -11250,7 +11252,7 @@ function StageReplayAccessCard({
       </p>
 
       {replayAvailability.replayOpensGameAt &&
-      replayAvailability.status !== 'available' ? (
+      replayAvailability.status === 'not_open' ? (
         <div className="mt-3 text-xs font-medium text-slate-500">
           {t('replay.availableAt', { date: replayOpensGameAtLabel ?? '—' })}
         </div>
@@ -12410,6 +12412,7 @@ type UniversalReplayInputSource =
 
 type UniversalAuthoritativeReplayPayload = {
   status?: string | null
+  reason?: string | null
   stage_id?: string | null
   race_id?: string | null
   simulation_run_id?: string | null
@@ -14710,7 +14713,9 @@ function UniversalRaceReplayPage({
           setLoadError(null)
         } else if (status === 'not_available') {
           setLoadError(
-            'Replay is not available yet.'
+            nextAuthoritativePayload?.reason === 'replay_archived'
+              ? 'Replay archived: detailed playback is no longer stored. Official race results remain available.'
+              : 'Replay is not available yet.'
           )
         } else {
           setLoadError(
@@ -17675,7 +17680,7 @@ function UniversalRaceReplayPage({
             </div>
           ) : (
             <div className="rounded-2xl bg-white px-4 py-12 text-center text-sm text-slate-500">
-              Universal engine calculation is not available for this stage.
+              {loadError ?? 'Universal engine calculation is not available for this stage.'}
             </div>
           )}
         </div>
