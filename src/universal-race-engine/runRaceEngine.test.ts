@@ -18144,30 +18144,6 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     const hillySelections = hilly.roadRaceResolution.phase4Finish!.profileClimbSelections
     const mediumSelections = medium.roadRaceResolution.phase4Finish!.profileClimbSelections
     const hardSelections = hard.roadRaceResolution.phase4Finish!.profileClimbSelections
-    // Temporary Slice 18 diagnostic only (remove before merge).
-    console.error('SLICE18_CLIMB_SHAPES=' + JSON.stringify(
-      [
-        ['hilly', hillySelections],
-        ['medium', mediumSelections],
-        ['hard', hardSelections],
-      ].map(([name, selections]) => ({
-        name,
-        climbData: (selections as typeof hillySelections).map((selection) => {
-          const rows = selection.riders.slice().sort((a, b) => a.holdScore - b.holdScore)
-          return {
-            km: [selection.kmStart, selection.kmEnd],
-            hardness: selection.hardness,
-            candidateCount: rows.length,
-            dropped: selection.droppedAtSummitRiderIds.length,
-            rejoined: selection.rejoinedBeforeNextEffortRiderIds.length,
-            holdRange: [rows[0]?.holdScore, rows.at(-1)?.holdScore],
-            holdFirst8: rows.slice(0, 8).map((r) => ({ id: r.riderId, hold: r.holdScore, energy: r.energyAtSummit })),
-            contactFirst3: selection.riders.filter((r) => r.contactLossKm !== null).slice(0, 3),
-          }
-        })
-      }))
-    ))
-
     expect(flatSelections).toHaveLength(0)
     expect(hillySelections).toHaveLength(2)
     expect(mediumSelections).toHaveLength(1)
