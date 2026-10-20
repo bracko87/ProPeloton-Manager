@@ -35865,7 +35865,7 @@ export function buildUniversalReplaySynchronizationSummary(
               row.contactLossKm !== null &&
               row.contactLossKm <= checkpoint.raceProgress.kmFromStart+0.00001)
           return current?.displayCode?.startsWith('C') === true &&
-            ((current.liveEnergyPercent < 5 &&
+            ((current.liveEnergyPercent <= 5.0001 &&
               previous?.displayCode !== current.displayCode) || confirmedContactLoss)
         }),
     )
