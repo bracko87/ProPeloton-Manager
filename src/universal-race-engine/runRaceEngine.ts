@@ -33551,7 +33551,20 @@ export function resolveUniversalPhase10Incidents({
         const healthDnf =
           healthOutcome.currentStageContinuation === 'dnf' &&
           !teamTimeTrialFormat
-        const statusImpact: 'finished' | 'dnf' = healthDnf ? 'dnf' : 'finished'
+        // A severe mechanical breakdown on critically worn equipment can
+        // independently force a withdrawal. This is not a medical injury and
+        // uses a separate deterministic draw so identical race seeds replay.
+        // Normal punctures and repairable incidents still permit continuing.
+        const mechanicalDnf =
+          selected.kind === 'technical_incident' &&
+          severity === 'serious' &&
+          selected.equipmentConditionPercent < 25 &&
+          !teamTimeTrialFormat &&
+          phase10DeterministicRoll(
+            md5Hex(`${selected.hash}:irreparable-mechanical:${riderId}`),
+          ) < 0.3
+        const statusImpact: 'finished' | 'dnf' =
+          healthDnf || mechanicalDnf ? 'dnf' : 'finished'
         const createsPhysicalRoadSeparation =
           input.stage.stageFormat === 'road_race' &&
           statusImpact === 'finished' &&

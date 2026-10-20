@@ -383,13 +383,15 @@ const terrains = {
   mountain: {finishType:'summit_finish',profileType:'climber',elevationGainM:3500,terrainPercentages:{flat:10,hilly:20,mountain:70,cobbled:0}},
   cobbled: {finishType:'cobbled_finish',profileType:'classics',elevationGainM:900,terrainPercentages:{flat:45,hilly:20,mountain:5,cobbled:30}},
 } as const
-const cohorts = ['baseline','fatigued','windy','rainy','combined'] as const
+const cohorts = ['baseline','fatigued','windy','rainy','combined','worn_equipment'] as const
 describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
   for(const cohort of cohorts) it(`measures incident-enabled ${cohort} conditions without invented rates`,()=>{
     const summary: Array<Record<string,number|string>>=[]
     for(const terrain of Object.keys(terrains) as Array<keyof typeof terrains>) for(const fieldSize of [48,72,96]){
       const totals:Record<(typeof statuses)[number],number>={finished:0,dnf:0,dns:0,otl:0,dsq:0}
       let zeroDnf=0
+      let technicalDnf=0
+      let technicalIncidents=0
       for(let seedIndex=0;seedIndex<3;seedIndex++){
         const base=createExpandedFieldInput(fieldSize)
         const config=terrains[terrain]
@@ -409,13 +411,19 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
             profilePoints:[{km:0,elevationM:20},{km:45,elevationM:terrain==='mountain'?800:160},
               {km:90,elevationM:terrain==='mountain'?1600:330},{km:120,elevationM:terrain==='mountain'?1950:50}]},
           points:base.points.map(p=>({...p,stageId:`${id}-stage`})),
-          riders:base.riders.map(r=>fatigued?{...r,fatigueBeforeStage:75,startStamina:55}:r),
+          riders:base.riders.map(r=>({
+            ...r,
+            ...(fatigued?{fatigueBeforeStage:75,startStamina:55}:{}),
+            ...(cohort==='worn_equipment'?{preparationModifiers:{inStageEnergyCostMultiplier:1,postStageFatigueMultiplier:1,postStageRecoveryBonusPoints:0,equipmentConditionPercent:15,mechanicalIncidentRiskMultiplier:1.5}}:{}),
+          })),
           weather:{...base.weather!,condition:rainy?'rain':windy?'sunny_windy':'clear',
             windKmh:windy?35:12,precipitationMm:rainy?8:0,rainProbabilityPct:rainy?95:10},
         }
         const result=runRaceEngine(input)
         expect(result.validationPassed).toBe(true)
         expect(result.replaySynchronization.synchronized).toBe(true)
+        technicalIncidents += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='technical_incident').length
+        technicalDnf += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='technical_incident').flatMap(e=>e.riderConsequences).filter(e=>e.statusImpact==='dnf').length
         const rows=result.finishResolution.classification
         expect(rows.length).toBe(fieldSize)
         expect(new Set(rows.map(r=>r.riderId)).size).toBe(fieldSize)
@@ -428,7 +436,7 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         if((counts.dnf??0)===0) zeroDnf++
       }
       summary.push({cohort,terrain,fieldSize,simulations:3,entries:fieldSize*3,...totals,
-        zeroDnfRaces:zeroDnf})
+        zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf})
     }
     console.info('ISSUE_139_ADVERSE_COHORT_JSON',JSON.stringify(summary))
   },120000)
