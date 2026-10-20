@@ -1,38 +1,31 @@
-# Controlled staged releases — ProPeloton Manager
+# Controlled main-only development and releases — ProPeloton Manager
 
-## Purpose
+## Active branches
 
-Make game changes visible and testable before they reach the production branch.
-
-| Branch | Purpose | Default action |
+| Branch | Purpose | Rules |
 |---|---|---|
-| `staging` | Development, bug fixes, translation and race-engine validation | Normal commits and local checks |
-| `main` | Production code deployed via GitHub / Netlify | Only merge a reviewed, validated release |
+| `main` | Sole active long-lived development target **and** production branch | Changes through reviewed, tested, user-approved PRs |
+| `staging` | Historical backup of the pre-2026-10-20 development history | Retain; do not use for new features, fixes, releases or merges |
+| Short-lived `feature/*`, `fix/*`, `release/*` | Isolated work and validation | Branch from current `main`, then PR back to `main`; remove after merge when safe |
 
-The repository's default branch remains `main`. Netlify production must continue tracking `main`.
+All commits from the former divergent `staging` and `main` histories were retained in the integration released via PR #155 on 2026-10-20, including mountain realism PR #154 and production SEO changes.
 
-## Working throughout the day
+## Work and review
 
-1. Before each task, fetch/check `main` and `staging` and work on `staging`, not `main`. If a feature branch is used, aim its PR at `staging`.
-2. After small changes, validate locally or in an isolated simulation. On a new local checkout, run `git fetch origin && git switch --track origin/staging`. Once on staging, `git pull --ff-only origin staging && npm run build && npm run dev`.
-3. Never apply production migrations, trigger live race operations, change live game speed, or rewrite historical results merely because code was pushed to `staging`.
-4. Check any running PR and CI triggers. A PR targeting `main` can launch validation with each source push even if plain `staging` pushes do not.
+1. Read `AGENTS.md`, fetch the newest `main`, and work on a short-lived branch based on it. Do not commit directly to `main`.
+2. Build/test the intended diff in isolation. Preserve affected race-engine, replay, localization and SEO gates.
+3. Open PR to `main`. Check for other changes, conflicts and all required test logs. Ensure known regression tests truly pass, not just the nonblocking workflow step.
+4. Verify migration status and SQL content against the real Supabase schema if the change depends on it. Avoid destructive operations and unapproved changes to live races.
+5. Treat approval to merge a specific PR into `main` as production release approval: Netlify may auto-build/deploy on every merge. Prefer morning/evening Europe/Berlin release review windows; no unattended merges.
+6. After merging, check GitHub Actions, Netlify deployment status, the live website and affected game behavior. A successful GitHub build is not proof that Netlify deployed.
 
-## Review and release
+Urgent fixes can use the same review-and-PR path outside a normal window when specifically authorized. Never use force pushes or discard historical changes.
 
-- Prefer two manual release review windows (morning and evening, Europe/Berlin); no timer pushes, no automatic merges.
-- When a release is approved, open `staging` → `main` PR and verify the exact file diff.
-- Check production build, relevant race-engine and localization tests, and test-scoped simulations where relevant. Existing passing regression gates must stay in place.
-- For race-engine changes, inspect the known pre-existing failing tests tracked by GitHub issue #109 and distinguish old failures from new regressions; do not treat a nonblocking suite as entirely passing.
-- Merge only after required tests and review succeed and the user authorizes that specific release. Verify the Netlify deployment and game status afterward.
-- Keep an urgent release path: expedite review for important fixes, but do not bypass validation or silently push to `main`.
+## Legacy pull requests and GitHub Actions
 
-## GitHub Actions and cost
+- Existing WIP PRs targeting `staging` are not part of the active release stream. Individually re-evaluate and retarget/rebase onto `main` only after validation. Do not merge them blindly.
+- Maintain `.github/workflows/race-engine-validation.yml` and other useful verification workflows. Main-only PR triggers should target `main`.
+- The repository is public; standard GitHub-hosted public-repository Actions are normally free, but unnecessary dispatches and redundant staging triggers create noise.
+- Exact protection of `main` requires GitHub Settings → Rules → Rulesets / branch protection. Documentation alone is not enforcement.
 
-- ProPeloton Manager is currently public. Standard GitHub-hosted Actions usage on public repositories is normally free and is not the main driver of the shared private-repository included-minute budget.
-- Preserve the existing CI pipelines, especially `.github/workflows/race-engine-validation.yml`. Do not delete tests to save minutes or create a false green status.
-- For exact branch and PR enforcement, a repository administrator must configure **Settings → Rules → Rulesets** or Branch protection for `main`, requiring pull requests and required checks as appropriate for the plan. This has not been enabled merely by creating `staging`.
-
-## Cross-chat reminder
-
-Tell every existing ProPeloton development chat: **read AGENTS.md on staging, push game changes to staging, do not push to main without reviewed release approval**. A repository document cannot automatically transmit instructions to another already-running chat.
+**Supabase reminder:** the 2026-10-20 integration reconciled the live v2 attrition policy before release. Preserve that policy and historical race results; do not reapply older migration text that overwrites newer deployed functions.
