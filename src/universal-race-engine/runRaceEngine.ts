@@ -35763,6 +35763,7 @@ export function buildUniversalReplaySynchronizationSummary(
   const openingBreakawayRiderIdSet = new Set(openingBreakawayRiderIds)
   let expectedBreakawayRiderIds = [...openingBreakawayRiderIds]
   let openingCatchSeen = false
+  const physicallyDroppedFromOpening = new Set<string>()
 
   if (openingFormationCheckpoint && openingBreakawayRiderIds.length === 0) {
     openingBreakawayLineageStable = false
@@ -35851,6 +35852,26 @@ export function buildUniversalReplaySynchronizationSummary(
      * compares the riders who are physically available to the front group at
      * this exact kilometre.
      */
+    const newlyDocumentedPhysicalDropouts = new Set(
+      checkpoint.commentary
+        .filter((entry) => entry.eventType === 'group_split')
+        .flatMap((entry) => entry.riderIds)
+        .filter((riderId) => {
+          const current = checkpoint.riderStates.find((row) => row.riderId === riderId)
+          const previous = replayTimeline.checkpoints[checkpointIndex-1]
+            ?.riderStates.find((row) => row.riderId === riderId)
+          const confirmedContactLoss = roadRaceResolution?.phase4Finish?.riderStates
+            .some((row) => row.riderId === riderId &&
+              row.contactLossKm !== null &&
+              row.contactLossKm <= checkpoint.raceProgress.kmFromStart+0.00001)
+          return current?.displayCode?.startsWith('C') === true &&
+            ((current.liveEnergyPercent < 5 &&
+              previous?.displayCode !== current.displayCode) || confirmedContactLoss)
+        }),
+    )
+    newlyDocumentedPhysicalDropouts.forEach((id) => {
+      if (expectedBreakawayRiderIds.includes(id)) physicallyDroppedFromOpening.add(id)
+    })
     const activeIncidentSeparatedRiderIds = new Set(
       phase10Incidents.incidents.flatMap((incident) =>
         incident.riderConsequences
@@ -35906,11 +35927,11 @@ export function buildUniversalReplaySynchronizationSummary(
       const originalRidersStillPresent = openingBreakawayRiderIds.every(
         (riderId) =>
           breakawayRiderIds.includes(riderId) ||
-          activeIncidentSeparatedRiderIds.has(riderId),
+          (activeIncidentSeparatedRiderIds.has(riderId) || physicallyDroppedFromOpening.has(riderId)),
       )
       const expectedBreakawayRiderIdsPresent =
         expectedBreakawayRiderIds.filter(
-          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId),
+          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId) && !physicallyDroppedFromOpening.has(riderId),
         )
       if (breakawayGroups.length !== 1 || !originalRidersStillPresent) {
         openingBreakawayLineageStable = false
@@ -36354,7 +36375,7 @@ export function buildUniversalReplaySynchronizationSummary(
           bridgeMergeTransition ||
           incidentRejoinTransition
       } else if (previousIsOpeningBreakaway) {
-        transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
+        transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId) || newlyDocumentedPhysicalDropouts.has(riderId)
       } else if (previousIsLateFront && currentIsPeloton) {
         transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
       } else if (previousIsPeloton && currentIsLateFront) {
