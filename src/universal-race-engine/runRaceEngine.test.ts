@@ -18225,6 +18225,13 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     const weakDropped = weakRows.filter((row) => row.contactLossKm !== null)
     const strongRetained = strongRows.filter((row) => row.contactLossKm === null)
 
+    console.log('SLICE20_CLIMBER_DIAGNOSTIC', JSON.stringify({
+      weakCount: weakRows.length,
+      weakDropped: weakDropped.length,
+      strongCount: strongRows.length,
+      strongRetained: strongRetained.length,
+      strongRows: strongRows.map((r) => ({riderId:r.riderId,holdScore:r.holdScore,energy:r.energyAtSummit,contactLossKm:r.contactLossKm,rejoinKm:r.rejoinKm})),
+    }))
     expect(weakRows.length).toBeGreaterThan(0)
     expect(strongRows.length).toBeGreaterThan(0)
     expect(weakDropped.length / weakRows.length).toBeGreaterThanOrEqual(0.8)
