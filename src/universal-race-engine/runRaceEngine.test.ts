@@ -18158,9 +18158,30 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(hillyDropped).toBeGreaterThan(0)
     expect(mediumDropped).toBeGreaterThan(0)
     expect(hardDropped).toBeGreaterThan(mediumDropped)
-    expect(hardSelections[0].remainedDetachedRiderIds.length).toBe(
-      hardSelections[0].droppedAtSummitRiderIds.length,
+    // A rider can lose summit-climb contact and physically chase back before
+    // the finish. Preserve strict accounting instead of equating "ever dropped"
+    // with "still detached" at the end of the selection window.
+    const summitSelection = hardSelections[0]
+    const summitDropped = new Set(summitSelection.droppedAtSummitRiderIds)
+    const summitRemained = new Set(summitSelection.remainedDetachedRiderIds)
+    const summitRejoined = summitSelection.riders.filter(
+      (row) => summitDropped.has(row.riderId) && row.rejoinKm !== null,
     )
+    expect(summitDropped.size).toBe(summitSelection.droppedAtSummitRiderIds.length)
+    expect(summitRemained.size).toBe(summitSelection.remainedDetachedRiderIds.length)
+    expect([...summitRemained].every((id) => summitDropped.has(id))).toBe(true)
+    expect(summitSelection.remainedDetachedRiderIds.length).toBeGreaterThan(
+      mediumDropped,
+    )
+    expect(
+      summitRejoined.every((row) =>
+        row.contactLossKm !== null &&
+        row.rejoinKm! > row.contactLossKm &&
+        row.rejoinKm! <= summitSelection.kmEnd &&
+        !summitRemained.has(row.riderId),
+      ),
+    ).toBe(true)
+    expect(summitRemained.size + summitRejoined.length).toBe(summitDropped.size)
 
     expect(flat.replaySynchronization.synchronized).toBe(true)
     expect(hilly.replaySynchronization.synchronized).toBe(true)
