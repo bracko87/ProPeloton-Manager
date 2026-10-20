@@ -385,9 +385,9 @@ const terrains = {
 } as const
 const cohorts = ['baseline','fatigued','windy','rainy','combined'] as const
 describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
-  it('measures terrain, fatigue and weather separately without imposing withdrawal targets',()=>{
+  for(const cohort of cohorts) it(`measures incident-enabled ${cohort} conditions without invented rates`,()=>{
     const summary: Array<Record<string,number|string>>=[]
-    for(const cohort of cohorts) for(const terrain of Object.keys(terrains) as Array<keyof typeof terrains>) for(const fieldSize of [48,72,96]){
+    for(const terrain of Object.keys(terrains) as Array<keyof typeof terrains>) for(const fieldSize of [48,72,96]){
       const totals:Record<(typeof statuses)[number],number>={finished:0,dnf:0,dns:0,otl:0,dsq:0}
       let zeroDnf=0
       for(let seedIndex=0;seedIndex<3;seedIndex++){
