@@ -390,6 +390,8 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
     for(const terrain of Object.keys(terrains) as Array<keyof typeof terrains>) for(const fieldSize of [48,72,96]){
       const totals:Record<(typeof statuses)[number],number>={finished:0,dnf:0,dns:0,otl:0,dsq:0}
       let zeroDnf=0
+      let technicalDnf=0
+      let technicalIncidents=0
       for(let seedIndex=0;seedIndex<3;seedIndex++){
         const base=createExpandedFieldInput(fieldSize)
         const config=terrains[terrain]
@@ -420,6 +422,8 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         const result=runRaceEngine(input)
         expect(result.validationPassed).toBe(true)
         expect(result.replaySynchronization.synchronized).toBe(true)
+        technicalIncidents += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='technical_incident').length
+        technicalDnf += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='technical_incident').flatMap(e=>e.riderConsequences).filter(e=>e.statusImpact==='dnf').length
         const rows=result.finishResolution.classification
         expect(rows.length).toBe(fieldSize)
         expect(new Set(rows.map(r=>r.riderId)).size).toBe(fieldSize)
@@ -432,7 +436,7 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         if((counts.dnf??0)===0) zeroDnf++
       }
       summary.push({cohort,terrain,fieldSize,simulations:3,entries:fieldSize*3,...totals,
-        zeroDnfRaces:zeroDnf})
+        zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf})
     }
     console.info('ISSUE_139_ADVERSE_COHORT_JSON',JSON.stringify(summary))
   },120000)
