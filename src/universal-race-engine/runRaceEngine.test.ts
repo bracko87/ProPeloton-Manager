@@ -15111,6 +15111,29 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
       runRaceEngine(createPhase11hLateClimbEnergyInput(45)),
       runRaceEngine(createPhase11gMixedStressInput(5)),
     ]
+    // Slice 16 diagnostic only; remove before merging.
+    const energyProbe = [45, 55, 65, 75, 85, 95, 99].map((fatigue) => {
+      try {
+        const probeResult = runRaceEngine(createPhase11hLateClimbEnergyInput(fatigue))
+        const states = probeResult.replayTimeline.checkpoints
+          .filter((cp) => !cp.finalResultsVisible && cp.raceProgress.kmFromStart > 0)
+          .flatMap((cp) => cp.riderStates)
+          .filter((state) => state.status === 'racing')
+        const nonnull = states.filter((state) => state.displayCode !== null)
+        return {
+          fatigue,
+          minRacing: Math.min(...states.map((s) => s.energy)),
+          minDisplayed: Math.min(...nonnull.map((s) => s.energy)),
+          displayedSub5: nonnull.filter((s) => s.energy > 0.000001 && s.energy < 5 - 0.000001).length,
+          racingSub5: states.filter((s) => s.energy > 0.000001 && s.energy < 5 - 0.000001).length,
+          displayedUnder10: nonnull.filter((s) => s.energy < 10).length,
+          checkpointCount: probeResult.replayTimeline.checkpoints.length,
+        }
+      } catch (error) {
+        return { fatigue, error: String(error).slice(0, 360) }
+      }
+    })
+    console.error('SLICE16_ENERGY_PROBE=' + JSON.stringify(energyProbe))
     let inspectedLowReserveStates = 0
 
     results.forEach((result) => {
