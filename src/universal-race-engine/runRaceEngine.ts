@@ -21155,6 +21155,7 @@ export function mergeAdjacentPhase5RoadGroups(
   candidates: readonly UniversalPhase5RoadGroupCandidate[],
   riderById: ReadonlyMap<string, UniversalRiderInput> = new Map(),
   toleranceSeconds: number = PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+  allowTransitiveMerging = true,
 ): readonly UniversalPhase5RoadGroupCandidate[] {
   const ordered = [...candidates]
     .map((candidate) => ({
@@ -21181,7 +21182,13 @@ export function mergeAdjacentPhase5RoadGroups(
         : 0
     if (
       previous &&
-      candidate.gapSeconds - previousTailGapSeconds <= toleranceSeconds
+      // Before the finish a stretched, continuous chase can regroup by
+      // transitive physical adjacency. At the finish a five-second gap is
+      // measured from the *first* rider in the time group, not the tail;
+      // otherwise a chain of 3-4s gaps can give riders 20s apart one time.
+      candidate.gapSeconds -
+        (allowTransitiveMerging ? previousTailGapSeconds : previous.gapSeconds) <=
+        toleranceSeconds
     ) {
       const combinedScores = {
         ...previous.riderPerformanceScores,
@@ -21536,6 +21543,9 @@ function buildPhase5RoadSnapshots(
     phaseNumber === 4
       ? PHASE5_FINAL_PHYSICAL_SAME_GROUP_TOLERANCE_SECONDS
       : PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+    // Published finish groups cannot merge transitively over an arbitrarily
+    // long time spread; intermediate road groups retain continuous adjacency.
+    phaseNumber !== 4,
   )
   const groupIdentities = canonicalizePhase5RoadGroupCodes(
     merged,

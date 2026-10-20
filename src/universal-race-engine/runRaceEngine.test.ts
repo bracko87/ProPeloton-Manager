@@ -7061,6 +7061,34 @@ describe('Phase 5 deterministic groups, selection, gaps, and official times', ()
     expect(merged[1].gapSeconds).toBe(11)
   })
 
+  it('does not give a stretched summit finish line one shared official time', () => {
+    const candidates = [0, 4, 8, 12].map((gapSeconds, index) => {
+      const riderId = `summit-rider-${index}`
+      return {
+        sourceOrder: index + 1,
+        preferredGroupCode: 'chasing_group' as const,
+        riderIds: [riderId],
+        gapSeconds,
+        riderPerformanceScores: { [riderId]: 90 - index },
+        formationReason: 'finish_group' as const,
+      }
+    })
+    // A continuous four-rider chase is allowed before the finish.
+    expect(mergeAdjacentPhase5RoadGroups(candidates)).toHaveLength(1)
+    // At the finish riders at +0 and +12 seconds cannot share an official time.
+    const finalGroups = mergeAdjacentPhase5RoadGroups(
+      candidates,
+      new Map(),
+      PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+      false,
+    )
+    expect(finalGroups.map((group) => group.riderIds)).toEqual([
+      ['summit-rider-0', 'summit-rider-1'],
+      ['summit-rider-2', 'summit-rider-3'],
+    ])
+    expect(finalGroups.map((group) => group.gapSeconds)).toEqual([0, 8])
+  })
+
   it('repeats adjacent merging until no mergeable road groups remain', () => {
     const merged = mergeAdjacentPhase5RoadGroups([
       {
