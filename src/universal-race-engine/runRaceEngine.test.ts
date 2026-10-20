@@ -18158,6 +18158,13 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(hillyDropped).toBeGreaterThan(0)
     expect(mediumDropped).toBeGreaterThan(0)
     expect(hardDropped).toBeGreaterThan(mediumDropped)
+    console.log('SLICE19_SUMMIT_DETACHMENT_DIAGNOSTIC', JSON.stringify({
+      dropped: hardSelections[0].droppedAtSummitRiderIds,
+      remained: hardSelections[0].remainedDetachedRiderIds,
+      riderRows: hardSelections[0].riders.filter((r) =>
+        hardSelections[0].droppedAtSummitRiderIds.includes(r.riderId)
+      ).map((r) => ({ id: r.riderId, contactLossKm: r.contactLossKm, rejoinKm: r.rejoinKm })),
+    }))
     expect(hardSelections[0].remainedDetachedRiderIds.length).toBe(
       hardSelections[0].droppedAtSummitRiderIds.length,
     )
