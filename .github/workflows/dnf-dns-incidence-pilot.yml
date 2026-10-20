@@ -24,4 +24,10 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Execute DNF/DNS pilot and print machine-readable summary
-        run: npx --yes vitest@3.2.4 run src/universal-race-engine/dnfDnsIncidencePilot.test.ts --reporter=verbose
+        shell: bash
+        run: |
+          set -euo pipefail
+          for cohort in baseline fatigued windy rainy combined; do
+            echo "Auditing $cohort cohort in its own Vitest process"
+            npx --yes vitest@3.2.4 run src/universal-race-engine/dnfDnsIncidencePilot.test.ts --reporter=verbose -t "measures incident-enabled $cohort conditions"
+          done
