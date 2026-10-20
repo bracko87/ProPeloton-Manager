@@ -30367,6 +30367,43 @@ export function buildUniversalReplayTimeline(
   if (preFinishPublishedDefinition) {
     const beforeCodes = displayCodeByRiderId(preFinishPublishedDefinition.groups)
     const finalCodes = displayCodeByRiderId(finalGroups)
+
+    // The winner crosses before the final classification becomes visible.
+    // Do not create a replay-only last-metre C detachment if the last
+    // published physical state and the authoritative finish have exactly
+    // the same rider membership and lineage. A live-energy interpolation
+    // at (finish - 0.01 km) is not an independently authorized group split.
+    // Genuine finish-line transitions still use the explicit event below.
+    const physicalIdentityKey = (
+      groups: readonly UniversalPhase5GroupSnapshot[],
+    ): string =>
+      JSON.stringify(
+        groups
+          .filter((group) => group.riderIds.length > 0)
+          .map((group) => ({
+            displayCode: group.displayCode,
+            physicalLineageId: group.physicalLineageId ?? null,
+            physicalPosition: group.physicalPosition,
+            riderIds: [...group.riderIds].sort(),
+          }))
+          .sort((left, right) =>
+            left.displayCode.localeCompare(right.displayCode) ||
+            String(left.physicalLineageId).localeCompare(String(right.physicalLineageId)),
+          ),
+      )
+    const samePreFinishPhysicalGroups =
+      physicalIdentityKey(preFinishPublishedDefinition.groups) ===
+      physicalIdentityKey(finalGroups)
+    if (winnerFinishDefinitionIndex >= 0 && samePreFinishPhysicalGroups) {
+      const winnerFinish = eventDefinitions[winnerFinishDefinitionIndex]
+      if (physicalIdentityKey(winnerFinish.groups) !== physicalIdentityKey(finalGroups)) {
+        eventDefinitions[winnerFinishDefinitionIndex] = {
+          ...winnerFinish,
+          groups: finalGroups,
+        }
+      }
+    }
+
     const finalTransitionRiderIds = eligibleStarterIds
       .filter((riderId) => beforeCodes.get(riderId) !== finalCodes.get(riderId))
       .sort()
