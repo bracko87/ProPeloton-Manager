@@ -440,6 +440,21 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         }
         exhaustionEvents += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='exhaustion').length
         exhaustionDnf += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='exhaustion').flatMap(e=>e.riderConsequences).filter(e=>e.statusImpact==='dnf').length
+        // A DNF is a timed on-road event: no continuing in any physical group.
+        for(const incident of result.phase10Incidents.incidents.filter(e=>e.incidentKind==='exhaustion')){
+          expect(incident.kmFromStart).toBeGreaterThan(0)
+          expect(incident.kmFromStart).toBeLessThan(input.stage.distanceKm)
+          expect(incident.healthCaseEligible).toBe(false)
+          for(const riderId of incident.riderIds){
+            expect(result.finishResolution.classification.find(r=>r.riderId===riderId)?.status).toBe('dnf')
+            const after=result.replayTimeline.checkpoints.filter(c=>c.raceProgress.kmFromStart>=incident.kmFromStart+0.000001)
+            expect(after.length).toBeGreaterThan(0)
+            for(const checkpoint of after){
+              expect(checkpoint.riderStates.find(r=>r.riderId===riderId)?.status).toBe('dnf')
+              expect(checkpoint.groups.some(g=>g.riderIds.includes(riderId))).toBe(false)
+            }
+          }
+        }
         const rows=result.finishResolution.classification
         expect(rows.length).toBe(fieldSize)
         expect(new Set(rows.map(r=>r.riderId)).size).toBe(fieldSize)
@@ -450,6 +465,9 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
           totals[row.status as (typeof statuses)[number]]++
         }
         if((counts.dnf??0)===0) zeroDnf++
+      }
+      if(cohort==='extreme_fatigue' && terrain==='mountain' && (fieldSize===48 || fieldSize===96)){
+        expect(exhaustionDnf).toBeGreaterThan(0)
       }
       summary.push({cohort,terrain,fieldSize,simulations:3,entries:fieldSize*3,...totals,
         zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf,fatigueRestrictedStarters,exhaustedFinishers,depletedFinishers,exhaustionEvents,exhaustionDnf})
