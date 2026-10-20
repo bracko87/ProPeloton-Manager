@@ -18368,8 +18368,22 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     )
     expect(roadLastFinisherTime).toBeGreaterThan(roadWinner.officialTimeSeconds!)
     expect(winnerCheckpointIndex).toBeGreaterThanOrEqual(0)
-    expect(transitionCheckpointIndex).toBeGreaterThan(winnerCheckpointIndex)
-    expect(finalCheckpointIndex).toBeGreaterThan(transitionCheckpointIndex)
+    if (transitionCheckpointIndex >= 0) {
+      // A real finishing-group membership change must be published between
+      // the winner clock and the final classified result.
+      expect(transitionCheckpointIndex).toBeGreaterThan(winnerCheckpointIndex)
+      expect(finalCheckpointIndex).toBeGreaterThan(transitionCheckpointIndex)
+      const transition = roadResult.replayTimeline.checkpoints[transitionCheckpointIndex]
+      expect(transition.commentary.some((entry) =>
+        entry.eventType === 'catch' || entry.eventType === 'group_split',
+      )).toBe(true)
+    } else {
+      // Different official finish times alone do not establish a physical
+      // road-group split. No synthetic transition should be published if
+      // both finish checkpoints have identical authoritative group identities.
+      expect(finalCheckpointIndex).toBeGreaterThan(winnerCheckpointIndex)
+      expect(roadWinnerCheckpoint.groups).toEqual(roadFinalCheckpoint.groups)
+    }
     expect(roadResult.replaySynchronization.finishCommentaryMatchesClassification).toBe(true)
     expect(roadResult.replaySynchronization.issues).not.toContain(
       'finish_replay_timestamp_mismatch',
