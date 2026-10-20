@@ -152,10 +152,10 @@ export function WorldChampionshipExpectedField({
                     <td className="px-4 py-3">
                       <span className="inline-flex items-center gap-2 font-semibold">
                         {/^[a-z]{2}$/.test(flagCode) ? (
-                          <img src={`https://flagcdn.com/w80/${flagCode}.png`}
+                          <img src={`https://flagcdn.com/w40/${flagCode}.png`}
                             alt={code} loading="lazy"
-                            className={`h-6 w-9 shrink-0 rounded-sm border border-slate-200 object-cover ${pending ? 'opacity-60' : ''}`} />
-                        ) : <span className="inline-block h-6 w-9 rounded-sm border bg-slate-100" />}
+                            className={`h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover ${pending ? 'opacity-60' : ''}`} />
+                        ) : <span className="inline-block h-4 w-6 shrink-0 rounded-sm border bg-slate-100" />}
                         {code}
                       </span>
                     </td>

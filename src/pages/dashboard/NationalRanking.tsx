@@ -1104,11 +1104,11 @@ export default function NationalRankingPage(): JSX.Element {
             <img
               src={countryFlag}
               alt={data?.country_code ?? countryName}
-              className="mt-0.5 h-8 w-12 rounded border border-slate-200 object-cover"
+              className="mt-0.5 h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
             />
           ) : (
-            <div className="mt-0.5 flex h-8 w-12 items-center justify-center rounded border border-slate-200 bg-white">
-              <Flag className="h-4 w-4 text-slate-500" />
+            <div className="mt-0.5 flex h-4 w-6 shrink-0 items-center justify-center rounded-sm border border-slate-200 bg-white">
+              <Flag className="h-3 w-3 text-slate-500" />
             </div>
           )}
           <div>
