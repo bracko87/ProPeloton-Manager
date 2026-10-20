@@ -119,6 +119,7 @@ type EventData = {
 type ReplayAvailability = {
   status: 'loading' | 'available' | 'not_open' | 'not_available' | 'error'
   replayOpensGameAt: string | null
+  reason: string | null
 }
 
 type ReplayCoinAccess = {
@@ -191,6 +192,7 @@ function normalizeReplayAvailability(value: unknown): ReplayAvailability {
 
   return {
     status,
+    reason: typeof row.reason === 'string' ? row.reason : null,
     replayOpensGameAt:
       typeof row.replay_opens_game_at === 'string'
         ? row.replay_opens_game_at
@@ -852,7 +854,9 @@ export default function NationalChampionshipRacePage(): JSX.Element {
                 : replayAvailability.status === 'not_open'
                   ? tr('replay.notOpen')
                   : replayAvailability.status === 'not_available'
-                    ? tr('replay.notAvailable')
+                    ? replayAvailability.reason === 'replay_archived'
+                      ? 'Replay archived: the detailed playback is no longer stored. Official race results remain available.'
+                      : tr('replay.notAvailable')
                     : replayAvailability.status === 'error'
                       ? tr('replay.temporaryUnavailable')
                       : data.viewer_has_participant
