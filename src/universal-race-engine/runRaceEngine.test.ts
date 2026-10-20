@@ -19068,6 +19068,20 @@ describe('Phase 11G organic race physics and replay continuity', () => {
           code:group.groupCode,riders:group.riderIds.length,gapSeconds:group.gapSeconds,
         })),
         distinctClimbingSkills:new Set(input.riders.map((rider)=>rider.climbing)).size,
+        summitWinnerContactDiagnostics:(()=>{
+          const summit=climbSelections.find((selection)=>
+            Math.abs(selection.kmEnd-stage.distance)<0.000001)
+          if(!summit)return null
+          const candidate=new Set(summit.pelotonRiderIdsBefore)
+          const detached=new Set(summit.remainedDetachedRiderIds)
+          const winners=finishing.filter((row)=>
+            (row.officialTimeSeconds??Infinity)<=winnerTime+0.5)
+          return {
+            winnersNotInSummitCandidate:winners.filter((row)=>!candidate.has(row.riderId)).length,
+            detachedStillCreditedWithWinnerTime:winners.filter((row)=>detached.has(row.riderId)).length,
+            winnersWithinSummitCandidate:winners.filter((row)=>candidate.has(row.riderId)).length,
+          }
+        })(),
         replaySynchronized:result.replaySynchronization.synchronized,
       }))
       }
