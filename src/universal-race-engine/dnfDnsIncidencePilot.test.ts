@@ -383,7 +383,7 @@ const terrains = {
   mountain: {finishType:'summit_finish',profileType:'climber',elevationGainM:3500,terrainPercentages:{flat:10,hilly:20,mountain:70,cobbled:0}},
   cobbled: {finishType:'cobbled_finish',profileType:'classics',elevationGainM:900,terrainPercentages:{flat:45,hilly:20,mountain:5,cobbled:30}},
 } as const
-const cohorts = ['baseline','fatigued','windy','rainy','combined'] as const
+const cohorts = ['baseline','fatigued','windy','rainy','combined','worn_equipment'] as const
 describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
   for(const cohort of cohorts) it(`measures incident-enabled ${cohort} conditions without invented rates`,()=>{
     const summary: Array<Record<string,number|string>>=[]
@@ -409,7 +409,11 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
             profilePoints:[{km:0,elevationM:20},{km:45,elevationM:terrain==='mountain'?800:160},
               {km:90,elevationM:terrain==='mountain'?1600:330},{km:120,elevationM:terrain==='mountain'?1950:50}]},
           points:base.points.map(p=>({...p,stageId:`${id}-stage`})),
-          riders:base.riders.map(r=>fatigued?{...r,fatigueBeforeStage:75,startStamina:55}:r),
+          riders:base.riders.map(r=>({
+            ...r,
+            ...(fatigued?{fatigueBeforeStage:75,startStamina:55}:{}),
+            ...(cohort==='worn_equipment'?{preparationModifiers:{...r.preparationModifiers,equipmentConditionPercent:15}}:{}),
+          })),
           weather:{...base.weather!,condition:rainy?'rain':windy?'sunny_windy':'clear',
             windKmh:windy?35:12,precipitationMm:rainy?8:0,rainProbabilityPct:rainy?95:10},
         }
