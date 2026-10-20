@@ -29832,6 +29832,45 @@ export function buildUniversalReplayTimeline(
     })
   })
 
+  // Live-energy dropout is a physical split, not an ordinary chase refresh.
+  // Announce the exact 5% reserve crossing before any later status snapshot.
+  // This is especially important when the rider drops from the opening B1
+  // escape: the breakaway lineage must change at an explicit split checkpoint.
+  const reserveDropCrossings: { riderId: string; km: number }[] = []
+  for (const [phaseNumber, endpoints] of phaseEnergyEndpoints) {
+    for (const [riderId, startEnergy] of endpoints.start) {
+      const endEnergy = endpoints.end.get(riderId)
+      if (endEnergy === undefined || startEnergy < 5 || endEnergy >= 5 ||
+          startEnergy <= endEnergy + 0.000001) continue
+      const km = deterministicRound(endpoints.startKm +
+        (endpoints.endKm - endpoints.startKm) *
+        ((startEnergy - 5) / (startEnergy - endEnergy)), 6)
+      if (km <= 0 || km >= stageDistanceKm - 0.000001) continue
+      const before = groupsAtKm(Math.max(0, km - 0.00001))
+      if (!before.some((group) =>
+        (group.displayCode.startsWith('B') || group.displayCode.startsWith('F')) &&
+        group.riderIds.includes(riderId))) continue
+      reserveDropCrossings.push({ riderId, km })
+    }
+  }
+  reserveDropCrossings.sort((a,b) => a.km - b.km || a.riderId.localeCompare(b.riderId))
+  reserveDropCrossings.forEach((drop, index) => {
+    eventDefinitions.push({
+      checkpointIdSuffix: `front-energy-split-${index+1}`,
+      checkpointKind: 'event',
+      phase: getRoadPhaseNumberForPoint(drop.km, stageDistanceKm),
+      kmFromStart: drop.km,
+      sortOrder: 675 + index,
+      groups: groupsAtKm(drop.km),
+      energyByRiderId: energyAtKm(4, drop.km),
+      eventType: 'group_split',
+      title: 'Exhausted front rider loses contact',
+      description: `${replayRiderSubject([drop.riderId])} loses the front group's wheel as live energy falls below the critical threshold.`,
+      riderIds: [drop.riderId],
+      teamIds: riderById.get(drop.riderId)?.teamId ? [riderById.get(drop.riderId)!.teamId] : [],
+    })
+  })
+
   const depletionContactLossClusters = buildContactLossClusters('energy_depleted')
   depletionContactLossClusters.forEach((cluster, index) => {
     eventDefinitions.push({
