@@ -28897,8 +28897,8 @@ export function buildUniversalReplayTimeline(
     checkpointKind: 'event',
     phase: 4,
     kmFromStart: stageDistanceKm,
-    sortOrder: 995,
-    groups: finalGroups,
+    sortOrder: 950,
+    groups: groupsAtKm(Math.max(0, stageDistanceKm - 0.01)),
     energyByRiderId: phase4EnergyByRiderId,
     eventType: 'finish',
     title: 'Stage finished',
@@ -29829,45 +29829,6 @@ export function buildUniversalReplayTimeline(
           ),
         ).sort(),
       })
-    })
-  })
-
-  // Live-energy dropout is a physical split, not an ordinary chase refresh.
-  // Announce the exact 5% reserve crossing before any later status snapshot.
-  // This is especially important when the rider drops from the opening B1
-  // escape: the breakaway lineage must change at an explicit split checkpoint.
-  const reserveDropCrossings: { riderId: string; km: number }[] = []
-  for (const [phaseNumber, endpoints] of phaseEnergyEndpoints) {
-    for (const [riderId, startEnergy] of endpoints.start) {
-      const endEnergy = endpoints.end.get(riderId)
-      if (endEnergy === undefined || startEnergy < 5 || endEnergy >= 5 ||
-          startEnergy <= endEnergy + 0.000001) continue
-      const km = deterministicRound(endpoints.startKm +
-        (endpoints.endKm - endpoints.startKm) *
-        ((startEnergy - 5) / (startEnergy - endEnergy)), 6)
-      if (km <= 0 || km >= stageDistanceKm - 0.000001) continue
-      const before = groupsAtKm(Math.max(0, km - 0.00001))
-      if (!before.some((group) =>
-        (group.displayCode.startsWith('B') || group.displayCode.startsWith('F')) &&
-        group.riderIds.includes(riderId))) continue
-      reserveDropCrossings.push({ riderId, km })
-    }
-  }
-  reserveDropCrossings.sort((a,b) => a.km - b.km || a.riderId.localeCompare(b.riderId))
-  reserveDropCrossings.forEach((drop, index) => {
-    eventDefinitions.push({
-      checkpointIdSuffix: `front-energy-split-${index+1}`,
-      checkpointKind: 'event',
-      phase: getRoadPhaseNumberForPoint(drop.km, stageDistanceKm),
-      kmFromStart: deterministicRound(drop.km + 0.0001, 6),
-      sortOrder: 675 + index,
-      groups: groupsAtKm(drop.km + 0.0001),
-      energyByRiderId: energyAtKm(4, drop.km),
-      eventType: 'group_split',
-      title: 'Exhausted front rider loses contact',
-      description: `${replayRiderSubject([drop.riderId])} loses the front group's wheel as live energy falls below the critical threshold.`,
-      riderIds: [drop.riderId],
-      teamIds: riderById.get(drop.riderId)?.teamId ? [riderById.get(drop.riderId)!.teamId] : [],
     })
   })
 
@@ -35746,7 +35707,6 @@ export function buildUniversalReplaySynchronizationSummary(
   const openingBreakawayRiderIdSet = new Set(openingBreakawayRiderIds)
   let expectedBreakawayRiderIds = [...openingBreakawayRiderIds]
   let openingCatchSeen = false
-  const physicallyDetachedBreakawayRiderIds = new Set<string>()
 
   if (openingFormationCheckpoint && openingBreakawayRiderIds.length === 0) {
     openingBreakawayLineageStable = false
@@ -35786,25 +35746,6 @@ export function buildUniversalReplaySynchronizationSummary(
             .flatMap((entry) => entry.riderIds)
         : [],
     )
-    // A front-group departure is legitimate only when this checkpoint
-    // documents the split and the underlying climb/energy model proves it.
-    const authorizedFrontDropoutsAtKm = new Set(
-      sameKilometreCommentary
-        .filter((entry) => entry.eventType === 'group_split')
-        .flatMap((entry) => entry.riderIds)
-        .filter((riderId) => {
-          const state = checkpoint.riderStates.find((r) => r.riderId === riderId)
-          const physicalLoss = roadRaceResolution?.phase4Finish?.riderStates.find(
-            (r) => r.riderId === riderId && r.contactLossKm !== null &&
-              r.contactLossKm <= checkpoint.raceProgress.kmFromStart + 0.000001,
-          )
-          return state?.displayCode?.startsWith('C') === true &&
-            (state.liveEnergyPercent < 5 || Boolean(physicalLoss))
-        }),
-    )
-    authorizedFrontDropoutsAtKm.forEach((id) => {
-      if (expectedBreakawayRiderIds.includes(id)) physicallyDetachedBreakawayRiderIds.add(id)
-    })
     const bridgeMergeEntriesAtKm = sameKilometreCommentary.filter(
       (entry) => entry.eventType === 'bridge_merge',
     )
@@ -35909,11 +35850,11 @@ export function buildUniversalReplaySynchronizationSummary(
       const originalRidersStillPresent = openingBreakawayRiderIds.every(
         (riderId) =>
           breakawayRiderIds.includes(riderId) ||
-          (activeIncidentSeparatedRiderIds.has(riderId) || physicallyDetachedBreakawayRiderIds.has(riderId)),
+          activeIncidentSeparatedRiderIds.has(riderId),
       )
       const expectedBreakawayRiderIdsPresent =
         expectedBreakawayRiderIds.filter(
-          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId) && !physicallyDetachedBreakawayRiderIds.has(riderId),
+          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId),
         )
       if (breakawayGroups.length !== 1 || !originalRidersStillPresent) {
         openingBreakawayLineageStable = false
@@ -36357,7 +36298,7 @@ export function buildUniversalReplaySynchronizationSummary(
           bridgeMergeTransition ||
           incidentRejoinTransition
       } else if (previousIsOpeningBreakaway) {
-        transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId) || authorizedFrontDropoutsAtKm.has(riderId)
+        transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
       } else if (previousIsLateFront && currentIsPeloton) {
         transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
       } else if (previousIsPeloton && currentIsLateFront) {
