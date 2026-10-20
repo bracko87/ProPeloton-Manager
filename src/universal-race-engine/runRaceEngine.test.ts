@@ -18052,6 +18052,33 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     }
   })
 
+  it('validates larger mixed-terrain fields and official withdrawal/replay consistency after Slice 22', () => {
+    for (const { index, fieldSize } of [
+      { index: 39, fieldSize: 48 },
+      { index: 42, fieldSize: 72 },
+      { index: 47, fieldSize: 72 },
+      { index: 50, fieldSize: 96 },
+    ]) {
+      const mixed = createPhase11gMixedStressInput(index)
+      const field = createExpandedFieldInput(fieldSize)
+      const input = {
+        ...mixed,
+        teams: field.teams,
+        riders: field.riders,
+        stagePlans: field.stagePlans,
+      }
+      const result = runRaceEngine(input)
+      expect(result.replaySynchronization.synchronized, `size ${fieldSize} seed ${index}`).toBe(true)
+      expect(result.replaySynchronization.issues).toEqual([])
+      const statuses = result.finishResolution.classification
+      expect(statuses).toHaveLength(fieldSize)
+      expect(new Set(statuses.map((row) => row.riderId)).size).toBe(fieldSize)
+      expect(statuses.every((row) =>
+        ['finished', 'DNF', 'DNS', 'OTL', 'DSQ'].includes(row.status),
+      )).toBe(true)
+    }
+  })
+
   it('keeps Phase 11G source free of the old scripted gap, catch and forced-success mechanisms', () => {
     const source = readFileSync(new URL('./runRaceEngine.ts', import.meta.url), 'utf8')
     expect(source).not.toContain('getRoadPreferredCatchFraction')
