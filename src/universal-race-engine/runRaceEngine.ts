@@ -19328,9 +19328,33 @@ export function resolveRoadPhase4Finish(
     6,
   )
 
+  // A detached rider on a climb finishing at the summit already has a
+  // complete, rider-specific physical trajectory to the finish line. Replaying
+  // that same contact loss against *all* starters (including slower dropped
+  // riders) can manufacture a catch that never happened on the decisive
+  // climb. Keep the authoritative summit trajectory instead.
+  const finalSummitDetachedByRiderId = new Map(
+    profileClimbSelections
+      .filter((selection) =>
+        Math.abs(selection.kmEnd - input.stage.distanceKm) <= 0.000001,
+      )
+      .flatMap((selection) =>
+        selection.riders
+          .filter((rider) =>
+            rider.finalDetached &&
+            rider.rejoinKm === null &&
+            rider.gapAtSummitSeconds > 0 &&
+            (rider.gapSamples.at(-1)?.kmEnd ?? 0) >=
+              input.stage.distanceKm - 0.000001,
+          )
+          .map((rider) => [rider.riderId, rider] as const),
+      ),
+  )
+
   let provisionalRiderStates = provisionalRiderStatesBeforePhysicalContact.map(
     (state) => {
       if (state.contactLossKm === null) return state
+      const finalSummitTrajectory = finalSummitDetachedByRiderId.get(state.riderId)
       const targetPelotonRiderIds = physicalContactLossSourceRiderIds.filter(
         (candidateId) => {
           if (candidateId === state.riderId) return false
@@ -19338,14 +19362,20 @@ export function resolveRoadPhase4Finish(
           return candidateLossKm === undefined || candidateLossKm > state.contactLossKm! + 0.000001
         },
       )
-      const trajectory = buildPhysicalDetachedTrajectory(
-        state.riderId,
-        targetPelotonRiderIds,
-        state.contactLossKm,
-        input.stage.distanceKm,
-        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-        true,
-      )
+      const trajectory: PhysicalDetachedTrajectory = finalSummitTrajectory
+        ? {
+            samples: finalSummitTrajectory.gapSamples,
+            rejoinKm: null,
+            finalGapBehindPelotonSeconds: finalSummitTrajectory.gapAtSummitSeconds,
+          }
+        : buildPhysicalDetachedTrajectory(
+            state.riderId,
+            targetPelotonRiderIds,
+            state.contactLossKm,
+            input.stage.distanceKm,
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+            true,
+          )
       const gapBehindPelotonAtFinish =
         trajectory.rejoinKm === null
           ? trajectory.finalGapBehindPelotonSeconds

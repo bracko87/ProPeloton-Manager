@@ -19011,6 +19011,26 @@ describe('Phase 11G organic race physics and replay continuity', () => {
         .slice(0,10)
         .map((row)=>({riderId:row.riderId,gapSeconds:Math.round((row.officialTimeSeconds??winnerTime)-winnerTime)}))
       const frontGroup=finishing.filter((row)=>Math.abs((row.officialTimeSeconds??Infinity)-winnerTime)<.5).length
+      // Riders who stayed physically detached all the way to a summit finish
+      // must not be reattached to the winning group by a second calculation.
+      const selectedSummitDetached = climbSelections
+        .filter((selection) => Math.abs(selection.kmEnd - stage.distance) < 0.000001)
+        .flatMap((selection) => selection.riders)
+        .filter((rider) =>
+          rider.finalDetached &&
+          rider.rejoinKm === null &&
+          (rider.gapSamples.at(-1)?.kmEnd ?? 0) >= stage.distance - 0.000001,
+        )
+      const officialFinishByRiderId = new Map(finishing.map((row)=>[row.riderId,row]))
+      expect(
+        selectedSummitDetached
+          .filter((rider) =>
+            (officialFinishByRiderId.get(rider.riderId)?.officialTimeSeconds ?? Infinity) <=
+            winnerTime + 0.5,
+          )
+          .map((rider)=>rider.riderId),
+        `${stage.name} (${fieldSize}) summit detachment was erased`,
+      ).toEqual([])
       const groupedFinishingTimes = new Map<number, number>()
       for (const row of finishing) {
         const gap = Math.round((row.officialTimeSeconds ?? winnerTime) - winnerTime)
