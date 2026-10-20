@@ -383,13 +383,14 @@ const terrains = {
   mountain: {finishType:'summit_finish',profileType:'climber',elevationGainM:3500,terrainPercentages:{flat:10,hilly:20,mountain:70,cobbled:0}},
   cobbled: {finishType:'cobbled_finish',profileType:'classics',elevationGainM:900,terrainPercentages:{flat:45,hilly:20,mountain:5,cobbled:30}},
 } as const
-const cohorts = ['baseline','fatigued','windy','rainy','combined','worn_equipment'] as const
+const cohorts = ['baseline','fatigued','windy','rainy','combined','worn_equipment','extreme_fatigue'] as const
 describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
   for(const cohort of cohorts) it(`measures incident-enabled ${cohort} conditions without invented rates`,()=>{
     const summary: Array<Record<string,number|string>>=[]
     for(const terrain of Object.keys(terrains) as Array<keyof typeof terrains>) for(const fieldSize of [48,72,96]){
       const totals:Record<(typeof statuses)[number],number>={finished:0,dnf:0,dns:0,otl:0,dsq:0}
       let zeroDnf=0
+      let fatigueRestrictedStarters=0
       let technicalDnf=0
       let technicalIncidents=0
       for(let seedIndex=0;seedIndex<3;seedIndex++){
@@ -414,6 +415,7 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
           riders:base.riders.map(r=>({
             ...r,
             ...(fatigued?{fatigueBeforeStage:75,startStamina:55}:{}),
+            ...(cohort==='extreme_fatigue'?{fatigueBeforeStage:95,startStamina:35}:{}),
             ...(cohort==='worn_equipment'?{preparationModifiers:{inStageEnergyCostMultiplier:1,postStageFatigueMultiplier:1,postStageRecoveryBonusPoints:0,equipmentConditionPercent:15,mechanicalIncidentRiskMultiplier:1.5}}:{}),
           })),
           weather:{...base.weather!,condition:rainy?'rain':windy?'sunny_windy':'clear',
@@ -422,6 +424,7 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         const result=runRaceEngine(input)
         expect(result.validationPassed).toBe(true)
         expect(result.replaySynchronization.synchronized).toBe(true)
+        fatigueRestrictedStarters += result.phase10Incidents.preRaceAvailability.filter(r=>r.restriction==='excessive_fatigue' && r.startAllowed).length
         technicalIncidents += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='technical_incident').length
         technicalDnf += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='technical_incident').flatMap(e=>e.riderConsequences).filter(e=>e.statusImpact==='dnf').length
         const rows=result.finishResolution.classification
@@ -436,7 +439,7 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         if((counts.dnf??0)===0) zeroDnf++
       }
       summary.push({cohort,terrain,fieldSize,simulations:3,entries:fieldSize*3,...totals,
-        zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf})
+        zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf,fatigueRestrictedStarters})
     }
     console.info('ISSUE_139_ADVERSE_COHORT_JSON',JSON.stringify(summary))
   },120000)
