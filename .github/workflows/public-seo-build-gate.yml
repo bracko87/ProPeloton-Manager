@@ -2,7 +2,7 @@ name: Public SEO production build gate
 
 on:
   push:
-    branches: [staging]
+    branches: [main]
     paths:
       - 'index.html'
       - 'public/**'
@@ -12,7 +12,7 @@ on:
       - 'package-lock.json'
       - '.github/workflows/public-seo-build-gate.yml'
   pull_request:
-    branches: [main, staging]
+    branches: [main]
     paths:
       - 'index.html'
       - 'public/**'
