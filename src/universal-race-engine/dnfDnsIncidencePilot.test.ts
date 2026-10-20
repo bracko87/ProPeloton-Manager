@@ -390,6 +390,8 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
     for(const terrain of Object.keys(terrains) as Array<keyof typeof terrains>) for(const fieldSize of [48,72,96]){
       const totals:Record<(typeof statuses)[number],number>={finished:0,dnf:0,dns:0,otl:0,dsq:0}
       let zeroDnf=0
+      let exhaustionDnf=0
+      let exhaustionEvents=0
       let exhaustedFinishers=0
       let depletedFinishers=0
       let fatigueRestrictedStarters=0
@@ -436,6 +438,8 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
           if(state.energy<=5)exhaustedFinishers++
           if(state.energy<=15)depletedFinishers++
         }
+        exhaustionEvents += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='exhaustion').length
+        exhaustionDnf += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='exhaustion').flatMap(e=>e.riderConsequences).filter(e=>e.statusImpact==='dnf').length
         const rows=result.finishResolution.classification
         expect(rows.length).toBe(fieldSize)
         expect(new Set(rows.map(r=>r.riderId)).size).toBe(fieldSize)
@@ -448,7 +452,7 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         if((counts.dnf??0)===0) zeroDnf++
       }
       summary.push({cohort,terrain,fieldSize,simulations:3,entries:fieldSize*3,...totals,
-        zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf,fatigueRestrictedStarters,exhaustedFinishers,depletedFinishers})
+        zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf,fatigueRestrictedStarters,exhaustedFinishers,depletedFinishers,exhaustionEvents,exhaustionDnf})
     }
     console.info('ISSUE_139_ADVERSE_COHORT_JSON',JSON.stringify(summary))
   },120000)
