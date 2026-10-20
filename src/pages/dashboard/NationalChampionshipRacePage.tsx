@@ -119,7 +119,7 @@ type EventData = {
 type ReplayAvailability = {
   status: 'loading' | 'available' | 'not_open' | 'not_available' | 'error'
   replayOpensGameAt: string | null
-  reason: string | null
+  reason?: string | null
 }
 
 type ReplayCoinAccess = {
