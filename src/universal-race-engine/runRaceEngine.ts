@@ -38000,6 +38000,13 @@ export function runRaceEngine(
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
   if (!replayPublicationPolicy.publishable && input.engine.deterministicSeed.includes('39')) {
+    console.log('SLICE22_ALL_LATE_EVENTS',JSON.stringify(replayTimeline.checkpoints.filter((c) =>
+      c.raceProgress.kmFromStart >= 175 &&
+      c.raceProgress.kmFromStart <= 190
+    ).map((c)=>({id:c.checkpointId,km:c.raceProgress.kmFromStart,event:c.commentary.map((e)=>e.eventType),
+      b:c.groups.filter((g)=>g.displayCode.startsWith('B')).flatMap((g)=>g.riderIds),
+      c:c.groups.filter((g)=>g.displayCode.startsWith('C')).map((g)=>({code:g.displayCode,ids:g.riderIds}))}))))
+
     const watchIds = ['expanded-rider-10','expanded-rider-22','expanded-rider-16']
     console.log('SLICE22_REPLAY_TRACE',JSON.stringify(replayTimeline.checkpoints.filter((c) =>
       /late-chase-step-2[234]|phase4-energy-contact-loss-1|race-status-95|winner-finish|late-chase-step-22|late-chase-start/.test(c.checkpointId)
