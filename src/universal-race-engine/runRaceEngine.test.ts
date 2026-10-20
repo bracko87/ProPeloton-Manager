@@ -15112,28 +15112,44 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
       runRaceEngine(createPhase11gMixedStressInput(5)),
     ]
     // Slice 16 diagnostic only; remove before merging.
-    const energyProbe = [45, 55, 65, 75, 85, 95, 99].map((fatigue) => {
+    const probeSpecs = [
+      { fatigue: 60, stamina: 95 }, { fatigue: 65, stamina: 95 },
+      { fatigue: 65, stamina: 90 }, { fatigue: 65, stamina: 85 },
+      { fatigue: 65, stamina: 80 }, { fatigue: 60, stamina: 85 },
+      { fatigue: 60, stamina: 80 }, { fatigue: 70, stamina: 95 },
+      { fatigue: 70, stamina: 90 },
+    ]
+    const energyProbe = probeSpecs.map(({ fatigue, stamina }) => {
       try {
-        const probeResult = runRaceEngine(createPhase11hLateClimbEnergyInput(fatigue))
+        const base = createPhase11hLateClimbEnergyInput(fatigue)
+        const input = {
+          ...base,
+          riders: base.riders.map((rider) => ({ ...rider, startStamina: stamina })),
+        }
+        const probeResult = runRaceEngine(input)
         const states = probeResult.replayTimeline.checkpoints
           .filter((cp) => !cp.finalResultsVisible && cp.raceProgress.kmFromStart > 0)
           .flatMap((cp) => cp.riderStates)
           .filter((state) => state.status === 'racing')
         const nonnull = states.filter((state) => state.displayCode !== null)
+        const minimum = nonnull.reduce(
+          (best, state) => state.energy < best.energy ? state : best,
+          nonnull[0],
+        )
+        const lowStates = nonnull.filter((s) => s.energy > 0.000001 && s.energy < 5 - 0.000001)
         return {
-          fatigue,
-          minRacing: Math.min(...states.map((s) => s.energy)),
-          minDisplayed: Math.min(...nonnull.map((s) => s.energy)),
-          displayedSub5: nonnull.filter((s) => s.energy > 0.000001 && s.energy < 5 - 0.000001).length,
-          racingSub5: states.filter((s) => s.energy > 0.000001 && s.energy < 5 - 0.000001).length,
-          displayedUnder10: nonnull.filter((s) => s.energy < 10).length,
-          checkpointCount: probeResult.replayTimeline.checkpoints.length,
+          fatigue, stamina,
+          minDisplayed: minimum?.energy ?? null,
+          minRider: minimum?.riderId ?? null,
+          sub5Count: lowStates.length,
+          lowRiderCodes: [...new Set(lowStates.map((s) => s.riderId + ':' + s.displayCode))].slice(0, 10),
+          under10: nonnull.filter((s) => s.energy < 10).length,
         }
       } catch (error) {
-        return { fatigue, error: String(error).slice(0, 360) }
+        return { fatigue, stamina, error: String(error).slice(0, 240) }
       }
     })
-    console.error('SLICE16_ENERGY_PROBE=' + JSON.stringify(energyProbe))
+    console.error('SLICE16_ENERGY_PROBE2=' + JSON.stringify(energyProbe))
     let inspectedLowReserveStates = 0
 
     results.forEach((result) => {
