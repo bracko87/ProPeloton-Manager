@@ -35798,7 +35798,7 @@ export function buildUniversalReplaySynchronizationSummary(
             (r) => r.riderId === riderId && r.contactLossKm !== null &&
               r.contactLossKm <= checkpoint.raceProgress.kmFromStart + 0.000001,
           )
-          return state?.displayCode.startsWith('C') === true &&
+          return state?.displayCode?.startsWith('C') === true &&
             (state.liveEnergyPercent < 5 || Boolean(physicalLoss))
         }),
     )
