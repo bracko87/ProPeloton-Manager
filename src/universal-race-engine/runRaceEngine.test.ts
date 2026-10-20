@@ -18228,7 +18228,30 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     expect(weakRows.length).toBeGreaterThan(0)
     expect(strongRows.length).toBeGreaterThan(0)
     expect(weakDropped.length / weakRows.length).toBeGreaterThanOrEqual(0.8)
-    expect(strongRetained.length / strongRows.length).toBeGreaterThanOrEqual(0.8)
+    // Summit retention is a physical state, not a "never dropped" counter:
+    // riders with a validated rejoin by the summit are back in contact.
+    const strongAtSummit = strongRows.filter(
+      (row) =>
+        row.contactLossKm === null ||
+        (row.rejoinKm !== null &&
+          row.contactLossKm !== null &&
+          row.rejoinKm > row.contactLossKm &&
+          row.rejoinKm <= selection.kmEnd),
+    )
+    const weakAtSummit = weakRows.filter(
+      (row) =>
+        row.contactLossKm === null ||
+        (row.rejoinKm !== null &&
+          row.contactLossKm !== null &&
+          row.rejoinKm > row.contactLossKm &&
+          row.rejoinKm <= selection.kmEnd),
+    )
+    expect(strongRetained.length).toBeGreaterThan(weakRows.length * 0.4)
+    expect(strongAtSummit.length / strongRows.length).toBeGreaterThanOrEqual(0.75)
+    expect(weakAtSummit.length / weakRows.length).toBeLessThanOrEqual(0.2)
+    expect(strongAtSummit.length / strongRows.length).toBeGreaterThan(
+      weakAtSummit.length / weakRows.length + 0.5,
+    )
 
     const exceptionalWeakId = input.riders[0].riderId
     const compromisedStrongId = input.riders[30].riderId
