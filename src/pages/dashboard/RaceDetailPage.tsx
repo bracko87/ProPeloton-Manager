@@ -925,7 +925,7 @@ function RaceTitleFlag({ code }: { code?: string | null }) {
 
   if (!flagUrl || !normalized || hasError) {
     return (
-      <span className="inline-block h-6 w-9 shrink-0 rounded border border-slate-200 bg-slate-100" />
+      <span className="inline-block h-7 w-11 shrink-0 rounded border border-slate-200 bg-slate-100" />
     )
   }
 
@@ -934,7 +934,7 @@ function RaceTitleFlag({ code }: { code?: string | null }) {
       src={flagUrl}
       alt={normalized}
       title={normalized}
-      className="inline-block h-6 w-9 shrink-0 rounded border border-slate-200 object-cover"
+      className="inline-block h-7 w-11 shrink-0 rounded border border-slate-200 object-cover"
       loading="lazy"
       onError={() => setHasError(true)}
     />
@@ -953,7 +953,7 @@ function SmallCountryFlag({ code }: { code?: string | null }) {
   if (!flagUrl || !normalized || hasError) {
     return (
       <span
-        className="inline-block h-6 w-9 shrink-0 rounded-[2px] border border-slate-200 bg-slate-100 align-middle"
+        className="inline-block h-4 w-6 shrink-0 rounded-[2px] border border-slate-200 bg-slate-100 align-middle"
         title={normalized ?? 'Unknown country'}
         aria-label={normalized ?? 'Unknown country'}
       />
@@ -965,7 +965,7 @@ function SmallCountryFlag({ code }: { code?: string | null }) {
       src={flagUrl}
       alt={normalized}
       title={normalized}
-      className="inline-block h-6 w-9 shrink-0 rounded-[2px] border border-slate-200 object-cover align-middle"
+      className="inline-block h-4 w-6 shrink-0 rounded-[2px] border border-slate-200 object-cover align-middle"
       loading="lazy"
       onError={() => setHasError(true)}
     />
@@ -11214,7 +11214,9 @@ function StageReplayAccessCard({
     : replayAvailability.status === 'not_open'
       ? t('replay.notOpen')
       : replayAvailability.status === 'not_available'
-        ? t('replay.notAvailable')
+        ? replayAvailability.reason === 'replay_archived'
+          ? 'Replay archived: detailed playback is no longer stored. Official race results remain available.'
+          : t('replay.notAvailable')
         : replayAvailability.status === 'error'
           ? t('replay.temporaryUnavailable')
           : userParticipated
@@ -11250,7 +11252,7 @@ function StageReplayAccessCard({
       </p>
 
       {replayAvailability.replayOpensGameAt &&
-      replayAvailability.status !== 'available' ? (
+      replayAvailability.status === 'not_open' ? (
         <div className="mt-3 text-xs font-medium text-slate-500">
           {t('replay.availableAt', { date: replayOpensGameAtLabel ?? '—' })}
         </div>
@@ -12410,6 +12412,7 @@ type UniversalReplayInputSource =
 
 type UniversalAuthoritativeReplayPayload = {
   status?: string | null
+  reason?: string | null
   stage_id?: string | null
   race_id?: string | null
   simulation_run_id?: string | null
@@ -14710,7 +14713,9 @@ function UniversalRaceReplayPage({
           setLoadError(null)
         } else if (status === 'not_available') {
           setLoadError(
-            'Replay is not available yet.'
+            nextAuthoritativePayload?.reason === 'replay_archived'
+              ? 'Replay archived: detailed playback is no longer stored. Official race results remain available.'
+              : 'Replay is not available yet.'
           )
         } else {
           setLoadError(
@@ -17039,6 +17044,24 @@ function UniversalRaceReplayPage({
           ) : null}
 
 
+          {result && resultsVisible ? (
+            <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
+              <h3 className="font-semibold">Phase 7 + Phase 8 acceptance audit</h3>
+              <p>Phase 8 rider updates from the same final race result</p>
+              <button type="button" onClick={downloadPhase78AcceptanceReport} className="mt-2 rounded-lg border border-slate-300 px-3 py-2 hover:bg-slate-50">
+                Download Phase 7 + Phase 8 JSON report
+              </button>
+              <h3 className="mt-4 font-semibold">Phase 9 weather, preparation and resource audit</h3>
+              <p>Equipment, asset and supply usage calculated for this race</p>
+              <p>Rider effects from weather and preparation in the same race result</p>
+              <button type="button" onClick={downloadPhase9AcceptanceReport} className="mt-2 rounded-lg border border-slate-300 px-3 py-2 hover:bg-slate-50">
+                Download Phase 9 JSON report
+              </button>
+            </section>
+          ) : result ? (
+            <p className="text-xs text-slate-500">Report unlocks at finish · Phase 9 report unlocks at finish</p>
+          ) : null}
+
           {result &&
           !result.intermediatePointFinalization.synchronization.synchronized ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
@@ -17657,7 +17680,7 @@ function UniversalRaceReplayPage({
             </div>
           ) : (
             <div className="rounded-2xl bg-white px-4 py-12 text-center text-sm text-slate-500">
-              Universal engine calculation is not available for this stage.
+              {loadError ?? 'Universal engine calculation is not available for this stage.'}
             </div>
           )}
         </div>

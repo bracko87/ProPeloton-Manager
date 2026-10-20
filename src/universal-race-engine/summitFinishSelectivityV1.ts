@@ -77,7 +77,10 @@ export function calculateSummitFinishSelectivityV1(
   // An elite climbing tempo is harder to follow as length, gradient and
   // previous ascent accumulate. This does not select a fixed front-group size:
   // how many riders can hold the pace depends on their individual abilities.
-  const scorePressure = 0.90 + hardness * 0.68
+  // Hard HC summit finishes require progressively stronger sustainable
+  // climbing tempo; this adjusts the physical contact threshold, never the
+  // result time or a fixed number of riders in the front group.
+  const scorePressure = 0.90 + hardness * 0.82
   const reference = mean + deviation * scorePressure
   const tolerance = 1.75 - hardness * 0.55
   const highestScore = Math.max(...scores)
