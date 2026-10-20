@@ -16745,6 +16745,7 @@ export function resolveRoadPhase4Finish(
     // pace selection instead of exempting the entire front group from climbing
     // attrition. Only a climb ending at the finish needs this handoff.
     const frontClimbCandidateRows =
+      input.stage.summitFinishSelectivityV1 === true &&
       input.stage.summitFinish &&
       Math.abs(effort.kmEnd - input.stage.distanceKm) <= 0.000001
         ? roadCommandResolution.riders
