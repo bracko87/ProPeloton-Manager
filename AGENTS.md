@@ -1,37 +1,36 @@
 # ProPeloton Manager — agent and release instructions
 
-Effective 2026-10-19. Every coding assistant or developer working on this repository must read and follow these instructions BEFORE writing code.
+Effective 2026-10-20. Every coding assistant must read these instructions and `docs/CONTROLLED_RELEASES.md` before writing code.
 
-## 1. Branch rules
+## 1. Main-only active workflow
 
-- **`staging` = all normal development.** All features, fixes, translations, UI changes, race-engine experiments, tests, and migration proposals must be committed to `staging` (or a feature branch that merges into `staging`), **NOT directly to `main`**.
-- **`main` = production release branch.** Keep Netlify production on `main`. Do not change the repository default branch.
-- Explicitly set the target ref/branch on GitHub write tools. Do not let a default-branch write silently fall back to `main`.
-- Before making changes, fetch the newest `main` and `staging` heads and preserve all existing commits. Do not force-push, reset away work, or overwrite changes from other conversations.
-- If an agent cannot write to `staging`, stop and ask for a supported workflow rather than changing `main`.
-- A direct `main` code push requires explicit user approval for a specific emergency; a general "fix it" request is not release approval.
+- **`main` is the only active long-lived branch and the production source.** It is the repository default branch and is tracked by Netlify.
+- **`staging` is a retained historical backup.** Do not delete it, force-push it, merge new work into it, or use it for normal development. The already-integrated history is preserved in `main`.
+- Start new work from the latest `main` on short-lived feature/fix branches. Submit reviewed PRs **to `main`**, not `staging`.
+- Each merge into `main` is a **potential production deployment**. PR review and explicit release authorization are required before merging; there are no unattended or automatic releases.
+- Do not commit/push code directly to `main` except with explicit user authorization for a *specific emergency*. Normal requests do not bypass review.
+- Always confirm the current `main` head before writing or merging; use expected SHAs and do not force-push, reset or discard existing commits. Set explicit refs on GitHub write tools.
+- Legacy in-progress PRs targeting `staging` are parked; review and rebase/retarget individually before considering them for `main`. Do not blindly merge WIP changes.
 
-## 2. Testing and release process
+## 2. Testing and production safety
 
-- Work in **small, independently tested steps**, especially for race-engine fixes. Preserve existing passing checks and investigate baseline failures without hiding them.
-- Two preferred **manual** release review windows each day (morning/evening, Europe/Berlin). These are guidance for batching, NOT scheduled automatic merges or unattended deployment. Urgent releases may be approved separately.
-- At a release window: inspect the `staging` → `main` diff, validate the affected application functionality and CI tests, obtain explicit release approval, then merge via PR. Stop if required checks fail.
-- Do not keep a long-lived staging → main PR open during frequent commits unless repeated PR-triggered CI is intended.
-- Existing GitHub Actions workflows **must be preserved**. Especially keep `.github/workflows/race-engine-validation.yml` and its passing regression gates. Public-repository standard GitHub-hosted Actions are generally free, but repeated runs still add noise.
-- Follow-up verification happens after the production deploy. A successful commit is NOT proof that the deployed app or race simulation works.
-- For local work: `git fetch origin`, `git switch staging` (or `git switch --track origin/staging` once), `git pull --ff-only origin staging`, `npm run build`, `npm run dev`.
+- Do small changes on short-lived branches and run production build, relevant localization checks, race-engine regression suites and simulation-only tests before merge.
+- The race-engine workflow includes a historically nonblocking full suite. **Read the test log** and verify the actual pass/fail counts; a green workflow alone is insufficient.
+- Prefer two **manual** release review windows daily (morning/evening, Europe/Berlin), but urgent approved releases may be expedited. Never schedule automated merges.
+- Confirm Netlify production configuration and dependencies before merging. After merge, verify GitHub Actions, Netlify deployment status and live-game functionality; a successful Git commit or GitHub build is not proof of production deployment.
+- Keep `.github/workflows/race-engine-validation.yml` and existing regression gates; never remove, loosen or hide tests to obtain passing checks.
+- For local development: `git fetch origin && git switch main && git pull --ff-only origin main`, then create a short-lived branch, `npm run build` and `npm run dev`.
 
-## 3. Critical game data and engine protection
+## 3. Critical game data and Supabase
 
-- Never alter or purge past race results, general classifications, payouts, historical records, user clubs, or live production data merely to test an engine change.
-- Database changes, migrations, and race operations are distinct from Git branch changes. **Staging Git code does not create a staging Supabase database or protect production data automatically.** Use test/simulation data and explicit user-approved production rollouts where needed.
-- Do not delete AI teams without explicit approval. Preserve the existing game clock, national teams/associations, National Championships, youth systems, and race-engine behavior except for the narrowly scoped requested fix.
-- Race-engine validation has known historical failures tracked in issue #109; do not remove, loosen, or silently mark those tests as passing. Document the baseline and individual corrections.
+- Never alter or purge historical race results, general classifications, payouts, player clubs, records or existing user data merely to test or release engine code.
+- Git branches and Supabase databases are separate. Migrations need independent review, version/content reconciliation, forward-only changes and explicit authorization. Do not assume a Git merge applies SQL.
+- Use isolated/synthetic race simulations for test coverage. Avoid triggering production race operations as a side effect of development.
+- Preserve game clock, national teams/associations, National Championships, AI teams, youth systems and established features unless a narrowly scoped change is explicitly approved.
+- Open PRs that have not been merged remain unshipped even if the old backup branch retains them.
 
-## 4. Cross-conversation handoff
+## 4. Coordination and protection
 
-- This policy applies across all ChatGPT conversations and coding tools. Start every task by reading this file on `staging` and `docs/CONTROLLED_RELEASES.md`.
-- Other chats cannot be guaranteed to automatically notice this policy: remind active coding chats to switch to `staging`. `main` remains the default branch.
-- Branch instructions are not technical enforcement. Protect `main` using GitHub branch rules requiring reviewed PRs and passing checks if the desired repository plan supports them.
-
-Do not apply these repository-specific rules to unrelated repositories unless those repositories have separately adopted them.
+- This policy supersedes the 2026-10-19 staging-first instructions for this repository. Inform other active development chats: **new work via feature/fix PR to main; staging is backup only**.
+- README/docs do not technically block pushes. An administrator should configure GitHub branch rules requiring PRs and appropriate successful checks on `main` if available.
+- Do not apply this repository policy to other games or repositories automatically.
