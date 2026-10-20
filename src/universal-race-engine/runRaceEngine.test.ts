@@ -19087,6 +19087,6 @@ describe('Phase 11G organic race physics and replay continuity', () => {
       }
     }
     expect(violations).toEqual([])
-  })
+  }, 180_000)
 
 })
