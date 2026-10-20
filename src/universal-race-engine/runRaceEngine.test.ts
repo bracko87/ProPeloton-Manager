@@ -18079,6 +18079,29 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     }
   })
 
+  it('audits deterministic race withdrawal incidence by terrain without changing race physics', () => {
+    const rows: Array<{ seed: number; terrain: string; starters: number; finished: number; dnf: number; dns: number; otl: number; dsq: number }> = []
+    for (const seed of [39, 40, 41, 42, 43, 44, 45, 46]) {
+      const input = createPhase11gMixedStressInput(seed)
+      const result = runRaceEngine(input)
+      const classification = result.finishResolution.classification
+      const count = (status: string) => classification.filter((r) => r.status === status).length
+      rows.push({
+        seed,
+        terrain: input.stage.terrainType,
+        starters: classification.length - count('DNS'),
+        finished: count('finished'),
+        dnf: count('DNF'),
+        dns: count('DNS'),
+        otl: count('OTL'),
+        dsq: count('DSQ'),
+      })
+      expect(result.replaySynchronization.issues).toEqual([])
+      expect(classification.length).toBe(input.riders.length)
+    }
+    console.log('POSTFIX_WITHDRAWAL_AUDIT', JSON.stringify(rows))
+  })
+
   it('keeps Phase 11G source free of the old scripted gap, catch and forced-success mechanisms', () => {
     const source = readFileSync(new URL('./runRaceEngine.ts', import.meta.url), 'utf8')
     expect(source).not.toContain('getRoadPreferredCatchFraction')
