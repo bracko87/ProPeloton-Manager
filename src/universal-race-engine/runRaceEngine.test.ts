@@ -18046,6 +18046,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
 
   it('keeps mixed flat, hilly, mountain and cobbled tactical races synchronized', () => {
     for (const index of [0, 1, 3, 5, 15, 18, 39, 46, 52, 72, 140, 260, 319]) {
+      console.log('SLICE22_MIXED_INDEX', index)
       const result = runRaceEngine(createPhase11gMixedStressInput(index))
       expect(result.replaySynchronization.synchronized).toBe(true)
       expect(result.replaySynchronization.issues).toEqual([])
