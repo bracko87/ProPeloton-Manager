@@ -2481,6 +2481,7 @@ export type UniversalPhase10IncidentKind =
   | 'individual_crash'
   | 'group_crash'
   | 'technical_incident'
+  | 'exhaustion'
 
 export type UniversalPhase10IncidentSeverity =
   | 'minor'
@@ -16465,6 +16466,7 @@ export function resolveRoadPhase4Finish(
     initialGapSeconds = PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
     allowRejoin = true,
     postClimbRecoveryStartsAtKm: number | null = null,
+    preserveFrontPaceReference = false,
   ): PhysicalDetachedTrajectory => {
     const samples: UniversalRoadDetachedGapSample[] = []
     let currentKm = clamp(startKm, 0, input.stage.distanceKm)
@@ -16504,11 +16506,14 @@ export function resolveRoadPhase4Finish(
       const stepDistanceKm = stepEndKm - currentKm
       const midKm = (currentKm + stepEndKm) / 2
       const pelotonContextKey =
-        `${targetPelotonCacheKey}|${deterministicRound(midKm, 6)}`
+        `${preserveFrontPaceReference ? 'front' : 'peloton'}|${targetPelotonCacheKey}|${deterministicRound(midKm, 6)}`
       let pelotonContext = detachedPelotonContextCache.get(pelotonContextKey)
       if (!pelotonContext) {
         const activePelotonRiderIds = targetPelotonRiderIds
-          .filter((candidateId) => !isKnownFrontRiderAtProfileKm(candidateId, midKm))
+          .filter((candidateId) =>
+            preserveFrontPaceReference ||
+            !isKnownFrontRiderAtProfileKm(candidateId, midKm),
+          )
           .sort()
         const liveEnergyByRiderId = new Map(
           activePelotonRiderIds.map((candidateId) =>
@@ -16652,29 +16657,15 @@ export function resolveRoadPhase4Finish(
   const profileDetachedRiderIds = new Set<string>()
   const profileClimbSelections: UniversalRoadProfileClimbSelectionResult[] = []
 
+  const frontSummitDetachedByRiderId = new Map<string, UniversalRoadProfileClimbSelectionRider>()
+
   profileClimbEfforts.forEach((effort, effortIndex) => {
     // Contexts are only shared between riders of the same climb. Clearing here
     // prevents long mountain stages from retaining every per-km peloton map.
     detachedPelotonContextCache.clear()
     const nextEffort = profileClimbEfforts[effortIndex + 1] ?? null
     const recoveryCorridorEndKm = nextEffort?.kmStart ?? input.stage.distanceKm
-    const candidateRows = roadCommandResolution.riders
-      .filter((row) => {
-        if (!row.eligibleToStart || profileDetachedRiderIds.has(row.riderId)) {
-          return false
-        }
-        if (isKnownFrontRiderAtProfileKm(row.riderId, effort.kmStart)) {
-          return false
-        }
-        if (effort.kmStart >= phaseBoundary.startKm - 0.000001) {
-          return (
-            phase4PelotonRiderSetAtStart.has(row.riderId) &&
-            !persistentOpeningState.droppedRiderIds.includes(row.riderId)
-          )
-        }
-        return true
-      })
-      .map((row) => {
+    const scoreClimbCandidate = (row: (typeof roadCommandResolution.riders)[number]) => {
         const rider = ridersById.get(row.riderId)!
         const readiness = readinessByRiderId.get(row.riderId)!
         const phaseNumber = getRoadPhaseNumberForPoint(
@@ -16724,13 +16715,51 @@ export function resolveRoadPhase4Finish(
           energyAtSummit,
           holdScore,
         }
+    }
+
+    const candidateRows = roadCommandResolution.riders
+      .filter((row) => {
+        if (!row.eligibleToStart || profileDetachedRiderIds.has(row.riderId)) {
+          return false
+        }
+        if (isKnownFrontRiderAtProfileKm(row.riderId, effort.kmStart)) {
+          return false
+        }
+        if (effort.kmStart >= phaseBoundary.startKm - 0.000001) {
+          return (
+            phase4PelotonRiderSetAtStart.has(row.riderId) &&
+            !persistentOpeningState.droppedRiderIds.includes(row.riderId)
+          )
+        }
+        return true
       })
+      .map(scoreClimbCandidate)
       .sort(
         (left, right) =>
           right.holdScore - left.holdScore ||
           right.energyAtSummit - left.energyAtSummit ||
           left.row.riderId.localeCompare(right.row.riderId),
       )
+
+    // A breakaway/front rider does not ride inside P, so keep its own summit
+    // pace selection instead of exempting the entire front group from climbing
+    // attrition. Only a climb ending at the finish needs this handoff.
+    const frontClimbCandidateRows =
+      input.stage.summitFinishSelectivityV1 === true &&
+      input.stage.summitFinish &&
+      Math.abs(effort.kmEnd - input.stage.distanceKm) <= 0.000001
+        ? roadCommandResolution.riders
+            .filter((row) =>
+              row.eligibleToStart &&
+              !profileDetachedRiderIds.has(row.riderId) &&
+              isKnownFrontRiderAtProfileKm(row.riderId, effort.kmStart),
+            )
+            .map(scoreClimbCandidate)
+            .sort((left,right) =>
+              right.holdScore-left.holdScore ||
+              left.row.riderId.localeCompare(right.row.riderId),
+            )
+        : []
 
     if (candidateRows.length <= 1) return
 
@@ -16783,7 +16812,10 @@ export function resolveRoadPhase4Finish(
     const holdWindow = majorHighMountainSelection
       ? clamp(3.25 - effort.hardness * 0.75, 1.75, 3.25)
       : hillyAttrition
-        ? clamp(12 - effort.hardness * 5, 6, 12)
+        // Short hilly climbs should separate weak climbers without using
+        // high-mountain selection. A 10s+ score margin masked the entire
+        // 40-to-80 climbing-ability spread even on successive 5% climbs.
+        ? clamp(8 - effort.hardness * 5, 4, 8)
         : clamp(10.5 - effort.hardness * 7, 3.5, 10.5)
     const requiredHoldScore = deterministicRound(
       calibratedSummit ? summitCalibration!.requiredHoldScore : referenceHoldScore - holdWindow,
@@ -16941,6 +16973,76 @@ export function resolveRoadPhase4Finish(
       riders: outcomeRows,
       modelVersion: 'universal_profile_climb_selection_v1',
     })
+
+    if (frontClimbCandidateRows.length >= 3) {
+      const frontSummitCalibration = calculateSummitFinishSelectivityV1({
+        stageDistanceKm: input.stage.distanceKm,
+        stageElevationGainM: input.stage.elevationGainM,
+        climbStartKm: effort.kmStart,
+        climbEndKm: effort.kmEnd,
+        climbDistanceKm: effort.distanceKm,
+        averageGradientPercent: effort.averageGradientPercent,
+        climbElevationGainM: effort.elevationGainM,
+        climbHardness: effort.hardness,
+        summitFinish: input.stage.summitFinish,
+        holdScores: frontClimbCandidateRows.map((candidate) => candidate.holdScore),
+      })
+      if (frontSummitCalibration.active) {
+        const frontPaceRiderIds = frontClimbCandidateRows
+          .filter((candidate) =>
+            candidate.holdScore + 0.000001 >= frontSummitCalibration.requiredHoldScore &&
+            candidate.energyAtSummit + 0.000001 >= frontSummitCalibration.minimumEnergyToHold,
+          )
+          .map((candidate) => candidate.row.riderId)
+        // A completely depleted break cannot maintain elite climbing tempo;
+        // use its best surviving rider as the physical pace reference.
+        if (frontPaceRiderIds.length === 0) {
+          frontPaceRiderIds.push(frontClimbCandidateRows[0].row.riderId)
+        }
+        for (const candidate of frontClimbCandidateRows) {
+          const holdDeficit = Math.max(0, frontSummitCalibration.requiredHoldScore - candidate.holdScore)
+          const energyDeficit = Math.max(0, frontSummitCalibration.minimumEnergyToHold - candidate.energyAtSummit)
+          if (holdDeficit <= 0.000001 && energyDeficit <= 0.000001) continue
+          const failureStrength = clamp(
+            (holdDeficit + energyDeficit * 1.2) / Math.max(5, holdWindow * 1.35), 0, 1,
+          )
+          const timingRoll = calculateDeterministicUnitRoll(
+            `${input.engine.deterministicSeed}|${input.stage.stageId}|v52-front-summit-contact|${effort.climbIndex}|${candidate.row.riderId}`,
+          )
+          const crackFraction = clamp(
+            0.88 - failureStrength * 0.62 + (timingRoll - 0.5) * 0.08, 0.15, 0.94,
+          )
+          const contactLossKm = deterministicRound(
+            effort.kmStart + effort.distanceKm * crackFraction, 6,
+          )
+          const trajectory = buildPhysicalDetachedTrajectory(
+            candidate.row.riderId, frontPaceRiderIds, contactLossKm,
+            input.stage.distanceKm, PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+            true, effort.kmEnd, true,
+          )
+          // A rider that really recatches the front on the road must not be
+          // credited with an artificial gap.
+          if (trajectory.rejoinKm !== null || trajectory.samples.length === 0) continue
+          const gapAtSummitSeconds = deterministicRound(
+            calculateUniversalRoadDetachedGapAtKm(
+              trajectory.samples, effort.kmEnd, PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+            ), 6,
+          )
+          if (gapAtSummitSeconds <= 0) continue
+          frontSummitDetachedByRiderId.set(candidate.row.riderId, {
+            riderId: candidate.row.riderId,
+            holdScore: candidate.holdScore,
+            energyAtClimbStart: candidate.energyAtClimbStart,
+            energyAtSummit: candidate.energyAtSummit,
+            contactLossKm,
+            gapAtSummitSeconds,
+            rejoinKm: null,
+            finalDetached: true,
+            gapSamples: trajectory.samples,
+          })
+        }
+      }
+    }
   })
 
   // Profile-wide climb selection is authoritative whenever it describes the
@@ -16985,6 +17087,12 @@ export function resolveRoadPhase4Finish(
           ),
         )
       })
+  })
+
+  // Apply only physical front splits that remained detached to the summit.
+  frontSummitDetachedByRiderId.forEach((row, riderId) => {
+    terrainContactLossKmByRiderId.set(riderId, row.contactLossKm!)
+    terrainGapPenaltyByRiderId.set(riderId, row.gapAtSummitSeconds)
   })
 
   const calculateFrontPaceKmh = (
@@ -19324,9 +19432,37 @@ export function resolveRoadPhase4Finish(
     6,
   )
 
+  // A detached rider on a climb finishing at the summit already has a
+  // complete, rider-specific physical trajectory to the finish line. Replaying
+  // that same contact loss against *all* starters (including slower dropped
+  // riders) can manufacture a catch that never happened on the decisive
+  // climb. Keep the authoritative summit trajectory instead.
+  const finalSummitDetachedByRiderId = new Map(
+    profileClimbSelections
+      .filter((selection) =>
+        Math.abs(selection.kmEnd - input.stage.distanceKm) <= 0.000001,
+      )
+      .flatMap((selection) =>
+        selection.riders
+          .filter((rider) =>
+            rider.finalDetached &&
+            rider.rejoinKm === null &&
+            rider.gapAtSummitSeconds > 0 &&
+            (rider.gapSamples.at(-1)?.kmEnd ?? 0) >=
+              input.stage.distanceKm - 0.000001,
+          )
+          .map((rider) => [rider.riderId, rider] as const),
+      ),
+  )
+
+  frontSummitDetachedByRiderId.forEach((row, riderId) => {
+    finalSummitDetachedByRiderId.set(riderId, row)
+  })
+
   let provisionalRiderStates = provisionalRiderStatesBeforePhysicalContact.map(
     (state) => {
       if (state.contactLossKm === null) return state
+      const finalSummitTrajectory = finalSummitDetachedByRiderId.get(state.riderId)
       const targetPelotonRiderIds = physicalContactLossSourceRiderIds.filter(
         (candidateId) => {
           if (candidateId === state.riderId) return false
@@ -19334,14 +19470,20 @@ export function resolveRoadPhase4Finish(
           return candidateLossKm === undefined || candidateLossKm > state.contactLossKm! + 0.000001
         },
       )
-      const trajectory = buildPhysicalDetachedTrajectory(
-        state.riderId,
-        targetPelotonRiderIds,
-        state.contactLossKm,
-        input.stage.distanceKm,
-        PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
-        true,
-      )
+      const trajectory: PhysicalDetachedTrajectory = finalSummitTrajectory
+        ? {
+            samples: finalSummitTrajectory.gapSamples,
+            rejoinKm: null,
+            finalGapBehindPelotonSeconds: finalSummitTrajectory.gapAtSummitSeconds,
+          }
+        : buildPhysicalDetachedTrajectory(
+            state.riderId,
+            targetPelotonRiderIds,
+            state.contactLossKm,
+            input.stage.distanceKm,
+            PHASE5_GROUP_MERGE_TOLERANCE_SECONDS + 1,
+            true,
+          )
       const gapBehindPelotonAtFinish =
         trajectory.rejoinKm === null
           ? trajectory.finalGapBehindPelotonSeconds
@@ -21151,6 +21293,7 @@ export function mergeAdjacentPhase5RoadGroups(
   candidates: readonly UniversalPhase5RoadGroupCandidate[],
   riderById: ReadonlyMap<string, UniversalRiderInput> = new Map(),
   toleranceSeconds: number = PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+  allowTransitiveMerging = true,
 ): readonly UniversalPhase5RoadGroupCandidate[] {
   const ordered = [...candidates]
     .map((candidate) => ({
@@ -21177,7 +21320,13 @@ export function mergeAdjacentPhase5RoadGroups(
         : 0
     if (
       previous &&
-      candidate.gapSeconds - previousTailGapSeconds <= toleranceSeconds
+      // Before the finish a stretched, continuous chase can regroup by
+      // transitive physical adjacency. At the finish a five-second gap is
+      // measured from the *first* rider in the time group, not the tail;
+      // otherwise a chain of 3-4s gaps can give riders 20s apart one time.
+      candidate.gapSeconds -
+        (allowTransitiveMerging ? previousTailGapSeconds : previous.gapSeconds) <=
+        toleranceSeconds
     ) {
       const combinedScores = {
         ...previous.riderPerformanceScores,
@@ -21532,6 +21681,9 @@ function buildPhase5RoadSnapshots(
     phaseNumber === 4
       ? PHASE5_FINAL_PHYSICAL_SAME_GROUP_TOLERANCE_SECONDS
       : PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,
+    // Published finish groups cannot merge transitively over an arbitrarily
+    // long time spread; intermediate road groups retain continuous adjacency.
+    phaseNumber !== 4,
   )
   const groupIdentities = canonicalizePhase5RoadGroupCodes(
     merged,
@@ -27526,8 +27678,15 @@ export function buildUniversalReplayTimeline(
         !activeFrontRiderSet.has(riderId),
     )
     if (pelotonRiderIds.length > 0) {
+      // A surviving Phase-3 front must use its own physical gap trajectory.
+      // Global replay anchors can otherwise collapse F into P at a sampled
+      // status point before Phase-3's authoritative catch kilometre.
       const pelotonGapSeconds = leadingRiderIds.length > 0
-        ? gapAtKm(km)
+        ? getRoadGapFromTrajectory(
+            phase3.physicalGapTrajectory,
+            km,
+            phase3.physicalEndGapSeconds,
+          )
         : activeLineageStates.length > 0
           ? Math.max(
               ...activeLineageStates.map(
@@ -30350,6 +30509,62 @@ export function buildUniversalReplayTimeline(
     })
     return result
   }
+  // Reconcile physically calculated B/P/F -> C losses with the event timeline.
+  // Inspect the actual road-group model instead of inventing a split at the
+  // next routine chase checkpoint. A binary search locates the first point
+  // where the rider's authoritative group has changed.
+  const physicalChaseDropGroupsAt = (km: number) => groupsAtKm(km)
+  const groupOfRiderAt = (riderId: string, km: number): string | null =>
+    physicalChaseDropGroupsAt(km).find((g) => g.riderIds.includes(riderId))
+      ?.displayCode ?? null
+  const physicalDropProbeKms = Array.from(new Set([
+    phase4.phaseBoundary.startKm,
+    ...eventDefinitions.map((d) => d.kmFromStart)
+      .filter((km) => km >= phase4.phaseBoundary.startKm),
+    stageDistanceKm - 0.00002,
+  ])).sort((a,b) => a-b)
+  const alreadyAnnouncedAt = (riderId: string, km: number): boolean =>
+    eventDefinitions.some((d) =>
+      d.eventType === 'group_split' &&
+      d.riderIds.includes(riderId) &&
+      Math.abs(d.kmFromStart - km) <= 0.00001)
+  eligibleStarterIds.forEach((riderId) => {
+    for (let j=1; j<physicalDropProbeKms.length; j++) {
+      const fromKm = physicalDropProbeKms[j-1]
+      const toKm = physicalDropProbeKms[j]
+      const from = groupOfRiderAt(riderId,fromKm)
+      const to = groupOfRiderAt(riderId,toKm)
+      if (!(from?.startsWith('B') || from?.startsWith('F') || from === 'P')
+          || !to?.startsWith('C')) continue
+      let low=fromKm,high=toKm
+      for(let z=0;z<28;z++){
+        const mid=(low+high)/2
+        if(groupOfRiderAt(riderId,mid)?.startsWith('C'))high=mid
+        else low=mid
+      }
+      const crossing=deterministicRound(Math.min(stageDistanceKm-0.00002,
+        high+0.00002),6)
+      if (alreadyAnnouncedAt(riderId,crossing)) break
+      const resolved=groupOfRiderAt(riderId,crossing)
+      if (!resolved?.startsWith('C')) break
+      eventDefinitions.push({
+        checkpointIdSuffix: `physical-energy-detachment-${riderId}`,
+        checkpointKind: 'event',
+        phase: 4,
+        kmFromStart: crossing,
+        sortOrder: 675,
+        groups: groupsAtKm(crossing),
+        energyByRiderId: energyAtKm(4,crossing),
+        eventType: 'group_split',
+        title: 'Rider loses contact',
+        description: `${replayRiderSubject([riderId])} physically loses contact with the group.`,
+        riderIds: [riderId],
+        teamIds: riderById.get(riderId)?.teamId ? [riderById.get(riderId)!.teamId] : [],
+      })
+      break
+    }
+  })
+
   const preFinishPublishedDefinition = [...baseDefinitions, ...eventDefinitions]
     .filter((definition) => definition.kmFromStart < stageDistanceKm - 0.000001)
     .sort(
@@ -30360,9 +30575,56 @@ export function buildUniversalReplayTimeline(
   if (preFinishPublishedDefinition) {
     const beforeCodes = displayCodeByRiderId(preFinishPublishedDefinition.groups)
     const finalCodes = displayCodeByRiderId(finalGroups)
+
+    // The winner crosses before the final classification becomes visible.
+    // Do not create a replay-only last-metre C detachment if the last
+    // published physical state and the authoritative finish have exactly
+    // the same rider membership and lineage. A live-energy interpolation
+    // at (finish - 0.01 km) is not an independently authorized group split.
+    // Genuine finish-line transitions still use the explicit event below.
+    const physicalIdentityKey = (
+      groups: readonly UniversalPhase5GroupSnapshot[],
+    ): string =>
+      JSON.stringify(
+        groups
+          .filter((group) => group.riderIds.length > 0)
+          .map((group) => ({
+            displayCode: group.displayCode,
+            physicalLineageId: group.physicalLineageId ?? null,
+            physicalPosition: group.physicalPosition,
+            riderIds: [...group.riderIds].sort(),
+          }))
+          .sort((left, right) =>
+            left.displayCode.localeCompare(right.displayCode) ||
+            String(left.physicalLineageId).localeCompare(String(right.physicalLineageId)),
+          ),
+      )
+    const samePreFinishPhysicalGroups =
+      physicalIdentityKey(preFinishPublishedDefinition.groups) ===
+      physicalIdentityKey(finalGroups)
+    if (winnerFinishDefinitionIndex >= 0 && samePreFinishPhysicalGroups) {
+      const winnerFinish = eventDefinitions[winnerFinishDefinitionIndex]
+      if (physicalIdentityKey(winnerFinish.groups) !== physicalIdentityKey(finalGroups)) {
+        eventDefinitions[winnerFinishDefinitionIndex] = {
+          ...winnerFinish,
+          groups: finalGroups,
+        }
+      }
+    }
+
     const finalTransitionRiderIds = eligibleStarterIds
       .filter((riderId) => beforeCodes.get(riderId) !== finalCodes.get(riderId))
       .sort()
+    // A physical F-to-P catch recorded in the authoritative final groups must
+    // be described as a catch, rather than an unsupported generic split.
+    // Only use this when every changed rider was in F and actually finishes
+    // inside P; mixed or other group transitions remain ordinary splits.
+    const allTransitionsAreFrontCaughtByPeloton =
+      finalTransitionRiderIds.length > 0 &&
+      finalTransitionRiderIds.every((riderId) =>
+        beforeCodes.get(riderId)?.startsWith('F') === true &&
+        finalCodes.get(riderId) === 'P',
+      )
     if (finalTransitionRiderIds.length > 0) {
       eventDefinitions.push({
         checkpointIdSuffix: 'finish-group-transition',
@@ -30372,8 +30634,8 @@ export function buildUniversalReplayTimeline(
         sortOrder: 990,
         groups: finalGroups,
         energyByRiderId: phase4EnergyByRiderId,
-        eventType: 'group_split',
-        title: 'Final gaps open on the line',
+        eventType: allTransitionsAreFrontCaughtByPeloton ? 'catch' : 'group_split',
+        title: allTransitionsAreFrontCaughtByPeloton ? 'Front group caught on the line' : 'Final gaps open on the line',
         description: `${replayRiderSubject(finalTransitionRiderIds)} ${finalTransitionRiderIds.length === 1 ? 'changes' : 'change'} physical finishing group as the final gaps are established.`,
         riderIds: finalTransitionRiderIds,
         teamIds: Array.from(
@@ -30615,6 +30877,8 @@ const PHASE10_BASE_PROBABILITY_PER_30_SECONDS: Readonly<
   individual_crash: 0.00008,
   group_crash: 0.00008,
   technical_incident: 0.00012,
+  // Only available after sustained low energy and severe accumulated fatigue.
+  exhaustion: 0.003,
 }
 
 const PHASE10_MAXIMUM_PROBABILITY: Readonly<
@@ -30623,6 +30887,7 @@ const PHASE10_MAXIMUM_PROBABILITY: Readonly<
   individual_crash: 0.08,
   group_crash: 0.04,
   technical_incident: 0.05,
+  exhaustion: 0.015,
 }
 
 const PHASE10_GLOBAL_COOLDOWN_SECONDS = 120 as const
@@ -31668,17 +31933,19 @@ export function calculateUniversalPhase10IncidentProbability(
   const tickDurationMultiplier = clamp(input.tickSeconds / 30, 0, 4)
   const weatherMultiplier = clamp(input.weatherMultiplier, 0.7, 2.5)
   const speedThreshold = input.incidentKind === 'group_crash' ? 35 : 40
-  const speedMultiplier = clamp(
-    1 + Math.max(0, input.currentSpeedKmh - speedThreshold) * 0.04,
-    1,
-    3,
-  )
+  const speedMultiplier = input.incidentKind === 'exhaustion'
+    ? 1
+    : clamp(
+        1 + Math.max(0, input.currentSpeedKmh - speedThreshold) * 0.04,
+        1,
+        3,
+      )
   const descentMultiplier =
-    input.gradientPercent < 0
+    input.incidentKind !== 'exhaustion' && input.gradientPercent < 0
       ? clamp(1 + Math.abs(input.gradientPercent) * 0.12, 1, 3.5)
       : 1
   const densityMultiplier =
-    input.incidentKind === 'technical_incident'
+    input.incidentKind === 'technical_incident' || input.incidentKind === 'exhaustion'
       ? 1
       : input.incidentKind === 'individual_crash'
         ? clamp(1 + Math.max(0, input.groupSize - 10) * 0.03, 1, 2)
@@ -31942,7 +32209,7 @@ function phase10CrashHealthOutcome(
     persistentAction: 'none',
     source: 'universal_phase10_crash_health_handoff_v1',
   })
-  if (incidentKind === 'technical_incident') {
+  if (incidentKind === 'technical_incident' || incidentKind === 'exhaustion') {
     return noInjury(phase10DeterministicRoll(md5Hex(`${deterministicHash}:health:${riderId}`)))
   }
 
@@ -32144,6 +32411,7 @@ function phase10TimeLossRange(
   severity: UniversalPhase10IncidentSeverity,
   technicalType: UniversalPhase10TechnicalIncidentType | null,
 ): readonly [number, number] {
+  if (kind === 'exhaustion') return [0, 0]
   if (kind === 'individual_crash') {
     return severity === 'minor' ? [15, 35] : severity === 'moderate' ? [36, 90] : [91, 180]
   }
@@ -32169,6 +32437,7 @@ function phase10IncidentEnergyLoss(
   kind: UniversalPhase10IncidentKind,
   timeLossSeconds: number,
 ): number {
+  if (kind === 'exhaustion') return 0
   const kindFactor =
     kind === 'technical_incident' ? 0.5 : kind === 'group_crash' ? 0.85 : 1
   return deterministicRound(
@@ -32853,6 +33122,8 @@ export function resolveUniversalPhase10Incidents({
       normalizedWeatherCondition,
     )
   const incidents: UniversalPhase10IncidentRecord[] = []
+  // Exhaustion requires continuous low-energy exposure, not a single finish reading.
+  const lowEnergySinceSecondByRiderId = new Map<string, number>()
   const nextRiderEligibleSecondById = new Map<string, number>()
   const nextRiderEligibleKmById = new Map<string, number>()
   const permanentlyUnavailableRiderIds = new Set<string>()
@@ -33138,6 +33409,64 @@ export function resolveUniversalPhase10Incidents({
         0,
         100,
       )
+      // Race-specific inability to continue, not a stage-finish energy threshold.
+      // Allow recovery if energy rises; never abandon in the final sprint.
+      const severeDepletion =
+        input.stage.stageFormat === 'road_race' &&
+        input.stage.distanceKm >= 60 &&
+        progressFraction >= 0.35 &&
+        progressFraction < 0.99 &&
+        state.energy <= 15 &&
+        runtimeFatigue >= 83
+      if (!severeDepletion) {
+        lowEnergySinceSecondByRiderId.delete(state.riderId)
+      } else {
+        if (!lowEnergySinceSecondByRiderId.has(state.riderId)) {
+          lowEnergySinceSecondByRiderId.set(state.riderId, raceSecond)
+        }
+        const depletionSeconds =
+          raceSecond - (lowEnergySinceSecondByRiderId.get(state.riderId) ?? raceSecond)
+        if (depletionSeconds >= 240) {
+          const terrainStress =
+            gradient >= 3 ? 1.8 :
+            input.stage.terrainType === 'mountain' ? 1.5 :
+            input.stage.terrainType === 'cobbled' ? 1.2 : 1
+          const probability = calculateUniversalPhase10IncidentProbability({
+            incidentKind: 'exhaustion',
+            tickSeconds: 30,
+            weatherMultiplier,
+            currentSpeedKmh: baseAverageSpeedKmh,
+            gradientPercent: gradient,
+            groupSize,
+            runtimeFatigue,
+            resistance: rider.resistance,
+            raceIq: rider.raceIQ,
+            preparationSupportMultiplier: supportMultiplier,
+            commandIntensityMultiplier: commandIntensity,
+            raceSituationMultiplier: terrainStress,
+          })
+          const hash = md5Hex([
+            input.engine.deterministicSeed, input.race.raceId,
+            input.stage.stageId, 'phase10', 'exhaustion',
+            incidents.length, raceSecond, state.riderId,
+          ].join('|'))
+          const roll = phase10DeterministicRoll(hash)
+          if (roll < probability.finalProbability) {
+            candidates.push({
+              kind: 'exhaustion',
+              entityId: state.riderId,
+              riderIds: [state.riderId],
+              teamIds: [state.teamId],
+              sourceDisplayCode: state.displayCode,
+              probability, roll, hash,
+              causes: ['sustained_energy_depletion', 'runtime_fatigue'],
+              runtimeFatigue,
+              equipmentConditionPercent: condition,
+              mechanicalTimeLossMultiplier: 1,
+            })
+          }
+        }
+      }
       ;(['individual_crash', 'technical_incident'] as const).forEach((kind) => {
         if (
           kind === 'individual_crash' &&
@@ -33376,7 +33705,9 @@ export function resolveUniversalPhase10Incidents({
           )
         : null
     const severity =
-      selected.kind === 'technical_incident'
+      selected.kind === 'exhaustion'
+        ? 'serious' as const
+        : selected.kind === 'technical_incident'
         ? phase10TechnicalSeverity(
             selected.probability,
             md5Hex(`${selected.hash}|severity`),
@@ -33438,7 +33769,21 @@ export function resolveUniversalPhase10Incidents({
         const healthDnf =
           healthOutcome.currentStageContinuation === 'dnf' &&
           !teamTimeTrialFormat
-        const statusImpact: 'finished' | 'dnf' = healthDnf ? 'dnf' : 'finished'
+        // A severe mechanical breakdown on critically worn equipment can
+        // independently force a withdrawal. This is not a medical injury and
+        // uses a separate deterministic draw so identical race seeds replay.
+        // Normal punctures and repairable incidents still permit continuing.
+        const mechanicalDnf =
+          selected.kind === 'technical_incident' &&
+          severity === 'serious' &&
+          selected.equipmentConditionPercent < 25 &&
+          !teamTimeTrialFormat &&
+          phase10DeterministicRoll(
+            md5Hex(`${selected.hash}:irreparable-mechanical:${riderId}`),
+          ) < 0.3
+        const statusImpact: 'finished' | 'dnf' =
+          healthDnf || mechanicalDnf || selected.kind === 'exhaustion'
+            ? 'dnf' : 'finished'
         const createsPhysicalRoadSeparation =
           input.stage.stageFormat === 'road_race' &&
           statusImpact === 'finished' &&
@@ -33493,13 +33838,17 @@ export function resolveUniversalPhase10Incidents({
       },
     )
     const incidentType =
-      selected.kind === 'technical_incident'
+      selected.kind === 'exhaustion'
+        ? 'exhaustion'
+        : selected.kind === 'technical_incident'
         ? technicalType ?? 'technical_incident'
         : weatherRelated
           ? `weather_related_${selected.kind}`
           : selected.kind
     const title =
-      selected.kind === 'individual_crash'
+      selected.kind === 'exhaustion'
+        ? 'Rider abandons from exhaustion'
+        : selected.kind === 'individual_crash'
         ? 'Rider crash'
         : selected.kind === 'group_crash'
           ? 'Group crash'
@@ -33525,7 +33874,9 @@ export function resolveUniversalPhase10Incidents({
     const affectedLabels = affectedRiderIds.map(riderTeamLabel)
     const roundedIncidentKm = Math.round(kmFromStart)
     const description =
-      selected.kind === 'group_crash'
+      selected.kind === 'exhaustion'
+        ? `${affectedLabels[0]} abandons from sustained exhaustion after ${roundedIncidentKm} km; energy reserves and accumulated fatigue prevent continuing.`
+        : selected.kind === 'group_crash'
         ? `Group crash at ${roundedIncidentKm} km involving ${affectedLabels.join(', ')}. All ${affectedRiderIds.length} affected riders lose ${timeLossSeconds} seconds${dnfCount > 0 ? `; ${dnfCount} rider${dnfCount === 1 ? '' : 's'} abandon` : ''}.`
         : selected.kind === 'individual_crash'
           ? `${affectedLabels[0]} crashes at ${roundedIncidentKm} km and loses ${timeLossSeconds} seconds${dnfCount > 0 ? '; the rider abandons the race' : ''}.`
@@ -34587,9 +34938,71 @@ export function resolveUniversalPhase10Incidents({
       }
     },
   )
+  // Phase 10 may adjudicate genuine incident-induced finish groups after the
+  // base replay has already published winner-finish. Make that physical finish
+  // transition explicit before final-results instead of silently changing the
+  // road state when ranks and times become visible.
+  const physicallyEqual = (
+    left: readonly UniversalReplayGroupState[],
+    right: readonly UniversalReplayGroupState[],
+  ): boolean => JSON.stringify(left.map(g => ({
+    displayCode:g.displayCode,physicalLineageId:g.physicalLineageId ?? null,
+    physicalPosition:g.physicalPosition,riderIds:[...g.riderIds].sort(),
+  })).sort((a,b)=>a.displayCode.localeCompare(b.displayCode))) ===
+    JSON.stringify(right.map(g => ({
+      displayCode:g.displayCode,physicalLineageId:g.physicalLineageId ?? null,
+      physicalPosition:g.physicalPosition,riderIds:[...g.riderIds].sort(),
+    })).sort((a,b)=>a.displayCode.localeCompare(b.displayCode)))
+  const synchronizedFinishCheckpoints: UniversalReplayCheckpoint[] = []
+  for (const checkpoint of replayCheckpoints) {
+    const previous = synchronizedFinishCheckpoints.at(-1)
+    if (
+      input.stage.stageFormat === 'road_race' &&
+      checkpoint.finalResultsVisible && previous &&
+      Math.abs(previous.raceProgress.kmFromStart - input.stage.distanceKm) <= 0.000001 &&
+      !physicallyEqual(previous.groups, checkpoint.groups)
+    ) {
+      const priorCodes = new Map(previous.groups.flatMap(g=>g.riderIds.map(id=>[id,g.displayCode] as const)))
+      const finalCodes = new Map(checkpoint.groups.flatMap(g=>g.riderIds.map(id=>[id,g.displayCode] as const)))
+      const changedRiderIds = input.riders.map(r=>r.riderId)
+        .filter(id=>priorCodes.get(id)!==finalCodes.get(id)).sort()
+      synchronizedFinishCheckpoints.push({
+        ...previous,
+        checkpointId:`${input.stage.stageId}|replay|phase10-finish-group-transition`,
+        groups:checkpoint.groups,
+        gaps:checkpoint.gaps.map(g=>({...g,officialTimeSeconds:null})),
+        riderStates:previous.riderStates.map(state=>{
+          const group=checkpoint.groups.find(g=>g.riderIds.includes(state.riderId))
+          const gap=checkpoint.gaps.find(g=>g.displayCode===group?.displayCode)
+          return {...state,groupCode:group?.groupCode??null,
+            displayCode:group?.displayCode??null,
+            gapSeconds:gap?.gapSeconds??null,
+            officialTimeSeconds:null,finishRank:null}
+        }),
+        commentary:[{
+          commentaryId:`${input.stage.stageId}:phase10-finish-physical-transition`,
+          eventType:'group_split',title:'Final gaps open on the line',
+          description:'The incident-adjusted physical finish groups are confirmed on the line.',
+          riderIds:changedRiderIds,
+          teamIds:Array.from(new Set(changedRiderIds.map(id=>riderById.get(id)?.teamId)
+            .filter((id):id is string=>Boolean(id)))).sort(),
+        }],
+      })
+    }
+    synchronizedFinishCheckpoints.push(checkpoint)
+  }
   const replayTimeline: UniversalReplayTimeline = {
     ...phase10SourceReplayTimeline,
-    checkpoints: replayCheckpoints,
+    checkpoints: synchronizedFinishCheckpoints.map((checkpoint, checkpointIndex) => ({
+      ...checkpoint,
+      checkpointIndex,
+      checkpointKind: checkpoint.checkpointId.endsWith('|replay|phase10-finish-group-transition')
+        ? 'event' as const : checkpoint.checkpointKind,
+    })),
+    eventCheckpointCount: synchronizedFinishCheckpoints.filter(checkpoint =>
+      checkpoint.checkpointKind === 'event' ||
+      checkpoint.checkpointId.endsWith('|replay|phase10-finish-group-transition'),
+    ).length,
   }
 
   const statusByRiderId = Object.fromEntries(
@@ -35650,6 +36063,7 @@ export function buildUniversalReplaySynchronizationSummary(
   const openingBreakawayRiderIdSet = new Set(openingBreakawayRiderIds)
   let expectedBreakawayRiderIds = [...openingBreakawayRiderIds]
   let openingCatchSeen = false
+  const physicallyDroppedFromOpening = new Set<string>()
 
   if (openingFormationCheckpoint && openingBreakawayRiderIds.length === 0) {
     openingBreakawayLineageStable = false
@@ -35738,6 +36152,26 @@ export function buildUniversalReplaySynchronizationSummary(
      * compares the riders who are physically available to the front group at
      * this exact kilometre.
      */
+    const newlyDocumentedPhysicalDropouts = new Set(
+      checkpoint.commentary
+        .filter((entry) => entry.eventType === 'group_split')
+        .flatMap((entry) => entry.riderIds)
+        .filter((riderId) => {
+          const current = checkpoint.riderStates.find((row) => row.riderId === riderId)
+          const previous = replayTimeline.checkpoints[checkpointIndex-1]
+            ?.riderStates.find((row) => row.riderId === riderId)
+          const confirmedContactLoss = roadRaceResolution?.phase4Finish?.riderStates
+            .some((row) => row.riderId === riderId &&
+              row.contactLossKm !== null &&
+              row.contactLossKm <= checkpoint.raceProgress.kmFromStart+0.00001)
+          return current?.displayCode?.startsWith('C') === true &&
+            ((current.liveEnergyPercent <= 5.0001 &&
+              previous?.displayCode !== current.displayCode) || confirmedContactLoss)
+        }),
+    )
+    newlyDocumentedPhysicalDropouts.forEach((id) => {
+      if (expectedBreakawayRiderIds.includes(id)) physicallyDroppedFromOpening.add(id)
+    })
     const activeIncidentSeparatedRiderIds = new Set(
       phase10Incidents.incidents.flatMap((incident) =>
         incident.riderConsequences
@@ -35793,11 +36227,11 @@ export function buildUniversalReplaySynchronizationSummary(
       const originalRidersStillPresent = openingBreakawayRiderIds.every(
         (riderId) =>
           breakawayRiderIds.includes(riderId) ||
-          activeIncidentSeparatedRiderIds.has(riderId),
+          (activeIncidentSeparatedRiderIds.has(riderId) || physicallyDroppedFromOpening.has(riderId)),
       )
       const expectedBreakawayRiderIdsPresent =
         expectedBreakawayRiderIds.filter(
-          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId),
+          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId) && !physicallyDroppedFromOpening.has(riderId),
         )
       if (breakawayGroups.length !== 1 || !originalRidersStillPresent) {
         openingBreakawayLineageStable = false
@@ -36241,7 +36675,7 @@ export function buildUniversalReplaySynchronizationSummary(
           bridgeMergeTransition ||
           incidentRejoinTransition
       } else if (previousIsOpeningBreakaway) {
-        transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
+        transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId) || newlyDocumentedPhysicalDropouts.has(riderId)
       } else if (previousIsLateFront && currentIsPeloton) {
         transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
       } else if (previousIsPeloton && currentIsLateFront) {
