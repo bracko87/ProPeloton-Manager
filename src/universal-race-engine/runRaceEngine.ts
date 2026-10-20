@@ -30360,6 +30360,62 @@ export function buildUniversalReplayTimeline(
     })
     return result
   }
+  // Reconcile physically calculated B/P/F -> C losses with the event timeline.
+  // Inspect the actual road-group model instead of inventing a split at the
+  // next routine chase checkpoint. A binary search locates the first point
+  // where the rider's authoritative group has changed.
+  const physicalChaseDropGroupsAt = (km: number) => groupsAtKm(km)
+  const groupOfRiderAt = (riderId: string, km: number): string | null =>
+    physicalChaseDropGroupsAt(km).find((g) => g.riderIds.includes(riderId))
+      ?.displayCode ?? null
+  const physicalDropProbeKms = Array.from(new Set([
+    phase4.phaseBoundary.startKm,
+    ...eventDefinitions.map((d) => d.kmFromStart)
+      .filter((km) => km >= phase4.phaseBoundary.startKm),
+    stageDistanceKm - 0.00002,
+  ])).sort((a,b) => a-b)
+  const alreadyAnnouncedAt = (riderId: string, km: number): boolean =>
+    eventDefinitions.some((d) =>
+      d.eventType === 'group_split' &&
+      d.riderIds.includes(riderId) &&
+      Math.abs(d.kmFromStart - km) <= 0.00001)
+  eligibleStarterIds.forEach((riderId) => {
+    for (let j=1; j<physicalDropProbeKms.length; j++) {
+      const fromKm = physicalDropProbeKms[j-1]
+      const toKm = physicalDropProbeKms[j]
+      const from = groupOfRiderAt(riderId,fromKm)
+      const to = groupOfRiderAt(riderId,toKm)
+      if (!(from?.startsWith('B') || from?.startsWith('F') || from === 'P')
+          || !to?.startsWith('C')) continue
+      let low=fromKm,high=toKm
+      for(let z=0;z<28;z++){
+        const mid=(low+high)/2
+        if(groupOfRiderAt(riderId,mid)?.startsWith('C'))high=mid
+        else low=mid
+      }
+      const crossing=deterministicRound(Math.min(stageDistanceKm-0.00002,
+        high+0.00002),6)
+      if (alreadyAnnouncedAt(riderId,crossing)) break
+      const resolved=groupOfRiderAt(riderId,crossing)
+      if (!resolved?.startsWith('C')) break
+      eventDefinitions.push({
+        checkpointIdSuffix: `physical-energy-detachment-${riderId}`,
+        checkpointKind: 'event',
+        phase: 4,
+        kmFromStart: crossing,
+        sortOrder: 675,
+        groups: groupsAtKm(crossing),
+        energyByRiderId: energyAtKm(4,crossing),
+        eventType: 'group_split',
+        title: 'Rider loses contact',
+        description: `${replayRiderSubject([riderId])} physically loses contact with the group.`,
+        riderIds: [riderId],
+        teamIds: riderById.get(riderId)?.teamId ? [riderById.get(riderId)!.teamId] : [],
+      })
+      break
+    }
+  })
+
   const preFinishPublishedDefinition = [...baseDefinitions, ...eventDefinitions]
     .filter((definition) => definition.kmFromStart < stageDistanceKm - 0.000001)
     .sort(
