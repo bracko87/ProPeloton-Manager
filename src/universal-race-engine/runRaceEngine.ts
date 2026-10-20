@@ -16783,7 +16783,10 @@ export function resolveRoadPhase4Finish(
     const holdWindow = majorHighMountainSelection
       ? clamp(3.25 - effort.hardness * 0.75, 1.75, 3.25)
       : hillyAttrition
-        ? clamp(12 - effort.hardness * 5, 6, 12)
+        // Short hilly climbs should separate weak climbers without using
+        // high-mountain selection. A 10s+ score margin masked the entire
+        // 40-to-80 climbing-ability spread even on successive 5% climbs.
+        ? clamp(8 - effort.hardness * 5, 4, 8)
         : clamp(10.5 - effort.hardness * 7, 3.5, 10.5)
     const requiredHoldScore = deterministicRound(
       calibratedSummit ? summitCalibration!.requiredHoldScore : referenceHoldScore - holdWindow,

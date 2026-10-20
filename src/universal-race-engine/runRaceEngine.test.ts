@@ -18144,7 +18144,6 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     const hillySelections = hilly.roadRaceResolution.phase4Finish!.profileClimbSelections
     const mediumSelections = medium.roadRaceResolution.phase4Finish!.profileClimbSelections
     const hardSelections = hard.roadRaceResolution.phase4Finish!.profileClimbSelections
-
     expect(flatSelections).toHaveLength(0)
     expect(hillySelections).toHaveLength(2)
     expect(mediumSelections).toHaveLength(1)
