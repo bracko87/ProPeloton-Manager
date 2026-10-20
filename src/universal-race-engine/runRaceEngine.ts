@@ -30730,7 +30730,7 @@ const PHASE10_BASE_PROBABILITY_PER_30_SECONDS: Readonly<
   group_crash: 0.00008,
   technical_incident: 0.00012,
   // Only available after sustained low energy and severe accumulated fatigue.
-  exhaustion: 0.002,
+  exhaustion: 0.003,
 }
 
 const PHASE10_MAXIMUM_PROBABILITY: Readonly<
@@ -33267,8 +33267,8 @@ export function resolveUniversalPhase10Incidents({
         input.stage.stageFormat === 'road_race' &&
         input.stage.distanceKm >= 60 &&
         progressFraction >= 0.35 &&
-        progressFraction < 0.96 &&
-        state.energy <= 8 &&
+        progressFraction < 0.99 &&
+        state.energy <= 15 &&
         runtimeFatigue >= 83
       if (!severeDepletion) {
         lowEnergySinceSecondByRiderId.delete(state.riderId)
@@ -33278,7 +33278,7 @@ export function resolveUniversalPhase10Incidents({
         }
         const depletionSeconds =
           raceSecond - (lowEnergySinceSecondByRiderId.get(state.riderId) ?? raceSecond)
-        if (depletionSeconds >= 600) {
+        if (depletionSeconds >= 240) {
           const terrainStress =
             gradient >= 3 ? 1.8 :
             input.stage.terrainType === 'mountain' ? 1.5 :
