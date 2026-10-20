@@ -37960,6 +37960,18 @@ export function runRaceEngine(
   const replayPublicationPolicy =
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
+  if (!replayPublicationPolicy.publishable && input.engine.deterministicSeed.includes('39')) {
+    const watchIds = ['expanded-rider-10','expanded-rider-22','expanded-rider-16']
+    console.log('SLICE22_REPLAY_TRACE',JSON.stringify(replayTimeline.checkpoints.filter((c) =>
+      /late-chase-step-2[234]|phase4-energy-contact-loss-1|race-status-95|winner-finish|late-chase-step-22|late-chase-start/.test(c.checkpointId)
+    ).map((c) => ({
+      id:c.checkpointId,
+      km:c.raceProgress.kmFromStart,
+      events:c.commentary.map((x)=>({type:x.eventType,title:x.title})),
+      groups:c.groups.filter((g)=>g.displayCode==='B1'||g.displayCode.startsWith('C')||g.displayCode==='P').map((g)=>({code:g.displayCode,lineage:g.physicalLineageId,riders:g.riderIds})),
+      watched:c.riderStates.filter((r)=>watchIds.includes(r.riderId)).map((r)=>({id:r.riderId,code:r.displayCode,energy:r.liveEnergyPercent}))
+    }))))
+  }
   if (!replayPublicationPolicy.publishable) {
     throw new Error(
       `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
