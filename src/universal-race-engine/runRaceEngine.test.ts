@@ -15107,44 +15107,23 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
 
 
   it('moves every live sub-5% rider out of B, F and P instead of showing impossible group contact', () => {
+    // The original 45-fatigue fixture never reaches sub-5% live energy.
+    // Keep the field's baseline at 65 and make only one non-attacking rider
+    // more fatigued, so the replay exercises a genuine C-group detachment
+    // without disrupting physical opening attacks or suppressing validation.
+    const baseline = createPhase11hLateClimbEnergyInput(65)
+    const lowReserveInput: UniversalRaceEngineInput = {
+      ...baseline,
+      riders: baseline.riders.map((rider) =>
+        rider.riderId === 'expanded-rider-22'
+          ? { ...rider, fatigueBeforeStage: 75 }
+          : rider,
+      ),
+    }
     const results = [
-      runRaceEngine(createPhase11hLateClimbEnergyInput(45)),
+      runRaceEngine(lowReserveInput),
       runRaceEngine(createPhase11gMixedStressInput(5)),
     ]
-    // Slice 16 diagnostic only; remove before merging.
-    const energyProbe = [67, 70, 72, 75, 78, 80, 85, 90].map((riderFatigue) => {
-      try {
-        const base = createPhase11hLateClimbEnergyInput(65)
-        const input = {
-          ...base,
-          riders: base.riders.map((rider) =>
-            rider.riderId === 'expanded-rider-22'
-              ? { ...rider, fatigueBeforeStage: riderFatigue }
-              : rider,
-          ),
-        }
-        const probeResult = runRaceEngine(input)
-        const states = probeResult.replayTimeline.checkpoints
-          .filter((cp) => !cp.finalResultsVisible && cp.raceProgress.kmFromStart > 0)
-          .flatMap((cp) => cp.riderStates)
-          .filter((state) => state.status === 'racing' && state.displayCode !== null)
-        const min = states.reduce(
-          (best, state) => state.energy < best.energy ? state : best,
-          states[0],
-        )
-        const below5 = states.filter((s) => s.energy > 0.000001 && s.energy < 5 - 0.000001)
-        return {
-          riderFatigue,
-          minEnergy: min?.energy ?? null,
-          minRider: min?.riderId ?? null,
-          validSub5: below5.length,
-          sub5Codes: [...new Set(below5.map((s) => s.riderId + ':' + s.displayCode))].slice(0, 10),
-        }
-      } catch (error) {
-        return { riderFatigue, error: String(error).slice(0, 360) }
-      }
-    })
-    console.error('SLICE16_SINGLE_RIDER_PROBE=' + JSON.stringify(energyProbe))
     let inspectedLowReserveStates = 0
 
     results.forEach((result) => {
@@ -15168,6 +15147,7 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
               expect(state.displayCode).not.toBe('P')
               expect(state.displayCode?.startsWith('B')).toBe(false)
               expect(state.displayCode?.startsWith('F')).toBe(false)
+              expect(state.displayCode?.startsWith('C')).toBe(true)
             })
         })
     })
