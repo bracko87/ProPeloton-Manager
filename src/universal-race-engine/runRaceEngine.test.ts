@@ -18911,4 +18911,108 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     }
   })
 
+
+  it('audits 72 to 160 synthetic riders for realistic French Tour summit time gaps', () => {
+    // Stored French Tour 2000 elevations and distances, synthetic 72/96/160-rider
+    // field, isolated fixture IDs. No Supabase or official race writes.
+    const violations: string[] = []
+    const stages = [
+      {
+        number: 5, name: 'Hautacam', distance: 171.5, elevation: 3650,
+        elevationPoints: [[0,180],[16,240],[35,620],[43,450],[60,520],
+          [75,880],[86,1370],[102,720],[116,920],[128,1480],
+          [144,820],[158,760],[164,1050],[168,1300],[171.5,1520]],
+      },
+      {
+        number: 16, name: 'Mont Ventoux', distance: 171.5, elevation: 2929,
+        elevationPoints: [[0,35],[40,55],[50,55],[90,95],[100,95],
+          [110,100],[140,120],[150.5,300],[159.5,900],[171.5,1909]],
+      },
+      {
+        number: 19, name: 'La Plagne', distance: 93.1, elevation: 3431,
+        elevationPoints: [[0,350],[8,360],[18,500],[30,1748],[37,1200],
+          [42,1100],[54,1968],[64,820],[70,750],[74,700],
+          [81.1,850],[93.1,2052]],
+      },
+    ] as const
+    for (const stage of stages) {
+      for (const fieldSize of [72, 96, 160]) {
+      const base = createExpandedFieldInput(fieldSize)
+      const stageId = `simulation-only-french-tour-stage-${stage.number}`
+      const input: UniversalRaceEngineInput = {
+        ...base,
+        engine: {
+          ...base.engine,
+          deterministicSeed: `french-2000-summit-calibration-${stage.number}`,
+        },
+        race: { raceId: 'simulation-only-french-tour-2000', raceType: 'stage_race', stageCount: 21 },
+        stage: {
+          ...base.stage,
+          raceId: 'simulation-only-french-tour-2000',
+          stageId,stageNumber:stage.number,stageFormat:'road_race',
+          terrainType:'mountain',finishType:'summit_finish',profileType:'climber',
+          distanceKm:stage.distance,elevationGainM:stage.elevation,
+          summitFinish:true,summitFinishSelectivityV1:true,
+          terrainPercentages:{flat:12,hilly:18,mountain:70,cobbled:0},
+          profilePoints:stage.elevationPoints.map(([km,elevationM])=>({km,elevationM})),
+        },
+        points:base.points.map((point)=>({
+          ...point, stageId,
+          kmFromStart: point.pointType==='FINISH'
+            ? stage.distance
+            : point.pointType==='KOM' ? stage.distance*.64
+              : point.pointType==='INTERMEDIATE_SPRINT' ? stage.distance*.34 : 0,
+        })),
+      }
+      const result=runRaceEngine(input)
+      expect(result.validationPassed,stage.name).toBe(true)
+      expect(result.finishResolution.complete,stage.name).toBe(true)
+      expect(result.finishResolution.winnerRiderId,stage.name).toBeTruthy()
+      expect(result.replaySynchronization.synchronized,stage.name).toBe(true)
+      const finishing=result.finishResolution.classification
+        .filter((row)=>row.status==='finished')
+      const winnerTime=Math.min(...finishing.map((row)=>row.officialTimeSeconds??Infinity))
+      expect(Number.isFinite(winnerTime),stage.name).toBe(true)
+      expect(finishing.every((row)=>(row.officialTimeSeconds??0)>=winnerTime),stage.name).toBe(true)
+      const climbSelections=result.roadRaceResolution.phase4Finish!.profileClimbSelections
+      expect(climbSelections.length,stage.name).toBeGreaterThan(0)
+      expect(climbSelections.some((selection)=>Math.abs(selection.kmEnd-stage.distance)<.56),stage.name).toBe(true)
+      const topTen=finishing
+        .slice()
+        .sort((left,right)=>(left.officialTimeSeconds??Infinity)-(right.officialTimeSeconds??Infinity)||left.riderId.localeCompare(right.riderId))
+        .slice(0,10)
+        .map((row)=>({riderId:row.riderId,gapSeconds:Math.round((row.officialTimeSeconds??winnerTime)-winnerTime)}))
+      const frontGroup=finishing.filter((row)=>Math.abs((row.officialTimeSeconds??Infinity)-winnerTime)<.5).length
+      const groupedFinishingTimes = new Map<number, number>()
+      for (const row of finishing) {
+        const gap = Math.round((row.officialTimeSeconds ?? winnerTime) - winnerTime)
+        groupedFinishingTimes.set(gap, (groupedFinishingTimes.get(gap) ?? 0) + 1)
+      }
+      const timeGroups = [...groupedFinishingTimes.entries()]
+        .sort(([a], [b]) => a - b)
+        .map(([gapSeconds, riders]) => ({gapSeconds, riders}))
+      const largestTimeGroup = Math.max(...timeGroups.map((group) => group.riders))
+      const soloFinishers = timeGroups.filter((group) => group.riders === 1).length
+      const maxGapSeconds = timeGroups[timeGroups.length - 1]?.gapSeconds ?? 0
+      const winnerGroupLimit = Math.max(5, Math.ceil(fieldSize * 0.12))
+      if (frontGroup > winnerGroupLimit) {
+        violations.push(`${stage.name} / ${fieldSize}: ${frontGroup} same-time winners exceed ${winnerGroupLimit}`)
+      }
+      if (timeGroups.length < 5) {
+        violations.push(`${stage.name} / ${fieldSize}: only ${timeGroups.length} distinct finishing time groups`)
+      }
+      expect(timeGroups.reduce((sum, group) => sum + group.riders, 0), stage.name).toBe(finishing.length)
+      console.info('FRENCH_TOUR_FULL_FIELD_AUDIT',JSON.stringify({
+        name:stage.name,syntheticField:input.riders.length,
+        finished:finishing.length,frontGroup,topTen,
+        distinctTimeGroups:timeGroups.length,soloFinishers,largestTimeGroup,maxGapSeconds,
+        timeGroups,
+        profilePhysicalSelections:climbSelections.length,
+        replaySynchronized:result.replaySynchronization.synchronized,
+      }))
+      }
+    }
+    expect(violations).toEqual([])
+  })
+
 })
