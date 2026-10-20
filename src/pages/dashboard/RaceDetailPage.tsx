@@ -925,7 +925,7 @@ function RaceTitleFlag({ code }: { code?: string | null }) {
 
   if (!flagUrl || !normalized || hasError) {
     return (
-      <span className="inline-block h-4 w-6 shrink-0 rounded border border-slate-200 bg-slate-100" />
+      <span className="inline-block h-7 w-11 shrink-0 rounded border border-slate-200 bg-slate-100" />
     )
   }
 
@@ -934,7 +934,7 @@ function RaceTitleFlag({ code }: { code?: string | null }) {
       src={flagUrl}
       alt={normalized}
       title={normalized}
-      className="inline-block h-4 w-6 shrink-0 rounded border border-slate-200 object-cover"
+      className="inline-block h-7 w-11 shrink-0 rounded border border-slate-200 object-cover"
       loading="lazy"
       onError={() => setHasError(true)}
     />
