@@ -377,58 +377,57 @@ function createExpandedFieldInput(riderCount = 26): UniversalRaceEngineInput {
 
 
 const statuses = ['finished', 'dnf', 'dns', 'otl', 'dsq'] as const
-const terrainConfigs = {
-  flat: {finishType:'flat_finish', profileType:'sprinter', elevationGainM:500, terrainPercentages:{flat:80,hilly:15,mountain:5,cobbled:0}},
-  hilly: {finishType:'uphill_finish', profileType:'puncheur', elevationGainM:1700, terrainPercentages:{flat:35,hilly:55,mountain:10,cobbled:0}},
-  mountain: {finishType:'summit_finish', profileType:'climber', elevationGainM:3500, terrainPercentages:{flat:10,hilly:20,mountain:70,cobbled:0}},
-  cobbled: {finishType:'cobbled_finish', profileType:'classics', elevationGainM:900, terrainPercentages:{flat:45,hilly:20,mountain:5,cobbled:30}},
+const terrains = {
+  flat: {finishType:'flat_finish',profileType:'sprinter',elevationGainM:500,terrainPercentages:{flat:80,hilly:15,mountain:5,cobbled:0}},
+  hilly: {finishType:'uphill_finish',profileType:'puncheur',elevationGainM:1700,terrainPercentages:{flat:35,hilly:55,mountain:10,cobbled:0}},
+  mountain: {finishType:'summit_finish',profileType:'climber',elevationGainM:3500,terrainPercentages:{flat:10,hilly:20,mountain:70,cobbled:0}},
+  cobbled: {finishType:'cobbled_finish',profileType:'classics',elevationGainM:900,terrainPercentages:{flat:45,hilly:20,mountain:5,cobbled:30}},
 } as const
-
-describe('Issue #139 — read-only DNF/DNS pilot incidence', () => {
-  it('reports seeded terrain/field status distributions without asserting invented realism thresholds', () => {
-    const summary: Array<Record<string, number | string>> = []
-    for (const terrain of Object.keys(terrainConfigs) as Array<keyof typeof terrainConfigs>) {
-      for (const fieldSize of [48,72,96]) {
-        const totals: Record<(typeof statuses)[number],number> = {finished:0,dnf:0,dns:0,otl:0,dsq:0}
-        let zeroDnf = 0
-        for (let seedIndex=0;seedIndex<3;seedIndex++) {
-          const base = createExpandedFieldInput(fieldSize)
-          const config = terrainConfigs[terrain]
-          const id = `audit139-${terrain}-${fieldSize}-${seedIndex}`
-          const input: UniversalRaceEngineInput = {
-            ...base,
-            engine:{...base.engine,deterministicSeed:id},
-            race:{...base.race,raceId:id},
-            stage:{
-              ...base.stage,raceId:id,stageId:`${id}-stage`,
-              terrainType:terrain,finishType:config.finishType,profileType:config.profileType,
-              elevationGainM:config.elevationGainM,terrainPercentages:config.terrainPercentages,
-              profilePoints:[
-                {km:0,elevationM:20},{km:45,elevationM:terrain==='mountain'?800:160},
-                {km:90,elevationM:terrain==='mountain'?1600:330},
-                {km:120,elevationM:terrain==='mountain'?1950:50},
-              ],
-            },
-            points:base.points.map(p=>({...p,stageId:`${id}-stage`})),
-          }
-          const result = runRaceEngine(input)
-          expect(result.validationPassed).toBe(true)
-          expect(result.replaySynchronization.synchronized).toBe(true)
-          const rows = result.finishResolution.classification
-          expect(rows.length).toBe(fieldSize)
-          const ids = new Set(rows.map(row=>row.riderId))
-          expect(ids.size).toBe(fieldSize)
-          const counts: Record<string,number> = {}
-          for(const row of rows){
-            expect(statuses).toContain(row.status)
-            counts[row.status] = (counts[row.status] ?? 0)+1
-            totals[row.status as (typeof statuses)[number]]++
-          }
-          if((counts.dnf ?? 0)===0)zeroDnf++
+const cohorts = ['baseline','fatigued','windy','rainy','combined'] as const
+describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
+  it('measures terrain, fatigue and weather separately without imposing withdrawal targets',()=>{
+    const summary: Array<Record<string,number|string>>=[]
+    for(const cohort of cohorts) for(const terrain of Object.keys(terrains) as Array<keyof typeof terrains>) for(const fieldSize of [48,72,96]){
+      const totals:Record<(typeof statuses)[number],number>={finished:0,dnf:0,dns:0,otl:0,dsq:0}
+      let zeroDnf=0
+      for(let seedIndex=0;seedIndex<3;seedIndex++){
+        const base=createExpandedFieldInput(fieldSize)
+        const config=terrains[terrain]
+        const id=`audit139-${cohort}-${terrain}-${fieldSize}-${seedIndex}`
+        const fatigued=cohort==='fatigued'||cohort==='combined'
+        const windy=cohort==='windy'||cohort==='combined'
+        const rainy=cohort==='rainy'||cohort==='combined'
+        const input:UniversalRaceEngineInput={
+          ...base,
+          engine:{...base.engine,deterministicSeed:id},
+          race:{...base.race,raceId:id},
+          stage:{...base.stage,raceId:id,stageId:`${id}-stage`,terrainType:terrain,
+            finishType:config.finishType,profileType:config.profileType,elevationGainM:config.elevationGainM,
+            terrainPercentages:config.terrainPercentages,
+            profilePoints:[{km:0,elevationM:20},{km:45,elevationM:terrain==='mountain'?800:160},
+              {km:90,elevationM:terrain==='mountain'?1600:330},{km:120,elevationM:terrain==='mountain'?1950:50}]},
+          points:base.points.map(p=>({...p,stageId:`${id}-stage`})),
+          riders:base.riders.map(r=>fatigued?{...r,fatigueBeforeStage:75,startStamina:55}:r),
+          weather:{...base.weather!,condition:rainy?'rain':windy?'sunny_windy':'clear',
+            windKmh:windy?35:12,precipitationMm:rainy?8:0,rainProbabilityPct:rainy?95:10},
         }
-        summary.push({terrain,fieldSize,simulations:3,startingList:fieldSize*3,...totals,zeroDnfRaces:zeroDnf,dnfPerStarter:totals.dnf/(fieldSize*3)})
+        const result=runRaceEngine(input)
+        expect(result.validationPassed).toBe(true)
+        expect(result.replaySynchronization.synchronized).toBe(true)
+        const rows=result.finishResolution.classification
+        expect(rows.length).toBe(fieldSize)
+        expect(new Set(rows.map(r=>r.riderId)).size).toBe(fieldSize)
+        const counts:Record<string,number>={}
+        for(const row of rows){
+          expect(statuses).toContain(row.status)
+          counts[row.status]=(counts[row.status]??0)+1
+          totals[row.status as (typeof statuses)[number]]++
+        }
+        if((counts.dnf??0)===0) zeroDnf++
       }
+      summary.push({cohort,terrain,fieldSize,simulations:3,entries:fieldSize*3,...totals,
+        zeroDnfRaces:zeroDnf})
     }
-    console.info('ISSUE_139_DNF_DNS_PILOT_JSON',JSON.stringify(summary))
-  }, 120000)
+    console.info('ISSUE_139_ADVERSE_COHORT_JSON',JSON.stringify(summary))
+  },120000)
 })
