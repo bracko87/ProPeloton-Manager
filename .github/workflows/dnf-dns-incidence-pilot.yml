@@ -27,7 +27,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for cohort in baseline fatigued windy rainy combined worn_equipment; do
+          for cohort in baseline fatigued windy rainy combined worn_equipment extreme_fatigue; do
             echo "Auditing $cohort in independent Vitest process"
             npx --yes vitest@3.2.4 run src/universal-race-engine/dnfDnsIncidencePilot.test.ts --reporter=verbose -t "measures incident-enabled $cohort conditions"
           done
