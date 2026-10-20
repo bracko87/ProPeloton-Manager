@@ -19008,6 +19008,18 @@ describe('Phase 11G organic race physics and replay continuity', () => {
         distinctTimeGroups:timeGroups.length,soloFinishers,largestTimeGroup,maxGapSeconds,
         timeGroups,
         profilePhysicalSelections:climbSelections.length,
+        climbContact:climbSelections.map((selection)=>({
+          kmStart:selection.kmStart,kmEnd:selection.kmEnd,
+          candidates:selection.pelotonRiderIdsBefore.length,
+          retained:selection.retainedAtSummitRiderIds.length,
+          lostContact:selection.droppedAtSummitRiderIds.length,
+          rejoined:selection.rejoinedBeforeNextEffortRiderIds.length,
+          detached:selection.remainedDetachedRiderIds.length,
+        })),
+        phase4FinishGroups:result.roadRaceResolution.phase4Finish!.finalGroups.map((group)=>({
+          code:group.groupCode,riders:group.riderIds.length,gapSeconds:group.gapSeconds,
+        })),
+        distinctClimbingSkills:new Set(input.riders.map((rider)=>rider.climbing)).size,
         replaySynchronized:result.replaySynchronization.synchronized,
       }))
       }
