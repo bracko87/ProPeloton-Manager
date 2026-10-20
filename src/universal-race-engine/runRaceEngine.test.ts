@@ -18687,6 +18687,10 @@ describe('Phase 11G organic race physics and replay continuity', () => {
     const protectedHelpers =
       withProtection.phase10Incidents.autonomousChase.teamRescueHelpers
 
+    console.log('SLICE21_RESCUE_DIAGNOSTIC', JSON.stringify({
+      helpers: protectedHelpers,
+      withoutCount: withoutProtection.phase10Incidents.autonomousChase.teamRescueHelperCount,
+    }))
     expect(withoutProtection.phase10Incidents.autonomousChase.teamRescueHelperCount).toBe(0)
     expect(protectedHelpers).toHaveLength(5)
     expect(protectedHelpers.every((row) => row.actualRejoinKm === null)).toBe(true)
