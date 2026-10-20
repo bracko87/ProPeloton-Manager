@@ -2481,6 +2481,7 @@ export type UniversalPhase10IncidentKind =
   | 'individual_crash'
   | 'group_crash'
   | 'technical_incident'
+  | 'exhaustion'
 
 export type UniversalPhase10IncidentSeverity =
   | 'minor'
@@ -30728,6 +30729,8 @@ const PHASE10_BASE_PROBABILITY_PER_30_SECONDS: Readonly<
   individual_crash: 0.00008,
   group_crash: 0.00008,
   technical_incident: 0.00012,
+  // Only available after sustained low energy and severe accumulated fatigue.
+  exhaustion: 0.003,
 }
 
 const PHASE10_MAXIMUM_PROBABILITY: Readonly<
@@ -30736,6 +30739,7 @@ const PHASE10_MAXIMUM_PROBABILITY: Readonly<
   individual_crash: 0.08,
   group_crash: 0.04,
   technical_incident: 0.05,
+  exhaustion: 0.015,
 }
 
 const PHASE10_GLOBAL_COOLDOWN_SECONDS = 120 as const
@@ -31781,17 +31785,19 @@ export function calculateUniversalPhase10IncidentProbability(
   const tickDurationMultiplier = clamp(input.tickSeconds / 30, 0, 4)
   const weatherMultiplier = clamp(input.weatherMultiplier, 0.7, 2.5)
   const speedThreshold = input.incidentKind === 'group_crash' ? 35 : 40
-  const speedMultiplier = clamp(
-    1 + Math.max(0, input.currentSpeedKmh - speedThreshold) * 0.04,
-    1,
-    3,
-  )
+  const speedMultiplier = input.incidentKind === 'exhaustion'
+    ? 1
+    : clamp(
+        1 + Math.max(0, input.currentSpeedKmh - speedThreshold) * 0.04,
+        1,
+        3,
+      )
   const descentMultiplier =
-    input.gradientPercent < 0
+    input.incidentKind !== 'exhaustion' && input.gradientPercent < 0
       ? clamp(1 + Math.abs(input.gradientPercent) * 0.12, 1, 3.5)
       : 1
   const densityMultiplier =
-    input.incidentKind === 'technical_incident'
+    input.incidentKind === 'technical_incident' || input.incidentKind === 'exhaustion'
       ? 1
       : input.incidentKind === 'individual_crash'
         ? clamp(1 + Math.max(0, input.groupSize - 10) * 0.03, 1, 2)
@@ -32055,7 +32061,7 @@ function phase10CrashHealthOutcome(
     persistentAction: 'none',
     source: 'universal_phase10_crash_health_handoff_v1',
   })
-  if (incidentKind === 'technical_incident') {
+  if (incidentKind === 'technical_incident' || incidentKind === 'exhaustion') {
     return noInjury(phase10DeterministicRoll(md5Hex(`${deterministicHash}:health:${riderId}`)))
   }
 
@@ -32257,6 +32263,7 @@ function phase10TimeLossRange(
   severity: UniversalPhase10IncidentSeverity,
   technicalType: UniversalPhase10TechnicalIncidentType | null,
 ): readonly [number, number] {
+  if (kind === 'exhaustion') return [0, 0]
   if (kind === 'individual_crash') {
     return severity === 'minor' ? [15, 35] : severity === 'moderate' ? [36, 90] : [91, 180]
   }
@@ -32282,6 +32289,7 @@ function phase10IncidentEnergyLoss(
   kind: UniversalPhase10IncidentKind,
   timeLossSeconds: number,
 ): number {
+  if (kind === 'exhaustion') return 0
   const kindFactor =
     kind === 'technical_incident' ? 0.5 : kind === 'group_crash' ? 0.85 : 1
   return deterministicRound(
@@ -32966,6 +32974,8 @@ export function resolveUniversalPhase10Incidents({
       normalizedWeatherCondition,
     )
   const incidents: UniversalPhase10IncidentRecord[] = []
+  // Exhaustion requires continuous low-energy exposure, not a single finish reading.
+  const lowEnergySinceSecondByRiderId = new Map<string, number>()
   const nextRiderEligibleSecondById = new Map<string, number>()
   const nextRiderEligibleKmById = new Map<string, number>()
   const permanentlyUnavailableRiderIds = new Set<string>()
@@ -33251,6 +33261,64 @@ export function resolveUniversalPhase10Incidents({
         0,
         100,
       )
+      // Race-specific inability to continue, not a stage-finish energy threshold.
+      // Allow recovery if energy rises; never abandon in the final sprint.
+      const severeDepletion =
+        input.stage.stageFormat === 'road_race' &&
+        input.stage.distanceKm >= 60 &&
+        progressFraction >= 0.35 &&
+        progressFraction < 0.99 &&
+        state.energy <= 15 &&
+        runtimeFatigue >= 83
+      if (!severeDepletion) {
+        lowEnergySinceSecondByRiderId.delete(state.riderId)
+      } else {
+        if (!lowEnergySinceSecondByRiderId.has(state.riderId)) {
+          lowEnergySinceSecondByRiderId.set(state.riderId, raceSecond)
+        }
+        const depletionSeconds =
+          raceSecond - (lowEnergySinceSecondByRiderId.get(state.riderId) ?? raceSecond)
+        if (depletionSeconds >= 240) {
+          const terrainStress =
+            gradient >= 3 ? 1.8 :
+            input.stage.terrainType === 'mountain' ? 1.5 :
+            input.stage.terrainType === 'cobbled' ? 1.2 : 1
+          const probability = calculateUniversalPhase10IncidentProbability({
+            incidentKind: 'exhaustion',
+            tickSeconds: 30,
+            weatherMultiplier,
+            currentSpeedKmh: baseAverageSpeedKmh,
+            gradientPercent: gradient,
+            groupSize,
+            runtimeFatigue,
+            resistance: rider.resistance,
+            raceIq: rider.raceIQ,
+            preparationSupportMultiplier: supportMultiplier,
+            commandIntensityMultiplier: commandIntensity,
+            raceSituationMultiplier: terrainStress,
+          })
+          const hash = md5Hex([
+            input.engine.deterministicSeed, input.race.raceId,
+            input.stage.stageId, 'phase10', 'exhaustion',
+            incidents.length, raceSecond, state.riderId,
+          ].join('|'))
+          const roll = phase10DeterministicRoll(hash)
+          if (roll < probability.finalProbability) {
+            candidates.push({
+              kind: 'exhaustion',
+              entityId: state.riderId,
+              riderIds: [state.riderId],
+              teamIds: [state.teamId],
+              sourceDisplayCode: state.displayCode,
+              probability, roll, hash,
+              causes: ['sustained_energy_depletion', 'runtime_fatigue'],
+              runtimeFatigue,
+              equipmentConditionPercent: condition,
+              mechanicalTimeLossMultiplier: 1,
+            })
+          }
+        }
+      }
       ;(['individual_crash', 'technical_incident'] as const).forEach((kind) => {
         if (
           kind === 'individual_crash' &&
@@ -33489,7 +33557,9 @@ export function resolveUniversalPhase10Incidents({
           )
         : null
     const severity =
-      selected.kind === 'technical_incident'
+      selected.kind === 'exhaustion'
+        ? 'serious' as const
+        : selected.kind === 'technical_incident'
         ? phase10TechnicalSeverity(
             selected.probability,
             md5Hex(`${selected.hash}|severity`),
@@ -33564,7 +33634,8 @@ export function resolveUniversalPhase10Incidents({
             md5Hex(`${selected.hash}:irreparable-mechanical:${riderId}`),
           ) < 0.3
         const statusImpact: 'finished' | 'dnf' =
-          healthDnf || mechanicalDnf ? 'dnf' : 'finished'
+          healthDnf || mechanicalDnf || selected.kind === 'exhaustion'
+            ? 'dnf' : 'finished'
         const createsPhysicalRoadSeparation =
           input.stage.stageFormat === 'road_race' &&
           statusImpact === 'finished' &&
@@ -33619,13 +33690,17 @@ export function resolveUniversalPhase10Incidents({
       },
     )
     const incidentType =
-      selected.kind === 'technical_incident'
+      selected.kind === 'exhaustion'
+        ? 'exhaustion'
+        : selected.kind === 'technical_incident'
         ? technicalType ?? 'technical_incident'
         : weatherRelated
           ? `weather_related_${selected.kind}`
           : selected.kind
     const title =
-      selected.kind === 'individual_crash'
+      selected.kind === 'exhaustion'
+        ? 'Rider abandons from exhaustion'
+        : selected.kind === 'individual_crash'
         ? 'Rider crash'
         : selected.kind === 'group_crash'
           ? 'Group crash'
@@ -33651,7 +33726,9 @@ export function resolveUniversalPhase10Incidents({
     const affectedLabels = affectedRiderIds.map(riderTeamLabel)
     const roundedIncidentKm = Math.round(kmFromStart)
     const description =
-      selected.kind === 'group_crash'
+      selected.kind === 'exhaustion'
+        ? `${affectedLabels[0]} abandons from sustained exhaustion after ${roundedIncidentKm} km; energy reserves and accumulated fatigue prevent continuing.`
+        : selected.kind === 'group_crash'
         ? `Group crash at ${roundedIncidentKm} km involving ${affectedLabels.join(', ')}. All ${affectedRiderIds.length} affected riders lose ${timeLossSeconds} seconds${dnfCount > 0 ? `; ${dnfCount} rider${dnfCount === 1 ? '' : 's'} abandon` : ''}.`
         : selected.kind === 'individual_crash'
           ? `${affectedLabels[0]} crashes at ${roundedIncidentKm} km and loses ${timeLossSeconds} seconds${dnfCount > 0 ? '; the rider abandons the race' : ''}.`
