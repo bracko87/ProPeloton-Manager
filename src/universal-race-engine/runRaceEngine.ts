@@ -28897,8 +28897,8 @@ export function buildUniversalReplayTimeline(
     checkpointKind: 'event',
     phase: 4,
     kmFromStart: stageDistanceKm,
-    sortOrder: 950,
-    groups: groupsAtKm(Math.max(0, stageDistanceKm - 0.01)),
+    sortOrder: 995,
+    groups: finalGroups,
     energyByRiderId: phase4EnergyByRiderId,
     eventType: 'finish',
     title: 'Stage finished',
@@ -29859,9 +29859,9 @@ export function buildUniversalReplayTimeline(
       checkpointIdSuffix: `front-energy-split-${index+1}`,
       checkpointKind: 'event',
       phase: getRoadPhaseNumberForPoint(drop.km, stageDistanceKm),
-      kmFromStart: drop.km,
+      kmFromStart: deterministicRound(drop.km + 0.0001, 6),
       sortOrder: 675 + index,
-      groups: groupsAtKm(drop.km),
+      groups: groupsAtKm(drop.km + 0.0001),
       energyByRiderId: energyAtKm(4, drop.km),
       eventType: 'group_split',
       title: 'Exhausted front rider loses contact',
@@ -35746,6 +35746,7 @@ export function buildUniversalReplaySynchronizationSummary(
   const openingBreakawayRiderIdSet = new Set(openingBreakawayRiderIds)
   let expectedBreakawayRiderIds = [...openingBreakawayRiderIds]
   let openingCatchSeen = false
+  const physicallyDetachedBreakawayRiderIds = new Set<string>()
 
   if (openingFormationCheckpoint && openingBreakawayRiderIds.length === 0) {
     openingBreakawayLineageStable = false
@@ -35785,6 +35786,25 @@ export function buildUniversalReplaySynchronizationSummary(
             .flatMap((entry) => entry.riderIds)
         : [],
     )
+    // A front-group departure is legitimate only when this checkpoint
+    // documents the split and the underlying climb/energy model proves it.
+    const authorizedFrontDropoutsAtKm = new Set(
+      sameKilometreCommentary
+        .filter((entry) => entry.eventType === 'group_split')
+        .flatMap((entry) => entry.riderIds)
+        .filter((riderId) => {
+          const state = checkpoint.riderStates.find((r) => r.riderId === riderId)
+          const physicalLoss = roadRaceResolution?.phase4Finish?.riderStates.find(
+            (r) => r.riderId === riderId && r.contactLossKm !== null &&
+              r.contactLossKm <= checkpoint.raceProgress.kmFromStart + 0.000001,
+          )
+          return state?.displayCode.startsWith('C') === true &&
+            (state.liveEnergyPercent < 5 || Boolean(physicalLoss))
+        }),
+    )
+    authorizedFrontDropoutsAtKm.forEach((id) => {
+      if (expectedBreakawayRiderIds.includes(id)) physicallyDetachedBreakawayRiderIds.add(id)
+    })
     const bridgeMergeEntriesAtKm = sameKilometreCommentary.filter(
       (entry) => entry.eventType === 'bridge_merge',
     )
@@ -35889,11 +35909,11 @@ export function buildUniversalReplaySynchronizationSummary(
       const originalRidersStillPresent = openingBreakawayRiderIds.every(
         (riderId) =>
           breakawayRiderIds.includes(riderId) ||
-          activeIncidentSeparatedRiderIds.has(riderId),
+          (activeIncidentSeparatedRiderIds.has(riderId) || physicallyDetachedBreakawayRiderIds.has(riderId)),
       )
       const expectedBreakawayRiderIdsPresent =
         expectedBreakawayRiderIds.filter(
-          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId),
+          (riderId) => !activeIncidentSeparatedRiderIds.has(riderId) && !physicallyDetachedBreakawayRiderIds.has(riderId),
         )
       if (breakawayGroups.length !== 1 || !originalRidersStillPresent) {
         openingBreakawayLineageStable = false
@@ -36337,7 +36357,7 @@ export function buildUniversalReplaySynchronizationSummary(
           bridgeMergeTransition ||
           incidentRejoinTransition
       } else if (previousIsOpeningBreakaway) {
-        transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
+        transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId) || authorizedFrontDropoutsAtKm.has(riderId)
       } else if (previousIsLateFront && currentIsPeloton) {
         transitionValid = hasCatch || incidentRiderIdsAtKm.has(riderId)
       } else if (previousIsPeloton && currentIsLateFront) {
@@ -37999,25 +38019,6 @@ export function runRaceEngine(
   const replayPublicationPolicy =
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
-  if (!replayPublicationPolicy.publishable && input.engine.deterministicSeed.includes('39')) {
-    console.log('SLICE22_ALL_LATE_EVENTS',JSON.stringify(replayTimeline.checkpoints.filter((c) =>
-      c.raceProgress.kmFromStart >= 175 &&
-      c.raceProgress.kmFromStart <= 190
-    ).map((c)=>({id:c.checkpointId,km:c.raceProgress.kmFromStart,event:c.commentary.map((e)=>e.eventType),
-      b:c.groups.filter((g)=>g.displayCode.startsWith('B')).flatMap((g)=>g.riderIds),
-      c:c.groups.filter((g)=>g.displayCode.startsWith('C')).map((g)=>({code:g.displayCode,ids:g.riderIds}))}))))
-
-    const watchIds = ['expanded-rider-10','expanded-rider-22','expanded-rider-16']
-    console.log('SLICE22_REPLAY_TRACE',JSON.stringify(replayTimeline.checkpoints.filter((c) =>
-      /late-chase-step-2[234]|phase4-energy-contact-loss-1|race-status-95|winner-finish|late-chase-step-22|late-chase-start/.test(c.checkpointId)
-    ).map((c) => ({
-      id:c.checkpointId,
-      km:c.raceProgress.kmFromStart,
-      events:c.commentary.map((x)=>({type:x.eventType,title:x.title})),
-      groups:c.groups.filter((g)=>g.displayCode==='B1'||g.displayCode.startsWith('C')||g.displayCode==='P').map((g)=>({code:g.displayCode,lineage:g.physicalLineageId,riders:g.riderIds})),
-      watched:c.riderStates.filter((r)=>watchIds.includes(r.riderId)).map((r)=>({id:r.riderId,code:r.displayCode,energy:r.liveEnergyPercent}))
-    }))))
-  }
   if (!replayPublicationPolicy.publishable) {
     throw new Error(
       `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
