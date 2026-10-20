@@ -1,0 +1,27 @@
+name: DNF DNS incidence pilot
+
+on:
+  pull_request:
+    branches: [staging]
+    paths:
+      - 'src/universal-race-engine/**'
+      - '.github/workflows/dnf-dns-incidence-pilot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pilot:
+    name: Synthetic incidence matrix (no database)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Execute DNF/DNS pilot and print machine-readable summary
+        run: npx --yes vitest@3.2.4 run src/universal-race-engine/dnfDnsIncidencePilot.test.ts --reporter=verbose
