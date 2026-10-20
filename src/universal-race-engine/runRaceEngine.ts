@@ -30367,6 +30367,43 @@ export function buildUniversalReplayTimeline(
   if (preFinishPublishedDefinition) {
     const beforeCodes = displayCodeByRiderId(preFinishPublishedDefinition.groups)
     const finalCodes = displayCodeByRiderId(finalGroups)
+
+    // The winner crosses before the final classification becomes visible.
+    // Do not create a replay-only last-metre C detachment if the last
+    // published physical state and the authoritative finish have exactly
+    // the same rider membership and lineage. A live-energy interpolation
+    // at (finish - 0.01 km) is not an independently authorized group split.
+    // Genuine finish-line transitions still use the explicit event below.
+    const physicalIdentityKey = (
+      groups: readonly UniversalPhase5GroupSnapshot[],
+    ): string =>
+      JSON.stringify(
+        groups
+          .filter((group) => group.riderIds.length > 0)
+          .map((group) => ({
+            displayCode: group.displayCode,
+            physicalLineageId: group.physicalLineageId ?? null,
+            physicalPosition: group.physicalPosition,
+            riderIds: [...group.riderIds].sort(),
+          }))
+          .sort((left, right) =>
+            left.displayCode.localeCompare(right.displayCode) ||
+            String(left.physicalLineageId).localeCompare(String(right.physicalLineageId)),
+          ),
+      )
+    const samePreFinishPhysicalGroups =
+      physicalIdentityKey(preFinishPublishedDefinition.groups) ===
+      physicalIdentityKey(finalGroups)
+    if (winnerFinishDefinitionIndex >= 0 && samePreFinishPhysicalGroups) {
+      const winnerFinish = eventDefinitions[winnerFinishDefinitionIndex]
+      if (physicalIdentityKey(winnerFinish.groups) !== physicalIdentityKey(finalGroups)) {
+        eventDefinitions[winnerFinishDefinitionIndex] = {
+          ...winnerFinish,
+          groups: finalGroups,
+        }
+      }
+    }
+
     const finalTransitionRiderIds = eligibleStarterIds
       .filter((riderId) => beforeCodes.get(riderId) !== finalCodes.get(riderId))
       .sort()
@@ -37921,37 +37958,6 @@ export function runRaceEngine(
     classifyUniversalReplaySynchronizationForPublication(replaySynchronization)
 
   if (!replayPublicationPolicy.publishable) {
-    // Temporary Slice 17 investigation only. Must remove before merge.
-    if (replayPublicationPolicy.blockingIssues.some((issue) =>
-      issue.includes('same_kilometre_physical_state_mismatch') ||
-      issue.includes('post_catch_group_transfer_without_physical_transition')
-    )) {
-      const observedIds = new Set(['expanded-rider-07', 'expanded-rider-22'])
-      console.error('SLICE17_FINISH_TRACE=' + JSON.stringify({
-        issues: replayPublicationPolicy.blockingIssues,
-        stageDistanceKm: calculationInput.stage.distanceKm,
-        phase4: roadRaceResolution.phase4Finish ? {
-          caught: roadRaceResolution.phase4Finish.breakawayCaught,
-          startGapSeconds: roadRaceResolution.phase4Finish.startGapSeconds,
-          endGapSeconds: roadRaceResolution.phase4Finish.endGapSeconds,
-          lastChaseSteps: roadRaceResolution.phase4Finish.chaseSteps.slice(-5).map((s) =>
-            ({ start: s.kmStart, end: s.kmEnd, before: s.startGapSeconds, after: s.endGapSeconds })),
-        } : null,
-        affectedOfficial: finishResolution.classification.filter((row) => observedIds.has(row.riderId))
-          .map((row) => ({ rider: row.riderId, status: row.status, physicalGroupOrder: row.physicalGroupOrder, gap: row.gapSeconds })),
-        tail: replayTimeline.checkpoints.slice(-13).map((cp) => ({
-          checkpointId: cp.checkpointId,
-          km: cp.raceProgress.kmFromStart,
-          final: cp.finalResultsVisible,
-          eventTypes: cp.commentary.map((e) => e.eventType),
-          eventRiderIds: cp.commentary.flatMap((e) => e.riderIds).filter((id) => observedIds.has(id)),
-          states: cp.riderStates.filter((row) => observedIds.has(row.riderId)).map((row) => ({
-            rider: row.riderId, code: row.displayCode, group: row.groupCode, gap: row.gapSeconds, status: row.status })),
-          groups: cp.groups.map((g) => ({ code:g.displayCode, riderIds: g.riderIds.filter((id) => observedIds.has(id)),
-            physicalPosition: g.physicalPosition })),
-        })),
-      }))
-    }
     throw new Error(
       `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,
     )
