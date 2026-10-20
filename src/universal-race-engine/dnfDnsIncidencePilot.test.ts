@@ -399,6 +399,8 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         const rainy=cohort==='rainy'||cohort==='combined'
         const input:UniversalRaceEngineInput={
           ...base,
+          // Mirror production: Phase 10 incidents and OTL are opt-in.
+          incidentModel:{enabled:true},
           engine:{...base.engine,deterministicSeed:id},
           race:{...base.race,raceId:id},
           stage:{...base.stage,raceId:id,stageId:`${id}-stage`,terrainType:terrain,
