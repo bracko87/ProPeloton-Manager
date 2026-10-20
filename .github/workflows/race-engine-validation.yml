@@ -4,7 +4,6 @@ on:
   pull_request:
     branches:
       - main
-      - staging
     paths:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
@@ -12,7 +11,6 @@ on:
   push:
     branches:
       - main
-      - fix/race-engine-replay-sync-gap-exhaustion
     paths:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
