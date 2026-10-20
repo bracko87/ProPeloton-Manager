@@ -925,7 +925,7 @@ function RaceTitleFlag({ code }: { code?: string | null }) {
 
   if (!flagUrl || !normalized || hasError) {
     return (
-      <span className="inline-block h-6 w-9 shrink-0 rounded border border-slate-200 bg-slate-100" />
+      <span className="inline-block h-4 w-6 shrink-0 rounded border border-slate-200 bg-slate-100" />
     )
   }
 
@@ -934,7 +934,7 @@ function RaceTitleFlag({ code }: { code?: string | null }) {
       src={flagUrl}
       alt={normalized}
       title={normalized}
-      className="inline-block h-6 w-9 shrink-0 rounded border border-slate-200 object-cover"
+      className="inline-block h-4 w-6 shrink-0 rounded border border-slate-200 object-cover"
       loading="lazy"
       onError={() => setHasError(true)}
     />
@@ -953,7 +953,7 @@ function SmallCountryFlag({ code }: { code?: string | null }) {
   if (!flagUrl || !normalized || hasError) {
     return (
       <span
-        className="inline-block h-6 w-9 shrink-0 rounded-[2px] border border-slate-200 bg-slate-100 align-middle"
+        className="inline-block h-4 w-6 shrink-0 rounded-[2px] border border-slate-200 bg-slate-100 align-middle"
         title={normalized ?? 'Unknown country'}
         aria-label={normalized ?? 'Unknown country'}
       />
@@ -965,7 +965,7 @@ function SmallCountryFlag({ code }: { code?: string | null }) {
       src={flagUrl}
       alt={normalized}
       title={normalized}
-      className="inline-block h-6 w-9 shrink-0 rounded-[2px] border border-slate-200 object-cover align-middle"
+      className="inline-block h-4 w-6 shrink-0 rounded-[2px] border border-slate-200 object-cover align-middle"
       loading="lazy"
       onError={() => setHasError(true)}
     />
