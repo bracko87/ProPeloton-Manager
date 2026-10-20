@@ -30725,8 +30725,10 @@ const PHASE10_BASE_PROBABILITY_PER_30_SECONDS: Readonly<
   // v10c: ordinary background crashes are deliberately rarer than technical
   // problems. Race-state multipliers raise crash risk in the places where it
   // should matter most (downhill, hard peloton chase, late flat sprint).
-  individual_crash: 0.00008,
-  group_crash: 0.00008,
+  // Calibration candidate #139: lift background crash opportunities modestly;
+  // the existing severity, group-collision and per-stage caps still apply.
+  individual_crash: 0.00012,
+  group_crash: 0.00012,
   technical_incident: 0.00012,
 }
 
