@@ -412,7 +412,7 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
           riders:base.riders.map(r=>({
             ...r,
             ...(fatigued?{fatigueBeforeStage:75,startStamina:55}:{}),
-            ...(cohort==='worn_equipment'?{preparationModifiers:{...r.preparationModifiers,equipmentConditionPercent:15}}:{}),
+            ...(cohort==='worn_equipment'?{preparationModifiers:{inStageEnergyCostMultiplier:1,postStageFatigueMultiplier:1,postStageRecoveryBonusPoints:0,equipmentConditionPercent:15,mechanicalIncidentRiskMultiplier:1.5}}:{}),
           })),
           weather:{...base.weather!,condition:rainy?'rain':windy?'sunny_windy':'clear',
             windKmh:windy?35:12,precipitationMm:rainy?8:0,rainProbabilityPct:rainy?95:10},
