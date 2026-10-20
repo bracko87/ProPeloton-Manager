@@ -390,6 +390,8 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
     for(const terrain of Object.keys(terrains) as Array<keyof typeof terrains>) for(const fieldSize of [48,72,96]){
       const totals:Record<(typeof statuses)[number],number>={finished:0,dnf:0,dns:0,otl:0,dsq:0}
       let zeroDnf=0
+      let exhaustedFinishers=0
+      let depletedFinishers=0
       let fatigueRestrictedStarters=0
       let technicalDnf=0
       let technicalIncidents=0
@@ -427,6 +429,13 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         fatigueRestrictedStarters += result.phase10Incidents.preRaceAvailability.filter(r=>r.restriction==='excessive_fatigue' && r.startAllowed).length
         technicalIncidents += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='technical_incident').length
         technicalDnf += result.phase10Incidents.incidents.filter(e=>e.incidentKind==='technical_incident').flatMap(e=>e.riderConsequences).filter(e=>e.statusImpact==='dnf').length
+        const endCheckpoint=result.replayTimeline.checkpoints.at(-1)
+        const finishStatusById=new Map(result.finishResolution.classification.map(r=>[r.riderId,r.status]))
+        for(const state of endCheckpoint?.riderStates??[]){
+          if(finishStatusById.get(state.riderId)!=='finished')continue
+          if(state.energy<=5)exhaustedFinishers++
+          if(state.energy<=15)depletedFinishers++
+        }
         const rows=result.finishResolution.classification
         expect(rows.length).toBe(fieldSize)
         expect(new Set(rows.map(r=>r.riderId)).size).toBe(fieldSize)
@@ -439,7 +448,7 @@ describe('Issue #139 — read-only DNF/DNS pilot incidence',()=>{
         if((counts.dnf??0)===0) zeroDnf++
       }
       summary.push({cohort,terrain,fieldSize,simulations:3,entries:fieldSize*3,...totals,
-        zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf,fatigueRestrictedStarters})
+        zeroDnfRaces:zeroDnf,technicalIncidents,technicalDnf,fatigueRestrictedStarters,exhaustedFinishers,depletedFinishers})
     }
     console.info('ISSUE_139_ADVERSE_COHORT_JSON',JSON.stringify(summary))
   },120000)
