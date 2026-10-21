@@ -625,5 +625,27 @@
     "renewing": "Продление…",
     "getCoins": "Купить монеты",
     "readOnly": "Доступ к Молодёжной академии нужно продлить на текущий сезон до управления."
+  },
+  "raceDetail": {
+    "overview": "Обзор",
+    "teamsCount": "Команды ({{count}})",
+    "mySquad": "Мой состав",
+    "results": "Результаты",
+    "backToCalendar": "← Назад к календарю молодёжи",
+    "raceInformation": "Информация о гонке",
+    "participantsResults": "Участники и результаты",
+    "hide": "Скрыть",
+    "show": "Показать",
+    "teamsRiders": "Команды и гонщики",
+    "raceClassifications": "Классификации гонки",
+    "currentStandings": "Текущий общий зачёт",
+    "generalClassification": "Генеральная классификация",
+    "sprintPoints": "Очки спринта",
+    "mountainPoints": "Горные очки",
+    "fullRaceStanding": "Полный зачёт гонки",
+    "stageResults": "Результаты этапа – Этап {{stage}}",
+    "stage": "Этап {{number}}",
+    "stageResult": "Результат этапа",
+    "fullStageStanding": "Полный зачёт этапа"
   }
 }
