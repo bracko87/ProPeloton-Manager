@@ -118,7 +118,13 @@
     "infrastructureTtt": "Centar za timski hronometar",
     "infrastructureTttEffect": "+10% U16 hronometarski razvoj i +5% razvoj kroz timske hronometre.",
     "infrastructureLevel": "Nivo {{level}}/{{max}}",
-    "notBuilt": "Nije izgrađeno"
+    "notBuilt": "Nije izgrađeno",
+    "completedRace": "Završena trka",
+    "confirmedEntry": "Potvrđena prijava",
+    "raceDays": "dana",
+    "enteredBy": "Prijavio",
+    "lineup": "Sastav",
+    "rider": "Vozač"
   },
   "roles": {
     "director": "Direktor Omladinske akademije",
@@ -343,7 +349,15 @@
       "teamwork": "Timski rad"
     },
     "weeklyResetTitle": "Nedeljno resetovanje izveštaja",
-    "weeklyResetHelp": "Svi otvoreni skautski izveštaji i pregovori ostaju vidljivi do nedelje. U ponedeljak {{date}} lista se resetuje i ponovo je dostupna prva besplatna pretraga. Potpisani vozači odmah prelaze u sastav mladih."
+    "weeklyResetHelp": "Svi otvoreni skautski izveštaji i pregovori ostaju vidljivi do nedelje. U ponedeljak {{date}} lista se resetuje i ponovo je dostupna prva besplatna pretraga. Potpisani vozači odmah prelaze u sastav mladih.",
+    "ageValue": "{{age}} godina",
+    "age": "Godine",
+    "country": "Država",
+    "riderRole": "Profil vozača",
+    "source": "Izvor",
+    "assessment": "Procena talenta",
+    "weekReset": "Nedeljno resetovanje",
+    "mondayReset": "Ponedeljkom se resetuje"
   },
   "settings": {
     "title": "Odgovornosti",
@@ -465,7 +479,8 @@
     "pathwayUntil": "Put do {{date}}",
     "pathwayHelp": "Privremeni put daje 30 dana igre za prelazak u Razvojni tim. Ako se prelazak ne završi, vozač postaje profesionalni slobodni agent.",
     "toDeveloping": "U Razvojni tim ({{slots}} slobodno)",
-    "release": "Otpusti u slobodne agente"
+    "release": "Otpusti u slobodne agente",
+    "releaseToFreeAgents": "Otpusti u slobodne agente"
   },
   "calendar": {
     "title": "U16 kalendar trka",
@@ -546,7 +561,21 @@
     "classCounts": "Svetske {{world}} · Kontinentalne {{continental}} · Regionalne {{regional}}",
     "browserHelp": "Prikazuje kompletan Youth kalendar za izabrani mesec. Filtriraj Prilike moje Akademije za pozive i domaću Regionalnu diviziju.",
     "pastPrelaunch": "Prošlo · pre pokretanja",
-    "prelaunchHelp": "Trka ostaje u kalendaru radi potpunosti. Već je bila prošla kada je Youth sistem pokrenut, pa rezultat nije generisan."
+    "prelaunchHelp": "Trka ostaje u kalendaru radi potpunosti. Već je bila prošla kada je Youth sistem pokrenut, pa rezultat nije generisan.",
+    "raceFilters": "Filteri trka",
+    "youthFilters": "Omladinski filteri",
+    "seasonRaceCalendarTitle": "Sezona {{season}} · Kalendar omladinskih trka",
+    "seasonRaceCalendarHelp": "Svaki mesec ima svoju karticu sa zakazanim omladinskim trkama.",
+    "finished": "Završeno",
+    "active": "Aktivno",
+    "scheduled": "Zakazano",
+    "openRace": "Otvori trku",
+    "applyRace": "Prijavi se na trku",
+    "withdrawApplication": "Povuci prijavu",
+    "noVisibleRaces": "Nema vidljivih trka",
+    "multiDay": "Više dana",
+    "entryFee": "Startnina",
+    "prizeFundCompact": "Nagradni fond"
   },
   "rankings": {
     "title": "Rang-liste mladih",
@@ -578,7 +607,9 @@
     "systemContinentalHelp": "Prvak svake grupe direktno napreduje. Drugi i treći iz obe grupe ulaze u plej-of četiri tima; dva najbolja takođe napreduju u Svetsku klasu.",
     "systemRegionalTitle": "Regionalna klasa · 12 divizija",
     "systemRegionalHelp": "Regionalno takmičenje mladih ima 12 geografskih divizija. Šest vodi u Kontinentalni Zapad, a šest u Istok. Svaki prvak napreduje, dok šest timova iz svake kontinentalne grupe ispada.",
-    "systemScoringHelp": "Poredak timova koristi bodove sa trka. Rangiranje vozača koristi bodove generalnog plasmana i koeficijente: Regionalna ×1,0, Kontinentalna ×1,5 i Svetska ×2,5. Sprint, brdski i hronometarski plasmani prate se zasebno."
+    "systemScoringHelp": "Poredak timova koristi bodove sa trka. Rangiranje vozača koristi bodove generalnog plasmana i koeficijente: Regionalna ×1,0, Kontinentalna ×1,5 i Svetska ×2,5. Sprint, brdski i hronometarski plasmani prate se zasebno.",
+    "competitionSystem": "Sistem omladinskih takmičenja",
+    "logo": "Logo"
   },
   "reports": {
     "title": "Izveštaji U16 trka",
@@ -637,7 +668,9 @@
     "race": "Trka",
     "reportClass": "Tip izveštaja",
     "details": "Detalji",
-    "reportSummary": "Regionalni bodovi +{{regional}} · Svetski bodovi +{{world}} · Umor +{{fatigue}} · Razvojni događaji {{events}}"
+    "reportSummary": "Regionalni bodovi +{{regional}} · Svetski bodovi +{{world}} · Umor +{{fatigue}} · Razvojni događaji {{events}}",
+    "freeAgentAcademyAlumni": "Slobodan agent · bivši vozač Akademije",
+    "reportRange": "Prikazano {{from}}–{{to}} od {{total}} izveštaja"
   },
   "profile": {
     "loading": "Učitavanje profila mladog vozača…",
