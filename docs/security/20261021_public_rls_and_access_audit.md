@@ -62,6 +62,11 @@ the previous bulk security_invoker conversion caused standings/statistics regres
    The database-only anonymous and authenticated-role smoke probes passed for standings/statistics,
    but **cannot substitute for a real user session**. The replay probes returned no frame rows
    without a JWT; that alone does not mean the logged-in replay is broken.
+   The legacy `race_stage_replay_frames` table currently has zero rows, but the current
+   universal replay RPC reads `race_stage_simulation_runs.result_summary_json.output_snapshot`.
+   Read-only verification confirmed all 20 most-recent completed simulation runs contain
+   an output snapshot and at least two replay timeline checkpoints. This is positive
+   persistence evidence, **not** an authenticated browser replay test.
 5. Confirm anon cannot read any private state and authenticated users cannot read another
    club's team-policy or coin-event records. Check SQL and Edge Function logs after release.
 6. Inspect the new Security Advisor findings: [RLS Disabled in Public](https://supabase.com/docs/guides/database/database-linter?lint=0013_rls_disabled_in_public).
