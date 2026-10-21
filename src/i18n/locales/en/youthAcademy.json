@@ -173,7 +173,8 @@
     "onCourseUntil": "On course until {{date}}",
     "courseRolePaused": "Staff member is unavailable until the course ends.",
     "roleBonusPaused": "Role bonus paused",
-    "roleBonusPausedHelp": "Role effects are paused during the training course."
+    "roleBonusPausedHelp": "Role effects are paused during the training course.",
+    "courseManagerHandover": "Manager temporarily handles: {{responsibilities}}. Saved assignments resume when staff return."
   },
   "budget": {
     "title": "Season Academy budget",
@@ -366,7 +367,8 @@
     "weeklyStipendHelp": "Weekly support paid to the rider and family while at the Academy.",
     "accommodationHelp": "Recurring weekly housing and relocation support.",
     "compensationOfferHelp": "One-time development compensation paid to the current Academy upon transfer.",
-    "compensationOfferUnattachedHelp": "No compensation is due for an unattached rider."
+    "compensationOfferUnattachedHelp": "No compensation is due for an unattached rider.",
+    "offerCostSummary": "Weekly cost: {{weekly}}. One-time compensation: {{compensation}}."
   },
   "settings": {
     "title": "Responsibilities",
@@ -413,7 +415,12 @@
     "managerTemporaryHandover": "Temporarily handled by Manager",
     "assignTemporaryCover": "Assign another staff member temporarily",
     "noTemporaryCoverAvailable": "No other Academy staff member is available.",
-    "activeResponsibilityNow": "Currently responsible: {{person}}"
+    "activeResponsibilityNow": "Currently responsible: {{person}}",
+    "coverPenaltyHelp": "Work quality is reduced by {{penalty}}% during temporary cover.",
+    "originalStaffReturns": "{{staff}} attends {{course}} until {{date}}. Original duties resume afterwards.",
+    "managerTemporaryHandoverCourse": "{{staff}} attends {{course}} until {{date}}. The saved role {{role}} resumes afterwards.",
+    "managerTemporaryHandoverUnavailable": "The assigned {{role}} is unavailable. The assignment is retained.",
+    "assignTemporaryCoverHelp": "Another employee may cover temporarily at 20–50% reduced effectiveness."
   },
   "placeholders": {},
   "errors": {
@@ -516,7 +523,10 @@
     "raceSupplies": "Youth Academy race supplies",
     "raceSuppliesHelp": "Bottles, gels, nutrition packs, race jerseys and rain jackets are funded by the Academy.",
     "inStock": "{{count}} in stock",
-    "quantity": "Quantity"
+    "quantity": "Quantity",
+    "temporaryCoverManaged": "Temporarily managed by {{staff}}",
+    "temporaryCoverManagedHelp": "Covering equipment outside normal duties reduces purchasing quality by {{penalty}}%.",
+    "setupConfiguredBy": "Configured by {{person}} · {{date}}"
   },
   "training": {
     "title": "Youth development philosophy",
@@ -580,7 +590,8 @@
       "world": "World Class",
       "continental": "Continental Class",
       "regional": "Regional Class",
-      "youth": "Youth Competition"
+      "youth": "Youth Competition",
+      "worldClass": "World Class"
     },
     "monthlyPlanTitle": "{{month}} Youth race plan",
     "approved": "Approved",
@@ -633,7 +644,11 @@
     "noVisibleRaces": "No visible races",
     "multiDay": "Multiple days",
     "entryFee": "Entry fee",
-    "prizeFundCompact": "Prize fund"
+    "prizeFundCompact": "Prize fund",
+    "applicationPending": "Application pending",
+    "withdrawRace": "Withdraw Race",
+    "openRaceParticipatingOnly": "Race details are available to participating Academies only.",
+    "estimatedRaceCost": "Estimated total cost"
   },
   "rankings": {
     "title": "Youth Rankings",
@@ -796,5 +811,6 @@
     "stage": "Stage {{number}}",
     "stageResult": "Stage result",
     "fullStageStanding": "Full stage standing"
-  }
+  },
+  "season": "Season"
 }
