@@ -1,5 +1,5 @@
 {
-  "title": "Nacionalno prvenstvo — {{country}}",
+  "title": "Nacionalno prvenstvo - {{country}}",
   "eyebrow": "Nacionalno takmičenje",
   "description": "Individualni nacionalni rang vozača, kvalifikacije za prvenstvo, nacionalna obaveza i individualna priprema. Bodovi ekipnog ranga se ne menjaju.",
   "country": "Država",
@@ -249,5 +249,79 @@
     "finished": "Trka završena",
     "ready": "Trka spremna",
     "planned": "Planirano"
+  },
+  "world": {
+    "winnerQualifies": "Pobednik se automatski kvalifikuje za Svetsko prvenstvo na drumu",
+    "title": "Svetsko prvenstvo na drumu",
+    "grandFinale": "Veliko finale",
+    "warmHost": "Domaćin sa toplom klimom",
+    "championsQualified": "Kvalifikovanih šampiona: {{count}}",
+    "confirmedCount": "Potvrđenih: {{count}}",
+    "openChampionship": "Otvori Svetsko prvenstvo →",
+    "scheduledDescription": "Zakazano od početka sezone. Nacionalni šampioni se dodaju automatski.",
+    "scheduledNotice": "Veliko finale Svetskog prvenstva zakazano je za ovu sezonu.",
+    "invitation": "Poziv za Svetsko prvenstvo na drumu",
+    "nationalChampionLabel": "Nacionalni šampion države {{country}}",
+    "unavailable": "Nedostupan",
+    "decisionDeadline": "Rok za odluku",
+    "dutyEffects": "Vozač je rezervisan za obavezu na Svetskom prvenstvu. Troškove snosi organizator. Potvrda donosi +10 morala, a odbijanje -15. Umor i ostali efekti trke normalno važe.",
+    "openRace": "Otvori stranicu trke Svetskog prvenstva",
+    "allowRider": "Dozvoli nastup",
+    "refuse": "Odbij",
+    "secondConfirmation": "Druga potvrda - finale Svetskog prvenstva",
+    "secondConfirmationHelp": "Već ste prihvatili poziv za Svetsko prvenstvo. Ponovo potvrdite vozača pre Velikog finala.",
+    "finalDeadline": "Rok za konačnu potvrdu",
+    "status": "Status",
+    "confirmAgain": "Potvrdi ponovo",
+    "refuseFinal": "Odbij finale",
+    "phase": {
+      "planned": "Planirano",
+      "completed": "Završeno",
+      "finalConfirmations": "Konačne potvrde",
+      "startlistConfirmed": "Startna lista potvrđena",
+      "invitationsOpen": "Pozivi su otvoreni",
+      "championsQualifying": "Kvalifikacije nacionalnih šampiona"
+    },
+    "decision": {
+      "pending": "Na čekanju",
+      "approved": "Odobreno",
+      "auto_approved": "Automatski odobreno",
+      "rejected": "Odbijeno",
+      "not_open": "Još nije otvoreno"
+    },
+    "toasts": {
+      "accepted": "{{rider}} će nastupiti u Velikom finalu Svetskog prvenstva. Moral +10.",
+      "refused": "{{rider}} neće nastupiti u Velikom finalu Svetskog prvenstva. Moral -15.",
+      "participationError": "Nije moguće ažurirati učešće na Svetskom prvenstvu.",
+      "nationalConfirmed": "{{rider}} je ponovo potvrđen za finale nacionalnog prvenstva.",
+      "nationalRefused": "{{rider}} neće nastupiti u finalu nacionalnog prvenstva.",
+      "nationalError": "Nije moguće ažurirati drugu potvrdu za nacionalno prvenstvo.",
+      "worldConfirmed": "{{rider}} je konačno potvrđen za Svetsko prvenstvo.",
+      "worldWithdrawn": "{{rider}} je povučen sa Svetskog prvenstva. Moral -15.",
+      "worldError": "Nije moguće ažurirati konačnu potvrdu za Svetsko prvenstvo.",
+      "withdrawnNational": "{{rider}} je povučen iz finala nacionalnog prvenstva i dobio je kaznu morala za odbijanje.",
+      "withdrawError": "Nije moguće povući vozača iz finala nacionalnog prvenstva."
+    }
+  },
+  "dutyExtra": {
+    "decisionsOnly": "Samo odluke o učešću",
+    "decisionsHelp": "Ovde odobrite ili odbijte nacionalnu obavezu. Odobreni vozač se automatski dodaje odgovarajućoj kvalifikacionoj grupi ili startnoj listi finala. Opremu i individualnu taktiku podešavate u Pripremi trke.",
+    "openPreparation": "Otvori Pripremu trke",
+    "secondConfirmation": "Druga potvrda - finale nacionalnog prvenstva",
+    "secondConfirmationHelp": "Ovaj vozač se plasirao u finale nacionalnog prvenstva. Menadžer mora zasebno da potvrdi ili odbije njegov nastup.",
+    "final": "Finale",
+    "confirmFinal": "Potvrdi finale",
+    "synced": "{{rider}} je potvrđen i automatski dodat u {{race}}. Opremom i individualnom taktikom upravljate u Pripremi trke."
+  },
+  "historyExtra": {
+    "raceName": "Finale nacionalnog prvenstva - {{country}}",
+    "myRiders": "Vaši vozači van prvih 10"
+  },
+  "terrain": {
+    "flat": "Ravno",
+    "hilly": "Brdovito",
+    "mountain": "Planinsko",
+    "cobbles": "Kocka",
+    "time_trial": "Hronometar"
   }
 }

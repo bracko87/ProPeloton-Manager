@@ -49,7 +49,8 @@
     "support-and-account": "Support and Account",
     "race-preparation": "Race Preparation",
     "transfers-and-scouting": "Transfers and Scouting",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "national-competitions": "National Competitions"
   },
   "guide": {
     "factParagraph": "Important reference values for this topic are: {{factText}}. Treat live values from the game page as authoritative whenever a value is database-driven, because prices, quotes, statuses or future balancing can change without the manual needing a code rewrite.",
@@ -70,7 +71,8 @@
       "transfers-and-scouting": "{{title}} combines market action with information quality. The manager should use scouting to reduce uncertainty, then negotiate only for realistic targets that fit both the squad and the budget.",
       "finance": "{{title}} affects club survival. Always distinguish operating income/expense from debt movement, use transaction rows to explain balance changes, and keep enough cash for mandatory recurring costs before paying for optional improvements.",
       "support-and-account": "{{title}} is an account/support function. Protect account information, use the correct support channel, and remember that user-profile data is separate from public club branding and club-finance systems.",
-      "faq": "{{title}} is a troubleshooting entry. The fastest answer normally comes from identifying which game state is blocking the action, then checking the page that owns that state instead of repeatedly clicking the disabled action."
+      "faq": "{{title}} is a troubleshooting entry. The fastest answer normally comes from identifying which game state is blocking the action, then checking the page that owns that state instead of repeatedly clicking the disabled action.",
+      "national-competitions": "{{title}} explains two separate systems: individual national championships and the World Nations national-team competition. Check deadlines, approvals, race-day lineups and the appropriate Race Preparation pages. Live game values are authoritative."
     },
     "commonMistake": {
       "equipment": "A common mistake is to buy the strongest-looking item without checking condition, assignment status, race profile or setup compatibility. The safer approach is to build complete specialist setups and maintain the items that those setups depend on.",

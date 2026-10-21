@@ -1,5 +1,5 @@
 {
-  "title": "Campionato nazionale — {{country}}",
+  "title": "Campionato nazionale - {{country}}",
   "eyebrow": "Competizione nazionale",
   "description": "Classifica nazionale individuale dei corridori, qualificazione al campionato, impegno nazionale e preparazione individuale. I punti della classifica a squadre non vengono influenzati.",
   "country": "Paese",
@@ -249,5 +249,79 @@
     "finished": "Gara conclusa",
     "ready": "Gara pronta",
     "planned": "Pianificata"
+  },
+  "world": {
+    "winnerQualifies": "Il vincitore si qualifica automaticamente al Campionato Mondiale su Strada",
+    "title": "Campionato Mondiale su Strada",
+    "grandFinale": "Gran Finale",
+    "warmHost": "Paese ospitante dal clima caldo",
+    "championsQualified": "Campioni qualificati: {{count}}",
+    "confirmedCount": "Confermati: {{count}}",
+    "openChampionship": "Apri il Campionato Mondiale →",
+    "scheduledDescription": "In programma dall'inizio della stagione. I campioni nazionali vengono aggiunti automaticamente.",
+    "scheduledNotice": "Il Gran Finale del Mondiale è previsto per questa stagione.",
+    "invitation": "Invito al Campionato Mondiale su Strada",
+    "nationalChampionLabel": "Campione nazionale di {{country}}",
+    "unavailable": "Non disponibile",
+    "decisionDeadline": "Scadenza della decisione",
+    "dutyEffects": "Il corridore è riservato per il Mondiale. L'organizzatore copre i costi. Accettare dà +10 morale; rifiutare toglie 15. Fatica ed effetti della corsa si applicano normalmente.",
+    "openRace": "Apri la pagina della corsa mondiale",
+    "allowRider": "Consenti al corridore",
+    "refuse": "Rifiuta",
+    "secondConfirmation": "Seconda conferma - finale mondiale",
+    "secondConfirmationHelp": "Hai già accettato l'invito al Mondiale. Conferma nuovamente il corridore prima del Gran Finale.",
+    "finalDeadline": "Scadenza conferma finale",
+    "status": "Stato",
+    "confirmAgain": "Conferma nuovamente",
+    "refuseFinal": "Rifiuta finale",
+    "phase": {
+      "planned": "Pianificato",
+      "completed": "Completato",
+      "finalConfirmations": "Conferme finali",
+      "startlistConfirmed": "Lista partenti confermata",
+      "invitationsOpen": "Inviti aperti",
+      "championsQualifying": "Campioni nazionali in qualificazione"
+    },
+    "decision": {
+      "pending": "In attesa",
+      "approved": "Approvato",
+      "auto_approved": "Approvato automaticamente",
+      "rejected": "Rifiutato",
+      "not_open": "Non ancora aperto"
+    },
+    "toasts": {
+      "accepted": "{{rider}} correrà il Gran Finale mondiale. Morale +10.",
+      "refused": "{{rider}} non correrà il Gran Finale mondiale. Morale -15.",
+      "participationError": "Impossibile aggiornare la partecipazione al Mondiale.",
+      "nationalConfirmed": "{{rider}} è di nuovo confermato per la finale nazionale.",
+      "nationalRefused": "{{rider}} non correrà la finale nazionale.",
+      "nationalError": "Impossibile aggiornare la seconda conferma nazionale.",
+      "worldConfirmed": "{{rider}} è confermato definitivamente per il Mondiale.",
+      "worldWithdrawn": "{{rider}} è stato ritirato dal Mondiale. Morale -15.",
+      "worldError": "Impossibile aggiornare la conferma finale mondiale.",
+      "withdrawnNational": "{{rider}} è stato ritirato dalla finale nazionale e ha ricevuto la penalità morale per rifiuto.",
+      "withdrawError": "Impossibile ritirare il corridore dalla finale nazionale."
+    }
+  },
+  "dutyExtra": {
+    "decisionsOnly": "Solo decisioni di partecipazione",
+    "decisionsHelp": "Approva o rifiuta qui l'impegno per il campionato nazionale. I corridori approvati vengono aggiunti automaticamente al gruppo di qualificazione o alla lista della finale. Attrezzatura e tattica individuale si impostano in Preparazione Gara.",
+    "openPreparation": "Apri Preparazione Gara",
+    "secondConfirmation": "Seconda conferma - finale nazionale",
+    "secondConfirmationHelp": "Questo corridore ha raggiunto la finale nazionale. Il manager deve approvare o rifiutare separatamente la partecipazione.",
+    "final": "Finale",
+    "confirmFinal": "Conferma finale",
+    "synced": "{{rider}} è stato approvato e aggiunto automaticamente a {{race}}. Gestisci attrezzatura e tattica individuale in Preparazione Gara."
+  },
+  "historyExtra": {
+    "raceName": "Finale del Campionato Nazionale - {{country}}",
+    "myRiders": "I tuoi corridori fuori dalla top 10"
+  },
+  "terrain": {
+    "flat": "Pianura",
+    "hilly": "Collinare",
+    "mountain": "Montagna",
+    "cobbles": "Pavé",
+    "time_trial": "Cronometro"
   }
 }

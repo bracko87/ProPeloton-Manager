@@ -49,7 +49,8 @@
     "support-and-account": "Unterstützung und Konto",
     "race-preparation": "Rennvorbereitung",
     "transfers-and-scouting": "Transfer und Scouting",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "national-competitions": "Nationale Wettbewerbe"
   },
   "guide": {
     "factParagraph": "Wichtige Referenzwerte für dieses Thema sind: {{factText}}. Behandeln Sie Live-Werte von der Spielseite als maßgeblich, wenn ein Wert datenbankgesteuert ist, da sich Preise, Zitate, Status oder zukünftiges Auswuchten ändern können, ohne dass das Handbuch einen Code neu schreiben muss.",
@@ -70,7 +71,8 @@
       "transfers-and-scouting": "{{title}} verbindet Aktivitäten auf dem Markt mit der Qualität der verfügbaren Informationen. Nutzen Sie Scouting, um Unsicherheit zu reduzieren, und verhandeln Sie anschließend nur über realistische Ziele, die sowohl zum Kader als auch zum Budget passen.",
       "finance": "{{title}} beeinflusst das Überleben des Vereins./expense Die Kommission hat die Kommission aufgefordert, die von der Kommission vorgeschlagenen Maßnahmen zu prüfen, um die Auswirkungen der Umstrukturierung der Umstrukturierungs- und Umstrukturierungsvorhaben zu untersuchen.",
       "support-and-account": "{{title}} ist ein Konto/support Funktion. Schützen Sie Kontoinformationen, verwenden Sie den richtigen Support-Kanal und erinnern Sie sich, dass Benutzer-Profil-Daten getrennt von öffentlichen Club-Branding-und Club-Finanz-Systeme.",
-      "faq": "{{title}} ist ein Fehlerbehebung Eintrag. Die schnellste Antwort kommt normalerweise von der Identifizierung, welche Spielzustand blockiert die Aktion, dann überprüfen Sie die Seite, die diesen Zustand besitzt, anstatt wiederholt auf die deaktivierte Aktion."
+      "faq": "{{title}} ist ein Fehlerbehebung Eintrag. Die schnellste Antwort kommt normalerweise von der Identifizierung, welche Spielzustand blockiert die Aktion, dann überprüfen Sie die Seite, die diesen Zustand besitzt, anstatt wiederholt auf die deaktivierte Aktion.",
+      "national-competitions": "{{title}} erklärt nationale Einzelmeisterschaften und den getrennten Teamwettbewerb World Nations. Prüfe die Fristen, Fahrerrückmeldungen, Startlisten und Rennvorbereitung. Die aktuellen Angaben im Spiel sind maßgeblich."
     },
     "commonMistake": {
       "equipment": "Ein häufiger Fehler ist es, das stärkste Produkt zu kaufen, ohne den Zustand, den Zuweisungsstatus, das Rennprofil oder die Setup-Kompatibilität zu überprüfen.",
@@ -3498,6 +3500,86 @@
         "5": "Infrastructure öffnen",
         "6": "Pro Packages öffnen"
       }
+    },
+    "national-ranking-championships": {
+      "category": "Nationale Wettbewerbe",
+      "title": "Nationale Rangliste und Meisterschaften - Vollständiger Leitfaden",
+      "subtitle": "Von Rangliste, Einladungen und Qualifikation bis zum Finale, Fahrerpflichten und der Weltmeisterschaft.",
+      "overview": "Nationale Ranglisten und Meisterschaften werden nach der Staatsangehörigkeit der Fahrer organisiert, unabhängig vom Verein. Das Spiel legt Termine fest, friert die Rangliste ein, bildet Qualifikationsgruppen, sammelt Bestätigungen, berechnet Ergebnisse und lädt den Landesmeister gegebenenfalls zum WM-Finale ein.",
+      "facts": [
+        {
+          "label": "Teilnahmeberechtigung",
+          "value": "Fahrer starten für ihre Staatsangehörigkeit, nicht für das Land ihres Vereins"
+        },
+        {
+          "label": "Finalfeld",
+          "value": "Bis zu 96 Fahrer; bei größerem Feld gibt es Qualifikationsgruppen"
+        },
+        {
+          "label": "Setzliste",
+          "value": "Die bestplatzierten Fahrer werden auf verschiedene Gruppen verteilt"
+        },
+        {
+          "label": "Fahrerentscheidungen",
+          "value": "Der Manager bestätigt oder lehnt die Teilnahme ab; das Rennen ist individuell"
+        },
+        {
+          "label": "Kosten",
+          "value": "Der Veranstalter trägt die Kosten; der Verein zahlt nicht"
+        },
+        {
+          "label": "Ausrüstung",
+          "value": "Standardpaket des Veranstalters mit erlaubten individuellen Einstellungen"
+        },
+        {
+          "label": "Landesmeister",
+          "value": "Sieger des nationalen Finales für Land und Saison"
+        },
+        {
+          "label": "WM-Einladung",
+          "value": "Der Landesmeister kann zum Straßen-WM-Finale eingeladen werden"
+        }
+      ]
+    },
+    "national-association-world-nations": {
+      "category": "Nationale Wettbewerbe",
+      "title": "Nationaler Verband und World Nations - Vollständiger Leitfaden",
+      "subtitle": "Gründung, Finanzierung, Wahlen, Kader, Vorbereitung, Gastgeber und World Nations.",
+      "overview": "Der Nationale Verband ist ein gemeinsames Nationalteam-System für Manager desselben Landes. Mitglieder finanzieren den Verband, wählen den Nationaltrainer, stellen Nationalteams auf und treten im teambasierten World Nations gegen andere Verbände an. Dieser Wettbewerb ist unabhängig von der Einzelmeisterschaft.",
+      "facts": [
+        {
+          "label": "Mitgliedschaft",
+          "value": "Aktive berechtigte Hauptvereine aus demselben Land"
+        },
+        {
+          "label": "Aktivierung",
+          "value": "Mindestmitglieder und festgelegtes Coin-Ziel"
+        },
+        {
+          "label": "Nationaltrainer",
+          "value": "Durch Wahl bestimmt; sportliche Entscheidungen sind dem Trainer vorbehalten"
+        },
+        {
+          "label": "Nationalkader",
+          "value": "10 Fahrer pro Wettbewerbszyklus"
+        },
+        {
+          "label": "Tagesaufgebot",
+          "value": "Genau 7 Fahrer pro Renntag"
+        },
+        {
+          "label": "Renntage",
+          "value": "Mannschaftszeitfahren, flaches Rennen und hügeliges/Bergrennen"
+        },
+        {
+          "label": "Rennkosten",
+          "value": "Vom System getragen; keine Kosten für Verein oder Verband"
+        },
+        {
+          "label": "Wertung",
+          "value": "Nationpunkte bestimmen Aufstieg und Ergebnis mit Stichentscheidungsregeln"
+        }
+      ]
     }
   }
 }

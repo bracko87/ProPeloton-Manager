@@ -49,7 +49,8 @@
     "support-and-account": "Apoyo y Cuenta",
     "race-preparation": "Preparación de carrera",
     "transfers-and-scouting": "Transferencias y exploración",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "national-competitions": "Competiciones nacionales"
   },
   "guide": {
     "factParagraph": "Los valores de referencia importantes para este tema son: {{factText}}. Trate los valores en vivo de la página del juego como autorizados cuando un valor está basado en bases de datos, porque los precios, cotizaciones, estados o futuros balances pueden cambiar sin que el manual necesite una reescritura de código.",
@@ -70,7 +71,8 @@
       "transfers-and-scouting": "{{title}} combina la acción del mercado con la calidad de la información. El mánager debe utilizar el scouting para reducir la incertidumbre, luego negociar sólo para objetivos realistas que se ajusten tanto al equipo como al presupuesto.",
       "finance": "{{title}} afecta la supervivencia del club. Siempre distinga los ingresos/gastos de operación del movimiento de la deuda, utilice filas de transacciones para explicar los cambios de saldo y mantenga suficiente efectivo para los costos recurrentes obligatorios antes de pagar por mejoras opcionales.",
       "support-and-account": "{{title}} es una función de cuenta/suporte. Proteja la información de la cuenta, utilice el canal de soporte correcto y recuerde que los datos del perfil de usuario están separados de los sistemas de branding y financiación del club público.",
-      "faq": "{{title}} es una entrada de resolución de problemas. La respuesta más rápida normalmente viene de identificar qué estado del juego está bloqueando la acción, luego de comprobar la página que posee ese estado en lugar de hacer clic repetidamente en la acción deshabilitada."
+      "faq": "{{title}} es una entrada de resolución de problemas. La respuesta más rápida normalmente viene de identificar qué estado del juego está bloqueando la acción, luego de comprobar la página que posee ese estado en lugar de hacer clic repetidamente en la acción deshabilitada.",
+      "national-competitions": "{{title}} explica los campeonatos nacionales individuales y el torneo por equipos World Nations, que es independiente. Revisa plazos, confirmaciones, listas de salida y preparación. Los datos actuales del juego son los válidos."
     },
     "commonMistake": {
       "equipment": "Un error común es comprar el artículo con mayor aspecto sin comprobar la condición, el estado de la asignación, el perfil de carrera o la compatibilidad de la configuración. El enfoque más seguro es construir configuraciones especializadas completas y mantener los elementos de los que dependen esas configuraciones.",
@@ -3498,6 +3500,86 @@
         "5": "Open Infrastructure",
         "6": "Open Pro Packages"
       }
+    },
+    "national-ranking-championships": {
+      "category": "Competiciones nacionales",
+      "title": "Clasificación y campeonatos nacionales - Guía completa",
+      "subtitle": "De la clasificación, invitaciones y grupos de clasificación a la final, compromisos y Mundial.",
+      "overview": "Las clasificaciones y campeonatos nacionales se organizan por nacionalidad del corredor, independientemente del club. El sistema programa fechas, congela la clasificación, crea grupos, solicita confirmaciones, calcula resultados y puede invitar al campeón al Mundial.",
+      "facts": [
+        {
+          "label": "Elegibilidad",
+          "value": "Se compite por la nacionalidad, no por el país del club"
+        },
+        {
+          "label": "Participantes en la final",
+          "value": "Hasta 96 corredores; con más participantes hay grupos clasificatorios"
+        },
+        {
+          "label": "Distribución de grupos",
+          "value": "Los mejor clasificados se distribuyen entre los grupos"
+        },
+        {
+          "label": "Decisión del mánager",
+          "value": "El mánager acepta o rechaza; las pruebas son individuales"
+        },
+        {
+          "label": "Costes",
+          "value": "La organización paga los costes, no el club"
+        },
+        {
+          "label": "Equipamiento",
+          "value": "Paquete estándar y ajustes individuales permitidos"
+        },
+        {
+          "label": "Campeón nacional",
+          "value": "Ganador de la final de ese país y temporada"
+        },
+        {
+          "label": "Invitación mundial",
+          "value": "El campeón puede recibir una invitación al Mundial"
+        }
+      ]
+    },
+    "national-association-world-nations": {
+      "category": "Competiciones nacionales",
+      "title": "Federación nacional y World Nations - Guía completa",
+      "subtitle": "Creación y financiación, elecciones, plantilla, preparación, sedes y World Nations.",
+      "overview": "La Federación Nacional une a los mánagers del mismo país. Los miembros financian la federación, eligen seleccionador, forman equipos nacionales y compiten por equipos en World Nations, separado de los campeonatos individuales.",
+      "facts": [
+        {
+          "label": "Miembros",
+          "value": "Clubes principales activos y elegibles del mismo país"
+        },
+        {
+          "label": "Activación",
+          "value": "Mínimo de miembros y objetivo de Coins"
+        },
+        {
+          "label": "Seleccionador",
+          "value": "Elegido mediante votación; controla las decisiones deportivas"
+        },
+        {
+          "label": "Equipo nacional",
+          "value": "10 corredores por ciclo"
+        },
+        {
+          "label": "Alineación diaria",
+          "value": "Exactamente 7 corredores por jornada"
+        },
+        {
+          "label": "Jornadas",
+          "value": "Contrarreloj por equipos, carrera llana y carrera montañosa"
+        },
+        {
+          "label": "Costes",
+          "value": "Cubiertos por el sistema sin gasto del club o federación"
+        },
+        {
+          "label": "Puntuación",
+          "value": "Los puntos nacionales determinan avance y clasificación"
+        }
+      ]
     }
   }
 }

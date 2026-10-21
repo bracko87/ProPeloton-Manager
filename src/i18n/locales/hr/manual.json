@@ -49,7 +49,8 @@
     "support-and-account": "Podrška i račun",
     "race-preparation": "Priprema utrke",
     "transfers-and-scouting": "Transferi i skauting",
-    "faq": "Česta pitanja"
+    "faq": "Česta pitanja",
+    "national-competitions": "Nacionalna natjecanja"
   },
   "guide": {
     "factParagraph": "Važne referentne vrijednosti za ovu temu su: {{factText}}. Kad god se vrijednost učitava iz baze podataka, kao merodavne koristite aktuelne vrijednosti sa stranice igre, jer se cene, ponude, statusi ili budući balans mogu promeniti bez izmene koda priručnika.",
@@ -70,7 +71,8 @@
       "transfers-and-scouting": "{{title}} kombinuje tržišne radnje sa kvalitetom informacija. Koristite skauting da smanjite neizvesnost, a zatim pregovarajte samo za realne mete koje odgovaraju i ekipi i budžetu.",
       "finance": "{{title}} utiče na opstanak kluba. Uvek razlikujte operativne prihode i rashode od kretanja duga, koristite transakcije da objasnite promjene stanja i zadržite dovoljno novca za obavezne ponavljajuće troškove pre plaćanja opcionih poboljšanja.",
       "support-and-account": "{{title}} je funkcija računa i podrške. Zaštitite podatke računa, koristite odgovarajući kanal podrške i zapamtite da su podaci korisničkog profila odvojeni od javnog brendiranja kluba i sistema klupskih finansija.",
-      "faq": "{{title}} je stavka za rešavanje problema. Najbrži odgovor se obično dobija utvrđivanjem koje stanje igre blokira radnju, a zatim proverom stranice koja upravlja tim stanjem, umesto ponovnog klikanja na onemogućenu radnju."
+      "faq": "{{title}} je stavka za rešavanje problema. Najbrži odgovor se obično dobija utvrđivanjem koje stanje igre blokira radnju, a zatim proverom stranice koja upravlja tim stanjem, umesto ponovnog klikanja na onemogućenu radnju.",
+      "national-competitions": "{{title}} objašnjava pojedinačna nacionalna prvenstva i zasebno momčadsko natjecanje World Nations. Pratite rokove, potvrde vozača, startne liste i pripremu utrke. Aktualni podaci igre mjerodavni su."
     },
     "commonMistake": {
       "equipment": "Česta greška je kupovina predmeta koji izgleda najjače bez provjere stanja, statusa dodele, profila utrke ili kompatibilnosti sa setom. Bezbedniji pristup je izgraditi kompletne specijalističke setove i održavati predmete od kojih oni zavise.",
@@ -3498,6 +3500,86 @@
         "5": "Open Infrastructure",
         "6": "Open Pro Packages"
       }
+    },
+    "national-ranking-championships": {
+      "category": "Nacionalna natjecanja",
+      "title": "Nacionalni poredak i nacionalna prvenstva - cjeloviti vodič",
+      "subtitle": "Od nacionalnog poretka, poziva i kvalifikacija do finala, obveza vozača i Svjetskog prvenstva.",
+      "overview": "Nacionalni poredak i nacionalna prvenstva temelje se na državljanstvu vozača, neovisno o njegovu klubu. Sustav određuje datume, zamrzava poredak, stvara kvalifikacijske skupine, prikuplja potvrde, obračunava rezultate i može pozvati prvaka na Svjetsko prvenstvo.",
+      "facts": [
+        {
+          "label": "Pravo nastupa",
+          "value": "Vozači nastupaju za svoju državu, ne za državu kluba"
+        },
+        {
+          "label": "Broj finalista",
+          "value": "Do 96 vozača; veća polja imaju kvalifikacijske skupine"
+        },
+        {
+          "label": "Raspored po skupinama",
+          "value": "Najbolji vozači raspoređeni su u različite skupine"
+        },
+        {
+          "label": "Odluka menadžera",
+          "value": "Menadžer prihvaća ili odbija nastup; utrke su pojedinačne"
+        },
+        {
+          "label": "Troškovi",
+          "value": "Organizator pokriva troškove, a ne klub"
+        },
+        {
+          "label": "Oprema",
+          "value": "Standardni paket organizatora uz dopuštena pojedinačna podešavanja"
+        },
+        {
+          "label": "Nacionalni prvak",
+          "value": "Pobjednik finala nacionalnog prvenstva za državu i sezonu"
+        },
+        {
+          "label": "Svjetski poziv",
+          "value": "Nacionalni prvak može dobiti poziv na Svjetsko prvenstvo"
+        }
+      ]
+    },
+    "national-association-world-nations": {
+      "category": "Nacionalna natjecanja",
+      "title": "Nacionalni savez i World Nations - cjeloviti vodič",
+      "subtitle": "Osnivanje saveza, financiranje, izbori, sastavi, priprema, domaćini i World Nations.",
+      "overview": "Nacionalni savez je zajednički reprezentativni sustav menadžera iz iste države. Članovi financiraju savez, biraju izbornika, sastavljaju reprezentaciju i sudjeluju u momčadskom natjecanju World Nations, zasebnom od pojedinačnog prvenstva.",
+      "facts": [
+        {
+          "label": "Članstvo",
+          "value": "Aktivni prihvatljivi glavni klubovi iz iste države"
+        },
+        {
+          "label": "Aktivacija",
+          "value": "Najmanji broj članova i određeni Coin cilj"
+        },
+        {
+          "label": "Izbornik",
+          "value": "Bira se na izborima i vodi sportske odluke"
+        },
+        {
+          "label": "Nacionalni sastav",
+          "value": "10 vozača po ciklusu"
+        },
+        {
+          "label": "Sastav za dan utrke",
+          "value": "Točno 7 vozača za svaki dan"
+        },
+        {
+          "label": "Dani utrka",
+          "value": "Ekipni kronometar, ravna i brdsko-planinska utrka"
+        },
+        {
+          "label": "Troškovi utrka",
+          "value": "Pokriva ih sustav, bez troškova za klub ili savez"
+        },
+        {
+          "label": "Bodovanje",
+          "value": "Nacionalni bodovi određuju prolazak i konačni poredak"
+        }
+      ]
     }
   }
 }

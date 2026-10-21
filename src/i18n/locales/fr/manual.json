@@ -49,7 +49,8 @@
     "support-and-account": "Support et compte",
     "race-preparation": "Préparation de course",
     "transfers-and-scouting": "Transferts et scoutisme",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "national-competitions": "Compétitions nationales"
   },
   "guide": {
     "factParagraph": "Les valeurs de référence importantes pour ce sujet sont: {{factText}}. Traiter les valeurs en direct de la page de jeu comme faisant autorité chaque fois qu'une valeur est basée sur une base de données, car les prix, les devis, les statuts ou l'équilibre futur peuvent changer sans que le manuel ait besoin d'une réécriture de code.",
@@ -70,7 +71,8 @@
       "transfers-and-scouting": "{{title}} combine l'action du marché et la qualité de l'information. Le gestionnaire devrait utiliser le scoutisme pour réduire l'incertitude, puis négocier uniquement pour des objectifs réalistes qui correspondent à la fois à l'équipe et au budget.",
       "finance": "{{title}} affecte la survie du club. Toujours distinguer le revenu d'exploitation/dépense du mouvement de la dette, utiliser les lignes de transaction pour expliquer les changements de solde, et garder suffisamment d'argent pour les coûts récurrents obligatoires avant de payer pour les améliorations optionnelles.",
       "support-and-account": "{{title}} est une fonction de compte/support. Protégez les informations de compte, utilisez le canal de support correct, et rappelez-vous que les données de profil utilisateur sont séparées des systèmes de branding public et de financement club.",
-      "faq": "{{title}} est une entrée de dépannage. La réponse la plus rapide vient normalement de l'identification de l'état du jeu qui bloque l'action, puis de vérifier la page qui possède cet état au lieu de cliquer à plusieurs reprises sur l'action désactivée."
+      "faq": "{{title}} est une entrée de dépannage. La réponse la plus rapide vient normalement de l'identification de l'état du jeu qui bloque l'action, puis de vérifier la page qui possède cet état au lieu de cliquer à plusieurs reprises sur l'action désactivée.",
+      "national-competitions": "{{title}} présente les championnats nationaux individuels et l'épreuve par équipes World Nations, qui est distincte. Vérifiez échéances, confirmations, listes de départ et préparation. Les données actuelles du jeu font foi."
     },
     "commonMistake": {
       "equipment": "Une erreur courante est d'acheter l'élément le plus puissant sans vérifier l'état, le statut d'affectation, le profil de course ou la compatibilité de configuration. L'approche plus sûre est de construire des configurations spécialisées complètes et de maintenir les éléments dont ces configurations dépendent.",
@@ -3498,6 +3500,86 @@
         "5": "Open Infrastructure",
         "6": "Open Pro Packages"
       }
+    },
+    "national-ranking-championships": {
+      "category": "Compétitions nationales",
+      "title": "Classement et championnats nationaux - Guide complet",
+      "subtitle": "Du classement, invitations et qualifications à la finale, obligations des coureurs et Mondial.",
+      "overview": "Les classements et championnats nationaux dépendent de la nationalité du coureur, indépendamment du club. Le système programme les dates, fige le classement, crée les groupes qualificatifs, demande les confirmations, calcule les résultats et peut inviter le champion au Mondial.",
+      "facts": [
+        {
+          "label": "Éligibilité",
+          "value": "Les coureurs représentent leur nationalité, non le pays du club"
+        },
+        {
+          "label": "Finale",
+          "value": "Jusqu'à 96 coureurs ; qualifications si le peloton est plus grand"
+        },
+        {
+          "label": "Répartition",
+          "value": "Les meilleurs coureurs sont répartis entre les groupes"
+        },
+        {
+          "label": "Décisions",
+          "value": "Le manager accepte ou refuse ; les courses sont individuelles"
+        },
+        {
+          "label": "Coûts",
+          "value": "Pris en charge par l'organisateur, pas le club"
+        },
+        {
+          "label": "Matériel",
+          "value": "Équipement standard et réglages individuels autorisés"
+        },
+        {
+          "label": "Champion national",
+          "value": "Vainqueur de la finale du pays et de la saison"
+        },
+        {
+          "label": "Invitation mondiale",
+          "value": "Le champion peut être invité au Mondial"
+        }
+      ]
+    },
+    "national-association-world-nations": {
+      "category": "Compétitions nationales",
+      "title": "Fédération nationale et World Nations - Guide complet",
+      "subtitle": "Création et financement, élections, sélection, préparation, hôtes et World Nations.",
+      "overview": "La Fédération Nationale regroupe les managers d'un même pays. Ils financent la fédération, élisent le sélectionneur, constituent les équipes nationales et participent au tournoi par équipes World Nations, distinct des championnats individuels.",
+      "facts": [
+        {
+          "label": "Membres",
+          "value": "Clubs principaux actifs et éligibles du même pays"
+        },
+        {
+          "label": "Activation",
+          "value": "Nombre minimum de membres et objectif en Coins"
+        },
+        {
+          "label": "Sélectionneur",
+          "value": "Élu ; responsable des décisions sportives"
+        },
+        {
+          "label": "Équipe nationale",
+          "value": "10 coureurs par cycle"
+        },
+        {
+          "label": "Composition du jour",
+          "value": "Exactement 7 coureurs par journée"
+        },
+        {
+          "label": "Journées",
+          "value": "Contre-la-montre par équipes, course plate, course vallonnée/montagneuse"
+        },
+        {
+          "label": "Frais",
+          "value": "Couverts par le système sans dépenses du club ou de la fédération"
+        },
+        {
+          "label": "Points",
+          "value": "Classements et qualifications déterminés par les points nationaux"
+        }
+      ]
     }
   }
 }

@@ -1,5 +1,5 @@
 {
-  "title": "Championnat national — {{country}}",
+  "title": "Championnat national - {{country}}",
   "eyebrow": "Compétition nationale",
   "description": "Classement national individuel des coureurs, qualification au championnat, devoir national et préparation individuelle. Les points du classement par équipes ne sont pas affectés.",
   "country": "Pays",
@@ -249,5 +249,79 @@
     "finished": "Course terminée",
     "ready": "Course prête",
     "planned": "Planifiée"
+  },
+  "world": {
+    "winnerQualifies": "Le vainqueur est automatiquement qualifié pour le Championnat du monde sur route",
+    "title": "Championnat du monde sur route",
+    "grandFinale": "Grande Finale",
+    "warmHost": "Pays hôte au climat chaud",
+    "championsQualified": "Champions qualifiés : {{count}}",
+    "confirmedCount": "Confirmés : {{count}}",
+    "openChampionship": "Ouvrir le Championnat du monde →",
+    "scheduledDescription": "Programmé dès le début de la saison. Les champions nationaux sont ajoutés automatiquement.",
+    "scheduledNotice": "La Grande Finale du Championnat du monde est prévue cette saison.",
+    "invitation": "Invitation au Championnat du monde sur route",
+    "nationalChampionLabel": "Champion national de {{country}}",
+    "unavailable": "Indisponible",
+    "decisionDeadline": "Date limite de décision",
+    "dutyEffects": "Ce coureur est réservé pour le Championnat du monde. L'organisateur couvre les frais. Accepter donne +10 de moral, refuser retire 15. La fatigue et les effets habituels de course s'appliquent.",
+    "openRace": "Ouvrir la course du Mondial",
+    "allowRider": "Autoriser le coureur",
+    "refuse": "Refuser",
+    "secondConfirmation": "Deuxième confirmation - finale mondiale",
+    "secondConfirmationHelp": "Vous avez déjà accepté l'invitation. Confirmez à nouveau le coureur avant la Grande Finale.",
+    "finalDeadline": "Date limite de confirmation finale",
+    "status": "Statut",
+    "confirmAgain": "Confirmer à nouveau",
+    "refuseFinal": "Refuser la finale",
+    "phase": {
+      "planned": "Prévu",
+      "completed": "Terminé",
+      "finalConfirmations": "Confirmations finales",
+      "startlistConfirmed": "Liste de départ confirmée",
+      "invitationsOpen": "Invitations ouvertes",
+      "championsQualifying": "Champions nationaux en qualification"
+    },
+    "decision": {
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "auto_approved": "Approuvé automatiquement",
+      "rejected": "Refusé",
+      "not_open": "Pas encore ouvert"
+    },
+    "toasts": {
+      "accepted": "{{rider}} participera à la Grande Finale mondiale. Moral +10.",
+      "refused": "{{rider}} ne participera pas à la Grande Finale mondiale. Moral -15.",
+      "participationError": "Impossible de modifier la participation au Mondial.",
+      "nationalConfirmed": "{{rider}} est à nouveau confirmé pour la finale nationale.",
+      "nationalRefused": "{{rider}} ne participera pas à la finale nationale.",
+      "nationalError": "Impossible de modifier la deuxième confirmation nationale.",
+      "worldConfirmed": "{{rider}} est définitivement confirmé pour le Mondial.",
+      "worldWithdrawn": "{{rider}} a été retiré du Mondial. Moral -15.",
+      "worldError": "Impossible de modifier la confirmation finale mondiale.",
+      "withdrawnNational": "{{rider}} a été retiré de la finale nationale et a reçu la pénalité de moral pour refus.",
+      "withdrawError": "Impossible de retirer le coureur de la finale nationale."
+    }
+  },
+  "dutyExtra": {
+    "decisionsOnly": "Décisions de participation uniquement",
+    "decisionsHelp": "Acceptez ou refusez ici la participation au championnat national. Les coureurs acceptés rejoignent automatiquement leur groupe de qualification ou la liste de départ finale. Réglez le matériel et la tactique individuelle dans Préparation de Course.",
+    "openPreparation": "Ouvrir Préparation de Course",
+    "secondConfirmation": "Deuxième confirmation - finale nationale",
+    "secondConfirmationHelp": "Ce coureur a atteint la finale nationale. Le manager doit approuver ou refuser séparément sa participation.",
+    "final": "Finale",
+    "confirmFinal": "Confirmer la finale",
+    "synced": "{{rider}} est approuvé et automatiquement ajouté à {{race}}. Gérez le matériel et la tactique individuelle dans Préparation de Course."
+  },
+  "historyExtra": {
+    "raceName": "Finale du Championnat national - {{country}}",
+    "myRiders": "Vos coureurs hors du top 10"
+  },
+  "terrain": {
+    "flat": "Plat",
+    "hilly": "Vallonné",
+    "mountain": "Montagne",
+    "cobbles": "Pavés",
+    "time_trial": "Contre-la-montre"
   }
 }

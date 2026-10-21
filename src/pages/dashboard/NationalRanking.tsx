@@ -12,7 +12,6 @@ import {
   Lock,
   RefreshCw,
   Save,
-  Trophy,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 
@@ -330,6 +329,27 @@ function addGameDays(value: string | null | undefined, days: number): string {
 }
 
 
+function localizedCountryName(code: string | null | undefined, language: string | undefined, fallback?: string | null): string {
+  if (!code || !/^[A-Za-z]{2}$/.test(code)) return fallback || code || ''
+  try {
+    const locale = language?.startsWith('sr') ? 'sr-Latn-RS' : language || 'en'
+    return new Intl.DisplayNames([locale], { type: 'region' }).of(code.toUpperCase()) || fallback || code
+  } catch {
+    return fallback || code
+  }
+}
+
+function localizedWorldPhase(phase: string, t: (key: string) => string): string {
+  const keys: Record<string, string> = {
+    Planned: 'planned', Completed: 'completed',
+    'Final confirmations': 'finalConfirmations',
+    'Startlist confirmed': 'startlistConfirmed',
+    'Invitations open': 'invitationsOpen',
+    'National champions qualifying': 'championsQualifying',
+  }
+  return t(`world.phase.${keys[phase] || 'planned'}`)
+}
+
 function worldChampionshipPhase(
   overview: WorldRoadOverview | null,
 ): string {
@@ -365,7 +385,7 @@ function worldChampionshipPhaseClasses(label: string): string {
   return 'bg-sky-100 text-sky-800'
 }
 
-function formatRouteMeta(route?: HostRoute | null): string {
+function formatRouteMeta(route: HostRoute | null | undefined, t: (key: string, options?: any) => string): string {
   if (!route) return '—'
   const parts: string[] = []
   if (Number.isFinite(Number(route.distance_km))) {
@@ -373,9 +393,9 @@ function formatRouteMeta(route?: HostRoute | null): string {
   }
   if (route.terrain_type) {
     parts.push(
-      route.terrain_type
-        .replaceAll('_', ' ')
-        .replace(/\b\w/g, letter => letter.toUpperCase()),
+      t(`terrain.${route.terrain_type.toLowerCase().replace(/[^a-z0-9]+/g, '_')}`, {
+        defaultValue: route.terrain_type.replaceAll('_', ' '),
+      }),
     )
   }
   return parts.join(' · ') || '—'
@@ -539,7 +559,7 @@ function NationalDutyPlanCard({
 }
 
 export default function NationalRankingPage(): JSX.Element {
-  const { t } = useTranslation('nationalRanking')
+  const { t, i18n } = useTranslation('nationalRanking')
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -760,14 +780,14 @@ export default function NationalRankingPage(): JSX.Element {
 
       setSaveMessage(
         approve
-          ? `${entry.rider_name} will ride the World Road Championship Grand Finale. Morale +10.`
-          : `${entry.rider_name} will not ride the World Road Championship Grand Finale. Morale -15.`,
+          ? t('world.toasts.accepted', { rider: entry.rider_name })
+          : t('world.toasts.refused', { rider: entry.rider_name }),
       )
       await loadPage()
     } catch (caught: any) {
       setSaveMessage(
         caught?.message ??
-          'Unable to update World Road Championship participation.',
+          t('world.toasts.participationError'),
       )
     } finally {
       setWorldDecisionSavingRiderId(null)
@@ -798,14 +818,14 @@ export default function NationalRankingPage(): JSX.Element {
 
       setSaveMessage(
         approve
-          ? `${entry.rider_name} is confirmed again for the National Championship final.`
-          : `${entry.rider_name} will not ride the National Championship final.`,
+          ? t('world.toasts.nationalConfirmed', { rider: entry.rider_name })
+          : t('world.toasts.nationalRefused', { rider: entry.rider_name }),
       )
       await loadPage()
     } catch (caught: any) {
       setSaveMessage(
         caught?.message ??
-          'Unable to update the second National Championship confirmation.',
+          t('world.toasts.nationalError'),
       )
     } finally {
       setNationalFinalDecisionSavingRiderId(null)
@@ -836,14 +856,14 @@ export default function NationalRankingPage(): JSX.Element {
 
       setSaveMessage(
         approve
-          ? `${entry.rider_name} is finally confirmed for the World Road Championship.`
-          : `${entry.rider_name} has been withdrawn from the World Road Championship. Morale -15.`,
+          ? t('world.toasts.worldConfirmed', { rider: entry.rider_name })
+          : t('world.toasts.worldWithdrawn', { rider: entry.rider_name }),
       )
       await loadPage()
     } catch (caught: any) {
       setSaveMessage(
         caught?.message ??
-          'Unable to update the final World Championship confirmation.',
+          t('world.toasts.worldError'),
       )
     } finally {
       setWorldFinalDecisionSavingRiderId(null)
@@ -871,13 +891,13 @@ export default function NationalRankingPage(): JSX.Element {
       if (withdrawError) throw withdrawError
 
       setSaveMessage(
-        `${entry.rider_name} has been withdrawn from the National Championship final. The rider was removed from the final startlist and received the refusal morale penalty.`,
+        t('world.toasts.withdrawnNational', { rider: entry.rider_name }),
       )
       await loadPage()
     } catch (caught: any) {
       setSaveMessage(
         caught?.message ??
-          'Unable to withdraw this rider from the National Championship final.',
+          t('world.toasts.withdrawError'),
       )
     } finally {
       setFinalWithdrawalSavingRiderId(null)
@@ -886,11 +906,10 @@ export default function NationalRankingPage(): JSX.Element {
 
   const edition = data?.edition ?? null
   const projection = data?.qualification_projection ?? null
-  const countryName =
-    data?.country_name ??
-    data?.countries?.[0]?.name ??
-    data?.country_code ??
-    t('common.national')
+  const countryName = localizedCountryName(
+    data?.country_code, i18n.resolvedLanguage || i18n.language,
+    data?.country_name ?? data?.countries?.[0]?.name ?? t('common.national'),
+  )
   const countryFlag = flagUrl(data?.country_code)
   const pageDate = (
     value?: string | null,
@@ -926,6 +945,14 @@ export default function NationalRankingPage(): JSX.Element {
   const qualificationResults = (data?.results ?? []).filter(
     result => result.event_type === 'qualification',
   )
+  const topTenFinalResults = [...finalResults]
+    .filter(row => row.rank >= 1 && row.rank <= 10)
+    .sort((a, b) => a.rank - b.rank)
+  const ownedRiderIds = new Set((data?.my_entries ?? []).map(row => row.rider_id))
+  const extraMyRiders = [...finalResults]
+    .filter(row => row.rank > 10 && (ownedRiderIds.has(row.rider_id) ||
+      (row.club_id != null && (data?.my_club_ids ?? []).includes(row.club_id))))
+    .sort((a, b) => a.rank - b.rank)
   const pendingApprovals = (data?.my_entries ?? []).filter(
     entry => entry.participation_decision === 'pending',
   )
@@ -1104,11 +1131,11 @@ export default function NationalRankingPage(): JSX.Element {
             <img
               src={countryFlag}
               alt={data?.country_code ?? countryName}
-              className="mt-0.5 h-4 w-6 shrink-0 rounded-sm border border-slate-200 object-cover"
+              className="mt-0.5 h-8 w-12 shrink-0 rounded-sm border border-slate-200 object-cover"
             />
           ) : (
-            <div className="mt-0.5 flex h-4 w-6 shrink-0 items-center justify-center rounded-sm border border-slate-200 bg-white">
-              <Flag className="h-3 w-3 text-slate-500" />
+            <div className="mt-0.5 flex h-8 w-12 shrink-0 items-center justify-center rounded-sm border border-slate-200 bg-white">
+              <Flag className="h-5 w-5 text-slate-500" />
             </div>
           )}
           <div>
@@ -1239,7 +1266,7 @@ export default function NationalRankingPage(): JSX.Element {
               )}
               <div className="mt-0.5 text-xs text-slate-500">
                 {data?.final_host
-                  ? formatRouteMeta(data.final_host)
+                  ? formatRouteMeta(data.final_host, t)
                   : t('cards.hostPendingHelp')}
               </div>
             </div>
@@ -1339,7 +1366,7 @@ export default function NationalRankingPage(): JSX.Element {
                     {t('draw.finalFieldCount', { count: edition.final_field_size })}
                   </div>
                   <div className="mt-2 text-[11px] font-semibold text-yellow-800">
-                    Winner qualifies automatically for the World Road Championship
+                    {t('world.winnerQualifies')}
                   </div>
                 </Link>
 
@@ -1362,11 +1389,11 @@ export default function NationalRankingPage(): JSX.Element {
                       />
                       <div className="min-w-0">
                         <div className="text-xs font-semibold uppercase tracking-wide text-sky-800">
-                          World Road Championship
+                          {t('world.title')}
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           <div className="text-base font-bold text-slate-950">
-                            Grand Finale
+                            {t('world.grandFinale')}
                           </div>
                           <span
                             className={[
@@ -1376,7 +1403,7 @@ export default function NationalRankingPage(): JSX.Element {
                               ),
                             ].join(' ')}
                           >
-                            {worldChampionshipPhase(worldData)}
+                            {localizedWorldPhase(worldChampionshipPhase(worldData), t)}
                           </span>
                         </div>
                         <div className="mt-1 text-sm font-semibold text-slate-800">
@@ -1388,21 +1415,21 @@ export default function NationalRankingPage(): JSX.Element {
                       </div>
                     </div>
                     <div className="mt-3 text-xs text-slate-600">
-                      {worldData.edition.host_country_name_snapshot ?? 'Warm-weather host'}
+                      {localizedCountryName(worldData.edition.host_country_code, i18n.resolvedLanguage || i18n.language, worldData.edition.host_country_name_snapshot || t('world.warmHost'))}
                       {worldData.route?.route_label
                         ? ` · ${worldData.route.route_label}`
                         : ''}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
                       <span className="rounded-full bg-sky-100 px-2 py-1 text-sky-800">
-                        {worldData.participant_count} champions qualified
+                        {t('world.championsQualified', { count: worldData.participant_count })}
                       </span>
                       <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-800">
-                        {worldData.confirmed_count} confirmed
+                        {t('world.confirmedCount', { count: worldData.confirmed_count })}
                       </span>
                     </div>
                     <div className="mt-3 text-xs font-bold text-sky-800">
-                      Open World Championship →
+                      {t('world.openChampionship')}
                     </div>
                   </Link>
                 ) : (
@@ -1419,13 +1446,13 @@ export default function NationalRankingPage(): JSX.Element {
                       )}
                       <div>
                         <div className="text-xs font-semibold uppercase tracking-wide text-sky-800">
-                          World Road Championship
+                          {t('world.title')}
                         </div>
-                        <div className="mt-1 font-bold text-slate-950">Grand Finale</div>
+                        <div className="mt-1 font-bold text-slate-950">{t('world.grandFinale')}</div>
                       </div>
                     </div>
                     <div className="mt-3 text-xs text-slate-600">
-                      Scheduled from the start of the season. National champions are added automatically.
+                      {t('world.scheduledDescription')}
                     </div>
                   </div>
                 )}
@@ -1449,7 +1476,7 @@ export default function NationalRankingPage(): JSX.Element {
                     {t('draw.finalFieldCount', { count: edition.final_field_size })}
                   </div>
                   <div className="mt-2 text-[11px] font-semibold text-yellow-800">
-                    Winner qualifies automatically for the World Road Championship
+                    {t('world.winnerQualifies')}
                   </div>
                 </Link>
 
@@ -1472,11 +1499,11 @@ export default function NationalRankingPage(): JSX.Element {
                       />
                       <div className="min-w-0">
                         <div className="text-xs font-semibold uppercase tracking-wide text-sky-800">
-                          World Road Championship
+                          {t('world.title')}
                         </div>
                         <div className="mt-1 flex flex-wrap items-center gap-2">
                           <div className="text-base font-bold text-slate-950">
-                            Grand Finale
+                            {t('world.grandFinale')}
                           </div>
                           <span
                             className={[
@@ -1486,7 +1513,7 @@ export default function NationalRankingPage(): JSX.Element {
                               ),
                             ].join(' ')}
                           >
-                            {worldChampionshipPhase(worldData)}
+                            {localizedWorldPhase(worldChampionshipPhase(worldData), t)}
                           </span>
                         </div>
                         <div className="mt-1 text-sm font-semibold text-slate-800">
@@ -1498,26 +1525,26 @@ export default function NationalRankingPage(): JSX.Element {
                       </div>
                     </div>
                     <div className="mt-3 text-xs text-slate-600">
-                      {worldData.edition.host_country_name_snapshot ?? 'Warm-weather host'}
+                      {localizedCountryName(worldData.edition.host_country_code, i18n.resolvedLanguage || i18n.language, worldData.edition.host_country_name_snapshot || t('world.warmHost'))}
                       {worldData.route?.route_label
                         ? ` · ${worldData.route.route_label}`
                         : ''}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-semibold">
                       <span className="rounded-full bg-sky-100 px-2 py-1 text-sky-800">
-                        {worldData.participant_count} champions qualified
+                        {t('world.championsQualified', { count: worldData.participant_count })}
                       </span>
                       <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-800">
-                        {worldData.confirmed_count} confirmed
+                        {t('world.confirmedCount', { count: worldData.confirmed_count })}
                       </span>
                     </div>
                     <div className="mt-3 text-xs font-bold text-sky-800">
-                      Open World Championship →
+                      {t('world.openChampionship')}
                     </div>
                   </Link>
                 ) : (
                   <div className="rounded border border-sky-200 bg-sky-50 px-4 py-4 text-sm text-slate-600">
-                    World Road Championship Grand Finale is scheduled for this season.
+                    {t('world.scheduledNotice')}
                   </div>
                 )}
               </div>
@@ -1672,16 +1699,16 @@ export default function NationalRankingPage(): JSX.Element {
 
           <div className="flex flex-col gap-3 rounded border border-sky-200 bg-sky-50 p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <div className="font-semibold text-slate-900">Participation decisions only</div>
+              <div className="font-semibold text-slate-900">{t('dutyExtra.decisionsOnly')}</div>
               <div className="mt-1 text-sm leading-6 text-slate-600">
-                Approve or refuse National Championship duty here. Once approved, the rider is added automatically to the correct Qualification Group or Final start list. Rider equipment and individual strategy are configured only in Race Preparation.
+                {t('dutyExtra.decisionsHelp')}
               </div>
             </div>
             <Link
               to="/dashboard/race-preparation"
               className="inline-flex shrink-0 items-center justify-center rounded bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-800"
             >
-              Open Race Preparation
+              {t('dutyExtra.openPreparation')}
             </Link>
           </div>
 
@@ -1704,7 +1731,7 @@ export default function NationalRankingPage(): JSX.Element {
                       />
                       <div>
                         <div className="text-xs font-bold uppercase tracking-wide text-sky-700">
-                          World Road Championship invitation
+                          {t('world.invitation')}
                         </div>
                         <Link
                           to={riderProfilePath(entry.rider_id, entry.club_id)}
@@ -1713,7 +1740,7 @@ export default function NationalRankingPage(): JSX.Element {
                           {entry.rider_name}
                         </Link>
                         <div className="text-xs text-slate-500">
-                          {entry.country_code} National Champion · {entry.club_name ?? t('ranking.freeAgent')}
+                          {t('world.nationalChampionLabel', { country: localizedCountryName(entry.country_code, i18n.resolvedLanguage || i18n.language) })} · {entry.club_name ?? t('ranking.freeAgent')}
                         </div>
                       </div>
                     </div>
@@ -1731,15 +1758,15 @@ export default function NationalRankingPage(): JSX.Element {
                       ].join(' ')}
                     >
                       {entry.entry_status === 'unavailable'
-                        ? 'Unavailable'
-                        : entry.participation_decision.replaceAll('_', ' ')}
+                        ? t('world.unavailable')
+                        : t(`world.decision.${entry.participation_decision}`, { defaultValue: entry.participation_decision })}
                     </span>
                   </div>
 
                   <div className="grid gap-4 p-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
                     <div className="text-sm text-slate-600">
                       <div>
-                        Grand Finale: <strong className="text-slate-900">
+                        {t('world.grandFinale')}: <strong className="text-slate-900">
                           {pageDate(
                             entry.race_date,
                             worldData?.edition?.season_number,
@@ -1747,20 +1774,20 @@ export default function NationalRankingPage(): JSX.Element {
                         </strong>
                       </div>
                       <div className="mt-1">
-                        Decision deadline: {pageDate(
+                        {t('world.decisionDeadline')}: {pageDate(
                           entry.decision_deadline,
                           worldData?.edition?.season_number,
                         )}
                       </div>
                       <div className="mt-2 text-xs leading-5 text-slate-500">
-                        The rider is reserved for this World Championship duty. All costs are covered by the organizer. Approval gives <strong>+10 morale</strong>; refusal gives <strong>-15 morale</strong>. Race fatigue and normal race effects still apply.
+                        {t('world.dutyEffects')}
                       </div>
                       {entry.race_id ? (
                         <Link
                           to={`/dashboard/races/${entry.race_id}`}
                           className="mt-2 inline-block text-xs font-bold text-sky-700 hover:underline"
                         >
-                          Open World Championship race page
+                          {t('world.openRace')}
                         </Link>
                       ) : null}
                     </div>
@@ -1780,7 +1807,7 @@ export default function NationalRankingPage(): JSX.Element {
                           ) : (
                             <CheckCircle2 className="h-4 w-4" />
                           )}
-                          Allow rider
+                          {t('world.allowRider')}
                         </button>
                         <button
                           type="button"
@@ -1788,7 +1815,7 @@ export default function NationalRankingPage(): JSX.Element {
                           onClick={() => void decideWorldParticipation(entry, false)}
                           className="rounded border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
                         >
-                          Refuse
+                          {t('world.refuse')}
                         </button>
                       </div>
                     ) : null}
@@ -1808,25 +1835,20 @@ export default function NationalRankingPage(): JSX.Element {
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div className="text-sm font-bold text-slate-950">
-                            2nd confirmation · World Championship final
+                            {t('world.secondConfirmation')}
                           </div>
                           <div className="mt-1 text-xs leading-5 text-slate-600">
-                            You already accepted the World Championship invitation.
-                            Please confirm the rider again shortly before the Grand Finale.
+                            {t('world.secondConfirmationHelp')}
                           </div>
                           <div className="mt-1 text-xs text-slate-500">
-                            Final confirmation deadline:{' '}
+                            {t('world.finalDeadline')}:{' '}
                             {pageDate(
                               entry.final_decision_deadline,
                               worldData?.edition?.season_number,
                             )}
                           </div>
                           <div className="mt-2 text-xs font-semibold text-slate-700">
-                            Status:{' '}
-                            {(entry.final_participation_decision ?? 'not_open').replaceAll(
-                              '_',
-                              ' ',
-                            )}
+                            {t('world.status')}: {t(`world.decision.${entry.final_participation_decision ?? 'not_open'}`)}
                           </div>
                         </div>
 
@@ -1848,7 +1870,7 @@ export default function NationalRankingPage(): JSX.Element {
                               ) : (
                                 <CheckCircle2 className="h-4 w-4" />
                               )}
-                              Confirm again
+                              {t('world.confirmAgain')}
                             </button>
                             <button
                               type="button"
@@ -1860,7 +1882,7 @@ export default function NationalRankingPage(): JSX.Element {
                               }
                               className="rounded border border-red-300 bg-white px-3 py-2 text-xs font-bold text-red-700 hover:bg-red-50 disabled:opacity-50"
                             >
-                              Refuse final
+                              {t('world.refuseFinal')}
                             </button>
                           </div>
                         ) : null}
@@ -2015,27 +2037,22 @@ export default function NationalRankingPage(): JSX.Element {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
                             <div className="text-sm font-semibold text-slate-900">
-                              2nd confirmation · National Championship final
+                              {t('dutyExtra.secondConfirmation')}
                             </div>
                             <div className="mt-1 text-xs leading-5 text-slate-600">
-                              This rider has reached the National Championship final.
-                              The manager must approve or refuse the final separately.
+                              {t('dutyExtra.secondConfirmationHelp')}
                             </div>
                             <div className="mt-1 text-xs text-slate-500">
-                              Final: {pageDate(edition?.final_date, edition?.season_number)}
+                              {t('dutyExtra.final')}: {pageDate(edition?.final_date, edition?.season_number)}
                               {' · '}
-                              Decision deadline:{' '}
+                              {t('world.decisionDeadline')}:{' '}
                               {pageDate(
                                 entry.final_decision_deadline,
                                 edition?.season_number,
                               )}
                             </div>
                             <div className="mt-2 text-xs font-medium text-slate-700">
-                              Status:{' '}
-                              {(entry.final_participation_decision ?? 'not_open').replaceAll(
-                                '_',
-                                ' ',
-                              )}
+                              {t('world.status')}: {t(`world.decision.${entry.final_participation_decision ?? 'not_open'}`)}
                             </div>
                           </div>
 
@@ -2057,7 +2074,7 @@ export default function NationalRankingPage(): JSX.Element {
                                 ) : (
                                   <CheckCircle2 className="h-4 w-4" />
                                 )}
-                                Confirm final
+                                {t('dutyExtra.confirmFinal')}
                               </button>
                               <button
                                 type="button"
@@ -2069,7 +2086,7 @@ export default function NationalRankingPage(): JSX.Element {
                                 }
                                 className="rounded border border-red-300 bg-white px-3 py-2 text-xs font-semibold text-red-700 hover:bg-red-50 disabled:opacity-50"
                               >
-                                Refuse final
+                                {t('world.refuseFinal')}
                               </button>
                             </div>
                           ) : null}
@@ -2081,17 +2098,18 @@ export default function NationalRankingPage(): JSX.Element {
                     (showQualification || showFinal) ? (
                       <div className="flex flex-col gap-3 rounded border border-emerald-200 bg-emerald-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
                         <div className="text-sm leading-6 text-emerald-900">
-                          <strong>{entry.rider_name}</strong> is approved and has been synced automatically to {
-                            entry.entry_path === 'qualification'
-                              ? `Qualification Group ${entry.heat_number ?? '—'}`
-                              : 'the National Championship Final'
-                          }. Equipment and individual race strategy are managed in Race Preparation.
+                          {t('dutyExtra.synced', {
+                            rider: entry.rider_name,
+                            race: entry.entry_path === 'qualification'
+                              ? t('draw.qualificationHeat', { number: entry.heat_number ?? '—' })
+                              : t('historyExtra.raceName', { country: countryName }),
+                          })}
                         </div>
                         <Link
                           to="/dashboard/race-preparation"
                           className="inline-flex shrink-0 items-center justify-center rounded bg-emerald-700 px-3 py-2 text-xs font-semibold text-white hover:bg-emerald-600"
                         >
-                          Open Race Preparation
+                          {t('dutyExtra.openPreparation')}
                         </Link>
                       </div>
                     ) : null}
@@ -2107,68 +2125,73 @@ export default function NationalRankingPage(): JSX.Element {
       {activeTab === 'history' ? (
         <section className="grid gap-4 xl:grid-cols-2">
           <div className="rounded bg-white p-4 shadow">
-            <div className="mb-4 flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-yellow-600" />
-              <h3 className="text-lg font-semibold text-slate-900">{t('results.title')}</h3>
-            </div>
-
-            {finalResults.length > 0 ? (
+            <h3 className="text-lg font-semibold text-slate-900">{t('results.title')}</h3>
+            {edition ? (
+              <Link to={`/dashboard/national-championships/${edition.id}/final`}
+                className="mt-1 mb-3 inline-block text-sm font-medium text-sky-700 hover:underline">
+                {t('historyExtra.raceName', { country: countryName })} →
+              </Link>
+            ) : (
+              <p className="mt-1 mb-3 text-sm text-slate-500">{t('historyExtra.raceName', { country: countryName })}</p>
+            )}
+            {topTenFinalResults.length ? (
               <div className="divide-y divide-slate-100">
-                {finalResults.slice(0, 50).map(result => (
-                  <div
-                    key={`${result.rider_id}:${result.rank}`}
-                    className="flex items-center justify-between gap-3 py-2.5"
-                  >
+                {topTenFinalResults.map(result => (
+                  <div key={`${result.rider_id}:${result.rank}`}
+                    className="flex items-center justify-between gap-3 py-2.5">
                     <div className="flex items-center gap-3">
                       <span className="w-7 font-semibold text-slate-700">{result.rank}</span>
-                      <Link
-                        to={riderProfilePath(result.rider_id, result.club_id)}
-                        className="font-semibold text-slate-900 hover:underline"
-                      >
-                        {result.rider_name}
-                      </Link>
+                      <Link to={riderProfilePath(result.rider_id, result.club_id)}
+                        className="font-semibold text-slate-900 hover:underline">{result.rider_name}</Link>
                     </div>
-                    <span className="text-xs text-slate-500">
-                      {result.club_name ?? t('ranking.freeAgent')}
-                    </span>
+                    <span className="text-xs text-slate-500">{result.club_name ?? t('ranking.freeAgent')}</span>
                   </div>
                 ))}
+                {extraMyRiders.length > 0 ? (
+                  <div className="pt-4">
+                    <h4 className="pb-2 text-sm font-semibold text-slate-900">{t('historyExtra.myRiders')}</h4>
+                    {extraMyRiders.map(result => (
+                      <div key={`${result.rider_id}:${result.rank}`}
+                        className="flex items-center justify-between gap-3 border-t border-slate-100 py-2.5">
+                        <div className="flex items-center gap-3">
+                          <span className="w-7 font-semibold text-slate-700">{result.rank}</span>
+                          <Link to={riderProfilePath(result.rider_id, result.club_id)}
+                            className="font-semibold text-slate-900 hover:underline">{result.rider_name}</Link>
+                        </div>
+                        <span className="text-xs text-slate-500">{result.club_name ?? t('ranking.freeAgent')}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="text-sm text-slate-500">{t('results.pending')}</div>
             )}
           </div>
-
           <div className="rounded bg-white p-4 shadow">
-            <div className="mb-4 flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-green-600" />
-              <h3 className="text-lg font-semibold text-slate-900">{t('champions.title')}</h3>
-            </div>
-
+            <h3 className="mb-4 text-lg font-semibold text-slate-900">{t('champions.title')}</h3>
             {(data?.past_champions?.length ?? 0) > 0 ? (
               <div className="divide-y divide-slate-100">
                 {data?.past_champions.map(champion => (
-                  <div
-                    key={`${champion.season_number}:${champion.champion_rider_id}`}
-                    className="flex items-center justify-between gap-3 py-2.5"
-                  >
+                  <div key={`${champion.season_number}:${champion.champion_rider_id}`}
+                    className="flex items-center justify-between gap-3 py-2.5">
                     <div>
                       <div className="text-xs text-slate-500">
                         {t('champions.season', { number: champion.season_number })}
                       </div>
-                      <Link
-                        to={riderProfilePath(
-                          champion.champion_rider_id,
-                          champion.champion_club_id,
-                        )}
-                        className="font-semibold text-slate-900 hover:underline"
-                      >
+                      <Link to={riderProfilePath(champion.champion_rider_id, champion.champion_club_id)}
+                        className="font-semibold text-slate-900 hover:underline">
                         {champion.champion_name_snapshot}
                       </Link>
+                      {champion.final_race_id ? (
+                        <Link to={`/dashboard/races/${champion.final_race_id}`}
+                          className="mt-1 block text-xs font-medium text-sky-700 hover:underline">
+                          {t('historyExtra.raceName', { country: countryName })} →
+                        </Link>
+                      ) : null}
                     </div>
                     <div className="text-xs text-slate-500">
-                      {champion.champion_club_name_snapshot ??
-                        t('results.independent')}
+                      {champion.champion_club_name_snapshot ?? t('results.independent')}
                     </div>
                   </div>
                 ))}

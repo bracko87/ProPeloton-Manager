@@ -30,7 +30,7 @@
   },
   "duty": {
     "title": "My National Duty",
-    "description": "Approve or refuse each rider\u2019s National Championship duty here. Approved riders are synced automatically to Race Preparation.",
+    "description": "Approve or refuse each rider’s National Championship duty here. Approved riders are synced automatically to Race Preparation.",
     "locked": "Decision page only — equipment and strategy are handled in Race Preparation.",
     "directQualifier": "Direct qualifier",
     "qualificationHeat": "Qualification Group {{number}}",
@@ -249,5 +249,79 @@
     "finished": "Race finished",
     "ready": "Race ready",
     "planned": "Planned"
+  },
+  "world": {
+    "winnerQualifies": "Winner qualifies automatically for the World Road Championship",
+    "title": "World Road Championship",
+    "grandFinale": "Grand Finale",
+    "warmHost": "Warm-weather host",
+    "championsQualified": "{{count}} champions qualified",
+    "confirmedCount": "{{count}} confirmed",
+    "openChampionship": "Open World Championship →",
+    "scheduledDescription": "Scheduled from the start of the season. National champions are added automatically.",
+    "scheduledNotice": "World Road Championship Grand Finale is scheduled for this season.",
+    "invitation": "World Road Championship invitation",
+    "nationalChampionLabel": "{{country}} National Champion",
+    "unavailable": "Unavailable",
+    "decisionDeadline": "Decision deadline",
+    "dutyEffects": "This rider is reserved for World Championship duty. The organizer pays the costs. Approval gives +10 morale; refusal gives -15 morale. Normal race fatigue and other effects apply.",
+    "openRace": "Open World Championship race page",
+    "allowRider": "Allow rider",
+    "refuse": "Refuse",
+    "secondConfirmation": "Second confirmation - World Championship final",
+    "secondConfirmationHelp": "You accepted the World Championship invitation. Confirm again before the Grand Finale.",
+    "finalDeadline": "Final confirmation deadline",
+    "status": "Status",
+    "confirmAgain": "Confirm again",
+    "refuseFinal": "Refuse final",
+    "phase": {
+      "planned": "Planned",
+      "completed": "Completed",
+      "finalConfirmations": "Final confirmations",
+      "startlistConfirmed": "Startlist confirmed",
+      "invitationsOpen": "Invitations open",
+      "championsQualifying": "National champions qualifying"
+    },
+    "decision": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "auto_approved": "Auto-approved",
+      "rejected": "Rejected",
+      "not_open": "Not open"
+    },
+    "toasts": {
+      "accepted": "{{rider}} will race in the World Road Championship Grand Finale. Morale +10.",
+      "refused": "{{rider}} will not race in the World Road Championship Grand Finale. Morale -15.",
+      "participationError": "Unable to update World Championship participation.",
+      "nationalConfirmed": "{{rider}} is confirmed again for the National Championship final.",
+      "nationalRefused": "{{rider}} will not race in the National Championship final.",
+      "nationalError": "Unable to update the second National Championship confirmation.",
+      "worldConfirmed": "{{rider}} is finally confirmed for the World Championship.",
+      "worldWithdrawn": "{{rider}} has withdrawn from the World Championship. Morale -15.",
+      "worldError": "Unable to update World Championship final confirmation.",
+      "withdrawnNational": "{{rider}} has withdrawn from the National Championship final and received the refusal morale penalty.",
+      "withdrawError": "Unable to withdraw the rider from the National Championship final."
+    }
+  },
+  "dutyExtra": {
+    "decisionsOnly": "Participation decisions only",
+    "decisionsHelp": "Approve or refuse National Championship duty here. Approved riders automatically join the correct qualification group or final start list. Set individual equipment and strategy in Race Preparation.",
+    "openPreparation": "Open Race Preparation",
+    "secondConfirmation": "Second confirmation - National Championship final",
+    "secondConfirmationHelp": "This rider qualified for the National Championship final. The manager must separately approve or refuse participation.",
+    "final": "Final",
+    "confirmFinal": "Confirm final",
+    "synced": "{{rider}} is approved and automatically added to {{race}}. Manage equipment and individual race tactics in Race Preparation."
+  },
+  "historyExtra": {
+    "raceName": "{{country}} National Championship Final",
+    "myRiders": "Your riders outside the top 10"
+  },
+  "terrain": {
+    "flat": "Flat",
+    "hilly": "Hilly",
+    "mountain": "Mountain",
+    "cobbles": "Cobbles",
+    "time_trial": "Time trial"
   }
 }

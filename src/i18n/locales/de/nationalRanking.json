@@ -1,5 +1,5 @@
 {
-  "title": "Nationale Meisterschaft — {{country}}",
+  "title": "Nationale Meisterschaft - {{country}}",
   "eyebrow": "Nationaler Wettbewerb",
   "description": "Nationale Einzelrangliste der Fahrer mit Meisterschaftsqualifikation, National Duty und individueller Rennvorbereitung. Die Team-Ranglistenpunkte werden nicht beeinflusst.",
   "country": "Land",
@@ -249,5 +249,79 @@
     "finished": "Rennen beendet",
     "ready": "Rennen bereit",
     "planned": "Geplant"
+  },
+  "world": {
+    "winnerQualifies": "Der Sieger qualifiziert sich automatisch für die Straßen-Weltmeisterschaft",
+    "title": "Straßen-Weltmeisterschaft",
+    "grandFinale": "Großes Finale",
+    "warmHost": "Gastgeber mit warmem Klima",
+    "championsQualified": "{{count}} Meister qualifiziert",
+    "confirmedCount": "{{count}} bestätigt",
+    "openChampionship": "Weltmeisterschaft öffnen →",
+    "scheduledDescription": "Seit Saisonbeginn geplant. Landesmeister werden automatisch hinzugefügt.",
+    "scheduledNotice": "Das Finale der Straßen-Weltmeisterschaft ist für diese Saison geplant.",
+    "invitation": "Einladung zur Straßen-Weltmeisterschaft",
+    "nationalChampionLabel": "Landesmeister aus {{country}}",
+    "unavailable": "Nicht verfügbar",
+    "decisionDeadline": "Entscheidungsfrist",
+    "dutyEffects": "Dieser Fahrer ist für die Weltmeisterschaft reserviert. Der Veranstalter übernimmt die Kosten. Eine Zusage gibt +10 Moral, eine Absage -15. Ermüdung und andere Renneffekte gelten weiterhin.",
+    "openRace": "WM-Rennseite öffnen",
+    "allowRider": "Fahrer zulassen",
+    "refuse": "Ablehnen",
+    "secondConfirmation": "Zweite Bestätigung - WM-Finale",
+    "secondConfirmationHelp": "Du hast die Einladung angenommen. Bestätige den Fahrer vor dem großen Finale erneut.",
+    "finalDeadline": "Frist für die endgültige Bestätigung",
+    "status": "Status",
+    "confirmAgain": "Erneut bestätigen",
+    "refuseFinal": "Finale ablehnen",
+    "phase": {
+      "planned": "Geplant",
+      "completed": "Abgeschlossen",
+      "finalConfirmations": "Endgültige Bestätigungen",
+      "startlistConfirmed": "Startliste bestätigt",
+      "invitationsOpen": "Einladungen offen",
+      "championsQualifying": "Landesmeister qualifizieren sich"
+    },
+    "decision": {
+      "pending": "Ausstehend",
+      "approved": "Genehmigt",
+      "auto_approved": "Automatisch genehmigt",
+      "rejected": "Abgelehnt",
+      "not_open": "Noch nicht offen"
+    },
+    "toasts": {
+      "accepted": "{{rider}} fährt beim WM-Finale. Moral +10.",
+      "refused": "{{rider}} fährt nicht beim WM-Finale. Moral -15.",
+      "participationError": "WM-Teilnahme konnte nicht aktualisiert werden.",
+      "nationalConfirmed": "{{rider}} wurde erneut für das nationale Finale bestätigt.",
+      "nationalRefused": "{{rider}} nimmt nicht am nationalen Finale teil.",
+      "nationalError": "Zweite Bestätigung des nationalen Finales fehlgeschlagen.",
+      "worldConfirmed": "{{rider}} ist für die Weltmeisterschaft endgültig bestätigt.",
+      "worldWithdrawn": "{{rider}} wurde von der Weltmeisterschaft zurückgezogen. Moral -15.",
+      "worldError": "Finalbestätigung zur Weltmeisterschaft fehlgeschlagen.",
+      "withdrawnNational": "{{rider}} wurde vom nationalen Finale zurückgezogen und erhielt die Moralstrafe für die Absage.",
+      "withdrawError": "Der Rückzug aus dem nationalen Finale ist fehlgeschlagen."
+    }
+  },
+  "dutyExtra": {
+    "decisionsOnly": "Nur Teilnahmeentscheidungen",
+    "decisionsHelp": "Hier kannst du den Nationalmeisterschaftseinsatz erlauben oder ablehnen. Bestätigte Fahrer werden automatisch zur richtigen Qualifikationsgruppe oder Finalstartliste hinzugefügt. Ausrüstung und Einzeltaktik werden in der Rennvorbereitung festgelegt.",
+    "openPreparation": "Rennvorbereitung öffnen",
+    "secondConfirmation": "Zweite Bestätigung - nationales Finale",
+    "secondConfirmationHelp": "Dieser Fahrer hat das nationale Finale erreicht. Der Manager muss die Teilnahme gesondert bestätigen oder ablehnen.",
+    "final": "Finale",
+    "confirmFinal": "Finalteilnahme bestätigen",
+    "synced": "{{rider}} wurde bestätigt und automatisch zu {{race}} hinzugefügt. Ausrüstung und Einzeltaktik werden in der Rennvorbereitung verwaltet."
+  },
+  "historyExtra": {
+    "raceName": "Finale der nationalen Meisterschaft - {{country}}",
+    "myRiders": "Deine Fahrer außerhalb der Top 10"
+  },
+  "terrain": {
+    "flat": "Flach",
+    "hilly": "Hügelig",
+    "mountain": "Bergig",
+    "cobbles": "Kopfsteinpflaster",
+    "time_trial": "Zeitfahren"
   }
 }

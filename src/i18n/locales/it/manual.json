@@ -49,7 +49,8 @@
     "support-and-account": "Supporto e account",
     "race-preparation": "Preparazione gara",
     "transfers-and-scouting": "Trasferimenti e scouting",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "national-competitions": "Competizioni nazionali"
   },
   "guide": {
     "factParagraph": "Importanti valori di riferimento per questo argomento sono: {{factText}}. Trattare i valori live dalla pagina di gioco come autorevoli ogni volta che un valore è basato su database, perché prezzi, citazioni, stati o bilanciamento futuro possono cambiare senza il manuale che necessita di una riscrittura di codice.",
@@ -70,7 +71,8 @@
       "transfers-and-scouting": "{{title}} combina l'azione di mercato con la qualità delle informazioni. Il manager dovrebbe utilizzare lo scouting per ridurre l'incertezza, quindi negoziare solo per obiettivi realistici che si adattano sia alla squadra che al budget.",
       "finance": "{{title}} influenza la sopravvivenza del club. Distinguere sempre il reddito operativo/spese dal movimento del debito, utilizzare le righe delle transazioni per spiegare le variazioni del saldo e mantenere abbastanza denaro per i costi ricorrenti obbligatori prima di pagare per miglioramenti opzionali.",
       "support-and-account": "{{title}} è una funzione di account/supporto. Proteggi le informazioni sull'account, usa il canale di supporto corretto e ricorda che i dati del profilo utente sono separati dai sistemi di branding e finanziamento del club pubblici.",
-      "faq": "{{title}} è una voce di risoluzione dei problemi. La risposta più veloce viene normalmente dall'identificazione dello stato di gioco che blocca l'azione, quindi controllando la pagina che possiede tale stato invece di fare clic ripetutamente sull'azione disabilitata."
+      "faq": "{{title}} è una voce di risoluzione dei problemi. La risposta più veloce viene normalmente dall'identificazione dello stato di gioco che blocca l'azione, quindi controllando la pagina che possiede tale stato invece di fare clic ripetutamente sull'azione disabilitata.",
+      "national-competitions": "{{title}} spiega i campionati nazionali individuali e il torneo a squadre World Nations, che è separato. Controlla scadenze, conferme, liste di partenza e preparazione. Fanno fede i dati attuali del gioco."
     },
     "commonMistake": {
       "equipment": "Un errore comune è quello di acquistare l'elemento più forte senza controllare le condizioni, lo stato di assegnazione, profilo di gara o la compatibilità di configurazione. L'approccio più sicuro è quello di costruire setup specializzati completi e mantenere gli elementi che tali setup dipendono.",
@@ -3498,6 +3500,86 @@
         "5": "Apri infrastrutture",
         "6": "Apri pacchetti Pro"
       }
+    },
+    "national-ranking-championships": {
+      "category": "Competizioni nazionali",
+      "title": "Classifica e campionati nazionali - Guida completa",
+      "subtitle": "Da classifica, inviti e qualificazioni a finale, impegni dei corridori e Mondiale.",
+      "overview": "Classifiche e campionati nazionali dipendono dalla nazionalità del corridore, indipendentemente dal club. Il sistema programma le date, blocca la classifica, crea gruppi di qualificazione, chiede conferme, calcola i risultati e può invitare il campione al Mondiale.",
+      "facts": [
+        {
+          "label": "Idoneità",
+          "value": "I corridori gareggiano per la nazionalità, non per il paese del club"
+        },
+        {
+          "label": "Partecipanti alla finale",
+          "value": "Fino a 96 corridori; i campi più grandi richiedono qualificazioni"
+        },
+        {
+          "label": "Composizione dei gruppi",
+          "value": "I migliori corridori sono distribuiti tra i gruppi"
+        },
+        {
+          "label": "Scelta del manager",
+          "value": "Il manager accetta o rifiuta; le gare sono individuali"
+        },
+        {
+          "label": "Costi",
+          "value": "Coperti dall'organizzatore, non dal club"
+        },
+        {
+          "label": "Attrezzatura",
+          "value": "Pacchetto standard con regolazioni individuali consentite"
+        },
+        {
+          "label": "Campione nazionale",
+          "value": "Vincitore della finale per quel paese e stagione"
+        },
+        {
+          "label": "Invito mondiale",
+          "value": "Il campione può essere invitato al Mondiale"
+        }
+      ]
+    },
+    "national-association-world-nations": {
+      "category": "Competizioni nazionali",
+      "title": "Federazione nazionale e World Nations - Guida completa",
+      "subtitle": "Costituzione e finanziamento, elezioni, rose, preparazione, sedi e World Nations.",
+      "overview": "La Federazione Nazionale riunisce i manager dello stesso paese. I membri finanziano la federazione, eleggono il selezionatore, formano le squadre nazionali e competono nel torneo a squadre World Nations, distinto dai campionati individuali.",
+      "facts": [
+        {
+          "label": "Iscrizione",
+          "value": "Club principali attivi e idonei dello stesso paese"
+        },
+        {
+          "label": "Attivazione",
+          "value": "Numero minimo di membri e obiettivo Coins"
+        },
+        {
+          "label": "Selezionatore",
+          "value": "Eletto dai membri; gestisce le scelte sportive"
+        },
+        {
+          "label": "Rosa nazionale",
+          "value": "10 corridori per ciclo"
+        },
+        {
+          "label": "Formazione giornaliera",
+          "value": "Esattamente 7 corridori per giornata"
+        },
+        {
+          "label": "Giornate di gara",
+          "value": "Cronosquadre, corsa pianeggiante e gara collinare/montana"
+        },
+        {
+          "label": "Costi",
+          "value": "A carico del sistema, senza costi del club o federazione"
+        },
+        {
+          "label": "Punteggio",
+          "value": "Punti nazionali per avanzamento e classifica"
+        }
+      ]
     }
   }
 }
