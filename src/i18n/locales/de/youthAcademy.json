@@ -173,7 +173,8 @@
     "onCourseUntil": "Auf Schulung bis {{date}}",
     "courseRolePaused": "Dieser Mitarbeiter ist bis zum Kursende nicht verfügbar.",
     "roleBonusPaused": "Rollenbonus pausiert",
-    "roleBonusPausedHelp": "Rolleneffekte sind während der Schulung ausgesetzt."
+    "roleBonusPausedHelp": "Rolleneffekte sind während der Schulung ausgesetzt.",
+    "courseManagerHandover": "Manager übernimmt vorübergehend: {{responsibilities}}. Gespeicherte Zuständigkeiten kehren nach Rückkehr zurück."
   },
   "budget": {
     "title": "Saisonbudget der Akademie",
@@ -366,7 +367,8 @@
     "weeklyStipendHelp": "Wöchentliche Unterstützung für Fahrer und Familie in der Akademie.",
     "accommodationHelp": "Wöchentliche Wohn- und Umzugshilfe.",
     "compensationOfferHelp": "Einmalige Ausbildungsentschädigung an die bisherige Akademie bei Transfer.",
-    "compensationOfferUnattachedHelp": "Bei vereinslosen Fahrern fällt keine Entschädigung an."
+    "compensationOfferUnattachedHelp": "Bei vereinslosen Fahrern fällt keine Entschädigung an.",
+    "offerCostSummary": "Wöchentliche Kosten: {{weekly}}. Einmalige Entschädigung: {{compensation}}."
   },
   "settings": {
     "title": "Verantwortlichkeiten",
@@ -413,7 +415,12 @@
     "managerTemporaryHandover": "Vorübergehend vom Manager betreut",
     "assignTemporaryCover": "Anderen Mitarbeiter vorübergehend zuweisen",
     "noTemporaryCoverAvailable": "Derzeit ist kein anderer Akademiemitarbeiter verfügbar.",
-    "activeResponsibilityNow": "Aktuell zuständig: {{person}}"
+    "activeResponsibilityNow": "Aktuell zuständig: {{person}}",
+    "coverPenaltyHelp": "Die Arbeitsqualität sinkt vorübergehend um {{penalty}} %.",
+    "originalStaffReturns": "{{staff}} besucht {{course}} bis {{date}}. Danach werden die Aufgaben wieder aufgenommen.",
+    "managerTemporaryHandoverCourse": "{{staff}} besucht {{course}} bis {{date}}. Die gespeicherte Rolle {{role}} wird danach wieder aktiv.",
+    "managerTemporaryHandoverUnavailable": "Die für {{role}} zuständige Person ist derzeit nicht verfügbar. Die Zuweisung bleibt erhalten.",
+    "assignTemporaryCoverHelp": "Ein anderer Mitarbeiter kann vorübergehend mit 20–50 % geringerer Wirksamkeit übernehmen."
   },
   "placeholders": {},
   "errors": {
@@ -516,7 +523,10 @@
     "raceSupplies": "Rennvorräte der Jugendakademie",
     "raceSuppliesHelp": "Flaschen, Gels, Verpflegung, Renntrikots und Regenjacken aus dem Akademiebudget.",
     "inStock": "{{count}} auf Lager",
-    "quantity": "Menge"
+    "quantity": "Menge",
+    "temporaryCoverManaged": "Vorübergehend verwaltet von {{staff}}",
+    "temporaryCoverManagedHelp": "Vertretung außerhalb der Rolle reduziert die Einkaufsqualität um {{penalty}} %.",
+    "setupConfiguredBy": "Konfiguriert von {{person}} · {{date}}"
   },
   "training": {
     "title": "Entwicklungsphilosophie der Jugend",
@@ -580,7 +590,8 @@
       "world": "World Class",
       "continental": "Continental Class",
       "regional": "Regional Class",
-      "youth": "Jugendwettbewerb"
+      "youth": "Jugendwettbewerb",
+      "worldClass": "Weltklasse"
     },
     "monthlyPlanTitle": "Jugend-Rennplan {{month}}",
     "approved": "Genehmigt",
@@ -633,7 +644,11 @@
     "noVisibleRaces": "Keine sichtbaren Rennen",
     "multiDay": "Mehrere Tage",
     "entryFee": "Startgebühr",
-    "prizeFundCompact": "Preisgeld"
+    "prizeFundCompact": "Preisgeld",
+    "applicationPending": "Bewerbung ausstehend",
+    "withdrawRace": "Rennen zurückziehen",
+    "openRaceParticipatingOnly": "Renndetails sind nur für teilnehmende Akademien verfügbar.",
+    "estimatedRaceCost": "Geschätzte Gesamtkosten"
   },
   "rankings": {
     "title": "Jugendranglisten",
@@ -796,5 +811,6 @@
     "stage": "Etappe {{number}}",
     "stageResult": "Etappenergebnis",
     "fullStageStanding": "Vollständige Etappenwertung"
-  }
+  },
+  "season": "Saison"
 }
