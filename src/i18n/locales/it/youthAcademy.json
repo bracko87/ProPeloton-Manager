@@ -75,7 +75,20 @@
     "latestResult": "Ultimo risultato",
     "noPreviousRace": "Nessuna gara dell'Accademia completata",
     "noUpcomingRace": "Nessuna prossima gara dell'Accademia selezionata",
-    "noResult": "Nessun risultato giovanile"
+    "noResult": "Nessun risultato giovanile",
+    "staffLevels": {
+      "poor": "Scarso",
+      "basic": "Base",
+      "competent": "Competente",
+      "strong": "Forte",
+      "elite": "Élite",
+      "world_class": "Classe mondiale"
+    },
+    "workloads": {
+      "low": "Basso",
+      "moderate": "Moderato",
+      "high": "Alto"
+    }
   },
   "roles": {
     "director": "Direttore dell'Accademia Giovanile",
@@ -290,7 +303,17 @@
     "runCoinSearch": "Avvia ricerca extra · {{cost}} Coins",
     "weeklyLimitReached": "Limite settimanale raggiunto",
     "lastSearch": "Ultima ricerca: run {{run}} · {{reports}} rapporti",
-    "maxReportsPerWeek": "Report max / settimana"
+    "maxReportsPerWeek": "Report max / settimana",
+    "focus": {
+      "balanced": "Equilibrato",
+      "sprint": "Sprint",
+      "climbing": "Salita",
+      "time_trial": "Cronometro",
+      "endurance": "Resistenza",
+      "teamwork": "Lavoro di squadra"
+    },
+    "weeklyResetTitle": "Azzeramento settimanale dei rapporti",
+    "weeklyResetHelp": "I rapporti degli osservatori e le trattative aperte restano visibili fino a domenica. Lunedì {{date}} l'elenco si azzera e torna disponibile la prima ricerca gratuita. I corridori ingaggiati passano subito alla rosa giovanile."
   },
   "settings": {
     "title": "Responsabilità",
@@ -408,11 +431,11 @@
     "pendingCount": "{{count}} in attesa",
     "none": "Nessun giovane corridore richiede attualmente una decisione.",
     "decisionHelp": "A 16 anni scegli il passo successivo. Il passaggio diretto alla Prima Squadra non è il percorso normale.",
-    "pathway": "Percorso Youth Graduate di 30 giorni",
+    "pathway": "Percorso diplomato di 30 giorni",
     "pathwayUntil": "Percorso fino al {{date}}",
     "pathwayHelp": "Questo percorso temporaneo concede 30 giorni di gioco per spostare il corridore nella Squadra di Sviluppo. In caso contrario diventa un professionista svincolato.",
     "toDeveloping": "Alla Squadra di Sviluppo ({{slots}} liberi)",
-    "release": "Rilascia come professionista svincolato"
+    "release": "Rilascia come svincolato"
   },
   "calendar": {
     "title": "Calendario U16",
@@ -579,7 +602,12 @@
     "focus": "Focus",
     "workload": "Carico",
     "change": "Cambiamento",
-    "readinessFatigue": "Forma / fatica"
+    "readinessFatigue": "Forma / fatica",
+    "date": "Data",
+    "race": "Gara",
+    "reportClass": "Tipo di rapporto",
+    "details": "Dettagli",
+    "reportSummary": "Punti regionali +{{regional}} · Punti mondiali +{{world}} · Fatica +{{fatigue}} · Eventi sviluppo {{events}}"
   },
   "profile": {
     "loading": "Caricamento profilo giovane…",
