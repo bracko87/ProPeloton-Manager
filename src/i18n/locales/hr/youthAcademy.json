@@ -75,7 +75,20 @@
     "latestResult": "Posljednji rezultat",
     "noPreviousRace": "Još nema završene utrke Akademije",
     "noUpcomingRace": "Nije odabrana sljedeća utrka Akademije",
-    "noResult": "Još nema rezultata utrke mladih"
+    "noResult": "Još nema rezultata utrke mladih",
+    "staffLevels": {
+      "poor": "Slab",
+      "basic": "Osnovan",
+      "competent": "Kompetentan",
+      "strong": "Snažan",
+      "elite": "Elitan",
+      "world_class": "Svjetska klasa"
+    },
+    "workloads": {
+      "low": "Nisko",
+      "moderate": "Umjereno",
+      "high": "Visoko"
+    }
   },
   "roles": {
     "director": "Direktor Omladinske akademije",
@@ -290,7 +303,17 @@
     "runCoinSearch": "Pokreni dodatnu pretragu · {{cost}} Coina",
     "weeklyLimitReached": "Tjedni limit dosegnut",
     "lastSearch": "Zadnja pretraga: pokušaj {{run}} · {{reports}} izvještaja",
-    "maxReportsPerWeek": "Maks. izvještaja / tjedan"
+    "maxReportsPerWeek": "Maks. izvještaja / tjedan",
+    "focus": {
+      "balanced": "Uravnoteženo",
+      "sprint": "Sprint",
+      "climbing": "Uspon",
+      "time_trial": "Kronometar",
+      "endurance": "Izdržljivost",
+      "teamwork": "Timski rad"
+    },
+    "weeklyResetTitle": "Tjedno resetiranje izvještaja",
+    "weeklyResetHelp": "Svi otvoreni skautski izvještaji i pregovori ostaju vidljivi do nedjelje. U ponedjeljak {{date}} popis se resetira i prva besplatna pretraga ponovno je dostupna. Potpisani vozači odmah prelaze u sastav mladih."
   },
   "settings": {
     "title": "Odgovornosti",
@@ -408,11 +431,11 @@
     "pendingCount": "{{count}} na čekanju",
     "none": "Trenutno nema mladih vozača koji zahtijevaju odluku.",
     "decisionHelp": "Sa 16 godina odaberite sljedeći razvojni put. Izravan prelazak u prvu momčad nije uobičajen put.",
-    "pathway": "30-dnevni Youth Graduate put",
+    "pathway": "30-dnevni put diplomanta akademije",
     "pathwayUntil": "Put do {{date}}",
     "pathwayHelp": "Privremeni put daje 30 dana igre za prelazak u razvojnu momčad. Ako se to ne dogodi, vozač postaje profesionalni slobodni agent.",
     "toDeveloping": "U razvojnu momčad ({{slots}} slobodno)",
-    "release": "Otpusti kao profesionalnog slobodnog agenta"
+    "release": "Otpusti među slobodne vozače"
   },
   "calendar": {
     "title": "U16 kalendar utrka",
@@ -579,7 +602,12 @@
     "focus": "Fokus",
     "workload": "Opterećenje",
     "change": "Razvojna promjena",
-    "readinessFatigue": "Spremnost / umor"
+    "readinessFatigue": "Spremnost / umor",
+    "date": "Datum",
+    "race": "Utrka",
+    "reportClass": "Vrsta izvještaja",
+    "details": "Detalji",
+    "reportSummary": "Regionalni bodovi +{{regional}} · Svjetski bodovi +{{world}} · Umor +{{fatigue}} · Razvojni događaji {{events}}"
   },
   "profile": {
     "loading": "Učitavanje profila mladog vozača…",
