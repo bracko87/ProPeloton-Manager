@@ -158,7 +158,18 @@
     "transferAmount": "Iznos",
     "transferring": "Prenos…",
     "transferFunds": "Prenesi sredstva",
-    "transferHelp": "Prihodi od trka automatski ostaju u Akademiji. Ovu opciju koristi samo kada namerno želiš da prebaciš novac između seniorskog tima i Akademije."
+    "transferHelp": "Prihodi od trka automatski ostaju u Akademiji. Ovu opciju koristi samo kada namerno želiš da prebaciš novac između seniorskog tima i Akademije.",
+    "racePrizeIncome": "Prihod od nagrada sa trka",
+    "racePrizeIncomeHelp": "Novčane nagrade koje je Omladinska akademija osvojila u ekipnom plasmanu trka.",
+    "previousPage": "Prethodna",
+    "nextPage": "Sledeća",
+    "ledgerPage": "Strana {{page}} od {{total}}",
+    "ledgerRange": "Prikazano {{from}}–{{to}} od {{total}} transakcija",
+    "weeklyPayroll": "Nedeljne plate",
+    "weeklyPayrollDescription": "Nedeljna podrška vozačima i plate osoblja Omladinske akademije",
+    "ledgerCategories": {
+      "weekly_payroll": "Nedeljne plate"
+    }
   },
   "scouting": {
     "title": "Domet omladinskog skautinga",
@@ -504,7 +515,17 @@
     "selectDivision": "Izaberi diviziju",
     "country": "Država",
     "yourAcademy": "Tvoja Akademija",
-    "riderRankingHelp": "Rang-lista vozača je odvojena od klasnog poretka Akademija."
+    "riderRankingHelp": "Rang-lista vozača je odvojena od klasnog poretka Akademija.",
+    "promotion": "Promocija",
+    "playoff": "Plej-of",
+    "relegation": "Ispadanje",
+    "systemWorldTitle": "Svetska klasa · 16 timova",
+    "systemWorldHelp": "Poslednja četiri tima ispadaju na kraju sezone.",
+    "systemContinentalTitle": "Kontinentalni Zapad i Istok · po 20 timova",
+    "systemContinentalHelp": "Prvak svake grupe direktno napreduje. Drugi i treći iz obe grupe ulaze u plej-of četiri tima; dva najbolja takođe napreduju u Svetsku klasu.",
+    "systemRegionalTitle": "Regionalna klasa · 12 divizija",
+    "systemRegionalHelp": "Regionalno takmičenje mladih ima 12 geografskih divizija. Šest vodi u Kontinentalni Zapad, a šest u Istok. Svaki prvak napreduje, dok šest timova iz svake kontinentalne grupe ispada.",
+    "systemScoringHelp": "Poredak timova koristi bodove sa trka. Rangiranje vozača koristi bodove generalnog plasmana i koeficijente: Regionalna ×1,0, Kontinentalna ×1,5 i Svetska ×2,5. Sprint, brdski i hronometarski plasmani prate se zasebno."
   },
   "reports": {
     "title": "Izveštaji U16 trka",
