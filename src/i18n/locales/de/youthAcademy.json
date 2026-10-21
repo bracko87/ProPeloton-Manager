@@ -743,7 +743,8 @@
     "details": "Details",
     "reportSummary": "Regionalpunkte +{{regional}} · Weltpunkte +{{world}} · Ermüdung +{{fatigue}} · Entwicklungsereignisse {{events}}",
     "freeAgentAcademyAlumni": "Freier Fahrer · ehemaliger Akademiefahrer",
-    "reportRange": "{{from}}–{{to}} von {{total}} Berichten"
+    "reportRange": "{{from}}–{{to}} von {{total}} Berichten",
+    "reportOutcome": "Beste Platzierung {{best}} · Podien {{podiums}} · Ausfälle {{dnf}} · Nicht gestartet {{dns}}"
   },
   "profile": {
     "loading": "Jugendfahrer-Profil wird geladen…",
