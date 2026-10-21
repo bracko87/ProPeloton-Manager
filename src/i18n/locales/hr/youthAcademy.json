@@ -625,5 +625,27 @@
     "renewing": "Obnavljanje…",
     "getCoins": "Kupi coine",
     "readOnly": "Akademiju mladih treba obnoviti za trenutnu sezonu prije upravljanja."
+  },
+  "raceDetail": {
+    "overview": "Pregled",
+    "teamsCount": "Ekipe ({{count}})",
+    "mySquad": "Moji vozači",
+    "results": "Rezultati",
+    "backToCalendar": "← Povratak na kalendar mladih",
+    "raceInformation": "Podaci o utrci",
+    "participantsResults": "Sudionici i rezultati",
+    "hide": "Sakrij",
+    "show": "Prikaži",
+    "teamsRiders": "Ekipe i vozači",
+    "raceClassifications": "Poredci utrke",
+    "currentStandings": "Trenutačni poredak utrke",
+    "generalClassification": "Ukupni poredak",
+    "sprintPoints": "Sprint bodovi",
+    "mountainPoints": "Brdski bodovi",
+    "fullRaceStanding": "Cijeli poredak utrke",
+    "stageResults": "Rezultati etape – Etapa {{stage}}",
+    "stage": "Etapa {{number}}",
+    "stageResult": "Rezultat etape",
+    "fullStageStanding": "Cijeli poredak etape"
   }
 }
