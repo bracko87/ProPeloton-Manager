@@ -42,6 +42,14 @@ This baseline is from SELECT-only queries against the live Supabase database.
 - 624 clubs, 27 profiles, 857 races, 179,733 stage results, 3,422 simulation runs.
 - Season 1; game clock running at 12x.
 - Team standings, team international statistics and rider statistics return data with both anon and authenticated database-role smoke tests (see linked PR audit).
+- Authenticated database role baseline with a valid simulated user claim (not a UI session):
+  `team_rankings_view = 497`, `team_international_points_by_season_v1 = 500`,
+  `rider_statistics_page_international_v1 = 17,635`,
+  `club_profile_roster_view = 9,109`; direct raw simulation runs visible = 0 under RLS.
+  These totals can naturally evolve as the game runs. Check continued nonzero access and
+  that no new privilege errors are introduced, not exact count equality.
+- Public production homepage responded at `https://propelotonmanager.com/`; full authenticated
+  browser inspection is still a pre-release blocker if that level of verification is required.
 - Universal replay snapshot persistence checked separately: 20 latest completed simulation runs contain output snapshots and replay timeline checkpoints.
 - No automated signed-in frontend session available at capture. Do not claim player-account UX tested until a real session was exercised.
 
