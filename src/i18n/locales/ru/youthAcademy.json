@@ -173,7 +173,8 @@
     "onCourseUntil": "На обучении до {{date}}",
     "courseRolePaused": "Сотрудник недоступен до окончания курса.",
     "roleBonusPaused": "Бонус роли приостановлен",
-    "roleBonusPausedHelp": "Эффекты роли не действуют во время обучения."
+    "roleBonusPausedHelp": "Эффекты роли не действуют во время обучения.",
+    "courseManagerHandover": "Менеджер временно отвечает за: {{responsibilities}}. Сохранённые обязанности возобновятся после возвращения персонала."
   },
   "budget": {
     "title": "Сезонный бюджет академии",
@@ -366,7 +367,8 @@
     "weeklyStipendHelp": "Еженедельная поддержка гонщика и семьи во время пребывания в Академии.",
     "accommodationHelp": "Еженедельная поддержка жилья и переезда.",
     "compensationOfferHelp": "Разовая компенсация прежней Академии после перехода.",
-    "compensationOfferUnattachedHelp": "За свободного гонщика компенсация другой Академии не требуется."
+    "compensationOfferUnattachedHelp": "За свободного гонщика компенсация другой Академии не требуется.",
+    "offerCostSummary": "Еженедельные расходы: {{weekly}}. Разовая компенсация: {{compensation}}."
   },
   "settings": {
     "title": "Ответственность",
@@ -413,7 +415,12 @@
     "managerTemporaryHandover": "Временно выполняет менеджер",
     "assignTemporaryCover": "Временно назначить другого сотрудника",
     "noTemporaryCoverAvailable": "Других доступных сотрудников Академии сейчас нет.",
-    "activeResponsibilityNow": "Сейчас отвечает: {{person}}"
+    "activeResponsibilityNow": "Сейчас отвечает: {{person}}",
+    "coverPenaltyHelp": "Качество работы временно снижено на {{penalty}}%.",
+    "originalStaffReturns": "{{staff}} проходит {{course}} до {{date}}. После возвращения обязанности восстановятся.",
+    "managerTemporaryHandoverCourse": "{{staff}} проходит {{course}} до {{date}}. Сохранённая роль {{role}} восстановится после курса.",
+    "managerTemporaryHandoverUnavailable": "Назначенный на {{role}} сейчас недоступен. Назначение сохранено.",
+    "assignTemporaryCoverHelp": "Другой сотрудник может временно заменить его со снижением эффективности на 20–50%."
   },
   "placeholders": {},
   "errors": {
@@ -516,7 +523,10 @@
     "raceSupplies": "Расходники для молодёжных гонок",
     "raceSuppliesHelp": "Фляги, гели, питание, майки и дождевики за счёт Академии.",
     "inStock": "На складе: {{count}}",
-    "quantity": "Количество"
+    "quantity": "Количество",
+    "temporaryCoverManaged": "Временно управляет {{staff}}",
+    "temporaryCoverManagedHelp": "Замена вне основной роли снижает качество закупок на {{penalty}}%.",
+    "setupConfiguredBy": "Настроил {{person}} · {{date}}"
   },
   "training": {
     "title": "Философия развития юниоров",
@@ -580,7 +590,8 @@
       "world": "Мировой класс",
       "continental": "Континентальный класс",
       "regional": "Региональный класс",
-      "youth": "Юниорское соревнование"
+      "youth": "Юниорское соревнование",
+      "worldClass": "Мировой класс"
     },
     "monthlyPlanTitle": "План юниорских гонок на {{month}}",
     "approved": "Утверждено",
@@ -633,7 +644,11 @@
     "noVisibleRaces": "Нет доступных гонок",
     "multiDay": "Несколько дней",
     "entryFee": "Стартовый взнос",
-    "prizeFundCompact": "Призовой фонд"
+    "prizeFundCompact": "Призовой фонд",
+    "applicationPending": "Заявка рассматривается",
+    "withdrawRace": "Отозвать участие",
+    "openRaceParticipatingOnly": "Детали доступны только участвующим Академиям.",
+    "estimatedRaceCost": "Ожидаемые общие расходы"
   },
   "rankings": {
     "title": "Юниорские рейтинги",
@@ -796,5 +811,6 @@
     "stage": "Этап {{number}}",
     "stageResult": "Результат этапа",
     "fullStageStanding": "Полный зачёт этапа"
-  }
+  },
+  "season": "Сезон"
 }
