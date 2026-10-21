@@ -743,7 +743,8 @@
     "details": "Detalles",
     "reportSummary": "Puntos regionales +{{regional}} · Puntos mundiales +{{world}} · Fatiga +{{fatigue}} · Eventos de desarrollo {{events}}",
     "freeAgentAcademyAlumni": "Agente libre · antiguo corredor de la Academia",
-    "reportRange": "informes {{from}}–{{to}} de {{total}}"
+    "reportRange": "informes {{from}}–{{to}} de {{total}}",
+    "reportOutcome": "Mejor puesto {{best}} · Podios {{podiums}} · Abandonos {{dnf}} · No salieron {{dns}}"
   },
   "profile": {
     "loading": "Cargando perfil juvenil…",
