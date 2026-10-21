@@ -858,6 +858,11 @@ function Card({
 
 export default function YouthAcademyPage(): JSX.Element {
   const { t } = useTranslation('youthAcademy')
+  const youthValue = (type: 'roles' | 'assessmentBands' | 'skillNames' | 'ranges' | 'focus', value: string | null | undefined) => {
+    const key = String(value ?? '').toLowerCase().trim().replace(/[\s-]+/g, '_')
+    return t(`scouting.${type}.${key}`, { defaultValue: humanize(value) })
+  }
+  const staffLevel = (value: string) => t(`overview.staffLevels.${value.toLowerCase().replace(/\s+/g, '_')}`, { defaultValue: value })
   const location = useLocation()
   const navigate = useNavigate()
   const [data, setData] = useState<AcademyPayload | null>(null)
@@ -876,6 +881,7 @@ export default function YouthAcademyPage(): JSX.Element {
   const [incomingOffers, setIncomingOffers] = useState<IncomingYouthOffer[]>([])
   const [financeData, setFinanceData] = useState<YouthFinancePayload | null>(null)
   const [ledgerPage, setLedgerPage] = useState(1)
+  const [historyReportPage, setHistoryReportPage] = useState(1)
   const [budgetTransferDirection, setBudgetTransferDirection] = useState<'senior_to_youth' | 'youth_to_senior'>('senior_to_youth')
   const [budgetTransferAmount, setBudgetTransferAmount] = useState(10000)
   const [budgetTransferLoading, setBudgetTransferLoading] = useState(false)
@@ -2319,7 +2325,7 @@ export default function YouthAcademyPage(): JSX.Element {
             <div className="mt-1 text-xs text-slate-500">{t('overview.fixedCapacity')}</div>
           </Card>
           <Card title={t('overview.scouting')}>
-            <div className="text-2xl font-semibold">{humanize(data.budget?.scouting_range)}</div>
+            <div className="text-2xl font-semibold">{youthValue('ranges', data.budget?.scouting_range)}</div>
             <div className="mt-1 text-xs text-slate-500">
               {money(data.budget?.scouting_budget)} {t('overview.perSeason')}
             </div>
@@ -2359,7 +2365,7 @@ export default function YouthAcademyPage(): JSX.Element {
                   },
                   {
                     label: t('overview.recruitment'),
-                    value: humanize(data.budget?.scouting_range),
+                    value: youthValue('ranges', data.budget?.scouting_range),
                     detail: t('overview.recruitmentReach', { defaultValue: 'Current scouting programme reach' }),
                   },
                   {
@@ -2428,7 +2434,7 @@ export default function YouthAcademyPage(): JSX.Element {
                         {overview ? (
                           <div className="shrink-0 text-right">
                             <div className="text-xs font-semibold text-slate-800">
-                              {overview.level}
+                              {staffLevel(overview.level)}
                             </div>
                             <div className="text-[11px] text-slate-400">{overview.score}/100</div>
                           </div>
@@ -2496,7 +2502,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               </Link>
                             </div>
                             <div className="mt-1 text-xs text-slate-500">
-                              {humanize(item.development_focus)}
+                              {youthValue('focus', item.development_focus)}
                             </div>
                           </div>
                           <div className="shrink-0 text-right">
@@ -2875,9 +2881,9 @@ export default function YouthAcademyPage(): JSX.Element {
                         </div>
                       </td>
                       <td className="py-3 pr-3">{rider.age}</td>
-                      <td className="py-3 pr-3">{humanize(rider.role)}</td>
-                      <td className="py-3 pr-3">{rider.assessment_band}</td>
-                      <td className="py-3 pr-3">{humanize(rider.development_focus)}</td>
+                      <td className="py-3 pr-3">{youthValue('roles', rider.role)}</td>
+                      <td className="py-3 pr-3">{youthValue('assessmentBands', rider.assessment_band)}</td>
+                      <td className="py-3 pr-3">{youthValue('focus', rider.development_focus)}</td>
                       <td className="py-3 pr-3">{rider.readiness}%</td>
                       <td className="py-3">{money(rider.stipend_weekly)}/{t('week')}</td>
                     </tr>
@@ -2924,7 +2930,7 @@ export default function YouthAcademyPage(): JSX.Element {
                             </div>
                           </div>
                           <div className="mt-1 text-xs text-slate-500">
-                            {humanize(item.role)} · {item.assessment_band}
+                            {youthValue('roles', item.role)} · {youthValue('assessmentBands', item.assessment_band)}
                           </div>
                         </div>
                         {item.decision === 'pathway' && item.pathway_expires_on ? (
@@ -6152,7 +6158,7 @@ export default function YouthAcademyPage(): JSX.Element {
                                             <span className="min-w-0">
                                               <span className="block truncate font-medium">{rider.name}</span>
                                               <span className="block text-xs text-slate-500">
-                                                {rider.age} · {humanize(rider.role)} · {rider.readiness}% / {rider.fatigue}%
+                                                {rider.age} · {youthValue('roles', rider.role)} · {rider.readiness}% / {rider.fatigue}%
                                               </span>
                                             </span>
                                           </label>
@@ -6608,7 +6614,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               {flag ? <img src={flag} alt="" className="h-4 w-6 object-cover" /> : null}
                               <div>
                                 <div className="font-medium text-slate-900">{rider.rider_name}</div>
-                                <div className="text-xs text-slate-500">{humanize(rider.role)}</div>
+                                <div className="text-xs text-slate-500">{youthValue('roles', rider.role)}</div>
                               </div>
                             </div>
                           </td>
@@ -6649,73 +6655,56 @@ export default function YouthAcademyPage(): JSX.Element {
 
           <Card
             title={t('history.raceReports')}
-            right={
-              <span className="text-xs text-slate-500">
-                {t('history.reportCount', { count: historyData?.race_reports?.length ?? 0 })}
-              </span>
-            }
+            right={<span className="text-xs text-slate-500">{t('history.reportCount', { count: historyData?.race_reports?.length ?? 0 })}</span>}
           >
             {(historyData?.race_reports?.length ?? 0) === 0 ? (
               <div className="text-sm text-slate-500">{t('history.noReports')}</div>
-            ) : (
-              <div className="space-y-3">
-                {(historyData?.race_reports ?? []).map(report => (
-                  <div
-                    key={report.race_id}
-                    className="rounded-xl border border-slate-200 bg-slate-50/60 p-4"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="font-semibold text-slate-900">{report.headline}</div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {report.race_date} · {humanize(report.race_level)} · {humanize(report.terrain_type)} · {report.distance_km} km
-                        </div>
-                      </div>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                        report.report_class === 'problem'
-                          ? 'bg-red-50 text-red-700'
-                          : report.report_class === 'exceptional'
-                            ? 'bg-emerald-50 text-emerald-700'
-                            : report.report_class === 'important'
-                              ? 'bg-amber-50 text-amber-800'
-                              : 'bg-slate-100 text-slate-600'
-                      }`}>
-                        {t(`history.reportClasses.${report.report_class}`)}
-                      </span>
-                    </div>
-                    <p className="mt-3 text-sm leading-6 text-slate-600">{report.summary}</p>
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-slate-500">
-                      <span>{t('history.regionalPoints')}: +{report.regional_points}</span>
-                      <span>{t('history.worldPoints')}: +{report.world_points}</span>
-                      <span>{t('history.fatigue')}: +{report.fatigue_added}</span>
-                      <span>{t('history.developmentEvents')}: {report.development_events}</span>
-                    </div>
-                    {(report.key_events?.length ?? 0) > 0 ? (
-                      <div className="mt-3 space-y-1.5">
-                        {(report.key_events ?? []).slice(0, 8).map(event => (
-                          <div
-                            key={`${report.race_id}-${event.rider_id}-${event.result_status}`}
-                            className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 text-xs"
-                          >
-                            <span className="font-medium text-slate-800">
-                              {event.position ? `#${event.position} · ` : ''}
-                              {event.rider_name}
-                            </span>
-                            <span className="text-slate-500">
-                              {humanize(event.result_status)}
-                              {event.incident_code ? ` · ${humanize(event.incident_code)}` : ''}
-                              {event.development_bonus
-                                ? ` · +${event.development_bonus} ${t('history.development')}`
-                                : ''}
-                            </span>
-                          </div>
+            ) : (() => {
+              const reports = [...(historyData?.race_reports ?? [])].sort((a, b) => b.race_date.localeCompare(a.race_date) || b.race_id.localeCompare(a.race_id))
+              const totalPages = Math.max(1, Math.ceil(reports.length / 10))
+              const page = Math.min(historyReportPage, totalPages)
+              return (
+                <div className="space-y-3">
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full min-w-[780px] table-auto text-sm">
+                      <thead className="bg-gray-50 text-gray-600">
+                        <tr>
+                          <th className="p-3 text-left">{t('history.date')}</th>
+                          <th className="p-3 text-left">{t('history.race')}</th>
+                          <th className="p-3 text-left">{t('history.reportClass')}</th>
+                          <th className="p-3 text-left">{t('history.details')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {reports.slice((page - 1) * 10, page * 10).map(report => (
+                          <tr key={report.race_id} className="border-t border-gray-200">
+                            <td className="whitespace-nowrap p-3 text-gray-700">{gameDateLabel(report.race_date)}</td>
+                            <td className="p-3">
+                              <Link to={`/dashboard/youth-academy/races/${report.race_id}`} className="font-medium text-slate-900 hover:text-amber-700 hover:underline">
+                                {report.headline.replace(/\\s*[-–·]\\s*Academy report$/i, '')}
+                              </Link>
+                              <div className="mt-1 text-xs text-slate-500">{t(`calendar.classes.${report.race_level}`, { defaultValue: humanize(report.race_level) })} · {t(`calendar.terrain.${report.terrain_type}`, { defaultValue: humanize(report.terrain_type) })} · {report.distance_km} km</div>
+                            </td>
+                            <td className="p-3 text-xs text-slate-600">{t(`history.reportClasses.${report.report_class}`)}</td>
+                            <td className="p-3 text-xs text-gray-600">
+                              <div>{t('history.reportSummary', { regional: report.regional_points, world: report.world_points, fatigue: report.fatigue_added, events: report.development_events })}</div>
+                            </td>
+                          </tr>
                         ))}
-                      </div>
-                    ) : null}
+                      </tbody>
+                    </table>
                   </div>
-                ))}
-              </div>
-            )}
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+                    <span>{t('budget.ledgerRange', { from: (page - 1) * 10 + 1, to: Math.min(page * 10, reports.length), total: reports.length })}</span>
+                    <div className="flex items-center gap-3">
+                      <button type="button" disabled={page === 1} onClick={() => setHistoryReportPage(page - 1)} className="rounded border border-slate-200 px-3 py-1.5 disabled:opacity-40">{t('budget.previousPage')}</button>
+                      <span>{t('budget.ledgerPage', { page, total: totalPages })}</span>
+                      <button type="button" disabled={page === totalPages} onClick={() => setHistoryReportPage(page + 1)} className="rounded border border-slate-200 px-3 py-1.5 disabled:opacity-40">{t('budget.nextPage')}</button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
           </Card>
 
           <Card
@@ -6755,8 +6744,8 @@ export default function YouthAcademyPage(): JSX.Element {
                         <tr key={`${row.week_start}-${row.youth_rider_id}-${index}`}>
                           <td className="py-3 pr-3">{row.week_start}</td>
                           <td className="py-3 pr-3 font-medium">{row.rider_name}</td>
-                          <td className="py-3 pr-3">{humanize(row.development_focus)}</td>
-                          <td className="py-3 pr-3">{humanize(row.workload)}</td>
+                          <td className="py-3 pr-3">{youthValue('focus', row.development_focus)}</td>
+                          <td className="py-3 pr-3">{t(`overview.workloads.${String(row.workload).toLowerCase()}`, { defaultValue: humanize(row.workload) })}</td>
                           <td className="py-3 pr-3">{changes || '—'}</td>
                           <td className="py-3">
                             {row.readiness_before}% → {row.readiness_after}% · {row.fatigue_before}% → {row.fatigue_after}%
