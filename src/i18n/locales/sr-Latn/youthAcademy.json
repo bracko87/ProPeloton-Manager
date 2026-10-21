@@ -625,5 +625,27 @@
     "renewing": "Obnavljanje…",
     "getCoins": "Kupi coin-e",
     "readOnly": "Omladinska akademija mora biti obnovljena za trenutnu sezonu pre upravljanja."
+  },
+  "raceDetail": {
+    "overview": "Pregled",
+    "teamsCount": "Timovi ({{count}})",
+    "mySquad": "Moji vozači",
+    "results": "Rezultati",
+    "backToCalendar": "← Nazad na kalendar mladih",
+    "raceInformation": "Informacije o trci",
+    "participantsResults": "Učesnici i rezultati",
+    "hide": "Sakrij",
+    "show": "Prikaži",
+    "teamsRiders": "Timovi i vozači",
+    "raceClassifications": "Plasmani trke",
+    "currentStandings": "Trenutni generalni plasman",
+    "generalClassification": "Generalni plasman",
+    "sprintPoints": "Sprint poeni",
+    "mountainPoints": "Brdski poeni",
+    "fullRaceStanding": "Ceo plasman trke",
+    "stageResults": "Rezultati etape – Etapa {{stage}}",
+    "stage": "Etapa {{number}}",
+    "stageResult": "Rezultat etape",
+    "fullStageStanding": "Ceo plasman etape"
   }
 }
