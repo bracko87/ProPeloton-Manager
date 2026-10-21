@@ -246,7 +246,10 @@
     "raceLinked": "Objectifs liés à une course",
     "goal": "Objectif",
     "openRace": "Ouvrir la course",
-    "openSponsorDetail": "Ouvrir les détails du sponsor"
+    "openSponsorDetail": "Ouvrir les détails du sponsor",
+    "checkDate": "date de vérification",
+    "seasonNumber": "Saison {{season}}",
+    "finalClassification": "Apparaître au classement final"
   },
   "development": {
     "pendingProgress": "Progression des compétences en attente",

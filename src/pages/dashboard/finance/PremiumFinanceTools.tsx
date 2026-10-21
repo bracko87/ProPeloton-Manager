@@ -104,6 +104,46 @@ function humanize(value: string | null | undefined): string {
     .replace(/\b\w/g, letter => letter.toUpperCase())
 }
 
+
+/** Translate backend sponsor objective copy while retaining race names and race categories. */
+function localizedSponsorObjectiveResult(objective: SponsorObjective): string {
+  const code = String(objective.required_result || objective.objective_code || '').toLowerCase()
+  const title = String(objective.objective_title || '')
+  if (/appear in (the )?final classification/i.test(title)) {
+    return appI18n.t('premiumCenter:sponsors.finalClassification')
+  }
+  const resultKeys: Record<string, string> = {
+    race_start: 'raceStart', stage_top_5: 'stageTop5', stage_win: 'stageWin',
+    race_win: 'raceWin', race_podium: 'racePodium', race_top_5: 'raceTop5',
+    race_top_10: 'raceTop10', gc_top_5: 'gcTop5', gc_top_10: 'gcTop10',
+    classification_visibility: 'classificationVisibility',
+  }
+  const key = resultKeys[code]
+  return key ? appI18n.t(`finance:sponsors.${key}`) : humanize(code)
+}
+
+function localizedSponsorObjectiveTitle(objective: SponsorObjective): string {
+  const title = String(objective.objective_title || '')
+  const raceName = String(objective.target_race_name || '').trim()
+  if (raceName && title.toLowerCase().startsWith(raceName.toLowerCase())) {
+    return `${raceName}: ${localizedSponsorObjectiveResult(objective)}`
+  }
+  return localizeSponsorText(title)
+}
+
+function localizeSponsorText(value: string | null | undefined): string {
+  return String(value || '')
+    .replace(/check date/gi, appI18n.t('premiumCenter:sponsors.checkDate'))
+    .replace(/\bSeason\s+(\d+)\b/gi, (_match, season: string) =>
+      appI18n.t('premiumCenter:sponsors.seasonNumber', { season }))
+}
+
+function localizedSponsorStatus(objective: SponsorObjective): string {
+  const status = String(objective.display_status_label || objective.objective_status || objective.risk_band || '')
+  const normalized = status.trim().toLowerCase().replace(/\s+/g, '_')
+  return humanize(normalized)
+}
+
 function getFlagImageUrl(code?: string | null): string | null {
   if (!code) return null
   const normalized = code.trim().toUpperCase() === 'UK' ? 'GB' : code.trim().toUpperCase()
@@ -633,16 +673,19 @@ export function PremiumSponsorIntelligence({
                           <span className="text-sm font-semibold text-slate-950">{objective.sponsor_name}</span>
                           {objective.sponsor_kind ? (
                             <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
-                              {humanize(objective.sponsor_kind)}
+                              {objective.sponsor_kind === 'main' ? appI18n.t('finance:sponsors.mainSponsor')
+                                  : objective.sponsor_kind === 'secondary' ? appI18n.t('finance:sponsors.secondarySponsor')
+                                  : objective.sponsor_kind === 'technical' ? appI18n.t('finance:sponsors.technicalSponsor')
+                                  : humanize(objective.sponsor_kind)}
                             </span>
                           ) : null}
                         </div>
-                        <div className="mt-1 text-base font-semibold text-slate-900">{objective.objective_title}</div>
-                        {targetSummary ? <div className="mt-1 text-sm leading-5 text-slate-600">{targetSummary}</div> : null}
+                        <div className="mt-1 text-base font-semibold text-slate-900">{localizedSponsorObjectiveTitle(objective)}</div>
+                        {targetSummary ? <div className="mt-1 text-sm leading-5 text-slate-600">{localizeSponsorText(targetSummary)}</div> : null}
                       </div>
                     </div>
                     <span className={`rounded-full border px-2 py-0.5 text-[11px] font-medium ${statusClass(objective.risk_band)}`}>
-                      {objective.display_status_label || humanize(objective.risk_band)}
+                      {localizedSponsorStatus(objective)}
                     </span>
                   </div>
 
@@ -677,7 +720,7 @@ export function PremiumSponsorIntelligence({
                     <div>
                       <div className="text-slate-400">{t('sponsors.goal')}</div>
                       <div className="mt-1 font-medium text-slate-700">
-                        {objective.required_result ? humanize(objective.required_result) : objective.target_text || '—'}
+                        {objective.required_result ? localizedSponsorObjectiveResult(objective) : localizeSponsorText(objective.target_text) || '—'}
                       </div>
                     </div>
                     <div>
@@ -689,7 +732,7 @@ export function PremiumSponsorIntelligence({
                       <div className="mt-1 font-medium text-slate-700">
                         {objective.target_check_game_date
                           ? formatGameDate(objective.target_check_game_date)
-                          : objective.user_visible_deadline_label || '—'}
+                          : localizeSponsorText(objective.user_visible_deadline_label) || '—'}
                       </div>
                     </div>
                     <div>

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '../../../lib/supabase'
 
 type ScoutIntelligencePayload = {
@@ -38,13 +39,13 @@ function formatMoney(value: number): string {
   }).format(Number.isFinite(value) ? value : 0)
 }
 
-function scoreLabel(value: number | null | undefined): string {
+function scoreLabel(value: number | null | undefined, t: (key: string) => string): string {
   const score = Number(value ?? 0)
-  if (score >= 80) return 'Strong'
-  if (score >= 60) return 'Good'
-  if (score >= 40) return 'Average'
-  if (score >= 20) return 'Weak'
-  return 'Very weak'
+  if (score >= 80) return t('negotiationIntel.strong')
+  if (score >= 60) return t('negotiationIntel.good')
+  if (score >= 40) return t('negotiationIntel.average')
+  if (score >= 20) return t('negotiationIntel.weak')
+  return t('negotiationIntel.veryWeak')
 }
 
 function normalizeOne<T>(value: unknown): T | null {
@@ -81,6 +82,7 @@ export default function TransferNegotiationIntelligence({
   feeScore?: number | null
   tierScore?: number | null
 }): JSX.Element {
+  const { t, i18n } = useTranslation('transfers')
   const [access, setAccess] = useState<ReportAccessPayload | null>(null)
   const [comparison, setComparison] = useState<ComparisonPayload | null>(null)
   const [loading, setLoading] = useState(true)
@@ -131,7 +133,7 @@ export default function TransferNegotiationIntelligence({
       setError(
         caught instanceof Error
           ? caught.message
-          : 'Failed to load Transfer Intelligence.',
+          : t('negotiationIntel.loadFailed'),
       )
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,7 +145,7 @@ export default function TransferNegotiationIntelligence({
   if (loading) {
     return (
       <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-        Loading Transfer Intelligence…
+        {t('negotiationIntel.loading')}
       </div>
     )
   }
@@ -154,15 +156,14 @@ export default function TransferNegotiationIntelligence({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
-              Transfer Intelligence
+              {t('negotiationIntel.title')}
             </span>
             <span className="text-xs text-slate-500">
-              Premium analysis
+              {t('negotiationIntel.premiumAnalysis')}
             </span>
           </div>
           <div className="mt-2 text-sm text-slate-600">
-            Financial commitment, squad fit and a structured explanation of the
-            current offer. This does not improve acceptance chances.
+            {t('negotiationIntel.description')}
           </div>
         </div>
         {!hasAccess ? (
@@ -175,11 +176,11 @@ export default function TransferNegotiationIntelligence({
             }}
             className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
           >
-            Unlock with Premium
+            {t('common.unlockPremium')}
           </button>
         ) : (
           <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
-            Included with Premium
+            {t('common.includedPremium')}
           </span>
         )}
       </div>
@@ -191,15 +192,14 @@ export default function TransferNegotiationIntelligence({
       ) : null}
       {!hasAccess ? (
         <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-          Available only with Premium. The basic negotiation outlook remains
-          available to every user.
+          {t('negotiationIntel.premiumOnly')}
         </div>
       ) : (
         <>
           <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="text-xs uppercase tracking-wide text-slate-500">
-                First-season salary
+                {t('negotiationIntel.firstSeasonSalary')}
               </div>
               <div className="mt-1 font-semibold text-slate-900">
                 {formatMoney(firstSeasonSalary)}
@@ -207,7 +207,7 @@ export default function TransferNegotiationIntelligence({
             </div>
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="text-xs uppercase tracking-wide text-slate-500">
-                Up-front commitment
+                {t('negotiationIntel.upfrontCommitment')}
               </div>
               <div className="mt-1 font-semibold text-slate-900">
                 {formatMoney(transferFee + signingBonus + agentFee)}
@@ -215,7 +215,7 @@ export default function TransferNegotiationIntelligence({
             </div>
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="text-xs uppercase tracking-wide text-slate-500">
-                First-season total
+                {t('negotiationIntel.firstSeasonTotal')}
               </div>
               <div className="mt-1 font-semibold text-slate-900">
                 {formatMoney(totalFirstSeasonCommitment)}
@@ -223,7 +223,7 @@ export default function TransferNegotiationIntelligence({
             </div>
             <div className="rounded-lg bg-slate-50 p-3">
               <div className="text-xs uppercase tracking-wide text-slate-500">
-                Contract salary
+                {t('negotiationIntel.contractSalary')}
               </div>
               <div className="mt-1 font-semibold text-slate-900">
                 {formatMoney(totalContractSalary)}
@@ -234,43 +234,47 @@ export default function TransferNegotiationIntelligence({
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               <div className="text-sm font-semibold text-slate-900">
-                Squad-fit comparison
+                {t('negotiationIntel.squadFit')}
               </div>
               <div className="mt-2 space-y-1.5 text-xs text-slate-600">
                 <div>
-                  Role: <span className="font-semibold">{riderRole || 'Unknown'}</span>
+                  {t('negotiationIntel.role')}: <span className="font-semibold">{riderRole
+                      ? i18n.exists(`premiumCenter:values.${riderRole.toLowerCase().trim().replace(/[\s-]+/g, '_')}`)
+                        ? i18n.t(`premiumCenter:values.${riderRole.toLowerCase().trim().replace(/[\s-]+/g, '_')}`)
+                        : riderRole
+                      : t('common.unknown')}</span>
                 </div>
                 <div>
-                  Existing riders in role:{' '}
+                  {t('negotiationIntel.existingRiders')}:{' '}
                   <span className="font-semibold">
                     {comparison?.role_count ?? '—'}
                   </span>
                 </div>
                 <div>
-                  Projected overall rank in squad:{' '}
+                  {t('negotiationIntel.overallRank')}:{' '}
                   <span className="font-semibold">
                     {comparison?.overall_rank
                       ? `#${comparison.overall_rank}`
-                      : 'Unavailable'}
+                      : t('common.unavailable')}
                   </span>
                 </div>
                 <div>
-                  Projected salary rank:{' '}
+                  {t('negotiationIntel.salaryRank')}:{' '}
                   <span className="font-semibold">
                     {comparison?.salary_rank
                       ? `#${comparison.salary_rank}`
-                      : 'Unavailable'}
+                      : t('common.unavailable')}
                   </span>
                 </div>
                 {comparison?.role_duplication_warning ? (
                   <div className="rounded border border-amber-200 bg-amber-50 px-2 py-1.5 text-amber-700">
-                    Squad already has several riders in this role.
+                    {t('negotiationIntel.roleDuplication')}
                   </div>
                 ) : null}
                 <div className="mt-2 border-t border-slate-200 pt-2">
-                  Scout/Analyst confidence:{' '}
+                  {t('negotiationIntel.confidence')}:{' '}
                   <span className="font-semibold capitalize">
-                    {comparison?.scout_intelligence?.analysis_confidence_label ?? 'limited'}
+                    {t(`negotiationIntel.confidenceLevels.${String(comparison?.scout_intelligence?.analysis_confidence_label || 'limited').toLowerCase().replace(/\s+/g, '')}`, { defaultValue: comparison?.scout_intelligence?.analysis_confidence_label || t('negotiationIntel.confidenceLevels.limited') })}
                   </span>
                   {comparison?.scout_intelligence?.analysis_confidence_pct != null
                     ? ' (' + Math.round(comparison.scout_intelligence.analysis_confidence_pct) + '%)'
@@ -278,7 +282,7 @@ export default function TransferNegotiationIntelligence({
                 </div>
                 {comparison?.scout_intelligence?.analyst_name ? (
                   <div>
-                    Analyst:{' '}
+                    {t('negotiationIntel.analyst')}:{' '}
                     <span className="font-semibold">
                       {comparison.scout_intelligence.analyst_name}
                     </span>
@@ -287,13 +291,13 @@ export default function TransferNegotiationIntelligence({
                 {comparison?.scout_intelligence?.has_scout_report ? (
                   <>
                     <div>
-                      Scouted overall:{' '}
+                      {t('negotiationIntel.scoutedOverall')}:{' '}
                       <span className="font-semibold">
                         {comparison.scout_intelligence.overall_label ?? '—'}
                       </span>
                     </div>
                     <div>
-                      Scouted potential:{' '}
+                      {t('negotiationIntel.scoutedPotential')}:{' '}
                       <span className="font-semibold">
                         {comparison.scout_intelligence.potential_label ?? '—'}
                       </span>
@@ -301,7 +305,7 @@ export default function TransferNegotiationIntelligence({
                   </>
                 ) : (
                   <div className="text-slate-500">
-                    No completed scout report yet; confidence is based on your active Scout/Analyst.
+                    {t('negotiationIntel.noScoutReport')}
                   </div>
                 )}
               </div>
@@ -309,15 +313,15 @@ export default function TransferNegotiationIntelligence({
 
             <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
               <div className="text-sm font-semibold text-slate-900">
-                Offer-factor explanation
+                {t('negotiationIntel.offerFactors')}
               </div>
               <div className="mt-2 grid grid-cols-2 gap-2 text-xs">
                 {[
-                  ['Salary', salaryScore],
-                  ['Duration', durationScore],
-                  ['Signing bonus', bonusScore],
-                  ['Agent fee', feeScore],
-                  ['Club level', tierScore],
+                  [t('negotiationIntel.salary'), salaryScore],
+                  [t('negotiationIntel.duration'), durationScore],
+                  [t('negotiationIntel.signingBonus'), bonusScore],
+                  [t('negotiationIntel.agentFee'), feeScore],
+                  [t('negotiationIntel.clubLevel'), tierScore],
                 ].map(([label, value]) => (
                   <div
                     key={String(label)}
@@ -325,15 +329,13 @@ export default function TransferNegotiationIntelligence({
                   >
                     <div className="text-slate-500">{label}</div>
                     <div className="mt-0.5 font-semibold text-slate-800">
-                      {scoreLabel(value as number | null | undefined)}
+                      {scoreLabel(value as number | null | undefined, t)}
                     </div>
                   </div>
                 ))}
               </div>
               <div className="mt-2 text-[11px] leading-5 text-slate-500">
-                Labels summarize the preview already available to the negotiation
-                engine. Exact hidden thresholds and minimum acceptance values are
-                not revealed.
+                {t('negotiationIntel.previewNote')}
               </div>
             </div>
           </div>

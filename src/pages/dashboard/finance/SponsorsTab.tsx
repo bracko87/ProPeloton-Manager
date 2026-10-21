@@ -339,17 +339,19 @@ function sponsorObjectiveCalendarPath(objective: SponsorObjectiveUiRow): string 
   return `/dashboard/calendar?${params.toString()}`
 }
 
-function sponsorObjectiveTitleSuffix(objective: SponsorObjectiveUiRow): string {
+function sponsorObjectiveTitleSuffix(objective: SponsorObjectiveUiRow, t: FinanceT): string {
   const title = String(objective.objective_title || '').trim()
   const raceName = String(objective.target_race_name || '').trim()
 
-  if (!title || !raceName) return title
-
-  if (title.toLowerCase().startsWith(raceName.toLowerCase())) {
-    return title.slice(raceName.length).replace(/^\s*[:–-]\s*/, '').trim()
-  }
-
-  return title
+  const suffix = title && raceName && title.toLowerCase().startsWith(raceName.toLowerCase())
+    ? title.slice(raceName.length).replace(/^\s*[:–-]\s*/, '').trim()
+    : title
+  if (/appear in (the )?final classification/i.test(suffix)) return t('sponsors.finalClassification')
+  if (/start the race/i.test(suffix)) return t('sponsors.raceStart')
+  if (/stage top\s*5/i.test(suffix)) return t('sponsors.stageTop5')
+  const knownResults = new Set(['race_podium', 'race_win', 'race_top_5', 'race_top_10', 'gc_top_10',
+    'gc_top_5', 'stage_top_5', 'stage_win', 'race_start', 'classification_visibility'])
+  return knownResults.has(objective.required_result) ? sponsorObjectiveRequiredResultLabel(objective.required_result, t) : suffix
 }
 
 function getCountryName(
@@ -1393,9 +1395,9 @@ function SponsorObjectiveCards({
                       >
                         {objective.target_race_name}
                       </button>
-                      {sponsorObjectiveTitleSuffix(objective) ? (
+                      {sponsorObjectiveTitleSuffix(objective, t) ? (
                         <div className="mt-0.5 text-xs font-semibold text-gray-700">
-                          {sponsorObjectiveTitleSuffix(objective)}
+                          {sponsorObjectiveTitleSuffix(objective, t)}
                         </div>
                       ) : null}
                       {sponsorObjectiveCalendarPath(objective) ? (
@@ -1410,7 +1412,7 @@ function SponsorObjectiveCards({
                     </>
                   ) : (
                     <div className="text-sm font-semibold text-gray-900">
-                      {objective.objective_title}
+                      {sponsorObjectiveTitleSuffix(objective, t)}
                     </div>
                   )}
                 </div>

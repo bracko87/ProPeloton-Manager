@@ -246,7 +246,10 @@
     "raceLinked": "Race-linked goals",
     "goal": "Goal",
     "openRace": "Open race",
-    "openSponsorDetail": "Open sponsor details"
+    "openSponsorDetail": "Open sponsor details",
+    "checkDate": "check date",
+    "seasonNumber": "Season {{season}}",
+    "finalClassification": "Appear in the final classification"
   },
   "development": {
     "pendingProgress": "Pending skill progress",

@@ -246,7 +246,10 @@
     "raceLinked": "Цели, связанные с гонками",
     "goal": "Цель",
     "openRace": "Открыть гонку",
-    "openSponsorDetail": "Открыть детали спонсора"
+    "openSponsorDetail": "Открыть детали спонсора",
+    "checkDate": "дата проверки",
+    "seasonNumber": "Сезон {{season}}",
+    "finalClassification": "Попасть в итоговую классификацию"
   },
   "development": {
     "pendingProgress": "Ожидающий прогресс навыков",

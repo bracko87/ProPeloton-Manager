@@ -207,7 +207,11 @@
     "netFormula": "ingresos - gastos operativos",
     "netTrend": "Tendencia del resultado operativo neto",
     "hoverBar": "Pasa el cursor sobre una barra para ver los detalles.",
-    "hoverDot": "Pasa el cursor sobre un punto para ver los detalles."
+    "hoverDot": "Pasa el cursor sobre un punto para ver los detalles.",
+    "incomeDarker": "Ingresos (más oscuro)",
+    "expensesLighter": "Gastos (más claro)",
+    "incomeIndex": "Ingreso {{number}}",
+    "costIndex": "Gasto {{number}}"
   },
   "sponsors": {
     "mainSponsor": "Patrocinador principal",
@@ -367,7 +371,8 @@
     "previewSportingResultsTitle": "Resultados deportivos",
     "previewSportingResultsDescription": "El dinero adicional depende de resultados como victorias, podios, puestos en el top 5 o top 10 y objetivos de GC.",
     "previewCheckedAfterRacesTitle": "Comprobado después de las carreras",
-    "previewCheckedAfterRacesDescription": "Los objetivos se evalúan después de que se haya finalizado la carrera o el resultado de la etapa y se pagan las bonificaciones mediante financiación."
+    "previewCheckedAfterRacesDescription": "Los objetivos se evalúan después de que se haya finalizado la carrera o el resultado de la etapa y se pagan las bonificaciones mediante financiación.",
+    "finalClassification": "Aparecer en la clasificación final"
   },
   "transactions": {
     "title": "Operaciones",

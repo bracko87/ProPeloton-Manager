@@ -207,7 +207,11 @@
     "netFormula": "income - operating expenses",
     "netTrend": "Net operating trend",
     "hoverBar": "Hover a bar to see details.",
-    "hoverDot": "Hover a dot to see details."
+    "hoverDot": "Hover a dot to see details.",
+    "incomeDarker": "Income (darker)",
+    "expensesLighter": "Expenses (lighter)",
+    "incomeIndex": "Income {{number}}",
+    "costIndex": "Cost {{number}}"
   },
   "sponsors": {
     "mainSponsor": "Main Sponsor",
@@ -367,7 +371,8 @@
     "previewSportingResultsTitle": "Sporting results",
     "previewSportingResultsDescription": "Bonus money is tied to results such as wins, podiums, top-5 finishes, top-10 finishes, or GC targets.",
     "previewCheckedAfterRacesTitle": "Checked after races",
-    "previewCheckedAfterRacesDescription": "Objectives are evaluated after the target race or stage result is finalized and bonuses are then paid through finance."
+    "previewCheckedAfterRacesDescription": "Objectives are evaluated after the target race or stage result is finalized and bonuses are then paid through finance.",
+    "finalClassification": "Appear in the final classification"
   },
   "transactions": {
     "title": "Transactions",

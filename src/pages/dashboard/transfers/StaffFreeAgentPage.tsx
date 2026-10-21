@@ -465,7 +465,7 @@ function buildStaffQualityBox(
       rows: [
         { label: t('staffQuality.medicalAbility'), value: qualityTierFromScore(medicalAbility, t) },
         { label: t('staffQuality.injuryPrevention'), value: qualityTierFromScore(injuryPrevention, t) },
-        { label: t('staffQuality.returnToFitness'), value: qualityTierFromScore(returnToFitness, t) },
+        { label: t('staffQuality.returnFitness'), value: qualityTierFromScore(returnToFitness, t) },
       ],
     }
   }
@@ -609,7 +609,7 @@ function buildStaffQualityBox(
   return {
     title: t('staffQuality.youthQuality'),
     rows: [
-      { label: t('staffQuality.youthCoachAbility'), value: qualityTierFromScore(youthCoachAbility, t) },
+      { label: t('staffQuality.youthAbility'), value: qualityTierFromScore(youthCoachAbility, t) },
       { label: t('staffQuality.talentDevelopment'), value: qualityTierFromScore(talentDevelopment, t) },
       { label: t('staffQuality.raceReadiness'), value: qualityTierFromScore(raceReadiness, t) },
     ],
@@ -643,75 +643,86 @@ function StaffQualityBoxPanel({ qualityBox }: { qualityBox: StaffQualityBox }) {
   )
 }
 
-function getCandidateStats(candidate: StaffCandidateRow) {
+function localizeStaffSpecialization(value: string, t: (key: string) => string): string {
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, '_')
+  const keys: Record<string, string> = {
+    potential_assessment: 'potentialAssessment',
+    youth_development: 'youthDevelopment',
+    local_prospects: 'localProspects',
+  }
+  const key = keys[normalized]
+  return key ? t(`staffSpecializations.${key}`) : value
+}
+
+function getCandidateStats(candidate: StaffCandidateRow, t: (key: string) => string) {
   if (candidate.role_type === 'head_coach') {
     return [
-      { label: 'Training', value: candidate.expertise },
-      { label: 'Recovery Plan', value: candidate.efficiency },
-      { label: 'Team Dev', value: candidate.potential },
+      { label: t('staffStats.training'), value: candidate.expertise },
+      { label: t('staffStats.recoveryPlan'), value: candidate.efficiency },
+      { label: t('staffStats.teamDevelopment'), value: candidate.potential },
     ]
   }
 
   if (candidate.role_type === 'trainer') {
     return [
-      { label: 'Daily Training', value: candidate.expertise },
-      { label: 'Efficiency', value: candidate.efficiency },
-      { label: 'Potential Growth', value: candidate.potential },
+      { label: t('staffStats.dailyTraining'), value: candidate.expertise },
+      { label: t('staffStats.efficiency'), value: candidate.efficiency },
+      { label: t('staffStats.potentialGrowth'), value: candidate.potential },
     ]
   }
 
   if (candidate.role_type === 'u23_head_coach') {
     return [
-      { label: 'Youth Training', value: candidate.expertise },
-      { label: 'Youth Dev', value: candidate.potential },
-      { label: 'Leadership', value: candidate.leadership },
+      { label: t('staffStats.youthTraining'), value: candidate.expertise },
+      { label: t('staffStats.youthDevelopment'), value: candidate.potential },
+      { label: t('staffStats.leadership'), value: candidate.leadership },
     ]
   }
 
   if (candidate.role_type === 'team_doctor') {
     return [
-      { label: 'Recovery', value: candidate.expertise },
-      { label: 'Prevention', value: candidate.efficiency },
-      { label: 'Diagnosis', value: candidate.experience },
+      { label: t('staffStats.recovery'), value: candidate.expertise },
+      { label: t('staffStats.prevention'), value: candidate.efficiency },
+      { label: t('staffStats.diagnosis'), value: candidate.experience },
     ]
   }
 
   if (candidate.role_type === 'physio') {
     return [
-      { label: 'Rehabilitation', value: candidate.expertise },
-      { label: 'Recovery Speed', value: candidate.efficiency },
-      { label: 'Experience', value: candidate.experience },
+      { label: t('staffStats.rehabilitation'), value: candidate.expertise },
+      { label: t('staffStats.recoverySpeed'), value: candidate.efficiency },
+      { label: t('staffStats.experience'), value: candidate.experience },
     ]
   }
 
   if (candidate.role_type === 'nutritionist') {
     return [
-      { label: 'Nutrition Plan', value: candidate.expertise },
-      { label: 'Recovery Support', value: candidate.efficiency },
-      { label: 'Consistency', value: candidate.loyalty },
+      { label: t('staffStats.nutritionPlan'), value: candidate.expertise },
+      { label: t('staffStats.recoverySupport'), value: candidate.efficiency },
+      { label: t('staffStats.consistency'), value: candidate.loyalty },
     ]
   }
 
   if (candidate.role_type === 'mechanic') {
     return [
-      { label: 'Setup', value: candidate.expertise },
-      { label: 'Reliability', value: candidate.efficiency },
-      { label: 'Innovation', value: candidate.potential },
+      { label: t('staffStats.setup'), value: candidate.expertise },
+      { label: t('staffStats.reliability'), value: candidate.efficiency },
+      { label: t('staffStats.innovation'), value: candidate.potential },
     ]
   }
 
   if (candidate.role_type === 'sport_director') {
     return [
-      { label: 'Tactics', value: candidate.expertise },
-      { label: 'Motivation', value: candidate.leadership },
-      { label: 'Organization', value: candidate.efficiency },
+      { label: t('staffStats.tactics'), value: candidate.expertise },
+      { label: t('staffStats.motivation'), value: candidate.leadership },
+      { label: t('staffStats.organization'), value: candidate.efficiency },
     ]
   }
 
   return [
-    { label: 'Evaluation', value: candidate.expertise },
-    { label: 'Network', value: candidate.experience },
-    { label: 'Accuracy', value: candidate.efficiency },
+    { label: t('staffStats.evaluation'), value: candidate.expertise },
+    { label: t('staffStats.network'), value: candidate.experience },
+    { label: t('staffStats.accuracy'), value: candidate.efficiency },
   ]
 }
 
@@ -1024,7 +1035,7 @@ export default function StaffFreeAgentPage({
                         <span>
                           {roleLabel(candidate.role_type, t)}
                           {candidate.specialization
-                            ? ` • ${candidate.specialization}`
+                            ? ` • ${localizeStaffSpecialization(candidate.specialization, t)}`
                             : ''}
                         </span>
 
@@ -1049,7 +1060,7 @@ export default function StaffFreeAgentPage({
                   </div>
 
                   <div className="mt-3 grid grid-cols-3 gap-2">
-                    {getCandidateStats(candidate).map((stat) => (
+                    {getCandidateStats(candidate, t).map((stat) => (
                       <div key={stat.label} className="rounded-lg bg-gray-50 p-2">
                         <div className="text-[11px] text-gray-500">{stat.label}</div>
 
@@ -1062,7 +1073,7 @@ export default function StaffFreeAgentPage({
 
                   {!candidate.is_available ? (
                     <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-600">
-                      Candidate is no longer available.
+                      {t('staffMarket.candidateUnavailable')}
                     </div>
                   ) : limitCount <= 0 ? (
                     <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
@@ -1175,7 +1186,7 @@ export default function StaffFreeAgentPage({
                   <div className="text-sm text-gray-500">
                     {roleLabel(selectedCandidate.role_type, t)}
                     {selectedCandidate.specialization
-                      ? ` • ${selectedCandidate.specialization}`
+                      ? ` • ${localizeStaffSpecialization(selectedCandidate.specialization, t)}`
                       : ''}
                   </div>
                 </div>
@@ -1194,7 +1205,7 @@ export default function StaffFreeAgentPage({
                   <div className="text-xs text-gray-500">{t('staffMarket.availability')}</div>
 
                   <div className="mt-1 text-sm font-semibold text-gray-900">
-                    {selectedCandidate.is_available ? 'Available' : 'Unavailable'}
+                    {selectedCandidate.is_available ? t('common.available') : t('common.unavailable')}
                   </div>
                 </div>
 
@@ -1239,9 +1250,9 @@ export default function StaffFreeAgentPage({
 
                 <div className="mt-3 space-y-2">
                   {[
-                    ...getCandidateStats(selectedCandidate),
-                    { label: 'Leadership', value: selectedCandidate.leadership },
-                    { label: 'Loyalty', value: selectedCandidate.loyalty },
+                    ...getCandidateStats(selectedCandidate, t),
+                    { label: t('staffStats.leadership'), value: selectedCandidate.leadership },
+                    { label: t('staffStats.loyalty'), value: selectedCandidate.loyalty },
                   ].map((stat, index) => (
                     <div
                       key={`${stat.label}-${index}`}
@@ -1300,12 +1311,12 @@ export default function StaffFreeAgentPage({
               <div className="mt-5 flex items-center justify-between gap-3">
                 <div className="text-xs text-gray-400">
                   {!selectedCandidate.is_available
-                    ? 'Candidate is no longer available'
+                    ? t('staffMarket.candidateUnavailableShort')
                     : selectedRoleLimitCount <= 0
-                      ? 'This role is currently unavailable'
+                      ? t('staffMarket.roleUnavailableShort')
                       : !selectedRoleCanHire
-                        ? 'Role is already at full capacity'
-                        : `${selectedRoleOpenSlots} open slot(s) available`}
+                        ? t('staffMarket.fullCapacity')
+                        : t('staffMarket.slotsAvailable', { slots: selectedRoleOpenSlots })}
                 </div>
 
                 <button

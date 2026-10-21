@@ -72,6 +72,14 @@ const DEBT_PRINCIPAL_REPAYMENT_TYPES = new Set(['emergency_loan_principal_repaym
 
 const REAL_DEBT_EXPENSE_TYPES = new Set(['emergency_loan_interest'])
 
+const shortLabelTranslationKeys: Record<string, string> = {
+  Loan: 'loan', Principal: 'principal', Interest: 'interest',
+  Salary: 'salary', Staff: 'staff', Sponsor: 'sponsor',
+  Tax: 'tax', 'Tax Refund': 'taxRefund', Bonus: 'bonus',
+  Training: 'training', Transfer: 'transfer', Equipment: 'equipment',
+  Medical: 'medical', Travel: 'travel', Other: 'other',
+}
+
 const shortTransactionLabels: Record<string, string> = {
   emergency_loan_disbursement: 'Loan',
   emergency_loan_principal_repayment: 'Principal',
@@ -705,6 +713,10 @@ export function OverviewTab({
   transactions?: Transaction[]
 }): JSX.Element {
   const { t } = useTranslation('finance')
+  const localizeShortLabel = (label: string) => {
+    const key = shortLabelTranslationKeys[label]
+    return key ? t(`transactionLabels.${key}`) : label
+  }
   const [granularity, setGranularity] = useState<Granularity>('monthly')
 
   const hasTransactions = Boolean(transactions && transactions.length > 0)
@@ -942,10 +954,10 @@ export function OverviewTab({
       }))
 
     return {
-      incomes: aggregateBreakdown(incomesRaw, formatTransactionShortLabel, 5),
-      expenses: aggregateBreakdown(expensesRaw, formatTransactionShortLabel, 5),
+      incomes: aggregateBreakdown(incomesRaw, formatTransactionShortLabel, 5).map(item => ({ ...item, label: localizeShortLabel(item.label) })),
+      expenses: aggregateBreakdown(expensesRaw, formatTransactionShortLabel, 5).map(item => ({ ...item, label: localizeShortLabel(item.label) })),
     }
-  }, [periodRows])
+  }, [periodRows, t])
 
   const topIncomeItems = useMemo(() => {
     if (topIncomeBreakdown && topIncomeBreakdown.length > 0) {
@@ -971,7 +983,7 @@ export function OverviewTab({
           value: Math.abs(x.value),
         }))
 
-      return aggregateBreakdown(filtered, formatTransactionShortLabel, 5)
+      return aggregateBreakdown(filtered, formatTransactionShortLabel, 5).map(item => ({ ...item, label: localizeShortLabel(item.label) }))
     }
 
     if (topFromTransactions.incomes.length > 0) return topFromTransactions.incomes
@@ -982,8 +994,8 @@ export function OverviewTab({
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
 
-    return sorted.map((x, idx) => ({ label: `Income ${idx + 1}`, value: x.value }))
-  }, [topIncomeBreakdown, topFromTransactions.incomes, periodWindow])
+    return sorted.map((x, idx) => ({ label: t('overview.incomeIndex', { number: idx + 1 }), value: x.value }))
+  }, [topIncomeBreakdown, topFromTransactions.incomes, periodWindow, t])
 
   const topExpenseItems = useMemo(() => {
     if (topExpenseBreakdown && topExpenseBreakdown.length > 0) {
@@ -1010,7 +1022,7 @@ export function OverviewTab({
           value: x.value,
         }))
 
-      return aggregateBreakdown(filtered, formatTransactionShortLabel, 5)
+      return aggregateBreakdown(filtered, formatTransactionShortLabel, 5).map(item => ({ ...item, label: localizeShortLabel(item.label) }))
     }
 
     if (topFromTransactions.expenses.length > 0) return topFromTransactions.expenses
@@ -1021,8 +1033,8 @@ export function OverviewTab({
       .sort((a, b) => b.value - a.value)
       .slice(0, 5)
 
-    return sorted.map((x, idx) => ({ label: `Cost ${idx + 1}`, value: x.value }))
-  }, [topExpenseBreakdown, topFromTransactions.expenses, periodWindow])
+    return sorted.map((x, idx) => ({ label: t('overview.costIndex', { number: idx + 1 }), value: x.value }))
+  }, [topExpenseBreakdown, topFromTransactions.expenses, periodWindow, t])
 
   const incomePalette = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0']
   const expensePalette = ['#dc2626', '#ef4444', '#f97316', '#fb7185', '#fca5a5']

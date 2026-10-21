@@ -207,7 +207,11 @@
     "netFormula": "recettes - dépenses d'exploitation",
     "netTrend": "Tendance opérationnelle nette",
     "hoverBar": "Passez un bar pour voir les détails.",
-    "hoverDot": "Déplacez un point pour voir les détails."
+    "hoverDot": "Déplacez un point pour voir les détails.",
+    "incomeDarker": "Revenus (plus foncé)",
+    "expensesLighter": "Dépenses (plus clair)",
+    "incomeIndex": "Revenu {{number}}",
+    "costIndex": "Dépense {{number}}"
   },
   "sponsors": {
     "mainSponsor": "Parrain principal",
@@ -367,7 +371,8 @@
     "previewSportingResultsTitle": "Résultats sportifs",
     "previewSportingResultsDescription": "Bonus argent est lié à des résultats tels que les victoires, podiums, top-5 finitions, top-10 finitions, ou cibles GC.",
     "previewCheckedAfterRacesTitle": "Vérification après les courses",
-    "previewCheckedAfterRacesDescription": "Les objectifs sont évalués après la finalisation de la course ou du résultat de l'étape cible et les primes sont ensuite payées par voie de financement."
+    "previewCheckedAfterRacesDescription": "Les objectifs sont évalués après la finalisation de la course ou du résultat de l'étape cible et les primes sont ensuite payées par voie de financement.",
+    "finalClassification": "Apparaître au classement final"
   },
   "transactions": {
     "title": "Opérations",
