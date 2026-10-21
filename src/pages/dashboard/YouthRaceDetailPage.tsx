@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
+import { useTranslation } from 'react-i18next'
 import { supabase } from '@/lib/supabase'
 
 type CompetitionClass = 'regional' | 'continental' | 'world'
@@ -386,6 +387,7 @@ function YouthStandingTable({
 export default function YouthRaceDetailPage(): JSX.Element {
   const { raceId } = useParams()
   const navigate = useNavigate()
+  const { t } = useTranslation('youthAcademy')
   const [payload, setPayload] = useState<YouthRaceDetailPayload | null>(null)
   const [tab, setTab] = useState<DetailTab>('overview')
   const [selectedRiders, setSelectedRiders] = useState<string[]>([])
@@ -504,7 +506,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
           onClick={() => navigate('/dashboard/youth-academy?tab=calendar')}
           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700"
         >
-          ← Back to Youth Calendar
+          {t('raceDetail.backToCalendar')}
         </button>
         <div className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
           {error ??
@@ -557,10 +559,10 @@ export default function YouthRaceDetailPage(): JSX.Element {
   const invalidSelectedRiders = invalidLineupRiders.filter(rider => selectedRiders.includes(rider.rider_id))
   const showSquadEligibilityWarning = isUpcomingYouthRace && invalidLineupRiders.length > 0
   const tabs: Array<{ key: DetailTab; label: string }> = [
-    { key: 'overview', label: 'Overview' },
-    { key: 'teams', label: `Teams (${payload.teams.length})` },
-    { key: 'squad', label: 'My Squad' },
-    { key: 'results', label: 'Results' },
+    { key: 'overview', label: t('raceDetail.overview') },
+    { key: 'teams', label: t('raceDetail.teamsCount', { count: payload.teams.length }) },
+    { key: 'squad', label: t('raceDetail.mySquad') },
+    { key: 'results', label: t('raceDetail.results') },
   ]
 
   return (
@@ -664,7 +666,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
       ) : null}
 
       {tab === 'overview' ? (
-        <Section title="Race information">
+        <Section title={t('raceDetail.raceInformation')}>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {[
               ['Competition', classLabel(race.competition_class)],
@@ -1004,12 +1006,12 @@ export default function YouthRaceDetailPage(): JSX.Element {
         <section className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 px-6 py-5">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Race information</div>
-              <h2 className="mt-1 text-lg font-semibold text-slate-950">Participants and results</h2>
+              <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">{t('raceDetail.raceInformation')}</div>
+              <h2 className="mt-1 text-lg font-semibold text-slate-950">{t('raceDetail.participantsResults')}</h2>
             </div>
             <button type="button" onClick={() => setRaceInfoExpanded(current => !current)}
               className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700">
-              {raceInfoExpanded ? 'Hide' : 'Show'}
+              {raceInfoExpanded ? t('raceDetail.hide') : t('raceDetail.show')}
             </button>
           </div>
           {raceInfoExpanded ? (
@@ -1017,11 +1019,11 @@ export default function YouthRaceDetailPage(): JSX.Element {
             <div className="flex rounded-2xl bg-slate-100 p-1">
               <button type="button" onClick={() => setRaceInfoTab('participants')}
                 className={'rounded-xl px-4 py-2 text-sm font-semibold ' + (raceInfoTab === 'participants' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900')}>
-                Teams &amp; riders
+                {t('raceDetail.teamsRiders')}
               </button>
               <button type="button" onClick={() => setRaceInfoTab('results')}
                 className={'rounded-xl px-4 py-2 text-sm font-semibold ' + (raceInfoTab === 'results' ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-500 hover:text-slate-900')}>
-                Results
+                {t('raceDetail.results')}
               </button>
             </div>
             {raceInfoTab === 'results' ? (
@@ -1029,14 +1031,14 @@ export default function YouthRaceDetailPage(): JSX.Element {
               <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div>
-                    <h3 className="font-semibold text-slate-950">Race classifications</h3>
-                    <p className="mt-0.5 text-xs text-slate-500">Current tour standings</p>
+                    <h3 className="font-semibold text-slate-950">{t('raceDetail.raceClassifications')}</h3>
+                    <p className="mt-0.5 text-xs text-slate-500">{t('raceDetail.currentStandings')}</p>
                   </div>
                   <select value={resultView} onChange={event => setResultView(event.target.value as 'general' | 'sprint' | 'mountain')}
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
-                    <option value="general">General classification</option>
-                    <option value="sprint">Sprint points</option>
-                    <option value="mountain">Mountain points</option>
+                    <option value="general">{t('raceDetail.generalClassification')}</option>
+                    <option value="sprint">{t('raceDetail.sprintPoints')}</option>
+                    <option value="mountain">{t('raceDetail.mountainPoints')}</option>
                   </select>
                 </div>
                 <div className="mt-4 overflow-hidden rounded-xl bg-white">
@@ -1045,13 +1047,13 @@ export default function YouthRaceDetailPage(): JSX.Element {
                 <div className="mt-4 flex justify-end">
                   <button type="button" disabled={!raceStandingRows.length} onClick={() => setFullStandingModal('race')}
                     className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 disabled:opacity-40">
-                    Full race standing
+                    {t('raceDetail.fullRaceStanding')}
                   </button>
                 </div>
               </div>
               <div className="min-w-0 rounded-2xl bg-slate-50 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="font-semibold text-slate-950">Stage results – Stage {selectedStageNumber}</h3>
+                  <h3 className="font-semibold text-slate-950">{t('raceDetail.stageResults', { stage: selectedStageNumber })}</h3>
                   <div className="flex flex-wrap gap-2">
                     <select value={selectedStageNumber} onChange={event => {
                       setSelectedStageNumber(Number(event.target.value))
@@ -1059,15 +1061,15 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                       {payload.stages.map(stage => (
                         <option value={stage.stage_number} key={stage.id}>
-                          Stage {stage.stage_number} · {shortDate(stage.stage_date)} · {humanize(stage.stage_type)}
+                          {t('raceDetail.stage', { number: stage.stage_number })} · {shortDate(stage.stage_date)} · {humanize(stage.stage_type)}
                         </option>
                       ))}
                     </select>
                     <select value={stageResultView} onChange={event => setStageResultView(event.target.value as 'stage_general' | 'stage_sprint' | 'stage_mountain')}
                       className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
-                      <option value="stage_general">Stage result</option>
-                      {selectedStageHasSprint ? <option value="stage_sprint">Sprint points</option> : null}
-                      {selectedStageHasMountain ? <option value="stage_mountain">Mountain points</option> : null}
+                      <option value="stage_general">{t('raceDetail.stageResult')}</option>
+                      {selectedStageHasSprint ? <option value="stage_sprint">{t('raceDetail.sprintPoints')}</option> : null}
+                      {selectedStageHasMountain ? <option value="stage_mountain">{t('raceDetail.mountainPoints')}</option> : null}
                     </select>
                   </div>
                 </div>
@@ -1077,7 +1079,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                 <div className="mt-4 flex justify-end">
                   <button type="button" disabled={!selectedStageStandingRows.length} onClick={() => setFullStandingModal('stage')}
                     className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-100 disabled:opacity-40">
-                    Full stage standing
+                    {t('raceDetail.fullStageStanding')}
                   </button>
                 </div>
               </div>
