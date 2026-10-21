@@ -118,7 +118,13 @@
     "infrastructureTtt": "Centro de contrarreloj por equipos",
     "infrastructureTttEffect": "+10 % desarrollo U16 en contrarreloj y +5 % en contrarreloj por equipos.",
     "infrastructureLevel": "Nivel {{level}}/{{max}}",
-    "notBuilt": "Sin construir"
+    "notBuilt": "Sin construir",
+    "completedRace": "Carrera finalizada",
+    "confirmedEntry": "Inscripción confirmada",
+    "raceDays": "días",
+    "enteredBy": "Inscrito por",
+    "lineup": "Alineación",
+    "rider": "Corredor"
   },
   "roles": {
     "director": "Director de la Academia Juvenil",
@@ -343,7 +349,15 @@
       "teamwork": "Trabajo en equipo"
     },
     "weeklyResetTitle": "Reinicio semanal de informes",
-    "weeklyResetHelp": "Todos los informes de ojeadores y negociaciones abiertos seguirán visibles hasta el domingo. El lunes {{date}} se reinicia la lista y vuelve la primera búsqueda gratuita. Los corredores fichados pasan inmediatamente a la plantilla juvenil."
+    "weeklyResetHelp": "Todos los informes de ojeadores y negociaciones abiertos seguirán visibles hasta el domingo. El lunes {{date}} se reinicia la lista y vuelve la primera búsqueda gratuita. Los corredores fichados pasan inmediatamente a la plantilla juvenil.",
+    "ageValue": "{{age}} años",
+    "age": "Edad",
+    "country": "País",
+    "riderRole": "Perfil de corredor",
+    "source": "Procedencia",
+    "assessment": "Evaluación del talento",
+    "weekReset": "Reinicio semanal",
+    "mondayReset": "Reinicio de lunes"
   },
   "settings": {
     "title": "Responsabilidades",
@@ -465,7 +479,8 @@
     "pathwayUntil": "Ruta hasta {{date}}",
     "pathwayHelp": "Esta ruta temporal da 30 días de juego para mover al ciclista al equipo de desarrollo. Si no se completa, pasa a ser agente libre profesional.",
     "toDeveloping": "Mover al equipo de desarrollo ({{slots}} libres)",
-    "release": "Liberar como agente libre"
+    "release": "Liberar como agente libre",
+    "releaseToFreeAgents": "Liberar como agente libre"
   },
   "calendar": {
     "title": "Calendario U16",
@@ -546,7 +561,21 @@
     "classCounts": "Mundial {{world}} · Continental {{continental}} · Regional {{regional}}",
     "browserHelp": "Muestra el calendario juvenil completo del mes. Usa Oportunidades de mi Academia para ver invitaciones y tu división Regional.",
     "pastPrelaunch": "Pasada · pre-lanzamiento",
-    "prelaunchHelp": "Se conserva para completar el calendario. Ya había pasado cuando se lanzó el sistema juvenil, por lo que no se generó resultado."
+    "prelaunchHelp": "Se conserva para completar el calendario. Ya había pasado cuando se lanzó el sistema juvenil, por lo que no se generó resultado.",
+    "raceFilters": "Filtros de carreras",
+    "youthFilters": "Filtros juveniles",
+    "seasonRaceCalendarTitle": "Temporada {{season}} · Calendario de carreras juveniles",
+    "seasonRaceCalendarHelp": "Cada mes tiene una pestaña con todas las carreras juveniles programadas.",
+    "finished": "Finalizada",
+    "active": "En curso",
+    "scheduled": "Programada",
+    "openRace": "Abrir carrera",
+    "applyRace": "Solicitar inscripción",
+    "withdrawApplication": "Retirar solicitud",
+    "noVisibleRaces": "Sin carreras visibles",
+    "multiDay": "Varios días",
+    "entryFee": "Cuota de inscripción",
+    "prizeFundCompact": "Premios"
   },
   "rankings": {
     "title": "Rankings juveniles",
@@ -578,7 +607,9 @@
     "systemContinentalHelp": "Los campeones ascienden directamente. Los segundos y terceros disputan una eliminatoria de cuatro equipos; los dos mejores también ascienden a Clase mundial.",
     "systemRegionalTitle": "Regional · 12 divisiones",
     "systemRegionalHelp": "La competición regional juvenil tiene 12 divisiones geográficas: seis alimentan Continental Oeste y seis Continental Este. Cada campeón asciende y seis equipos descienden de cada grupo continental.",
-    "systemScoringHelp": "La clasificación de equipos usa puntos de carrera. La de corredores usa puntos de la general ponderados: Regional ×1,0, Continental ×1,5 y Mundial ×2,5. Esprint, montaña y contrarreloj se registran por separado."
+    "systemScoringHelp": "La clasificación de equipos usa puntos de carrera. La de corredores usa puntos de la general ponderados: Regional ×1,0, Continental ×1,5 y Mundial ×2,5. Esprint, montaña y contrarreloj se registran por separado.",
+    "competitionSystem": "Sistema de competición juvenil",
+    "logo": "Logo"
   },
   "reports": {
     "title": "Informes de carreras juveniles",
@@ -637,7 +668,9 @@
     "race": "Carrera",
     "reportClass": "Tipo de informe",
     "details": "Detalles",
-    "reportSummary": "Puntos regionales +{{regional}} · Puntos mundiales +{{world}} · Fatiga +{{fatigue}} · Eventos de desarrollo {{events}}"
+    "reportSummary": "Puntos regionales +{{regional}} · Puntos mundiales +{{world}} · Fatiga +{{fatigue}} · Eventos de desarrollo {{events}}",
+    "freeAgentAcademyAlumni": "Agente libre · antiguo corredor de la Academia",
+    "reportRange": "informes {{from}}–{{to}} de {{total}}"
   },
   "profile": {
     "loading": "Cargando perfil juvenil…",
