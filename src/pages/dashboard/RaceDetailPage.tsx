@@ -7462,6 +7462,8 @@ function RaceResultsHub({
         .eq('race_id', race.id)
         .eq('classification_type', 'general')
         .eq('entity_type', 'rider')
+        // One GC leader per stage avoids PostgREST's 1,000-row cap for long tours.
+        .eq('rank', 1)
 
       if (cancelled) return
 
@@ -19175,6 +19177,8 @@ export default function RaceDetailPage({
         .eq('race_id', classificationRaceId)
         .eq('classification_type', 'general')
         .eq('entity_type', 'rider')
+        // One GC leader per stage avoids PostgREST's 1,000-row cap for long tours.
+        .eq('rank', 1)
 
       if (cancelled) return
 
