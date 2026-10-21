@@ -496,7 +496,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
   }
 
   if (loading) {
-    return <div className="p-6 text-sm text-slate-500">Loading Youth race…</div>
+    return <div className="p-6 text-sm text-slate-500">{t('raceDetail.loadingRace')}</div>
   }
 
   if (!payload || error && !payload) {
@@ -579,15 +579,15 @@ export default function YouthRaceDetailPage(): JSX.Element {
       {showSquadEligibilityWarning ? (
         <div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
           <p className="font-semibold">
-            Youth race lineup needs attention: {invalidLineupRiders.length} ineligible rider{invalidLineupRiders.length === 1 ? '' : 's'}
+            {t('raceDetail.lineupWarningTitle', { count: invalidLineupRiders.length })}
           </p>
-          <p className="mt-1">Riders must be aged 12–15 at race start. A rider who turns 16, leaves the academy, or becomes otherwise ineligible cannot start.
+          <p className="mt-1">{t('raceDetail.eligibilityRules')}
             {payload.my_entry.race_squad_decider === 'manager'
-              ? ' Replace the affected riders in My Squad and save the updated lineup.'
-              : ' Your U16 Head Coach will attempt replacements before the start.'}
+              ? t('raceDetail.managerReplaceHelp')
+              : t('raceDetail.coachReplaceHelp')}
           </p>
           <button type="button" onClick={() => setTab('squad')}
-            className="mt-2 rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-100">Review My Squad</button>
+            className="mt-2 rounded-lg border border-amber-400 bg-white px-3 py-1.5 text-xs font-semibold hover:bg-amber-100">{t('raceDetail.reviewSquad')}</button>
         </div>
       ) : null}
       <section className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -618,8 +618,8 @@ export default function YouthRaceDetailPage(): JSX.Element {
               </div>
               <p className="mt-2 text-sm text-slate-500">
                 {race.host_city ? `${race.host_city} · ` : ''}
-                {humanize(race.terrain_type)} · {race.distance_km} km
-                {raceDays > 1 ? ' / stage' : ''}
+                {t(`raceDetail.terrain.${race.terrain_type}`, { defaultValue: humanize(race.terrain_type) })} · {race.distance_km} km
+                {raceDays > 1 ? t('raceDetail.perStage') : ''}
               </p>
             </div>
           </div>
@@ -631,7 +631,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
               </span>
             ) : null}
             <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${classBadge(race.competition_class)}`}>
-              {classLabel(race.competition_class)}
+              {t(`calendar.competition.${race.competition_class}`, { defaultValue: classLabel(race.competition_class) })}
             </span>
             <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700">
               {t('raceDetail.teamsRegistered', { registered: race.entries_count, capacity: race.team_limit })}
@@ -670,12 +670,12 @@ export default function YouthRaceDetailPage(): JSX.Element {
         <Section title={t('raceDetail.raceInformation')}>
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
             {[
-              [t('raceDetail.competition'), classLabel(race.competition_class)],
+              [t('raceDetail.competition'), t(`calendar.competition.${race.competition_class}`, { defaultValue: classLabel(race.competition_class) })],
               [t('raceDetail.dates'), race.race_end_date !== race.race_date
                 ? `${shortDate(race.race_date)} – ${shortDate(race.race_end_date)}`
                 : shortDate(race.race_date)],
               [t('raceDetail.raceLength'), t('raceDetail.dayCount', { count: raceDays })],
-              [t('raceDetail.distance'), `${race.distance_km} km${raceDays > 1 ? ' / stage' : ''}`],
+              [t('raceDetail.distance'), `${race.distance_km} km${raceDays > 1 ? t('raceDetail.perStage') : ''}`],
               [t('raceDetail.teams'), `${race.entries_count} / ${race.team_limit}`],
               [t('raceDetail.prizeFund'), money(race.prize_fund_cash)],
               [t('raceDetail.entryFee'), money(race.entry_fee ?? race.entry_cost)],
@@ -761,7 +761,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                           {stage.distance_km} km
                         </span>
                         <span className="rounded-full bg-white px-2 py-1 text-slate-700">
-                          {humanize(stage.stage_type)}
+                          {t(`raceDetail.terrain.${stage.stage_type}`, { defaultValue: humanize(stage.stage_type) })}
                         </span>
                         <span className={`rounded-full px-2 py-1 ${
                           stage.status === 'completed'
@@ -823,7 +823,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                       )}
                       <div className="mt-0.5 text-xs text-slate-500">
                         {isFinished ? (
-                          actualRiders.length > 0 ? `${actualRiders.length} recorded starter${actualRiders.length === 1 ? '' : 's'}` : t('raceDetail.noRecordedStarter')
+                          actualRiders.length > 0 ? t('raceDetail.recordedStarters', { count: actualRiders.length }) : t('raceDetail.noRecordedStarter')
                         ) : team.entry_status === 'withdrawn' ? t('raceDetail.withdrawn')
                           : t('raceDetail.ridersSelected', { selected: team.lineup_count, max: race.lineup_size })}
                       </div>
@@ -988,7 +988,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     className="flex items-center justify-between gap-3 rounded-lg bg-slate-50 px-3 py-2 text-sm"
                   >
                     <span>{index + 1}. {rider.name}</span>
-                    <span className="text-xs text-slate-500">{humanize(rider.role)}</span>
+                    <span className="text-xs text-slate-500">{t(`scouting.roles.${rider.role}`, { defaultValue: humanize(rider.role) })}</span>
                   </div>
                 ))
               )}
@@ -1061,7 +1061,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     }} className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
                       {payload.stages.map(stage => (
                         <option value={stage.stage_number} key={stage.id}>
-                          {t('raceDetail.stage', { number: stage.stage_number })} · {shortDate(stage.stage_date)} · {humanize(stage.stage_type)}
+                          {t('raceDetail.stage', { number: stage.stage_number })} · {shortDate(stage.stage_date)} · {t(`raceDetail.terrain.${stage.stage_type}`, { defaultValue: humanize(stage.stage_type) })}
                         </option>
                       ))}
                     </select>
@@ -1091,7 +1091,7 @@ export default function YouthRaceDetailPage(): JSX.Element {
                     <JerseyThumb url={team.jersey_url} name={team.club_name} />
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-slate-950">{team.club_name}</div>
-                      <div className="text-xs text-slate-500">{team.lineup_count} riders</div>
+                      <div className="text-xs text-slate-500">{t('raceDetail.riderCount', { count: team.lineup_count })}</div>
                     </div>
                   </div>
                 ))}
