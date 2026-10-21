@@ -873,7 +873,42 @@
     "noSquadSelected": "Non è ancora stata selezionata una rosa giovanile.",
     "coachSelectsSquad": "L'allenatore U16 seleziona la rosa.",
     "teamPrizes": "Classifica squadre e montepremi",
-    "close": "Chiudi"
+    "close": "Chiudi",
+    "loadingRace": "Caricamento gara giovanile…",
+    "lineupWarningTitle": "Rosa da controllare: {{count}} corridori non idonei",
+    "eligibilityRules": "Possono partire solo i corridori tra 12 e 15 anni. Chi compie 16 anni o lascia l'Accademia perde l'idoneità.",
+    "managerReplaceHelp": " Sostituisci questi corridori e salva la formazione.",
+    "coachReplaceHelp": " L'allenatore U16 tenterà le sostituzioni prima del via.",
+    "reviewSquad": "Controlla la mia rosa",
+    "perStage": " / tappa",
+    "recordedStarters": "{{count}} partenti registrati",
+    "riderCount": "{{count}} corridori",
+    "terrain": {
+      "flat": "Pianura",
+      "hilly": "Collinare",
+      "mountain": "Montagna",
+      "time_trial": "Cronometro",
+      "mixed": "Misto",
+      "rolling": "Ondulato"
+    },
+    "status": {
+      "finished": "Conclusa",
+      "active": "In corso",
+      "scheduled": "Programmata",
+      "completed": "Completata",
+      "entered": "Iscritta",
+      "pending": "In attesa",
+      "withdrawn": "Ritirata"
+    },
+    "entryStatus": {
+      "finished": "Conclusa",
+      "active": "In corso",
+      "scheduled": "Programmata",
+      "completed": "Completata",
+      "entered": "Iscritta",
+      "pending": "In attesa",
+      "withdrawn": "Ritirata"
+    }
   },
   "season": "Stagione"
 }
