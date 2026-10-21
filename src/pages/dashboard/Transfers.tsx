@@ -2962,7 +2962,7 @@ export default function TransfersPage() {
           activity: 'outgoing',
           offerId: null,
         })
-        showToast('{t('transferOffer.inactive')}', 'info')
+        showToast(t('transferOffer.inactive'), 'info')
         return
       }
 
