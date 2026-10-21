@@ -873,7 +873,42 @@
     "noSquadSelected": "No Youth race squad has been selected.",
     "coachSelectsSquad": "The U16 Head Coach selects the squad.",
     "teamPrizes": "Team classification and prize money",
-    "close": "Close"
+    "close": "Close",
+    "loadingRace": "Loading youth race…",
+    "lineupWarningTitle": "Lineup requires attention: {{count}} ineligible riders",
+    "eligibilityRules": "Only riders aged 12–15 may start. Riders who turn 16 or leave the Academy lose eligibility.",
+    "managerReplaceHelp": " Replace these riders in My Squad and save the lineup.",
+    "coachReplaceHelp": " The U16 Head Coach will try to replace them before the start.",
+    "reviewSquad": "Review My Squad",
+    "perStage": " / stage",
+    "recordedStarters": "{{count}} recorded starters",
+    "riderCount": "{{count}} riders",
+    "terrain": {
+      "flat": "Flat",
+      "hilly": "Hilly",
+      "mountain": "Mountain",
+      "time_trial": "Time Trial",
+      "mixed": "Mixed",
+      "rolling": "Rolling"
+    },
+    "status": {
+      "finished": "Finished",
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "entered": "Entered",
+      "pending": "Pending",
+      "withdrawn": "Withdrawn"
+    },
+    "entryStatus": {
+      "finished": "Finished",
+      "active": "Active",
+      "scheduled": "Scheduled",
+      "completed": "Completed",
+      "entered": "Entered",
+      "pending": "Pending",
+      "withdrawn": "Withdrawn"
+    }
   },
   "season": "Season"
 }
