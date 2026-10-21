@@ -158,7 +158,18 @@
     "transferAmount": "Importe",
     "transferring": "Transfiriendo…",
     "transferFunds": "Transferir fondos",
-    "transferHelp": "Los ingresos de carreras permanecen automáticamente en la Academia. Usa este control solo para mover dinero deliberadamente entre el sénior y la Academia."
+    "transferHelp": "Los ingresos de carreras permanecen automáticamente en la Academia. Usa este control solo para mover dinero deliberadamente entre el sénior y la Academia.",
+    "racePrizeIncome": "Ingresos por premios de carrera",
+    "racePrizeIncomeHelp": "Premios obtenidos por la Academia Juvenil en las clasificaciones por equipos.",
+    "previousPage": "Anterior",
+    "nextPage": "Siguiente",
+    "ledgerPage": "Página {{page}} de {{total}}",
+    "ledgerRange": "Transacciones {{from}}–{{to}} de {{total}}",
+    "weeklyPayroll": "Nómina semanal",
+    "weeklyPayrollDescription": "Ayudas semanales a corredores y salarios del personal de la Academia Juvenil",
+    "ledgerCategories": {
+      "weekly_payroll": "Nómina semanal"
+    }
   },
   "scouting": {
     "title": "Alcance del scouting juvenil",
@@ -504,7 +515,17 @@
     "selectDivision": "Seleccionar división",
     "country": "País",
     "yourAcademy": "Tu Academia",
-    "riderRankingHelp": "El ranking de corredores es independiente de la clasificación de Academias."
+    "riderRankingHelp": "El ranking de corredores es independiente de la clasificación de Academias.",
+    "promotion": "Ascenso",
+    "playoff": "Eliminatoria",
+    "relegation": "Descenso",
+    "systemWorldTitle": "Clase mundial · 16 equipos",
+    "systemWorldHelp": "Los cuatro últimos descienden al final de la temporada.",
+    "systemContinentalTitle": "Continental Oeste y Este · 20 equipos cada uno",
+    "systemContinentalHelp": "Los campeones ascienden directamente. Los segundos y terceros disputan una eliminatoria de cuatro equipos; los dos mejores también ascienden a Clase mundial.",
+    "systemRegionalTitle": "Regional · 12 divisiones",
+    "systemRegionalHelp": "La competición regional juvenil tiene 12 divisiones geográficas: seis alimentan Continental Oeste y seis Continental Este. Cada campeón asciende y seis equipos descienden de cada grupo continental.",
+    "systemScoringHelp": "La clasificación de equipos usa puntos de carrera. La de corredores usa puntos de la general ponderados: Regional ×1,0, Continental ×1,5 y Mundial ×2,5. Esprint, montaña y contrarreloj se registran por separado."
   },
   "reports": {
     "title": "Informes de carreras juveniles",
