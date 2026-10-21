@@ -75,7 +75,20 @@
     "latestResult": "Dernier résultat",
     "noPreviousRace": "Aucune course de l'Académie terminée",
     "noUpcomingRace": "Aucune prochaine course de l'Académie sélectionnée",
-    "noResult": "Aucun résultat jeunes pour le moment"
+    "noResult": "Aucun résultat jeunes pour le moment",
+    "staffLevels": {
+      "poor": "Faible",
+      "basic": "Débutant",
+      "competent": "Compétent",
+      "strong": "Solide",
+      "elite": "Élite",
+      "world_class": "Classe mondiale"
+    },
+    "workloads": {
+      "low": "Faible",
+      "moderate": "Modérée",
+      "high": "Élevée"
+    }
   },
   "roles": {
     "director": "Directeur de l'Académie Jeunes",
@@ -290,7 +303,17 @@
     "runCoinSearch": "Recherche supplémentaire · {{cost}} Coins",
     "weeklyLimitReached": "Limite hebdomadaire atteinte",
     "lastSearch": "Dernière recherche : passage {{run}} · {{reports}} rapports",
-    "maxReportsPerWeek": "Rapports max. / semaine"
+    "maxReportsPerWeek": "Rapports max. / semaine",
+    "focus": {
+      "balanced": "Équilibré",
+      "sprint": "Sprint",
+      "climbing": "Grimpe",
+      "time_trial": "Contre-la-montre",
+      "endurance": "Endurance",
+      "teamwork": "Travail d'équipe"
+    },
+    "weeklyResetTitle": "Réinitialisation hebdomadaire des rapports",
+    "weeklyResetHelp": "Les rapports et négociations en cours restent visibles jusqu'à dimanche. Le lundi {{date}}, la liste est réinitialisée et la première recherche gratuite est disponible. Les coureurs recrutés rejoignent aussitôt l'effectif des jeunes."
   },
   "settings": {
     "title": "Responsabilités",
@@ -408,11 +431,11 @@
     "pendingCount": "{{count}} en attente",
     "none": "Aucun jeune coureur ne nécessite actuellement de décision de sortie.",
     "decisionHelp": "À 16 ans, choisissez la prochaine étape. Le passage direct en équipe première n'est pas la voie normale.",
-    "pathway": "Parcours Jeune Diplômé de 30 jours",
+    "pathway": "Parcours diplômé sur 30 jours",
     "pathwayUntil": "Parcours jusqu'au {{date}}",
     "pathwayHelp": "Ce parcours temporaire offre 30 jours de jeu pour intégrer le coureur à l'équipe de développement. Sinon, il devient coureur professionnel libre.",
     "toDeveloping": "Vers l'équipe de développement ({{slots}} places)",
-    "release": "Libérer comme coureur professionnel libre"
+    "release": "Libérer comme agent libre"
   },
   "calendar": {
     "title": "Calendrier U16",
@@ -579,7 +602,12 @@
     "focus": "Axe",
     "workload": "Charge",
     "change": "Progression",
-    "readinessFatigue": "Fraîcheur / fatigue"
+    "readinessFatigue": "Fraîcheur / fatigue",
+    "date": "Date",
+    "race": "Course",
+    "reportClass": "Type de rapport",
+    "details": "Détails",
+    "reportSummary": "Points régionaux +{{regional}} · Points mondiaux +{{world}} · Fatigue +{{fatigue}} · Événements de progression {{events}}"
   },
   "profile": {
     "loading": "Chargement du profil jeune…",
