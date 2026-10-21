@@ -873,7 +873,42 @@
     "noSquadSelected": "Состав на молодёжную гонку ещё не выбран.",
     "coachSelectsSquad": "Состав выбирает главный тренер U16.",
     "teamPrizes": "Командный зачёт и призовые",
-    "close": "Закрыть"
+    "close": "Закрыть",
+    "loadingRace": "Загрузка молодёжной гонки…",
+    "lineupWarningTitle": "Проверьте состав: {{count}} недопущенных гонщиков",
+    "eligibilityRules": "Стартовать могут только гонщики 12–15 лет. После 16 лет или ухода из Академии право старта теряется.",
+    "managerReplaceHelp": " Замените таких гонщиков и сохраните состав.",
+    "coachReplaceHelp": " Главный тренер U16 попытается заменить их до старта.",
+    "reviewSquad": "Проверить состав",
+    "perStage": " / этап",
+    "recordedStarters": "{{count}} стартовавших гонщиков",
+    "riderCount": "{{count}} гонщиков",
+    "terrain": {
+      "flat": "Равнина",
+      "hilly": "Холмы",
+      "mountain": "Горы",
+      "time_trial": "Разделка",
+      "mixed": "Смешанный",
+      "rolling": "Волнистый"
+    },
+    "status": {
+      "finished": "Завершена",
+      "active": "Идёт",
+      "scheduled": "Запланирована",
+      "completed": "Завершена",
+      "entered": "Заявлено",
+      "pending": "В ожидании",
+      "withdrawn": "Отозвано"
+    },
+    "entryStatus": {
+      "finished": "Завершена",
+      "active": "Идёт",
+      "scheduled": "Запланирована",
+      "completed": "Завершена",
+      "entered": "Заявлено",
+      "pending": "В ожидании",
+      "withdrawn": "Отозвано"
+    }
   },
   "season": "Сезон"
 }
