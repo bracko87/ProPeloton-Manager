@@ -158,7 +158,18 @@
     "transferAmount": "Amount",
     "transferring": "Transferring…",
     "transferFunds": "Transfer funds",
-    "transferHelp": "Race income remains in the Youth Academy automatically. Use this control only when you deliberately want to move money between the senior team and the Academy."
+    "transferHelp": "Race income remains in the Youth Academy automatically. Use this control only when you deliberately want to move money between the senior team and the Academy.",
+    "racePrizeIncome": "Race prize income",
+    "racePrizeIncomeHelp": "Prize money earned by the Youth Academy from race team classifications.",
+    "previousPage": "Previous",
+    "nextPage": "Next",
+    "ledgerPage": "Page {{page}} of {{total}}",
+    "ledgerRange": "Showing {{from}}–{{to}} of {{total}} transactions",
+    "weeklyPayroll": "Weekly payroll",
+    "weeklyPayrollDescription": "Youth Academy weekly rider support and staff payroll",
+    "ledgerCategories": {
+      "weekly_payroll": "Weekly payroll"
+    }
   },
   "scouting": {
     "title": "Youth scouting range",
@@ -504,7 +515,17 @@
     "selectDivision": "Select division",
     "country": "Country",
     "yourAcademy": "Your Academy",
-    "riderRankingHelp": "Rider rankings are separate from Academy class standings."
+    "riderRankingHelp": "Rider rankings are separate from Academy class standings.",
+    "promotion": "Promotion",
+    "playoff": "Playoff",
+    "relegation": "Relegation",
+    "systemWorldTitle": "World Class · 16 teams",
+    "systemWorldHelp": "Bottom four are relegated at season end.",
+    "systemContinentalTitle": "Continental West & East · 20 teams each",
+    "systemContinentalHelp": "Each group champion is promoted directly. Second and third place enter a four-team playoff; the best two also advance to World Class.",
+    "systemRegionalTitle": "Regional · 12 divisions",
+    "systemRegionalHelp": "Regional youth competition has 12 geographic divisions. Six feed Continental West and six Continental East. Each champion is promoted; six clubs per Continental group are relegated.",
+    "systemScoringHelp": "Team standings use race-result points. Rider rankings use General Classification points weighted Regional ×1.0, Continental ×1.5 and World ×2.5. Sprint, mountain and time-trial rankings are tracked separately."
   },
   "reports": {
     "title": "Youth Race Reports",
