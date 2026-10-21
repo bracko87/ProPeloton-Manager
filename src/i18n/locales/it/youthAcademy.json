@@ -173,7 +173,8 @@
     "onCourseUntil": "In formazione fino al {{date}}",
     "courseRolePaused": "Il membro dello staff non è disponibile fino alla fine del corso.",
     "roleBonusPaused": "Bonus ruolo sospeso",
-    "roleBonusPausedHelp": "Gli effetti del ruolo sono sospesi durante la formazione."
+    "roleBonusPausedHelp": "Gli effetti del ruolo sono sospesi durante la formazione.",
+    "courseManagerHandover": "Il manager gestisce temporaneamente: {{responsibilities}}. I ruoli salvati riprendono al ritorno dello staff."
   },
   "budget": {
     "title": "Budget stagionale dell'accademia",
@@ -366,7 +367,8 @@
     "weeklyStipendHelp": "Sostegno settimanale al corridore e alla famiglia durante la permanenza.",
     "accommodationHelp": "Sostegno settimanale per alloggio e trasferimento.",
     "compensationOfferHelp": "Indennità una tantum pagata all'Accademia attuale dopo il trasferimento.",
-    "compensationOfferUnattachedHelp": "Nessuna indennità è dovuta per un corridore svincolato."
+    "compensationOfferUnattachedHelp": "Nessuna indennità è dovuta per un corridore svincolato.",
+    "offerCostSummary": "Costo settimanale: {{weekly}}. Indennità una tantum: {{compensation}}."
   },
   "settings": {
     "title": "Responsabilità",
@@ -413,7 +415,12 @@
     "managerTemporaryHandover": "Gestito temporaneamente dal manager",
     "assignTemporaryCover": "Assegna temporaneamente un altro membro",
     "noTemporaryCoverAvailable": "Nessun altro membro dell'Accademia è disponibile.",
-    "activeResponsibilityNow": "Responsabile attuale: {{person}}"
+    "activeResponsibilityNow": "Responsabile attuale: {{person}}",
+    "coverPenaltyHelp": "La qualità del lavoro diminuisce temporaneamente del {{penalty}}%.",
+    "originalStaffReturns": "{{staff}} segue {{course}} fino al {{date}}. Poi riprende le funzioni.",
+    "managerTemporaryHandoverCourse": "{{staff}} segue {{course}} fino al {{date}}. Il ruolo salvato {{role}} riprende dopo il corso.",
+    "managerTemporaryHandoverUnavailable": "Il responsabile di {{role}} non è disponibile. L'assegnazione resta salvata.",
+    "assignTemporaryCoverHelp": "Un altro membro può sostituirlo con efficacia ridotta del 20–50%."
   },
   "placeholders": {},
   "errors": {
@@ -516,7 +523,10 @@
     "raceSupplies": "Forniture gare giovanili",
     "raceSuppliesHelp": "Borracce, gel, alimenti, maglie e giacche antipioggia a carico dell'Accademia.",
     "inStock": "{{count}} in magazzino",
-    "quantity": "Quantità"
+    "quantity": "Quantità",
+    "temporaryCoverManaged": "Gestito temporaneamente da {{staff}}",
+    "temporaryCoverManagedHelp": "La sostituzione fuori ruolo riduce la qualità degli acquisti del {{penalty}}%.",
+    "setupConfiguredBy": "Configurato da {{person}} · {{date}}"
   },
   "training": {
     "title": "Filosofia di sviluppo giovanile",
@@ -580,7 +590,8 @@
       "world": "Classe Mondiale",
       "continental": "Classe Continentale",
       "regional": "Classe Regionale",
-      "youth": "Competizione Giovanile"
+      "youth": "Competizione Giovanile",
+      "worldClass": "Classe mondiale"
     },
     "monthlyPlanTitle": "Piano gare giovanili di {{month}}",
     "approved": "Approvato",
@@ -633,7 +644,11 @@
     "noVisibleRaces": "Nessuna gara visibile",
     "multiDay": "Più giorni",
     "entryFee": "Quota di iscrizione",
-    "prizeFundCompact": "Montepremi"
+    "prizeFundCompact": "Montepremi",
+    "applicationPending": "Candidatura in attesa",
+    "withdrawRace": "Ritira gara",
+    "openRaceParticipatingOnly": "Dettagli disponibili solo per le Accademie partecipanti.",
+    "estimatedRaceCost": "Costo totale stimato"
   },
   "rankings": {
     "title": "Ranking giovanili",
@@ -796,5 +811,6 @@
     "stage": "Tappa {{number}}",
     "stageResult": "Risultato tappa",
     "fullStageStanding": "Classifica completa tappa"
-  }
+  },
+  "season": "Stagione"
 }
