@@ -625,5 +625,27 @@
     "renewing": "Wird verlängert…",
     "getCoins": "Coins kaufen",
     "readOnly": "Der Jugendakademie-Zugang muss für die aktuelle Saison verlängert werden, bevor Verwaltungsaktionen möglich sind."
+  },
+  "raceDetail": {
+    "overview": "Übersicht",
+    "teamsCount": "Teams ({{count}})",
+    "mySquad": "Mein Kader",
+    "results": "Ergebnisse",
+    "backToCalendar": "← Zurück zum Jugendkalender",
+    "raceInformation": "Renninformationen",
+    "participantsResults": "Teilnehmer und Ergebnisse",
+    "hide": "Ausblenden",
+    "show": "Anzeigen",
+    "teamsRiders": "Teams & Fahrer",
+    "raceClassifications": "Rennwertungen",
+    "currentStandings": "Aktueller Gesamtstand",
+    "generalClassification": "Gesamtwertung",
+    "sprintPoints": "Sprintpunkte",
+    "mountainPoints": "Bergpunkte",
+    "fullRaceStanding": "Vollständige Rennwertung",
+    "stageResults": "Etappenergebnisse – Etappe {{stage}}",
+    "stage": "Etappe {{number}}",
+    "stageResult": "Etappenergebnis",
+    "fullStageStanding": "Vollständige Etappenwertung"
   }
 }
