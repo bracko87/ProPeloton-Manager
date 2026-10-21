@@ -173,7 +173,8 @@
     "onCourseUntil": "Na tečaju do {{date}}",
     "courseRolePaused": "Član osoblja nije dostupan dok se tečaj ne završi.",
     "roleBonusPaused": "Bonus uloge je pauziran",
-    "roleBonusPausedHelp": "Učinci uloge pauzirani su tijekom tečaja."
+    "roleBonusPausedHelp": "Učinci uloge pauzirani su tijekom tečaja.",
+    "courseManagerHandover": "Menadžer privremeno vodi: {{responsibilities}}. Spremljene dužnosti vraćaju se po povratku osoblja."
   },
   "budget": {
     "title": "Sezonski budžet akademije",
@@ -366,7 +367,8 @@
     "weeklyStipendHelp": "Tjedna potpora vozaču i obitelji tijekom boravka u Akademiji.",
     "accommodationHelp": "Tjedna potpora za smještaj i preseljenje.",
     "compensationOfferHelp": "Jednokratna razvojna naknada sadašnjoj Akademiji nakon transfera.",
-    "compensationOfferUnattachedHelp": "Za slobodnog vozača ne plaća se naknada drugoj Akademiji."
+    "compensationOfferUnattachedHelp": "Za slobodnog vozača ne plaća se naknada drugoj Akademiji.",
+    "offerCostSummary": "Tjedni trošak: {{weekly}}. Jednokratna naknada: {{compensation}}."
   },
   "settings": {
     "title": "Odgovornosti",
@@ -413,7 +415,12 @@
     "managerTemporaryHandover": "Privremeno vodi menadžer",
     "assignTemporaryCover": "Privremeno dodijeli drugog člana osoblja",
     "noTemporaryCoverAvailable": "Trenutačno nema drugih dostupnih djelatnika Akademije.",
-    "activeResponsibilityNow": "Trenutačno odgovoran: {{person}}"
+    "activeResponsibilityNow": "Trenutačno odgovoran: {{person}}",
+    "coverPenaltyHelp": "Kvaliteta rada privremeno je smanjena za {{penalty}}%.",
+    "originalStaffReturns": "{{staff}} je na tečaju {{course}} do {{date}}. Zatim nastavlja izvorne dužnosti.",
+    "managerTemporaryHandoverCourse": "{{staff}} je na tečaju {{course}} do {{date}}. Spremljena uloga {{role}} zatim se vraća.",
+    "managerTemporaryHandoverUnavailable": "Odgovorni za {{role}} trenutačno nije dostupan. Dodjela je sačuvana.",
+    "assignTemporaryCoverHelp": "Drugi član osoblja može privremeno preuzeti dužnost uz 20–50% manju učinkovitost."
   },
   "placeholders": {},
   "errors": {
@@ -516,7 +523,10 @@
     "raceSupplies": "Potrepštine za omladinske utrke",
     "raceSuppliesHelp": "Boce, gelovi, paketi hrane, dresovi i kabanice plaćaju se iz budžeta Akademije.",
     "inStock": "Na zalihi: {{count}}",
-    "quantity": "Količina"
+    "quantity": "Količina",
+    "temporaryCoverManaged": "Privremeno vodi {{staff}}",
+    "temporaryCoverManagedHelp": "Privremena zamjena za opremu smanjuje kvalitetu kupnje za {{penalty}}%.",
+    "setupConfiguredBy": "Postavio {{person}} · {{date}}"
   },
   "training": {
     "title": "Filozofija razvoja mladih",
@@ -580,7 +590,8 @@
       "world": "Svjetska klasa",
       "continental": "Kontinentalna klasa",
       "regional": "Regionalna klasa",
-      "youth": "Natjecanje mladih"
+      "youth": "Natjecanje mladih",
+      "worldClass": "Svjetska klasa"
     },
     "monthlyPlanTitle": "Plan utrka mladih za {{month}}",
     "approved": "Odobreno",
@@ -633,7 +644,11 @@
     "noVisibleRaces": "Nema vidljivih utrka",
     "multiDay": "Više dana",
     "entryFee": "Startnina",
-    "prizeFundCompact": "Nagradni fond"
+    "prizeFundCompact": "Nagradni fond",
+    "applicationPending": "Prijava na čekanju",
+    "withdrawRace": "Povuci utrku",
+    "openRaceParticipatingOnly": "Stranica utrke dostupna je samo Akademijama koje sudjeluju.",
+    "estimatedRaceCost": "Procijenjeni ukupni trošak"
   },
   "rankings": {
     "title": "Youth rang-liste",
@@ -796,5 +811,6 @@
     "stage": "Etapa {{number}}",
     "stageResult": "Rezultat etape",
     "fullStageStanding": "Cijeli poredak etape"
-  }
+  },
+  "season": "Sezona"
 }
