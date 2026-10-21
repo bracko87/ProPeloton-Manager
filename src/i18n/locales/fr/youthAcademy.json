@@ -173,7 +173,8 @@
     "onCourseUntil": "En formation jusqu'au {{date}}",
     "courseRolePaused": "Le membre du personnel est indisponible jusqu'à la fin de la formation.",
     "roleBonusPaused": "Bonus de rôle suspendu",
-    "roleBonusPausedHelp": "Les effets du poste sont suspendus pendant la formation."
+    "roleBonusPausedHelp": "Les effets du poste sont suspendus pendant la formation.",
+    "courseManagerHandover": "Le manager assure temporairement : {{responsibilities}}. Les responsabilités enregistrées reprennent au retour du personnel."
   },
   "budget": {
     "title": "Budget de saison de l'académie",
@@ -366,7 +367,8 @@
     "weeklyStipendHelp": "Aide hebdomadaire au coureur et à sa famille durant son séjour à l'Académie.",
     "accommodationHelp": "Aide hebdomadaire au logement et au déménagement.",
     "compensationOfferHelp": "Indemnité de formation unique payée à l'Académie actuelle lors du transfert.",
-    "compensationOfferUnattachedHelp": "Aucune indemnité n'est due pour un coureur libre."
+    "compensationOfferUnattachedHelp": "Aucune indemnité n'est due pour un coureur libre.",
+    "offerCostSummary": "Coût hebdomadaire : {{weekly}}. Indemnité unique : {{compensation}}."
   },
   "settings": {
     "title": "Responsabilités",
@@ -413,7 +415,12 @@
     "managerTemporaryHandover": "Géré temporairement par le manager",
     "assignTemporaryCover": "Affecter temporairement un autre membre",
     "noTemporaryCoverAvailable": "Aucun autre membre de l'Académie n'est disponible.",
-    "activeResponsibilityNow": "Responsable actuel : {{person}}"
+    "activeResponsibilityNow": "Responsable actuel : {{person}}",
+    "coverPenaltyHelp": "La qualité du travail est réduite temporairement de {{penalty}} %.",
+    "originalStaffReturns": "{{staff}} suit {{course}} jusqu'au {{date}}. Ses fonctions reprennent ensuite.",
+    "managerTemporaryHandoverCourse": "{{staff}} suit {{course}} jusqu'au {{date}}. Le rôle enregistré {{role}} reprend ensuite.",
+    "managerTemporaryHandoverUnavailable": "Le responsable de {{role}} est indisponible. L'attribution est conservée.",
+    "assignTemporaryCoverHelp": "Un autre membre peut assurer l'intérim avec 20 à 50 % d'efficacité en moins."
   },
   "placeholders": {},
   "errors": {
@@ -516,7 +523,10 @@
     "raceSupplies": "Fournitures de course de l'Académie",
     "raceSuppliesHelp": "Bidons, gels, nutrition, maillots et vestes de pluie financés par l'Académie.",
     "inStock": "{{count}} en stock",
-    "quantity": "Quantité"
+    "quantity": "Quantité",
+    "temporaryCoverManaged": "Géré temporairement par {{staff}}",
+    "temporaryCoverManagedHelp": "Le remplacement hors fonction réduit la qualité des achats de {{penalty}} %.",
+    "setupConfiguredBy": "Configuré par {{person}} · {{date}}"
   },
   "training": {
     "title": "Philosophie de développement des jeunes",
@@ -580,7 +590,8 @@
       "world": "Classe Mondiale",
       "continental": "Classe Continentale",
       "regional": "Classe Régionale",
-      "youth": "Compétition Jeunes"
+      "youth": "Compétition Jeunes",
+      "worldClass": "Classe mondiale"
     },
     "monthlyPlanTitle": "Plan de courses jeunes de {{month}}",
     "approved": "Approuvé",
@@ -633,7 +644,11 @@
     "noVisibleRaces": "Aucune course visible",
     "multiDay": "Plusieurs jours",
     "entryFee": "Frais d'inscription",
-    "prizeFundCompact": "Dotation"
+    "prizeFundCompact": "Dotation",
+    "applicationPending": "Candidature en attente",
+    "withdrawRace": "Retirer la course",
+    "openRaceParticipatingOnly": "Les détails sont réservés aux Académies participantes.",
+    "estimatedRaceCost": "Coût total estimé"
   },
   "rankings": {
     "title": "Classements jeunes",
@@ -796,5 +811,6 @@
     "stage": "Étape {{number}}",
     "stageResult": "Résultat d'étape",
     "fullStageStanding": "Classement complet de l'étape"
-  }
+  },
+  "season": "Saison"
 }
