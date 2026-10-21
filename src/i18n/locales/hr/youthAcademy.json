@@ -873,7 +873,42 @@
     "noSquadSelected": "Još nije odabran omladinski sastav za utrku.",
     "coachSelectsSquad": "Sastav odabire glavni trener U16.",
     "teamPrizes": "Ekipni poredak i nagrade",
-    "close": "Zatvori"
+    "close": "Zatvori",
+    "loadingRace": "Učitavanje omladinske utrke…",
+    "lineupWarningTitle": "Sastav treba provjeru: {{count}} nepodobnih vozača",
+    "eligibilityRules": "Mogu startati samo vozači od 12 do 15 godina. Oni koji navrše 16 ili napuste Akademiju gube pravo nastupa.",
+    "managerReplaceHelp": " Zamijeni te vozače u sastavu i spremi izmjene.",
+    "coachReplaceHelp": " Glavni trener U16 pokušat će zamjene prije starta.",
+    "reviewSquad": "Pregledaj moj sastav",
+    "perStage": " / etapa",
+    "recordedStarters": "{{count}} zabilježenih startera",
+    "riderCount": "{{count}} vozača",
+    "terrain": {
+      "flat": "Ravno",
+      "hilly": "Brdovito",
+      "mountain": "Planinsko",
+      "time_trial": "Kronometar",
+      "mixed": "Mješovito",
+      "rolling": "Valovito"
+    },
+    "status": {
+      "finished": "Završeno",
+      "active": "U tijeku",
+      "scheduled": "Zakazano",
+      "completed": "Završeno",
+      "entered": "Prijavljeno",
+      "pending": "Na čekanju",
+      "withdrawn": "Povučeno"
+    },
+    "entryStatus": {
+      "finished": "Završeno",
+      "active": "U tijeku",
+      "scheduled": "Zakazano",
+      "completed": "Završeno",
+      "entered": "Prijavljeno",
+      "pending": "Na čekanju",
+      "withdrawn": "Povučeno"
+    }
   },
   "season": "Sezona"
 }
