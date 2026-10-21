@@ -743,7 +743,8 @@
     "details": "Детали",
     "reportSummary": "Региональные очки +{{regional}} · Мировые очки +{{world}} · Усталость +{{fatigue}} · События развития {{events}}",
     "freeAgentAcademyAlumni": "Свободный агент · бывший гонщик Академии",
-    "reportRange": "отчётов {{from}}–{{to}} из {{total}}"
+    "reportRange": "отчётов {{from}}–{{to}} из {{total}}",
+    "reportOutcome": "Лучшее место {{best}} · Подиумы {{podiums}} · Сходы {{dnf}} · Не стартовали {{dns}}"
   },
   "profile": {
     "loading": "Загрузка профиля юниора…",
