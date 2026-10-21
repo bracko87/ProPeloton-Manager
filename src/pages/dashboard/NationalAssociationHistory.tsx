@@ -35,11 +35,11 @@ type HistoryData = {
   events?: HistoryEvent[]
 }
 
-function formatGameDate(value?: string | null): string {
+function formatGameDate(value?: string | null, language?: string): string {
   if (!value) return '—'
   const date = new Date(`${value}T00:00:00Z`)
   if (Number.isNaN(date.getTime())) return value
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(language || 'en', {
     day: '2-digit',
     month: 'short',
     timeZone: 'UTC',
@@ -47,7 +47,7 @@ function formatGameDate(value?: string | null): string {
 }
 
 export default function NationalAssociationHistoryPage(): JSX.Element {
-  const { t } = useTranslation('nations')
+  const { t, i18n } = useTranslation('nations')
   const [association, setAssociation] = useState<AssociationData | null>(null)
   const [history, setHistory] = useState<HistoryData | null>(null)
   const [isCoach, setIsCoach] = useState(false)
@@ -103,7 +103,13 @@ export default function NationalAssociationHistoryPage(): JSX.Element {
     if (event.event_type === 'national_coach_appointed') {
       return t('association.history.detail.coachAppointed', {
         club: String(details.club_name ?? '—'),
-        term: String(details.term_kind ?? '—'),
+        term: (() => {
+          const kind = String(details.term_kind ?? '')
+          return kind === 'annual' ? t('association.electionsPage.kindSeason')
+            : kind === 'activation' ? t('association.electionsPage.kindActivation')
+            : kind === 'special' ? t('association.electionsPage.kindSpecial')
+            : kind || '—'
+        })(),
       })
     }
     if (event.event_type === 'national_squad_confirmed') {
@@ -193,34 +199,38 @@ export default function NationalAssociationHistoryPage(): JSX.Element {
             {t('association.history.empty')}
           </div>
         ) : (
-          <div className="divide-y divide-slate-200">
-            {events.map(event => {
-              const detail = eventDetail(event)
-              return (
-                <article key={event.event_key} className="grid gap-3 p-4 sm:grid-cols-[160px_minmax(0,1fr)]">
-                  <div>
-                    <div className="text-sm font-semibold text-slate-900">
-                      {event.event_date ? formatGameDate(event.event_date) : t('association.history.seasonOnly', { season: event.season_number ?? '—' })}
-                    </div>
-                    {event.season_number ? (
-                      <div className="mt-1 text-xs text-slate-500">
-                        {t('association.history.season', { season: event.season_number })}
-                      </div>
-                    ) : null}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-slate-900">
-                      {eventTitle(event)}
-                    </div>
-                    {detail ? (
-                      <p className="mt-1 text-sm leading-6 text-slate-600">
-                        {detail}
-                      </p>
-                    ) : null}
-                  </div>
-                </article>
-              )
-            })}
+          <div className="overflow-x-auto">
+            <table className="w-full table-auto text-sm">
+              <thead className="bg-gray-50 text-gray-600">
+                <tr>
+                  <th className="whitespace-nowrap p-3 text-left">{t('association.history.columns.date')}</th>
+                  <th className="p-3 text-left">{t('association.history.columns.event')}</th>
+                  <th className="p-3 text-left">{t('association.history.columns.details')}</th>
+                  <th className="whitespace-nowrap p-3 text-right">{t('association.history.columns.season')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {events.map(event => {
+                  const detail = eventDetail(event)
+                  return (
+                    <tr key={event.event_key} className="border-t border-gray-200">
+                      <td className="whitespace-nowrap p-3 text-gray-700">
+                        {event.event_date
+                          ? formatGameDate(event.event_date, i18n.resolvedLanguage || i18n.language)
+                          : '—'}
+                      </td>
+                      <td className="p-3 font-medium text-gray-800">{eventTitle(event)}</td>
+                      <td className="p-3 text-xs font-normal text-gray-500">{detail || '—'}</td>
+                      <td className="whitespace-nowrap p-3 text-right text-xs text-gray-500">
+                        {event.season_number
+                          ? t('association.history.season', { season: event.season_number })
+                          : '—'}
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </section>

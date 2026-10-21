@@ -2142,7 +2142,7 @@ export default function NationalRankingPage(): JSX.Element {
                     <div className="flex items-center gap-3">
                       <span className="w-7 font-semibold text-slate-700">{result.rank}</span>
                       <Link to={riderProfilePath(result.rider_id, result.club_id)}
-                        className="font-semibold text-slate-900 hover:underline">{result.rider_name}</Link>
+                        className="text-sm font-normal text-slate-900 hover:underline">{result.rider_name}</Link>
                     </div>
                     <span className="text-xs text-slate-500">{result.club_name ?? t('ranking.freeAgent')}</span>
                   </div>
@@ -2156,7 +2156,7 @@ export default function NationalRankingPage(): JSX.Element {
                         <div className="flex items-center gap-3">
                           <span className="w-7 font-semibold text-slate-700">{result.rank}</span>
                           <Link to={riderProfilePath(result.rider_id, result.club_id)}
-                            className="font-semibold text-slate-900 hover:underline">{result.rider_name}</Link>
+                            className="text-sm font-normal text-slate-900 hover:underline">{result.rider_name}</Link>
                         </div>
                         <span className="text-xs text-slate-500">{result.club_name ?? t('ranking.freeAgent')}</span>
                       </div>
@@ -2180,7 +2180,7 @@ export default function NationalRankingPage(): JSX.Element {
                         {t('champions.season', { number: champion.season_number })}
                       </div>
                       <Link to={riderProfilePath(champion.champion_rider_id, champion.champion_club_id)}
-                        className="font-semibold text-slate-900 hover:underline">
+                        className="text-sm font-normal text-slate-900 hover:underline">
                         {champion.champion_name_snapshot}
                       </Link>
                       {champion.final_race_id ? (

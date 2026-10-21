@@ -1127,10 +1127,10 @@ export default function NationalAssociationPage(): JSX.Element {
                       >
                         <div className="border-b border-slate-200 bg-slate-50 px-3 py-2.5">
                           <div className="text-sm font-semibold text-slate-900">
-                            {group.roundLabel} · {group.groupLabel}
+                            {group.roundLabel === 'Final Qualification' ? t('world.finalQualification') : group.roundLabel === 'World Nations Final' ? t('world.worldFinal') : group.roundLabel} · {group.groupLabel.replace(/Group ([A-Z])/i, (_, letter: string) => t('associationExtra.groupLabel', { letter }))}
                           </div>
                           <div className="mt-0.5 text-xs text-slate-500">
-                            {group.events.length} scheduled race day{group.events.length === 1 ? '' : 's'}
+                            {t('associationExtra.scheduledDays', { count: group.events.length })}
                           </div>
                         </div>
 
@@ -1152,7 +1152,7 @@ export default function NationalAssociationPage(): JSX.Element {
                                   className="min-w-0 flex-1 text-left"
                                 >
                                   <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
-                                    Day {event.race_day ?? '—'} · {humanize(event.race_type)}
+                                    {t('common.dayRace', { day: event.race_day ?? '—', race: t(`raceTypes.${event.race_type}`, { defaultValue: humanize(event.race_type) }) })}
                                   </div>
                                   <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs">
                                     <span className="font-semibold text-slate-900">
@@ -1160,11 +1160,11 @@ export default function NationalAssociationPage(): JSX.Element {
                                     </span>
                                     <span className="text-slate-300">·</span>
                                     <span className="font-medium text-slate-500">
-                                      Season {overview?.season_number ?? dashboard?.season_number ?? '—'}
+                                      {t('common.seasonNumber', { season: overview?.season_number ?? dashboard?.season_number ?? '—' })}
                                     </span>
                                     <span className="text-slate-300">·</span>
                                     <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusClasses(event.status)}`}>
-                                      {event.status ? humanize(event.status) : 'Scheduled'}
+                                      {t(`status.${event.status || 'scheduled'}`, { defaultValue: event.status ? humanize(event.status) : t('associationExtra.scheduled') })}
                                     </span>
                                   </div>
                                   {event.host_country_code || event.host_city ? (
@@ -1181,7 +1181,7 @@ export default function NationalAssociationPage(): JSX.Element {
                                         </span>
                                       ) : null}
                                       <span className="font-medium text-slate-700">
-                                        {event.host_city ?? 'Host city not assigned'}
+                                        {event.host_city ?? t('associationExtra.noHostCity')}
                                       </span>
                                     </div>
                                   ) : null}
@@ -1191,7 +1191,7 @@ export default function NationalAssociationPage(): JSX.Element {
                                   to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
                                   className="inline-flex shrink-0 self-start rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black shadow-sm hover:bg-yellow-300 sm:self-center"
                                 >
-                                  Open race page
+                                  {t('world.openRace')}
                                 </Link>
                               </div>
                             )
@@ -1207,11 +1207,23 @@ export default function NationalAssociationPage(): JSX.Element {
                 <div className="flex items-center justify-between gap-3">
                   <div>
                     <h4 className="font-semibold text-slate-900">
-                      Selected riders
+                      {t('association.dashboard.selectedRiders')}
                     </h4>
                     {selectedOverviewEvent ? (
                       <div className="mt-0.5 text-xs text-slate-500">
-                        {selectedOverviewEvent.label}
+                        {[
+                          selectedOverviewEvent.round_label === 'Final Qualification'
+                            ? t('world.finalQualification')
+                            : selectedOverviewEvent.round_label === 'World Nations Final'
+                              ? t('world.worldFinal')
+                              : selectedOverviewEvent.round_label || t('world.title'),
+                          selectedOverviewEvent.group_label?.replace(/Group ([A-Z])/i, (_match, letter: string) =>
+                            t('associationExtra.groupLabel', { letter }),
+                          ),
+                          selectedOverviewEvent.race_type
+                            ? t(`raceTypes.${selectedOverviewEvent.race_type}`, { defaultValue: humanize(selectedOverviewEvent.race_type) })
+                            : null,
+                        ].filter(Boolean).join(' · ')}
                       </div>
                     ) : null}
                   </div>
@@ -1225,11 +1237,11 @@ export default function NationalAssociationPage(): JSX.Element {
                 <div className="mt-3">
                   {!selectedOverviewEvent ? (
                     <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                      No upcoming World Nations race is assigned to this National Team.
+                      {t('associationExtra.noAssignedRace')}
                     </div>
                   ) : !selectedEventMembers.length ? (
                     <div className="rounded border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
-                      No 7-rider lineup has been submitted for this race yet.
+                      {t('associationExtra.noLineup')}
                     </div>
                   ) : (
                     <div className="grid gap-2 sm:grid-cols-2">

@@ -286,6 +286,11 @@ function CountryLabel({
   name?: string | null
 }): JSX.Element {
   const src = flagUrl(code)
+  const { i18n } = useTranslation('nations')
+  let localizedName = name || code || '—'
+  if (code && /^[a-z]{2}$/i.test(code)) {
+    try { localizedName = new Intl.DisplayNames([i18n.resolvedLanguage || i18n.language || 'en'], { type: 'region' }).of(code.toUpperCase()) || localizedName } catch { /* Use the supplied name. */ }
+  }
   return (
     <div className="flex items-center gap-2">
       {src ? (
@@ -295,7 +300,7 @@ function CountryLabel({
           className="h-4 w-6 rounded-sm border border-slate-200 object-cover"
         />
       ) : null}
-      <span>{name || code || '—'}</span>
+      <span>{localizedName}</span>
     </div>
   )
 }
@@ -320,12 +325,12 @@ function RoundCard({
         <div>
           <div className="flex items-center gap-2">
 
-            <h3 className="text-base font-semibold text-slate-900">{round.round_label}</h3>
+            <h3 className="text-base font-semibold text-slate-900">{round.round_type === 'world_final' ? t('world.worldFinal') : round.round_label === 'Final Qualification' ? t('world.finalQualification') : round.round_label}</h3>
           </div>
           <p className="mt-1 text-sm text-slate-500">
             {round.round_type === 'world_final'
-              ? 'Final field'
-              : `${round.entrants_target} nation${round.entrants_target === 1 ? '' : 's'}`}
+              ? t('worldExtra.finalField')
+              : t('worldExtra.nationsCount', { count: round.entrants_target })}
             {' · '}
             {formatGameDate(round.starts_on_game_date)}
             {round.ends_on_game_date ? ` – ${formatGameDate(round.ends_on_game_date)}` : ''}
@@ -349,23 +354,23 @@ function RoundCard({
           <div key={group.id} className="overflow-hidden rounded border border-slate-200">
             <div className="flex items-center justify-between gap-3 bg-slate-50 px-3 py-2.5">
               <div>
-                <div className="font-semibold text-slate-900">{group.group_label}</div>
+                <div className="font-semibold text-slate-900">{group.group_label.replace(/Group ([A-Z])/i, (_match, letter: string) => t('worldExtra.groupLabel', { letter }))}</div>
                 <div className="mt-0.5 text-xs text-slate-500">
-                  {round.round_type === 'world_final' ? 'World Nations Final' : 'Qualification group'}
+                  {round.round_type === 'world_final' ? t('world.worldFinal') : t('worldExtra.qualificationGroup')}
                   {' · '}
                   {round.round_type === 'world_final'
-                    ? `Teams: ${group.entries?.length ?? 0}`
-                    : `Teams: ${group.entries?.length ?? 0} / ${round.group_size_max || 16}`}
+                    ? t('worldExtra.teams', { count: group.entries?.length ?? 0 })
+                    : t('worldExtra.teamsOf', { count: group.entries?.length ?? 0, max: round.group_size_max || 16 })}
                 </div>
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-600">
-                  <span className="font-semibold uppercase tracking-wide text-slate-400">Host</span>
+                  <span className="font-semibold uppercase tracking-wide text-slate-400">{t('common.host')}</span>
                   {groupHost?.host_country_code ? (
                     <CountryLabel
                       code={groupHost.host_country_code}
                       name={groupHost.host_country_name ?? groupHost.host_country_code}
                     />
                   ) : (
-                    <span className="font-medium text-slate-500">Pending</span>
+                    <span className="font-medium text-slate-500">{t('common.pending')}</span>
                   )}
                 </div>
               </div>
@@ -412,7 +417,7 @@ function RoundCard({
                       to={`/dashboard/national-association/world-nations/events/${event.event_id}`}
                       className="mt-2 inline-flex rounded-lg bg-yellow-400 px-2.5 py-1.5 text-[11px] font-semibold text-black shadow-sm hover:bg-yellow-300"
                     >
-                      Open race page
+                      {t('world.openRace')}
                     </Link>
                   </div>
                 ))}
@@ -678,9 +683,9 @@ export default function WorldNationsPage(): JSX.Element {
 
               {t('world.finalQualification')}
             </div>
-            <div className="mt-2 text-xl font-semibold text-slate-900">Max 16 teams per group</div>
+            <div className="mt-2 text-xl font-semibold text-slate-900">{t('worldExtra.maxTeams')}</div>
             <p className="mt-1 text-xs leading-5 text-slate-500">
-              Target size is 12–16 when the field is large enough. Season 1 fills the existing group before opening the next; from Season 2, ranked nations are spread evenly across groups.
+              {t('worldExtra.seedingHelp')}
             </p>
           </div>
 
@@ -714,13 +719,13 @@ export default function WorldNationsPage(): JSX.Element {
               className="mt-2 rounded bg-yellow-400 px-3 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
             >
               {hostWorkspace?.viewer_can_apply
-                ? `Apply for Season ${hostWorkspace?.target_season_number ?? ((data?.season_number ?? 0) + 1)}`
-                : 'National Coach only'}
+                ? t('worldExtra.applySeason', { season: hostWorkspace?.target_season_number ?? ((data?.season_number ?? 0) + 1) })
+                : t('worldExtra.coachOnly')}
             </button>
             <p className="mt-1 text-xs text-slate-500">
               {hostWorkspace?.viewer_can_apply
-                ? 'Host applications are always for the next season.'
-                : 'Only the elected National Coach can submit host applications or missing-race requests.'}
+                ? t('worldExtra.nextSeasonHelp')
+                : t('worldExtra.coachHelp')}
             </p>
           </div>
         </div>
@@ -739,21 +744,21 @@ export default function WorldNationsPage(): JSX.Element {
 
       <section className="overflow-hidden rounded bg-white shadow">
         <div className="border-b border-slate-200 p-4">
-          <h3 className="text-base font-semibold text-slate-900">National Team Standing</h3>
+          <h3 className="text-base font-semibold text-slate-900">{t('worldExtra.standingTitle')}</h3>
           <p className="mt-1 text-sm text-slate-500">
-            World Nations ranking points accumulate from season to season. There are no defending points to remove; this persistent standing seeds the next season&apos;s qualification groups.
+            {t('worldExtra.standingDescription')}
           </p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[720px] text-sm">
             <thead className="bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                <th className="px-4 py-3">Rank</th>
-                <th className="px-4 py-3">National Team</th>
-                <th className="px-4 py-3 text-right">Season</th>
-                <th className="px-4 py-3 text-right">Qualification</th>
-                <th className="px-4 py-3 text-right">World Final</th>
-                <th className="px-4 py-3 text-right">All-time</th>
+                <th className="px-4 py-3">{t('common.rank')}</th>
+                <th className="px-4 py-3">{t('worldExtra.nationalTeam')}</th>
+                <th className="px-4 py-3 text-right">{t('worldExtra.season')}</th>
+                <th className="px-4 py-3 text-right">{t('worldExtra.qualification')}</th>
+                <th className="px-4 py-3 text-right">{t('world.worldFinal')}</th>
+                <th className="px-4 py-3 text-right">{t('worldExtra.allTime')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -771,7 +776,7 @@ export default function WorldNationsPage(): JSX.Element {
               )) : (
                 <tr>
                   <td colSpan={6} className="px-4 py-6 text-center text-slate-500">
-                    No active National Teams are available for the standing yet.
+                    {t('worldExtra.emptyStanding')}
                   </td>
                 </tr>
               )}
@@ -779,7 +784,7 @@ export default function WorldNationsPage(): JSX.Element {
           </table>
         </div>
         <div className="border-t border-slate-200 px-4 py-3 text-xs text-slate-500">
-          Qualification and World Final placement points are awarded when each group is completed. The point scale is versioned so it can be tuned without deleting historical awards.
+          {t('worldExtra.standingFootnote')}
         </div>
       </section>
 
@@ -792,8 +797,8 @@ export default function WorldNationsPage(): JSX.Element {
                 {t('world.points.description')}
               </p>
             </div>
-            <span className="shrink-0 text-xs font-semibold text-slate-500 group-open:hidden">Show points</span>
-            <span className="hidden shrink-0 text-xs font-semibold text-slate-500 group-open:inline">Hide points</span>
+            <span className="shrink-0 text-xs font-semibold text-slate-500 group-open:hidden">{t('worldExtra.showPoints')}</span>
+            <span className="hidden shrink-0 text-xs font-semibold text-slate-500 group-open:inline">{t('worldExtra.hidePoints')}</span>
           </div>
         </summary>
 
@@ -827,15 +832,15 @@ export default function WorldNationsPage(): JSX.Element {
         </div>
 
         <div className="border-t border-slate-200 p-4">
-          <div className="font-semibold text-slate-900">National Team Standing points</div>
+          <div className="font-semibold text-slate-900">{t('worldExtra.standingPoints')}</div>
           <p className="mt-1 text-xs leading-5 text-slate-500">
-            These are the persistent ranking points added to the National Team Standing after the Qualification group and World Final. They are cumulative and are never defended or removed.
+            {t('worldExtra.standingPointsHelp')}
           </p>
           <div className="mt-3 grid gap-4 xl:grid-cols-2">
             {(['qualification', 'world_final'] as const).map(phase => (
               <div key={phase} className="rounded border border-slate-200 p-3">
                 <div className="text-sm font-semibold text-slate-900">
-                  {phase === 'qualification' ? 'Qualification group' : 'World Final'}
+                  {phase === 'qualification' ? t('worldExtra.qualificationGroup') : t('world.worldFinal')}
                 </div>
                 <div className="mt-2 grid grid-cols-4 gap-2 text-xs">
                   {rankingScale.filter(row => row.phase === phase).map(row => (
@@ -898,10 +903,10 @@ export default function WorldNationsPage(): JSX.Element {
             <div className="flex items-start justify-between gap-4 border-b border-slate-200 p-5">
               <div>
                 <h3 className="text-lg font-semibold text-slate-950">
-                  Apply to host World Nations · Season {hostWorkspace?.target_season_number ?? '—'}
+                  {t('worldExtra.hostModalTitle', { season: hostWorkspace?.target_season_number ?? '—' })}
                 </h3>
                 <p className="mt-1 text-sm leading-6 text-slate-500">
-                  Applications are always for the next season. A host must provide exactly three races from the same country: one Team Time Trial, one Flat road race and one Hilly/Mountain road race.
+                  {t('worldExtra.hostModalDescription')}
                 </p>
               </div>
               <button
@@ -916,7 +921,7 @@ export default function WorldNationsPage(): JSX.Element {
             <div className="space-y-5 p-5">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Application type
+                  {t('worldExtra.applicationType')}
                 </div>
                 <div className="mt-2 inline-flex flex-wrap rounded-lg bg-slate-100 p-1">
                   <button
@@ -929,7 +934,7 @@ export default function WorldNationsPage(): JSX.Element {
                         : 'text-slate-600 hover:bg-white',
                     ].join(' ')}
                   >
-                    Qualification round
+                    {t('worldExtra.qualificationRound')}
                   </button>
                   <button
                     type="button"
@@ -941,7 +946,7 @@ export default function WorldNationsPage(): JSX.Element {
                         : 'text-slate-600 hover:bg-white',
                     ].join(' ')}
                   >
-                    World Final
+                    {t('world.worldFinal')}
                   </button>
                   <button
                     type="button"
@@ -961,7 +966,7 @@ export default function WorldNationsPage(): JSX.Element {
                         : 'text-slate-600 hover:bg-white',
                     ].join(' ')}
                   >
-                    Request missing race type
+                    {t('worldExtra.requestRaceType')}
                   </button>
                 </div>
               </div>
@@ -970,14 +975,14 @@ export default function WorldNationsPage(): JSX.Element {
                 <div className="space-y-4">
                   <div className="rounded border border-slate-200 bg-slate-50 p-4">
                     <div className="font-semibold text-slate-900">
-                      Request race creation for {hostWorkspace?.viewer_country_code ?? association?.country_code ?? 'your country'}
+                      {t('worldExtra.requestRaceCreation', { country: hostWorkspace?.viewer_country_code ?? association?.country_code ?? t('worldExtra.yourCountry') })}
                     </div>
                     <p className="mt-1 text-sm leading-6 text-slate-600">
-                      Use this only when your country is missing one of the three race types required to host World Nations. The request is sent to the Game Control Center for administrator review.
+                      {t('worldExtra.requestHelp')}
                     </p>
                     {hostWorkspace?.route_request ? (
                       <div className="mt-3 rounded border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-800">
-                        Existing Season {hostWorkspace.route_request.target_season_number} request: {humanize(hostWorkspace.route_request.status)}
+                        {t('worldExtra.existingRequest', { season: hostWorkspace.route_request.target_season_number, status: t(`status.${hostWorkspace.route_request.status}`, { defaultValue: humanize(hostWorkspace.route_request.status) }) })}
                       </div>
                     ) : null}
                   </div>
@@ -1004,10 +1009,10 @@ export default function WorldNationsPage(): JSX.Element {
                             />
                             <span className="text-sm font-semibold text-slate-900">
                               {type === 'team_time_trial'
-                                ? 'Team Time Trial'
+                                ? t('raceTypes.team_time_trial')
                                 : type === 'flat'
-                                  ? 'Flat road race'
-                                  : 'Hilly / Mountain road race'}
+                                  ? t('raceTypes.flatRoadRace')
+                                  : t('raceTypes.hillyMountainRoadRace')}
                             </span>
                           </label>
                         )
@@ -1015,17 +1020,17 @@ export default function WorldNationsPage(): JSX.Element {
                     </div>
                   ) : (
                     <div className="rounded border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
-                      Your country already has all three required host race types. No race-creation request is needed.
+                      {t('worldExtra.allRaceTypesAvailable')}
                     </div>
                   )}
 
                   <label className="block">
-                    <span className="text-sm font-semibold text-slate-900">Request note</span>
+                    <span className="text-sm font-semibold text-slate-900">{t('worldExtra.requestNote')}</span>
                     <textarea
                       rows={3}
                       value={routeRequestNote}
                       onChange={event => setRouteRequestNote(event.target.value)}
-                      placeholder="Optional details for the administrator, for example preferred city, region or route character."
+                      placeholder={t('worldExtra.requestPlaceholder')}
                       className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
                     />
                   </label>
@@ -1034,7 +1039,7 @@ export default function WorldNationsPage(): JSX.Element {
                 <>
                   <div className="rounded border border-slate-200 bg-slate-50 p-4">
                     <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Countries already applied for Season {hostWorkspace?.target_season_number ?? '—'}
+                      {t('worldExtra.appliedCountries', { season: hostWorkspace?.target_season_number ?? '—' })}
                     </div>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {applicationsForScope.length ? (
@@ -1048,7 +1053,7 @@ export default function WorldNationsPage(): JSX.Element {
                         ))
                       ) : (
                         <span className="text-sm text-slate-500">
-                          No countries have applied for this host type yet.
+                          {t('worldExtra.noApplicants')}
                         </span>
                       )}
                     </div>
@@ -1056,27 +1061,27 @@ export default function WorldNationsPage(): JSX.Element {
 
                   {!hostWorkspace?.viewer_can_apply ? (
                     <div className="rounded border border-slate-200 bg-slate-50 p-4">
-                      <div className="font-semibold text-slate-900">National Coach only</div>
+                      <div className="font-semibold text-slate-900">{t('worldExtra.coachOnly')}</div>
                       <p className="mt-1 text-sm leading-6 text-slate-600">
-                        Applications can be viewed by Association members, but only the elected National Coach can submit or change an application.
+                        {t('worldExtra.applicationMembersHelp')}
                       </p>
                     </div>
                   ) : !hostWorkspace?.country_has_complete_bundle ? (
                     <div className="rounded border border-amber-200 bg-amber-50 p-4">
                       <div className="font-semibold text-amber-950">
-                        Your country is missing a required host race type
+                        {t('worldExtra.missingRaceType')}
                       </div>
                       <p className="mt-1 text-sm leading-6 text-amber-900">
-                        A host application needs exactly one Team Time Trial, one Flat road race and one Hilly/Mountain road race from the same country.
+                        {t('worldExtra.requireThreeRaces')}
                       </p>
                       <div className="mt-2 text-xs font-medium text-amber-800">
-                        Missing: {(hostWorkspace?.missing_types ?? [])
+                        {t('worldExtra.missing')}: {(hostWorkspace?.missing_types ?? [])
                           .map(type =>
                             type === 'team_time_trial'
-                              ? 'Team Time Trial'
+                              ? t('raceTypes.team_time_trial')
                               : type === 'flat'
-                                ? 'Flat road race'
-                                : 'Hilly / Mountain road race',
+                                ? t('raceTypes.flatRoadRace')
+                                : t('raceTypes.hillyMountainRoadRace'),
                           )
                           .join(', ')}
                       </div>
@@ -1088,33 +1093,33 @@ export default function WorldNationsPage(): JSX.Element {
                         }}
                         className="mt-3 rounded bg-white px-3 py-2 text-xs font-semibold text-amber-900 ring-1 ring-amber-300 hover:bg-amber-100"
                       >
-                        Request missing race type
+                        {t('worldExtra.requestRaceType')}
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <div className="rounded border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800">
-                        Exactly three host races will be submitted for Season {hostWorkspace?.target_season_number ?? '—'}.
+                        {t('worldExtra.exactThree', { season: hostWorkspace?.target_season_number ?? '—' })}
                       </div>
 
                       {[
                         {
                           key: 'ttt',
-                          label: '1 · Team Time Trial',
+                          label: `1 · ${t('raceTypes.team_time_trial')}`,
                           value: hostTttStageId,
                           onChange: setHostTttStageId,
                           options: hostWorkspace?.stage_options?.team_time_trial ?? [],
                         },
                         {
                           key: 'flat',
-                          label: '2 · Flat road race',
+                          label: `2 · ${t('raceTypes.flatRoadRace')}`,
                           value: hostFlatStageId,
                           onChange: setHostFlatStageId,
                           options: hostWorkspace?.stage_options?.flat ?? [],
                         },
                         {
                           key: 'mountain',
-                          label: '3 · Hilly / Mountain road race',
+                          label: `3 · ${t('raceTypes.hillyMountainRoadRace')}`,
                           value: hostMountainStageId,
                           onChange: setHostMountainStageId,
                           options: hostWorkspace?.stage_options?.hilly_mountain ?? [],
@@ -1129,7 +1134,7 @@ export default function WorldNationsPage(): JSX.Element {
                           >
                             {field.options.map(option => (
                               <option key={option.stage_id} value={option.stage_id}>
-                                {option.race_name ?? option.stage_name ?? 'Race'} · {option.route_label ?? option.stage_name ?? 'Stage'} · {Number(option.distance_km ?? 0).toFixed(1).replace(/\.0$/, '')} km
+                                {option.race_name ?? option.stage_name ?? t('common.race')} · {option.route_label ?? option.stage_name ?? t('worldExtra.stage')} · {Number(option.distance_km ?? 0).toFixed(1).replace(/\.0$/, '')} km
                               </option>
                             ))}
                           </select>
@@ -1137,12 +1142,12 @@ export default function WorldNationsPage(): JSX.Element {
                       ))}
 
                       <label className="block">
-                        <span className="text-sm font-semibold text-slate-900">Application note</span>
+                        <span className="text-sm font-semibold text-slate-900">{t('worldExtra.applicationNote')}</span>
                         <textarea
                           rows={3}
                           value={hostStatement}
                           onChange={event => setHostStatement(event.target.value)}
-                          placeholder="Optional note about your host proposal."
+                          placeholder={t('worldExtra.applicationPlaceholder')}
                           className="mt-2 w-full rounded border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:border-yellow-500"
                         />
                       </label>
@@ -1158,7 +1163,7 @@ export default function WorldNationsPage(): JSX.Element {
                 onClick={() => setHostModalOpen(false)}
                 className="rounded border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
               >
-                Cancel
+                {t('worldExtra.cancel')}
               </button>
               <button
                 type="button"
@@ -1180,10 +1185,10 @@ export default function WorldNationsPage(): JSX.Element {
                 className="rounded bg-yellow-400 px-4 py-2 text-sm font-semibold text-black hover:bg-yellow-300 disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {hostSaving
-                  ? 'Submitting…'
+                  ? t('worldExtra.submitting')
                   : hostMode === 'routes'
-                    ? 'Submit race request'
-                    : 'Submit host application'}
+                    ? t('worldExtra.submitRaceRequest')
+                    : t('worldExtra.submitApplication')}
               </button>
             </div>
           </div>

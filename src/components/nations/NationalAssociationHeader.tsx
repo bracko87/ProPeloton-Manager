@@ -34,8 +34,20 @@ export default function NationalAssociationHeader({
   loading = false,
   onRefresh,
 }: Props): JSX.Element {
-  const { t } = useTranslation('nations')
+  const { t, i18n } = useTranslation('nations')
   const countryFlag = flagUrl(association?.country_code)
+  const countryCode = association?.country_code?.trim().toUpperCase()
+  let countryName = countryCode || ''
+  if (countryCode && /^[A-Z]{2}$/.test(countryCode)) {
+    try {
+      countryName = new Intl.DisplayNames(
+        [i18n.resolvedLanguage || i18n.language || 'en'],
+        { type: 'region' },
+      ).of(countryCode) || countryName
+    } catch {
+      // Use the country code when the user's locale is not supported by Intl.
+    }
+  }
 
   return (
     <div className="space-y-3">
@@ -55,10 +67,9 @@ export default function NationalAssociationHeader({
 
         <div>
           <h2 className="text-2xl font-semibold text-slate-900">
-            {association?.association_name ??
-              (association?.country_code
-                ? t('association.countryTitle', { country: association.country_code })
-                : t('association.title'))}
+            {countryCode
+              ? t('association.countryTitle', { country: countryName })
+              : association?.association_name || t('association.title')}
           </h2>
           <p className="mt-1 text-sm text-slate-600">{t('association.subtitle')}</p>
 

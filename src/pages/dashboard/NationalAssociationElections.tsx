@@ -355,7 +355,7 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                 </h3>
                 <p className="mt-1 text-sm text-slate-500">
                   {election?.status === 'completed'
-                    ? `Election completed. Next regular election: Season ${election.season_number + 1} · candidate registration 01 Jan–10 Jan · main vote 10 Jan–20 Jan.`
+                    ? t('associationExtra.elections.completedSchedule', { season: election.season_number + 1 })
                     : election
                       ? t('association.electionsPage.scheduleActual', {
                           registrationStart: formatGameDate(election.registration_open_date),
@@ -427,7 +427,7 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                     </div>
                     <div className="mt-2 text-sm font-semibold text-slate-900">
                       {election.status === 'completed'
-                        ? 'Completed'
+                        ? t('status.completed')
                         : `${formatGameDate(election.current_round_open_date)} – ${formatGameDate(election.current_round_close_date)}`}
                     </div>
                   </div>
@@ -436,30 +436,30 @@ export default function NationalAssociationElectionsPage(): JSX.Element {
                 {nextRegularElectionSeason ? (
                   <div className="rounded border border-sky-200 bg-sky-50 p-4">
                     <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                      Next regular National Coach election
+                      {t('associationExtra.elections.nextElection')}
                     </div>
                     <div className="mt-1 text-sm font-semibold text-sky-950">
-                      Season {nextRegularElectionSeason} · January
+                      {t('associationExtra.elections.nextSeason', { season: nextRegularElectionSeason })}
                     </div>
                     <div className="mt-3 grid gap-3 sm:grid-cols-3">
                       <div className="rounded border border-sky-100 bg-white px-3 py-2">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                          Candidate registration
+                          {t('associationExtra.elections.registration')}
                         </div>
                         <div className="mt-1 text-sm font-semibold text-slate-900">01 Jan – 10 Jan</div>
                       </div>
                       <div className="rounded border border-sky-100 bg-white px-3 py-2">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                          Main vote
+                          {t('associationExtra.elections.mainVote')}
                         </div>
                         <div className="mt-1 text-sm font-semibold text-slate-900">10 Jan – 20 Jan</div>
                       </div>
                       <div className="rounded border border-sky-100 bg-white px-3 py-2">
                         <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-                          Until the result
+                          {t('associationExtra.elections.untilResult')}
                         </div>
                         <div className="mt-1 text-sm font-semibold text-slate-900">
-                          Current coach continues as caretaker
+                          {t('associationExtra.elections.caretaker')}
                         </div>
                       </div>
                     </div>

@@ -63,40 +63,7 @@ export default function NationalAssociationCustomization(): JSX.Element {
   const [jerseyFile, setJerseyFile] = useState<File | null>(null)
   const [promptCopied, setPromptCopied] = useState(false)
 
-  const jerseyCreationPrompt = `Create a professional front-facing cycling jersey product mockup for ProPeloton Manager.
-
-Jersey type: National Team jersey
-Country / team name: [ENTER COUNTRY OR TEAM NAME]
-Manufacturer / apparel brand: [ENTER ADIDAS, NIKE, SPECIALIZED, CASTELLI, ANOTHER MANUFACTURER, OR NONE]
-Primary color: [ENTER PRIMARY COLOR]
-Secondary color: [ENTER SECONDARY COLOR]
-Accent color: [OPTIONAL ACCENT COLOR]
-Motifs / symbols: [ENTER NATIONAL OR TEAM MOTIFS]
-Optional text: [ENTER TEXT OR WRITE NONE]
-National crest / team logo: [DESCRIBE THE NATIONAL EMBLEM OR ATTACH YOUR LOGO]
-Manufacturer logo: [USE THE CHOSEN MANUFACTURER'S LOGO, OR WRITE NONE]
-
-Manufacturer styling:
-- if a manufacturer is specified, follow its recognizable cycling/sportswear design language as closely as possible: characteristic panel shapes, sleeve trim, stripe placement, typography and logo position
-- for example, use Adidas-inspired three-stripe treatments, Nike-inspired athletic styling, or Specialized-inspired cycling apparel styling as appropriate to the chosen brand
-- create an original national-team jersey rather than reproducing an existing retail product
-- keep the chosen manufacturer's branding consistent, with no unrelated manufacturer or sponsor logos
-- if the manufacturer is NONE, create a clean unbranded jersey without any manufacturer logo
-
-Image requirements:
-- square 1:1 image, preferably 1536 × 1536 px
-- pure white (#FFFFFF) background
-- one jersey only, centered and front-facing
-- full jersey visible from collar to bottom hem and both sleeves fully visible
-- jersey should occupy about 75–85% of the image height, with even white margins
-- realistic cycling jersey shape, fabric texture, collar and centered zipper
-- symmetrical product-photo presentation
-- no mannequin, no person, no hanger, no scenery, no shadows outside the jersey
-- do not crop any part of the jersey
-- no text outside the jersey
-- keep the design clean enough to remain readable when displayed as a small in-game team jersey
-
-Generate only the finished jersey image.`
+  const jerseyCreationPrompt = t('associationExtra.jersey.prompt')
 
   const copyJerseyPrompt = async (): Promise<void> => {
     try {
@@ -189,8 +156,8 @@ Generate only the finished jersey image.`
       const remaining = nextData?.free_changes_remaining ?? 0
       setMessage(
         remaining > 0
-          ? `${t('association.customization.jerseySaved')} ${remaining} free change${remaining === 1 ? '' : 's'} remaining.`
-          : `${t('association.customization.jerseySaved')} Future jersey changes cost ${nextData?.next_change_cost ?? 2} Coins.`,
+          ? t('associationExtra.jersey.savedFree', { remaining })
+          : t('associationExtra.jersey.savedPaid', { cost: nextData?.next_change_cost ?? 2 }),
       )
     } catch (caught: any) {
       if (uploadedPath) {
@@ -227,14 +194,14 @@ Generate only the finished jersey image.`
           {t('association.customization.jerseyTitle')}
         </h3>
         <p className="mt-1 max-w-4xl text-sm leading-6 text-slate-500">
-          Upload your own National Team jersey. Until you save one, the automatically assigned default jersey remains in use.
+          {t('associationExtra.jersey.intro')}
         </p>
       </div>
 
       <div className="grid gap-px bg-slate-200 lg:grid-cols-2">
         <div className="flex h-full flex-col bg-white p-5">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-            Current National Team jersey
+            {t('associationExtra.jersey.current')}
           </div>
           <div className="mt-4 flex min-h-[420px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white p-8">
             {effectiveJersey ? (
@@ -251,10 +218,10 @@ Generate only the finished jersey image.`
           <div>
             <div>
               <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Upload new jersey
+                {t('associationExtra.jersey.uploadNew')}
               </div>
               <p className="mt-1 text-xs text-slate-500">
-                Upload your own National Team jersey image. The currently assigned default jersey remains in use until you save a custom one.
+                {t('associationExtra.jersey.uploadHelp')}
               </p>
             </div>
           </div>
@@ -263,12 +230,12 @@ Generate only the finished jersey image.`
             {jerseyPreview ? (
               <img
                 src={jerseyPreview}
-                alt="New National Team jersey preview"
+                alt={t('associationExtra.jersey.preview')}
                 className="max-h-40 max-w-full object-contain"
               />
             ) : (
               <div className="max-w-sm text-center text-sm leading-6 text-slate-500">
-                Select a PNG, JPG or WEBP image up to 2 MB. A preview will appear here before you apply it.
+                {t('associationExtra.jersey.fileHint')}
               </div>
             )}
           </div>
@@ -322,10 +289,10 @@ Generate only the finished jersey image.`
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
                 <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                  Create a jersey with ChatGPT
+                  {t('associationExtra.jersey.createWithChatGPT')}
                 </div>
                 <p className="mt-1 text-xs leading-5 text-slate-600">
-                  Copy this prompt, choose a jersey manufacturer (such as Adidas, Nike or Specialized), and replace the bracketed fields with your team details, colors and motifs. The design should reflect the manufacturer's style.
+                  {t('associationExtra.jersey.chatHelp')}
                 </p>
               </div>
               <button
@@ -334,7 +301,7 @@ Generate only the finished jersey image.`
                 className="inline-flex items-center gap-1.5 rounded border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100"
               >
                 {promptCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
-                {promptCopied ? 'Copied' : 'Copy prompt'}
+                {promptCopied ? t('associationExtra.jersey.copied') : t('associationExtra.jersey.copyPrompt')}
               </button>
             </div>
             <pre className="mt-3 max-h-48 overflow-auto whitespace-pre-wrap rounded border border-slate-200 bg-white p-3 text-[11px] leading-5 text-slate-600">
@@ -348,8 +315,8 @@ Generate only the finished jersey image.`
         <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="text-slate-600">
             {data.can_edit
-              ? `${data.change_count ?? 0} jersey changes used this Season. The first ${data.free_change_limit ?? 3} changes are free; every later jersey change costs 2 Coins.`
-              : 'Customization is visible to all Association members, but only the elected National Coach can change the jersey.'}
+              ? t('associationExtra.jersey.changeCount', { used: data.change_count ?? 0, free: data.free_change_limit ?? 3 })
+              : t('associationExtra.jersey.coachOnly')}
           </div>
           <div className="font-semibold text-slate-700">
             {t('association.customization.balance', { balance: data.coin_balance ?? 0 })}
