@@ -3457,6 +3457,198 @@
         }
       ]
     },
+    "national-ranking-championships": {
+      "category": "Nacionalna takmičenja",
+      "title": "Nacionalni rang i nacionalna prvenstva — kompletan vodič",
+      "subtitle": "Od nacionalnog rangiranja i poziva do kvalifikacija, finala, obaveza vozača i Svetskog prvenstva.",
+      "overview": "Nacionalni rang i nacionalna prvenstva su takmičenja kojima upravlja sistem na osnovu državljanstva vozača, bez obzira na njihov klub. Sistem određuje kalendar, zaključava rang, formira kvalifikacione grupe, šalje pozive menadžerima, blokira vozače za nastupe, obračunava rezultate, proglašava nacionalnog šampiona i može ga pozvati u veliko finale Svetskog prvenstva na drumu.",
+      "details": [
+        "1. Nacionalni rang se određuje prema državljanstvu vozača, nezavisno od države u kojoj se nalazi njegov klub.",
+        "2. Rang se zasniva na sportskim rezultatima i prikazuje redosled do datuma zaključavanja rang-liste.",
+        "3. Svaka država ima sopstveni kalendar nacionalnog prvenstva, sa datumima i rutama koje određuje sistem.",
+        "4. Ruta prvenstva mora biti unutar iste države. Ako nema odgovarajuće rute, izdanje ostaje na čekanju.",
+        "5. Pri izboru datuma i rute sistem uzima u obzir klimu i prikladnost profila za drumsko prvenstvo.",
+        "6. Na datum zaključavanja rang-liste fiksira se redosled vozača za to izdanje prvenstva.",
+        "7. Kada nema mnogo kandidata, kvalifikacije nisu potrebne. Za veće polje svi kandidati ulaze u kvalifikacione grupe.",
+        "8. Kvalifikacione grupe smanjuju broj vozača na ciljano finale od 96 mesta, kada ima dovoljno kandidata.",
+        "9. Najbolje rangirani vozači ravnomerno se raspoređuju po kvalifikacionim grupama.",
+        "10. Svaka grupa ima tačno određen broj mesta koja vode u finale.",
+        "11. Menadžer trenutnog kluba odlučuje o nastupu vozača, pošto će vozač biti nedostupan tokom nacionalne obaveze.",
+        "12. Prihvatanje potvrđuje nastup; odbijanje uklanja vozača iz odgovarajuće etape i utiče na moral.",
+        "13. Kada rok za odgovor istekne, sistem može automatski razrešiti neodgovorene pozive.",
+        "14. Potvrđeni vozač dobija blokadu nacionalne obaveze i ne može istovremeno voziti suprotstavljenu klupsku trku.",
+        "15. Kvalifikacione grupe nastupaju različitim datumima kako bi se izbegla preklapanja.",
+        "16. Nacionalno prvenstvo je individualna trka: nema klupskih ekipnih naređenja ni taktike nacionalnog selektora.",
+        "17. Organizator pokriva put, osoblje, vozila, zalihe i redovne troškove nacionalnog prvenstva.",
+        "18. Umor, zdravlje, takmičarska spremnost i ostalo stanje vozača ostaju stvarni i ne resetuju se za trku.",
+        "19. U Pripremi trke dostupne su samo kontrole koje imaju smisla za pojedinačnog vozača.",
+        "20. Kada je dozvoljeno, menadžer može odabrati opremu i individualnu taktiku, a za hronometar i odgovarajuća podešavanja.",
+        "21. Zalihe i završni obračun trke kontrolišu organizator i sistem, kako bogatiji klub ne bi kupio prednost.",
+        "22. Po završetku kvalifikacija rezultati se obrađuju automatski; kvalifikovani prelaze u finale, ostali se oslobađaju obaveze.",
+        "23. Plasman u finale može zahtevati drugu zasebnu potvrdu menadžera.",
+        "24. Potvrđeni finalista ulazi na startnu listu i dobija finalnu obavezu; odbijanje donosi predviđenu kaznu morala.",
+        "25. Povlačenje kvalifikovanog vozača pre finala, dok je dozvoljeno, uklanja ga iz startne liste i utiče na moral.",
+        "26. Finale se računa standardnim trkačkim sistemom; pobednik postaje nacionalni šampion i rezultat ostaje sačuvan.",
+        "27. Rezultati i prethodni šampioni dostupni su na stranici Nacionalnog ranga, sa linkovima ka profilima vozača.",
+        "28. Lider sezonskog Nacionalnog ranga i pobednik jednodnevnog nacionalnog prvenstva ne moraju biti isti vozač.",
+        "29. Nacionalni šampioni mogu kasnije učestvovati na Svetskom prvenstvu na drumu, koje nije isto što i World Nations.",
+        "30. Poziv na Svetsko prvenstvo zahteva novu odluku menadžera i ima posebne posledice za moral.",
+        "31. Svetsko prvenstvo bira domaćina sa toplijom klimom, pokriva troškove i dodeljuje svetsku titulu.",
+        "32. Obaveštenja prate pozive, odgovore, blokade, kvalifikacije, finale i svetsko prvenstvo.",
+        "33. Nedostatak upotrebljive rute prikazuje se kao problem rasporeda, a ne kao lažna greška obračuna trke.",
+        "34. Sistem prati zaključavanje ranga, pozive, odluke, startne liste, rezultate i proglašenje šampiona.",
+        "35. Pratite Nacionalni rang i obaveštenja, odgovorite na vreme, pripremite prihvaćene vozače i proverite rezultate."
+      ],
+      "facts": [
+        {
+          "label": "Pravo nastupa",
+          "value": "Vozači nastupaju za svoju državu, a ne za državu kluba"
+        },
+        {
+          "label": "Broj finalista",
+          "value": "Do 96 vozača; za veći broj kandidata koriste se kvalifikacione grupe"
+        },
+        {
+          "label": "Raspodela po grupama",
+          "value": "Najbolje rangirani vozači raspoređeni su u različite grupe"
+        },
+        {
+          "label": "Odluka menadžera",
+          "value": "Menadžer odobrava ili odbija nastup; nacionalne trke su individualne"
+        },
+        {
+          "label": "Troškovi",
+          "value": "Troškove trke pokriva organizator, a ne klub"
+        },
+        {
+          "label": "Oprema",
+          "value": "Organizator obezbeđuje standardni paket; dozvoljena su individualna podešavanja"
+        },
+        {
+          "label": "Nacionalni šampion",
+          "value": "Pobednik finala nacionalnog prvenstva za tu državu i sezonu"
+        },
+        {
+          "label": "Svetski poziv",
+          "value": "Nacionalni šampion može biti pozvan na veliko finale Svetskog prvenstva"
+        }
+      ],
+      "tips": [
+        "Ne zakazujte važnu klupsku trku za vozača dok traje potvrđena nacionalna obaveza.",
+        "Pre prihvatanja poziva proverite umor i takmičarsku spremnost vozača.",
+        "Poziv za kvalifikacije i potvrda finala mogu imati različite rokove.",
+        "Za pripremu prihvaćenih vozača koristite karticu Nacionalna obaveza i Pripremu trke.",
+        "Nacionalni šampion i lider Nacionalnog ranga predstavljaju dva različita uspeha."
+      ],
+      "relatedLinks": [
+        "Otvori Nacionalni rang",
+        "Otvori nacionalne obaveze",
+        "Otvori istoriju nacionalnog prvenstva"
+      ]
+    },
+    "national-association-world-nations": {
+      "category": "Nacionalna takmičenja",
+      "title": "Nacionalni savez i World Nations — kompletan vodič",
+      "subtitle": "Osnivanje i finansiranje saveza, izbor selektora, sastavi, priprema, domaćini i World Nations.",
+      "overview": "Nacionalni savez je zajednička reprezentativna organizacija menadžera iz iste države. Članovi osnivaju i finansiraju savez, biraju selektora, uređuju nacionalni identitet, formiraju reprezentaciju i učestvuju u ekipnom takmičenju World Nations. Ovo je sistem odvojen od individualnog nacionalnog prvenstva.",
+      "details": [
+        "1. Nacionalni savez pripada državi podobnog glavnog kluba menadžera i odvojen je od individualnog prvenstva.",
+        "2. Samo aktivni podobni glavni klubovi računaju se kao članovi saveza; AI i obrisani klubovi ne računaju se.",
+        "3. Savez se formira i aktivira kada ispuni uslove broja članova i finansiranja.",
+        "4. Članovi uplaćuju Coins za aktivaciju; to ne daje takmičarsku prednost na trkama.",
+        "5. Ne postoji fond saveza kojim se kupuju bolji rezultati; troškove nastupa pokriva sistem.",
+        "6. Jednom osnovan savez čuva svoj identitet i istoriju čak i ako se broj članova kasnije promeni.",
+        "7. Savez ima sezonsku važnost i rokove za obnovu, prikazane na stranici saveza.",
+        "8. Obnova se plaća doprinosima članova pre roka, kako ne bi istekao pristup budućim takmičenjima.",
+        "9. Nacionalni selektor bira se na izborima, kroz kandidature, glasanje i eventualni drugi krug.",
+        "10. Izbori zavise od kalendara sezone; prazno mesto selektora pokreće postupak zamene.",
+        "11. Samo aktivni selektor bira reprezentaciju, sastave, taktike i određene nacionalne postavke.",
+        "12. Savez može koristiti sopstveni grb i dres; državna zastava je rezervni nacionalni simbol.",
+        "13. Dres reprezentacije koristi se u World Nations, dok individualno prvenstvo ima drugačija pravila nastupa.",
+        "14. Podobni savezi automatski ulaze u World Nations, bez klupske prijave.",
+        "15. Prva sezona ima poseban datum zaključavanja učesnika; kasnije aktivirani savezi čekaju sledeći ciklus.",
+        "16. Od druge sezone izbori i World Nations prate redovan sezonski ciklus.",
+        "17. Struktura takmičenja prilagođava se broju aktivnih saveza, po potrebi sa kvalifikacijama.",
+        "18. Sistem raspoređuje grupe i određuje broj reprezentacija koje prolaze dalje.",
+        "19. Domaćin grupe obezbeđuje rute, ali nema sportsku prednost zbog domaćinstva.",
+        "20. Paket domaćina zahteva tri rute iste države: ekipni hronometar, ravnu i brdsko-planinsku trku.",
+        "21. Prvi dan je ekipni hronometar, drugi ravna, a treći brdsko-planinska drumska trka.",
+        "22. Selektor pre ciklusa bira deset vozača prema relevantnim nacionalnim podacima.",
+        "23. Ocena pri izboru samo pomaže planiranju, ne daje skriven bonus u simulaciji.",
+        "24. Prvo se priprema nacrt tima, zatim zaključava i šalju se pozivi izabranim vozačima.",
+        "25. Pozivi bez odgovora mogu se automatski razrešiti po isteku roka.",
+        "26. Nakon potvrde deset vozača, selektor bira tačno sedam za svaki trkački dan.",
+        "27. Promena vozača između dana ograničena je pravilima o zameni u sastavu.",
+        "28. Svaki sastav ima rok prijave koji selektor mora poštovati.",
+        "29. Potvrđenih sedam vozača sinhronizuje se sa zvaničnom startnom listom.",
+        "30. Stranica trke prikazuje pet favorita i potpune sastave svih reprezentacija.",
+        "31. Priprema reprezentacije koristi standardni sistem, uz ograničenja nacionalnog takmičenja.",
+        "32. Dozvoljeni su izbor opreme, podešavanja hronometra i individualna taktika.",
+        "33. Zalihe i završni obračun kontroliše sistem; ne kupuje se prednost.",
+        "34. Izbor klupskog osoblja nije dostupan za World Nations.",
+        "35. Korišćenje vozila reprezentacije ograničeno je standardnim nacionalnim paketom.",
+        "36. Umor, zdravlje i takmičarska spremnost vozača ne resetuju se.",
+        "37. Dan ekipnog hronometra donosi bodove naciji, a naredne drumske trke imaju pravila najboljih poena.",
+        "38. Ukupan plasman određuju bodovi, a ne jednostavan zbir vremena tri dana.",
+        "39. Kod jednakog broja bodova primenjuju se propisana pravila razrešenja.",
+        "40. Nakon trećeg dana grupe određuje se ko prolazi dalje, a ko ispada.",
+        "41. Svetsko finale ima tri trkačka dana i proglašava šampionsku naciju.",
+        "42. Svetski timski šampion, nacionalni pojedinačni šampion i lider nacionalnog ranga nisu isto.",
+        "43. Obaveštenja prate izbore, pozive, sastave, žrebove i napredovanje.",
+        "44. Operativni nadzor kontroliše saveze, izbore, domaćine, prijave, trke i neizvršene korake.",
+        "45. Članovi treba da obnove savez, prate izbore, odgovaraju na pozive i prate rezultate.",
+        "46. Selektor treba da izabere deset vozača, prijavi sedam po danu, podesi taktike i prati rezultate."
+      ],
+      "facts": [
+        {
+          "label": "Članstvo u savezu",
+          "value": "Aktivni menadžeri podobnih glavnih klubova pridružuju se savezu svoje države"
+        },
+        {
+          "label": "Uslovi aktivacije",
+          "value": "Minimalan broj podobnih članova i neophodan broj novčića"
+        },
+        {
+          "label": "Nacionalni selektor",
+          "value": "Bira se na izborima; sportske odluke donosi samo selektor"
+        },
+        {
+          "label": "Sastav reprezentacije",
+          "value": "10 vozača za jedan ciklus World Nations takmičenja"
+        },
+        {
+          "label": "Sastav za trkački dan",
+          "value": "Tačno 7 vozača prijavljuje se za svaki trkački dan"
+        },
+        {
+          "label": "Trkački dani World Nations",
+          "value": "Ekipni hronometar, ravna drumska trka i brdsko-planinska trka"
+        },
+        {
+          "label": "Troškovi trka",
+          "value": "Pokriva ih sistem, bez troška za savez ili klub"
+        },
+        {
+          "label": "Bodovanje",
+          "value": "Nacionalni bodovi određuju prolaz i konačni plasman, uz dodatna pravila"
+        }
+      ],
+      "tips": [
+        "Birajte deset vozača za sve tri vrste trka, ne samo za jedan dan.",
+        "Potvrdite sedam vozača pre roka; potvrđenih deset nije isto što i startna lista.",
+        "Rotirajte vozače po profilima trka uz poštovanje ograničenja zamena.",
+        "Novčići aktiviraju i obnavljaju savez, ali ne poboljšavaju performanse.",
+        "Ako reprezentacija nema vozače na startnoj listi, proverite prijavu za taj dan.",
+        "World Nations je ekipni, a nacionalno prvenstvo individualni sistem."
+      ],
+      "relatedLinks": [
+        "Otvori Nacionalni savez",
+        "Otvori sastav reprezentacije",
+        "Otvori izbore",
+        "Otvori World Nations",
+        "Otvori Nacionalni rang i prvenstva"
+      ]
+    },
     "youth-academy": {
       "category": "Vozači",
       "title": "Omladinska akademija: Kompletan U16 vodič",
@@ -3544,198 +3736,6 @@
         "5": "Otvori Infrastructure",
         "6": "Otvori Pro Packages"
       }
-    },
-    "national-ranking-championships": {
-      "category": "Nacionalna takmičenja",
-      "title": "Nacionalni rang i nacionalna prvenstva — kompletan vodič",
-      "subtitle": "Od nacionalnog rangiranja i poziva do kvalifikacija, finala, obaveza vozača i Svetskog prvenstva.",
-      "overview": "Nacionalni rang i nacionalna prvenstva su takmičenja kojima upravlja sistem na osnovu državljanstva vozača, bez obzira na njihov klub. Sistem određuje kalendar, zaključava rang, formira kvalifikacione grupe, šalje pozive menadžerima, blokira vozače za nastupe, obračunava rezultate, proglašava nacionalnog šampiona i može ga pozvati u veliko finale Svetskog prvenstva na drumu.",
-      "facts": [
-        {
-          "label": "Pravo nastupa",
-          "value": "Vozači nastupaju za svoju državu, a ne za državu kluba"
-        },
-        {
-          "label": "Broj finalista",
-          "value": "Do 96 vozača; za veći broj kandidata koriste se kvalifikacione grupe"
-        },
-        {
-          "label": "Raspodela po grupama",
-          "value": "Najbolje rangirani vozači raspoređeni su u različite grupe"
-        },
-        {
-          "label": "Odluka menadžera",
-          "value": "Menadžer odobrava ili odbija nastup; nacionalne trke su individualne"
-        },
-        {
-          "label": "Troškovi",
-          "value": "Troškove trke pokriva organizator, a ne klub"
-        },
-        {
-          "label": "Oprema",
-          "value": "Organizator obezbeđuje standardni paket; dozvoljena su individualna podešavanja"
-        },
-        {
-          "label": "Nacionalni šampion",
-          "value": "Pobednik finala nacionalnog prvenstva za tu državu i sezonu"
-        },
-        {
-          "label": "Svetski poziv",
-          "value": "Nacionalni šampion može biti pozvan na veliko finale Svetskog prvenstva"
-        }
-      ],
-      "details": [
-        "1. Nacionalni rang se određuje prema državljanstvu vozača, nezavisno od države u kojoj se nalazi njegov klub.",
-        "2. Rang se zasniva na sportskim rezultatima i prikazuje redosled do datuma zaključavanja rang-liste.",
-        "3. Svaka država ima sopstveni kalendar nacionalnog prvenstva, sa datumima i rutama koje određuje sistem.",
-        "4. Ruta prvenstva mora biti unutar iste države. Ako nema odgovarajuće rute, izdanje ostaje na čekanju.",
-        "5. Pri izboru datuma i rute sistem uzima u obzir klimu i prikladnost profila za drumsko prvenstvo.",
-        "6. Na datum zaključavanja rang-liste fiksira se redosled vozača za to izdanje prvenstva.",
-        "7. Kada nema mnogo kandidata, kvalifikacije nisu potrebne. Za veće polje svi kandidati ulaze u kvalifikacione grupe.",
-        "8. Kvalifikacione grupe smanjuju broj vozača na ciljano finale od 96 mesta, kada ima dovoljno kandidata.",
-        "9. Najbolje rangirani vozači ravnomerno se raspoređuju po kvalifikacionim grupama.",
-        "10. Svaka grupa ima tačno određen broj mesta koja vode u finale.",
-        "11. Menadžer trenutnog kluba odlučuje o nastupu vozača, pošto će vozač biti nedostupan tokom nacionalne obaveze.",
-        "12. Prihvatanje potvrđuje nastup; odbijanje uklanja vozača iz odgovarajuće etape i utiče na moral.",
-        "13. Kada rok za odgovor istekne, sistem može automatski razrešiti neodgovorene pozive.",
-        "14. Potvrđeni vozač dobija blokadu nacionalne obaveze i ne može istovremeno voziti suprotstavljenu klupsku trku.",
-        "15. Kvalifikacione grupe nastupaju različitim datumima kako bi se izbegla preklapanja.",
-        "16. Nacionalno prvenstvo je individualna trka: nema klupskih ekipnih naređenja ni taktike nacionalnog selektora.",
-        "17. Organizator pokriva put, osoblje, vozila, zalihe i redovne troškove nacionalnog prvenstva.",
-        "18. Umor, zdravlje, takmičarska spremnost i ostalo stanje vozača ostaju stvarni i ne resetuju se za trku.",
-        "19. U Pripremi trke dostupne su samo kontrole koje imaju smisla za pojedinačnog vozača.",
-        "20. Kada je dozvoljeno, menadžer može odabrati opremu i individualnu taktiku, a za hronometar i odgovarajuća podešavanja.",
-        "21. Zalihe i završni obračun trke kontrolišu organizator i sistem, kako bogatiji klub ne bi kupio prednost.",
-        "22. Po završetku kvalifikacija rezultati se obrađuju automatski; kvalifikovani prelaze u finale, ostali se oslobađaju obaveze.",
-        "23. Plasman u finale može zahtevati drugu zasebnu potvrdu menadžera.",
-        "24. Potvrđeni finalista ulazi na startnu listu i dobija finalnu obavezu; odbijanje donosi predviđenu kaznu morala.",
-        "25. Povlačenje kvalifikovanog vozača pre finala, dok je dozvoljeno, uklanja ga iz startne liste i utiče na moral.",
-        "26. Finale se računa standardnim trkačkim sistemom; pobednik postaje nacionalni šampion i rezultat ostaje sačuvan.",
-        "27. Rezultati i prethodni šampioni dostupni su na stranici Nacionalnog ranga, sa linkovima ka profilima vozača.",
-        "28. Lider sezonskog Nacionalnog ranga i pobednik jednodnevnog nacionalnog prvenstva ne moraju biti isti vozač.",
-        "29. Nacionalni šampioni mogu kasnije učestvovati na Svetskom prvenstvu na drumu, koje nije isto što i World Nations.",
-        "30. Poziv na Svetsko prvenstvo zahteva novu odluku menadžera i ima posebne posledice za moral.",
-        "31. Svetsko prvenstvo bira domaćina sa toplijom klimom, pokriva troškove i dodeljuje svetsku titulu.",
-        "32. Obaveštenja prate pozive, odgovore, blokade, kvalifikacije, finale i svetsko prvenstvo.",
-        "33. Nedostatak upotrebljive rute prikazuje se kao problem rasporeda, a ne kao lažna greška obračuna trke.",
-        "34. Sistem prati zaključavanje ranga, pozive, odluke, startne liste, rezultate i proglašenje šampiona.",
-        "35. Pratite Nacionalni rang i obaveštenja, odgovorite na vreme, pripremite prihvaćene vozače i proverite rezultate."
-      ],
-      "tips": [
-        "Ne zakazujte važnu klupsku trku za vozača dok traje potvrđena nacionalna obaveza.",
-        "Pre prihvatanja poziva proverite umor i takmičarsku spremnost vozača.",
-        "Poziv za kvalifikacije i potvrda finala mogu imati različite rokove.",
-        "Za pripremu prihvaćenih vozača koristite karticu Nacionalna obaveza i Pripremu trke.",
-        "Nacionalni šampion i lider Nacionalnog ranga predstavljaju dva različita uspeha."
-      ],
-      "relatedLinks": [
-        "Otvori Nacionalni rang",
-        "Otvori nacionalne obaveze",
-        "Otvori istoriju nacionalnog prvenstva"
-      ]
-    },
-    "national-association-world-nations": {
-      "category": "Nacionalna takmičenja",
-      "title": "Nacionalni savez i World Nations — kompletan vodič",
-      "subtitle": "Osnivanje i finansiranje saveza, izbor selektora, sastavi, priprema, domaćini i World Nations.",
-      "overview": "Nacionalni savez je zajednička reprezentativna organizacija menadžera iz iste države. Članovi osnivaju i finansiraju savez, biraju selektora, uređuju nacionalni identitet, formiraju reprezentaciju i učestvuju u ekipnom takmičenju World Nations. Ovo je sistem odvojen od individualnog nacionalnog prvenstva.",
-      "facts": [
-        {
-          "label": "Članstvo u savezu",
-          "value": "Aktivni menadžeri podobnih glavnih klubova pridružuju se savezu svoje države"
-        },
-        {
-          "label": "Uslovi aktivacije",
-          "value": "Minimalan broj podobnih članova i neophodan broj novčića"
-        },
-        {
-          "label": "Nacionalni selektor",
-          "value": "Bira se na izborima; sportske odluke donosi samo selektor"
-        },
-        {
-          "label": "Sastav reprezentacije",
-          "value": "10 vozača za jedan ciklus World Nations takmičenja"
-        },
-        {
-          "label": "Sastav za trkački dan",
-          "value": "Tačno 7 vozača prijavljuje se za svaki trkački dan"
-        },
-        {
-          "label": "Trkački dani World Nations",
-          "value": "Ekipni hronometar, ravna drumska trka i brdsko-planinska trka"
-        },
-        {
-          "label": "Troškovi trka",
-          "value": "Pokriva ih sistem, bez troška za savez ili klub"
-        },
-        {
-          "label": "Bodovanje",
-          "value": "Nacionalni bodovi određuju prolaz i konačni plasman, uz dodatna pravila"
-        }
-      ],
-      "details": [
-        "1. Nacionalni savez pripada državi podobnog glavnog kluba menadžera i odvojen je od individualnog prvenstva.",
-        "2. Samo aktivni podobni glavni klubovi računaju se kao članovi saveza; AI i obrisani klubovi ne računaju se.",
-        "3. Savez se formira i aktivira kada ispuni uslove broja članova i finansiranja.",
-        "4. Članovi uplaćuju Coins za aktivaciju; to ne daje takmičarsku prednost na trkama.",
-        "5. Ne postoji fond saveza kojim se kupuju bolji rezultati; troškove nastupa pokriva sistem.",
-        "6. Jednom osnovan savez čuva svoj identitet i istoriju čak i ako se broj članova kasnije promeni.",
-        "7. Savez ima sezonsku važnost i rokove za obnovu, prikazane na stranici saveza.",
-        "8. Obnova se plaća doprinosima članova pre roka, kako ne bi istekao pristup budućim takmičenjima.",
-        "9. Nacionalni selektor bira se na izborima, kroz kandidature, glasanje i eventualni drugi krug.",
-        "10. Izbori zavise od kalendara sezone; prazno mesto selektora pokreće postupak zamene.",
-        "11. Samo aktivni selektor bira reprezentaciju, sastave, taktike i određene nacionalne postavke.",
-        "12. Savez može koristiti sopstveni grb i dres; državna zastava je rezervni nacionalni simbol.",
-        "13. Dres reprezentacije koristi se u World Nations, dok individualno prvenstvo ima drugačija pravila nastupa.",
-        "14. Podobni savezi automatski ulaze u World Nations, bez klupske prijave.",
-        "15. Prva sezona ima poseban datum zaključavanja učesnika; kasnije aktivirani savezi čekaju sledeći ciklus.",
-        "16. Od druge sezone izbori i World Nations prate redovan sezonski ciklus.",
-        "17. Struktura takmičenja prilagođava se broju aktivnih saveza, po potrebi sa kvalifikacijama.",
-        "18. Sistem raspoređuje grupe i određuje broj reprezentacija koje prolaze dalje.",
-        "19. Domaćin grupe obezbeđuje rute, ali nema sportsku prednost zbog domaćinstva.",
-        "20. Paket domaćina zahteva tri rute iste države: ekipni hronometar, ravnu i brdsko-planinsku trku.",
-        "21. Prvi dan je ekipni hronometar, drugi ravna, a treći brdsko-planinska drumska trka.",
-        "22. Selektor pre ciklusa bira deset vozača prema relevantnim nacionalnim podacima.",
-        "23. Ocena pri izboru samo pomaže planiranju, ne daje skriven bonus u simulaciji.",
-        "24. Prvo se priprema nacrt tima, zatim zaključava i šalju se pozivi izabranim vozačima.",
-        "25. Pozivi bez odgovora mogu se automatski razrešiti po isteku roka.",
-        "26. Nakon potvrde deset vozača, selektor bira tačno sedam za svaki trkački dan.",
-        "27. Promena vozača između dana ograničena je pravilima o zameni u sastavu.",
-        "28. Svaki sastav ima rok prijave koji selektor mora poštovati.",
-        "29. Potvrđenih sedam vozača sinhronizuje se sa zvaničnom startnom listom.",
-        "30. Stranica trke prikazuje pet favorita i potpune sastave svih reprezentacija.",
-        "31. Priprema reprezentacije koristi standardni sistem, uz ograničenja nacionalnog takmičenja.",
-        "32. Dozvoljeni su izbor opreme, podešavanja hronometra i individualna taktika.",
-        "33. Zalihe i završni obračun kontroliše sistem; ne kupuje se prednost.",
-        "34. Izbor klupskog osoblja nije dostupan za World Nations.",
-        "35. Korišćenje vozila reprezentacije ograničeno je standardnim nacionalnim paketom.",
-        "36. Umor, zdravlje i takmičarska spremnost vozača ne resetuju se.",
-        "37. Dan ekipnog hronometra donosi bodove naciji, a naredne drumske trke imaju pravila najboljih poena.",
-        "38. Ukupan plasman određuju bodovi, a ne jednostavan zbir vremena tri dana.",
-        "39. Kod jednakog broja bodova primenjuju se propisana pravila razrešenja.",
-        "40. Nakon trećeg dana grupe određuje se ko prolazi dalje, a ko ispada.",
-        "41. Svetsko finale ima tri trkačka dana i proglašava šampionsku naciju.",
-        "42. Svetski timski šampion, nacionalni pojedinačni šampion i lider nacionalnog ranga nisu isto.",
-        "43. Obaveštenja prate izbore, pozive, sastave, žrebove i napredovanje.",
-        "44. Operativni nadzor kontroliše saveze, izbore, domaćine, prijave, trke i neizvršene korake.",
-        "45. Članovi treba da obnove savez, prate izbore, odgovaraju na pozive i prate rezultate.",
-        "46. Selektor treba da izabere deset vozača, prijavi sedam po danu, podesi taktike i prati rezultate."
-      ],
-      "tips": [
-        "Birajte deset vozača za sve tri vrste trka, ne samo za jedan dan.",
-        "Potvrdite sedam vozača pre roka; potvrđenih deset nije isto što i startna lista.",
-        "Rotirajte vozače po profilima trka uz poštovanje ograničenja zamena.",
-        "Novčići aktiviraju i obnavljaju savez, ali ne poboljšavaju performanse.",
-        "Ako reprezentacija nema vozače na startnoj listi, proverite prijavu za taj dan.",
-        "World Nations je ekipni, a nacionalno prvenstvo individualni sistem."
-      ],
-      "relatedLinks": [
-        "Otvori Nacionalni savez",
-        "Otvori sastav reprezentacije",
-        "Otvori izbore",
-        "Otvori World Nations",
-        "Otvori Nacionalni rang i prvenstva"
-      ]
     }
   }
 }
