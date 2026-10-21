@@ -173,7 +173,8 @@
     "onCourseUntil": "En formación hasta {{date}}",
     "courseRolePaused": "El empleado no está disponible hasta terminar el curso.",
     "roleBonusPaused": "Bono de función suspendido",
-    "roleBonusPausedHelp": "Los efectos de la función se suspenden durante la formación."
+    "roleBonusPausedHelp": "Los efectos de la función se suspenden durante la formación.",
+    "courseManagerHandover": "El mánager asume temporalmente: {{responsibilities}}. Las funciones guardadas se recuperan cuando vuelve el personal."
   },
   "budget": {
     "title": "Presupuesto de temporada de la academia",
@@ -366,7 +367,8 @@
     "weeklyStipendHelp": "Ayuda semanal al corredor y su familia en la Academia.",
     "accommodationHelp": "Ayuda semanal para vivienda y traslado.",
     "compensationOfferHelp": "Compensación única pagada a la Academia de origen al completar el traspaso.",
-    "compensationOfferUnattachedHelp": "No se debe compensación por un corredor sin equipo."
+    "compensationOfferUnattachedHelp": "No se debe compensación por un corredor sin equipo.",
+    "offerCostSummary": "Coste semanal: {{weekly}}. Compensación única: {{compensation}}."
   },
   "settings": {
     "title": "Responsabilidades",
@@ -413,7 +415,12 @@
     "managerTemporaryHandover": "Gestionado temporalmente por el mánager",
     "assignTemporaryCover": "Asignar temporalmente otro empleado",
     "noTemporaryCoverAvailable": "No hay otro empleado de la Academia disponible.",
-    "activeResponsibilityNow": "Responsable actual: {{person}}"
+    "activeResponsibilityNow": "Responsable actual: {{person}}",
+    "coverPenaltyHelp": "La calidad del trabajo se reduce temporalmente un {{penalty}} %.",
+    "originalStaffReturns": "{{staff}} asiste a {{course}} hasta {{date}}. Después retoma sus funciones.",
+    "managerTemporaryHandoverCourse": "{{staff}} asiste a {{course}} hasta {{date}}. Después vuelve la función guardada {{role}}.",
+    "managerTemporaryHandoverUnavailable": "El responsable de {{role}} no está disponible. Se conserva la asignación.",
+    "assignTemporaryCoverHelp": "Otro empleado puede cubrir temporalmente con un 20–50 % menos de eficacia."
   },
   "placeholders": {},
   "errors": {
@@ -516,7 +523,10 @@
     "raceSupplies": "Suministros de carreras juveniles",
     "raceSuppliesHelp": "Bidones, geles, nutrición, maillots y chubasqueros pagados por la Academia.",
     "inStock": "{{count}} en existencias",
-    "quantity": "Cantidad"
+    "quantity": "Cantidad",
+    "temporaryCoverManaged": "Gestionado temporalmente por {{staff}}",
+    "temporaryCoverManagedHelp": "La sustitución ajena al puesto reduce la calidad de compra un {{penalty}} %.",
+    "setupConfiguredBy": "Configurado por {{person}} · {{date}}"
   },
   "training": {
     "title": "Filosofía de desarrollo juvenil",
@@ -580,7 +590,8 @@
       "world": "Clase Mundial",
       "continental": "Clase Continental",
       "regional": "Clase Regional",
-      "youth": "Competición Juvenil"
+      "youth": "Competición Juvenil",
+      "worldClass": "Clase mundial"
     },
     "monthlyPlanTitle": "Plan de carreras juveniles de {{month}}",
     "approved": "Aprobado",
@@ -633,7 +644,11 @@
     "noVisibleRaces": "Sin carreras visibles",
     "multiDay": "Varios días",
     "entryFee": "Cuota de inscripción",
-    "prizeFundCompact": "Premios"
+    "prizeFundCompact": "Premios",
+    "applicationPending": "Solicitud pendiente",
+    "withdrawRace": "Retirar carrera",
+    "openRaceParticipatingOnly": "Los detalles solo están disponibles para Academias participantes.",
+    "estimatedRaceCost": "Coste total estimado"
   },
   "rankings": {
     "title": "Rankings juveniles",
@@ -796,5 +811,6 @@
     "stage": "Etapa {{number}}",
     "stageResult": "Resultado de etapa",
     "fullStageStanding": "Clasificación completa de etapa"
-  }
+  },
+  "season": "Temporada"
 }
