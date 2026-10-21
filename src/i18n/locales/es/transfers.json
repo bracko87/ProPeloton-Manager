@@ -638,5 +638,10 @@
     "openClub": "Abrir club",
     "reject": "Rechazar",
     "accept": "Aceptar"
+  },
+  "staffSpecializations": {
+    "potentialAssessment": "Evaluación del potencial",
+    "youthDevelopment": "Desarrollo juvenil",
+    "localProspects": "Talentos locales"
   }
 }
