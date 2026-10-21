@@ -625,5 +625,27 @@
     "renewing": "Renovando…",
     "getCoins": "Comprar Coins",
     "readOnly": "Debes renovar la Academia Juvenil para la temporada actual antes de poder gestionarla."
+  },
+  "raceDetail": {
+    "overview": "Resumen",
+    "teamsCount": "Equipos ({{count}})",
+    "mySquad": "Mi plantilla",
+    "results": "Resultados",
+    "backToCalendar": "← Volver al calendario juvenil",
+    "raceInformation": "Información de carrera",
+    "participantsResults": "Participantes y resultados",
+    "hide": "Ocultar",
+    "show": "Mostrar",
+    "teamsRiders": "Equipos y corredores",
+    "raceClassifications": "Clasificaciones de carrera",
+    "currentStandings": "Clasificación actual",
+    "generalClassification": "Clasificación general",
+    "sprintPoints": "Puntos de esprint",
+    "mountainPoints": "Puntos de montaña",
+    "fullRaceStanding": "Clasificación completa de carrera",
+    "stageResults": "Resultados de etapa – Etapa {{stage}}",
+    "stage": "Etapa {{number}}",
+    "stageResult": "Resultado de etapa",
+    "fullStageStanding": "Clasificación completa de etapa"
   }
 }
