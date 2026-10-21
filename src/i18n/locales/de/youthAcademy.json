@@ -118,7 +118,13 @@
     "infrastructureTtt": "Teamzeitfahrzentrum",
     "infrastructureTttEffect": "+10 % U16-Zeitfahrentwicklung und +5 % Teamzeitfahr-Rennentwicklung.",
     "infrastructureLevel": "Stufe {{level}}/{{max}}",
-    "notBuilt": "Nicht gebaut"
+    "notBuilt": "Nicht gebaut",
+    "completedRace": "Beendetes Rennen",
+    "confirmedEntry": "Bestätigte Teilnahme",
+    "raceDays": "Tage",
+    "enteredBy": "Angemeldet durch",
+    "lineup": "Aufstellung",
+    "rider": "Fahrer"
   },
   "roles": {
     "director": "Leiter der Jugendakademie",
@@ -343,7 +349,15 @@
       "teamwork": "Teamarbeit"
     },
     "weeklyResetTitle": "Wöchentliche Berichtsrücksetzung",
-    "weeklyResetHelp": "Alle offenen Scoutberichte und Verhandlungen bleiben bis Sonntag sichtbar. Am Montag {{date}} wird die Liste zurückgesetzt und die erste kostenlose Suche ist wieder verfügbar. Verpflichtete Fahrer erscheinen sofort im Jugendkader."
+    "weeklyResetHelp": "Alle offenen Scoutberichte und Verhandlungen bleiben bis Sonntag sichtbar. Am Montag {{date}} wird die Liste zurückgesetzt und die erste kostenlose Suche ist wieder verfügbar. Verpflichtete Fahrer erscheinen sofort im Jugendkader.",
+    "ageValue": "Alter {{age}}",
+    "age": "Alter",
+    "country": "Land",
+    "riderRole": "Fahrerprofil",
+    "source": "Herkunft",
+    "assessment": "Talentbewertung",
+    "weekReset": "Wöchentliche Rücksetzung",
+    "mondayReset": "Montagsrücksetzung"
   },
   "settings": {
     "title": "Verantwortlichkeiten",
@@ -465,7 +479,8 @@
     "pathwayUntil": "Pfad bis {{date}}",
     "pathwayHelp": "Dieser Übergang gibt dir 30 Spieltage Zeit, den Fahrer ins Entwicklungsteam zu übernehmen. Erfolgt das nicht, wird er Profi-Free-Agent.",
     "toDeveloping": "Ins Entwicklungsteam ({{slots}} frei)",
-    "release": "An freie Fahrer entlassen"
+    "release": "An freie Fahrer entlassen",
+    "releaseToFreeAgents": "An freie Fahrer entlassen"
   },
   "calendar": {
     "title": "U16-Rennkalender",
@@ -546,7 +561,21 @@
     "classCounts": "Welt {{world}} · Kontinental {{continental}} · Regional {{regional}}",
     "browserHelp": "Hier siehst du den vollständigen Jugend-Rennkalender des ausgewählten Monats. Mit „Möglichkeiten meiner Akademie“ werden Einladungen und deine regionale Heimdivision gefiltert.",
     "pastPrelaunch": "Vergangen · vor Einführung",
-    "prelaunchHelp": "Dieses Rennen bleibt zur Vollständigkeit im Kalender. Es lag bereits in der Vergangenheit, als das Jugend-Wettbewerbssystem eingeführt wurde; daher wurde kein Ergebnis erzeugt."
+    "prelaunchHelp": "Dieses Rennen bleibt zur Vollständigkeit im Kalender. Es lag bereits in der Vergangenheit, als das Jugend-Wettbewerbssystem eingeführt wurde; daher wurde kein Ergebnis erzeugt.",
+    "raceFilters": "Rennfilter",
+    "youthFilters": "Jugendfilter",
+    "seasonRaceCalendarTitle": "Saison {{season}} · Jugendrennkalender",
+    "seasonRaceCalendarHelp": "Jeder Monat zeigt alle geplanten Jugendrennen in einer eigenen Registerkarte.",
+    "finished": "Beendet",
+    "active": "Aktiv",
+    "scheduled": "Geplant",
+    "openRace": "Rennen öffnen",
+    "applyRace": "Für Rennen bewerben",
+    "withdrawApplication": "Bewerbung zurückziehen",
+    "noVisibleRaces": "Keine sichtbaren Rennen",
+    "multiDay": "Mehrere Tage",
+    "entryFee": "Startgebühr",
+    "prizeFundCompact": "Preisgeld"
   },
   "rankings": {
     "title": "Jugendranglisten",
@@ -578,7 +607,9 @@
     "systemContinentalHelp": "Die Gruppensieger steigen direkt auf. Die Zweit- und Drittplatzierten spielen in einem Vierer-Playoff um zwei weitere Aufstiegsplätze in die Weltklasse.",
     "systemRegionalTitle": "Regionalklasse · 12 Divisionen",
     "systemRegionalHelp": "Die Jugend-Regionalklasse umfasst 12 geografische Divisionen. Je sechs gehören zu Kontinental West und Ost. Jeder Divisionssieger steigt auf; je sechs Kontinentalteams steigen ab.",
-    "systemScoringHelp": "Die Teamwertung basiert auf Rennpunkten. Die Fahrerwertung nutzt Gesamtwertungspunkte mit Faktoren: Regional ×1,0, Kontinental ×1,5 und Welt ×2,5. Sprint-, Berg- und Zeitfahrwertungen werden separat geführt."
+    "systemScoringHelp": "Die Teamwertung basiert auf Rennpunkten. Die Fahrerwertung nutzt Gesamtwertungspunkte mit Faktoren: Regional ×1,0, Kontinental ×1,5 und Welt ×2,5. Sprint-, Berg- und Zeitfahrwertungen werden separat geführt.",
+    "competitionSystem": "Jugend-Wettkampfsystem",
+    "logo": "Logo"
   },
   "reports": {
     "title": "Jugend-Rennberichte",
@@ -637,7 +668,9 @@
     "race": "Rennen",
     "reportClass": "Berichtstyp",
     "details": "Details",
-    "reportSummary": "Regionalpunkte +{{regional}} · Weltpunkte +{{world}} · Ermüdung +{{fatigue}} · Entwicklungsereignisse {{events}}"
+    "reportSummary": "Regionalpunkte +{{regional}} · Weltpunkte +{{world}} · Ermüdung +{{fatigue}} · Entwicklungsereignisse {{events}}",
+    "freeAgentAcademyAlumni": "Freier Fahrer · ehemaliger Akademiefahrer",
+    "reportRange": "{{from}}–{{to}} von {{total}} Berichten"
   },
   "profile": {
     "loading": "Jugendfahrer-Profil wird geladen…",
