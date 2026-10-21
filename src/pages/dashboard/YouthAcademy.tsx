@@ -875,6 +875,7 @@ export default function YouthAcademyPage(): JSX.Element {
   const [offerDrafts, setOfferDrafts] = useState<Record<string, OfferDraft>>({})
   const [incomingOffers, setIncomingOffers] = useState<IncomingYouthOffer[]>([])
   const [financeData, setFinanceData] = useState<YouthFinancePayload | null>(null)
+  const [ledgerPage, setLedgerPage] = useState(1)
   const [budgetTransferDirection, setBudgetTransferDirection] = useState<'senior_to_youth' | 'youth_to_senior'>('senior_to_youth')
   const [budgetTransferAmount, setBudgetTransferAmount] = useState(10000)
   const [budgetTransferLoading, setBudgetTransferLoading] = useState(false)
@@ -3433,44 +3434,58 @@ export default function YouthAcademyPage(): JSX.Element {
             </p>
           </Card>
 
-          <Card
-            title={t('budget.ledger')}
-            right={
-              phase2Loading ? (
-                <span className="text-xs text-slate-500">{t('budget.loadingLedger')}</span>
-              ) : null
-            }
-          >
+          <Card title={t('budget.ledger')} right={phase2Loading ? <span className="text-xs text-slate-500">{t('budget.loadingLedger')}</span> : null}>
             {(financeData?.ledger?.length ?? 0) === 0 ? (
               <div className="text-sm text-slate-500">{t('budget.noLedger')}</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full min-w-[680px] text-left text-sm">
-                  <thead className="border-b border-slate-200 text-xs text-slate-500">
-                    <tr>
-                      <th className="py-2 pr-3">{t('budget.date')}</th>
-                      <th className="py-2 pr-3">{t('budget.category')}</th>
-                      <th className="py-2 pr-3">{t('budget.description')}</th>
-                      <th className="py-2 text-right">{t('budget.amount')}</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {(financeData?.ledger ?? []).map(entry => (
-                      <tr key={entry.id}>
-                        <td className="py-2 pr-3">{entry.game_date}</td>
-                        <td className="py-2 pr-3">{humanize(entry.category)}</td>
-                        <td className="py-2 pr-3">{entry.description}</td>
-                        <td className={`py-2 text-right font-medium ${
-                          entry.amount > 0 ? 'text-emerald-700' : 'text-slate-900'
-                        }`}>
-                          {entry.amount > 0 ? '+' : ''}{money(entry.amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            ) : (() => {
+              const transactions = [...(financeData?.ledger ?? [])].sort((a, b) =>
+                b.game_date.localeCompare(a.game_date) || b.id.localeCompare(a.id)
+              )
+              const totalPages = Math.max(1, Math.ceil(transactions.length / 10))
+              const page = Math.min(ledgerPage, totalPages)
+              const shown = transactions.slice((page - 1) * 10, page * 10)
+              const categoryText = (value: string) => t(`budget.ledgerCategories.${value}`, { defaultValue: humanize(value) })
+              const descriptionText = (value: string) =>
+                value === 'Youth Academy weekly rider support and staff payroll'
+                  ? t('budget.weeklyPayrollDescription')
+                  : t(`budget.ledgerDescriptions.${value}`, { defaultValue: value })
+              return (
+                <div className="space-y-3">
+                  <div className="overflow-x-auto rounded-lg border border-slate-200">
+                    <table className="w-full min-w-[680px] text-left text-sm">
+                      <thead className="bg-slate-50 text-xs font-semibold text-slate-600">
+                        <tr>
+                          <th className="p-3">{t('budget.date')}</th>
+                          <th className="p-3">{t('budget.category')}</th>
+                          <th className="p-3">{t('budget.description')}</th>
+                          <th className="p-3 text-right">{t('budget.amount')}</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {shown.map(entry => (
+                          <tr key={entry.id} className="border-t border-slate-200">
+                            <td className="p-3 whitespace-nowrap text-slate-700">{gameDateLabel(entry.game_date)}</td>
+                            <td className="p-3 text-slate-800">{categoryText(entry.category)}</td>
+                            <td className="p-3 text-slate-700">{descriptionText(entry.description)}</td>
+                            <td className={`p-3 text-right whitespace-nowrap font-medium ${entry.amount > 0 ? 'text-emerald-700' : 'text-slate-900'}`}>
+                              {entry.amount > 0 ? '+' : ''}{money(entry.amount)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+                    <span>{t('budget.ledgerRange', { from: (page - 1) * 10 + 1, to: Math.min(page * 10, transactions.length), total: transactions.length })}</span>
+                    <div className="flex items-center gap-3">
+                      <button type="button" disabled={page <= 1} onClick={() => setLedgerPage(page - 1)} className="rounded border border-slate-200 px-3 py-1.5 disabled:opacity-40">{t('budget.previousPage')}</button>
+                      <span>{t('budget.ledgerPage', { page, total: totalPages })}</span>
+                      <button type="button" disabled={page >= totalPages} onClick={() => setLedgerPage(page + 1)} className="rounded border border-slate-200 px-3 py-1.5 disabled:opacity-40">{t('budget.nextPage')}</button>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
           </Card>
         </div>
       ) : null}
@@ -6426,9 +6441,9 @@ export default function YouthAcademyPage(): JSX.Element {
                 <span>{t('rankings.yourAcademy', { defaultValue: 'Your Academy' })}</span>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-emerald-100" />Promotion</span>
-                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-blue-100" />Playoff</span>
-                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-red-100" />Relegation</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-emerald-100" />{t('rankings.promotion')}</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-blue-100" />{t('rankings.playoff')}</span>
+                <span className="flex items-center gap-1.5"><span className="h-3 w-3 rounded bg-red-100" />{t('rankings.relegation')}</span>
               </div>
             </div>
           </div>
@@ -6439,20 +6454,20 @@ export default function YouthAcademyPage(): JSX.Element {
             </h3>
             <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-3 text-sm text-slate-600">
               <div className="rounded-lg bg-slate-50 p-3">
-                <div className="font-medium text-slate-900">World Class · 16 teams</div>
-                <p className="mt-1 text-xs leading-5">Bottom four are relegated at season end.</p>
+                <div className="font-medium text-slate-900">{t('rankings.systemWorldTitle')}</div>
+                <p className="mt-1 text-xs leading-5">{t('rankings.systemWorldHelp')}</p>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
-                <div className="font-medium text-slate-900">Continental West & East · 20 teams each</div>
-                <p className="mt-1 text-xs leading-5">Each group champion is promoted directly. 2nd and 3rd from West and East enter a four-team playoff table; the best two are also promoted to World Class.</p>
+                <div className="font-medium text-slate-900">{t('rankings.systemContinentalTitle')}</div>
+                <p className="mt-1 text-xs leading-5">{t('rankings.systemContinentalHelp')}</p>
               </div>
               <div className="rounded-lg bg-slate-50 p-3">
-                <div className="font-medium text-slate-900">Regional · 12 divisions</div>
-                <p className="mt-1 text-xs leading-5">Youth Regional now uses the same 12 geographic divisions as the senior Team Ranking. Six divisions feed Continental West and six feed Continental East. Each Regional champion is promoted, so each Continental group relegates six teams. Regional AI depth stays small at two AI Academies per division.</p>
+                <div className="font-medium text-slate-900">{t('rankings.systemRegionalTitle')}</div>
+                <p className="mt-1 text-xs leading-5">{t('rankings.systemRegionalHelp')}</p>
               </div>
             </div>
             <p className="mt-3 text-xs leading-5 text-slate-500">
-              Team standings use race-result points. Rider rankings use General Classification points plus the class weighting: Regional ×1.0, Continental ×1.5 and World ×2.5. Sprint, mountain and time-trial classifications are tracked separately inside stage races.
+              {t('rankings.systemScoringHelp')}
             </p>
           </div>
 
