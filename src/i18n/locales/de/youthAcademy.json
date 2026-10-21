@@ -158,7 +158,18 @@
     "transferAmount": "Betrag",
     "transferring": "Übertragung…",
     "transferFunds": "Geld übertragen",
-    "transferHelp": "Renneinnahmen bleiben automatisch in der Youth Academy. Nutze diese Funktion nur, wenn du bewusst Geld zwischen Senior-Team und Akademie verschieben möchtest."
+    "transferHelp": "Renneinnahmen bleiben automatisch in der Youth Academy. Nutze diese Funktion nur, wenn du bewusst Geld zwischen Senior-Team und Akademie verschieben möchtest.",
+    "racePrizeIncome": "Rennprämieneinnahmen",
+    "racePrizeIncomeHelp": "Preisgeld der Jugendakademie aus den Teamwertungen der Rennen.",
+    "previousPage": "Zurück",
+    "nextPage": "Weiter",
+    "ledgerPage": "Seite {{page}} von {{total}}",
+    "ledgerRange": "{{from}}–{{to}} von {{total}} Transaktionen",
+    "weeklyPayroll": "Wöchentliche Gehaltszahlung",
+    "weeklyPayrollDescription": "Wöchentliche Fahrerunterstützung und Personalkosten der Jugendakademie",
+    "ledgerCategories": {
+      "weekly_payroll": "Wöchentliche Gehaltszahlung"
+    }
   },
   "scouting": {
     "title": "Reichweite des Jugendscoutings",
@@ -504,7 +515,17 @@
     "selectDivision": "Division auswählen",
     "country": "Land",
     "yourAcademy": "Deine Akademie",
-    "riderRankingHelp": "Fahrer-Ranglisten sind von den Akademie-Klassenwertungen getrennt."
+    "riderRankingHelp": "Fahrer-Ranglisten sind von den Akademie-Klassenwertungen getrennt.",
+    "promotion": "Aufstieg",
+    "playoff": "Playoff",
+    "relegation": "Abstieg",
+    "systemWorldTitle": "Weltklasse · 16 Teams",
+    "systemWorldHelp": "Die letzten vier Teams steigen am Saisonende ab.",
+    "systemContinentalTitle": "Kontinental West und Ost · je 20 Teams",
+    "systemContinentalHelp": "Die Gruppensieger steigen direkt auf. Die Zweit- und Drittplatzierten spielen in einem Vierer-Playoff um zwei weitere Aufstiegsplätze in die Weltklasse.",
+    "systemRegionalTitle": "Regionalklasse · 12 Divisionen",
+    "systemRegionalHelp": "Die Jugend-Regionalklasse umfasst 12 geografische Divisionen. Je sechs gehören zu Kontinental West und Ost. Jeder Divisionssieger steigt auf; je sechs Kontinentalteams steigen ab.",
+    "systemScoringHelp": "Die Teamwertung basiert auf Rennpunkten. Die Fahrerwertung nutzt Gesamtwertungspunkte mit Faktoren: Regional ×1,0, Kontinental ×1,5 und Welt ×2,5. Sprint-, Berg- und Zeitfahrwertungen werden separat geführt."
   },
   "reports": {
     "title": "Jugend-Rennberichte",
