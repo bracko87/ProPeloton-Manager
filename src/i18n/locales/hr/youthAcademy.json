@@ -743,7 +743,8 @@
     "details": "Detalji",
     "reportSummary": "Regionalni bodovi +{{regional}} · Svjetski bodovi +{{world}} · Umor +{{fatigue}} · Razvojni događaji {{events}}",
     "freeAgentAcademyAlumni": "Slobodan vozač · bivši član Akademije",
-    "reportRange": "Prikazano {{from}}–{{to}} od {{total}} izvještaja"
+    "reportRange": "Prikazano {{from}}–{{to}} od {{total}} izvještaja",
+    "reportOutcome": "Najbolji plasman {{best}} · Postolja {{podiums}} · Odustajanja {{dnf}} · Nisu startali {{dns}}"
   },
   "profile": {
     "loading": "Učitavanje profila mladog vozača…",
