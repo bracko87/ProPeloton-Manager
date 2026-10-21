@@ -118,7 +118,13 @@
     "infrastructureTtt": "Centar za ekipni kronometar",
     "infrastructureTttEffect": "+10% U16 kronometarski razvoj i +5% razvoj kroz ekipne kronometre.",
     "infrastructureLevel": "Razina {{level}}/{{max}}",
-    "notBuilt": "Nije izgrađeno"
+    "notBuilt": "Nije izgrađeno",
+    "completedRace": "Završena utrka",
+    "confirmedEntry": "Potvrđena prijava",
+    "raceDays": "dana",
+    "enteredBy": "Prijavio",
+    "lineup": "Sastav",
+    "rider": "Vozač"
   },
   "roles": {
     "director": "Direktor Omladinske akademije",
@@ -343,7 +349,15 @@
       "teamwork": "Timski rad"
     },
     "weeklyResetTitle": "Tjedno resetiranje izvještaja",
-    "weeklyResetHelp": "Svi otvoreni skautski izvještaji i pregovori ostaju vidljivi do nedjelje. U ponedjeljak {{date}} popis se resetira i prva besplatna pretraga ponovno je dostupna. Potpisani vozači odmah prelaze u sastav mladih."
+    "weeklyResetHelp": "Svi otvoreni skautski izvještaji i pregovori ostaju vidljivi do nedjelje. U ponedjeljak {{date}} popis se resetira i prva besplatna pretraga ponovno je dostupna. Potpisani vozači odmah prelaze u sastav mladih.",
+    "ageValue": "{{age}} godina",
+    "age": "Dob",
+    "country": "Država",
+    "riderRole": "Profil vozača",
+    "source": "Izvor",
+    "assessment": "Procjena talenta",
+    "weekReset": "Tjedno resetiranje",
+    "mondayReset": "Resetiranje ponedjeljkom"
   },
   "settings": {
     "title": "Odgovornosti",
@@ -465,7 +479,8 @@
     "pathwayUntil": "Put do {{date}}",
     "pathwayHelp": "Privremeni put daje 30 dana igre za prelazak u razvojnu momčad. Ako se to ne dogodi, vozač postaje profesionalni slobodni agent.",
     "toDeveloping": "U razvojnu momčad ({{slots}} slobodno)",
-    "release": "Otpusti među slobodne vozače"
+    "release": "Otpusti među slobodne vozače",
+    "releaseToFreeAgents": "Otpusti među slobodne vozače"
   },
   "calendar": {
     "title": "U16 kalendar utrka",
@@ -546,7 +561,21 @@
     "classCounts": "Svjetske {{world}} · Kontinentalne {{continental}} · Regionalne {{regional}}",
     "browserHelp": "Prikazuje kompletan Youth kalendar za odabrani mjesec. Filtriraj prilike Akademije za pozivnice i domaću Regionalnu diviziju.",
     "pastPrelaunch": "Prošlo · prije pokretanja",
-    "prelaunchHelp": "Utrka ostaje u kalendaru radi potpunosti. Već je bila prošla pri pokretanju Youth sustava pa rezultat nije generiran."
+    "prelaunchHelp": "Utrka ostaje u kalendaru radi potpunosti. Već je bila prošla pri pokretanju Youth sustava pa rezultat nije generiran.",
+    "raceFilters": "Filtri utrka",
+    "youthFilters": "Omladinski filtri",
+    "seasonRaceCalendarTitle": "Sezona {{season}} · Kalendar utrka mladih",
+    "seasonRaceCalendarHelp": "Svaki mjesec ima karticu sa zakazanim utrkama mladih.",
+    "finished": "Završeno",
+    "active": "Aktivno",
+    "scheduled": "Zakazano",
+    "openRace": "Otvori utrku",
+    "applyRace": "Prijavi utrku",
+    "withdrawApplication": "Povuci prijavu",
+    "noVisibleRaces": "Nema vidljivih utrka",
+    "multiDay": "Više dana",
+    "entryFee": "Startnina",
+    "prizeFundCompact": "Nagradni fond"
   },
   "rankings": {
     "title": "Youth rang-liste",
@@ -578,7 +607,9 @@
     "systemContinentalHelp": "Prvak svake skupine izravno napreduje. Drugoplasirani i trećeplasirani ulaze u doigravanje četiriju ekipa; najbolje dvije također prelaze u Svjetsku klasu.",
     "systemRegionalTitle": "Regionalna klasa · 12 divizija",
     "systemRegionalHelp": "Regionalna klasa mladih ima 12 geografskih divizija. Šest vodi u Kontinentalni Zapad, a šest u Istok. Svaki prvak napreduje, a iz svake kontinentalne skupine ispada šest ekipa.",
-    "systemScoringHelp": "Poredak ekipa temelji se na bodovima s utrka. Poredak vozača temelji se na bodovima općeg poretka uz koeficijente: Regionalna ×1,0, Kontinentalna ×1,5 i Svjetska ×2,5. Sprint, brdski i kronometarski poredak vode se zasebno."
+    "systemScoringHelp": "Poredak ekipa temelji se na bodovima s utrka. Poredak vozača temelji se na bodovima općeg poretka uz koeficijente: Regionalna ×1,0, Kontinentalna ×1,5 i Svjetska ×2,5. Sprint, brdski i kronometarski poredak vode se zasebno.",
+    "competitionSystem": "Sustav natjecanja mladih",
+    "logo": "Logotip"
   },
   "reports": {
     "title": "Izvještaji U16 utrka",
@@ -637,7 +668,9 @@
     "race": "Utrka",
     "reportClass": "Vrsta izvještaja",
     "details": "Detalji",
-    "reportSummary": "Regionalni bodovi +{{regional}} · Svjetski bodovi +{{world}} · Umor +{{fatigue}} · Razvojni događaji {{events}}"
+    "reportSummary": "Regionalni bodovi +{{regional}} · Svjetski bodovi +{{world}} · Umor +{{fatigue}} · Razvojni događaji {{events}}",
+    "freeAgentAcademyAlumni": "Slobodan vozač · bivši član Akademije",
+    "reportRange": "Prikazano {{from}}–{{to}} od {{total}} izvještaja"
   },
   "profile": {
     "loading": "Učitavanje profila mladog vozača…",
