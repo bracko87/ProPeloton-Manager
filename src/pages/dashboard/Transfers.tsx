@@ -2796,7 +2796,7 @@ export default function TransfersPage() {
       }
 
       if (!Number.isFinite(offeredPrice) || offeredPrice <= 0) {
-        throw new Error('Please enter a valid offer amount.')
+        throw new Error(t('transferOffer.invalidAmount'))
       }
 
       const existingActiveOffer = myOutgoingOffers.find(
@@ -2962,7 +2962,7 @@ export default function TransfersPage() {
           activity: 'outgoing',
           offerId: null,
         })
-        showToast('This offer is no longer active.', 'info')
+        showToast('{t('transferOffer.inactive')}', 'info')
         return
       }
 
@@ -3523,21 +3523,21 @@ export default function TransfersPage() {
       {offerModalListing ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900">Make Transfer Offer</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('transferOffer.title')}</h3>
 
             <div className="mt-3 space-y-2 text-sm text-gray-600">
               <div>
-                <span className="font-semibold text-gray-900">Rider:</span>{' '}
-                {offerModalListing.full_name || offerModalListing.display_name || 'Unknown rider'}
+                <span className="font-semibold text-gray-900">{t('transferOffer.rider')}:</span>{' '}
+                {offerModalListing.full_name || offerModalListing.display_name || t('common.unknownRider')}
               </div>
               <div>
-                <span className="font-semibold text-gray-900">Seller:</span>{' '}
+                <span className="font-semibold text-gray-900">{t('transferOffer.seller')}:</span>{' '}
                 {clubNameMap[offerModalListing.seller_club_id] ||
                   offerModalListing.seller_club_name ||
                   'Unknown club'}
               </div>
               <div>
-                <span className="font-semibold text-gray-900">Asking price:</span>{' '}
+                <span className="font-semibold text-gray-900">{t('transferOffer.askingPrice')}:</span>{' '}
                 {formatTransferAmount(offerModalListing.asking_price)}
               </div>
             </div>
@@ -3550,7 +3550,7 @@ export default function TransfersPage() {
 
             <div className="mt-4">
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-gray-500">
-                Your Offer
+                {t('transferOffer.yourOffer')}
               </label>
               <input
                 type="text"
@@ -3583,7 +3583,7 @@ export default function TransfersPage() {
 
                   const parsed = parseCurrencyInput(offerDraftPrice)
                   if (!parsed) {
-                    const msg = 'Please enter a valid offer amount.'
+                    const msg = t('transferOffer.invalidAmount')
                     setOfferModalMessage(msg)
                     showToast(msg, 'error')
                     return
@@ -3603,7 +3603,7 @@ export default function TransfersPage() {
                     : 'bg-yellow-400 text-black hover:bg-yellow-300'
                 }`}
               >
-                {riderActionLoading ? 'Submitting...' : 'Submit Offer'}
+                {riderActionLoading ? t('transferOffer.submitting') : t('transferOffer.submit')}
               </button>
             </div>
           </div>
@@ -3613,18 +3613,18 @@ export default function TransfersPage() {
       {sellerReviewOffer ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/25 backdrop-blur-sm px-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="text-lg font-semibold text-gray-900">Review Transfer Offer</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t('transferOffer.reviewTitle')}</h3>
 
             <div className="mt-3 space-y-2 text-sm text-gray-600">
               <div>
-                <span className="font-semibold text-gray-900">Rider:</span> {sellerReviewRiderName}
+                <span className="font-semibold text-gray-900">{t('transferOffer.rider')}:</span> {sellerReviewRiderName}
               </div>
               <div>
-                <span className="font-semibold text-gray-900">Buyer:</span>{' '}
+                <span className="font-semibold text-gray-900">{t('transferOffer.buyer')}:</span>{' '}
                 {sellerReviewClubInfo.clubName}
               </div>
               <div>
-                <span className="font-semibold text-gray-900">Offer value:</span>{' '}
+                <span className="font-semibold text-gray-900">{t('transferOffer.offerValue')}:</span>{' '}
                 {formatTransferAmount(sellerReviewOffer.offered_price)}
               </div>
               <div>
@@ -3635,7 +3635,7 @@ export default function TransfersPage() {
 
             {!sellerReviewOfferIsOpen ? (
               <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
-                This offer is no longer active.
+                {t('transferOffer.inactive')}
               </div>
             ) : null}
 
@@ -3656,7 +3656,7 @@ export default function TransfersPage() {
                       onClick={() => openClubProfile(sellerReviewOffer, 'outgoing')}
                       className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
                     >
-                      Open club
+                      {t('transferOffer.openClub')}
                     </button>
                   ) : null}
 
@@ -3672,7 +3672,7 @@ export default function TransfersPage() {
                         : 'border border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
                     }`}
                   >
-                    Reject
+                    {t('transferOffer.reject')}
                   </button>
 
                   <button
@@ -3687,7 +3687,7 @@ export default function TransfersPage() {
                         : 'bg-yellow-400 text-black hover:bg-yellow-300'
                     }`}
                   >
-                    Accept
+                    {t('transferOffer.accept')}
                   </button>
                 </>
               ) : null}
