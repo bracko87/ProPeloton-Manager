@@ -873,7 +873,42 @@
     "noSquadSelected": "Todavía no se ha elegido la plantilla juvenil.",
     "coachSelectsSquad": "El entrenador U16 elige la plantilla.",
     "teamPrizes": "Clasificación por equipos y premios",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "loadingRace": "Cargando carrera juvenil…",
+    "lineupWarningTitle": "Revisar plantilla: {{count}} corredores no aptos",
+    "eligibilityRules": "Solo pueden salir los corredores de 12 a 15 años. Los que cumplen 16 o abandonan la Academia dejan de ser aptos.",
+    "managerReplaceHelp": " Sustituye a esos corredores y guarda la alineación.",
+    "coachReplaceHelp": " El entrenador U16 intentará sustituirlos antes de la salida.",
+    "reviewSquad": "Revisar mi plantilla",
+    "perStage": " / etapa",
+    "recordedStarters": "{{count}} participantes registrados",
+    "riderCount": "{{count}} corredores",
+    "terrain": {
+      "flat": "Llano",
+      "hilly": "Ondulado",
+      "mountain": "Montaña",
+      "time_trial": "Contrarreloj",
+      "mixed": "Mixto",
+      "rolling": "Quebrado"
+    },
+    "status": {
+      "finished": "Finalizada",
+      "active": "En curso",
+      "scheduled": "Programada",
+      "completed": "Completada",
+      "entered": "Inscrita",
+      "pending": "Pendiente",
+      "withdrawn": "Retirada"
+    },
+    "entryStatus": {
+      "finished": "Finalizada",
+      "active": "En curso",
+      "scheduled": "Programada",
+      "completed": "Completada",
+      "entered": "Inscrita",
+      "pending": "Pendiente",
+      "withdrawn": "Retirada"
+    }
   },
   "season": "Temporada"
 }
