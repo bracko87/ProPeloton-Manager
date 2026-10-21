@@ -168,7 +168,12 @@
     "contract": "Vertrag",
     "directorActiveBonus": "Bis zu {{value}} % Rabatt beim Kauf von Jugendausrüstung",
     "coachActiveBonus": "Entwicklungswert {{score}}: beeinflusst Wochenentwicklung, Bereitschaft und Rennauswahl",
-    "scoutActiveBonus": "Scout-Wert {{score}}: bis zu {{reports}} Berichte je Suche mit höherer Bewertungsgenauigkeit"
+    "scoutActiveBonus": "Scout-Wert {{score}}: bis zu {{reports}} Berichte je Suche mit höherer Bewertungsgenauigkeit",
+    "courseInProgress": "Schulung läuft",
+    "onCourseUntil": "Auf Schulung bis {{date}}",
+    "courseRolePaused": "Dieser Mitarbeiter ist bis zum Kursende nicht verfügbar.",
+    "roleBonusPaused": "Rollenbonus pausiert",
+    "roleBonusPausedHelp": "Rolleneffekte sind während der Schulung ausgesetzt."
   },
   "budget": {
     "title": "Saisonbudget der Akademie",
@@ -357,7 +362,11 @@
     "source": "Herkunft",
     "assessment": "Talentbewertung",
     "weekReset": "Wöchentliche Rücksetzung",
-    "mondayReset": "Montagsrücksetzung"
+    "mondayReset": "Montagsrücksetzung",
+    "weeklyStipendHelp": "Wöchentliche Unterstützung für Fahrer und Familie in der Akademie.",
+    "accommodationHelp": "Wöchentliche Wohn- und Umzugshilfe.",
+    "compensationOfferHelp": "Einmalige Ausbildungsentschädigung an die bisherige Akademie bei Transfer.",
+    "compensationOfferUnattachedHelp": "Bei vereinslosen Fahrern fällt keine Entschädigung an."
   },
   "settings": {
     "title": "Verantwortlichkeiten",
@@ -394,7 +403,17 @@
     "confirmed": "Bestätigt",
     "responsiblePerson": "Verantwortliche Person",
     "confirming": "Wird bestätigt…",
-    "confirmResponsibility": "Verantwortung bestätigen"
+    "confirmResponsibility": "Verantwortung bestätigen",
+    "trainingResponsibility": "Trainingsplan",
+    "trainingResponsibilityHelp": "Steuert die Trainingsphilosophie und den Entwicklungsschwerpunkt der Jugend.",
+    "temporaryStaffCover": "Vorübergehende Personalvertretung aktiv",
+    "coverEffectiveness": "{{value}}% Arbeitsqualität",
+    "updatingCover": "Aktualisierung…",
+    "returnToManager": "Verantwortung an Manager zurückgeben",
+    "managerTemporaryHandover": "Vorübergehend vom Manager betreut",
+    "assignTemporaryCover": "Anderen Mitarbeiter vorübergehend zuweisen",
+    "noTemporaryCoverAvailable": "Derzeit ist kein anderer Akademiemitarbeiter verfügbar.",
+    "activeResponsibilityNow": "Aktuell zuständig: {{person}}"
   },
   "placeholders": {},
   "errors": {
