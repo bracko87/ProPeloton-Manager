@@ -7462,6 +7462,9 @@ function RaceResultsHub({
         .eq('race_id', race.id)
         .eq('classification_type', 'general')
         .eq('entity_type', 'rider')
+        // We only need stage IDs. Fetch each stage's GC leader, not every rider:
+        // 170 riders × 12 stages exceeds the default 1,000-row API page.
+        .eq('rank', 1)
 
       if (cancelled) return
 
@@ -19175,6 +19178,9 @@ export default function RaceDetailPage({
         .eq('race_id', classificationRaceId)
         .eq('classification_type', 'general')
         .eq('entity_type', 'rider')
+        // We only need stage IDs. Fetch each stage's GC leader, not every rider:
+        // 170 riders × 12 stages exceeds the default 1,000-row API page.
+        .eq('rank', 1)
 
       if (cancelled) return
 
