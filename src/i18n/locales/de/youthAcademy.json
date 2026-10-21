@@ -873,7 +873,42 @@
     "noSquadSelected": "Noch kein Jugendrennkader ausgewählt.",
     "coachSelectsSquad": "Der U16-Cheftrainer wählt den Kader.",
     "teamPrizes": "Teamwertung und Preisgeld",
-    "close": "Schließen"
+    "close": "Schließen",
+    "loadingRace": "Jugendrennen wird geladen…",
+    "lineupWarningTitle": "Kader überprüfen: {{count}} nicht startberechtigte Fahrer",
+    "eligibilityRules": "Nur Fahrer von 12–15 Jahren dürfen starten. Wer 16 wird oder die Akademie verlässt, verliert die Startberechtigung.",
+    "managerReplaceHelp": " Ersetze diese Fahrer im Kader und speichere die Aufstellung.",
+    "coachReplaceHelp": " Der U16-Cheftrainer versucht, sie vor dem Start zu ersetzen.",
+    "reviewSquad": "Meinen Kader prüfen",
+    "perStage": " / Etappe",
+    "recordedStarters": "{{count}} bestätigte Starter",
+    "riderCount": "{{count}} Fahrer",
+    "terrain": {
+      "flat": "Flach",
+      "hilly": "Hügelig",
+      "mountain": "Bergig",
+      "time_trial": "Zeitfahren",
+      "mixed": "Gemischt",
+      "rolling": "Wellig"
+    },
+    "status": {
+      "finished": "Beendet",
+      "active": "Aktiv",
+      "scheduled": "Geplant",
+      "completed": "Abgeschlossen",
+      "entered": "Angemeldet",
+      "pending": "Ausstehend",
+      "withdrawn": "Zurückgezogen"
+    },
+    "entryStatus": {
+      "finished": "Beendet",
+      "active": "Aktiv",
+      "scheduled": "Geplant",
+      "completed": "Abgeschlossen",
+      "entered": "Angemeldet",
+      "pending": "Ausstehend",
+      "withdrawn": "Zurückgezogen"
+    }
   },
   "season": "Saison"
 }
