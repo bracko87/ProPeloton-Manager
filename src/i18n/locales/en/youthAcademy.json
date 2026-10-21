@@ -75,7 +75,20 @@
     "latestResult": "Latest result",
     "noPreviousRace": "No completed Academy race yet",
     "noUpcomingRace": "No upcoming Academy race selected",
-    "noResult": "No Youth race result yet"
+    "noResult": "No Youth race result yet",
+    "staffLevels": {
+      "poor": "Poor",
+      "basic": "Basic",
+      "competent": "Competent",
+      "strong": "Strong",
+      "elite": "Elite",
+      "world_class": "World Class"
+    },
+    "workloads": {
+      "low": "Low",
+      "moderate": "Moderate",
+      "high": "High"
+    }
   },
   "roles": {
     "director": "Youth Academy Director",
@@ -290,7 +303,17 @@
     "runCoinSearch": "Run extra search · {{cost}} Coins",
     "weeklyLimitReached": "Weekly search limit reached",
     "lastSearch": "Last search: run {{run}} · {{reports}} reports created",
-    "maxReportsPerWeek": "Max reports / week"
+    "maxReportsPerWeek": "Max reports / week",
+    "focus": {
+      "balanced": "Balanced",
+      "sprint": "Sprint",
+      "climbing": "Climbing",
+      "time_trial": "Time Trial",
+      "endurance": "Endurance",
+      "teamwork": "Teamwork"
+    },
+    "weeklyResetTitle": "Weekly report reset",
+    "weeklyResetHelp": "All open scouting reports and recruitment work remain visible until Sunday. On Monday {{date}}, the reports reset and the first free search becomes available again. Riders who sign are immediately moved into the Youth Riders squad."
   },
   "settings": {
     "title": "Responsibilities",
@@ -408,11 +431,11 @@
     "pendingCount": "{{count}} pending",
     "none": "No Youth Riders currently require a graduation decision.",
     "decisionHelp": "At age 16, choose the rider's next pathway. Direct promotion to the First Squad is not the normal route.",
-    "pathway": "Keep on 30-day Youth Graduate pathway",
+    "pathway": "30-day Youth Graduate pathway",
     "pathwayUntil": "Pathway until {{date}}",
     "pathwayHelp": "This temporary pathway gives you 30 game days to move the rider into the Developing Team. If no Developing Team move is completed by then, the rider becomes a professional free agent.",
     "toDeveloping": "Move to Developing Team ({{slots}} free)",
-    "release": "Release as professional free agent"
+    "release": "Release to Free Agents"
   },
   "calendar": {
     "title": "U16 race calendar",
@@ -579,7 +602,12 @@
     "focus": "Focus",
     "workload": "Workload",
     "change": "Development change",
-    "readinessFatigue": "Readiness / fatigue"
+    "readinessFatigue": "Readiness / fatigue",
+    "date": "Date",
+    "race": "Race",
+    "reportClass": "Report type",
+    "details": "Details",
+    "reportSummary": "Regional points +{{regional}} · World points +{{world}} · Fatigue +{{fatigue}} · Development events {{events}}"
   },
   "profile": {
     "loading": "Loading Youth Rider profile…",
