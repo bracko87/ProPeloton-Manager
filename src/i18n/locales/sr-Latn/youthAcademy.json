@@ -168,7 +168,12 @@
     "contract": "Ugovor",
     "directorActiveBonus": "Do {{value}}% popusta pri kupovini Youth opreme",
     "coachActiveBonus": "Razvojni rezultat {{score}}: utiče na napredak, spremnost i izbor",
-    "scoutActiveBonus": "Scout rezultat {{score}}: do {{reports}} izveštaja po pretrazi uz bolju preciznost"
+    "scoutActiveBonus": "Scout rezultat {{score}}: do {{reports}} izveštaja po pretrazi uz bolju preciznost",
+    "courseInProgress": "Kurs obuke u toku",
+    "onCourseUntil": "Na kursu do {{date}}",
+    "courseRolePaused": "Član osoblja nije dostupan dok se kurs ne završi.",
+    "roleBonusPaused": "Bonus za ulogu je pauziran",
+    "roleBonusPausedHelp": "Efekti uloge su pauzirani tokom kursa."
   },
   "budget": {
     "title": "Sezonski budžet akademije",
@@ -357,7 +362,11 @@
     "source": "Izvor",
     "assessment": "Procena talenta",
     "weekReset": "Nedeljno resetovanje",
-    "mondayReset": "Ponedeljkom se resetuje"
+    "mondayReset": "Ponedeljkom se resetuje",
+    "weeklyStipendHelp": "Nedeljna podrška vozaču i porodici dok je u Akademiji.",
+    "accommodationHelp": "Nedeljna podrška za smeštaj i preseljenje.",
+    "compensationOfferHelp": "Jednokratna razvojna naknada sadašnjoj Akademiji posle transfera.",
+    "compensationOfferUnattachedHelp": "Za slobodnog vozača ne plaća se naknada drugoj Akademiji."
   },
   "settings": {
     "title": "Odgovornosti",
@@ -394,7 +403,17 @@
     "confirmed": "Potvrđeno",
     "responsiblePerson": "Odgovorna osoba",
     "confirming": "Potvrđivanje…",
-    "confirmResponsibility": "Potvrdi odgovornost"
+    "confirmResponsibility": "Potvrdi odgovornost",
+    "trainingResponsibility": "Plan treninga",
+    "trainingResponsibilityHelp": "Upravlja filozofijom treninga mladih i fokusom razvoja.",
+    "temporaryStaffCover": "Aktivna privremena zamena osoblja",
+    "coverEffectiveness": "{{value}}% kvaliteta rada",
+    "updatingCover": "Ažuriranje…",
+    "returnToManager": "Vrati odgovornost menadžeru",
+    "managerTemporaryHandover": "Privremeno vodi menadžer",
+    "assignTemporaryCover": "Privremeno dodeli drugog člana osoblja",
+    "noTemporaryCoverAvailable": "Trenutno nema dostupnih drugih članova Akademije.",
+    "activeResponsibilityNow": "Trenutno odgovoran: {{person}}"
   },
   "placeholders": {},
   "errors": {
