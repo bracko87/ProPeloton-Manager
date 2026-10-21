@@ -158,7 +158,18 @@
     "transferAmount": "Importo",
     "transferring": "Trasferimento…",
     "transferFunds": "Trasferisci fondi",
-    "transferHelp": "Le entrate delle gare restano automaticamente nell'Accademia. Usa questo controllo solo per spostare intenzionalmente denaro tra squadra senior e Accademia."
+    "transferHelp": "Le entrate delle gare restano automaticamente nell'Accademia. Usa questo controllo solo per spostare intenzionalmente denaro tra squadra senior e Accademia.",
+    "racePrizeIncome": "Introiti dai premi gara",
+    "racePrizeIncomeHelp": "Premi guadagnati dall'Accademia giovanile nelle classifiche a squadre.",
+    "previousPage": "Precedente",
+    "nextPage": "Successiva",
+    "ledgerPage": "Pagina {{page}} di {{total}}",
+    "ledgerRange": "Transazioni {{from}}–{{to}} di {{total}}",
+    "weeklyPayroll": "Stipendi settimanali",
+    "weeklyPayrollDescription": "Sostegno settimanale ai corridori e stipendi dello staff dell'Accademia",
+    "ledgerCategories": {
+      "weekly_payroll": "Stipendi settimanali"
+    }
   },
   "scouting": {
     "title": "Raggio dello scouting giovanile",
@@ -504,7 +515,17 @@
     "selectDivision": "Seleziona divisione",
     "country": "Paese",
     "yourAcademy": "La tua Accademia",
-    "riderRankingHelp": "I ranking corridori sono separati dalle classifiche di classe delle Accademie."
+    "riderRankingHelp": "I ranking corridori sono separati dalle classifiche di classe delle Accademie.",
+    "promotion": "Promozione",
+    "playoff": "Playoff",
+    "relegation": "Retrocessione",
+    "systemWorldTitle": "Classe mondiale · 16 squadre",
+    "systemWorldHelp": "Le ultime quattro squadre retrocedono a fine stagione.",
+    "systemContinentalTitle": "Continentale Ovest ed Est · 20 squadre ciascuno",
+    "systemContinentalHelp": "Le vincitrici dei gruppi salgono direttamente. Le seconde e le terze disputano un playoff a quattro; le migliori due salgono nella Classe mondiale.",
+    "systemRegionalTitle": "Regionale · 12 divisioni",
+    "systemRegionalHelp": "La competizione giovanile regionale comprende 12 divisioni geografiche: sei confluiscono nel Continentale Ovest e sei nell'Est. Ogni campione sale e sei squadre retrocedono per gruppo continentale.",
+    "systemScoringHelp": "Le classifiche a squadre usano i punti gara. Quelle dei corridori usano i punti della generale ponderati: Regionale ×1,0, Continentale ×1,5 e Mondiale ×2,5. Sprint, montagna e cronometro sono conteggiati separatamente."
   },
   "reports": {
     "title": "Report gare giovanili",
