@@ -168,7 +168,12 @@
     "contract": "Contract",
     "directorActiveBonus": "Up to {{value}}% Youth equipment purchasing discount",
     "coachActiveBonus": "Development score {{score}}: affects weekly progression, readiness and race selection",
-    "scoutActiveBonus": "Scout score {{score}}: up to {{reports}} reports per search with stronger assessment accuracy"
+    "scoutActiveBonus": "Scout score {{score}}: up to {{reports}} reports per search with stronger assessment accuracy",
+    "courseInProgress": "Training course in progress",
+    "onCourseUntil": "On course until {{date}}",
+    "courseRolePaused": "Staff member is unavailable until the course ends.",
+    "roleBonusPaused": "Role bonus paused",
+    "roleBonusPausedHelp": "Role effects are paused during the training course."
   },
   "budget": {
     "title": "Season Academy budget",
@@ -357,7 +362,11 @@
     "source": "Source",
     "assessment": "Talent assessment",
     "weekReset": "Weekly reset",
-    "mondayReset": "Monday reset"
+    "mondayReset": "Monday reset",
+    "weeklyStipendHelp": "Weekly support paid to the rider and family while at the Academy.",
+    "accommodationHelp": "Recurring weekly housing and relocation support.",
+    "compensationOfferHelp": "One-time development compensation paid to the current Academy upon transfer.",
+    "compensationOfferUnattachedHelp": "No compensation is due for an unattached rider."
   },
   "settings": {
     "title": "Responsibilities",
@@ -394,7 +403,17 @@
     "confirmed": "Confirmed",
     "responsiblePerson": "Responsible person",
     "confirming": "Confirming…",
-    "confirmResponsibility": "Confirm responsibility"
+    "confirmResponsibility": "Confirm responsibility",
+    "trainingResponsibility": "Training plan",
+    "trainingResponsibilityHelp": "Manages the Youth training philosophy and development focus.",
+    "temporaryStaffCover": "Temporary staff cover active",
+    "coverEffectiveness": "{{value}}% work quality",
+    "updatingCover": "Updating…",
+    "returnToManager": "Return responsibility to Manager",
+    "managerTemporaryHandover": "Temporarily handled by Manager",
+    "assignTemporaryCover": "Assign another staff member temporarily",
+    "noTemporaryCoverAvailable": "No other Academy staff member is available.",
+    "activeResponsibilityNow": "Currently responsible: {{person}}"
   },
   "placeholders": {},
   "errors": {
