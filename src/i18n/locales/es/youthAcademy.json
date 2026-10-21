@@ -168,7 +168,12 @@
     "contract": "Contrato",
     "directorActiveBonus": "Hasta {{value}} % de descuento en equipamiento juvenil",
     "coachActiveBonus": "Puntuación de desarrollo {{score}}: afecta progresión, preparación y selección",
-    "scoutActiveBonus": "Puntuación scout {{score}}: hasta {{reports}} informes por búsqueda con mejor precisión"
+    "scoutActiveBonus": "Puntuación scout {{score}}: hasta {{reports}} informes por búsqueda con mejor precisión",
+    "courseInProgress": "Curso de formación en marcha",
+    "onCourseUntil": "En formación hasta {{date}}",
+    "courseRolePaused": "El empleado no está disponible hasta terminar el curso.",
+    "roleBonusPaused": "Bono de función suspendido",
+    "roleBonusPausedHelp": "Los efectos de la función se suspenden durante la formación."
   },
   "budget": {
     "title": "Presupuesto de temporada de la academia",
@@ -357,7 +362,11 @@
     "source": "Procedencia",
     "assessment": "Evaluación del talento",
     "weekReset": "Reinicio semanal",
-    "mondayReset": "Reinicio de lunes"
+    "mondayReset": "Reinicio de lunes",
+    "weeklyStipendHelp": "Ayuda semanal al corredor y su familia en la Academia.",
+    "accommodationHelp": "Ayuda semanal para vivienda y traslado.",
+    "compensationOfferHelp": "Compensación única pagada a la Academia de origen al completar el traspaso.",
+    "compensationOfferUnattachedHelp": "No se debe compensación por un corredor sin equipo."
   },
   "settings": {
     "title": "Responsabilidades",
@@ -394,7 +403,17 @@
     "confirmed": "Confirmado",
     "responsiblePerson": "Responsable",
     "confirming": "Confirmando…",
-    "confirmResponsibility": "Confirmar responsabilidad"
+    "confirmResponsibility": "Confirmar responsabilidad",
+    "trainingResponsibility": "Plan de entrenamiento",
+    "trainingResponsibilityHelp": "Gestiona la filosofía de entrenamiento y el enfoque de desarrollo juvenil.",
+    "temporaryStaffCover": "Sustitución temporal activa",
+    "coverEffectiveness": "{{value}} % de calidad de trabajo",
+    "updatingCover": "Actualizando…",
+    "returnToManager": "Devolver responsabilidad al mánager",
+    "managerTemporaryHandover": "Gestionado temporalmente por el mánager",
+    "assignTemporaryCover": "Asignar temporalmente otro empleado",
+    "noTemporaryCoverAvailable": "No hay otro empleado de la Academia disponible.",
+    "activeResponsibilityNow": "Responsable actual: {{person}}"
   },
   "placeholders": {},
   "errors": {
