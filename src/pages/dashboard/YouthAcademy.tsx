@@ -6681,13 +6681,14 @@ export default function YouthAcademyPage(): JSX.Element {
                             <td className="whitespace-nowrap p-3 text-gray-700">{gameDateLabel(report.race_date)}</td>
                             <td className="p-3">
                               <Link to={`/dashboard/youth-academy/races/${report.race_id}`} className="font-medium text-slate-900 hover:text-amber-700 hover:underline">
-                                {report.headline.replace(/\s*[-–·]\s*Academy report$/i, '')}
+                                {report.race_name}
                               </Link>
                               <div className="mt-1 text-xs text-slate-500">{t(`calendar.competition.${report.race_level}`, { defaultValue: humanize(report.race_level) })} · {t(`scouting.focus.${report.terrain_type}`, { defaultValue: humanize(report.terrain_type) })} · {report.distance_km} km</div>
                             </td>
                             <td className="p-3 text-xs text-slate-600">{t(`history.reportClasses.${report.report_class}`)}</td>
                             <td className="p-3 text-xs text-gray-600">
                               <div>{t('history.reportSummary', { regional: report.regional_points, world: report.world_points, fatigue: report.fatigue_added, events: report.development_events })}</div>
+                              <div className="mt-1">{t('history.reportOutcome', { best: report.best_finish == null ? '—' : `#${report.best_finish}`, podiums: report.podium_count, dnf: report.dnf_count, dns: report.dns_count })}</div>
                             </td>
                           </tr>
                         ))}
