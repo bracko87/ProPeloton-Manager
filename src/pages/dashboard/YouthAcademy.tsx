@@ -6683,7 +6683,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               <Link to={`/dashboard/youth-academy/races/${report.race_id}`} className="font-medium text-slate-900 hover:text-amber-700 hover:underline">
                                 {report.headline.replace(/\s*[-–·]\s*Academy report$/i, '')}
                               </Link>
-                              <div className="mt-1 text-xs text-slate-500">{t(`calendar.classes.${report.race_level}`, { defaultValue: humanize(report.race_level) })} · {t(`calendar.terrain.${report.terrain_type}`, { defaultValue: humanize(report.terrain_type) })} · {report.distance_km} km</div>
+                              <div className="mt-1 text-xs text-slate-500">{t(`calendar.competition.${report.race_level}`, { defaultValue: humanize(report.race_level) })} · {t(`scouting.focus.${report.terrain_type}`, { defaultValue: humanize(report.terrain_type) })} · {report.distance_km} km</div>
                             </td>
                             <td className="p-3 text-xs text-slate-600">{t(`history.reportClasses.${report.report_class}`)}</td>
                             <td className="p-3 text-xs text-gray-600">
