@@ -158,7 +158,18 @@
     "transferAmount": "Iznos",
     "transferring": "Prijenos…",
     "transferFunds": "Prenesi sredstva",
-    "transferHelp": "Prihodi od utrka automatski ostaju u Akademiji. Ovu opciju koristi samo kada namjerno želiš premjestiti novac između seniorske ekipe i Akademije."
+    "transferHelp": "Prihodi od utrka automatski ostaju u Akademiji. Ovu opciju koristi samo kada namjerno želiš premjestiti novac između seniorske ekipe i Akademije.",
+    "racePrizeIncome": "Prihod od nagrada s utrka",
+    "racePrizeIncomeHelp": "Novčane nagrade koje je Omladinska akademija osvojila u ekipnom poretku utrka.",
+    "previousPage": "Prethodna",
+    "nextPage": "Sljedeća",
+    "ledgerPage": "Stranica {{page}} od {{total}}",
+    "ledgerRange": "Prikazano {{from}}–{{to}} od {{total}} transakcija",
+    "weeklyPayroll": "Tjedne plaće",
+    "weeklyPayrollDescription": "Tjedne potpore vozačima i plaće osoblja Omladinske akademije",
+    "ledgerCategories": {
+      "weekly_payroll": "Tjedne plaće"
+    }
   },
   "scouting": {
     "title": "Doseg omladinskog skautinga",
@@ -504,7 +515,17 @@
     "selectDivision": "Odaberi diviziju",
     "country": "Država",
     "yourAcademy": "Tvoja Akademija",
-    "riderRankingHelp": "Rang-lista vozača odvojena je od poretka Akademija."
+    "riderRankingHelp": "Rang-lista vozača odvojena je od poretka Akademija.",
+    "promotion": "Promocija",
+    "playoff": "Doigravanje",
+    "relegation": "Ispadanje",
+    "systemWorldTitle": "Svjetska klasa · 16 ekipa",
+    "systemWorldHelp": "Posljednje četiri ekipe ispadaju na kraju sezone.",
+    "systemContinentalTitle": "Kontinentalni Zapad i Istok · po 20 ekipa",
+    "systemContinentalHelp": "Prvak svake skupine izravno napreduje. Drugoplasirani i trećeplasirani ulaze u doigravanje četiriju ekipa; najbolje dvije također prelaze u Svjetsku klasu.",
+    "systemRegionalTitle": "Regionalna klasa · 12 divizija",
+    "systemRegionalHelp": "Regionalna klasa mladih ima 12 geografskih divizija. Šest vodi u Kontinentalni Zapad, a šest u Istok. Svaki prvak napreduje, a iz svake kontinentalne skupine ispada šest ekipa.",
+    "systemScoringHelp": "Poredak ekipa temelji se na bodovima s utrka. Poredak vozača temelji se na bodovima općeg poretka uz koeficijente: Regionalna ×1,0, Kontinentalna ×1,5 i Svjetska ×2,5. Sprint, brdski i kronometarski poredak vode se zasebno."
   },
   "reports": {
     "title": "Izvještaji U16 utrka",
