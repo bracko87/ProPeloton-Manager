@@ -118,7 +118,13 @@
     "infrastructureTtt": "Centro cronometro a squadre",
     "infrastructureTttEffect": "+10% sviluppo cronometro U16 e +5% nelle cronometro a squadre.",
     "infrastructureLevel": "Livello {{level}}/{{max}}",
-    "notBuilt": "Non costruito"
+    "notBuilt": "Non costruito",
+    "completedRace": "Gara conclusa",
+    "confirmedEntry": "Iscrizione confermata",
+    "raceDays": "giorni",
+    "enteredBy": "Iscritto da",
+    "lineup": "Formazione",
+    "rider": "Corridore"
   },
   "roles": {
     "director": "Direttore dell'Accademia Giovanile",
@@ -343,7 +349,15 @@
       "teamwork": "Lavoro di squadra"
     },
     "weeklyResetTitle": "Azzeramento settimanale dei rapporti",
-    "weeklyResetHelp": "I rapporti degli osservatori e le trattative aperte restano visibili fino a domenica. Lunedì {{date}} l'elenco si azzera e torna disponibile la prima ricerca gratuita. I corridori ingaggiati passano subito alla rosa giovanile."
+    "weeklyResetHelp": "I rapporti degli osservatori e le trattative aperte restano visibili fino a domenica. Lunedì {{date}} l'elenco si azzera e torna disponibile la prima ricerca gratuita. I corridori ingaggiati passano subito alla rosa giovanile.",
+    "ageValue": "{{age}} anni",
+    "age": "Età",
+    "country": "Paese",
+    "riderRole": "Profilo corridore",
+    "source": "Origine",
+    "assessment": "Valutazione del talento",
+    "weekReset": "Azzeramento settimanale",
+    "mondayReset": "Azzeramento del lunedì"
   },
   "settings": {
     "title": "Responsabilità",
@@ -465,7 +479,8 @@
     "pathwayUntil": "Percorso fino al {{date}}",
     "pathwayHelp": "Questo percorso temporaneo concede 30 giorni di gioco per spostare il corridore nella Squadra di Sviluppo. In caso contrario diventa un professionista svincolato.",
     "toDeveloping": "Alla Squadra di Sviluppo ({{slots}} liberi)",
-    "release": "Rilascia come svincolato"
+    "release": "Rilascia come svincolato",
+    "releaseToFreeAgents": "Rilascia come svincolato"
   },
   "calendar": {
     "title": "Calendario U16",
@@ -546,7 +561,21 @@
     "classCounts": "Mondiale {{world}} · Continentale {{continental}} · Regionale {{regional}}",
     "browserHelp": "Mostra il calendario Youth completo del mese. Filtra le opportunità dell’Accademia per inviti e divisione Regionale di casa.",
     "pastPrelaunch": "Passata · pre-lancio",
-    "prelaunchHelp": "La gara resta visibile per completezza. Era già passata al lancio del sistema Youth, quindi non è stato generato alcun risultato."
+    "prelaunchHelp": "La gara resta visibile per completezza. Era già passata al lancio del sistema Youth, quindi non è stato generato alcun risultato.",
+    "raceFilters": "Filtri gare",
+    "youthFilters": "Filtri giovanili",
+    "seasonRaceCalendarTitle": "Stagione {{season}} · Calendario gare giovanili",
+    "seasonRaceCalendarHelp": "Ogni mese ha una scheda con tutte le gare giovanili programmate.",
+    "finished": "Conclusa",
+    "active": "In corso",
+    "scheduled": "Programmata",
+    "openRace": "Apri gara",
+    "applyRace": "Candidati alla gara",
+    "withdrawApplication": "Ritira candidatura",
+    "noVisibleRaces": "Nessuna gara visibile",
+    "multiDay": "Più giorni",
+    "entryFee": "Quota di iscrizione",
+    "prizeFundCompact": "Montepremi"
   },
   "rankings": {
     "title": "Ranking giovanili",
@@ -578,7 +607,9 @@
     "systemContinentalHelp": "Le vincitrici dei gruppi salgono direttamente. Le seconde e le terze disputano un playoff a quattro; le migliori due salgono nella Classe mondiale.",
     "systemRegionalTitle": "Regionale · 12 divisioni",
     "systemRegionalHelp": "La competizione giovanile regionale comprende 12 divisioni geografiche: sei confluiscono nel Continentale Ovest e sei nell'Est. Ogni campione sale e sei squadre retrocedono per gruppo continentale.",
-    "systemScoringHelp": "Le classifiche a squadre usano i punti gara. Quelle dei corridori usano i punti della generale ponderati: Regionale ×1,0, Continentale ×1,5 e Mondiale ×2,5. Sprint, montagna e cronometro sono conteggiati separatamente."
+    "systemScoringHelp": "Le classifiche a squadre usano i punti gara. Quelle dei corridori usano i punti della generale ponderati: Regionale ×1,0, Continentale ×1,5 e Mondiale ×2,5. Sprint, montagna e cronometro sono conteggiati separatamente.",
+    "competitionSystem": "Sistema di competizioni giovanili",
+    "logo": "Logo"
   },
   "reports": {
     "title": "Report gare giovanili",
@@ -637,7 +668,9 @@
     "race": "Gara",
     "reportClass": "Tipo di rapporto",
     "details": "Dettagli",
-    "reportSummary": "Punti regionali +{{regional}} · Punti mondiali +{{world}} · Fatica +{{fatigue}} · Eventi sviluppo {{events}}"
+    "reportSummary": "Punti regionali +{{regional}} · Punti mondiali +{{world}} · Fatica +{{fatigue}} · Eventi sviluppo {{events}}",
+    "freeAgentAcademyAlumni": "Svincolato · ex corridore dell'Accademia",
+    "reportRange": "rapporti {{from}}–{{to}} di {{total}}"
   },
   "profile": {
     "loading": "Caricamento profilo giovane…",
