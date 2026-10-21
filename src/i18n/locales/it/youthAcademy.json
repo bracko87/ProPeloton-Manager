@@ -168,7 +168,12 @@
     "contract": "Contratto",
     "directorActiveBonus": "Fino al {{value}}% di sconto sull’attrezzatura Youth",
     "coachActiveBonus": "Punteggio sviluppo {{score}}: influenza progressione, forma e selezione",
-    "scoutActiveBonus": "Punteggio scout {{score}}: fino a {{reports}} rapporti per ricerca con maggiore precisione"
+    "scoutActiveBonus": "Punteggio scout {{score}}: fino a {{reports}} rapporti per ricerca con maggiore precisione",
+    "courseInProgress": "Corso di formazione in corso",
+    "onCourseUntil": "In formazione fino al {{date}}",
+    "courseRolePaused": "Il membro dello staff non è disponibile fino alla fine del corso.",
+    "roleBonusPaused": "Bonus ruolo sospeso",
+    "roleBonusPausedHelp": "Gli effetti del ruolo sono sospesi durante la formazione."
   },
   "budget": {
     "title": "Budget stagionale dell'accademia",
@@ -357,7 +362,11 @@
     "source": "Origine",
     "assessment": "Valutazione del talento",
     "weekReset": "Azzeramento settimanale",
-    "mondayReset": "Azzeramento del lunedì"
+    "mondayReset": "Azzeramento del lunedì",
+    "weeklyStipendHelp": "Sostegno settimanale al corridore e alla famiglia durante la permanenza.",
+    "accommodationHelp": "Sostegno settimanale per alloggio e trasferimento.",
+    "compensationOfferHelp": "Indennità una tantum pagata all'Accademia attuale dopo il trasferimento.",
+    "compensationOfferUnattachedHelp": "Nessuna indennità è dovuta per un corridore svincolato."
   },
   "settings": {
     "title": "Responsabilità",
@@ -394,7 +403,17 @@
     "confirmed": "Confermato",
     "responsiblePerson": "Responsabile",
     "confirming": "Conferma…",
-    "confirmResponsibility": "Conferma responsabilità"
+    "confirmResponsibility": "Conferma responsabilità",
+    "trainingResponsibility": "Piano di allenamento",
+    "trainingResponsibilityHelp": "Gestisce filosofia di allenamento e priorità di sviluppo dei giovani.",
+    "temporaryStaffCover": "Sostituzione temporanea dello staff attiva",
+    "coverEffectiveness": "{{value}}% qualità del lavoro",
+    "updatingCover": "Aggiornamento…",
+    "returnToManager": "Restituisci responsabilità al manager",
+    "managerTemporaryHandover": "Gestito temporaneamente dal manager",
+    "assignTemporaryCover": "Assegna temporaneamente un altro membro",
+    "noTemporaryCoverAvailable": "Nessun altro membro dell'Accademia è disponibile.",
+    "activeResponsibilityNow": "Responsabile attuale: {{person}}"
   },
   "placeholders": {},
   "errors": {
