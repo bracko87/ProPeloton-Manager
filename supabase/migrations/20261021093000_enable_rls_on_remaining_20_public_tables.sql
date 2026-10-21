@@ -61,7 +61,7 @@ using (exists (
     select 1
     from public.clubs c
     left join public.clubs parent on parent.id = c.parent_club_id
-    where c.id = race_eligibility_notification_state.club_id
+    where c.id = race_eligibility_notification_state.team_id
       and (
         c.owner_user_id = (select auth.uid())
         or parent.owner_user_id = (select auth.uid())
