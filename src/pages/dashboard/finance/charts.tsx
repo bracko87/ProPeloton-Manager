@@ -7,6 +7,7 @@
  */
 
 import React from 'react'
+import { useTranslation } from 'react-i18next'
 
 function formatCash(value: number): string {
   const amount = Math.round(Number(value) || 0)
@@ -25,8 +26,9 @@ export function MiniBars({
   points: { label: string; income: number; expenses: number }[]
   height?: number
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   if (!points.length) {
-    return <div className="text-sm text-gray-500">No data yet.</div>
+    return <div className="text-sm text-gray-500">{t('common.noData')}</div>
   }
 
   const maxVal = Math.max(1, ...points.map((p) => Math.max(p.income, p.expenses)))
@@ -51,8 +53,8 @@ export function MiniBars({
           })}
         </svg>
         <div className="mt-2 flex justify-between text-xs text-gray-500">
-          <span>Income (darker)</span>
-          <span>Expenses (lighter)</span>
+          <span>{t('overview.incomeDarker')}</span>
+          <span>{t('overview.expensesLighter')}</span>
         </div>
       </div>
     </div>
@@ -70,8 +72,9 @@ export function MiniLine({
   points: { label: string; value: number }[]
   height?: number
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   if (!points.length) {
-    return <div className="text-sm text-gray-500">No data yet.</div>
+    return <div className="text-sm text-gray-500">{t('common.noData')}</div>
   }
 
   const width = Math.max(1, points.length * 18)
@@ -108,7 +111,7 @@ export function MiniLine({
             <circle key={i} cx={c.x} cy={c.y} r={2} fill="currentColor" opacity="0.6" />
           ))}
         </svg>
-        <div className="mt-2 text-xs text-gray-500">Net trend</div>
+        <div className="mt-2 text-xs text-gray-500">{t('overview.netTrend')}</div>
       </div>
     </div>
   )
@@ -127,6 +130,7 @@ export function Donut({
   expenses: number
   size?: number
 }): JSX.Element {
+  const { t } = useTranslation('finance')
   const total = Math.max(0, income) + Math.max(0, expenses)
   const pct = total === 0 ? 0 : Math.round((income / total) * 100)
 
@@ -163,7 +167,7 @@ export function Donut({
             transform: 'translate(-50%, -50%)',
           }}
         >
-          <div className="text-xs text-gray-500">Income</div>
+          <div className="text-xs text-gray-500">{t('overview.income')}</div>
           <div className="text-sm font-semibold">{pct}%</div>
         </div>
       </div>
@@ -171,15 +175,15 @@ export function Donut({
       <div className="text-sm">
         <div className="flex items-center gap-2">
           <span className="inline-block w-3 h-3 rounded" style={{ background: '#16a34a' }} />
-          <span className="text-gray-700">Income:</span>
+          <span className="text-gray-700">{t('overview.income')}:</span>
           <span className="font-semibold">{formatCash(income)}</span>
         </div>
         <div className="flex items-center gap-2 mt-1">
           <span className="inline-block w-3 h-3 rounded" style={{ background: '#dc2626' }} />
-          <span className="text-gray-700">Expenses:</span>
+          <span className="text-gray-700">{t('overview.expenses')}:</span>
           <span className="font-semibold">{formatCash(expenses)}</span>
         </div>
-        <div className="mt-2 text-xs text-gray-500">Total: {formatCash(total)}</div>
+        <div className="mt-2 text-xs text-gray-500">{t('common.total')}: {formatCash(total)}</div>
       </div>
     </div>
   )
