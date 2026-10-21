@@ -7,6 +7,8 @@
 -- and functions with direct references to these tables are security-definer.
 -- Review & release via PR; NOT auto-applied on production by a Git push.
 begin;
+set local lock_timeout = '4s';
+set local statement_timeout = '45s';
 
 alter table public.admin_shadow_validation_runs_v1 enable row level security;
 alter table public.championship_calendar_draw_state_v1 enable row level security;
@@ -124,4 +126,48 @@ using (exists (
 
 -- Remaining 13 internal tables have NO SELECT/DML frontend policies.
 -- service_role and table-owning backend functions keep their bypass capabilities.
+-- Transactional release assertions: abort the entire migration on mismatch.
+do $rls_release_guard$
+declare
+  v_disabled integer;
+  v_definer_views integer;
+  v_policy_count integer;
+begin
+  select count(*) into v_disabled
+  from pg_class c
+  join pg_namespace n on n.oid = c.relnamespace
+  where n.nspname='public'
+    and c.relkind in ('r','p')
+    and not c.relrowsecurity;
+  if v_disabled <> 0 then
+    raise exception 'RLS release guard: % remaining unprotected public tables',v_disabled;
+  end if;
+
+  select count(*) into v_definer_views
+  from pg_class c
+  join pg_namespace n on n.oid=c.relnamespace
+  where n.nspname='public' and c.relkind='v'
+  and not coalesce(c.reloptions,array[]::text[]) @> array['security_invoker=true'];
+  if v_definer_views <> 45 then
+    raise exception 'View regression guard: definer-mode views are %, expected 45', v_definer_views;
+  end if;
+
+  select count(*) into v_policy_count
+  from pg_policies
+  where schemaname='public'
+    and policyname in (
+      'nations_competition_schedule_config_authenticated_read',
+      'youth_competition_transition_movements_v1_authenticated_read',
+      'youth_team_standing_history_v1_authenticated_read',
+      'race_eligibility_notification_state_own_club_read',
+      'team_policy_nonrecurring_charge_state_v1_own_club_read',
+      'team_policy_rider_effect_log_v1_own_club_read',
+      'national_association_renewal_coin_events_own_read'
+    );
+  if v_policy_count <> 7 then
+    raise exception 'Policy guard: found % expected 7',v_policy_count;
+  end if;
+end
+$rls_release_guard$;
+
 commit;
