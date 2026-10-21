@@ -118,7 +118,13 @@
     "infrastructureTtt": "Team Time Trial Center",
     "infrastructureTttEffect": "+10% U16 time-trial development and +5% team time-trial race development.",
     "infrastructureLevel": "Level {{level}}/{{max}}",
-    "notBuilt": "Not built"
+    "notBuilt": "Not built",
+    "completedRace": "Completed race",
+    "confirmedEntry": "Confirmed entry",
+    "raceDays": "days",
+    "enteredBy": "Entered by",
+    "lineup": "Lineup",
+    "rider": "Rider"
   },
   "roles": {
     "director": "Youth Academy Director",
@@ -343,7 +349,15 @@
       "teamwork": "Teamwork"
     },
     "weeklyResetTitle": "Weekly report reset",
-    "weeklyResetHelp": "All open scouting reports and recruitment work remain visible until Sunday. On Monday {{date}}, the reports reset and the first free search becomes available again. Riders who sign are immediately moved into the Youth Riders squad."
+    "weeklyResetHelp": "All open scouting reports and recruitment work remain visible until Sunday. On Monday {{date}}, the reports reset and the first free search becomes available again. Riders who sign are immediately moved into the Youth Riders squad.",
+    "ageValue": "Age {{age}}",
+    "age": "Age",
+    "country": "Country",
+    "riderRole": "Rider profile",
+    "source": "Source",
+    "assessment": "Talent assessment",
+    "weekReset": "Weekly reset",
+    "mondayReset": "Monday reset"
   },
   "settings": {
     "title": "Responsibilities",
@@ -465,7 +479,8 @@
     "pathwayUntil": "Pathway until {{date}}",
     "pathwayHelp": "This temporary pathway gives you 30 game days to move the rider into the Developing Team. If no Developing Team move is completed by then, the rider becomes a professional free agent.",
     "toDeveloping": "Move to Developing Team ({{slots}} free)",
-    "release": "Release to Free Agents"
+    "release": "Release to Free Agents",
+    "releaseToFreeAgents": "Release to Free Agents"
   },
   "calendar": {
     "title": "U16 race calendar",
@@ -546,7 +561,21 @@
     "classCounts": "World {{world}} · Continental {{continental}} · Regional {{regional}}",
     "browserHelp": "This browser shows the complete Youth race calendar for the selected month. Use My Academy opportunities to narrow it to invitations and your home Regional division.",
     "pastPrelaunch": "Past · pre-launch",
-    "prelaunchHelp": "This event is kept in the calendar for completeness. It was already in the past when the Youth competition system was launched, so no result was generated."
+    "prelaunchHelp": "This event is kept in the calendar for completeness. It was already in the past when the Youth competition system was launched, so no result was generated.",
+    "raceFilters": "Race filters",
+    "youthFilters": "Youth filters",
+    "seasonRaceCalendarTitle": "Season {{season}} Youth Race Calendar",
+    "seasonRaceCalendarHelp": "Each month has a tab containing all scheduled youth races.",
+    "finished": "Finished",
+    "active": "Active",
+    "scheduled": "Scheduled",
+    "openRace": "Open Race",
+    "applyRace": "Apply for Race",
+    "withdrawApplication": "Withdraw Application",
+    "noVisibleRaces": "No visible races",
+    "multiDay": "Multiple days",
+    "entryFee": "Entry fee",
+    "prizeFundCompact": "Prize fund"
   },
   "rankings": {
     "title": "Youth Rankings",
@@ -578,7 +607,9 @@
     "systemContinentalHelp": "Each group champion is promoted directly. Second and third place enter a four-team playoff; the best two also advance to World Class.",
     "systemRegionalTitle": "Regional · 12 divisions",
     "systemRegionalHelp": "Regional youth competition has 12 geographic divisions. Six feed Continental West and six Continental East. Each champion is promoted; six clubs per Continental group are relegated.",
-    "systemScoringHelp": "Team standings use race-result points. Rider rankings use General Classification points weighted Regional ×1.0, Continental ×1.5 and World ×2.5. Sprint, mountain and time-trial rankings are tracked separately."
+    "systemScoringHelp": "Team standings use race-result points. Rider rankings use General Classification points weighted Regional ×1.0, Continental ×1.5 and World ×2.5. Sprint, mountain and time-trial rankings are tracked separately.",
+    "competitionSystem": "Youth competition system",
+    "logo": "Logo"
   },
   "reports": {
     "title": "Youth Race Reports",
@@ -637,7 +668,9 @@
     "race": "Race",
     "reportClass": "Report type",
     "details": "Details",
-    "reportSummary": "Regional points +{{regional}} · World points +{{world}} · Fatigue +{{fatigue}} · Development events {{events}}"
+    "reportSummary": "Regional points +{{regional}} · World points +{{world}} · Fatigue +{{fatigue}} · Development events {{events}}",
+    "freeAgentAcademyAlumni": "Free agent · former Academy rider",
+    "reportRange": "Showing {{from}}–{{to}} of {{total}} reports"
   },
   "profile": {
     "loading": "Loading Youth Rider profile…",
