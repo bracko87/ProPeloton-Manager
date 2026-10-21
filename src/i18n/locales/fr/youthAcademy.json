@@ -158,7 +158,18 @@
     "transferAmount": "Montant",
     "transferring": "Transfert…",
     "transferFunds": "Transférer les fonds",
-    "transferHelp": "Les revenus des courses restent automatiquement dans l'Académie. Utilisez ce contrôle uniquement pour déplacer volontairement de l'argent entre l'équipe senior et l'Académie."
+    "transferHelp": "Les revenus des courses restent automatiquement dans l'Académie. Utilisez ce contrôle uniquement pour déplacer volontairement de l'argent entre l'équipe senior et l'Académie.",
+    "racePrizeIncome": "Revenus des primes de course",
+    "racePrizeIncomeHelp": "Primes remportées par l'Académie des jeunes dans les classements par équipes.",
+    "previousPage": "Précédent",
+    "nextPage": "Suivant",
+    "ledgerPage": "Page {{page}} sur {{total}}",
+    "ledgerRange": "Transactions {{from}} à {{to}} sur {{total}}",
+    "weeklyPayroll": "Paie hebdomadaire",
+    "weeklyPayrollDescription": "Indemnités hebdomadaires des coureurs et salaires du personnel de l'Académie",
+    "ledgerCategories": {
+      "weekly_payroll": "Paie hebdomadaire"
+    }
   },
   "scouting": {
     "title": "Portée du scouting jeunes",
@@ -504,7 +515,17 @@
     "selectDivision": "Choisir la division",
     "country": "Pays",
     "yourAcademy": "Votre Académie",
-    "riderRankingHelp": "Les classements coureurs sont séparés des classements de classe des Académies."
+    "riderRankingHelp": "Les classements coureurs sont séparés des classements de classe des Académies.",
+    "promotion": "Promotion",
+    "playoff": "Barrages",
+    "relegation": "Relégation",
+    "systemWorldTitle": "Classe mondiale · 16 équipes",
+    "systemWorldHelp": "Les quatre dernières équipes sont reléguées en fin de saison.",
+    "systemContinentalTitle": "Continental Ouest et Est · 20 équipes chacun",
+    "systemContinentalHelp": "Les champions de groupe montent directement. Les deuxièmes et troisièmes disputent des barrages à quatre équipes, dont les deux meilleures montent aussi en Classe mondiale.",
+    "systemRegionalTitle": "Régional · 12 divisions",
+    "systemRegionalHelp": "La compétition régionale des jeunes compte 12 divisions géographiques : six vers l'Ouest continental et six vers l'Est. Chaque champion monte et six équipes descendent de chaque groupe continental.",
+    "systemScoringHelp": "Le classement des équipes repose sur les points des courses. Celui des coureurs utilise les points du classement général pondérés : Régional ×1,0, Continental ×1,5 et Monde ×2,5. Sprint, montagne et contre-la-montre sont suivis séparément."
   },
   "reports": {
     "title": "Rapports de course jeunes",
