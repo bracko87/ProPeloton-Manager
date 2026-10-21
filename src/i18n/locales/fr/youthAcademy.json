@@ -118,7 +118,13 @@
     "infrastructureTtt": "Centre du contre-la-montre par équipes",
     "infrastructureTttEffect": "+10 % de progression CLM U16 et +5 % en contre-la-montre par équipes.",
     "infrastructureLevel": "Niveau {{level}}/{{max}}",
-    "notBuilt": "Non construit"
+    "notBuilt": "Non construit",
+    "completedRace": "Course terminée",
+    "confirmedEntry": "Inscription confirmée",
+    "raceDays": "jours",
+    "enteredBy": "Inscrit par",
+    "lineup": "Composition",
+    "rider": "Coureur"
   },
   "roles": {
     "director": "Directeur de l'Académie Jeunes",
@@ -343,7 +349,15 @@
       "teamwork": "Travail d'équipe"
     },
     "weeklyResetTitle": "Réinitialisation hebdomadaire des rapports",
-    "weeklyResetHelp": "Les rapports et négociations en cours restent visibles jusqu'à dimanche. Le lundi {{date}}, la liste est réinitialisée et la première recherche gratuite est disponible. Les coureurs recrutés rejoignent aussitôt l'effectif des jeunes."
+    "weeklyResetHelp": "Les rapports et négociations en cours restent visibles jusqu'à dimanche. Le lundi {{date}}, la liste est réinitialisée et la première recherche gratuite est disponible. Les coureurs recrutés rejoignent aussitôt l'effectif des jeunes.",
+    "ageValue": "{{age}} ans",
+    "age": "Âge",
+    "country": "Pays",
+    "riderRole": "Profil du coureur",
+    "source": "Origine",
+    "assessment": "Évaluation du talent",
+    "weekReset": "Réinitialisation hebdomadaire",
+    "mondayReset": "Réinitialisation le lundi"
   },
   "settings": {
     "title": "Responsabilités",
@@ -465,7 +479,8 @@
     "pathwayUntil": "Parcours jusqu'au {{date}}",
     "pathwayHelp": "Ce parcours temporaire offre 30 jours de jeu pour intégrer le coureur à l'équipe de développement. Sinon, il devient coureur professionnel libre.",
     "toDeveloping": "Vers l'équipe de développement ({{slots}} places)",
-    "release": "Libérer comme agent libre"
+    "release": "Libérer comme agent libre",
+    "releaseToFreeAgents": "Libérer comme agent libre"
   },
   "calendar": {
     "title": "Calendrier U16",
@@ -546,7 +561,21 @@
     "classCounts": "Mondiale {{world}} · Continentale {{continental}} · Régionale {{regional}}",
     "browserHelp": "Affiche le calendrier jeunes complet du mois. Filtrez sur les opportunités de votre Académie pour les invitations et votre division régionale.",
     "pastPrelaunch": "Passée · pré-lancement",
-    "prelaunchHelp": "Cette épreuve reste visible pour compléter le calendrier. Elle était déjà passée au lancement du système jeunes, donc aucun résultat n’a été généré."
+    "prelaunchHelp": "Cette épreuve reste visible pour compléter le calendrier. Elle était déjà passée au lancement du système jeunes, donc aucun résultat n’a été généré.",
+    "raceFilters": "Filtres des courses",
+    "youthFilters": "Filtres jeunes",
+    "seasonRaceCalendarTitle": "Saison {{season}} · Calendrier des courses jeunes",
+    "seasonRaceCalendarHelp": "Chaque mois dispose d'un onglet avec toutes les courses jeunes programmées.",
+    "finished": "Terminée",
+    "active": "En cours",
+    "scheduled": "Programmée",
+    "openRace": "Ouvrir la course",
+    "applyRace": "Candidater à la course",
+    "withdrawApplication": "Retirer la candidature",
+    "noVisibleRaces": "Aucune course visible",
+    "multiDay": "Plusieurs jours",
+    "entryFee": "Frais d'inscription",
+    "prizeFundCompact": "Dotation"
   },
   "rankings": {
     "title": "Classements jeunes",
@@ -578,7 +607,9 @@
     "systemContinentalHelp": "Les champions de groupe montent directement. Les deuxièmes et troisièmes disputent des barrages à quatre équipes, dont les deux meilleures montent aussi en Classe mondiale.",
     "systemRegionalTitle": "Régional · 12 divisions",
     "systemRegionalHelp": "La compétition régionale des jeunes compte 12 divisions géographiques : six vers l'Ouest continental et six vers l'Est. Chaque champion monte et six équipes descendent de chaque groupe continental.",
-    "systemScoringHelp": "Le classement des équipes repose sur les points des courses. Celui des coureurs utilise les points du classement général pondérés : Régional ×1,0, Continental ×1,5 et Monde ×2,5. Sprint, montagne et contre-la-montre sont suivis séparément."
+    "systemScoringHelp": "Le classement des équipes repose sur les points des courses. Celui des coureurs utilise les points du classement général pondérés : Régional ×1,0, Continental ×1,5 et Monde ×2,5. Sprint, montagne et contre-la-montre sont suivis séparément.",
+    "competitionSystem": "Système des compétitions jeunes",
+    "logo": "Logo"
   },
   "reports": {
     "title": "Rapports de course jeunes",
@@ -637,7 +668,9 @@
     "race": "Course",
     "reportClass": "Type de rapport",
     "details": "Détails",
-    "reportSummary": "Points régionaux +{{regional}} · Points mondiaux +{{world}} · Fatigue +{{fatigue}} · Événements de progression {{events}}"
+    "reportSummary": "Points régionaux +{{regional}} · Points mondiaux +{{world}} · Fatigue +{{fatigue}} · Événements de progression {{events}}",
+    "freeAgentAcademyAlumni": "Agent libre · ancien coureur de l'Académie",
+    "reportRange": "rapports {{from}} à {{to}} sur {{total}}"
   },
   "profile": {
     "loading": "Chargement du profil jeune…",
