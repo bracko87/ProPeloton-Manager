@@ -6695,7 +6695,7 @@ export default function YouthAcademyPage(): JSX.Element {
                     </table>
                   </div>
                   <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
-                    <span>{t('budget.ledgerRange', { from: (page - 1) * 10 + 1, to: Math.min(page * 10, reports.length), total: reports.length })}</span>
+                    <span>{t('history.reportRange', { from: (page - 1) * 10 + 1, to: Math.min(page * 10, reports.length), total: reports.length })}</span>
                     <div className="flex items-center gap-3">
                       <button type="button" disabled={page === 1} onClick={() => setHistoryReportPage(page - 1)} className="rounded border border-slate-200 px-3 py-1.5 disabled:opacity-40">{t('budget.previousPage')}</button>
                       <span>{t('budget.ledgerPage', { page, total: totalPages })}</span>
