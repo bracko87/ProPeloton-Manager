@@ -625,5 +625,27 @@
     "renewing": "Renouvellement…",
     "getCoins": "Acheter des coins",
     "readOnly": "L'Académie Jeunes doit être renouvelée pour la saison actuelle avant toute action de gestion."
+  },
+  "raceDetail": {
+    "overview": "Aperçu",
+    "teamsCount": "Équipes ({{count}})",
+    "mySquad": "Mon effectif",
+    "results": "Résultats",
+    "backToCalendar": "← Retour au calendrier des jeunes",
+    "raceInformation": "Informations sur la course",
+    "participantsResults": "Participants et résultats",
+    "hide": "Masquer",
+    "show": "Afficher",
+    "teamsRiders": "Équipes et coureurs",
+    "raceClassifications": "Classements de la course",
+    "currentStandings": "Classement actuel",
+    "generalClassification": "Classement général",
+    "sprintPoints": "Points sprint",
+    "mountainPoints": "Points montagne",
+    "fullRaceStanding": "Classement complet de la course",
+    "stageResults": "Résultats d'étape – Étape {{stage}}",
+    "stage": "Étape {{number}}",
+    "stageResult": "Résultat d'étape",
+    "fullStageStanding": "Classement complet de l'étape"
   }
 }
