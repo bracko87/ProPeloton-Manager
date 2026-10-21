@@ -625,5 +625,27 @@
     "renewing": "Renewing…",
     "getCoins": "Get coins",
     "readOnly": "Youth Academy access must be renewed for the current season before management actions are available."
+  },
+  "raceDetail": {
+    "overview": "Overview",
+    "teamsCount": "Teams ({{count}})",
+    "mySquad": "My Squad",
+    "results": "Results",
+    "backToCalendar": "← Back to Youth Calendar",
+    "raceInformation": "Race information",
+    "participantsResults": "Participants and results",
+    "hide": "Hide",
+    "show": "Show",
+    "teamsRiders": "Teams & riders",
+    "raceClassifications": "Race classifications",
+    "currentStandings": "Current tour standings",
+    "generalClassification": "General classification",
+    "sprintPoints": "Sprint points",
+    "mountainPoints": "Mountain points",
+    "fullRaceStanding": "Full race standing",
+    "stageResults": "Stage results – Stage {{stage}}",
+    "stage": "Stage {{number}}",
+    "stageResult": "Stage result",
+    "fullStageStanding": "Full stage standing"
   }
 }
