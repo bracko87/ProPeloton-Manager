@@ -75,7 +75,20 @@
     "latestResult": "Letztes Ergebnis",
     "noPreviousRace": "Noch kein abgeschlossenes Akademie-Rennen",
     "noUpcomingRace": "Noch kein kommendes Akademie-Rennen ausgewählt",
-    "noResult": "Noch kein Jugend-Rennergebnis"
+    "noResult": "Noch kein Jugend-Rennergebnis",
+    "staffLevels": {
+      "poor": "Schwach",
+      "basic": "Einfach",
+      "competent": "Kompetent",
+      "strong": "Stark",
+      "elite": "Elite",
+      "world_class": "Weltklasse"
+    },
+    "workloads": {
+      "low": "Gering",
+      "moderate": "Mittel",
+      "high": "Hoch"
+    }
   },
   "roles": {
     "director": "Leiter der Jugendakademie",
@@ -290,7 +303,17 @@
     "runCoinSearch": "Zusatzsuche starten · {{cost}} Coins",
     "weeklyLimitReached": "Wochenlimit erreicht",
     "lastSearch": "Letzte Suche: Lauf {{run}} · {{reports}} Berichte erstellt",
-    "maxReportsPerWeek": "Max. Berichte / Woche"
+    "maxReportsPerWeek": "Max. Berichte / Woche",
+    "focus": {
+      "balanced": "Ausgewogen",
+      "sprint": "Sprint",
+      "climbing": "Klettern",
+      "time_trial": "Zeitfahren",
+      "endurance": "Ausdauer",
+      "teamwork": "Teamarbeit"
+    },
+    "weeklyResetTitle": "Wöchentliche Berichtsrücksetzung",
+    "weeklyResetHelp": "Alle offenen Scoutberichte und Verhandlungen bleiben bis Sonntag sichtbar. Am Montag {{date}} wird die Liste zurückgesetzt und die erste kostenlose Suche ist wieder verfügbar. Verpflichtete Fahrer erscheinen sofort im Jugendkader."
   },
   "settings": {
     "title": "Verantwortlichkeiten",
@@ -408,11 +431,11 @@
     "pendingCount": "{{count}} offen",
     "none": "Aktuell benötigt kein Jugendfahrer eine Abschlussentscheidung.",
     "decisionHelp": "Mit 16 Jahren wählst du den nächsten Entwicklungsschritt. Ein direkter Sprung in die erste Mannschaft ist nicht der normale Weg.",
-    "pathway": "30-Tage-Jugendabsolventen-Pfad",
+    "pathway": "30-tägiger Nachwuchs-Absolventenpfad",
     "pathwayUntil": "Pfad bis {{date}}",
     "pathwayHelp": "Dieser Übergang gibt dir 30 Spieltage Zeit, den Fahrer ins Entwicklungsteam zu übernehmen. Erfolgt das nicht, wird er Profi-Free-Agent.",
     "toDeveloping": "Ins Entwicklungsteam ({{slots}} frei)",
-    "release": "Als Profi-Free-Agent freigeben"
+    "release": "An freie Fahrer entlassen"
   },
   "calendar": {
     "title": "U16-Rennkalender",
@@ -579,7 +602,12 @@
     "focus": "Fokus",
     "workload": "Belastung",
     "change": "Entwicklungsänderung",
-    "readinessFatigue": "Frische / Ermüdung"
+    "readinessFatigue": "Frische / Ermüdung",
+    "date": "Datum",
+    "race": "Rennen",
+    "reportClass": "Berichtstyp",
+    "details": "Details",
+    "reportSummary": "Regionalpunkte +{{regional}} · Weltpunkte +{{world}} · Ermüdung +{{fatigue}} · Entwicklungsereignisse {{events}}"
   },
   "profile": {
     "loading": "Jugendfahrer-Profil wird geladen…",
