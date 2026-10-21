@@ -246,7 +246,10 @@
     "raceLinked": "Ciljevi vezani za trku",
     "goal": "Cilj",
     "openRace": "Otvori trku",
-    "openSponsorDetail": "Otvori detalje sponzora"
+    "openSponsorDetail": "Otvori detalje sponzora",
+    "checkDate": "datum provere",
+    "seasonNumber": "Sezona {{season}}",
+    "finalClassification": "Pojaviti se u konačnom plasmanu"
   },
   "development": {
     "pendingProgress": "Razvojni poeni na čekanju",

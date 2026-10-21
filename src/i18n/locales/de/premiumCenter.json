@@ -246,7 +246,10 @@
     "raceLinked": "Rennbezogene Ziele",
     "goal": "Ziel",
     "openRace": "Rennen öffnen",
-    "openSponsorDetail": "Sponsorendetails öffnen"
+    "openSponsorDetail": "Sponsorendetails öffnen",
+    "checkDate": "Prüfdatum",
+    "seasonNumber": "Saison {{season}}",
+    "finalClassification": "In der Endwertung erscheinen"
   },
   "development": {
     "pendingProgress": "Ausstehender Fähigkeitenfortschritt",
