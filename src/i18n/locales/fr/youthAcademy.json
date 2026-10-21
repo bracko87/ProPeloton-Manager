@@ -743,7 +743,8 @@
     "details": "Détails",
     "reportSummary": "Points régionaux +{{regional}} · Points mondiaux +{{world}} · Fatigue +{{fatigue}} · Événements de progression {{events}}",
     "freeAgentAcademyAlumni": "Agent libre · ancien coureur de l'Académie",
-    "reportRange": "rapports {{from}} à {{to}} sur {{total}}"
+    "reportRange": "rapports {{from}} à {{to}} sur {{total}}",
+    "reportOutcome": "Meilleur classement {{best}} · Podiums {{podiums}} · Abandons {{dnf}} · Non-partants {{dns}}"
   },
   "profile": {
     "loading": "Chargement du profil jeune…",
