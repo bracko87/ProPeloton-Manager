@@ -168,7 +168,12 @@
     "contract": "Контракт",
     "directorActiveBonus": "До {{value}}% скидки на юниорское оборудование",
     "coachActiveBonus": "Развитие {{score}}: влияет на прогресс, готовность и выбор",
-    "scoutActiveBonus": "Скаут {{score}}: до {{reports}} отчетов за поиск с большей точностью"
+    "scoutActiveBonus": "Скаут {{score}}: до {{reports}} отчетов за поиск с большей точностью",
+    "courseInProgress": "Обучение продолжается",
+    "onCourseUntil": "На обучении до {{date}}",
+    "courseRolePaused": "Сотрудник недоступен до окончания курса.",
+    "roleBonusPaused": "Бонус роли приостановлен",
+    "roleBonusPausedHelp": "Эффекты роли не действуют во время обучения."
   },
   "budget": {
     "title": "Сезонный бюджет академии",
@@ -357,7 +362,11 @@
     "source": "Источник",
     "assessment": "Оценка таланта",
     "weekReset": "Еженедельный сброс",
-    "mondayReset": "Сброс в понедельник"
+    "mondayReset": "Сброс в понедельник",
+    "weeklyStipendHelp": "Еженедельная поддержка гонщика и семьи во время пребывания в Академии.",
+    "accommodationHelp": "Еженедельная поддержка жилья и переезда.",
+    "compensationOfferHelp": "Разовая компенсация прежней Академии после перехода.",
+    "compensationOfferUnattachedHelp": "За свободного гонщика компенсация другой Академии не требуется."
   },
   "settings": {
     "title": "Ответственность",
@@ -394,7 +403,17 @@
     "confirmed": "Подтверждено",
     "responsiblePerson": "Ответственный",
     "confirming": "Подтверждение…",
-    "confirmResponsibility": "Подтвердить ответственность"
+    "confirmResponsibility": "Подтвердить ответственность",
+    "trainingResponsibility": "План тренировок",
+    "trainingResponsibilityHelp": "Управляет философией тренировок и направлением развития молодёжи.",
+    "temporaryStaffCover": "Временная замена сотрудника активна",
+    "coverEffectiveness": "{{value}}% качества работы",
+    "updatingCover": "Обновление…",
+    "returnToManager": "Вернуть обязанности менеджеру",
+    "managerTemporaryHandover": "Временно выполняет менеджер",
+    "assignTemporaryCover": "Временно назначить другого сотрудника",
+    "noTemporaryCoverAvailable": "Других доступных сотрудников Академии сейчас нет.",
+    "activeResponsibilityNow": "Сейчас отвечает: {{person}}"
   },
   "placeholders": {},
   "errors": {
