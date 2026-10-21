@@ -743,7 +743,8 @@
     "details": "Details",
     "reportSummary": "Regional points +{{regional}} · World points +{{world}} · Fatigue +{{fatigue}} · Development events {{events}}",
     "freeAgentAcademyAlumni": "Free agent · former Academy rider",
-    "reportRange": "Showing {{from}}–{{to}} of {{total}} reports"
+    "reportRange": "Showing {{from}}–{{to}} of {{total}} reports",
+    "reportOutcome": "Best finish {{best}} · Podiums {{podiums}} · DNF {{dnf}} · DNS {{dns}}"
   },
   "profile": {
     "loading": "Loading Youth Rider profile…",
