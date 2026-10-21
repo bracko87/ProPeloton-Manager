@@ -873,7 +873,42 @@
     "noSquadSelected": "Aucun effectif de course jeune sélectionné.",
     "coachSelectsSquad": "L'entraîneur U16 choisit l'effectif.",
     "teamPrizes": "Classement par équipes et primes",
-    "close": "Fermer"
+    "close": "Fermer",
+    "loadingRace": "Chargement de la course jeunes…",
+    "lineupWarningTitle": "Effectif à vérifier : {{count}} coureurs non admissibles",
+    "eligibilityRules": "Seuls les coureurs de 12 à 15 ans peuvent prendre le départ. Ceux qui atteignent 16 ans ou quittent l'Académie perdent leur admissibilité.",
+    "managerReplaceHelp": " Remplacez ces coureurs et enregistrez l'effectif.",
+    "coachReplaceHelp": " L'entraîneur U16 tentera de les remplacer avant le départ.",
+    "reviewSquad": "Vérifier mon effectif",
+    "perStage": " / étape",
+    "recordedStarters": "{{count}} partants enregistrés",
+    "riderCount": "{{count}} coureurs",
+    "terrain": {
+      "flat": "Plat",
+      "hilly": "Vallonné",
+      "mountain": "Montagne",
+      "time_trial": "Contre-la-montre",
+      "mixed": "Mixte",
+      "rolling": "Ondulé"
+    },
+    "status": {
+      "finished": "Terminée",
+      "active": "En cours",
+      "scheduled": "Programmée",
+      "completed": "Terminée",
+      "entered": "Inscrite",
+      "pending": "En attente",
+      "withdrawn": "Retirée"
+    },
+    "entryStatus": {
+      "finished": "Terminée",
+      "active": "En cours",
+      "scheduled": "Programmée",
+      "completed": "Terminée",
+      "entered": "Inscrite",
+      "pending": "En attente",
+      "withdrawn": "Retirée"
+    }
   },
   "season": "Saison"
 }
