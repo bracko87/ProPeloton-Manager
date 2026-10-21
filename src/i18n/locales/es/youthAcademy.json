@@ -75,7 +75,20 @@
     "latestResult": "Último resultado",
     "noPreviousRace": "Aún no hay una carrera de Academia completada",
     "noUpcomingRace": "No hay una próxima carrera de Academia seleccionada",
-    "noResult": "Aún no hay resultado juvenil"
+    "noResult": "Aún no hay resultado juvenil",
+    "staffLevels": {
+      "poor": "Débil",
+      "basic": "Básico",
+      "competent": "Competente",
+      "strong": "Fuerte",
+      "elite": "Élite",
+      "world_class": "Clase mundial"
+    },
+    "workloads": {
+      "low": "Baja",
+      "moderate": "Media",
+      "high": "Alta"
+    }
   },
   "roles": {
     "director": "Director de la Academia Juvenil",
@@ -290,7 +303,17 @@
     "runCoinSearch": "Ejecutar búsqueda extra · {{cost}} Coins",
     "weeklyLimitReached": "Límite semanal alcanzado",
     "lastSearch": "Última búsqueda: ejecución {{run}} · {{reports}} informes",
-    "maxReportsPerWeek": "Máx. informes / semana"
+    "maxReportsPerWeek": "Máx. informes / semana",
+    "focus": {
+      "balanced": "Equilibrado",
+      "sprint": "Esprint",
+      "climbing": "Escalada",
+      "time_trial": "Contrarreloj",
+      "endurance": "Resistencia",
+      "teamwork": "Trabajo en equipo"
+    },
+    "weeklyResetTitle": "Reinicio semanal de informes",
+    "weeklyResetHelp": "Todos los informes de ojeadores y negociaciones abiertos seguirán visibles hasta el domingo. El lunes {{date}} se reinicia la lista y vuelve la primera búsqueda gratuita. Los corredores fichados pasan inmediatamente a la plantilla juvenil."
   },
   "settings": {
     "title": "Responsabilidades",
@@ -408,11 +431,11 @@
     "pendingCount": "{{count}} pendiente(s)",
     "none": "Ningún ciclista juvenil necesita ahora una decisión de graduación.",
     "decisionHelp": "A los 16 años, elige el siguiente paso. El ascenso directo al primer equipo no es la vía normal.",
-    "pathway": "Ruta temporal de Graduado Juvenil de 30 días",
+    "pathway": "Programa de graduado de 30 días",
     "pathwayUntil": "Ruta hasta {{date}}",
     "pathwayHelp": "Esta ruta temporal da 30 días de juego para mover al ciclista al equipo de desarrollo. Si no se completa, pasa a ser agente libre profesional.",
     "toDeveloping": "Mover al equipo de desarrollo ({{slots}} libres)",
-    "release": "Liberar como agente libre profesional"
+    "release": "Liberar como agente libre"
   },
   "calendar": {
     "title": "Calendario U16",
@@ -579,7 +602,12 @@
     "focus": "Enfoque",
     "workload": "Carga",
     "change": "Cambio de desarrollo",
-    "readinessFatigue": "Preparación / fatiga"
+    "readinessFatigue": "Preparación / fatiga",
+    "date": "Fecha",
+    "race": "Carrera",
+    "reportClass": "Tipo de informe",
+    "details": "Detalles",
+    "reportSummary": "Puntos regionales +{{regional}} · Puntos mundiales +{{world}} · Fatiga +{{fatigue}} · Eventos de desarrollo {{events}}"
   },
   "profile": {
     "loading": "Cargando perfil juvenil…",
