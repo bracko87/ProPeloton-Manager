@@ -207,7 +207,11 @@
     "netFormula": "prihodi - poslovni rashodi",
     "netTrend": "Trend neto poslovanja",
     "hoverBar": "Prijeđite pokazivačem preko stupca za detalje.",
-    "hoverDot": "Prijeđite pokazivačem preko točke za detalje."
+    "hoverDot": "Prijeđite pokazivačem preko točke za detalje.",
+    "incomeDarker": "Prihodi (tamnije)",
+    "expensesLighter": "Rashodi (svjetlije)",
+    "incomeIndex": "Prihod {{number}}",
+    "costIndex": "Trošak {{number}}"
   },
   "sponsors": {
     "mainSponsor": "Glavni sponzor",
@@ -367,7 +371,8 @@
     "previewSportingResultsTitle": "Sportski rezultati",
     "previewSportingResultsDescription": "Bonus novac je vezan za rezultate kao što su pobjede, postoljei, top-5, top-10 ili ciljevi u generalnom plasmanu.",
     "previewCheckedAfterRacesTitle": "Provjera nakon utrka",
-    "previewCheckedAfterRacesDescription": "Ciljevi se provjeravaju nakon konačnog rezultata ciljane utrke ili etape, a bonus se zatim isplaćuje kroz financije."
+    "previewCheckedAfterRacesDescription": "Ciljevi se provjeravaju nakon konačnog rezultata ciljane utrke ili etape, a bonus se zatim isplaćuje kroz financije.",
+    "finalClassification": "Pojavljivanje u konačnom poretku"
   },
   "transactions": {
     "title": "Transakcije",

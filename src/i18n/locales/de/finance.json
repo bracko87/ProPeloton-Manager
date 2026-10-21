@@ -207,7 +207,11 @@
     "netFormula": "Erträge - Betriebsaufwendungen",
     "netTrend": "Nettobetriebsentwicklung",
     "hoverBar": "Bewegen Sie den Mauszeiger über einen Balken, um Details anzuzeigen.",
-    "hoverDot": "Ich will Details sehen."
+    "hoverDot": "Ich will Details sehen.",
+    "incomeDarker": "Einnahmen (dunkler)",
+    "expensesLighter": "Ausgaben (heller)",
+    "incomeIndex": "Einnahme {{number}}",
+    "costIndex": "Ausgabe {{number}}"
   },
   "sponsors": {
     "mainSponsor": "Hauptsponsor",
@@ -367,7 +371,8 @@
     "previewSportingResultsTitle": "Sportliche Ergebnisse",
     "previewSportingResultsDescription": "Bonus Geld ist gebunden an Ergebnisse wie Siege, Podiumsplätze, Top-5-Finishes, Top-10-Finishes, oder GC Ziele.",
     "previewCheckedAfterRacesTitle": "Nach Rennen überprüft",
-    "previewCheckedAfterRacesDescription": "Die Ziele werden nach Abschluss des Zielrennen oder des Etappenersiegels bewertet und dann werden die Boni durch Finanzierung bezahlt."
+    "previewCheckedAfterRacesDescription": "Die Ziele werden nach Abschluss des Zielrennen oder des Etappenersiegels bewertet und dann werden die Boni durch Finanzierung bezahlt.",
+    "finalClassification": "In der Endwertung erscheinen"
   },
   "transactions": {
     "title": "Transaktionen",

@@ -207,7 +207,11 @@
     "netFormula": "Entrate - Spese di funzionamento",
     "netTrend": "Evoluzione netta dell'attività operativa",
     "hoverBar": "Passa un bar per vedere i dettagli.",
-    "hoverDot": "Spostare un punto per vedere i dettagli."
+    "hoverDot": "Spostare un punto per vedere i dettagli.",
+    "incomeDarker": "Entrate (più scuro)",
+    "expensesLighter": "Spese (più chiaro)",
+    "incomeIndex": "Entrata {{number}}",
+    "costIndex": "Spesa {{number}}"
   },
   "sponsors": {
     "mainSponsor": "Sponsor principale",
@@ -367,7 +371,8 @@
     "previewSportingResultsTitle": "Risultati sportivi",
     "previewSportingResultsDescription": "Il denaro bonus è legato a risultati come vittorie, podi, top-5 finiture, top-10 finiture, o GC obiettivi.",
     "previewCheckedAfterRacesTitle": "Controllato dopo le gare",
-    "previewCheckedAfterRacesDescription": "Gli obiettivi sono valutati dopo che il risultato della gara o stadio obiettivo è finalizzato e i bonus vengono poi pagati attraverso la finanza."
+    "previewCheckedAfterRacesDescription": "Gli obiettivi sono valutati dopo che il risultato della gara o stadio obiettivo è finalizzato e i bonus vengono poi pagati attraverso la finanza.",
+    "finalClassification": "Comparire nella classifica finale"
   },
   "transactions": {
     "title": "Operazioni",
