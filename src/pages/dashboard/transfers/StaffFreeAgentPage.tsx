@@ -643,6 +643,17 @@ function StaffQualityBoxPanel({ qualityBox }: { qualityBox: StaffQualityBox }) {
   )
 }
 
+function localizeStaffSpecialization(value: string, t: (key: string) => string): string {
+  const normalized = value.trim().toLowerCase().replace(/[\s-]+/g, '_')
+  const keys: Record<string, string> = {
+    potential_assessment: 'potentialAssessment',
+    youth_development: 'youthDevelopment',
+    local_prospects: 'localProspects',
+  }
+  const key = keys[normalized]
+  return key ? t(`staffSpecializations.${key}`) : value
+}
+
 function getCandidateStats(candidate: StaffCandidateRow, t: (key: string) => string) {
   if (candidate.role_type === 'head_coach') {
     return [
@@ -1024,7 +1035,7 @@ export default function StaffFreeAgentPage({
                         <span>
                           {roleLabel(candidate.role_type, t)}
                           {candidate.specialization
-                            ? ` • ${candidate.specialization}`
+                            ? ` • ${localizeStaffSpecialization(candidate.specialization, t)}`
                             : ''}
                         </span>
 
@@ -1175,7 +1186,7 @@ export default function StaffFreeAgentPage({
                   <div className="text-sm text-gray-500">
                     {roleLabel(selectedCandidate.role_type, t)}
                     {selectedCandidate.specialization
-                      ? ` • ${selectedCandidate.specialization}`
+                      ? ` • ${localizeStaffSpecialization(selectedCandidate.specialization, t)}`
                       : ''}
                   </div>
                 </div>

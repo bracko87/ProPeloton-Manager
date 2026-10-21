@@ -82,7 +82,7 @@ export default function TransferNegotiationIntelligence({
   feeScore?: number | null
   tierScore?: number | null
 }): JSX.Element {
-  const { t } = useTranslation('transfers')
+  const { t, i18n } = useTranslation('transfers')
   const [access, setAccess] = useState<ReportAccessPayload | null>(null)
   const [comparison, setComparison] = useState<ComparisonPayload | null>(null)
   const [loading, setLoading] = useState(true)
@@ -238,7 +238,11 @@ export default function TransferNegotiationIntelligence({
               </div>
               <div className="mt-2 space-y-1.5 text-xs text-slate-600">
                 <div>
-                  {t('negotiationIntel.role')}: <span className="font-semibold">{riderRole || t('common.unknown')}</span>
+                  {t('negotiationIntel.role')}: <span className="font-semibold">{riderRole
+                      ? i18n.exists(`premiumCenter:values.${riderRole.toLowerCase().trim().replace(/[\s-]+/g, '_')}`)
+                        ? i18n.t(`premiumCenter:values.${riderRole.toLowerCase().trim().replace(/[\s-]+/g, '_')}`)
+                        : riderRole
+                      : t('common.unknown')}</span>
                 </div>
                 <div>
                   {t('negotiationIntel.existingRiders')}:{' '}
