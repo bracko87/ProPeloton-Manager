@@ -743,7 +743,8 @@
     "details": "Dettagli",
     "reportSummary": "Punti regionali +{{regional}} · Punti mondiali +{{world}} · Fatica +{{fatigue}} · Eventi sviluppo {{events}}",
     "freeAgentAcademyAlumni": "Svincolato · ex corridore dell'Accademia",
-    "reportRange": "rapporti {{from}}–{{to}} di {{total}}"
+    "reportRange": "rapporti {{from}}–{{to}} di {{total}}",
+    "reportOutcome": "Miglior piazzamento {{best}} · Podi {{podiums}} · Ritiri {{dnf}} · Non partiti {{dns}}"
   },
   "profile": {
     "loading": "Caricamento profilo giovane…",
