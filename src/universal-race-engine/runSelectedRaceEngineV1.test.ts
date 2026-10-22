@@ -303,9 +303,11 @@ describe('isolated experimental mountain executable', () => {
 
   it('preserves the full baseline result for every unapproved mountain stage', () => {
     const pilotShape = syntheticMountainPilotInput()
+    const nonpilotStageId = 'not-a-pilot-stage'
     const nonpilot = {
       ...pilotShape,
-      stage: { ...pilotShape.stage, stageId: 'not-a-pilot-stage' },
+      stage: { ...pilotShape.stage, stageId: nonpilotStageId },
+      points: pilotShape.points.map((point) => ({ ...point, stageId: nonpilotStageId })),
     }
     expect(runSelectedRaceEngineV1(nonpilot)).toEqual(runBaselineRaceEngine(nonpilot))
   })
