@@ -6,7 +6,7 @@ import {
 import {
   runRaceEngine as runExperimentalMountainCoreV1,
 } from './runMountainExperimentalEngineV1.ts'
-import { selectMountainEngineLaneV1 } from './mountainEngineLaneV1.ts'
+import { dispatchSelectedRaceEngineV1 } from './mountainEngineLaneV1.ts'
 
 /**
  * Stage-scoped executable boundary for the experimental mountain solver.
@@ -21,8 +21,8 @@ import { selectMountainEngineLaneV1 } from './mountainEngineLaneV1.ts'
 export function runSelectedRaceEngineV1(
   input: UniversalRaceEngineInput,
 ): UniversalRaceEngineResult {
-  if (selectMountainEngineLaneV1(input.stage) === 'experimental_mountain_v1') {
-    return runExperimentalMountainCoreV1(input)
-  }
-  return runBaselineRaceEngine(input)
+  return dispatchSelectedRaceEngineV1(input, {
+    baseline: runBaselineRaceEngine,
+    experimentalMountain: runExperimentalMountainCoreV1,
+  })
 }
