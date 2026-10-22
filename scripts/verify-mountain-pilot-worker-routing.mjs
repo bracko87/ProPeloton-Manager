@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 const file = slug => readFileSync(`supabase/functions/${slug}/index.ts`,'utf8')
-const sha='c1b46c39efd513932da65e4c331357f86b727412'
+const sha='878aa8ae0db95d97fa5385513d2c1394e3a791a2'
 const [runner,pass1,pass2,safe]=['universal-race-stage-runner','universal-race-stage-pass1-resume','universal-race-stage-pass2-resume','universal-race-stage-safe-resume'].map(file)
 for(const code of [runner,pass1,pass2,safe])assert.ok(code.includes(`const SOURCE_COMMIT = "${sha}"`))
 for(const code of [runner,pass2]) {

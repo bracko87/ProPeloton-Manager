@@ -1,5 +1,5 @@
 # Controlled four-worker mountain pilot deployment candidate
-All four Supabase workers pin primary source SHA `c1b46c39efd513932da65e4c331357f86b727412`, the already tested
+All four Supabase workers pin primary source SHA `878aa8ae0db95d97fa5385513d2c1394e3a791a2`, the already tested
 isolation implementation merged to main. Emergency sporting fallback sources
 remain unchanged.
 
