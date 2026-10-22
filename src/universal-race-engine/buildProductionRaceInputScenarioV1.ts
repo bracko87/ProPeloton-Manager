@@ -154,19 +154,13 @@ export function buildScenarioProductionUniversalRaceEngineInput(
     return input
   }
 
-  // Preserve the existing universal-engine path for every non-pilot mountain
-  // stage. Mountain scenario templates and summit selectivity remain isolated
-  // to the explicitly approved stage-ID allowlist during acceptance testing.
-  if (
-    input.stage.terrainType === 'mountain' &&
-    !isMountainEnginePilotStageV1(input.stage)
-  ) {
-    return input
-  }
+  // Preserve the existing scenario pre-calculation for ALL terrain types.
+  // Nonpilot stages use the original baseline solver via the dispatcher;
+  // they must not silently lose their previous scenario handling.
 
-  // This is deliberately the normal engine with no scenario metadata attached.
-  // Its result is only used to classify the race shape; it is never persisted as
-  // the official sporting result.
+  // The preliminary engine is selected by explicit stage-ID routing; on
+  // nonpilot races this is exactly the existing baseline pre-calculation.
+  // Its outcome guides scenario choice and is never persisted as official.
   const preCalculation = runSelectedRaceEngineV1(input)
   const selection = applyRoadScenarioFromPrecalculationV2(
     input,
