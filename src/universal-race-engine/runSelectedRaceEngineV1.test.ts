@@ -301,6 +301,15 @@ describe('isolated experimental mountain executable', () => {
     expect(runSelectedRaceEngineV1(normal)).toEqual(runBaselineRaceEngine(normal))
   })
 
+  it('preserves the full baseline result for every unapproved mountain stage', () => {
+    const pilotShape = syntheticMountainPilotInput()
+    const nonpilot = {
+      ...pilotShape,
+      stage: { ...pilotShape.stage, stageId: 'not-a-pilot-stage' },
+    }
+    expect(runSelectedRaceEngineV1(nonpilot)).toEqual(runBaselineRaceEngine(nonpilot))
+  })
+
   it('selects the experimental executable for an approved mountain stage', () => {
     const mountain = syntheticMountainPilotInput()
     const direct = runExperimentalMountainCoreV1(mountain)
