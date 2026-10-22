@@ -6,11 +6,12 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = process.cwd()
-const RELEASE_SHA = '16d240ccd8a2d4351f8abae014d6cedd10c1b24c'
+const RELEASE_SHA = 'c1b46c39efd513932da65e4c331357f86b727412'
 const prefix = 'https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/'
 const workers = new Map([
   ['universal-race-stage-runner', [
     'runRaceEngine.ts',
+    'runSelectedRaceEngineV1.ts',
     'buildProductionRaceInputScenarioV1.ts',
     'buildProductionRaceOutput.ts',
   ]],
@@ -19,11 +20,14 @@ const workers = new Map([
   ]],
   ['universal-race-stage-pass2-resume', [
     'runRaceEngine.ts',
+    'runSelectedRaceEngineV1.ts',
     'buildProductionRaceInput.ts',
     'buildProductionRaceOutput.ts',
   ]],
   ['universal-race-stage-safe-resume', [
     'runRaceEngine.ts',
+    'runSelectedRaceEngineV1.ts',
+    'mountainEngineLaneV1.ts',
     'buildProductionRaceInput.ts',
     'buildProductionRaceOutput.ts',
   ]],
@@ -42,6 +46,10 @@ for (const [name, requiredPrimaryModules] of workers) {
       ? 'buildScenarioProductionUniversalRaceEngineInput'
       : moduleName === 'buildProductionRaceInput.ts'
         ? 'buildProductionUniversalRaceEngineInput as buildBaseInput'
+        : moduleName === 'runSelectedRaceEngineV1.ts'
+          ? (name === 'universal-race-stage-safe-resume' ? 'getSelectedRaceEngineModuleV1' : 'runSelectedRaceEngineV1')
+        : moduleName === 'mountainEngineLaneV1.ts'
+          ? 'selectMountainEngineLaneV1'
         : moduleName === 'buildProductionRaceOutput.ts'
           ? 'buildProductionUniversalRaceOutput'
           : 'runRaceEngine'

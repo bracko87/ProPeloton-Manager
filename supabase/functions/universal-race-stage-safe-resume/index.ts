@@ -1,5 +1,8 @@
 
 /// <reference lib="deno.ns" />
+import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c1b46c39efd513932da65e4c331357f86b727412/src/universal-race-engine/runRaceEngine.ts";
+import { getSelectedRaceEngineModuleV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c1b46c39efd513932da65e4c331357f86b727412/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { selectMountainEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c1b46c39efd513932da65e4c331357f86b727412/src/universal-race-engine/mountainEngineLaneV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
@@ -40,15 +43,16 @@ import {
   isUniversalPhase78IssueNonBlocking,
   buildUniversalRaceCalibrationSummary,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c1b46c39efd513932da65e4c331357f86b727412/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c1b46c39efd513932da65e4c331357f86b727412/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/c1b46c39efd513932da65e4c331357f86b727412/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
-const SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
+const SOURCE_COMMIT = "c1b46c39efd513932da65e4c331357f86b727412";
+const PREVIOUS_SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -578,8 +582,8 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     const built=await buildInput(supabase,stageId,runId);
     input=built.input;
     scenarioPreserved=Boolean(built.scenario);
-    phase9Modifiers=buildUniversalPhase9ModifierSummary(input);
-    calculationInput=applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);
+    phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);
+    calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);
   } else {
     input=checkpoint.sourceInput as any;
     phase9Modifiers=checkpoint.phase9Modifiers as any;
@@ -590,26 +594,38 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     }
   }
 
+  // Pin the executable lane in the first checkpoint. Prior-release runs with
+  // no lane marker must resume on the original engine, not switch mid-race.
+  const engineLaneV1 = step === 0
+    ? selectMountainEngineLaneV1(calculationInput.stage)
+    : text(checkpoint.selectedEngineLaneV1) === "experimental_mountain_v1"
+      ? "experimental_mountain_v1" : "baseline_universal";
+  const selectedCore = engineLaneV1 === "experimental_mountain_v1"
+    ? getSelectedRaceEngineModuleV1(calculationInput.stage) : acceptedCore;
+  const effectiveSourceCommit = step === 0 ? SOURCE_COMMIT
+    : text(checkpoint.selectedEngineSourceCommit) || PREVIOUS_SOURCE_COMMIT;
   let next: JsonObject={...checkpoint};
 
   if(step===0){
-    const errors=validateRunInput(input);
+    const errors=selectedCore.validateRunInput(input);
     if(errors.length>0) throw new UniversalRaceEngineValidationError(errors);
-    const stageClassification=classifyStage(calculationInput.stage);
-    const terrain=analyzeTerrain(calculationInput.stage);
-    const difficulty=calculateDifficulty(calculationInput,terrain);
-    const riderReadiness=calculateAllRiderReadiness(calculationInput.riders);
-    const stageSkillModel=calculateStageSkillModel(calculationInput.stage);
-    const teamTimeTrialSuitabilityRules=buildTeamTimeTrialSuitabilityRules(calculationInput.stage);
-    const riderSuitability=calculateRiderSuitabilityScores(calculationInput,riderReadiness,stageSkillModel);
-    const teamStrength=calculateStageTeamStrength(calculationInput,riderSuitability,teamTimeTrialSuitabilityRules);
-    const favourites=buildUniversalFavouritesSummary(calculationInput,riderSuitability,stageSkillModel);
-    const roadCommandResolution=buildRoadCommandResolution(calculationInput,riderReadiness);
+    const stageClassification=selectedCore.classifyStage(calculationInput.stage);
+    const terrain=selectedCore.analyzeTerrain(calculationInput.stage);
+    const difficulty=selectedCore.calculateDifficulty(calculationInput,terrain);
+    const riderReadiness=selectedCore.calculateAllRiderReadiness(calculationInput.riders);
+    const stageSkillModel=selectedCore.calculateStageSkillModel(calculationInput.stage);
+    const teamTimeTrialSuitabilityRules=selectedCore.buildTeamTimeTrialSuitabilityRules(calculationInput.stage);
+    const riderSuitability=selectedCore.calculateRiderSuitabilityScores(calculationInput,riderReadiness,stageSkillModel);
+    const teamStrength=selectedCore.calculateStageTeamStrength(calculationInput,riderSuitability,teamTimeTrialSuitabilityRules);
+    const favourites=selectedCore.buildUniversalFavouritesSummary(calculationInput,riderSuitability,stageSkillModel);
+    const roadCommandResolution=selectedCore.buildRoadCommandResolution(calculationInput,riderReadiness);
     next={
       sourceInput:input,
       calculationInput,
       phase9Modifiers,
       scenarioPreserved,
+      selectedEngineLaneV1:engineLaneV1,
+      selectedEngineSourceCommit:effectiveSourceCommit,
       stageClassification,
       terrain,
       difficulty,
@@ -622,21 +638,21 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       roadCommandResolution,
     };
   } else if(step===1){
-    next={...checkpoint,phase1RoadRaceResolution:resolveRoadPhase1Opening(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadCommandResolution as any)};
+    next={...checkpoint,phase1RoadRaceResolution:selectedCore.resolveRoadPhase1Opening(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadCommandResolution as any)};
   } else if(step===2){
-    next={...checkpoint,phase2RoadRaceResolution:resolveRoadPhase2Development(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase1RoadRaceResolution as any)};
+    next={...checkpoint,phase2RoadRaceResolution:selectedCore.resolveRoadPhase2Development(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase1RoadRaceResolution as any)};
   } else if(step===3){
-    next={...checkpoint,phase3RoadRaceResolution:resolveRoadPhase3Decisive(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase2RoadRaceResolution as any)};
+    next={...checkpoint,phase3RoadRaceResolution:selectedCore.resolveRoadPhase3Decisive(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase2RoadRaceResolution as any)};
   } else if(step===4){
-    next={...checkpoint,roadRaceResolution:resolveRoadPhase4Finish(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase3RoadRaceResolution as any)};
+    next={...checkpoint,roadRaceResolution:selectedCore.resolveRoadPhase4Finish(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase3RoadRaceResolution as any)};
   } else if(step===5){
-    const intermediatePointPlan=buildUniversalIntermediatePointPlan(calculationInput,checkpoint.roadCommandResolution as any,checkpoint.roadRaceResolution as any);
-    const provisionalIntermediatePointBattles=buildUniversalIntermediatePointBattles(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadRaceResolution as any,intermediatePointPlan);
-    const provisionalIntermediatePointFinalization=buildUniversalIntermediatePointFinalization(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadCommandResolution as any,intermediatePointPlan,provisionalIntermediatePointBattles);
+    const intermediatePointPlan=selectedCore.buildUniversalIntermediatePointPlan(calculationInput,checkpoint.roadCommandResolution as any,checkpoint.roadRaceResolution as any);
+    const provisionalIntermediatePointBattles=selectedCore.buildUniversalIntermediatePointBattles(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadRaceResolution as any,intermediatePointPlan);
+    const provisionalIntermediatePointFinalization=selectedCore.buildUniversalIntermediatePointFinalization(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadCommandResolution as any,intermediatePointPlan,provisionalIntermediatePointBattles);
     next={...checkpoint,intermediatePointPlan,provisionalIntermediatePointBattles,provisionalIntermediatePointFinalization};
   } else if(step===6){
-    const groupAndTimeResolution=buildUniversalPhase5GroupingSummary(calculationInput,checkpoint.difficulty as any,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadRaceResolution as any);
-    const baseFinishResolution=resolveUniversalFinishResolution({
+    const groupAndTimeResolution=selectedCore.buildUniversalPhase5GroupingSummary(calculationInput,checkpoint.difficulty as any,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadRaceResolution as any);
+    const baseFinishResolution=selectedCore.resolveUniversalFinishResolution({
       input:calculationInput,
       stageClassification:checkpoint.stageClassification as any,
       riderReadiness:checkpoint.riderReadiness as any,
@@ -647,7 +663,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     });
     next={...checkpoint,groupAndTimeResolution,baseFinishResolution};
   } else if(step===7){
-    const builtBaseReplayTimeline=buildUniversalReplayTimeline(
+    const builtBaseReplayTimeline=selectedCore.buildUniversalReplayTimeline(
       calculationInput,
       checkpoint.riderReadiness as any,
       checkpoint.roadCommandResolution as any,
@@ -728,7 +744,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       }
     }
     console.log(JSON.stringify({event:"step8_phase10",state:"begin",stageId,frames:phase10BaseReplayTimeline?.checkpoints?.length}));
-    const phase10Resolution=resolveUniversalPhase10Incidents({
+    const phase10Resolution=selectedCore.resolveUniversalPhase10Incidents({
       input:calculationInput,
       sourceInput:input,
       phase9:phase9Modifiers,
@@ -860,19 +876,19 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     }
     const phase10Incidents=phase10Resolution.summary;
     const finishResolution=phase10Resolution.finishResolution;
-    const intermediatePointBattles=reconcileFinishLineIntermediatePointBattlesV1(
+    const intermediatePointBattles=selectedCore.reconcileFinishLineIntermediatePointBattlesV1(
       calculationInput,
       checkpoint.provisionalIntermediatePointBattles as any,
       finishResolution,
     );
-    const intermediatePointFinalization=buildUniversalIntermediatePointFinalization(
+    const intermediatePointFinalization=selectedCore.buildUniversalIntermediatePointFinalization(
       calculationInput,
       checkpoint.riderReadiness as any,
       checkpoint.roadCommandResolution as any,
       checkpoint.intermediatePointPlan as any,
       intermediatePointBattles,
     );
-    const replayTimeline=reconcileReplayTimelineIntermediatePointsV1(
+    const replayTimeline=selectedCore.reconcileReplayTimelineIntermediatePointsV1(
       phase10Resolution.replayTimeline,
       intermediatePointFinalization,
     );
@@ -1117,7 +1133,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   } else if(step===10){
     const replayTimeline=checkpoint.replayTimeline as any;
     console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_sync",stageId,step}));
-    const replaySynchronization=buildUniversalReplaySynchronizationSummary(
+    const replaySynchronization=selectedCore.buildUniversalReplaySynchronizationSummary(
       calculationInput,
       checkpoint.riderReadiness as any,
       checkpoint.roadCommandResolution as any,
@@ -1129,13 +1145,13 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       checkpoint.roadRaceResolution as any,
     );
     await heartbeat(supabase,stageId,runId,"step10_replay_synchronized",{checkpoint_count:Array.isArray(replayTimeline?.checkpoints)?replayTimeline.checkpoints.length:0});
-    const replayPublicationPolicy=classifyUniversalReplaySynchronizationForPublication(replaySynchronization);
+    const replayPublicationPolicy=selectedCore.classifyUniversalReplaySynchronizationForPublication(replaySynchronization);
     const hardReplayBlockingIssues=replayPublicationPolicy.blockingIssues.filter((issue)=>!isRecoverableReplayOnlyIssue(issue));
     if(hardReplayBlockingIssues.length>0){
       throw new Error(`Universal replay synchronization failed: ${hardReplayBlockingIssues.join(", ")}`);
     }
     console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_post",stageId,step}));
-    const postStageUpdate=buildUniversalPostStageUpdateSummary(
+    const postStageUpdate=selectedCore.buildUniversalPostStageUpdateSummary(
       calculationInput,
       checkpoint.difficulty as any,
       checkpoint.riderReadiness as any,
@@ -1148,9 +1164,9 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       replaySynchronization,
     );
     await heartbeat(supabase,stageId,runId,"step10_post_stage_ready",{});
-    const phase9Acceptance=buildUniversalPhase9AcceptanceReport(input,calculationInput,phase9Modifiers,postStageUpdate);
+    const phase9Acceptance=selectedCore.buildUniversalPhase9AcceptanceReport(input,calculationInput,phase9Modifiers,postStageUpdate);
     if(!phase9Acceptance.passed) throw new Error(`Phase 9 acceptance audit failed: ${phase9Acceptance.warnings.join(", ")}`);
-    const phase78Acceptance=buildUniversalPhase78AcceptanceReport(
+    const phase78Acceptance=selectedCore.buildUniversalPhase78AcceptanceReport(
       calculationInput,
       checkpoint.finishResolution as any,
       replayTimeline as any,
@@ -1158,10 +1174,10 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       postStageUpdate,
     );
     const blockingPhase78Issues=phase78Acceptance.issues.filter((issue)=>
-      !isUniversalPhase78IssueNonBlocking(issue) && !isRecoverablePhase78ReplayIssue(issue)
+      !selectedCore.isUniversalPhase78IssueNonBlocking(issue) && !isRecoverablePhase78ReplayIssue(issue)
     );
     if(blockingPhase78Issues.length>0) throw new Error(`Phase 7 + 8 acceptance audit failed: ${blockingPhase78Issues.join(", ")}`);
-    const calibrationSummary=buildUniversalRaceCalibrationSummary(
+    const calibrationSummary=selectedCore.buildUniversalRaceCalibrationSummary(
       calculationInput,
       checkpoint.stageClassification as any,
       checkpoint.roadRaceResolution as any,
@@ -1213,14 +1229,16 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         ...object(output.verification),
         safeMode:true,
         safeModeContract:CONTRACT,
-        primarySourceCommit:SOURCE_COMMIT,
+        primarySourceCommit:effectiveSourceCommit,
+        engineLaneV1,
         recoveryPolicy:"checkpointed_safe_mode_v2",
         scenarioPreserved:scenarioPreserved,
       },
       calculationSurvival:{
         modelVersion:"checkpointed_safe_mode_v2",
         checkpointed:true,
-        sourceCommit:SOURCE_COMMIT,
+        sourceCommit:effectiveSourceCommit,
+        engineLaneV1,
         totalSteps:11,
       },
     };

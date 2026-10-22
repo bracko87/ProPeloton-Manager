@@ -9,6 +9,7 @@ on:
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - 'supabase/functions/universal-race-stage-*/index.ts'
       - 'scripts/verify-summit-worker-pins.mjs'
+      - 'scripts/verify-mountain-pilot-worker-routing.mjs'
       - '.github/workflows/race-engine-validation.yml'
   push:
     branches:
@@ -18,6 +19,7 @@ on:
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - 'supabase/functions/universal-race-stage-*/index.ts'
       - 'scripts/verify-summit-worker-pins.mjs'
+      - 'scripts/verify-mountain-pilot-worker-routing.mjs'
       - '.github/workflows/race-engine-validation.yml'
 
 permissions:
@@ -44,6 +46,9 @@ jobs:
 
       - name: Verify production race worker summit source pins
         run: node scripts/verify-summit-worker-pins.mjs
+
+      - name: Verify stage-scoped mountain worker execution paths
+        run: node scripts/verify-mountain-pilot-worker-routing.mjs
 
       - name: TypeScript syntax-check race Edge Function entrypoints
         run: |
