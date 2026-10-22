@@ -6,7 +6,7 @@ import {
   type UniversalRaceEngineInput,
 } from './runRaceEngine.ts'
 import { runRaceEngine as runExperimentalMountainCoreV1 } from './runMountainExperimentalEngineV1.ts'
-import { runSelectedRaceEngineV1 } from './runSelectedRaceEngineV1.ts'
+import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1 } from './runSelectedRaceEngineV1.ts'
 
 /**
  * All data below are synthetic test fixtures, copied from the original
@@ -308,6 +308,15 @@ describe('isolated experimental mountain executable', () => {
       stage: { ...pilotShape.stage, stageId: 'not-a-pilot-stage' },
     }
     expect(runSelectedRaceEngineV1(nonpilot)).toEqual(runBaselineRaceEngine(nonpilot))
+  })
+
+  it('selects the same solver module for checkpointed and one-shot execution', () => {
+    const nonpilot = createValidInput()
+    const experimental = syntheticMountainPilotInput()
+    expect(getSelectedRaceEngineModuleV1(nonpilot.stage).runRaceEngine)
+      .toBe(runBaselineRaceEngine)
+    expect(getSelectedRaceEngineModuleV1(experimental.stage).runRaceEngine)
+      .toBe(runExperimentalMountainCoreV1)
   })
 
   it('selects the experimental executable for an approved mountain stage', () => {
