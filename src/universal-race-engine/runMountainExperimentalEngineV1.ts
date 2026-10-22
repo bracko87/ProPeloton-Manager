@@ -1,3 +1,4 @@
+import { mountainOpeningBreakawayPhysicallyActiveV1 } from './mountainOpeningBreakawayV1.ts'
 import { calculateSummitFinishSelectivityV1 } from './summitFinishSelectivityV1.ts'
 import {
   applyRoadScenarioFinishFragmentationV1,
@@ -27456,9 +27457,12 @@ export function buildUniversalReplayTimeline(
       .map((attempt) => attempt.riderId)
       .sort()
     const openingBreakawayActiveAtKm =
-      phase1.endGapSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS &&
-      (phase2.breakawayCatchKm === null ||
-        km < phase2.breakawayCatchKm - 0.000001)
+      mountainOpeningBreakawayPhysicallyActiveV1(
+        phase1.endGapSeconds,
+        PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS,
+        phase2.breakawayCatchKm,
+        km,
+      )
     const secondaryMergedIntoBreakaway =
       secondaryState.merged && openingBreakawayActiveAtKm
     const breakawayRiderIds = openingBreakawayActiveAtKm
