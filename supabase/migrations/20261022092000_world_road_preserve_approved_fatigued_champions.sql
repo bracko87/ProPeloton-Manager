@@ -87,5 +87,4 @@ begin
 
   return v_count;
 end;
-$function$
-
+$function$;
