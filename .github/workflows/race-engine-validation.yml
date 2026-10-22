@@ -7,6 +7,8 @@ on:
     paths:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
+      - 'supabase/functions/universal-race-stage-*/index.ts'
+      - 'scripts/verify-summit-worker-pins.mjs'
       - '.github/workflows/race-engine-validation.yml'
   push:
     branches:
@@ -14,6 +16,8 @@ on:
     paths:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
+      - 'supabase/functions/universal-race-stage-*/index.ts'
+      - 'scripts/verify-summit-worker-pins.mjs'
       - '.github/workflows/race-engine-validation.yml'
 
 permissions:
@@ -37,6 +41,15 @@ jobs:
 
       - name: Install application dependencies
         run: npm ci
+
+      - name: Verify production race worker summit source pins
+        run: node scripts/verify-summit-worker-pins.mjs
+
+      - name: TypeScript syntax-check race Edge Function entrypoints
+        run: |
+          for function_name in universal-race-stage-runner universal-race-stage-pass1-resume universal-race-stage-pass2-resume universal-race-stage-safe-resume; do
+            npx esbuild "supabase/functions/${function_name}/index.ts" --bundle --platform=neutral --format=esm --external:'https://*' --external:'npm:*' --external:'jsr:*' --outfile="/tmp/${function_name}.mjs"
+          done
 
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
