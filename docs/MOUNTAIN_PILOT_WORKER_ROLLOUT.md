@@ -17,3 +17,5 @@ Required before live deployment: all CI gates pass, recheck all four worker
 deploy settings and source versions, coordinated four-function deployment,
 read-back of deployed code and operational logs. Do not trigger real races,
 alter historical results, or edit Supabase SQL for this change.
+
+Baseline input guard: `buildProductionRaceInput.ts` matches the pre-pilot accepted SHA `f520ab08d05dc406918d34295d02ca6ef1f53cb2` byte-for-byte. Old baseline summit settings remain unchanged; the experimental solver is selected by stage ID, not by rewriting input flags for other races.
