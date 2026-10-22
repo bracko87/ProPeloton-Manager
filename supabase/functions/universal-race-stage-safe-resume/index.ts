@@ -40,15 +40,15 @@ import {
   isUniversalPhase78IssueNonBlocking,
   buildUniversalRaceCalibrationSummary,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/652816a5c04c5de342fd1c45c31ed4f2536775b9/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/271f79db6fdf5b6117be5c7c9f947e6faf6d78af/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/652816a5c04c5de342fd1c45c31ed4f2536775b9/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
-const SOURCE_COMMIT = "652816a5c04c5de342fd1c45c31ed4f2536775b9";
+const SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
