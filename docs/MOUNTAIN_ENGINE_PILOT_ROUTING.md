@@ -14,12 +14,12 @@ The pilot requires both `road_race` and `mountain` terrain in addition to the ex
 
 For non-pilot mountain stages:
 - The **existing** baseline solver and pre-calculation/scenario-selection pathway remain in place; no existing scenario handling is skipped.
-- The experimental-only `summitFinishSelectivityV1` flag is disabled outside approved pilot stages.
+- The existing `summitFinishSelectivityV1` input setting is preserved exactly as in the previously deployed baseline. It must not be disabled for non-pilot races: that would silently alter accepted summit results. The NEW experimental solver itself is selected only for allowlisted stages.
 - The dedicated mountain solver is never selected.
 
 Other terrains retain their existing behavior. The experimental mountain engine now has its own source-level physical simulation implementation, `runMountainExperimentalEngineV1.ts`, forked byte-for-byte from the previously approved universal physical solver. The immutable accepted baseline stays in `runRaceEngine.ts`. The opt-in dispatcher `runSelectedRaceEngineV1.ts` runs the experimental fork only for listed mountain road stages and the baseline for everything else. Both still share explicitly reusable supporting modules, but future experimental core-physics changes can be made in the fork without modifying baseline core physics.
 
-**Caution:** the fork mostly retains the baseline sporting algorithm; it is independent source and stage-routing infrastructure, not yet proof of fully calibrated mountain physics. Its first experimental-only fix changes replay B1 lineage retention to use the true physical catch threshold rather than the 5-second official grouping tolerance. Other sporting-result logic remains unchanged. Production workers still import their previously pinned engine SHA and do **not** use this dispatcher yet.
+**Caution:** original production input normalization, including the pre-existing summit selectivity flag, is byte-for-byte preserved. The fork mostly retains the baseline sporting algorithm; it is independent source and stage-routing infrastructure, not yet proof of fully calibrated mountain physics. Its first experimental-only fix changes replay B1 lineage retention to use the true physical catch threshold rather than the 5-second official grouping tolerance. Other sporting-result logic remains unchanged. Production workers still import their previously pinned engine SHA and do **not** use this dispatcher yet.
 
 ## Current production acceptance evidence
 
