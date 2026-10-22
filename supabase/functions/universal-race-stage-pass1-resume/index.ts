@@ -110,6 +110,48 @@ async function loadScenarioHistory(supabase: SupabaseClient, payload: JsonObject
   }));
 }
 
+
+function checkpointedSafeModeDecision(payloadValue: unknown): {
+  safe: boolean;
+  score: number;
+  riderCount: number;
+  distanceKm: number;
+  elevationGainM: number;
+  terrain: string;
+  climbCount: number;
+} {
+  const payload = object(payloadValue);
+  const stage = object(payload.stage);
+  const riderCount = rows(payload.rider_inputs).length;
+  const distanceKm = Math.max(0, finite(stage.distance_km ?? stage.distanceKm, 0));
+  const elevationGainM = Math.max(0, finite(stage.elevation_gain_m ?? stage.elevationGainM, 0));
+  const terrain = text(stage.terrain_type ?? stage.terrainType).toLowerCase();
+  const stagePoints = rows(payload.stage_points);
+  const climbCount = stagePoints.filter((point) => text(point.point_type ?? point.pointType).toUpperCase() === "KOM").length;
+  const score =
+    (riderCount / 160) * 40 +
+    (distanceKm / 180) * 22 +
+    (elevationGainM / 3200) * 25 +
+    climbCount * 3 +
+    (terrain === "mountain" ? 13 : terrain === "hilly" ? 5 : 0);
+  const safe =
+    riderCount >= 160 &&
+    (
+      (terrain === "mountain" && (distanceKm >= 155 || elevationGainM >= 2800)) ||
+      elevationGainM >= 3500 ||
+      (distanceKm >= 210 && elevationGainM >= 2500)
+    );
+  return {
+    safe,
+    score: Math.round(score * 100) / 100,
+    riderCount,
+    distanceKm,
+    elevationGainM,
+    terrain,
+    climbCount,
+  };
+}
+
 async function executePass1(supabase: SupabaseClient, claim: JsonObject): Promise<JsonObject> {
   const stageId = text(claim.stage_id);
   const runId = text(claim.simulation_run_id);
@@ -120,6 +162,30 @@ async function executePass1(supabase: SupabaseClient, claim: JsonObject): Promis
     p_stage_id: stageId,
   }));
   const stageNumber = Math.max(1, Math.trunc(finite(object(payload.stage).stage_number, 1)));
+
+  const safeDecision = checkpointedSafeModeDecision(payload);
+  if (safeDecision.safe) {
+    const enabled = object(await rpc(supabase, "universal_race_stage_enable_safe_mode_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: runId,
+      p_reason: "preemptive_heavy_stage",
+      p_workload_score: safeDecision.score,
+    }));
+    try { await rpc(supabase, "universal_race_stage_kick_safe_worker_v1"); } catch {}
+    await heartbeat(supabase, stageId, runId, "safe_mode_pending", {
+      source_commit: SOURCE_COMMIT,
+      reason: "preemptive_heavy_stage",
+      safe_decision: safeDecision,
+      safe_mode_enable_result: enabled,
+    });
+    return {
+      status: "safe_mode_queued",
+      stage_id: stageId,
+      simulation_run_id: runId,
+      safe_decision: safeDecision,
+    };
+  }
+
 
   let standings: unknown = [];
   try {
@@ -229,6 +295,32 @@ Deno.serve(async (request: Request) => {
           error: errorPayload(failureError),
         }));
       }
+
+      try {
+        const enabled = object(await rpc(supabase, "universal_race_stage_enable_safe_mode_v1", {
+          p_stage_id: stageId,
+          p_simulation_run_id: runId,
+          p_reason: "first_calculation_failure",
+          p_workload_score: 0,
+        }));
+        try { await rpc(supabase, "universal_race_stage_kick_safe_worker_v1"); } catch {}
+        console.warn(JSON.stringify({
+          status: "checkpointed_safe_mode_started",
+          contract: CONTRACT,
+          stage_id: stageId,
+          simulation_run_id: runId,
+          safe_mode_enable_result: enabled,
+        }));
+      } catch (safeModeError) {
+        console.error(JSON.stringify({
+          status: "checkpointed_safe_mode_start_failed",
+          contract: CONTRACT,
+          stage_id: stageId,
+          simulation_run_id: runId,
+          error: errorPayload(safeModeError),
+        }));
+      }
+
       console.error(JSON.stringify({ status: "failed", contract: CONTRACT, stage_id: stageId, simulation_run_id: runId, error: serialized }));
     });
   EdgeRuntime.waitUntil(task);
