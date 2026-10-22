@@ -1,6 +1,7 @@
 // Executable source and provenance checks for a candidate four-worker release.
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 const file = slug => readFileSync(`supabase/functions/${slug}/index.ts`,'utf8')
 const sha='878aa8ae0db95d97fa5385513d2c1394e3a791a2'
 const [runner,pass1,pass2,safe]=['universal-race-stage-runner','universal-race-stage-pass1-resume','universal-race-stage-pass2-resume','universal-race-stage-safe-resume'].map(file)
@@ -24,3 +25,11 @@ for(const id of ['62c7ca62-b6aa-470f-bf32-0822f64849c0','9c329adc-ccbf-45cf-8b5f
 assert.match(allowlist,/stage.stageFormat === 'road_race'/)
 assert.match(allowlist,/stage.terrainType === 'mountain'/)
 console.log('PASS stage-scoped mountain pilot routing across all four workers')
+
+// Fail closed if this rollout changes any pre-existing baseline input behavior.
+const builder = readFileSync('src/universal-race-engine/buildProductionRaceInput.ts')
+const baselineBlobHash = createHash('sha1')
+  .update(Buffer.concat([Buffer.from(`blob ${builder.byteLength}\\0`),builder]))
+  .digest('hex')
+assert.equal(baselineBlobHash, 'f520ab08d05dc406918d34295d02ca6ef1f53cb2',
+  'Pre-existing baseline race input builder must remain byte-for-byte unchanged')
