@@ -9,8 +9,8 @@ import {
 import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/buildProductionRaceOutput.ts";
 import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7e4299371f452e5d1d0a706e48fb083340362d11/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/16d240ccd8a2d4351f8abae014d6cedd10c1b24c/src/universal-race-engine/buildProductionRaceOutput.ts";
+import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
