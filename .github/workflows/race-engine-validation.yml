@@ -54,6 +54,17 @@ jobs:
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
 
+      - name: Compile isolated mountain experimental solver
+        run: npx esbuild src/universal-race-engine/runMountainExperimentalEngineV1.ts --bundle --platform=node --format=esm --outfile=/tmp/runMountainExperimentalEngineV1.mjs
+
+      - name: Verify stage-scoped baseline and mountain engine isolation
+        run: >-
+          npx --yes vitest@3.2.4 run
+          src/universal-race-engine/mountainEnginePilotV1.test.ts
+          src/universal-race-engine/mountainEngineLaneV1.test.ts
+          src/universal-race-engine/runSelectedRaceEngineV1.test.ts
+          --reporter=dot
+
       - name: Production build
         run: npm run build
 
