@@ -1,4 +1,3 @@
-import { isMountainEnginePilotStageV1 } from './mountainEnginePilotV1.ts'
 /**
  * Phase 11A production input adapter.
  *
@@ -904,7 +903,6 @@ export function buildProductionUniversalRaceEngineInput(
       summitFinish,
       // Explicit start-date gate: never change simulations of completed races.
       summitFinishSelectivityV1:
-        isMountainEnginePilotStageV1({ stageId, stageFormat, terrainType }) &&
         stageFormat === 'road_race' &&
         terrainType === 'mountain' &&
         summitFinish &&

@@ -11637,7 +11637,8 @@ describe('Phase 7 read-only replay page integration — Task 7.3', () => {
     )
 
     expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
-    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/runSelectedRaceEngineV1\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/const rawResult = runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(source).not.toContain('buildUniversalPhase6SprintAudit')
     expect(source).not.toContain('__PPM_PHASE6_SPRINT_AUDIT__')
   })
@@ -12235,7 +12236,8 @@ describe('Phase 7 final replay-page closeout', () => {
     )
 
     expect(source.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
-    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/runSelectedRaceEngineV1\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/const rawResult = runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(source).toContain(
       "raceDetailReadRpc('get_authorized_race_stage_replay_payload_v1'",
     )
@@ -14684,7 +14686,8 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
     expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
     expect(runnerSource).toContain('buildProductionUniversalRaceEngineInput(sources)')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
-    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/runSelectedRaceEngineV1\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/const rawResult = runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 
   it('keeps Phase 9 production loading backend-only while the replay page remains read-only', () => {
@@ -14702,7 +14705,8 @@ describe('Phase 9 unified weather, preparation and resource modifiers', () => {
     expect(pageSource).toContain("raceDetailReadRpc('get_authorized_race_stage_replay_payload_v1'")
     expect(pageSource).not.toContain('get_universal_race_stage_replay_payload_v1')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
-    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/runSelectedRaceEngineV1\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/const rawResult = runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 
   it('merges server-normalized equipment and supplies into the Phase 9 engine input', () => {
@@ -16473,7 +16477,8 @@ describe('Phase 10 deterministic incidents, availability and final statuses', ()
     expect(pageSource).toContain('phase9Modifier.mechanical_time_loss_multiplier')
     expect(pageSource).toContain('phase9Modifier.equipment_condition_factor')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
-    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/runSelectedRaceEngineV1\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/const rawResult = runRaceEngine\(/g) ?? []).toHaveLength(0)
   })
 
   it('keeps every Rio Tour replay behind the same stored backend lifecycle with no development unlock', () => {
@@ -16868,7 +16873,8 @@ describe('Phase 11B production lifecycle cutover', () => {
     expect(pageSource).toContain('production_authoritative_pending')
     expect(pageSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(pageSource).not.toContain('ENABLE_RIO_TOUR_INTEGRATION_REPLAYS')
-    expect(runnerSource.match(/runRaceEngine\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/runSelectedRaceEngineV1\(/g) ?? []).toHaveLength(1)
+    expect(runnerSource.match(/const rawResult = runRaceEngine\(/g) ?? []).toHaveLength(0)
     expect(runnerSource).toContain('phase9Payload: firstObject(payload.phase9_inputs)')
     expect(runnerSource).toContain('universal_race_stage_process_lifecycle_v1')
     expect(runnerSource).toContain('x-universal-race-worker-secret')
