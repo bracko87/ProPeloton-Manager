@@ -29,7 +29,7 @@ console.log('PASS stage-scoped mountain pilot routing across all four workers')
 // Fail closed if this rollout changes any pre-existing baseline input behavior.
 const builder = readFileSync('src/universal-race-engine/buildProductionRaceInput.ts')
 const baselineBlobHash = createHash('sha1')
-  .update(Buffer.concat([Buffer.from(`blob ${builder.byteLength}\\0`),builder]))
+  .update(Buffer.concat([Buffer.from(`blob ${builder.byteLength}\0`),builder]))
   .digest('hex')
 assert.equal(baselineBlobHash, 'f520ab08d05dc406918d34295d02ca6ef1f53cb2',
   'Pre-existing baseline race input builder must remain byte-for-byte unchanged')
