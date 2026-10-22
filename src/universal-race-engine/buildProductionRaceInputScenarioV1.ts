@@ -1,3 +1,4 @@
+import { isMountainEnginePilotStageV1 } from './mountainEnginePilotV1.ts'
 import {
   buildProductionUniversalRaceEngineInput as buildBaseProductionUniversalRaceEngineInput,
   type ProductionUniversalRaceSources as BaseProductionUniversalRaceSources,
@@ -151,6 +152,16 @@ export function buildScenarioProductionUniversalRaceEngineInput(
   if (
     input.stage.stageFormat !== 'road_race' ||
     !['flat', 'hilly', 'mountain', 'cobbled'].includes(input.stage.terrainType)
+  ) {
+    return input
+  }
+
+  // Preserve the existing universal-engine path for every non-pilot mountain
+  // stage. Mountain scenario templates and summit selectivity remain isolated
+  // to the explicitly approved stage-ID allowlist during acceptance testing.
+  if (
+    input.stage.terrainType === 'mountain' &&
+    !isMountainEnginePilotStageV1(input.stage)
   ) {
     return input
   }
