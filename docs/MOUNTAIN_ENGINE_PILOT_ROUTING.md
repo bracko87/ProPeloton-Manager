@@ -17,7 +17,9 @@ For non-pilot mountain stages:
 - The prospective `summitFinishSelectivityV1` flag stays disabled.
 - The existing baseline universal race engine continues to run.
 
-Other terrains retain their existing behavior. This is a **candidate-path isolation safeguard**, not yet a fully independent physical simulation engine: the legacy and pilot calculations still share `runRaceEngine.ts` and its physical integrator. Any changes to shared core physics must be separately isolated before release; this guard alone must not be described as a complete independent engine.
+Other terrains retain their existing behavior. The experimental mountain engine now has its own source-level physical simulation implementation, `runMountainExperimentalEngineV1.ts`, forked byte-for-byte from the previously approved universal physical solver. The immutable accepted baseline stays in `runRaceEngine.ts`. The opt-in dispatcher `runSelectedRaceEngineV1.ts` runs the experimental fork only for listed mountain road stages and the baseline for everything else. Both still share explicitly reusable supporting modules, but future experimental core-physics changes can be made in the fork without modifying baseline core physics.
+
+**Caution:** the new fork initially calculates exactly the same as the baseline; it is isolation infrastructure, not a calibrated new algorithm by itself. Pilot mechanics (such as summit selectivity) must be proven independently. Production workers still import their previously pinned engine SHA and do **not** use this dispatcher yet.
 
 ## Current production acceptance evidence
 
