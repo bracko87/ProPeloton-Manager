@@ -1,3 +1,5 @@
+import * as acceptedCore from './runRaceEngine.ts'
+import * as mountainCore from './runMountainExperimentalEngineV1.ts'
 import {
   runRaceEngine as runBaselineRaceEngine,
   type UniversalRaceEngineInput,
@@ -6,7 +8,7 @@ import {
 import {
   runRaceEngine as runExperimentalMountainCoreV1,
 } from './runMountainExperimentalEngineV1.ts'
-import { dispatchSelectedRaceEngineV1 } from './mountainEngineLaneV1.ts'
+import { dispatchSelectedRaceEngineV1, selectMountainEngineLaneV1 } from './mountainEngineLaneV1.ts'
 
 /**
  * Stage-scoped executable boundary for the experimental mountain solver.
@@ -25,4 +27,21 @@ export function runSelectedRaceEngineV1(
     baseline: runBaselineRaceEngine,
     experimentalMountain: runExperimentalMountainCoreV1,
   })
+}
+
+/**
+ * Checkpointed safe-resume workers cannot use runRaceEngine() as a single call:
+ * they invoke its exported deterministic phases over multiple Edge requests.
+ * This selector provides exactly the same per-stage solver fork as the
+ * single-shot dispatcher, so phase1..phase10 and replay cannot mix lanes.
+ *
+ * The worker must pin every imported source to the same reviewed Git commit
+ * and preserve the accepted fallback path independently.
+ */
+export function getSelectedRaceEngineModuleV1(
+  stage: UniversalRaceEngineInput['stage'],
+): typeof acceptedCore {
+  return selectMountainEngineLaneV1(stage) === 'experimental_mountain_v1'
+    ? mountainCore
+    : acceptedCore
 }
