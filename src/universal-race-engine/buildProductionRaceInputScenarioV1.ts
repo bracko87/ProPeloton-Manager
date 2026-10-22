@@ -3,10 +3,8 @@ import {
   buildProductionUniversalRaceEngineInput as buildBaseProductionUniversalRaceEngineInput,
   type ProductionUniversalRaceSources as BaseProductionUniversalRaceSources,
 } from './buildProductionRaceInput.ts'
-import {
-  runRaceEngine as runCoreRaceEngine,
-  type UniversalRaceEngineInput,
-} from './runRaceEngine.ts'
+import type { UniversalRaceEngineInput } from './runRaceEngine.ts'
+import { runSelectedRaceEngineV1 } from './runSelectedRaceEngineV1.ts'
 import {
   applyRoadScenarioFromPrecalculationV2,
   type PrecalculationScenarioHistoryEntryV2,
@@ -169,14 +167,32 @@ export function buildScenarioProductionUniversalRaceEngineInput(
   // This is deliberately the normal engine with no scenario metadata attached.
   // Its result is only used to classify the race shape; it is never persisted as
   // the official sporting result.
-  const preCalculation = runCoreRaceEngine(input)
+  const preCalculation = runSelectedRaceEngineV1(input)
   const selection = applyRoadScenarioFromPrecalculationV2(
     input,
     preCalculation,
     gameDateFromSources(sources),
     rawScenarioHistory(sources),
   )
-  return selection.input
+  if (!isMountainEnginePilotStageV1(input.stage)) return selection.input
+
+  // Snapshot marker for independent production-readback audits. The worker's
+  // final calculation must use runSelectedRaceEngineV1 as well; metadata alone
+  // does not prove that the selected executable was used.
+  return {
+    ...selection.input,
+    stagePlans: selection.input.stagePlans.map((plan) => ({
+      ...plan,
+      metadata: {
+        ...plan.metadata,
+        mountainEnginePilotV1: {
+          lane: 'experimental_mountain_v1',
+          selection: 'explicit_stage_id_allowlist',
+          stageId: input.stage.stageId,
+        },
+      },
+    })),
+  }
 }
 
 export const buildProductionUniversalRaceEngineInput =
