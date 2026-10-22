@@ -217,6 +217,7 @@
     "rider": "Гонщик",
     "status": "Статус",
     "worldChampionshipWaiting": "Отбор продолжается",
+    "worldChampionshipAcceptedUnavailable": "Участие подтверждено — временно недоступен",
     "worldChampionshipUnavailable": "Не подтверждён",
     "worldChampionshipConfirmedLabel": "Подтверждён",
     "worldChampionshipInvited": "Ожидает подтверждения",
