@@ -11109,34 +11109,41 @@ function StageReplayAccessCard({
 
     let cancelled = false
     let intervalId: number | null = null
+    let requestInFlight = false
 
     async function loadReplayAvailability(showLoading = false): Promise<void> {
-      if (showLoading) {
-        setReplayAvailability((current) => ({ ...current, status: 'loading' }))
-      }
+      if (cancelled || requestInFlight || document.hidden) return
+      requestInFlight = true
+      try {
+        if (showLoading) {
+          setReplayAvailability((current) => ({ ...current, status: 'loading' }))
+        }
 
-      const { data, error } = await supabase.rpc(
-        'get_authorized_race_stage_replay_payload_v1',
-        { p_stage_id: stage.id }
-      )
+        const { data, error } = await supabase.rpc(
+          'get_authorized_race_stage_replay_payload_v1',
+          { p_stage_id: stage.id }
+        )
 
-      if (cancelled) return
+        if (cancelled) return
 
-      const nextAvailability = normalizeStageReplayAvailability(
-        data,
-        error?.message ?? null
-      )
-      setReplayAvailability(nextAvailability)
+        const nextAvailability = normalizeStageReplayAvailability(
+          data,
+          error?.message ?? null
+        )
+        setReplayAvailability(nextAvailability)
 
-      if (nextAvailability.status === 'available' && intervalId !== null) {
-        window.clearInterval(intervalId)
-        intervalId = null
+        if (nextAvailability.status === 'available' && intervalId !== null) {
+          window.clearInterval(intervalId)
+          intervalId = null
+        }
+      } finally {
+        requestInFlight = false
       }
     }
 
     intervalId = window.setInterval(
       () => void loadReplayAvailability(false),
-      5000
+      15000
     )
     void loadReplayAvailability(true)
 
@@ -14770,8 +14777,12 @@ function UniversalRaceReplayPage({
 
   useEffect(() => {
     let cancelled = false
+    let requestInFlight = false
 
     async function refreshPersistedLiveReplayState(): Promise<void> {
+      if (cancelled || requestInFlight || document.hidden) return
+      requestInFlight = true
+      try {
       const { data, error } = await raceDetailReadRpc(
         'get_race_stage_live_state_v1',
         { p_stage_id: stage.id }
@@ -14845,6 +14856,9 @@ function UniversalRaceReplayPage({
             setInputSource('production_authoritative_run')
           }
         }
+      }
+      } finally {
+        requestInFlight = false
       }
     }
 
@@ -19141,31 +19155,31 @@ export default function RaceDetailPage({
       if (!selectedStage?.id || cancelled || requestInFlight || document.hidden) return
       requestInFlight = true
       try {
-      const { data, error } = await raceDetailReadRpc(
-        'get_race_stage_live_state_v1',
-        {
-          p_stage_id: selectedStage.id,
-        }
-      )
-
-      if (cancelled) return
-
-      if (error) {
-        console.error(
-          'Could not load race stage live state:',
-          error
+        const { data, error } = await raceDetailReadRpc(
+          'get_race_stage_live_state_v1',
+          {
+            p_stage_id: selectedStage.id,
+          }
         )
-        // Preserve the last known state during a transient API failure.
-        return
-      }
 
-      const value = Array.isArray(data) ? data[0] : data
+        if (cancelled) return
 
-      setLiveState(
-        value && typeof value === 'object'
-          ? (value as RaceStageLiveState)
-          : null
-      )
+        if (error) {
+          console.error(
+            'Could not load race stage live state:',
+            error
+          )
+          // Preserve the last known state during a transient API failure.
+          return
+        }
+
+        const value = Array.isArray(data) ? data[0] : data
+
+        setLiveState(
+          value && typeof value === 'object'
+            ? (value as RaceStageLiveState)
+            : null
+        )
       } finally {
         requestInFlight = false
       }
