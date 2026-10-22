@@ -13,13 +13,13 @@ The only approved pilot stage IDs in `src/universal-race-engine/mountainEnginePi
 The pilot requires both `road_race` and `mountain` terrain in addition to the exact stage ID.
 
 For non-pilot mountain stages:
-- The separate scenario-selection pass is skipped.
-- The prospective `summitFinishSelectivityV1` flag stays disabled.
-- The existing baseline universal race engine continues to run.
+- The **existing** baseline solver and pre-calculation/scenario-selection pathway remain in place; no existing scenario handling is skipped.
+- The experimental-only `summitFinishSelectivityV1` flag is disabled outside approved pilot stages.
+- The dedicated mountain solver is never selected.
 
 Other terrains retain their existing behavior. The experimental mountain engine now has its own source-level physical simulation implementation, `runMountainExperimentalEngineV1.ts`, forked byte-for-byte from the previously approved universal physical solver. The immutable accepted baseline stays in `runRaceEngine.ts`. The opt-in dispatcher `runSelectedRaceEngineV1.ts` runs the experimental fork only for listed mountain road stages and the baseline for everything else. Both still share explicitly reusable supporting modules, but future experimental core-physics changes can be made in the fork without modifying baseline core physics.
 
-**Caution:** the new fork initially calculates exactly the same as the baseline; it is isolation infrastructure, not a calibrated new algorithm by itself. Pilot mechanics (such as summit selectivity) must be proven independently. Production workers still import their previously pinned engine SHA and do **not** use this dispatcher yet.
+**Caution:** the fork mostly retains the baseline sporting algorithm; it is independent source and stage-routing infrastructure, not yet proof of fully calibrated mountain physics. Its first experimental-only fix changes replay B1 lineage retention to use the true physical catch threshold rather than the 5-second official grouping tolerance. Other sporting-result logic remains unchanged. Production workers still import their previously pinned engine SHA and do **not** use this dispatcher yet.
 
 ## Current production acceptance evidence
 
@@ -35,4 +35,6 @@ Poyang Stage 7 and Oropa remain live candidates. Do not manually recalculate or 
 - Supabase race workers import Git-pinned primary engine and input builder files. Merging this PR alone will **not** update their current pinned commit. Any later worker pin or deployment needs a separate coordinated controlled release of all four workers and post-deployment read-back.
 - No SQL migration or database writes are required for this code-level allowlist. Never rewrite official results.
 - Physical replay gaps are a separate issue; a `safeMode: true`, `replayQuality: degraded` race is not a complete acceptance pass.
-- Before calling this a truly independent mountain engine, separate the mountain pilot's physics implementation from the shared core and test that ordinary races are unchanged.
+- Xingtai's authoritative Phase 2 physical trajectory remains active until km 46.1, but the earlier replay constructor dropped B1 whenever the Phase 1 boundary gap was below 5 seconds. Its 3.690225-second boundary gap was **above** the true 0.75-second physical catch threshold, so the replay incorrectly removed B1. The experimental fork uses the physical threshold; the existing core remains intact.
+- A previous prototype that inferred catches from replay group disappearance was intentionally removed: it could have reported a catch too early without matching the authoritative 46.1 km event. No synthetic commentary is used as a substitute for physical-state evidence.
+- Full implementation requires production worker orchestration to select the experimental stage-scoped solver for both ordinary and checkpointed safe-mode runs, with source SHA pinning and post-deployment read-back. The code-level dispatcher alone is not a production release.
