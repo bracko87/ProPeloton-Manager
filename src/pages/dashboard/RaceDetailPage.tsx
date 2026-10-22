@@ -512,6 +512,14 @@ function raceDetailReadRpc(
 }
 
 
+function isTransientRaceDetailReadError(
+  error: { code?: string; message?: string } | null
+): boolean {
+  if (!error) return false
+  if (['57014', 'PGRST000', 'PGRST002', 'PGRST003'].includes(error.code ?? '')) return true
+  return /statement timeout|canceling statement|schema cache|service unavailable|internal server error|failed to fetch|network error|connection timeout/i.test(error.message ?? '')
+}
+
 type RaceStageLiveState = {
   stage_id: string
   has_simulation: boolean
@@ -7086,104 +7094,101 @@ function usePublishedRaceStageIds(
     () => stages.map((stage) => stage.id),
     [stages]
   )
-
   const stageIdsKey = stageIds.join('|')
-
-  const [
-    publishedStageIds,
-    setPublishedStageIds,
-  ] = useState<string[]>([])
+  const [publishedStageIds, setPublishedStageIds] = useState<string[]>([])
 
   useEffect(() => {
     if (stageIds.length === 0) {
-      setPublishedStageIds((current) =>
-        current.length === 0 ? current : []
-      )
+      setPublishedStageIds((current) => current.length === 0 ? current : [])
       return
     }
 
     let cancelled = false
+    let requestInFlight = false
+    // Published stage results are final. Recheck only unpublished stages
+    // instead of sending requests for every historical stage on every poll.
+    const confirmedPublishedStageIds = new Set<string>()
+    setPublishedStageIds([])
 
-    async function loadPublishedStages() {
-      const results = await Promise.all(
-        stageIds.map(async (stageId) => {
-          const { data, error } =
-            await raceDetailReadRpc(
-              'get_race_stage_live_state_v1',
-              {
-                p_stage_id: stageId,
-              }
-            )
+    async function loadPublishedStages(): Promise<void> {
+      if (cancelled || requestInFlight || document.visibilityState === 'hidden') return
 
-          if (error) {
-            console.error(
-              `Could not load live state for stage ${stageId}:`,
-              error
-            )
-            return null
-          }
-
-          const value = Array.isArray(data)
-            ? data[0]
-            : data
-
-          const liveState =
-            value &&
-            typeof value === 'object'
-              ? (value as RaceStageLiveState)
-              : null
-
-          return liveState?.results_visible === true
-            ? stageId
-            : null
-        })
+      const outstandingStageIds = stageIds.filter(
+        (stageId) => !confirmedPublishedStageIds.has(stageId)
       )
+      if (outstandingStageIds.length === 0) return
 
-      if (cancelled) return
+      requestInFlight = true
+      try {
+        let cursor = 0
+        let failures = 0
+        // Cap concurrent RPCs and never start another polling cycle
+        // while the previous one is still awaiting Supabase.
+        await Promise.all(
+          Array.from(
+            { length: Math.min(3, outstandingStageIds.length) },
+            async () => {
+              while (!cancelled && cursor < outstandingStageIds.length) {
+                const stageId = outstandingStageIds[cursor++]
+                try {
+                  const { data, error } = await raceDetailReadRpc(
+                    'get_race_stage_live_state_v1',
+                    { p_stage_id: stageId }
+                  )
+                  if (error) {
+                    failures += 1
+                    continue
+                  }
 
-      const nextPublishedStageIds =
-        results.filter(
-          (stageId): stageId is string =>
-            Boolean(stageId)
+                  const value = Array.isArray(data) ? data[0] : data
+                  const liveState =
+                    value && typeof value === 'object'
+                      ? (value as RaceStageLiveState)
+                      : null
+
+                  if (liveState?.results_visible === true) {
+                    confirmedPublishedStageIds.add(stageId)
+                  }
+                } catch {
+                  failures += 1
+                }
+              }
+            }
+          )
         )
 
-      /*
-       * Keep the existing array reference when the publication
-       * state has not changed.
-       *
-       * This prevents the results effects from restarting every
-       * five seconds.
-       */
-      setPublishedStageIds(
-        (currentPublishedStageIds) => {
-          const unchanged =
-            currentPublishedStageIds.length ===
-              nextPublishedStageIds.length &&
-            currentPublishedStageIds.every(
-              (stageId, index) =>
-                stageId ===
-                nextPublishedStageIds[index]
-            )
-
-          return unchanged
-            ? currentPublishedStageIds
-            : nextPublishedStageIds
+        if (cancelled) return
+        if (failures > 0) {
+          console.warn(
+            `Could not check publication for ${failures} race stages; retrying later.`
+          )
         }
-      )
+
+        const nextPublishedStageIds = stageIds.filter(
+          (stageId) => confirmedPublishedStageIds.has(stageId)
+        )
+        setPublishedStageIds((current) =>
+          current.length === nextPublishedStageIds.length &&
+          current.every((stageId, index) => stageId === nextPublishedStageIds[index])
+            ? current
+            : nextPublishedStageIds
+        )
+      } finally {
+        requestInFlight = false
+      }
     }
 
     void loadPublishedStages()
-
-    const interval = window.setInterval(
-      () => {
-        void loadPublishedStages()
-      },
-      5000
-    )
+    const interval = window.setInterval(() => void loadPublishedStages(), 15000)
+    const onVisibilityChange = () => {
+      if (!document.hidden) void loadPublishedStages()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
 
     return () => {
       cancelled = true
       window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
     }
   }, [stageIdsKey])
 
@@ -7582,6 +7587,7 @@ function RaceResultsHub({
 
   useEffect(() => {
     let mounted = true
+    let retryTimeout: number | null = null
 
     async function loadCurrentClassifications() {
       if (
@@ -7639,6 +7645,9 @@ function RaceResultsHub({
       if (classificationResponse.error) {
         setClassificationPayload(null)
         setClassificationError(classificationResponse.error.message)
+        if (isTransientRaceDetailReadError(classificationResponse.error)) {
+          retryTimeout = window.setTimeout(() => void loadCurrentClassifications(), 15000)
+        }
       } else {
         const normalizedClassificationPayload =
           await hydrateRaceResultsPayloadDisplayNames(
@@ -7655,6 +7664,9 @@ function RaceResultsHub({
             'Could not load roster-based full race standings:',
             fullStandingResponse.error
           )
+          if (isTransientRaceDetailReadError(fullStandingResponse.error)) {
+            retryTimeout = window.setTimeout(() => void loadCurrentClassifications(), 15000)
+          }
         }
 
         setClassificationPayload({
@@ -7683,6 +7695,7 @@ function RaceResultsHub({
 
   useEffect(() => {
     let mounted = true
+    let retryTimeout: number | null = null
 
     async function loadStageResults() {
       const stageForResults =
@@ -7772,6 +7785,9 @@ function RaceResultsHub({
         setStageResultsPayload(null)
         setStagePointResults([])
         setStageResultsError(resultsError.message)
+        if (isTransientRaceDetailReadError(resultsError)) {
+          retryTimeout = window.setTimeout(() => void loadStageResults(), 15000)
+        }
       } else {
         const normalizedStageResultsPayload =
           await hydrateRaceResultsPayloadDisplayNames(
@@ -7802,6 +7818,9 @@ function RaceResultsHub({
             'Could not load stage point results:',
             pointError
           )
+          if (isTransientRaceDetailReadError(pointError)) {
+            retryTimeout = window.setTimeout(() => void loadStageResults(), 15000)
+          }
         }
       }
 
@@ -19116,10 +19135,12 @@ export default function RaceDetailPage({
     }
 
     let cancelled = false
+    let requestInFlight = false
 
     async function loadSelectedStageLiveState() {
-      if (!selectedStage?.id) return
-
+      if (!selectedStage?.id || cancelled || requestInFlight || document.hidden) return
+      requestInFlight = true
+      try {
       const { data, error } = await raceDetailReadRpc(
         'get_race_stage_live_state_v1',
         {
@@ -19134,7 +19155,7 @@ export default function RaceDetailPage({
           'Could not load race stage live state:',
           error
         )
-        setLiveState(null)
+        // Preserve the last known state during a transient API failure.
         return
       }
 
@@ -19145,6 +19166,9 @@ export default function RaceDetailPage({
           ? (value as RaceStageLiveState)
           : null
       )
+      } finally {
+        requestInFlight = false
+      }
     }
 
     loadSelectedStageLiveState()
