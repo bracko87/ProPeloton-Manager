@@ -33,3 +33,28 @@ const baselineBlobHash = createHash('sha1')
   .digest('hex')
 assert.equal(baselineBlobHash, 'f520ab08d05dc406918d34295d02ca6ef1f53cb2',
   'Pre-existing baseline race input builder must remain byte-for-byte unchanged')
+
+/**
+ * Production incident 2026-10-22: using selectedCore in Phase 9 before it was
+ * initialized caused ALL baseline Safe Resume calculations to fail. Require
+ * stage-scoped module assignment before the FIRST phase-9 engine call.
+ */
+const safeStep = safe.slice(safe.indexOf('async function executeStep('))
+const stepZeroStart = safeStep.indexOf('if(step===0){', safeStep.indexOf('let engineLaneV1:'))
+const stepZeroEnd = safeStep.indexOf('} else {', stepZeroStart)
+const stepZero = safeStep.slice(stepZeroStart, stepZeroEnd)
+const stageLoaded = stepZero.indexOf('input=built.input;')
+const selection = stepZero.indexOf('engineLaneV1=selectMountainEngineLaneV1(input.stage);')
+const executable = stepZero.indexOf('selectedCore=engineLaneV1 === "experimental_mountain_v1"')
+const phase9 = stepZero.indexOf('phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);')
+const phase9Application = stepZero.indexOf('calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);')
+assert.ok(
+  stageLoaded>=0 && stageLoaded<selection && selection<executable &&
+  executable<phase9 && phase9<phase9Application,
+  'Safe Resume Phase 9 must select/initialize stage engine BEFORE first use'
+)
+const resume = safeStep.slice(stepZeroEnd,safeStep.indexOf('const effectiveSourceCommit ='))
+assert.match(resume,/engineLaneV1=text\(checkpoint.selectedEngineLaneV1\)/)
+assert.match(resume,/selectedCore=engineLaneV1 === "experimental_mountain_v1"/)
+assert.match(resume,/!input \|\| !calculationInput \|\| !phase9Modifiers/)
+console.log('PASS safe-resume pilot/baseline engine initialized before Phase 9')

@@ -577,11 +577,18 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   let phase9Modifiers: any;
   let calculationInput: any;
   let scenarioPreserved = false;
+  let selectedCore: typeof acceptedCore = acceptedCore;
+  let engineLaneV1: "baseline_universal" | "experimental_mountain_v1" = "baseline_universal";
 
   if(step===0){
     const built=await buildInput(supabase,stageId,runId);
     input=built.input;
     scenarioPreserved=Boolean(built.scenario);
+    // Select the lane as soon as we have a stage. Phase 9 uses this same
+    // executable; do not reference selectedCore before initializing it.
+    engineLaneV1=selectMountainEngineLaneV1(input.stage);
+    selectedCore=engineLaneV1 === "experimental_mountain_v1"
+      ? getSelectedRaceEngineModuleV1(input.stage) : acceptedCore;
     phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);
     calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);
   } else {
@@ -592,16 +599,14 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     if(!input || !calculationInput || !phase9Modifiers){
       throw new Error("Checkpoint is missing the preserved engine input.");
     }
+    // Resume only the original lane, never switch an in-flight baseline
+    // checkpoint to experimental mountain code after a production release.
+    engineLaneV1=text(checkpoint.selectedEngineLaneV1) === "experimental_mountain_v1"
+      ? "experimental_mountain_v1" : "baseline_universal";
+    selectedCore=engineLaneV1 === "experimental_mountain_v1"
+      ? getSelectedRaceEngineModuleV1(calculationInput.stage) : acceptedCore;
   }
 
-  // Pin the executable lane in the first checkpoint. Prior-release runs with
-  // no lane marker must resume on the original engine, not switch mid-race.
-  const engineLaneV1 = step === 0
-    ? selectMountainEngineLaneV1(calculationInput.stage)
-    : text(checkpoint.selectedEngineLaneV1) === "experimental_mountain_v1"
-      ? "experimental_mountain_v1" : "baseline_universal";
-  const selectedCore = engineLaneV1 === "experimental_mountain_v1"
-    ? getSelectedRaceEngineModuleV1(calculationInput.stage) : acceptedCore;
   const effectiveSourceCommit = step === 0 ? SOURCE_COMMIT
     : text(checkpoint.selectedEngineSourceCommit) || PREVIOUS_SOURCE_COMMIT;
   let next: JsonObject={...checkpoint};
