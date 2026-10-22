@@ -217,6 +217,7 @@
     "rider": "Corredor",
     "status": "Estado",
     "worldChampionshipWaiting": "Clasificación en curso",
+    "worldChampionshipAcceptedUnavailable": "Aceptado — actualmente no disponible",
     "worldChampionshipUnavailable": "No confirmado",
     "worldChampionshipConfirmedLabel": "Confirmado",
     "worldChampionshipInvited": "Pendiente de confirmación",

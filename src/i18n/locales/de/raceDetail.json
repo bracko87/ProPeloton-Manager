@@ -217,6 +217,7 @@
     "rider": "Fahrer",
     "status": "Status",
     "worldChampionshipWaiting": "Qualifikation läuft",
+    "worldChampionshipAcceptedUnavailable": "Akzeptiert — derzeit nicht verfügbar",
     "worldChampionshipUnavailable": "Nicht bestätigt",
     "worldChampionshipConfirmedLabel": "Bestätigt",
     "worldChampionshipInvited": "Bestätigung ausstehend",

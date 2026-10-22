@@ -1,0 +1,69 @@
+name: World Road Championship AI approval and fitness
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/world-road-championship-approval-qa.yml'
+      - 'supabase/migrations/*world_road_preserve_approved_fatigued_champions.sql'
+      - 'supabase/tests/world_road_approved_fatigue_fixture.sql'
+      - 'src/pages/dashboard/WorldChampionshipExpectedField.tsx'
+      - 'src/i18n/locales/**/raceDetail.json'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/world-road-championship-approval-qa.yml'
+      - 'supabase/migrations/*world_road_preserve_approved_fatigued_champions.sql'
+      - 'supabase/tests/world_road_approved_fatigue_fixture.sql'
+      - 'src/pages/dashboard/WorldChampionshipExpectedField.tsx'
+      - 'src/i18n/locales/**/raceDetail.json'
+
+permissions:
+  contents: read
+
+jobs:
+  world-approval:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: championship_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: test_password
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d championship_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: test_password
+      PGDATABASE: championship_test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test SQL migration against an isolated PostgreSQL 16 database
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/world_road_approved_fatigue_fixture.sql
+      - name: Check all eight language labels
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs'
+          const expected = 'worldChampionshipAcceptedUnavailable'
+          const page = fs.readFileSync('src/pages/dashboard/WorldChampionshipExpectedField.tsx', 'utf8')
+          if (!page.includes('participants.'+expected)) throw new Error('World Championship status not wired into the page')
+          for (const lang of ['en','de','es','fr','hr','it','ru','sr-Latn']) {
+            const value = JSON.parse(fs.readFileSync('src/i18n/locales/'+lang+'/raceDetail.json','utf8'))
+              .participants?.[expected]
+            if (typeof value !== 'string' || !value.trim()) throw new Error('Missing '+expected+' in '+lang)
+          }
+          console.log('All 8 translations verified')
+          NODE
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Validate translations and production bundle
+        run: npm run build
