@@ -310,12 +310,14 @@ describe('isolated experimental mountain executable', () => {
     expect(selected.finishResolution.classification).toHaveLength(mountain.riders.length)
   })
 
-  it('starts from an exact accepted physics baseline, without changing results', () => {
+  it('preserves official sporting results when changing mountain replay grouping only', () => {
     const mountain = syntheticMountainPilotInput()
-    const expectedBaseline = runBaselineRaceEngine(mountain)
+    const baseline = runBaselineRaceEngine(mountain)
     const experimental = runExperimentalMountainCoreV1(mountain)
-    // Until experimental physics is deliberately changed, its fork must
-    // reproduce the accepted baseline bit-for-bit on identical seeded input.
-    expect(experimental).toEqual(expectedBaseline)
+    // Pilot replay group identity is now allowed to differ until the physical
+    // catch event, but sporting time, rank and classification must not change.
+    expect(experimental.finishResolution).toEqual(baseline.finishResolution)
+    expect(experimental.groupAndTimeResolution).toEqual(baseline.groupAndTimeResolution)
+    expect(experimental.calibrationSummary).toEqual(baseline.calibrationSummary)
   })
 })
