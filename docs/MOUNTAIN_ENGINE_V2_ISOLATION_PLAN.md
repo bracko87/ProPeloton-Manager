@@ -2,6 +2,7 @@
 
 ## NON-NEGOTIABLE PRODUCTION SAFETY
 1. **Do not edit** `src/universal-race-engine/runRaceEngine.ts` while developing experimental mountain physics. Baseline Git blob at start of this project: `fa4ffd631d9d318ca92d6cfb8a517489b7842fcf`.
+   Also freeze its directly imported shared helpers: `roadScenarioPhysicalDirectorV1.ts`, `replayPhysicalStateV16.ts` and `summitFinishSelectivityV1.ts`. Changes to a shared helper would silently affect the baseline even if its entrypoint stays identical. A source-fingerprint CI gate protects all four files.
 2. Implement mountain-only physical group and climb calculations in `runMountainExperimentalEngineV1.ts` and purpose-built isolated modules. Never attach them to global helpers used by the baseline solver.
 3. Keep `mountainEnginePilotV1.ts` default-off outside its three existing stage IDs. Do not widen the allowlist until after multi-race acceptance.
 4. New work must remain in short-lived feature PRs to `main`, fully tested before any merge. Git merge is **not** a Supabase worker deployment.
