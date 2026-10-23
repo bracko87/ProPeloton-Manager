@@ -272,7 +272,7 @@ const STAGE_ID='5523cf76-8fd4-4a12-ab28-7f285c9829ff'
 const ATTRS:readonly (readonly [number,number,number,number,number])[]=[[0,71,65,67,100],[0,64,68,69,100],[0,73,67,77,100],[0,73,69,76,100],[0,66,69,75,100],[0,75,75,77,100],[1,61,56,59,65],[1,60,61,64,58],[1,62,68,66,64],[1,72,74,74,42],[1,62,58,63,59],[1,63,63,72,55],[2,71,80,82,99],[2,66,64,70,100],[2,72,74,79,100],[2,63,66,68,100],[2,74,86,77,84],[2,60,62,65,100],[3,75,71,80,31],[3,60,64,69,100],[3,74,69,76,70],[3,57,64,64,100],[3,62,62,70,84],[3,61,62,65,100],[4,90,81,86,100],[4,85,87,92,100],[4,89,87,90,100],[4,84,87,95,94],[4,84,86,91,100],[4,87,79,85,93],[5,75,71,77,84],[5,68,74,79,100],[5,63,66,67,100],[5,67,69,76,100],[5,67,59,71,100],[5,64,69,74,100],[6,55,66,64,100],[6,65,54,65,100],[6,69,78,70,95],[6,58,65,68,100],[6,58,65,65,100],[6,63,59,70,36],[7,64,65,69,36],[7,63,55,63,53],[7,71,70,73,11],[7,53,57,60,0],[7,68,68,66,23],[7,53,56,56,14],[8,66,64,67,83],[8,63,70,70,85],[8,61,58,66,94],[8,62,61,66,94],[8,60,59,62,82],[8,62,64,63,93],[9,67,66,72,48],[9,64,61,68,71],[9,61,59,64,84],[9,55,57,66,81],[9,58,65,63,57],[9,67,76,78,45],[10,59,64,60,83],[10,57,59,64,79],[10,59,71,62,80],[10,54,56,62,94],[10,54,53,61,64],[10,58,60,69,95],[11,63,52,59,87],[11,69,68,71,70],[11,63,57,64,97],[11,67,67,68,31],[11,68,67,70,12],[11,57,63,66,75],[12,62,62,63,80],[12,59,55,63,80],[12,62,59,66,70],[12,70,73,74,34],[12,57,62,61,53],[12,74,75,75,33],[13,63,55,64,84],[13,55,58,60,94],[13,69,69,66,94],[13,59,59,67,40],[13,54,60,65,94],[13,56,51,60,94],[14,62,58,65,65],[14,50,53,58,0],[14,60,65,68,79],[14,57,61,62,65],[14,61,55,66,66],[14,61,63,71,81],[15,69,66,73,67],[15,58,63,61,97],[15,55,63,65,52],[15,66,72,77,12],[15,61,62,66,14],[15,54,60,64,45]]
 const PROFILE:readonly (readonly [number,number])[]=[[0,80],[16,82],[32,78],[46,83],[60,88],[76,94],[92,104],[102,110],[118,113],[130,116],[139.2,114]]
 const POINTS=[["START",0,"Start",[],[],false,0],["INTERMEDIATE_SPRINT",46,"Sprint 1",[12,8,5,3,1],[3,2,1],false,10],["INTERMEDIATE_SPRINT",102,"Sprint 2",[10,6,4,2,1],[3,2,1],false,20],["FINISH",139.2,"Finish",[25,20,16,14,12,10,8,6,4,2],[10,6,4],true,30]] as const
-function scenario(chase:'minimal'|'organized'):UniversalRaceEngineInput {
+function scenario(chase:'minimal'|'organized', sustainEscape=false):UniversalRaceEngineInput {
   const base=createValidInput()
   // Cooperating escape candidates: strongest available *per separate team*.
   const skill=(r:typeof attrs[number])=>r[1]*0.55+r[3]*0.4-r[4]*0.12
@@ -331,7 +331,8 @@ function scenario(chase:'minimal'|'organized'):UniversalRaceEngineInput {
             chase==='organized'?'breakaway_chaser' as const:'rouleur' as const,
           commands:hasBreak
             ? {phase1:r.i===leadAttackIndex?'attack' as const:'join_breakaway' as const,phase2:'control_tempo' as const,
-                phase3:'conserve_energy' as const,phase4:'ride_for_stage_result' as const}
+                phase3:sustainEscape?'control_tempo' as const:'conserve_energy' as const,
+                phase4:'ride_for_stage_result' as const}
             : chase==='organized'
               ? {phase1:'stay_near_front' as const,phase2:'chase_breakaway' as const,
                   phase3:'chase_breakaway' as const,phase4:'chase_breakaway' as const}
@@ -491,6 +492,39 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     expect(minimallyChasedWithEscape.length).toBeGreaterThan(0)
     expect(minimallyChasedWithEscape.some(x=>x.anyFrontAtHalf===true)).toBe(true)
     expect(rows).toHaveLength(4)
+  })
+
+  it('compares deliberate Phase-3 breakaway rotation with energy conservation at the same seed',()=>{
+    const samples=[]
+    for(const rotateInPhase3 of [false,true]){
+      const input=scenario('minimal',rotateInPhase3)
+      input.engine.deterministicSeed+='-seed-a'
+      const original=JSON.stringify(input)
+      const result=runSelectedRaceEngineV1(input)
+      expect(JSON.stringify(input)).toBe(original)
+      expect(result.validationPassed).toBe(true)
+      expect(result.replaySynchronization.synchronized).toBe(true)
+      expect(result.finishResolution.complete).toBe(true)
+      expect(result.finishResolution.classification).toHaveLength(96)
+      expect(result.postStageUpdate.persistenceContract.directDatabaseWritePerformed).toBe(false)
+      const road=result.roadRaceResolution
+      const initialEscapeRiders=road.phase1Opening?.breakawayRiderIds??[]
+      const winner=result.finishResolution.winnerRiderId
+      samples.push({
+        rotateInPhase3,
+        openingRiders:initialEscapeRiders.length,
+        km25GapSeconds:road.phase1Opening?.endGapSeconds??0,
+        km50GapSeconds:road.phase2Development?.endGapSeconds??0,
+        km75GapSeconds:road.phase3Decisive?.endGapSeconds??0,
+        finishGapSeconds:road.phase4Finish?.endGapSeconds??0,
+        winner,
+        originalEscapeWon:initialEscapeRiders.includes(winner??''),
+        breakawaySurvived:result.calibrationSummary.breakawaySurvived,
+        replayIssues:result.replaySynchronization.issues,
+      })
+    }
+    console.log('BREAKAWAY_SUSTAINED_ROTATION_AUDIT='+JSON.stringify(samples))
+    expect(samples).toHaveLength(2)
   })
 
 })
