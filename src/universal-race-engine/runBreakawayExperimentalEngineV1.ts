@@ -10377,7 +10377,9 @@ export function resolveRoadPhase1Opening(
         point.kmFromStart <= stepEndKm + 2,
     )
     const provisionalEscapePaceKmh =
-      stepReferencePaceKmh * escapeAbilityMultiplier * cooperationMultiplier
+      stepReferencePaceKmh * escapeAbilityMultiplier * cooperationMultiplier *
+        breakawayV1PhysicalEscapePaceFactor(input, activeAcceptedRiderIds.length,
+          cooperationMultiplier, finiteWorkerAssets, stepMidKm)
     const response = calculatePelotonResponseComponents(
       stepEndKm / input.stage.distanceKm,
       input.stage.distanceKm - stepEndKm,
