@@ -764,18 +764,21 @@ export default function HomePage(): JSX.Element {
       `}</style>
 
       <header className="border-b border-white/15">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-2">
-          <div className="flex items-center gap-4">
+        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-2">
+          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png"
               alt="ProPeloton Manager"
-              className="h-24 w-auto shrink-0 object-contain"
+              className="h-16 w-auto shrink-0 object-contain sm:h-20 lg:h-24"
             />
-            <div className="text-xl font-semibold">ProPeloton Manager</div>
+            <div className="min-w-0 break-words text-base font-semibold sm:text-xl">ProPeloton Manager</div>
           </div>
 
-          <nav className="flex items-center justify-end gap-3 sm:gap-4">
-            <a href="#/login" className="text-sm font-semibold text-white/80 hover:text-white">
+          <nav className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0 sm:items-center sm:justify-end sm:gap-4" aria-label={t('footer.gameAria')}>
+            <a
+              href="#/login"
+              className="flex min-h-[44px] min-w-0 items-center justify-center rounded-md border border-white/20 px-2 py-2 text-center text-sm font-semibold text-white/90 hover:border-yellow-400 hover:text-yellow-400 sm:px-4"
+            >
               {t('header.signIn')}
             </a>
             <button
@@ -784,7 +787,7 @@ export default function HomePage(): JSX.Element {
               aria-disabled="true"
               title={t('header.registrationUnavailable')}
               data-registration-locked="true"
-              className="cursor-not-allowed rounded-md bg-slate-600 px-4 py-2 text-sm font-bold text-slate-300"
+              className="min-h-[44px] min-w-0 cursor-not-allowed rounded-md bg-slate-600 px-2 py-2 text-center text-sm font-bold text-slate-300 sm:px-4"
             >
               {t('header.startPlaying')}
             </button>
@@ -1167,7 +1170,7 @@ export default function HomePage(): JSX.Element {
       </main>
 
       <footer className="border-t border-white/15 py-10">
-        <div className="mx-auto grid max-w-7xl gap-8 px-6 md:grid-cols-[1.4fr_auto_auto_1fr] md:gap-x-10 lg:gap-x-14">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-x-10">
           <div>
             <div className="text-lg font-semibold">ProPeloton Manager</div>
             <div className="mt-2 max-w-md text-sm leading-6 text-white/70">
@@ -1191,37 +1194,39 @@ export default function HomePage(): JSX.Element {
             </div>
           </div>
 
-          <nav aria-label={t('footer.gameAria')}>
-            <div className="text-sm font-semibold text-white">{t('footer.game')}</div>
-            <div className="mt-3 flex flex-col gap-2">
+          <div className="grid min-w-0 grid-cols-2 items-stretch" data-mobile-footer-links>
+          <nav aria-label={t('footer.gameAria')} className="min-w-0 pr-3 sm:pr-6">
+            <div className="break-words text-sm font-semibold text-white">{t('footer.game')}</div>
+            <div className="mt-3 flex flex-col">
               {FOOTER_GAME_LINKS.map(link => (
-                <a key={link.href} href={link.href} className="text-sm text-white/70 hover:text-yellow-400">
+                <a key={link.href} href={link.href} className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
                   {t(link.labelKey)}
                 </a>
               ))}
-              <a href="#/login" className="text-sm text-white/70 hover:text-yellow-400">{t('header.signIn')}</a>
+              <a href="#/login" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">{t('header.signIn')}</a>
               <span
                 aria-disabled="true"
                 data-registration-locked="true"
                 title={t('header.registrationUnavailable')}
-                className="cursor-not-allowed text-sm text-white/35"
+                className="flex min-h-[44px] cursor-not-allowed items-center break-words text-sm text-white/35"
               >
                 {t('header.startPlaying')}
               </span>
             </div>
           </nav>
 
-          <nav aria-label={t('footer.legalAria')}>
-            <div className="text-sm font-semibold text-white">{t('footer.legal')}</div>
-            <div className="mt-3 flex flex-col gap-2">
+          <nav aria-label={t('footer.legalAria')} className="min-w-0 border-l border-white/20 pl-3 sm:pl-6">
+            <div className="break-words text-sm font-semibold text-white">{t('footer.legal')}</div>
+            <div className="mt-3 flex flex-col">
               {FOOTER_LEGAL_LINKS.map(link => (
-                <a key={link.href} href={link.href} className="text-sm text-white/70 hover:text-yellow-400">
+                <a key={link.href} href={link.href} className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
                   {t(link.labelKey)}
                 </a>
               ))}
-              <a href="/support/" className="text-sm text-white/70 hover:text-yellow-400">{t('footer.support')}</a>
+              <a href="/support/" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">{t('footer.support')}</a>
             </div>
           </nav>
+          </div>
 
           <div>
             <div className="text-sm font-semibold text-white">{t('footer.connect')}</div>
