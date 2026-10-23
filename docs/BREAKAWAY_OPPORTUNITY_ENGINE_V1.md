@@ -59,3 +59,24 @@ The test suite `breakawayOpportunityRealRoster.test.ts` includes 18 cases (three
 Additional official-finish/replay identity tests exist in `runSelectedRaceEngineV1.test.ts`. The four production Supabase Edge Function race workers are **not connected to this wrapper and are not redeployed**. These tests prove in-memory orchestration invariants only.
 
 **Release decision:** Only Bačka Plains Opener is the recommended **first candidate**. Do not switch its authoritative race engine yet: this model outputs a group-vs-peloton escape survival sketch, not official individual gaps, finish rank, incidents, replay frames, GC, classifications, stage points or prizes. Implementation of a complete separate authoritative stage solver, all checkpointed worker source pins, safe resume and sporting settlement remains necessary. The user must explicitly approve the first authoritative pilot only after those checks pass.
+
+
+## 2026-10-23 complete 96-rider race-engine regression — release gate remains closed
+
+After the full sporting fork `runBreakawayExperimentalEngineV1.ts` was introduced, the complete `breakawayFullPilotRealRoster.test.ts` test was executed in GitHub Actions against 96 anonymized Bačka registrants with **synthetic** stage orders and starting stamina. This is separate from the successful 30-checkpoint shadow opportunity model.
+
+- [Run 40011508641](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40011508641) failed: two accepted successful second-wave attacks (R031 and R017) were shown in the peloton at their launch kilometres. Replay verification correctly rejected the physically impossible commentary.
+- The specialist Phase-1 physical response was adjusted without changing the accepted universal engine, allowing the first B1 move to remain live when the second-wave riders successfully launched.
+- [Run 40013477735](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40013477735) passed: physical group replay synchronized, no race writes, full sporting result for both 96-rider scenarios, 27 breakaway tests, 20 isolation tests and **557/557 legacy engine tests**.
+- A subsequent chase-sensitive speed adjustment was tested in [run 40014063658](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40014063658), again with all checks green. **But no stage-long escape succeeded.**
+
+Latest complete-solver results:
+ 
+| Scenario | Successful opening attacks | Latest opening catch | Final classification | Breakaway winner? |
+| --- | ---: | --- | --- | --- |
+| Minimal organized chase, synthetic cooperative escape | Three, with separate wave launch kilometres | **20.168782 km** of 139.2 km | 96 riders, 1 final group, winner R028 | **No** |
+| Organized peloton chase | Zero accepted opening escape riders | No B1 to catch | 96 riders, 1 final group, winner R019 | **No** |
+
+**Blocking result:** The technical regression contract passes, but the specialist has not demonstrated its core requirement: plausible long-range survival, individual gaps and an occasional justified breakaway victory under genuinely permissive tactics. It must not be promoted merely because the stage ID is allowlisted. The experimental fork uses a complete sporting contract; however, the four live Supabase race workers are still pinned to accepted historical source commit `878aa8ae0db95d97fa5385513d2c1394e3a791a2` and do not use this new fork.
+
+**Required next work before approval:** calibrate the specialist's actual full-stage chase and escape-pace interaction across Phase 1 through Phase 4, test *multiple deterministic seeds and different team orders*, confirm synchronized complete replay and valid winner/points/GC/payout contracts, and independently validate a coordinated worker-pin release with a clear fallback. Do not change official stage results or trigger a real race for calibration.
