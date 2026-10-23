@@ -597,4 +597,68 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     expect(samples[1].finishGapSeconds).toBeGreaterThan(0)
   })
 
+
+  it('executes the Binche 203.2 km hilly pilot with 96 anonymized riders and real route geometry',()=>{
+    const BIN='335708f7-d56a-4816-9068-38399e8f74e3'
+    const DANUBE='f5af8665-91c1-4585-937e-11fb94f65819'
+    const original=scenario('minimal',true)
+    const binche:UniversalRaceEngineInput={
+      ...original,
+      engine:{...original.engine,deterministicSeed:'binche-official-hilly-roster-synthetic-seed-a'},
+      stage:{
+        ...original.stage,stageId:BIN,stageFormat:'road_race',
+        terrainType:'hilly',profileType:'sprinter',
+        distanceKm:203.2,elevationGainM:1710,
+        terrainPercentages:{flat:58,hilly:38,mountain:0,cobbled:4},
+        profilePoints:[
+          {km:0,elevationM:120},{km:25,elevationM:180},
+          {km:49,elevationM:240},{km:70,elevationM:205},
+          {km:77,elevationM:310},{km:91,elevationM:150},
+          {km:101,elevationM:125},{km:111,elevationM:225},
+          {km:123.8,elevationM:168},{km:139.7,elevationM:168},
+          {km:160.6,elevationM:118},{km:176.5,elevationM:118},
+          {km:190,elevationM:150},{km:203.2,elevationM:120},
+        ],
+      },
+      points:[
+        {...original.points[0],stageId:BIN},
+        {...original.points[1],stageId:BIN,kmFromStart:64},
+        {...original.points[1],stageId:BIN,pointId:'binche-kom-77',
+          pointType:'KOM',kmFromStart:77,name:'Petit Poggio',
+          komCategory:'3',pointsScheme:[5,3,2,1],timeBonusSeconds:[],sortOrder:15},
+        {...original.points[1],stageId:BIN,pointId:'binche-kom-111',
+          pointType:'KOM',kmFromStart:111,name:'Thuin North Rise',
+          komCategory:'3',pointsScheme:[5,3,2,1],timeBonusSeconds:[],sortOrder:20},
+        {...original.points.at(-1)!,stageId:BIN,kmFromStart:203.2,sortOrder:30},
+      ],
+    }
+    expect(selectCompleteRaceEngineLaneV1(binche.stage)).toBe('experimental_breakaway_v1')
+    expect(getSelectedRaceEngineModuleV1(binche.stage).runRaceEngine).toBe(specialistEngine)
+    expect(selectCompleteRaceEngineLaneV1({...binche.stage,terrainType:'flat'}))
+      .toBe('baseline_universal')
+    expect(selectCompleteRaceEngineLaneV1({...binche.stage,stageId:DANUBE}))
+      .toBe('baseline_universal')
+    const unchanged=JSON.stringify(binche)
+    const result=runSelectedRaceEngineV1(binche)
+    expect(JSON.stringify(binche)).toBe(unchanged)
+    expect(result.validationPassed).toBe(true)
+    expect(result.finishResolution.complete).toBe(true)
+    expect(result.finishResolution.classification).toHaveLength(96)
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result.phase9Acceptance.passed).toBe(true)
+    expect(result.phase78Acceptance.passed).toBe(true)
+    expect(result.postStageUpdate.persistenceContract.directDatabaseWritePerformed).toBe(false)
+    console.log('BINCHE_HILLY_PILOT_AUDIT='+JSON.stringify({
+      stage:BIN,terrain:binche.stage.terrainType,
+      distanceKm:binche.stage.distanceKm,
+      classification:result.finishResolution.classification.length,
+      winner:result.finishResolution.winnerRiderId,
+      openingEscapeCount:result.roadRaceResolution.phase1Opening?.breakawayRiderIds.length??0,
+      gapAt70Pct:result.roadRaceResolution.phase3Decisive?.physicalEndGapSeconds??0,
+      endGap:result.roadRaceResolution.phase4Finish?.endGapSeconds??0,
+      survived:result.calibrationSummary.breakawaySurvived,
+      replayIssues:result.replaySynchronization.issues,
+    }))
+  })
+
 })
