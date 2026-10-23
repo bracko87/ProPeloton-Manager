@@ -1,9 +1,9 @@
 /**
  * Authoritative Breakaway V1 release gate.
  *
- * Distinct from the THREE shadow-opportunity candidates. Only the explicit
- * first-stage controlled pilot may use the complete experimental race core;
- * all other registered candidates remain ordinary universal road stages.
+ * Distinct from the shadow-opportunity candidate registry. Only expressly
+ * approved stage UUIDs may use the complete experimental race core;
+ * unapproved candidates remain ordinary universal road stages.
  * This list must never be inferred from terrain, race, country or calendar.
  */
 import {
@@ -14,6 +14,8 @@ import {
 export const BREAKAWAY_OFFICIAL_PILOT_STAGE_IDS_V1: readonly string[] = [
   // Trka kroz Vojvodinu, Stage 1 — Bačka Plains Opener.
   '5523cf76-8fd4-4a12-ab28-7f285c9829ff',
+  // Binche–Chimay–Binche / Mémorial Franco Vandenbroeck — Oct 7, hilly.
+  '335708f7-d56a-4816-9068-38399e8f74e3',
 ] as const
 
 const pilotIds=new Set(BREAKAWAY_OFFICIAL_PILOT_STAGE_IDS_V1)
