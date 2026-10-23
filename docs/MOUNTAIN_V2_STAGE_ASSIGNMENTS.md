@@ -32,3 +32,25 @@ The prototype separated the 96 riders into **87–88** finish groups and all rid
 ### What changes are needed to add a stage?
 
 Add an exact entry to the TypeScript registry, check eligibility, calendar and sampled route coverage, write a stage-specific deterministic simulation fixture, and run the full validation workflow. Changes to the V1 pilot list, shared universal physics, game database and production worker pins are not part of stage selection.
+
+## 2026-10-23: isolated production-integration preparation
+
+The V2 physics prototype was corrected after the actual Durmitor sandbox exposed 96/96 exhausted riders and 87–88 end groups. New physics use duration-scaled energy, sustainable paceline/drafting matching, and physically calculated on-road separation. **This is calibration, not an official release.**
+
+| Durmitor, 96 riders | Previous V2 | Revised V2 |
+|---|---:|---:|
+| Steady finish groups | 87 | 23 |
+| Attack/support finish groups | 88 | 42 |
+| Riders with zero reserve at finish | 96 | 0 |
+| Steady winner-to-10th gap | 457.7s | 430.0s |
+| Attack winner-to-10th gap | 607.4s | 531.0s |
+
+Both use the same anonymized, frozen rider attributes and sampled real route; the full-stage situation and tactics remain synthetic. No hard-coded group quotas or forced finish order.
+
+The shadow adapter now computes the validated physical/timing/replay pipeline **once** and translates solver errors into a non-authoritative diagnostic rather than throwing them into the game race pathway. `runSelectedRaceEngineWithMountainV2Shadow(input)` is a separate **in-memory integration boundary** that returns the unchanged accepted official result plus an optional stage-whitelisted V2 preview. A failure of V2 preview never changes or blocks the official output. This new helper is tested against the original result equality and has no database I/O.
+
+### Deployment reality and hold
+
+The actual production calculation, pass1, pass2 and safe-resume Edge Functions still import pinned accepted sources. They **do not call** the new wrapper. A GitHub PR merge alone is not equivalent to a Supabase worker deployment. For future *production shadow* deployment, review and pin all four workers to a coherent release, prove checkpointed resume parity and fallback, carry V2 diagnostics in separate non-sporting telemetry, and demonstrate an actual run whose official result and payout hashes exactly match the pre-V2 engine. Shadow must remain optional, fail-safe and separately toggleable on exact stage IDs. Production testing must never rewrite completed stages or change rankings, points, GC, prizes, replay or ownership.
+
+**Status: preparation implemented in draft PR; no merge, no deploy, no engine promotion.** The documented stage IDs are diagnostic candidates only. Their V2 status must remain `sandbox_shadow_only` until explicit release approval and the worker changes are reviewed/tested.
