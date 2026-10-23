@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild'
-import { copyFile, readFile, writeFile } from 'node:fs/promises'
+import { access, cp, readFile, writeFile } from 'node:fs/promises'
 import { rimraf } from 'rimraf'
 import stylePlugin from 'esbuild-style-plugin'
 import autoprefixer from 'autoprefixer'
@@ -7,7 +7,32 @@ import tailwindcss from 'tailwindcss'
 
 const args = process.argv.slice(2)
 const isProd = args[0] === '--production'
-const indexNowKey = '2b44bc2a682f02d72a345de371fa2f83'
+const PUBLIC_PAGE_ROUTES = [
+  'about',
+  'how-to-play',
+  'game-guide',
+  'contact',
+  'privacy-policy',
+  'terms',
+  'support',
+  'demo',
+]
+
+async function publishPublicSite() {
+  // These real standalone public HTML pages are linked from the homepage and
+  // advertised in the sitemap. They must exist in dist in both dev and prod;
+  // without this copy, clean URLs such as /how-to-play/ return an HTTP 404.
+  await cp('public', 'dist', { recursive: true, force: true })
+
+  await Promise.all(
+    PUBLIC_PAGE_ROUTES.map(route => access(`dist/${route}/index.html`)),
+  )
+  await Promise.all([
+    access('dist/static-site.css'),
+    access('dist/robots.txt'),
+    access('dist/sitemap.xml'),
+  ])
+}
 
 const cacheBustedIndexPlugin = {
   name: 'cache-busted-index',
@@ -71,13 +96,11 @@ const esbuildOpts = {
 
 if (isProd) {
   await esbuild.build(esbuildOpts)
-  await copyFile(
-    `public/${indexNowKey}.txt`,
-    `dist/${indexNowKey}.txt`,
-  )
+  await publishPublicSite()
 } else {
   const ctx = await esbuild.context(esbuildOpts)
   await ctx.watch()
+  await publishPublicSite()
   const { hosts, port } = await ctx.serve()
   console.log(`Running on:`)
   hosts.forEach((host) => {
