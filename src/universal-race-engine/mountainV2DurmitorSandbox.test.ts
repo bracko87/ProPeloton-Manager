@@ -105,6 +105,23 @@ function report(scenario:'steady'|'tactics'){
     expect(cp.riders.every(r=>r.gapSeconds>=0&&Number.isFinite(r.gapSeconds))).toBe(true)
   }
   console.log('MOUNTAIN_V2_DURMITOR_REPORT='+JSON.stringify(output))
+  const groupByRiderId = new Map(final.groups.flatMap(group =>
+    group.riderIds.map(id=>[id,group.groupId] as const)))
+  const energyByRiderId = new Map(final.riders.map(row=>[row.riderId,row.energy] as const))
+  const teamByRiderId = new Map(riders.map(row=>[row.riderId,row.teamId] as const))
+  console.log('MOUNTAIN_V2_DURMITOR_STANDINGS='+JSON.stringify({
+    scenario,
+    rows: times.map(row=>[
+      row.riderId,
+      row.rank,
+      Number(row.elapsedSeconds.toFixed(3)),
+      Number(row.gapSeconds.toFixed(3)),
+      groupByRiderId.get(row.riderId),
+      teamByRiderId.get(row.riderId),
+      energyByRiderId.get(row.riderId),
+    ]),
+  }))
+
   return output
 }
 
