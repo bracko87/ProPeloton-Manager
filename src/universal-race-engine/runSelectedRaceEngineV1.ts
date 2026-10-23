@@ -12,6 +12,24 @@ import {
 } from './runMountainExperimentalEngineV1.ts'
 import { dispatchSelectedRaceEngineV1, selectMountainEngineLaneV1 } from './mountainEngineLaneV1.ts'
 
+export type SelectedCompleteRaceEngineLaneV1 =
+  | 'baseline_universal'
+  | 'experimental_mountain_v1'
+  | 'experimental_breakaway_v1'
+
+/** Single source of truth for both one-shot and checkpointed execution. */
+export function selectCompleteRaceEngineLaneV1(
+  stage: UniversalRaceEngineInput['stage'],
+): SelectedCompleteRaceEngineLaneV1 {
+  const mountain = selectMountainEngineLaneV1(stage) === 'experimental_mountain_v1'
+  const breakaway = isBreakawayOfficialPilotStageV1(stage)
+  if (mountain && breakaway) {
+    throw new Error('Stage cannot be eligible for two experimental solvers')
+  }
+  return mountain ? 'experimental_mountain_v1' :
+    breakaway ? 'experimental_breakaway_v1' : 'baseline_universal'
+}
+
 /**
  * Stage-scoped executable boundary for the experimental mountain solver.
  *
@@ -25,10 +43,7 @@ import { dispatchSelectedRaceEngineV1, selectMountainEngineLaneV1 } from './moun
 export function runSelectedRaceEngineV1(
   input: UniversalRaceEngineInput,
 ): UniversalRaceEngineResult {
-  if (isBreakawayOfficialPilotStageV1(input.stage)) {
-    if (selectMountainEngineLaneV1(input.stage) === 'experimental_mountain_v1') {
-      throw new Error('A race stage cannot select both Mountain V1 and Breakaway V1')
-    }
+  if (selectCompleteRaceEngineLaneV1(input.stage) === 'experimental_breakaway_v1') {
     return breakawayCore.runRaceEngine(input)
   }
   return dispatchSelectedRaceEngineV1(input, {
@@ -49,11 +64,7 @@ export function runSelectedRaceEngineV1(
 export function getSelectedRaceEngineModuleV1(
   stage: UniversalRaceEngineInput['stage'],
 ): typeof acceptedCore {
-  if (selectMountainEngineLaneV1(stage) === 'experimental_mountain_v1') {
-    if (isBreakawayOfficialPilotStageV1(stage)) {
-      throw new Error('A stage cannot use both experimental solver lanes')
-    }
-    return mountainCore
-  }
-  return isBreakawayOfficialPilotStageV1(stage) ? breakawayCore : acceptedCore
+  const lane=selectCompleteRaceEngineLaneV1(stage)
+  return lane === 'experimental_mountain_v1' ? mountainCore :
+    lane === 'experimental_breakaway_v1' ? breakawayCore : acceptedCore
 }
