@@ -350,7 +350,7 @@ describe('Breakaway V1: official result identity and failure isolation',()=>{
     const base=createValidInput()
     return {
       ...base,
-      stage:{...base.stage,stageId:BACKA,distanceKm:139.2},
+      stage:{...base.stage,stageId:BACKA},
       points:base.points.map(point=>({...point,stageId:BACKA})),
     }
   }
