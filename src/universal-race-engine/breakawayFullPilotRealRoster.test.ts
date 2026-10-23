@@ -416,7 +416,7 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
       opener:p.phase1Opening?.breakawayRiderIds.length??0,
       openingEndGapSeconds:p.phase1Opening?.endGapSeconds??0,
       phase2GapSeconds:p.phase2Development?.endGapSeconds??0,
-      phase3GapSeconds:p.phase3Decisive?.endGapSeconds??0,
+      phase3GapSeconds:p.phase3Decisive?.physicalEndGapSeconds??0,
       phase4GapSeconds:p.phase4Finish?.endGapSeconds??0,
       winner:result.finishResolution.winnerRiderId,
       finalGroupCount:result.calibrationSummary.finalGroupCount,
@@ -440,7 +440,7 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
       opener:p.phase1Opening?.breakawayRiderIds.length??0,
       openingEndGapSeconds:p.phase1Opening?.endGapSeconds??0,
       phase2GapSeconds:p.phase2Development?.endGapSeconds??0,
-      phase3GapSeconds:p.phase3Decisive?.endGapSeconds??0,
+      phase3GapSeconds:p.phase3Decisive?.physicalEndGapSeconds??0,
       phase4GapSeconds:p.phase4Finish?.endGapSeconds??0,
       winner:official.finishResolution.winnerRiderId,
       finalGroupCount:official.calibrationSummary.finalGroupCount,
@@ -475,7 +475,7 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
           halfwayPrimaryGapSeconds:halfwayPrimaryGap,
           halfwaySecondaryRiders,
           anyFrontAtHalf:halfwayPrimaryGap>0.5||halfwaySecondaryRiders>0,
-          threeQuarterGapSeconds:road.phase3Decisive?.endGapSeconds??0,
+          seventyPercentPhysicalGapSeconds:road.phase3Decisive?.physicalEndGapSeconds??0,
           finishGapSeconds:road.phase4Finish?.endGapSeconds??0,
           breakawaySurvived:result.calibrationSummary.breakawaySurvived,
           breakawayCaught:result.calibrationSummary.breakawayCaught,
@@ -515,8 +515,17 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
         openingRiders:initialEscapeRiders.length,
         km25GapSeconds:road.phase1Opening?.endGapSeconds??0,
         km50GapSeconds:road.phase2Development?.endGapSeconds??0,
-        km75GapSeconds:road.phase3Decisive?.endGapSeconds??0,
+        km70PhysicalGapSeconds:road.phase3Decisive?.physicalEndGapSeconds??0,
         finishGapSeconds:road.phase4Finish?.endGapSeconds??0,
+        phase4StartGapSeconds:road.phase4Finish?.startGapSeconds??0,
+        phase4EscapeSurvived:road.phase4Finish?.breakawaySurvived??false,
+        phase4ChaseSamples:(road.phase4Finish?.chaseSteps??[])
+          .filter((_,index)=>index % 3===0)
+          .map(x=>({km:x.kmEnd,gap:x.endGapSeconds,
+            escapeKmh:x.escapePaceKmh,pelotonKmh:x.effectivePelotonPaceKmh,
+            explicitChasers:x.explicitChasingTeamCount,
+            automaticChasers:x.automaticChasingTeamCount,
+            response:x.responseMode})),
         escapeEnergyAtHalf:(road.phase2Development?.riderEnergy??[])
           .filter(x=>initialEscapeRiders.includes(x.riderId))
           .map(x=>({riderId:x.riderId, energyAfterPhase:x.energyAfterPhase})),
@@ -526,13 +535,18 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
             command:x.phases.find(p=>p.phaseNumber===3)?.resolvedCommand,
             behaviour:x.phases.find(p=>p.phaseNumber===3)?.behaviour})),
         winner,
-        originalEscapeWon:initialEscapeRiders.includes(winner??''),
+        originalAttackerWasStageWinner:initialEscapeRiders.includes(winner??''),
         breakawaySurvived:result.calibrationSummary.breakawaySurvived,
         replayIssues:result.replaySynchronization.issues,
       })
     }
     console.log('BREAKAWAY_SUSTAINED_ROTATION_AUDIT='+JSON.stringify(samples))
     expect(samples).toHaveLength(2)
+    // The exact same riders and seed must do physically better when they
+    // keep rotating in Phase 3 instead of taking conservation orders.
+    expect(samples[1].km70PhysicalGapSeconds).toBeGreaterThan(0)
+    expect(samples[1].km70PhysicalGapSeconds)
+      .toBeGreaterThan(samples[0].km70PhysicalGapSeconds)
   })
 
 })
