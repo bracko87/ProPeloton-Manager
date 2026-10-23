@@ -10426,6 +10426,10 @@ export function resolveRoadPhase1Opening(
     )
     const pelotonPaceKmh = clamp(
       stepReferencePaceKmh * response.selectedResponseMultiplier *
+        // Without chase workers, the peloton rides in a conservative rolling
+        // formation rather than converting its full response into pursuit.
+        // This modifies its *physical speed*, not the gap or classification.
+        (noOrganizedOpeningChase ? 0.965 : 1) *
         windSpeedMultiplier +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,
