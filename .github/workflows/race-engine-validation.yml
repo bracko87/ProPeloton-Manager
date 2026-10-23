@@ -67,6 +67,9 @@ jobs:
       - name: Compile isolated mountain experimental solver
         run: npx esbuild src/universal-race-engine/runMountainExperimentalEngineV1.ts --bundle --platform=node --format=esm --outfile=/tmp/runMountainExperimentalEngineV1.mjs
 
+      - name: Compile synthetic experimental mountain contact model
+        run: npx esbuild src/universal-race-engine/mountainContactPhysicsV2.ts --bundle --platform=node --format=esm --outfile=/tmp/mountainContactPhysicsV2.mjs
+
       - name: Verify stage-scoped baseline and mountain engine isolation
         run: >-
           npx --yes vitest@3.2.4 run
@@ -75,6 +78,7 @@ jobs:
           src/universal-race-engine/runSelectedRaceEngineV1.test.ts
           src/universal-race-engine/mountainOpeningBreakawayV1.test.ts
           src/universal-race-engine/mountainProfileAuditV2.test.ts
+          src/universal-race-engine/mountainContactPhysicsV2.test.ts
           --reporter=dot
 
       - name: Production build
