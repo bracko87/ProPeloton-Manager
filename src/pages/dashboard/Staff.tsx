@@ -3633,6 +3633,7 @@ function RoleContributionPanel({
   isPremiumLoading: boolean
 }) {
   const { t } = useTranslation('staff')
+  const [mobileImpactExpanded, setMobileImpactExpanded] = useState(false)
   const translateStatLabel = (label: string) => {
     const attributeKey =
       ATTRIBUTE_TRANSLATION_KEYS[label as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
@@ -3703,6 +3704,8 @@ function RoleContributionPanel({
         ) : isPremium ? (
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1.1fr_1fr]">
             <div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
               <SectionTitle
                 title={t('impactI18n.combinedTitle')}
                 subtitle={
@@ -3713,7 +3716,25 @@ function RoleContributionPanel({
                       : t('impactI18n.combinedCurrent')
                 }
               />
-              <div className="space-y-2">
+                </div>
+                {isCoachingGroup ? (
+                  <button
+                    type="button"
+                    aria-expanded={mobileImpactExpanded}
+                    aria-controls="mobile-coaching-combined-impact"
+                    onClick={() => setMobileImpactExpanded((expanded) => !expanded)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-800 md:hidden"
+                    title={t('impactI18n.combinedTitle')}
+                  >
+                    <span aria-hidden="true" className="text-2xl leading-none">{mobileImpactExpanded ? '−' : '+'}</span>
+                    <span className="sr-only">{t('impactI18n.combinedTitle')}</span>
+                  </button>
+                ) : null}
+              </div>
+              <div
+                id={isCoachingGroup ? 'mobile-coaching-combined-impact' : undefined}
+                className={isCoachingGroup && !mobileImpactExpanded ? 'hidden space-y-2 md:block' : 'space-y-2'}
+              >
                 {aggregateEffects.map((effect) => (
                   <div
                     key={effect}
@@ -5443,8 +5464,8 @@ export default function StaffPage() {
       />
 
       <div className="rounded-lg bg-white p-6 shadow">
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
+        <div className="relative flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+          <div className="min-w-0 pr-12 md:pr-0">
             <div className="text-base font-semibold text-gray-800">{t('page.title')}</div>
             <div className="mt-1 text-sm text-gray-500">
               {t('page.subtitle')}
@@ -5455,7 +5476,7 @@ export default function StaffPage() {
           <button
             type="button"
             onClick={() => setShowRoleInformation(true)}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="absolute right-0 top-0 flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-300 bg-white text-sm font-semibold text-gray-700 hover:bg-gray-50 md:static"
             aria-label={t('page.explainPositions')}
             title={t('page.explainPositions')}
           >
