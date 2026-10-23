@@ -6,6 +6,7 @@ import {
   type UniversalRaceEngineInput,
 } from './runRaceEngine.ts'
 import { runRaceEngine as runExperimentalMountainCoreV1 } from './runMountainExperimentalEngineV1.ts'
+import { compareMountainV2WithOfficialEvents } from './mountainV2OfficialEventComparison.ts'
 import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1 } from './runSelectedRaceEngineV1.ts'
 
 /**
@@ -363,6 +364,30 @@ describe('isolated experimental mountain executable', () => {
     expect(shadow?.syntheticTiming?.finish).toHaveLength(mountain.riders.length)
     expect(shadow?.syntheticTiming?.replay).toHaveLength(6)
     expect(shadow?.sportingEventsStatus).toBe('unreconciled')
+    // The real engine's Phase 10 statuses and bonus/event ledgers are read
+    // only after finishing. The preview must not mutate authoritative output.
+    const officialBefore = JSON.stringify({
+      finish: experimental.finishResolution,
+      replay: experimental.replayTimeline,
+      incidents: experimental.phase10Incidents,
+      points: experimental.intermediatePointFinalization,
+    })
+    const eventAudit = compareMountainV2WithOfficialEvents(mountain, experimental, shadow!)
+    expect(eventAudit.authority).toBe('non_authoritative')
+    expect(eventAudit.readyForAuthority).toBe(false)
+    expect(eventAudit.blockers).toContain('authoritative_finish_gc_points_prizes_replay_not_integrated')
+    expect(eventAudit.syntheticSportingPreview?.classified).toHaveLength(mountain.riders.length)
+    expect(eventAudit.officialStatusByRiderId).toEqual(
+      Object.fromEntries(experimental.finishResolution.classification.map(row =>
+        [row.riderId, row.status])),
+    )
+    expect(eventAudit.bonuses.every(row => row.bonusSeconds > 0)).toBe(true)
+    expect(JSON.stringify({
+      finish: experimental.finishResolution,
+      replay: experimental.replayTimeline,
+      incidents: experimental.phase10Incidents,
+      points: experimental.intermediatePointFinalization,
+    })).toBe(officialBefore)
     const syntheticLast = shadow!.syntheticTiming!.replay.at(-1)!
     for (const finisher of shadow!.syntheticTiming!.finish) {
       expect(finisher.elapsedSeconds)
