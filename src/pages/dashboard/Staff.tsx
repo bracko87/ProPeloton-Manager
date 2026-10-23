@@ -3511,7 +3511,6 @@ function StaffListRow({
   onOpen: (staff: StaffListMember) => void
 }) {
   const { t } = useTranslation('staff')
-  const [mobileImpactExpanded, setMobileImpactExpanded] = useState(false)
   const translateStatLabel = (label: string) => {
     const attributeKey =
       ATTRIBUTE_TRANSLATION_KEYS[label as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
@@ -3634,6 +3633,7 @@ function RoleContributionPanel({
   isPremiumLoading: boolean
 }) {
   const { t } = useTranslation('staff')
+  const [mobileImpactExpanded, setMobileImpactExpanded] = useState(false)
   const translateStatLabel = (label: string) => {
     const attributeKey =
       ATTRIBUTE_TRANSLATION_KEYS[label as keyof typeof ATTRIBUTE_TRANSLATION_KEYS]
