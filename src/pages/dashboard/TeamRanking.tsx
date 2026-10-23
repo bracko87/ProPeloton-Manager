@@ -1311,16 +1311,12 @@ export default function TeamRankingPage(): JSX.Element {
         const [
           displayNameByClubId,
           currentLogoPathByClubId,
-          publicInactivityByClubId,
         ] = await Promise.all([
           loadClubDisplayNameMap(teamIds),
           loadClubLogoPathMap(teamIds),
-          loadPublicClubInactivityMap(teamIds),
         ])
 
         if (!mounted) return
-
-        setInactivityByClubId(publicInactivityByClubId)
 
         setTeams((currentTeams) =>
           currentTeams.map((team) => ({
@@ -1348,8 +1344,15 @@ export default function TeamRankingPage(): JSX.Element {
           supabase.auth.getUser(),
           getTeamRankingTeams(),
         ])
+        // Fetch public inactivity status before painting standings so we do
+        // not briefly show forfeited current-season points for dormant managers.
+        // The RPC reveals only the existing public inactivity labels.
+        const inactivityStatuses = await loadPublicClubInactivityMap(
+          teamsResult.map(team => team.id),
+        )
         if (!mounted) return
 
+        setInactivityByClubId(inactivityStatuses)
         setTeams(teamsResult)
         setLoading(false)
 
