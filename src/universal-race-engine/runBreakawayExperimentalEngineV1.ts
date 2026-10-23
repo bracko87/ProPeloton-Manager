@@ -10458,6 +10458,22 @@ export function resolveRoadPhase1Opening(
         (stepDistanceKm / Math.max(5, pelotonPaceKmh)) * 3600 -
         (stepDistanceKm / Math.max(5, escapePaceKmh)) * 3600,
     )
+    // Synthetic Bačka calibration only: log actual road-speed inputs at the
+    // opening momentum transition. Never alters physical gaps or race results.
+    if (input.engine.deterministicSeed.startsWith('breakaway-BACKA-registered-roster-') &&
+        stepMidKm >= 16 && stepMidKm <= 24) {
+      console.log('BREAKAWAY_OPENING_SPEED_DIAGNOSTIC='+JSON.stringify({
+        seed: input.engine.deterministicSeed, km: stepMidKm,
+        escapeRiders: activeAcceptedRiderIds.length,
+        chasingTeams: phase1ChasingTeamIds.length,
+        chaseWorkers: finiteWorkerAssets,
+        cooperationMultiplier, escapePaceKmh, pelotonPaceKmh,
+        previousGapSeconds: phase1PhysicalGapSeconds,
+        calculatedNextGapSeconds,
+        responseMode: response.responseMode,
+        responseMultiplier: response.selectedResponseMultiplier,
+      }))
+    }
     const openingAgeKm = Math.max(0, stepMidKm - openingFormationKm)
     const openingMomentum = clamp(
       1 - openingAgeKm / Math.max(0.1, phase1OpeningMomentumWindowKm),
