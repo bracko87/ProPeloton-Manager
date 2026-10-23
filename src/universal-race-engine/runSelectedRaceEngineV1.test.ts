@@ -6,6 +6,7 @@ import {
   type UniversalRaceEngineInput,
 } from './runRaceEngine.ts'
 import { runRaceEngine as runExperimentalMountainCoreV1 } from './runMountainExperimentalEngineV1.ts'
+import { runRaceEngine as runBreakawayCoreV1 } from './runBreakawayExperimentalEngineV1.ts'
 import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1 } from './runSelectedRaceEngineV1.ts'
 import { runOfficialWithBreakawayShadowV1 } from './runBreakawayShadowWithOfficialV1.ts'
 
@@ -417,5 +418,68 @@ describe('Breakaway V1: official result identity and failure isolation',()=>{
     expect(mismatched.shadowStatus).toBe('failed')
     expect(mismatched.officialResult).toEqual(expected)
     expect(mismatched.officialResultAuthoritative).toBe(true)
+  })
+})
+
+describe('Breakaway V1 full sporting core stage-authority selection',()=>{
+  const BAČKA='5523cf76-8fd4-4a12-ab28-7f285c9829ff'
+  const BINCHE='335708f7-d56a-4816-9068-38399e8f74e3'
+  const FRUSKA='f5af8665-91c1-4585-937e-11fb94f65819'
+  function breakawayFixture(stageId:string,terrainType:'flat'|'hilly'='flat'){
+    const source=createValidInput()
+    return {
+      ...source,
+      engine:{...source.engine,deterministicSeed:'breakaway-complete-pilot-synthetic-v1'},
+      stage:{
+        ...source.stage,stageId,terrainType,
+        profileType:terrainType==='flat'?'sprinter' as const:'hilly' as const,
+      },
+      points:source.points.map(p=>({...p,stageId})),
+    }
+  }
+  it('selects the same independent full core for all three stage IDs',()=>{
+    for(const id of [BAČKA,BINCHE,FRUSKA]){
+      const stage=breakawayFixture(id,id===BAČKA?'flat':'hilly')
+      expect(getSelectedRaceEngineModuleV1(stage.stage).runRaceEngine)
+        .toBe(runBreakawayCoreV1)
+      const selected=runSelectedRaceEngineV1(stage)
+      const direct=runBreakawayCoreV1(stage)
+      expect(selected).toEqual(direct)
+      expect(selected.finishResolution.complete).toBe(true)
+      expect(selected.finishResolution.classification).toHaveLength(stage.riders.length)
+      expect(selected.replaySynchronization.synchronized).toBe(true)
+      expect(selected.postStageUpdate.persistenceContract.directDatabaseWritePerformed)
+        .toBe(false)
+      expect(selected.phase9Acceptance.passed).toBe(true)
+      expect(runSelectedRaceEngineV1(stage)).toEqual(selected)
+    }
+  })
+  it('never selects the specialist core for another stage in the same race, wrong terrain or TT',()=>{
+    for(const stage of [
+      breakawayFixture('unlisted-flat-stage'),
+      breakawayFixture(BAČKA,'hilly'),
+      {
+        ...breakawayFixture(BAČKA),
+        stage:{...breakawayFixture(BAČKA).stage,stageFormat:'individual_time_trial' as const},
+      },
+    ]){
+      expect(getSelectedRaceEngineModuleV1(stage.stage).runRaceEngine)
+        .toBe(runBaselineRaceEngine)
+    }
+    expect(()=>runBreakawayCoreV1(breakawayFixture('unlisted-flat-stage')))
+      .toThrow('refuses non-allowlisted stages')
+  })
+  it('retains all complete official scoring and replay contracts in specialist mode',()=>{
+    const input=breakawayFixture(BAČKA)
+    const official=runSelectedRaceEngineV1(input)
+    const expected=runBaselineRaceEngine(input)
+    expect(official.stageId).toBe(expected.stageId)
+    expect(official.finishResolution.classification.map(x=>x.riderId).sort())
+      .toEqual(expected.finishResolution.classification.map(x=>x.riderId).sort())
+    expect(official.intermediatePointFinalization).toBeDefined()
+    expect(official.phase10Incidents).toBeDefined()
+    expect(official.replayTimeline.checkpoints.length).toBeGreaterThan(0)
+    expect(official.phase78Acceptance.issues.filter(x=>x.startsWith('blocking')))
+      .toHaveLength(0)
   })
 })
