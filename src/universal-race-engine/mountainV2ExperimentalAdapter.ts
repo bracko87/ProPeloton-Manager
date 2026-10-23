@@ -10,7 +10,6 @@
 import type { UniversalRaceEngineInput } from './runMountainExperimentalEngineV1.ts'
 import { auditMountainProfileV2, type MountainProfileAuditV2 } from './mountainProfileAuditV2.ts'
 import {
-  simulateMountainV2Contacts,
   type MountainV2Rider,
   type MountainV2Segment,
 } from './mountainContactPhysicsV2.ts'
@@ -20,6 +19,7 @@ export type MountainV2ShadowStatus =
   | 'evaluated_non_authoritative'
   | 'geometry_review_required'
   | 'insufficient_starters'
+  | 'simulation_error'
 
 export interface MountainV2ShadowCheckpoint {
   readonly km: number
@@ -154,24 +154,36 @@ export function buildMountainV2ShadowAudit(
     }
   }
 
-  const preview = simulateMountainV2Contacts(riders, route.segments)
-  // Pure second-pass synthetic reconciliation; never touches official outputs.
-  const synthetic = runMountainV2SyntheticStage(riders, route.segments)
-  return {
-    ...base,
-    status: 'evaluated_non_authoritative',
-    checkpoints: preview.checkpoints.map((checkpoint) => ({
-      km: checkpoint.km,
-      terrain: checkpoint.terrain,
-      groups: checkpoint.groups,
-      leadGroupSize: checkpoint.groups[0]?.riderIds.length ?? 0,
-      individualRiderCount: checkpoint.groups.filter(
-        (group) => group.riderIds.length === 1,
-      ).length,
-    })),
-    finalRiderGapsSeconds: Object.fromEntries(
-      preview.finalRiders.map((rider) => [rider.riderId, rider.gapSeconds]),
-    ),
-    syntheticTiming: { finish: synthetic.finish, replay: synthetic.replay },
+  // The previous adapter ran the whole physical solver twice. Use the
+  // validated synthetic pipeline once and derive all checkpoint diagnostics
+  // from that same timing/replay lineage. Shadow failure never blocks V1.
+  try {
+    const synthetic = runMountainV2SyntheticStage(riders, route.segments)
+    return {
+      ...base,
+      status: 'evaluated_non_authoritative',
+      checkpoints: synthetic.physicalCheckpoints.map((checkpoint) => ({
+        km: checkpoint.km,
+        terrain: checkpoint.terrain,
+        groups: checkpoint.groups,
+        leadGroupSize: checkpoint.groups[0]?.riderIds.length ?? 0,
+        individualRiderCount: checkpoint.groups.filter(
+          (group) => group.riderIds.length === 1,
+        ).length,
+      })),
+      finalRiderGapsSeconds: Object.fromEntries(
+        (synthetic.physicalCheckpoints.at(-1)?.riders ?? [])
+          .map((rider) => [rider.riderId, rider.gapSeconds]),
+      ),
+      syntheticTiming: { finish: synthetic.finish, replay: synthetic.replay },
+    }
+  } catch {
+    return {
+      ...base,
+      status: 'simulation_error',
+      warningCodes: [...base.warningCodes, 'v2_shadow_simulation_failed'],
+      checkpoints: [],
+      finalRiderGapsSeconds: {},
+    }
   }
 }
