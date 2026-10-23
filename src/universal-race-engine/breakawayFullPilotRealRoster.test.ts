@@ -369,6 +369,25 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     expect(selectCompleteRaceEngineLaneV1(input.stage)).toBe('experimental_breakaway_v1')
     expect(getSelectedRaceEngineModuleV1(input.stage).runRaceEngine).toBe(specialistEngine)
     const before=JSON.stringify(input)
+    const core=getSelectedRaceEngineModuleV1(input.stage)
+    const p9=core.buildUniversalPhase9ModifierSummary(input)
+    const calc=core.applyUniversalPhase9ModifiersToInput(input,p9)
+    const readiness=core.calculateAllRiderReadiness(calc.riders)
+    const cmds=core.buildRoadCommandResolution(calc,readiness)
+    const opening=core.resolveRoadPhase1Opening(calc,readiness,cmds)
+    const o=opening.phase1Opening
+    console.log('BREAKAWAY_OPENING_BEFORE_OFFICIAL='+JSON.stringify({
+      officialStage:input.stage.stageId,active:opening.active,
+      endGap:o?.endGapSeconds,catchKm:o?.breakawayCatchKm,
+      breakawayRiders:o?.breakawayRiderIds,
+      attackAttempts:o?.attackAttempts.map(a=>({
+        rider:a.riderId,command:a.command,wave:a.waveCode,
+        attemptKm:a.attemptKm,success:a.attackSucceeded,
+        accepted:a.acceptedEscapeLaunch,initialGap:a.initialGapSeconds,
+        probability:a.attackSuccessProbability,roll:a.deterministicOutcomeRoll,
+      })),
+      physicalGapTrajectory:o?.physicalGapTrajectory,
+    }))
     const result=runSelectedRaceEngineV1(input)
     console.log('BREAKAWAY_FULL_PILOT_DIAGNOSTIC='+JSON.stringify({
       phase1PlanJoiners:input.stagePlans.flatMap(p=>p.riders)
