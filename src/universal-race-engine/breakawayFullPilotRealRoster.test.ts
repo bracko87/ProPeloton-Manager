@@ -483,6 +483,13 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
       }
     }
     console.log('BREAKAWAY_MULTI_SEED_HALFWAY_AUDIT='+JSON.stringify(rows))
+    // This calibration gate must fail rather than silently accepting a
+    // physically valid but ineffective specialist. A cooperative, minimally
+    // chased escape needs to reach halfway in at least one deterministic seed.
+    const minimallyChasedWithEscape=rows.filter(x=>
+      x.chase==='minimal' && (x.openingRiders as number)>0)
+    expect(minimallyChasedWithEscape.length).toBeGreaterThan(0)
+    expect(minimallyChasedWithEscape.some(x=>x.anyFrontAtHalf===true)).toBe(true)
     expect(rows).toHaveLength(4)
   })
 
