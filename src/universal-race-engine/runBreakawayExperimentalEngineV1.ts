@@ -10870,6 +10870,41 @@ function calculateBreakawayCooperation(
   }
 }
 
+/**
+ * Models sustainable automatic workers, never an automatic chase by every
+ * domestique/rouleur on the road. Interested teams can rotate up to two
+ * automatic workers; limited reserves and accumulated workload reduce
+ * participation. Explicitly ordered chasers are resolved independently.
+ * No gap, catch, result or winner is set by this function.
+ */
+export function calculateBreakawayAutomaticPursuitCommitmentV1(
+  teams: readonly { workerCount: number; averageEnergy: number }[],
+  activityFraction: number,
+  workloadFraction: number,
+): { workerCount: number; teamCount: number } {
+  const availableTeams = teams.filter(
+    (team) => team.workerCount > 0 && team.averageEnergy > 0,
+  )
+  const sustainableWorkerCapacity = availableTeams.reduce(
+    (total, team) =>
+      total +
+      Math.min(2, Math.max(0, team.workerCount)) *
+        clamp(team.averageEnergy / 70, 0, 1),
+    0,
+  )
+  const fatigueFactor = 1 - clamp(workloadFraction, 0, 1) * 0.38
+  const workerCount = Math.floor(
+    sustainableWorkerCapacity *
+      clamp(activityFraction, 0, 1) *
+      fatigueFactor +
+      0.000001,
+  )
+  return {
+    workerCount,
+    teamCount: Math.min(availableTeams.length, Math.ceil(workerCount / 2)),
+  }
+}
+
 function calculatePelotonResponseComponents(
   stageProgressFraction: number,
   remainingKm: number,
@@ -17797,8 +17832,13 @@ export function resolveRoadPhase4Finish(
         !bridgeRiderSet.has(row.riderId) &&
         !riderHasLostContactByKm(row.riderId),
     ).length
+    // Only finish-interested teams can supply automatic pursuit. Generic
+    // rouleur/domestique roles alone do not constitute chase orders, and an
+    // explicitly ordered rider must not be counted twice.
     const effectiveAutomaticWorkerRows = automaticWorkerRows.filter(
       (row) =>
+        effectiveAutomaticChasingTeamIds.includes(row.teamId) &&
+        !explicitChasers.some((chaser) => chaser.riderId === row.riderId) &&
         !currentFrontRiderSet.has(row.riderId) &&
         !bridgeRiderSet.has(row.riderId) &&
         !riderHasLostContactByKm(row.riderId),
@@ -17815,28 +17855,25 @@ export function resolveRoadPhase4Finish(
       0,
       1,
     )
-    const workerEnergyFraction = clamp(
-      average(
-        effectiveAutomaticWorkerRows.map(
-          (row) => phase3EnergyByRiderId.get(row.riderId) ?? 0,
-        ),
-      ) / 70,
-      0.35,
-      1,
+    const automaticPursuitCommitment = calculateBreakawayAutomaticPursuitCommitmentV1(
+      effectiveAutomaticChasingTeamIds.map((teamId) => {
+        const teamWorkers = effectiveAutomaticWorkerRows.filter(
+          (row) => row.teamId === teamId,
+        )
+        return {
+          workerCount: teamWorkers.length,
+          averageEnergy: average(
+            teamWorkers.map(
+              (row) => phase3EnergyByRiderId.get(row.riderId) ?? 0,
+            ),
+          ),
+        }
+      }),
+      automaticActivityFactor,
+      chaseWorkloadFraction,
     )
-    const finiteWorkerAvailability = clamp(
-      workerEnergyFraction * (1 - chaseWorkloadFraction * 0.38),
-      0.25,
-      1,
-    )
-    const activeAutomaticWorkerCount = Math.ceil(
-      effectiveAutomaticWorkerRows.length *
-        automaticActivityFactor *
-        finiteWorkerAvailability,
-    )
-    const activeAutomaticTeamCount = Math.ceil(
-      effectiveAutomaticChasingTeamIds.length * automaticActivityFactor,
-    )
+    const activeAutomaticWorkerCount = automaticPursuitCommitment.workerCount
+    const activeAutomaticTeamCount = automaticPursuitCommitment.teamCount
     const response = calculatePelotonResponseComponents(
       progress,
       remainingKm,
@@ -18010,10 +18047,11 @@ export function resolveRoadPhase4Finish(
     // purposeful chase effort. With zero pursuit workers an uninterested
     // peloton was still riding ~44.6 km/h against a 38.7 km/h escape.
     // On selected specialist stages only, model a rolling tempo that rises
-    // continuously as physical chase workers commit. A real coalition
-    // restores the normal peloton pace; no gap or winner is prescribed.
+    // continuously as physical chase workers commit. An explicit coalition
+    // restores normal pace; automatic workers contribute at half strength.
+    // No gap or winner is prescribed.
     const phase4ActualPursuitWorkers =
-      effectiveExplicitChaserCount + activeAutomaticWorkerCount
+      effectiveExplicitChaserCount + activeAutomaticWorkerCount * 0.5
     const phase4SpecialistRollingFactor =
       escapeStillActive &&
       selectBreakawayOpportunityStageV1(input.stage) !== null &&
