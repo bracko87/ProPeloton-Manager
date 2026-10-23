@@ -13594,10 +13594,40 @@ export function resolveRoadPhase3Decisive(
         stepMidKm,
         phase3Points,
       )
+    // The shared cooperation model can hit its 0.72 floor while four
+    // physically capable escape riders still have 30–60 energy and have
+    // explicit race-control orders. That floor suppresses differences
+    // between conservation and genuine rotation and causes an abrupt,
+    // unrealistic speed collapse at the Phase-2/3 boundary.
+    // Recover only a bounded group-rotation pace for the selected specialist,
+    // with >=3 riders, >=75% actually taking turns, no chase and useful energy.
+    const phase3WorkingRiderFraction = physicalEscapeRiderIds.length > 0
+      ? physicalEscapeRiderIds.filter((riderId) => {
+          const commandRow = roadCommandResolution.riders.find(row => row.riderId === riderId)
+          const behaviour = commandRow?.phases.find(p => p.phaseNumber === 3)?.behaviour
+          return behaviour === 'race_control' || behaviour === 'team_work'
+        }).length / physicalEscapeRiderIds.length
+      : 0
+    const phase3LiveEnergyFraction = clamp(
+      average(physicalEscapeRiderIds.map(riderId =>
+        (phase3EscapeLiveEnergyByRiderId.get(riderId) ?? 0) / 70)),
+      0, 1,
+    )
+    const phase3UnopposedRotation =
+      selectBreakawayOpportunityStageV1(input.stage) !== null &&
+      physicalEscapeRiderIds.length >= 3 &&
+      physicalChasingTeamIds.length === 0 &&
+      phase3WorkingRiderFraction >= 0.75 &&
+      phase3LiveEnergyFraction >= 0.3
+    const phase3PhysicalCooperationMultiplier = phase3UnopposedRotation
+      ? Math.max(phase3DynamicCooperationMultiplier,
+          clamp(0.90 + phase3LiveEnergyFraction *
+            phase3WorkingRiderFraction * 0.085, 0.90, 0.985))
+      : phase3DynamicCooperationMultiplier
     const stepEscapePaceReferenceKmh =
       phase3EscapePaceKmh *
       phase3TerrainScale *
-      phase3DynamicCooperationMultiplier
+      phase3PhysicalCooperationMultiplier
     const phase3WorkloadFraction = clamp(
       (stepEndKm - phaseBoundary.startKm) /
         Math.max(1, (phaseBoundary.endKm - phaseBoundary.startKm)),
@@ -13663,6 +13693,11 @@ export function resolveRoadPhase3Decisive(
     const pelotonPaceKmh = clamp(
       stepReferencePaceKmh *
         response.selectedResponseMultiplier *
+        // A passive peloton cannot sustain organized pursuit tempo when
+        // not one team is supplying chase workers. Same physical-tempo
+        // principle as the specialist's Phase-1/2 corrections.
+        (selectBreakawayOpportunityStageV1(input.stage) !== null &&
+          physicalChasingTeamIds.length === 0 ? 0.965 : 1) *
         phase3WindSpeedMultiplier +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,
@@ -13678,7 +13713,7 @@ export function resolveRoadPhase3Decisive(
         phase3WindSpeedMultiplier *
         phase3WindBreakawayMultiplier *
         breakawayV1PhysicalEscapePaceFactor(input, physicalEscapeRiderIds.length,
-          phase3DynamicCooperationMultiplier, phase3FiniteChaseAssets, stepMidKm) +
+          phase3PhysicalCooperationMultiplier, phase3FiniteChaseAssets, stepMidKm) +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,
           'phase3-escape',
