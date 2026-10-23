@@ -33,9 +33,24 @@ function breakawayV1PhysicalEscapePaceFactor(
   const unopposedEscapeBenefit =
     pilot.escapeOpportunity * 0.09 * genuineCooperation *
     absenceOfPursuit * fatiguePressure * packEfficiency
+  // The canonical cooperation multiplier already discounts a rider's pull
+  // for available energy, and is also multiplied directly into opening /
+  // finish physical pace. The old hard 0.88 threshold therefore charged
+  // tiring but still rotating escapees twice: e.g. three riders at 0.85
+  // ran at ~36 km/h against an uninterested ~41 km/h peloton.
+  // Recover only part of that duplicate group-rotation discount when 3+
+  // riders are still contributing AND no chase workers are active. This is
+  // a speed correction, not a time-gap floor; the correction fades with
+  // energy/cooperation, fatigue, group size and any organized pursuit.
+  const ongoingRotation = Math.max(0, Math.min(1, (cooperationMultiplier - 0.72) / 0.15))
+  const doubleCountedPullPenalty = Math.max(0,
+    Math.min(0.18, 1 / Math.max(0.72, cooperationMultiplier) - 1))
+  const unopposedRotationCorrection =
+    pilot.escapeOpportunity * absenceOfPursuit * packEfficiency *
+    fatiguePressure * ongoingRotation * doubleCountedPullPenalty
   return Math.round((1 + pilot.escapeOpportunity * 0.065 * genuineCooperation *
     chaseDefence * fatiguePressure * packEfficiency +
-    unopposedEscapeBenefit) * 1e6) / 1e6
+    unopposedEscapeBenefit + unopposedRotationCorrection) * 1e6) / 1e6
 }
 
 import { calculateSummitFinishSelectivityV1 } from './summitFinishSelectivityV1.ts'
