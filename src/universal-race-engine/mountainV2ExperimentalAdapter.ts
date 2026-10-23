@@ -14,6 +14,7 @@ import {
   type MountainV2Rider,
   type MountainV2Segment,
 } from './mountainContactPhysicsV2.ts'
+import { runMountainV2SyntheticStage } from './mountainV2SyntheticStage.ts'
 
 export type MountainV2ShadowStatus =
   | 'evaluated_non_authoritative'
@@ -43,6 +44,11 @@ export interface MountainV2ShadowAudit {
   readonly starterCount: number
   readonly checkpoints: readonly MountainV2ShadowCheckpoint[]
   readonly finalRiderGapsSeconds: Readonly<Record<string, number>>
+  /** Diagnostic preview only; not official elapsed time, placing or replay. */
+  readonly syntheticTiming?: {
+    readonly finish: readonly { readonly riderId: string; readonly rank: number; readonly elapsedSeconds: number; readonly gapSeconds: number }[]
+    readonly replay: readonly { readonly km: number; readonly riderElapsedSeconds: Readonly<Record<string, number>>; readonly groupRiderIds: readonly (readonly string[])[] }[]
+  }
 }
 
 /** A coarse route is not silently reinterpreted as a steep mountain route. */
@@ -146,6 +152,8 @@ export function buildMountainV2ShadowAudit(
   }
 
   const preview = simulateMountainV2Contacts(riders, route.segments)
+  // Pure second-pass synthetic reconciliation; never touches official outputs.
+  const synthetic = runMountainV2SyntheticStage(riders, route.segments)
   return {
     ...base,
     status: 'evaluated_non_authoritative',
@@ -161,5 +169,6 @@ export function buildMountainV2ShadowAudit(
     finalRiderGapsSeconds: Object.fromEntries(
       preview.finalRiders.map((rider) => [rider.riderId, rider.gapSeconds]),
     ),
+    syntheticTiming: { finish: synthetic.finish, replay: synthetic.replay },
   }
 }
