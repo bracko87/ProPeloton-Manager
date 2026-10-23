@@ -1332,53 +1332,39 @@ export default function TeamRankingPage(): JSX.Element {
       try {
         setLoading(true)
 
-        const [
-          { data: authData },
-          teamsResult,
-          orderedStandingsByTeamId,
-        ] = await Promise.all([
+        // The standings view is sufficient for the first render. The canonical
+        // tie-breaker RPC may be expensive: it must not block the entire page.
+        const [{ data: authData }, teamsResult] = await Promise.all([
           supabase.auth.getUser(),
           getTeamRankingTeams(),
-          loadOrderedTeamStandingsByTeamId(),
         ])
-
         if (!mounted) return
 
-        const userId = authData.user?.id ?? null
-
-        const teamsWithCanonicalStandings = teamsResult.map((team) => {
-          const canonicalStanding = orderedStandingsByTeamId.get(team.id)
-
-          return {
-            ...team,
-            // The ordered-standings RPC is the authoritative source used by
-            // promotion/relegation. If it is temporarily unavailable, preserve
-            // the already-loaded team_rankings_view points instead of zeroing them.
-            seasonPoints:
-              canonicalStanding?.internationalPoints ?? team.seasonPoints,
-            completedRaceCount:
-              canonicalStanding?.completedRaceCount ??
-              getCompletedRaceCountFromTeam(team),
-            raceReputationValue:
-              canonicalStanding?.raceReputationValue ??
-              getRaceReputationValueFromTeam(team),
-          }
-        })
-
-        // First paint uses the same canonical points and season-end tie-breakers
-        // that promotion/relegation uses. Display names, logos and inactivity
-        // badges hydrate separately without overwriting ranking statistics.
-        setTeams(teamsWithCanonicalStandings)
+        setTeams(teamsResult)
         setLoading(false)
 
-        void hydrateMyClubContext(userId)
+        void hydrateMyClubContext(authData.user?.id ?? null)
         void hydrateRankingMetadata(teamsResult)
+
+        // Refine with authoritative season-end rank/tie-breaker values when
+        // available. Never replace current logo/name metadata with stale rows.
+        void loadOrderedTeamStandingsByTeamId().then((canonical) => {
+          if (!mounted || canonical.size === 0) return
+
+          setTeams((current) => current.map(team => {
+            const standing = canonical.get(team.id)
+            if (!standing) return team
+            return {
+              ...team,
+              seasonPoints: standing.internationalPoints,
+              completedRaceCount: standing.completedRaceCount,
+              raceReputationValue: standing.raceReputationValue,
+            }
+          }))
+        })
       } catch (error) {
         console.error('Failed to load team ranking page:', error)
-
-        if (mounted) {
-          setLoading(false)
-        }
+        if (mounted) setLoading(false)
       }
     }
 

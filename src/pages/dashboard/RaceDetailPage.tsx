@@ -20134,8 +20134,36 @@ export default function RaceDetailPage({
             {t('page.stages')}
           </div>
 
+          {stages.length > 1 ? (
+            <div className="flex gap-2 md:hidden" aria-label={t('page.stages')}>
+              <button
+                type="button"
+                onClick={() => {
+                  const index = Math.max(0, stages.findIndex(stage => stage.id === selectedStage?.id))
+                  setSelectedStage(stages[Math.max(0, index - 1)])
+                }}
+                disabled={!selectedStage || selectedStage.id === stages[0]?.id}
+                aria-label={t('page.stages') + ' ←'}
+                className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg text-slate-700 disabled:opacity-35"
+              >←</button>
+              <span className="flex min-w-[64px] items-center justify-center text-xs text-slate-500" aria-live="polite">
+                {Math.max(1, stages.findIndex(stage => stage.id === selectedStage?.id) + 1)} / {stages.length}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const index = Math.max(0, stages.findIndex(stage => stage.id === selectedStage?.id))
+                  setSelectedStage(stages[Math.min(stages.length - 1, index + 1)])
+                }}
+                disabled={!selectedStage || selectedStage.id === stages[stages.length - 1]?.id}
+                aria-label={t('page.stages') + ' →'}
+                className="flex h-11 w-11 items-center justify-center rounded-lg border border-slate-200 bg-white text-lg text-slate-700 disabled:opacity-35"
+              >→</button>
+            </div>
+          ) : null}
+
           {stages.length > 5 ? (
-            <div className="flex gap-2">
+            <div className="hidden gap-2 md:flex">
               <button
                 type="button"
                 onClick={() => scrollStages('left')}
@@ -20155,6 +20183,12 @@ export default function RaceDetailPage({
           ) : null}
         </div>
 
+        {stages.length > 0 ? (
+          <div className="md:hidden" data-ppm-mobile-single-stage="true">
+            {renderStageCard(selectedStage ?? stages[0])}
+          </div>
+        ) : null}
+        <div className="hidden md:block">
         {stages.length <= 5 ? (
           <div
             className={[
@@ -20180,6 +20214,7 @@ export default function RaceDetailPage({
             {stages.map((stage) => renderStageCard(stage, true))}
           </div>
         )}
+        </div>
       </div>
 
       {selectedStage ? (

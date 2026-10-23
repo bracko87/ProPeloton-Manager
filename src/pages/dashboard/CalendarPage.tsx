@@ -2299,7 +2299,7 @@ export default function CalendarPage(): JSX.Element {
               ))}
             </div>
 
-            <div className="grid w-full grid-cols-7 gap-2 text-sm text-gray-600">
+            <div className="grid w-full grid-cols-7 gap-2 text-sm text-gray-600" data-ppm-calendar-agenda="true">
               {calendarGridCells.map(cell => {
                 if (cell.type === 'empty') {
                   return <div key={cell.key} className="min-h-[110px]" />
@@ -2328,11 +2328,13 @@ export default function CalendarPage(): JSX.Element {
                 return (
                   <div
                     key={cell.key}
+                    data-ppm-calendar-day="true"
                     className={`min-h-[110px] rounded-md border p-3 ${
                       isToday ? 'border-yellow-400 bg-yellow-50' : 'border-gray-200'
                     }`}
                   >
                     <div className="text-[11px] font-medium leading-4 text-gray-700">
+                      <span className="md:hidden">{weekdayHeaders[getWeekdayIndexMondayFirst(day.canonicalDate)]} · </span>
                       {formatCalendarCellDate(day.gameParts.monthNumber, day.gameParts.dayNumber, t)}
                     </div>
 
