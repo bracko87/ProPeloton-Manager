@@ -10,6 +10,7 @@ on:
       - 'supabase/functions/universal-race-stage-*/index.ts'
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-mountain-pilot-worker-routing.mjs'
+      - 'scripts/verify-mountain-v2-baseline.mjs'
       - '.github/workflows/race-engine-validation.yml'
   push:
     branches:
@@ -20,6 +21,7 @@ on:
       - 'supabase/functions/universal-race-stage-*/index.ts'
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-mountain-pilot-worker-routing.mjs'
+      - 'scripts/verify-mountain-v2-baseline.mjs'
       - '.github/workflows/race-engine-validation.yml'
 
 permissions:
@@ -43,6 +45,9 @@ jobs:
 
       - name: Install application dependencies
         run: npm ci
+
+      - name: Protect unchanged universal race engine during mountain V2 development
+        run: node scripts/verify-mountain-v2-baseline.mjs
 
       - name: Verify production race worker summit source pins
         run: node scripts/verify-summit-worker-pins.mjs
