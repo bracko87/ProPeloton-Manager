@@ -20,6 +20,14 @@ Poyang Lakes Stage 7, 108.5 km, declared 2,320 m climbing, flat finish, Cat 2 an
 
 **Architecture:** the experimental engine source and baseline are the same sporting physics except for one breakaway replay-continuity threshold fix. A separate file alone is **not** a mountain physical model.
 
+## First executable experimental physics prototype (synthetic only)
+
+`src/universal-race-engine/mountainContactPhysicsV2.ts` models travel-time contact using rider climbing/endurance/descending skills, energy reserve, rider pacing commands and physical team support across individually described road segments. Riders accumulate seconds through distance / sustainable speed; groups form only from contact-proximate gaps at observed segment boundaries. Descending and flat terrain can regain time only if a rider travels fast enough; attacks cost extra energy. Its deterministic, pure output is independently testable.
+
+**Integration status: NOT wired to the deployed mountain engine or the authoritative official sporting output.** This is an intentionally separate physics kernel so climb dynamics can be calibrated on repeatable synthetic fixtures before touching the 38,000-line experimental race engine. Rider times, historical published races and baseline worker imports do not change.
+
+Known prototype limits: no gradient interpolator; it requires provided physical segment grades, and it has no weather, drafting field-wide aerodynamics, climbing group pacing collaboration or replay event adapter yet. The next iteration should derive segments from validated profile geometry, add bridge/rejoin lineage and compare physical groups with official outputs under a source SHA controlled simulation.
+
 ## Develop mountain-only capabilities in steps
 
 ### A. Stage physical profile interpretation
