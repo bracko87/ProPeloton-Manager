@@ -379,13 +379,20 @@ describe('isolated experimental mountain executable', () => {
   })
 
   it('flags under-sampled geometry without changing official finishing results', () => {
-    const mountain = syntheticMountainPilotInput()
+    const fixture = syntheticMountainPilotInput()
+    // The stage declares substantially more climbing than its sparse
+    // elevation samples can explain. It must not invent route segments.
+    const mountain = {
+      ...fixture,
+      stage: { ...fixture.stage, elevationGainM: 8000 },
+    }
     const baseline = runBaselineRaceEngine(mountain)
     const experimental = runExperimentalMountainCoreV1(mountain)
     const shadow = experimental.roadRaceResolution.phase4Finish?.mountainV2Shadow
     expect(shadow?.status).toBe('geometry_review_required')
     expect(shadow?.checkpoints).toHaveLength(0)
-    expect(shadow?.warningCodes).toContain('incomplete_profile_distance_coverage')
+    expect(shadow?.warningCodes)
+      .toContain('coarse_samples_capture_less_than_half_declared_ascent')
     expect(experimental.finishResolution).toEqual(baseline.finishResolution)
   })
 
