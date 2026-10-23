@@ -75,6 +75,9 @@ jobs:
       - name: Compile isolated complete Breakaway V1 race engine
         run: npx esbuild src/universal-race-engine/runBreakawayExperimentalEngineV1.ts --bundle --platform=node --format=esm --outfile=/tmp/runBreakawayExperimentalEngineV1.mjs
 
+      - name: Run Bačka registered-roster full-engine pilot (simulation only)
+        run: npx --yes vitest@3.2.4 run src/universal-race-engine/breakawayFullPilotRealRoster.test.ts --reporter=dot
+
       - name: Verify stage-scoped baseline and mountain engine isolation
         run: >-
           npx --yes vitest@3.2.4 run
