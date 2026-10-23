@@ -1,3 +1,5 @@
+import { buildMountainV2ShadowAudit, type MountainV2ShadowAudit } from './mountainV2ExperimentalAdapter.ts'
+import { isMountainEnginePilotStageV1 } from './mountainEnginePilotV1.ts'
 import { mountainOpeningBreakawayPhysicallyActiveV1 } from './mountainOpeningBreakawayV1.ts'
 import { calculateSummitFinishSelectivityV1 } from './summitFinishSelectivityV1.ts'
 import {
@@ -2245,6 +2247,8 @@ export interface UniversalRoadFinishResult {
 }
 
 export interface UniversalRoadPhase4FinishResult {
+  /** Non-authoritative experimental climbing model; not an official result. */
+  readonly mountainV2Shadow?: MountainV2ShadowAudit
   readonly phaseNumber: 4
   readonly phaseBoundary: UniversalRoadPhaseBoundary
   readonly status: UniversalRoadPhase4Status
@@ -19681,6 +19685,12 @@ export function resolveRoadPhase4Finish(
       chaseSteps,
       lateTerrainSelection,
       profileClimbSelections,
+      // The independent climbing model runs on the same candidate stage and
+      // riders, but NEVER overwrites authoritative Phase 4/5 times or replay.
+      // This shadow path is only compiled into the experimental solver fork.
+      ...(isMountainEnginePilotStageV1(input.stage)
+        ? { mountainV2Shadow: buildMountainV2ShadowAudit(input) }
+        : {}),
       riderStates: provisionalRiderStates.sort(
         (left, right) =>
           left.finalGapSeconds - right.finalGapSeconds ||
