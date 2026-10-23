@@ -1,17 +1,17 @@
 /// <reference lib="deno.ns" />
-import { runSelectedRaceEngineV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import {
   classifyUniversalReplaySynchronizationForPublication,
   isUniversalPhase78IssueNonBlocking,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runRaceEngine.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/runRaceEngine.ts";
 import {
   buildScenarioProductionUniversalRaceEngineInput as buildProductionUniversalRaceEngineInput,
   getRoadScenarioAuditV1,
   type ScenarioProductionUniversalRaceSources as ProductionUniversalRaceSources,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 // Accepted V5.2 is kept as the emergency sporting fallback only. It is used
 // only after a failed/orphaned primary attempt or at the mandatory T-15 deadline.
@@ -20,7 +20,7 @@ import { buildProductionUniversalRaceEngineInput as buildFallbackProductionUnive
 import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
-const SOURCE_COMMIT = "2d2c4290ecea56e5a66d89705c4e1655383da1b3";
+const SOURCE_COMMIT = "10dc6e7b7470f2c859a7019515a46708a5792024";
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
 const WORKER_BUILD = "race_director_v2_accelerated_checkpointed_2026_10_13";
 const MAX_CALCULATIONS_PER_TICK = 1;
@@ -469,6 +469,8 @@ await heartbeat(supabase, stageId, simulationRunId, "scenario_reserved", {
       input = buildProductionInputWithTimeTrialRules(currentBaseInput, timeTrialRule);
       await heartbeat(supabase, stageId, simulationRunId, "primary_engine_started", {
         rider_count: Array.isArray(input?.riders) ? input.riders.length : null,
+        selected_engine_lane: selectCompleteRaceEngineLaneV1(input.stage),
+        selected_engine_source_commit: SOURCE_COMMIT,
       });
       try {
         const rawResult = runSelectedRaceEngineV1(input);
@@ -493,6 +495,9 @@ await heartbeat(supabase, stageId, simulationRunId, "scenario_reserved", {
     }
 
     if (useFallback) {
+      if (stageId === "5523cf76-8fd4-4a12-ab28-7f285c9829ff") {
+        throw new Error("Mandatory Breakaway V1 pilot cannot publish baseline fallback.");
+      }
       if (scenarioReserved) {
         await abandonScenarioReservation(
 supabase,
@@ -527,6 +532,7 @@ fallbackReason || "primary_not_official",
         fallbackUsed: useFallback,
         fallbackReason: fallbackReason || null,
         primarySourceCommit: SOURCE_COMMIT,
+        selectedEngineLaneV1: !useFallback ? selectCompleteRaceEngineLaneV1(input.stage) : null,
         fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
         degradedComponents,
       },
