@@ -3384,47 +3384,20 @@ async function fetchRiderCurrentHealthCaseById(
 }
 
 async function fetchMedicalCenterLevelForClub(clubId: string): Promise<number | null> {
-  const tableCandidates = [
-    'club_facilities',
-    'club_infrastructure_facilities',
-    'club_facility_levels',
-    'facilities',
-  ]
+  // Read the actual persisted infrastructure level; do not probe nonexistent facility tables.
+  const { data, error } = await supabase
+    .from('club_infrastructure')
+    .select('medical_center_level')
+    .eq('club_id', clubId)
+    .maybeSingle()
 
-  for (const tableName of tableCandidates) {
-    try {
-      const { data, error } = await supabase.from(tableName).select('*').eq('club_id', clubId).limit(50)
-      if (error || !Array.isArray(data)) continue
-
-      const medicalRow = data.find((row: any) => {
-        const code = String(
-          row.facility_type ??
-            row.facility_code ??
-            row.facility_key ??
-            row.code ??
-            row.type ??
-            row.name ??
-            '',
-        )
-          .toLowerCase()
-          .replace(/[\s-]+/g, '_')
-        return code.includes('medical') || code.includes('health')
-      }) as any | undefined
-
-      const rawLevel =
-        medicalRow?.level ??
-        medicalRow?.facility_level ??
-        medicalRow?.current_level ??
-        medicalRow?.upgrade_level ??
-        null
-      const level = normalizeNumber(rawLevel, NaN)
-      if (Number.isFinite(level)) return Math.max(0, Math.round(level))
-    } catch {
-      // Try next table candidate.
-    }
+  if (error) {
+    console.warn('Failed to load Medical Center infrastructure level:', error)
+    return null
   }
 
-  return null
+  const level = normalizeNumber(data?.medical_center_level, NaN)
+  return Number.isFinite(level) ? Math.max(0, Math.round(level)) : null
 }
 
 async function resolveRiderMedicalSupportClubId(
@@ -3433,36 +3406,14 @@ async function resolveRiderMedicalSupportClubId(
 ): Promise<string | null> {
   if (knownClubId?.trim()) return knownClubId.trim()
 
-  const riderClubTableCandidates = [
-    'rider_contracts',
-    'club_riders',
-    'club_rosters',
-    'rider_rosters',
-    'riders',
-  ]
-
-  for (const tableName of riderClubTableCandidates) {
-    try {
-      const { data, error } = await supabase.from(tableName).select('*').eq('rider_id', riderId).limit(5)
-      if (error || !Array.isArray(data)) continue
-
-      const activeRow =
-        data.find((row: any) =>
-          ['active', 'current', 'signed'].includes(String(row.status ?? '').toLowerCase()),
-        ) ?? data[0]
-      const clubId =
-        activeRow?.club_id ??
-        activeRow?.team_id ??
-        activeRow?.current_club_id ??
-        activeRow?.owner_club_id ??
-        activeRow?.parent_club_id ??
-        null
-
-      if (typeof clubId === 'string' && clubId.trim() !== '') return clubId.trim()
-    } catch {
-      // Try next source.
-    }
-  }
+  // Current rider membership is stored in club_riders, not legacy roster tables.
+  const { data: membership, error: membershipError } = await supabase
+    .from('club_riders')
+    .select('club_id')
+    .eq('rider_id', riderId)
+    .limit(1)
+    .maybeSingle()
+  if (!membershipError && membership?.club_id) return membership.club_id
 
   try {
     const { data, error } = await supabase.rpc('get_my_primary_club_id')
@@ -3961,7 +3912,15 @@ async function fetchRiderLastTwelveMonthPointsById(
       p_rider_id: riderId,
       p_game_date: gameDate ?? null,
     })
-    if (error) return null
+    if (error) {
+      console.warn('Failed to load owned rider monthly points:', {
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      })
+      return null
+    }
     if (!Array.isArray(data)) return null
     return normalizeLastTwelveMonthPointRows(data, gameDate)
   } catch {
@@ -4933,7 +4892,9 @@ export default function RiderProfilePage({
         fetchRiderSeasonOverviewById(targetRiderId),
         fetchRiderSeasonStatsById(targetRiderId),
         fetchRiderLastFiveRacesById(targetRiderId),
-        fetchRiderLastTwelveMonthPointsById(targetRiderId, gameDate),
+        isPremium && !premiumStatusLoading
+          ? fetchRiderLastTwelveMonthPointsById(targetRiderId, gameDate)
+          : Promise.resolve(null),
         fetchRiderRaceSharpnessById(targetRiderId),
         fetchRiderCareerHonoursById(targetRiderId),
       ])
@@ -4952,7 +4913,7 @@ export default function RiderProfilePage({
     return () => {
       mounted = false
     }
-  }, [selectedRider?.id, gameDate])
+  }, [selectedRider?.id, gameDate, isPremium, premiumStatusLoading])
 
   useEffect(() => {
     let mounted = true
