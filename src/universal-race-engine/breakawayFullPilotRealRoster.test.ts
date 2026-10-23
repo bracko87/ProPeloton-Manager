@@ -11,7 +11,49 @@ import {runRaceEngine as acceptedEngine,
   type UniversalRaceEngineInput} from './runRaceEngine.ts'
 import {runSelectedRaceEngineV1,getSelectedRaceEngineModuleV1,
   selectCompleteRaceEngineLaneV1} from './runSelectedRaceEngineV1.ts'
-import {runRaceEngine as specialistEngine} from './runBreakawayExperimentalEngineV1.ts'
+import {runRaceEngine as specialistEngine,
+  calculateBreakawayAutomaticPursuitCommitmentV1} from './runBreakawayExperimentalEngineV1.ts'
+
+describe('Phase 4 experimental automatic chase effort budget', () => {
+  const team = (workerCount: number, averageEnergy: number) => ({
+    workerCount, averageEnergy,
+  })
+
+  it('never creates a chase coalition without interested, energetic teams', () => {
+    expect(calculateBreakawayAutomaticPursuitCommitmentV1([], 1, 0))
+      .toEqual({ workerCount: 0, teamCount: 0 })
+    expect(calculateBreakawayAutomaticPursuitCommitmentV1(
+      [team(6, 0)], 1, 0,
+    )).toEqual({ workerCount: 0, teamCount: 0 })
+    expect(calculateBreakawayAutomaticPursuitCommitmentV1(
+      [team(6, 70)], 0, 0,
+    )).toEqual({ workerCount: 0, teamCount: 0 })
+  })
+
+  it('caps automatic participation per team rather than counting all rouleurs', () => {
+    expect(calculateBreakawayAutomaticPursuitCommitmentV1(
+      [team(6, 70)], 1, 0,
+    )).toEqual({ workerCount: 2, teamCount: 1 })
+    expect(calculateBreakawayAutomaticPursuitCommitmentV1(
+      [team(60, 70)], 1, 0,
+    )).toEqual({ workerCount: 2, teamCount: 1 })
+  })
+
+  it('ramps late participation and reduces it with workload and energy', () => {
+    const interestedTeams = Array.from({ length: 4 }, () => team(6, 70))
+    expect(calculateBreakawayAutomaticPursuitCommitmentV1(
+      interestedTeams, 0.25, 0,
+    )).toEqual({ workerCount: 2, teamCount: 1 })
+    expect(calculateBreakawayAutomaticPursuitCommitmentV1(
+      interestedTeams, 1, 1,
+    )).toEqual({ workerCount: 4, teamCount: 2 })
+    expect(calculateBreakawayAutomaticPursuitCommitmentV1(
+      interestedTeams.map(() => team(6, 35)), 1, 1,
+    )).toEqual({ workerCount: 2, teamCount: 1 })
+  })
+})
+
+
 function createRider(
   riderId: string,
   participantRiderId: string,
