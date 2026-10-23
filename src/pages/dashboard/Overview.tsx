@@ -3610,8 +3610,8 @@ function normalizeOverviewSeasonSnapshot(
 async function loadOverviewSeasonSnapshot(
   mainClubId: string | null,
   seasonYear: number,
-): Promise<OverviewSeasonSnapshot> {
-  if (!mainClubId) return EMPTY_SEASON_SNAPSHOT;
+): Promise<OverviewSeasonSnapshot | null> {
+  if (!mainClubId) return null;
 
   try {
     const { data, error } = await supabase.rpc(
@@ -3624,13 +3624,13 @@ async function loadOverviewSeasonSnapshot(
 
     if (error) {
       console.warn("Could not load overview season snapshot:", error.message);
-      return EMPTY_SEASON_SNAPSHOT;
+      return null;
     }
 
     return normalizeOverviewSeasonSnapshot(data);
   } catch (err) {
     console.warn("Overview season snapshot lookup failed:", err);
-    return EMPTY_SEASON_SNAPSHOT;
+    return null;
   }
 }
 
@@ -8689,7 +8689,9 @@ export default function OverviewPage() {
   const [squadPulseOverride, setSquadPulseOverride] =
     React.useState<SquadPulse | null>(null);
   const [seasonSnapshot, setSeasonSnapshot] =
-    React.useState<OverviewSeasonSnapshot>(EMPTY_SEASON_SNAPSHOT);
+    React.useState<OverviewSeasonSnapshot | null>(null);
+  const [seasonSnapshotLoadState, setSeasonSnapshotLoadState] =
+    React.useState<"loading" | "ready" | "unavailable">("loading");
   const [externalCyclingNews, setExternalCyclingNews] = React.useState<
     ExternalCyclingNewsItem[]
   >([]);
@@ -9216,12 +9218,19 @@ export default function OverviewPage() {
         console.warn("Fast overview squad pulse load failed:", err);
       });
 
+      setSeasonSnapshot(null);
+      setSeasonSnapshotLoadState("loading");
       void loadOverviewSeasonSnapshot(mainClubId, seasonYear).then((loadedSeasonSnapshot) => {
-        if (alive) {
+        if (alive && lastFastWidgetKey === key) {
           setSeasonSnapshot(loadedSeasonSnapshot);
+          setSeasonSnapshotLoadState(loadedSeasonSnapshot ? "ready" : "unavailable");
         }
       }).catch((err) => {
         console.warn("Fast overview season snapshot load failed:", err);
+        if (alive && lastFastWidgetKey === key) {
+          setSeasonSnapshot(null);
+          setSeasonSnapshotLoadState("unavailable");
+        }
       });
 
 
@@ -9992,8 +10001,35 @@ export default function OverviewPage() {
           </div>
         </div>
 
-        {premiumStatusLoading ? (
+        {premiumStatusLoading || seasonSnapshotLoadState === "loading" ? (
           <div className="h-32 animate-pulse rounded-2xl border border-slate-200 bg-white shadow-sm" />
+        ) : seasonSnapshotLoadState === "unavailable" || !seasonSnapshot ? (
+          <Card className="p-5">
+            <h3 className="text-base font-semibold text-slate-900">{t("seasonSnapshot.title")}</h3>
+            <p role="status" className="mt-2 text-sm text-amber-800">
+              {t("seasonSnapshot.unavailable")}
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                const clubId = data.club.id;
+                if (!clubId) return;
+                setSeasonSnapshotLoadState("loading");
+                void loadOverviewSeasonSnapshot(clubId, getSeasonYearFromOverview(data))
+                  .then((snapshot) => {
+                    setSeasonSnapshot(snapshot);
+                    setSeasonSnapshotLoadState(snapshot ? "ready" : "unavailable");
+                  })
+                  .catch(() => {
+                    setSeasonSnapshot(null);
+                    setSeasonSnapshotLoadState("unavailable");
+                  });
+              }}
+              className="mt-3 min-h-[44px] rounded-md border border-amber-300 bg-white px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-amber-50"
+            >
+              {t("seasonSnapshot.retry")}
+            </button>
+          </Card>
         ) : isPremium ? (
           <SeasonSnapshotCard stats={seasonSnapshot} />
         ) : (
