@@ -25,8 +25,17 @@ function breakawayV1PhysicalEscapePaceFactor(
   const chaseDefence = Math.max(0.12, Math.min(1, 1 - chasingAssets / 22))
   const fatiguePressure = Math.max(0.72, 1 - 0.22 * raceKm / input.stage.distanceKm)
   const packEfficiency = escapeGroupSize >= 3 ? 1 : escapeGroupSize === 2 ? 0.75 : 0.5
+  // The specialist's long-range opportunity exists ONLY when physical
+  // escapees cooperate and the peloton has few real pursuit workers. A
+  // determined chase removes this speed benefit; fitness and accumulated
+  // fatigue also diminish it naturally. This never sets winner/rank/gap.
+  const absenceOfPursuit = Math.max(0, Math.min(1, (10 - chasingAssets) / 10))
+  const unopposedEscapeBenefit =
+    pilot.escapeOpportunity * 0.09 * genuineCooperation *
+    absenceOfPursuit * fatiguePressure * packEfficiency
   return Math.round((1 + pilot.escapeOpportunity * 0.065 * genuineCooperation *
-    chaseDefence * fatiguePressure * packEfficiency) * 1e6) / 1e6
+    chaseDefence * fatiguePressure * packEfficiency +
+    unopposedEscapeBenefit) * 1e6) / 1e6
 }
 
 import { calculateSummitFinishSelectivityV1 } from './summitFinishSelectivityV1.ts'
