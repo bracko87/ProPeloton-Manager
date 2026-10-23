@@ -4,14 +4,15 @@
  * No database, user identities, secrets, production race tasks or mutation.
  */
 import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 }
-  from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+  from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/decf613ae309ee9f1216c2085a4f69deab255260/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { PPM_UNIVERSAL_RACE_ENGINE_KEY, PPM_UNIVERSAL_RACE_ENGINE_VERSION,
   type UniversalRaceEngineInput } from
-  "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runRaceEngine.ts";
+  "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/decf613ae309ee9f1216c2085a4f69deab255260/src/universal-race-engine/runRaceEngine.ts";
 
-const SOURCE_COMMIT="2d2c4290ecea56e5a66d89705c4e1655383da1b3";
+const SOURCE_COMMIT="decf613ae309ee9f1216c2085a4f69deab255260";
 const CONTRACT="breakaway_full_official_contract_synthetic_canary_v1";
 const PILOT="5523cf76-8fd4-4a12-ab28-7f285c9829ff";
+const BINCHE="335708f7-d56a-4816-9068-38399e8f74e3";
 const respond=(data:unknown,status=200)=>new Response(JSON.stringify(data),{
   status,headers:{"content-type":"application/json","cache-control":"no-store"}
 });
@@ -277,11 +278,23 @@ Deno.serve(async req=>{
   if(req.method!=="GET")return respond({error:"method_not_allowed"},405);
   try{
     const fixture=createValidInput();
+    const binche=new URL(req.url).searchParams.get("stage")==="binche";
+    const target=binche?BINCHE:PILOT;
     const input:UniversalRaceEngineInput={
       ...fixture,
       engine:{...fixture.engine,deterministicSeed:"read_only_breakaway_release_canary_v1"},
-      stage:{...fixture.stage,stageId:PILOT},
-      points:fixture.points.map(row=>({...row,stageId:PILOT})),
+      stage:{...fixture.stage,stageId:target,...(binche?{
+        terrainType:"hilly" as const,profileType:"sprinter" as const,
+        distanceKm:203.2,elevationGainM:1710,
+        terrainPercentages:{flat:58,hilly:38,mountain:0,cobbled:4},
+        profilePoints:[{km:0,elevationM:120},{km:49,elevationM:240},
+          {km:77,elevationM:310},{km:101,elevationM:125},
+          {km:111,elevationM:225},{km:160,elevationM:118},
+          {km:203.2,elevationM:120}],
+      }: {})},
+      points:fixture.points.map(row=>({...row,stageId:target,kmFromStart:binche
+        ? (row.pointType==="FINISH"?203.2:row.pointType==="KOM"?77:row.pointType==="INTERMEDIATE_SPRINT"?64:0)
+        : row.kmFromStart})),
     };
     const selected=selectCompleteRaceEngineLaneV1(input.stage);
     if(selected!=="experimental_breakaway_v1")
@@ -296,7 +309,7 @@ Deno.serve(async req=>{
       return respond({error:"official_contract_validation_failed"},503);
     return respond({
       status:"ok",contract:CONTRACT,source_commit:SOURCE_COMMIT,
-      engine_lane:selected,stage_id:PILOT,
+      engine_lane:selected,stage_id:target,
       input_type:"fixed_synthetic_four_riders",
       riders:result.finishResolution.classification.length,
       winner:result.finishResolution.winnerRiderId,
