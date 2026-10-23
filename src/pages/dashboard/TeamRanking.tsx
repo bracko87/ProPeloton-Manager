@@ -804,17 +804,20 @@ function toStandingRows(
 ): StandingRow[] {
   return teams.map((team, index) => {
     const inactivity = inactivityByClubId.get(team.id)
+    // Keep historical award records untouched: zero applies only to the
+    // current, effective league standing while the club is inactive.
+    const inactiveForStandings = team.isActive === false || Boolean(inactivity?.status)
 
     return {
       id: team.id,
       position: team.divisionRank ?? team.tierRank ?? team.overallRank ?? index + 1,
       teamName: team.name,
       countryCode: team.country,
-      points: team.seasonPoints,
-      completedRaceCount: getCompletedRaceCountFromTeam(team),
-      raceReputationValue: getRaceReputationValueFromTeam(team),
+      points: inactiveForStandings ? 0 : team.seasonPoints,
+      completedRaceCount: inactiveForStandings ? 0 : getCompletedRaceCountFromTeam(team),
+      raceReputationValue: inactiveForStandings ? 0 : getRaceReputationValueFromTeam(team),
       logoPath: team.logoPath ?? null,
-      isActive: team.isActive !== false,
+      isActive: !inactiveForStandings,
       publicInactivityStatus: inactivity?.status ?? null,
       inactivityDaysSnapshot: inactivity?.days ?? null,
       seasonEndTransitionPending: inactivity?.seasonEndTransitionPending ?? false,
@@ -826,6 +829,10 @@ function compareStandingRowsBySeasonEndTieBreakers(
   a: StandingRow,
   b: StandingRow,
 ): number {
+  // An inactive manager/club is placed after every active team, including
+  // active teams with zero points, regardless of remaining tie-breakers.
+  if (a.isActive !== b.isActive) return a.isActive ? -1 : 1
+
   if (b.points !== a.points) {
     return b.points - a.points
   }
