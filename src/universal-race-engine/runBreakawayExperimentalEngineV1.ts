@@ -11873,9 +11873,23 @@ export function resolveRoadPhase2Development(
       input.stage,
       stepMidKm,
     )
+    // One race-control team with only a handful of willing workers cannot
+    // maintain the same whole-peloton road speed as an organized pursuit.
+    // Preserve the universal response and full organized-chase physics:
+    // apply this small rolling-tempo correction only when no teams order a
+    // chase and at most one team is providing weak race control.
+    const sparsePhase2Control =
+      selectBreakawayOpportunityStageV1(input.stage) !== null &&
+      chasingTeamIds.length === 0 &&
+      controllingTeamIds.length <= 1 &&
+      phase2FiniteChaseAssets <= 6
+    const phase2RollingTempoMultiplier = sparsePhase2Control
+      ? 0.96 + phase2FiniteChaseAssets * 0.001
+      : 1
     effectivePelotonPaceKmh = clamp(
       stepReferencePaceKmh *
         pelotonComponents.selectedResponseMultiplier *
+        phase2RollingTempoMultiplier *
         phase2WindSpeedMultiplier +
         pelotonVariationKmh,
       20,
