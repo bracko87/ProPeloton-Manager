@@ -13696,8 +13696,7 @@ export function resolveRoadPhase3Decisive(
     )
     // Synthetic Bačka only: audit Phase-3 road speed and chase actors.
     // Diagnostics never alter physical groups, replay or race results.
-    if (input.engine.deterministicSeed.startsWith('breakaway-BACKA-registered-roster-') &&
-        Math.floor(stepEndKm / 4) !== Math.floor(phase3PhysicalKm / 4)) {
+    if (input.engine.deterministicSeed.startsWith('breakaway-BACKA-registered-roster-')) {
       console.log('BREAKAWAY_PHASE3_SPEED_DIAGNOSTIC='+JSON.stringify({
         seed:input.engine.deterministicSeed,km:stepMidKm,
         escapeRiders:physicalEscapeRiderIds.length,
