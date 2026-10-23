@@ -330,6 +330,79 @@ describe('isolated experimental mountain executable', () => {
     expect(selected.finishResolution.classification).toHaveLength(mountain.riders.length)
   })
 
+  it('integrates mountain V2 as non-authoritative Phase 4 group checkpoints on verified geometry', () => {
+    const seed = syntheticMountainPilotInput()
+    const mountain = {
+      ...seed,
+      stage: {
+        ...seed.stage,
+        distanceKm: 128.4,
+        elevationGainM: 3700,
+        profilePoints: [
+          { km: 0, elevationM: 200 },
+          { km: 20, elevationM: 1400 },
+          { km: 40, elevationM: 200 },
+          { km: 60, elevationM: 1600 },
+          { km: 80, elevationM: 300 },
+          { km: 100, elevationM: 1400 },
+          { km: 128.4, elevationM: 300 },
+        ],
+      },
+    }
+    const baseline = runBaselineRaceEngine(mountain)
+    const experimental = runExperimentalMountainCoreV1(mountain)
+    const shadow = experimental.roadRaceResolution.phase4Finish?.mountainV2Shadow
+    expect(shadow?.authority).toBe('non_authoritative')
+    expect(shadow?.status).toBe('evaluated_non_authoritative')
+    expect(shadow?.segmentCount).toBe(6)
+    expect(shadow?.checkpoints).toHaveLength(6)
+    expect(shadow?.profileAudit.sampledGainM).toBe(3700)
+    expect(shadow?.starterCount).toBe(mountain.riders.length)
+    const finalCheckpoint = shadow!.checkpoints.at(-1)!
+    expect(finalCheckpoint.km).toBe(128.4)
+    expect(
+      new Set(finalCheckpoint.groups.flatMap((group) => group.riderIds)).size,
+    ).toBe(mountain.riders.length)
+    for (const checkpoint of shadow!.checkpoints) {
+      expect(checkpoint.groups.flatMap((group) => group.riderIds))
+        .toHaveLength(mountain.riders.length)
+      expect(checkpoint.groups.every((group) => group.leaderGapSeconds >= 0))
+        .toBe(true)
+    }
+    // Shadow calculations cannot change any of the existing authoritative
+    // classification, prizes, grouping or race finish contracts.
+    expect(experimental.finishResolution).toEqual(baseline.finishResolution)
+    expect(experimental.groupAndTimeResolution).toEqual(baseline.groupAndTimeResolution)
+    expect(experimental.calibrationSummary).toEqual(baseline.calibrationSummary)
+    const replay = experimental.replayTimeline
+    expect(replay).toBeDefined()
+  })
+
+  it('flags under-sampled geometry without changing official finishing results', () => {
+    const mountain = syntheticMountainPilotInput()
+    const baseline = runBaselineRaceEngine(mountain)
+    const experimental = runExperimentalMountainCoreV1(mountain)
+    const shadow = experimental.roadRaceResolution.phase4Finish?.mountainV2Shadow
+    expect(shadow?.status).toBe('geometry_review_required')
+    expect(shadow?.checkpoints).toHaveLength(0)
+    expect(shadow?.warningCodes).toContain('incomplete_profile_distance_coverage')
+    expect(experimental.finishResolution).toEqual(baseline.finishResolution)
+  })
+
+  it('never attaches mountain V2 simulation data to a nonpilot mountain stage', () => {
+    const seed = syntheticMountainPilotInput()
+    const stageId = 'unapproved-mountain-stage'
+    const nonpilot = {
+      ...seed, stage: { ...seed.stage, stageId },
+      points: seed.points.map((point) => ({ ...point, stageId })),
+    }
+    const baseline = runBaselineRaceEngine(nonpilot)
+    const experimental = runExperimentalMountainCoreV1(nonpilot)
+    expect(experimental.roadRaceResolution.phase4Finish?.mountainV2Shadow)
+      .toBeUndefined()
+    expect(experimental.finishResolution).toEqual(baseline.finishResolution)
+  })
+
   it('preserves official sporting results when changing mountain replay grouping only', () => {
     const mountain = syntheticMountainPilotInput()
     const baseline = runBaselineRaceEngine(mountain)
