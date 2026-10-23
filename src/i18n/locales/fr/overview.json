@@ -260,6 +260,8 @@
     "history": "Historique"
   },
   "seasonSnapshot": {
+    "unavailable": "Les statistiques de saison sont temporairement indisponibles. Cela ne signifie pas que votre club n'a aucun résultat.",
+    "retry": "Réessayer",
     "title": "Capture d'instantané de la saison",
     "premiumDescription": "Débloquez le volume de course de la saison, les points internationaux, les victoires, les podiums, les résultats Top 10, les maillots et les meilleures performances de classement général.",
     "subtitle": "Résultats de la saison en cours, points, podiums, maillots et volume de course.",

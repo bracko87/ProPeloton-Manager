@@ -260,6 +260,8 @@
     "history": "Storico"
   },
   "seasonSnapshot": {
+    "unavailable": "Le statistiche stagionali sono temporaneamente non disponibili. Questo non significa che il club non abbia risultati.",
+    "retry": "Riprova a caricare le statistiche",
     "title": "Istantanea della stagione",
     "premiumDescription": "Sblocca il volume di gara in corso di stagione, punti internazionali, vittorie, podi, risultati top 10, maglie e migliori prestazioni di classificazione generale.",
     "subtitle": "Risultati della stagione attuale, punti, podi, maglie e volume gara.",

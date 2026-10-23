@@ -260,6 +260,8 @@
     "history": "Povijest"
   },
   "seasonSnapshot": {
+    "unavailable": "Statistika sezone trenutačno nije dostupna. To ne znači da vaš klub nema rezultate.",
+    "retry": "Ponovno učitaj statistiku sezone",
     "title": "Pregled sezone",
     "premiumDescription": "Otključajte pregled broja utrka u sezoni, međunarodnih bodova, pobeda, podijuma, Top 10 rezultata, majica i najboljeg plasmana u generalnom plasmanu.",
     "subtitle": "Rezultati tekuće sezone, bodovi, postolja, dresovi i opseg nastupa na utrkama.",

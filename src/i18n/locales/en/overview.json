@@ -260,6 +260,8 @@
     "history": "History"
   },
   "seasonSnapshot": {
+    "unavailable": "Season statistics are temporarily unavailable. This does not mean your club has zero results.",
+    "retry": "Retry season statistics",
     "title": "Season Snapshot",
     "premiumDescription": "Unlock current-season race volume, international points, wins, podiums, Top 10 results, jerseys, and best general-classification performance.",
     "subtitle": "Current season results, points, podiums, jerseys, and race volume.",

@@ -260,6 +260,8 @@
     "history": "Historie"
   },
   "seasonSnapshot": {
+    "unavailable": "Die Saisonstatistiken sind vorübergehend nicht verfügbar. Das bedeutet nicht, dass dein Verein keine Ergebnisse hat.",
+    "retry": "Saisonstatistiken erneut laden",
     "title": "Saisonüberblick",
     "premiumDescription": "Schalten Sie Rennumfang der aktuellen Saison, internationale Punkte, Siege, Podiumsplätze, Top-10-Ergebnisse, Trikots und die beste GC-Leistung frei.",
     "subtitle": "Ergebnisse, Punkte, Podiumsplätze, Trikots und Rennumfang der aktuellen Saison.",

@@ -260,6 +260,8 @@
     "history": "Historial"
   },
   "seasonSnapshot": {
+    "unavailable": "Las estadísticas de la temporada no están disponibles temporalmente. Esto no significa que el club no tenga resultados.",
+    "retry": "Volver a intentar cargar estadísticas",
     "title": "Captura de la temporada",
     "premiumDescription": "Desbloquear el volumen de la carrera de temporada actual, puntos internacionales, victorias, podios, Top 10 resultados, camisetas y mejor rendimiento de clasificación general.",
     "subtitle": "Resultados de la temporada actual, puntos, podios, camisetas y volumen de la carrera.",
