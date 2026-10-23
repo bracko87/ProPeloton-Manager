@@ -7103,8 +7103,15 @@ function usePublishedRaceStageIds(
     }
 
     let cancelled = false
+    let requestInFlight = false
+    let allPublished = false
 
     async function loadPublishedStages() {
+      // Stage tours previously triggered overlapping multi-stage RPC batches
+      // every five seconds, even when all results were already published.
+      if (cancelled || requestInFlight || allPublished) return
+      requestInFlight = true
+      try {
       const results = await Promise.all(
         stageIds.map(async (stageId) => {
           const { data, error } =
@@ -7147,12 +7154,12 @@ function usePublishedRaceStageIds(
             Boolean(stageId)
         )
 
+      allPublished = nextPublishedStageIds.length === stageIds.length
+
       /*
        * Keep the existing array reference when the publication
-       * state has not changed.
-       *
-       * This prevents the results effects from restarting every
-       * five seconds.
+       * state has not changed. Avoid rerendering when polling returns
+       * exactly the same publication set.
        */
       setPublishedStageIds(
         (currentPublishedStageIds) => {
@@ -7170,15 +7177,18 @@ function usePublishedRaceStageIds(
             : nextPublishedStageIds
         }
       )
+      } finally {
+        requestInFlight = false
+      }
     }
 
     void loadPublishedStages()
 
     const interval = window.setInterval(
       () => {
-        void loadPublishedStages()
+        if (!allPublished) void loadPublishedStages()
       },
-      5000
+      15000
     )
 
     return () => {
