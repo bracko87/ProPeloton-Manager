@@ -517,6 +517,14 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
         km50GapSeconds:road.phase2Development?.endGapSeconds??0,
         km75GapSeconds:road.phase3Decisive?.endGapSeconds??0,
         finishGapSeconds:road.phase4Finish?.endGapSeconds??0,
+        escapeEnergyAtHalf:(road.phase2Development?.riderEnergy??[])
+          .filter(x=>initialEscapeRiders.includes(x.riderId))
+          .map(x=>({riderId:x.riderId, energyAfterPhase:x.energyAfterPhase})),
+        escapePhase3Orders:result.roadCommandResolution.riders
+          .filter(x=>initialEscapeRiders.includes(x.riderId))
+          .map(x=>({riderId:x.riderId,
+            command:x.phases.find(p=>p.phaseNumber===3)?.resolvedCommand,
+            behaviour:x.phases.find(p=>p.phaseNumber===3)?.behaviour})),
         winner,
         originalEscapeWon:initialEscapeRiders.includes(winner??''),
         breakawaySurvived:result.calibrationSummary.breakawaySurvived,
