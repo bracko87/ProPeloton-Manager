@@ -7,7 +7,7 @@ import {
 } from './runRaceEngine.ts'
 import { runRaceEngine as runExperimentalMountainCoreV1 } from './runMountainExperimentalEngineV1.ts'
 import { compareMountainV2WithOfficialEvents } from './mountainV2OfficialEventComparison.ts'
-import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1 } from './runSelectedRaceEngineV1.ts'
+import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1, runSelectedRaceEngineWithMountainV2Shadow } from './runSelectedRaceEngineV1.ts'
 
 /**
  * All data below are synthetic test fixtures, copied from the original
@@ -297,6 +297,37 @@ function syntheticMountainPilotInput(): UniversalRaceEngineInput {
 }
 
 describe('isolated experimental mountain executable', () => {
+
+  it('prepares a V2 stage-selective fail-safe shadow without changing an official finish',()=>{
+    const source = syntheticMountainPilotInput()
+    const stageId = 'be7ce2aa-ec52-4b6b-a6c6-48bfab89ab9b'
+    const input = {
+      ...source,
+      stage:{...source.stage,stageId},
+      points:source.points.map(point=>({...point,stageId})),
+    }
+    const expected = runBaselineRaceEngine(input)
+    const serializedInput = JSON.stringify(input)
+    const result = runSelectedRaceEngineWithMountainV2Shadow(input)
+    expect(result.official).toEqual(expected)
+    expect(result.official.finishResolution.classification).toEqual(
+      expected.finishResolution.classification)
+    expect(result.official.replayTimeline).toEqual(expected.replayTimeline)
+    expect(result.v2ShadowFailed).toBe(false)
+    expect(result.v2?.selection.mode).toBe('sandbox_shadow_only')
+    expect(result.v2?.preview?.status).toBe('evaluated_non_authoritative')
+    expect(result.v2?.preview?.syntheticTiming?.finish).toHaveLength(input.riders.length)
+    expect(JSON.stringify(input)).toBe(serializedInput)
+  })
+
+  it('never executes a V2 preview for unlisted official stages',()=>{
+    const input=createValidInput()
+    const expected=runBaselineRaceEngine(input)
+    const result=runSelectedRaceEngineWithMountainV2Shadow(input)
+    expect(result.official).toEqual(expected)
+    expect(result.v2).toBeNull()
+    expect(result.v2ShadowFailed).toBe(false)
+  })
   it('runs the original solver unchanged for nonpilot races', () => {
     const normal = createValidInput()
     expect(runSelectedRaceEngineV1(normal)).toEqual(runBaselineRaceEngine(normal))
