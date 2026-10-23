@@ -95,6 +95,7 @@ jobs:
           src/universal-race-engine/mountainV2OfficialEventComparison.test.ts
           src/universal-race-engine/mountainV2DurmitorSandbox.test.ts
           src/universal-race-engine/mountainV2StageRegistry.test.ts
+          src/universal-race-engine/mountainV2CurrentRosterSandbox.test.ts
           --reporter=dot
 
       - name: Production build
