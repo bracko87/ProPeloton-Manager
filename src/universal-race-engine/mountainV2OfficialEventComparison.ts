@@ -118,7 +118,7 @@ export function compareMountainV2WithOfficialEvents(
   if (incidents.some(i => i.sprintZoneProtected)) {
     blockers.add('sprint_zone_time_protection_not_reconciled')
   }
-  if (result.phase10Incidents.autonomousChase.summary.teamRescueHelperCount > 0) {
+  if ((result.phase10Incidents.autonomousChase?.summary?.teamRescueHelperCount ?? 0) > 0) {
     blockers.add('team_rescue_time_cost_not_reconciled')
   }
 
