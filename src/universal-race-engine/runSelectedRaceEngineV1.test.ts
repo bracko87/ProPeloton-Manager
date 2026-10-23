@@ -362,6 +362,12 @@ describe('isolated experimental mountain executable', () => {
     // official classifications and existing replay remain unchanged below.
     expect(shadow?.syntheticTiming?.finish).toHaveLength(mountain.riders.length)
     expect(shadow?.syntheticTiming?.replay).toHaveLength(6)
+    expect(shadow?.syntheticSportingNoEvents?.authority).toBe('synthetic_only')
+    expect(shadow?.syntheticSportingNoEvents?.classified.map(row => row.riderId))
+      .toEqual(shadow?.syntheticTiming?.finish.map(row => row.riderId))
+    expect(shadow?.syntheticSportingNoEvents?.classified.map(row => row.adjustedSeconds))
+      .toEqual(shadow?.syntheticTiming?.finish.map(row => row.elapsedSeconds))
+    expect(shadow?.syntheticSportingNoEvents?.nonFinishers).toEqual([])
     const syntheticLast = shadow!.syntheticTiming!.replay.at(-1)!
     for (const finisher of shadow!.syntheticTiming!.finish) {
       expect(finisher.elapsedSeconds)
@@ -403,6 +409,7 @@ describe('isolated experimental mountain executable', () => {
     expect(shadow?.status).toBe('geometry_review_required')
     expect(shadow?.checkpoints).toHaveLength(0)
     expect(shadow?.syntheticTiming).toBeUndefined()
+    expect(shadow?.syntheticSportingNoEvents).toBeUndefined()
     expect(shadow?.warningCodes)
       .toContain('coarse_samples_capture_less_than_half_declared_ascent')
     expect(experimental.finishResolution).toEqual(baseline.finishResolution)
