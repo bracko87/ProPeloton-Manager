@@ -1,13 +1,13 @@
 /// <reference lib="deno.ns" />
-import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/decf613ae309ee9f1216c2085a4f69deab255260/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import {
   classifyUniversalReplaySynchronizationForPublication,
   isUniversalPhase78IssueNonBlocking,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/decf613ae309ee9f1216c2085a4f69deab255260/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/decf613ae309ee9f1216c2085a4f69deab255260/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/decf613ae309ee9f1216c2085a4f69deab255260/src/universal-race-engine/buildProductionRaceOutput.ts";
 import { runRaceEngine as runFallbackRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7e4299371f452e5d1d0a706e48fb083340362d11/src/universal-race-engine/runRaceEngine.ts";
 import { buildProductionUniversalRaceEngineInput as buildFallbackInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceInput.ts";
 import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/38fec7814395d77331ae255d1b9203edba0142c7/src/universal-race-engine/buildProductionRaceOutput.ts";
@@ -15,7 +15,8 @@ import { buildProductionUniversalRaceOutput as buildFallbackOutput } from "https
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
-const SOURCE_COMMIT = "10dc6e7b7470f2c859a7019515a46708a5792024";
+const SOURCE_COMMIT = "decf613ae309ee9f1216c2085a4f69deab255260";
+const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3"]);
 const FALLBACK_SOURCE_COMMIT = "7e4299371f452e5d1d0a706e48fb083340362d11";
 const CONTRACT = "universal_race_pass2_resume_v19";
 
@@ -434,7 +435,7 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   // Phase 4 loop. Use the accepted lighter sporting fallback after the bounded
   // checkpoint retry budget is exhausted.
   const useFallback = legacyFallbackRequested;
-  if (useFallback && stageId === "5523cf76-8fd4-4a12-ab28-7f285c9829ff") {
+  if (useFallback && MANDATORY_BREAKAWAY_PILOT_IDS.has(stageId)) {
     throw new Error("Mandatory Breakaway V1 pilot cannot publish baseline fallback.");
   }
   const fallbackReason = legacyFallbackRequested ? "phase4_cpu_retry_budget_exhausted" : null;
