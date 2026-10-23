@@ -449,4 +449,41 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
       issues:official.replaySynchronization.issues,
     }))
   })
+  it('audits deterministic halfway survival across different seeds and chase orders',()=>{
+    const rows: Array<Record<string, unknown>>=[]
+    for(const chase of ['minimal','organized'] as const){
+      for(const seed of ['seed-a','seed-b']){
+        const input=scenario(chase)
+        input.engine.deterministicSeed += '-'+seed
+        const before=JSON.stringify(input)
+        const result=runSelectedRaceEngineV1(input)
+        expect(JSON.stringify(input)).toBe(before)
+        expect(result.validationPassed).toBe(true)
+        expect(result.replaySynchronization.synchronized).toBe(true)
+        expect(result.finishResolution.complete).toBe(true)
+        expect(result.finishResolution.classification).toHaveLength(96)
+        expect(result.postStageUpdate.persistenceContract.directDatabaseWritePerformed).toBe(false)
+        const road=result.roadRaceResolution
+        const p2=road.phase2Development
+        const halfwayPrimaryGap=p2?.endGapSeconds??0
+        const halfwaySecondaryRiders=p2?.secondaryFrontRiderIdsAtEnd.length??0
+        rows.push({
+          chase,seed,stageKm:input.stage.distanceKm,
+          openingRiders:road.phase1Opening?.breakawayRiderIds.length??0,
+          quarterGapSeconds:road.phase1Opening?.endGapSeconds??0,
+          halfwayPrimaryGapSeconds:halfwayPrimaryGap,
+          halfwaySecondaryRiders,
+          anyFrontAtHalf:halfwayPrimaryGap>0.5||halfwaySecondaryRiders>0,
+          threeQuarterGapSeconds:road.phase3Decisive?.endGapSeconds??0,
+          finishGapSeconds:road.phase4Finish?.endGapSeconds??0,
+          breakawaySurvived:result.calibrationSummary.breakawaySurvived,
+          breakawayCaught:result.calibrationSummary.breakawayCaught,
+          winner:result.finishResolution.winnerRiderId,
+        })
+      }
+    }
+    console.log('BREAKAWAY_MULTI_SEED_HALFWAY_AUDIT='+JSON.stringify(rows))
+    expect(rows).toHaveLength(4)
+  })
+
 })
