@@ -286,7 +286,9 @@ function TabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`px-4 py-2 rounded-md text-sm font-medium transition ${
+      role="tab"
+      aria-selected={active}
+      className={`min-h-[44px] shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition ${
         active ? 'bg-yellow-400 text-black' : 'text-gray-600 hover:bg-gray-100'
       }`}
     >
@@ -317,6 +319,16 @@ export default function FinancePage(): JSX.Element {
   const [tab, setTab] = useState<TabKey>('overview')
   const location = useLocation()
   const navigate = useNavigate()
+  const financeTabScrollRef = React.useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 767px)').matches) return
+    const strip = financeTabScrollRef.current
+    const selected = strip?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+    if (!strip || !selected) return
+    const left = selected.getBoundingClientRect().left - strip.getBoundingClientRect().left
+      + strip.scrollLeft - (strip.clientWidth - selected.clientWidth) / 2
+    strip.scrollTo({ left: Math.max(0, left), behavior: 'auto' })
+  }, [tab])
 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -625,7 +637,8 @@ export default function FinancePage(): JSX.Element {
         </div>
       </div>
 
-      <div className="mb-5 inline-flex rounded-lg bg-white border border-gray-100 p-1 shadow-sm flex-wrap">
+      <div ref={financeTabScrollRef} className="mb-5 max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-gray-100 bg-white shadow-sm" aria-label={t('page.title')}>
+        <div role="tablist" className="flex w-max min-w-full flex-nowrap gap-0.5 p-1">
         <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
           {t('tabs.overview')}
         </TabButton>
@@ -644,6 +657,7 @@ export default function FinancePage(): JSX.Element {
         >
           {t('tabs.policies')}
         </TabButton>
+        </div>
       </div>
 
       {loading && (

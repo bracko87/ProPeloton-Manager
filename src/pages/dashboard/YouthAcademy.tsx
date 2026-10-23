@@ -870,6 +870,16 @@ export default function YouthAcademyPage(): JSX.Element {
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<TabKey>('overview')
+  const youthTabScrollRef = React.useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!window.matchMedia('(max-width: 767px)').matches) return
+    const strip = youthTabScrollRef.current
+    const selected = strip?.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]')
+    if (!strip || !selected) return
+    const left = selected.getBoundingClientRect().left - strip.getBoundingClientRect().left
+      + strip.scrollLeft - (strip.clientWidth - selected.clientWidth) / 2
+    strip.scrollTo({ left: Math.max(0, left), behavior: 'auto' })
+  }, [tab])
   const [activationBudget, setActivationBudget] = useState(100000)
   const [draftRange, setDraftRange] =
     useState<'local' | 'regional' | 'continental' | 'world'>('local')
@@ -2287,13 +2297,16 @@ export default function YouthAcademyPage(): JSX.Element {
         </div>
       ) : null}
 
-      <div className="mb-1 inline-flex flex-wrap rounded-lg border border-gray-100 bg-white p-1 shadow-sm">
+      <div ref={youthTabScrollRef} className="mb-1 max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-gray-100 bg-white shadow-sm" aria-label={t('title')}>
+        <div role="tablist" className="flex w-max min-w-full flex-nowrap gap-0.5 p-1">
         {tabKeys.map(key => (
           <button
             key={key}
             type="button"
             onClick={() => setTab(key)}
-            className={`rounded-md px-4 py-2 text-sm font-medium transition ${
+            role="tab"
+            aria-selected={tab === key}
+            className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition ${
               tab === key
                 ? 'bg-yellow-400 text-black'
                 : 'text-gray-600 hover:bg-gray-100'
@@ -2302,6 +2315,7 @@ export default function YouthAcademyPage(): JSX.Element {
             {t(`tabs.${key}`)}
           </button>
         ))}
+        </div>
       </div>
 
       {error ? (
@@ -5841,11 +5855,12 @@ export default function YouthAcademyPage(): JSX.Element {
                             {race.host_city
                               ? `${race.host_city} · ${humanize(race.terrain_type)} · ${race.distance_km} km${raceDays > 1 ? ' / stage' : ''}`
                               : `${humanize(race.terrain_type)} · ${race.distance_km} km${raceDays > 1 ? ' / stage' : ''}`}
+                            <span className="md:hidden"> · {formatLabel}</span>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2 lg:justify-end">
-                          <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                        <div data-ppm-youth-race-actions="true" className="flex w-full min-w-0 flex-nowrap items-center gap-2 overflow-x-auto overscroll-x-contain pb-1 lg:w-auto lg:flex-wrap lg:justify-end lg:overflow-visible">
+                          <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${
                             isCompleted
                               ? 'bg-slate-100 text-slate-700'
                               : isActive
@@ -5854,15 +5869,15 @@ export default function YouthAcademyPage(): JSX.Element {
                           }`}>
                             {statusLabel}
                           </span>
-                          <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${competitionClassBadgeClass(race.competition_class)}`}>
+                          <span className={`shrink-0 whitespace-nowrap rounded-full border px-2.5 py-1 text-xs font-medium ${competitionClassBadgeClass(race.competition_class)}`}>
                             {competitionClassLabel(race.competition_class)}
                           </span>
-                          <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                          <span className="hidden shrink-0 whitespace-nowrap rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 md:inline-flex">
                             {formatLabel}
                           </span>
                           {race.invitation_status &&
                           (race.invitation_status !== 'pending' || race.application_pending) ? (
-                            <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
+                            <span className={`shrink-0 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${
                               race.invitation_status === 'accepted'
                                 ? 'bg-emerald-50 text-emerald-700'
                                 : race.application_pending
@@ -5889,7 +5904,7 @@ export default function YouthAcademyPage(): JSX.Element {
                                 type="button"
                                 disabled={data.read_only || raceAction !== null}
                                 onClick={() => void declineYouthRaceInvitation(race)}
-                                className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                                className="min-h-[44px] shrink-0 whitespace-nowrap rounded-full border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                               >
                                 {raceAction === `decline:${race.id}`
                                   ? t('calendar.declining')
@@ -5900,7 +5915,7 @@ export default function YouthAcademyPage(): JSX.Element {
                                 type="button"
                                 disabled={data.read_only || raceAction !== null}
                                 onClick={() => void enterYouthRace(race)}
-                                className="rounded-full bg-yellow-400 px-3 py-1.5 text-xs font-semibold text-black transition hover:bg-yellow-300 disabled:opacity-50"
+                                className="min-h-[44px] shrink-0 whitespace-nowrap rounded-full bg-yellow-400 px-3 py-2 text-xs font-semibold text-black transition hover:bg-yellow-300 disabled:opacity-50"
                               >
                                 {raceAction === race.id
                                   ? t('calendar.entering')
@@ -5919,7 +5934,7 @@ export default function YouthAcademyPage(): JSX.Element {
                               type="button"
                               disabled={data.read_only || raceAction !== null}
                               onClick={() => void declineYouthRaceInvitation(race)}
-                              className="rounded-full border border-red-200 bg-white px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                              className="min-h-[44px] shrink-0 whitespace-nowrap rounded-full border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
                             >
                               {raceAction === `decline:${race.id}`
                                 ? t('calendar.declining')
@@ -5934,7 +5949,7 @@ export default function YouthAcademyPage(): JSX.Element {
                                 ? navigate(`/dashboard/youth-academy/races/${race.id}`)
                                 : undefined
                             }
-                            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                            className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-full px-3 py-2 text-xs font-semibold transition ${
                               isParticipating
                                 ? 'bg-slate-950 text-white hover:bg-slate-800'
                                 : 'cursor-not-allowed border border-slate-200 bg-slate-100 text-slate-400'

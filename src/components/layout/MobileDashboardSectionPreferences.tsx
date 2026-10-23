@@ -15,8 +15,8 @@ const ENABLED_PAGE_KEYS = new Set([
   'training',
   'equipment',
   'infrastructure',
-  'finance',
-  'transfers',
+  // Finance (including Tax) and Transfers (both Rider and Staff markets)
+  // use their own layouts. Do not inject buttons over their card headers.
   'statistics',
   'notifications',
   'inbox',
@@ -230,7 +230,10 @@ function discoverTargets(): CollapsibleTarget[] {
   if (!root) return []
 
   const pageKey = getPageKey(root)
-  if (!ENABLED_PAGE_KEYS.has(pageKey)) return []
+  if (!ENABLED_PAGE_KEYS.has(pageKey)) {
+    removeEnhancementMarks()
+    return []
+  }
 
   const collapsedIds = readCollapsedIds(pageKey)
   const merged = new Map<HTMLElement, string>()
