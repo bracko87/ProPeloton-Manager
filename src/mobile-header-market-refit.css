@@ -1,0 +1,185 @@
+/* ProPeloton — compact mobile header, product actions and safe modal viewport.
+   All changes below are limited to phone widths; desktop stays unchanged. */
+@media (max-width: 767px) {
+  [data-ppm-dashboard-header='true'] {
+    position: sticky !important;
+    top: 0;
+    z-index: 60 !important;
+    isolation: isolate;
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) 44px 80px !important;
+    grid-template-rows: auto auto !important;
+    column-gap: 0.35rem !important;
+    row-gap: 0.25rem !important;
+    align-items: center !important;
+    padding: max(0.25rem, env(safe-area-inset-top)) 0.65rem 0.3rem !important;
+    background: rgb(250 204 21) !important;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child {
+    grid-column: 1 !important;
+    grid-row: 1 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    gap: 0.2rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > button:first-child {
+    min-width: 40px !important;
+    min-height: 44px !important;
+    padding: 0.4rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:first-child > div:last-child {
+    gap: 0.3rem !important;
+    overflow: hidden;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:last-child {
+    display: contents !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-notifications'] {
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    justify-self: center !important;
+    min-width: 44px !important;
+    width: 44px !important;
+    min-height: 44px !important;
+    padding: 0.5rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-menu'] {
+    grid-column: 3 !important;
+    grid-row: 1 !important;
+    min-width: 0 !important;
+    min-height: 44px !important;
+    padding: 0.35rem !important;
+    width: 100%;
+    gap: 0.2rem !important;
+    justify-content: center !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-menu'] span {
+    font-size: 0.7rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-membership'] {
+    grid-column: 1 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    min-height: 33px !important;
+    height: auto;
+    padding: 0.27rem 0.35rem !important;
+    font-size: 0.72rem !important;
+    line-height: 1rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [data-tutorial-target='header-coins'] {
+    grid-column: 2 / 4 !important;
+    grid-row: 2 !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 33px !important;
+    padding: 0.27rem 0.3rem !important;
+    font-size: 0.72rem !important;
+    line-height: 1rem !important;
+  }
+
+  [data-ppm-dashboard-header='true'] > div:last-child > div:has([data-tutorial-target='header-menu']) {
+    display: contents !important;
+  }
+
+  [data-ppm-dashboard-header='true'] [role='menu'] {
+    position: fixed !important;
+    top: var(--ppm-mobile-fixed-header-height, 92px) !important;
+    right: 0.4rem !important;
+    max-height: calc(100dvh - var(--ppm-mobile-fixed-header-height, 92px) - 0.5rem) !important;
+    z-index: 95 !important;
+  }
+
+  /* Market product card: price / compare / buy on exactly one action row.
+     Existing desktop column layout is not touched. */
+  [data-ppm-dashboard-page='equipment'] [data-ppm-market-item='true'] {
+    min-width: 0 !important;
+    gap: 0.75rem !important;
+    padding: 0.7rem !important;
+  }
+
+  [data-ppm-dashboard-page='equipment'] [data-ppm-market-actions='true'] {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) auto auto !important;
+    gap: 0.4rem !important;
+    align-items: center !important;
+    justify-items: end !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    align-self: auto !important;
+  }
+
+  [data-ppm-dashboard-page='equipment'] [data-ppm-market-actions='true'] > :first-child {
+    grid-column: 1 !important;
+    justify-self: start !important;
+    min-width: 0 !important;
+    width: 100%;
+    text-align: left !important;
+    overflow-wrap: anywhere;
+  }
+
+  [data-ppm-dashboard-page='equipment'] [data-ppm-market-actions='true'] > :nth-child(2) {
+    grid-column: 2 !important;
+    width: auto !important;
+    min-width: 0 !important;
+  }
+
+  [data-ppm-dashboard-page='equipment'] [data-ppm-market-actions='true'] > :nth-child(2) label {
+    min-height: 44px !important;
+    padding: 0.3rem 0.4rem !important;
+    gap: 0.22rem !important;
+    white-space: normal !important;
+  }
+
+  [data-ppm-dashboard-page='equipment'] [data-ppm-market-actions='true'] > button:last-child {
+    grid-column: 3 !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    height: 44px !important;
+    padding: 0.45rem 0.7rem !important;
+  }
+
+  /* Modals begin below the persistent header. Their close buttons stay
+     reachable even with shorter viewports or a mobile keyboard. */
+  [data-ppm-dashboard-main='true'] .fixed.inset-0:is([aria-modal='true'], [role='dialog']),
+  [data-ppm-dashboard-main='true'] [data-ppm-mobile-modal='true'] {
+    top: var(--ppm-mobile-fixed-header-height, 92px) !important;
+    bottom: 0 !important;
+    height: calc(100dvh - var(--ppm-mobile-fixed-header-height, 92px)) !important;
+    max-height: calc(100dvh - var(--ppm-mobile-fixed-header-height, 92px)) !important;
+    z-index: 80 !important;
+    padding: 0.5rem !important;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+  }
+
+  [data-ppm-dashboard-main='true'] [data-ppm-mobile-modal='true'] > div,
+  [data-ppm-dashboard-main='true'] .fixed.inset-0[aria-modal='true'] > div {
+    max-height: calc(100dvh - var(--ppm-mobile-fixed-header-height, 92px) - 1rem) !important;
+    max-width: 100% !important;
+    overflow-y: auto !important;
+  }
+
+  [data-ppm-dashboard-main='true'] [data-ppm-mobile-modal='true'] > div > div:first-child,
+  [data-ppm-dashboard-main='true'] .fixed.inset-0[aria-modal='true'] > div > div:first-child {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: white;
+  }
+}

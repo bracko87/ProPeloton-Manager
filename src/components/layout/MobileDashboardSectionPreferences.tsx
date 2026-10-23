@@ -162,6 +162,13 @@ function discoverHeadingTargets(root: HTMLElement): Array<{
   headings.forEach(heading => {
     if (isExcludedElement(heading)) return
 
+    // Product and facility cards are not independent collapsible windows.
+    // Keep the Market/Facilities section-level control, not a minus button
+    // on every product image or clubhouse item.
+    const pageKey = getPageKey(root)
+    if (pageKey === 'equipment' && heading.tagName === 'H4') return
+    if (pageKey === 'infrastructure' && heading.closest('article')) return
+
     const title = normalizeTitle(heading.textContent)
     if (!title) return
 
@@ -239,8 +246,22 @@ function discoverTargets(): CollapsibleTarget[] {
     .map(([element, title]) => ({ element, title }))
     .filter(({ element }) => {
       const contentHeight = Math.max(element.scrollHeight, element.offsetHeight)
-      return contentHeight >= 76
+      if (contentHeight < 76) return false
+      if (pageKey === 'infrastructure' && element.closest('article')) return false
+      if (pageKey === 'equipment' && element.matches('[data-ppm-market-item="true"]')) return false
+      return true
     })
+
+  // Restore any formerly collapsed individual cards when they are no longer
+  // eligible. The stale storage ID is ignored because it is never targeted.
+  const activeElements = new Set(candidates.slice(0, 40).map(item => item.element))
+  root.querySelectorAll<HTMLElement>('[data-ppm-mobile-section-toggle-host="true"]').forEach(element => {
+    if (activeElements.has(element)) return
+    delete element.dataset.ppmMobileSectionToggleHost
+    delete element.dataset.ppmMobileSectionCollapsed
+    delete element.dataset.ppmMobileSectionId
+    element.querySelectorAll(':scope > .ppm-mobile-section-toggle-fallback').forEach(button => button.remove())
+  })
 
   return candidates.slice(0, 40).map(({ element, title }) => {
     const id = getStableSectionId(pageKey, element, root)

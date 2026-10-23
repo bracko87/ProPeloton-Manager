@@ -930,6 +930,7 @@ export default function EquipmentMarketTab({
               return (
                 <div
                   key={item.id}
+                  data-ppm-market-item="true"
                   className="grid gap-5 rounded-lg border border-gray-100 bg-white p-4 shadow-sm md:grid-cols-[14rem_minmax(0,1fr)_12rem]"
                 >
                   <div className="flex h-48 w-full shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-100 bg-white p-3 md:w-56">
@@ -1020,7 +1021,7 @@ export default function EquipmentMarketTab({
                     </div>
                   </div>
 
-                  <div className="ml-auto flex min-w-[190px] flex-col items-end justify-between gap-3 self-stretch">
+                  <div data-ppm-market-actions="true" className="ml-auto flex min-w-[190px] flex-col items-end justify-between gap-3 self-stretch">
                     {hasSponsorDiscount ? (
                       <div className="w-full rounded-lg border border-green-200 bg-green-50 p-3 text-right">
                         <div className="text-xs text-gray-400">{t('market.sponsorPrice')}</div>

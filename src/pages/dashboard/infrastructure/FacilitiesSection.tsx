@@ -349,7 +349,13 @@ function FacilityDetailsModal({
   const isDisabled = isProcessing || !item.canAct
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-label={t('facilityGuide.title') + ': ' + item.name}
+      data-ppm-mobile-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4"
+    >
       <button type="button" aria-label={t('common.close')} onClick={onClose} className="absolute inset-0 bg-black/40 backdrop-blur-sm" />
 
       <div className="relative z-10 max-h-[94vh] w-full max-w-6xl overflow-y-auto rounded-2xl border border-gray-100 bg-white shadow-2xl">

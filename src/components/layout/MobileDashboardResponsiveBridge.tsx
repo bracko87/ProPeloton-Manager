@@ -84,9 +84,32 @@ export default function MobileDashboardResponsiveBridge(): JSX.Element | null {
     if (typeof window === 'undefined' || typeof document === 'undefined') return
 
     const mobileMediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY)
+    let measuredHeader: HTMLElement | null = null
+    const measureHeader = () => {
+      if (!mobileMediaQuery.matches) {
+        document.documentElement.style.removeProperty('--ppm-mobile-fixed-header-height')
+        return
+      }
+      const header = document.querySelector<HTMLElement>('[data-ppm-dashboard-header="true"]')
+      if (!header) return
+      const height = Math.ceil(header.getBoundingClientRect().height)
+      if (height > 0) {
+        document.documentElement.style.setProperty('--ppm-mobile-fixed-header-height', `${height}px`)
+      }
+    }
+    const headerResizeObserver = typeof ResizeObserver === 'undefined'
+      ? null
+      : new ResizeObserver(measureHeader)
 
     const retag = () => {
       tagDashboardElements()
+      const header = document.querySelector<HTMLElement>('[data-ppm-dashboard-header="true"]')
+      if (header !== measuredHeader) {
+        headerResizeObserver?.disconnect()
+        measuredHeader = header
+        if (header) headerResizeObserver?.observe(header)
+      }
+      measureHeader()
 
       if (!isDashboardPath()) {
         setIsMobileNavigationOpen(false)
@@ -157,13 +180,17 @@ export default function MobileDashboardResponsiveBridge(): JSX.Element | null {
     document.addEventListener('click', handleDocumentClick, true)
     document.addEventListener('keydown', handleKeyDown)
     window.addEventListener('hashchange', handleHashChange)
+    window.addEventListener('resize', retag)
     mobileMediaQuery.addEventListener('change', handleViewportChange)
 
     return () => {
       observer.disconnect()
+      headerResizeObserver?.disconnect()
+      document.documentElement.style.removeProperty('--ppm-mobile-fixed-header-height')
       document.removeEventListener('click', handleDocumentClick, true)
       document.removeEventListener('keydown', handleKeyDown)
       window.removeEventListener('hashchange', handleHashChange)
+      window.removeEventListener('resize', retag)
       mobileMediaQuery.removeEventListener('change', handleViewportChange)
       delete document.body.dataset.ppmMobileNavOpen
     }
