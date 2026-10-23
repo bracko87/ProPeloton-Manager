@@ -358,6 +358,17 @@ describe('isolated experimental mountain executable', () => {
     expect(shadow?.checkpoints).toHaveLength(6)
     expect(shadow?.profileAudit.sampledGainM).toBe(3700)
     expect(shadow?.starterCount).toBe(mountain.riders.length)
+    // Shadow elapsed time, finish ranks and replay must all reconcile;
+    // official classifications and existing replay remain unchanged below.
+    expect(shadow?.syntheticTiming?.finish).toHaveLength(mountain.riders.length)
+    expect(shadow?.syntheticTiming?.replay).toHaveLength(6)
+    const syntheticLast = shadow!.syntheticTiming!.replay.at(-1)!
+    for (const finisher of shadow!.syntheticTiming!.finish) {
+      expect(finisher.elapsedSeconds)
+        .toBe(syntheticLast.riderElapsedSeconds[finisher.riderId])
+      expect(finisher.gapSeconds).toBeCloseTo(
+        finisher.elapsedSeconds - shadow!.syntheticTiming!.finish[0].elapsedSeconds, 5)
+    }
     const finalCheckpoint = shadow!.checkpoints.at(-1)!
     expect(finalCheckpoint.km).toBe(128.4)
     expect(
@@ -391,6 +402,7 @@ describe('isolated experimental mountain executable', () => {
     const shadow = experimental.roadRaceResolution.phase4Finish?.mountainV2Shadow
     expect(shadow?.status).toBe('geometry_review_required')
     expect(shadow?.checkpoints).toHaveLength(0)
+    expect(shadow?.syntheticTiming).toBeUndefined()
     expect(shadow?.warningCodes)
       .toContain('coarse_samples_capture_less_than_half_declared_ascent')
     expect(experimental.finishResolution).toEqual(baseline.finishResolution)
