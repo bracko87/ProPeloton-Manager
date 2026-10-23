@@ -8,6 +8,7 @@ on:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - 'supabase/functions/universal-race-stage-*/index.ts'
+      - 'supabase/functions/mountain-v2-shadow-canary/index.ts'
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-mountain-pilot-worker-routing.mjs'
       - 'scripts/verify-mountain-v2-baseline.mjs'
@@ -19,6 +20,7 @@ on:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - 'supabase/functions/universal-race-stage-*/index.ts'
+      - 'supabase/functions/mountain-v2-shadow-canary/index.ts'
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-mountain-pilot-worker-routing.mjs'
       - 'scripts/verify-mountain-v2-baseline.mjs'
@@ -60,6 +62,11 @@ jobs:
           for function_name in universal-race-stage-runner universal-race-stage-pass1-resume universal-race-stage-pass2-resume universal-race-stage-safe-resume; do
             npx esbuild "supabase/functions/${function_name}/index.ts" --bundle --platform=neutral --format=esm --external:'https://*' --external:'npm:*' --external:'jsr:*' --outfile="/tmp/${function_name}.mjs"
           done
+
+      - name: Compile and audit isolated V2 canary endpoint
+        run: |
+          npx esbuild supabase/functions/mountain-v2-shadow-canary/index.ts --bundle --platform=neutral --format=esm --external:'https://*' --external:'npm:*' --external:'jsr:*' --outfile=/tmp/mountainV2ShadowCanary.mjs
+          node scripts/verify-mountain-v2-shadow-canary.mjs
 
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
