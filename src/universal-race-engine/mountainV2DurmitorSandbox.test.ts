@@ -89,6 +89,18 @@ function report(scenario:'steady'|'tactics'){
     ridersWithZeroEnergy:final.riders.filter(r=>r.energy===0).length,
     topTen,checkpoints,
   }
+  // Realism acceptance safeguards, intentionally broad rather than
+  // scripted group counts. Prevent regression to the earlier prototype's
+  // 87-88 groups and universal zero energy at this 96-rider mountain fixture.
+  expect(output.ridersWithZeroEnergy).toBeLessThan(20)
+  expect(output.finalGroupCount).toBeLessThan(60)
+  expect(Math.max(...finishGroupSizes)).toBeGreaterThan(4)
+  expect(output.finalGapLastSeconds).toBeGreaterThan(output.finalGapP10Seconds)
+  if(scenario==='steady') {
+    // The strongest combined climber/endurance starter should remain
+    // competitive without scripting any finish ranking inside the engine.
+    expect(result.finish.slice(0,5).some(r=>r.riderId==='R022')).toBe(true)
+  }
   expect(result.authority).toBe('synthetic_only')
   expect(result.finish).toHaveLength(96)
   expect(result.replay).toHaveLength(15)
