@@ -7,6 +7,7 @@ import {
 } from './runRaceEngine.ts'
 import { runRaceEngine as runExperimentalMountainCoreV1 } from './runMountainExperimentalEngineV1.ts'
 import { runRaceEngine as runBreakawayCoreV1 } from './runBreakawayExperimentalEngineV1.ts'
+import { isBreakawayOfficialPilotStageV1 } from './breakawayOfficialPilotV1.ts'
 import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1 } from './runSelectedRaceEngineV1.ts'
 import { runOfficialWithBreakawayShadowV1 } from './runBreakawayShadowWithOfficialV1.ts'
 
@@ -437,8 +438,8 @@ describe('Breakaway V1 full sporting core stage-authority selection',()=>{
       points:source.points.map(p=>({...p,stageId})),
     }
   }
-  it('selects the same independent full core for all three stage IDs',()=>{
-    for(const id of [BAČKA,BINCHE,FRUSKA]){
+  it('selects the complete independent core only for the first explicit pilot',()=>{
+    for(const id of [BAČKA]){
       const stage=breakawayFixture(id,id===BAČKA?'flat':'hilly')
       expect(getSelectedRaceEngineModuleV1(stage.stage).runRaceEngine)
         .toBe(runBreakawayCoreV1)
@@ -454,8 +455,10 @@ describe('Breakaway V1 full sporting core stage-authority selection',()=>{
       expect(runSelectedRaceEngineV1(stage)).toEqual(selected)
     }
   })
-  it('never selects the specialist core for another stage in the same race, wrong terrain or TT',()=>{
+  it('never selects the specialist core for other candidate stages, wrong terrain or TT',()=>{
     for(const stage of [
+      breakawayFixture(BINCHE,'hilly'),
+      breakawayFixture(FRUSKA,'hilly'),
       breakawayFixture('unlisted-flat-stage'),
       breakawayFixture(BAČKA,'hilly'),
       {
@@ -466,6 +469,9 @@ describe('Breakaway V1 full sporting core stage-authority selection',()=>{
       expect(getSelectedRaceEngineModuleV1(stage.stage).runRaceEngine)
         .toBe(runBaselineRaceEngine)
     }
+    expect(isBreakawayOfficialPilotStageV1(breakawayFixture(BAČKA).stage)).toBe(true)
+    expect(isBreakawayOfficialPilotStageV1(breakawayFixture(BINCHE,'hilly').stage)).toBe(false)
+    expect(isBreakawayOfficialPilotStageV1(breakawayFixture(FRUSKA,'hilly').stage)).toBe(false)
     expect(()=>runBreakawayCoreV1(breakawayFixture('unlisted-flat-stage')))
       .toThrow('refuses non-allowlisted stages')
   })
