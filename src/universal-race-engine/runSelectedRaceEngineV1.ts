@@ -1,7 +1,7 @@
 import * as acceptedCore from './runRaceEngine.ts'
 import * as mountainCore from './runMountainExperimentalEngineV1.ts'
 import * as breakawayCore from './runBreakawayExperimentalEngineV1.ts'
-import { selectBreakawayOpportunityStageV1 } from './breakawayOpportunityEngineV1.ts'
+import { isBreakawayOfficialPilotStageV1 } from './breakawayOfficialPilotV1.ts'
 import {
   runRaceEngine as runBaselineRaceEngine,
   type UniversalRaceEngineInput,
@@ -25,7 +25,7 @@ import { dispatchSelectedRaceEngineV1, selectMountainEngineLaneV1 } from './moun
 export function runSelectedRaceEngineV1(
   input: UniversalRaceEngineInput,
 ): UniversalRaceEngineResult {
-  if (selectBreakawayOpportunityStageV1(input.stage)) {
+  if (isBreakawayOfficialPilotStageV1(input.stage)) {
     if (selectMountainEngineLaneV1(input.stage) === 'experimental_mountain_v1') {
       throw new Error('A race stage cannot select both Mountain V1 and Breakaway V1')
     }
@@ -50,10 +50,10 @@ export function getSelectedRaceEngineModuleV1(
   stage: UniversalRaceEngineInput['stage'],
 ): typeof acceptedCore {
   if (selectMountainEngineLaneV1(stage) === 'experimental_mountain_v1') {
-    if (selectBreakawayOpportunityStageV1(stage)) {
+    if (isBreakawayOfficialPilotStageV1(stage)) {
       throw new Error('A stage cannot use both experimental solver lanes')
     }
     return mountainCore
   }
-  return selectBreakawayOpportunityStageV1(stage) ? breakawayCore : acceptedCore
+  return isBreakawayOfficialPilotStageV1(stage) ? breakawayCore : acceptedCore
 }
