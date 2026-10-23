@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = process.cwd()
-const RELEASE_SHA = '2d2c4290ecea56e5a66d89705c4e1655383da1b3'
+const RELEASE_SHA = '10dc6e7b7470f2c859a7019515a46708a5792024'
 const prefix = 'https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/'
 const workers = new Map([
   ['universal-race-stage-runner', [
