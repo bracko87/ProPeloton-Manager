@@ -438,8 +438,8 @@ describe('Breakaway V1 full sporting core stage-authority selection',()=>{
       points:source.points.map(p=>({...p,stageId})),
     }
   }
-  it('selects the complete independent core only for the first explicit pilot',()=>{
-    for(const id of [BAČKA]){
+  it('selects the complete independent core for both explicitly approved pilot stages',()=>{
+    for(const id of [BAČKA,BINCHE]){
       const stage=breakawayFixture(id,id===BAČKA?'flat':'hilly')
       expect(getSelectedRaceEngineModuleV1(stage.stage).runRaceEngine)
         .toBe(runBreakawayCoreV1)
@@ -457,7 +457,7 @@ describe('Breakaway V1 full sporting core stage-authority selection',()=>{
   })
   it('never selects the specialist core for other candidate stages, wrong terrain or TT',()=>{
     for(const stage of [
-      breakawayFixture(BINCHE,'hilly'),
+      breakawayFixture(BINCHE,'flat'),
       breakawayFixture(FRUSKA,'hilly'),
       breakawayFixture('unlisted-flat-stage'),
       breakawayFixture(BAČKA,'hilly'),
@@ -470,7 +470,7 @@ describe('Breakaway V1 full sporting core stage-authority selection',()=>{
         .toBe(runBaselineRaceEngine)
     }
     expect(isBreakawayOfficialPilotStageV1(breakawayFixture(BAČKA).stage)).toBe(true)
-    expect(isBreakawayOfficialPilotStageV1(breakawayFixture(BINCHE,'hilly').stage)).toBe(false)
+    expect(isBreakawayOfficialPilotStageV1(breakawayFixture(BINCHE,'hilly').stage)).toBe(true)
     expect(isBreakawayOfficialPilotStageV1(breakawayFixture(FRUSKA,'hilly').stage)).toBe(false)
     expect(()=>runBreakawayCoreV1(breakawayFixture('unlisted-flat-stage')))
       .toThrow('refuses non-allowlisted stages')
