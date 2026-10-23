@@ -1205,6 +1205,8 @@ export default function TeamRankingPage(): JSX.Element {
 
   const [teams, setTeams] = useState<TeamRankingRecord[]>([])
   const [loading, setLoading] = useState(true)
+  const [rankingLoadFailed, setRankingLoadFailed] = useState(false)
+  const [rankingRetryKey, setRankingRetryKey] = useState(0)
   const [selectedTier, setSelectedTier] = useState<TeamRankingRecord['tier']>(initialSelection.tier)
   const [selectedDivision, setSelectedDivision] = useState<CompetitionDivision | null>(
     initialSelection.division,
@@ -1331,6 +1333,7 @@ export default function TeamRankingPage(): JSX.Element {
     async function load(): Promise<void> {
       try {
         setLoading(true)
+        setRankingLoadFailed(false)
 
         // The standings view is sufficient for the first render. The canonical
         // tie-breaker RPC may be expensive: it must not block the entire page.
@@ -1364,7 +1367,10 @@ export default function TeamRankingPage(): JSX.Element {
         })
       } catch (error) {
         console.error('Failed to load team ranking page:', error)
-        if (mounted) setLoading(false)
+        if (mounted) {
+          setRankingLoadFailed(true)
+          setLoading(false)
+        }
       }
     }
 
@@ -1376,7 +1382,7 @@ export default function TeamRankingPage(): JSX.Element {
     // Intentionally do not reload standings when only the URL query changes.
     // Tier/division selection is controlled locally and should not refetch the whole page.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [navigate])
+  }, [navigate, rankingRetryKey])
 
   useEffect(() => {
     let alive = true
@@ -1708,6 +1714,19 @@ export default function TeamRankingPage(): JSX.Element {
           </div>
         </div>
       </div>
+
+      {rankingLoadFailed ? (
+        <div role="alert" className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">
+          <p>{t('page.rankingUnavailable', { defaultValue: 'Team standings could not be loaded. The server may be temporarily busy.' })}</p>
+          <button
+            type="button"
+            onClick={() => setRankingRetryKey(current => current + 1)}
+            className="mt-3 min-h-[44px] rounded-md border border-rose-300 bg-white px-4 py-2 font-semibold text-rose-800 hover:bg-rose-100"
+          >
+            {t('page.retryStandings', { defaultValue: 'Retry standings' })}
+          </button>
+        </div>
+      ) : null}
 
       <div className="mt-4 overflow-hidden rounded bg-white shadow">
         <div className="border-b border-slate-200 px-4 py-4">
