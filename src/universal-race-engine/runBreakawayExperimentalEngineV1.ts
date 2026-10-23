@@ -18018,7 +18018,7 @@ export function resolveRoadPhase4Finish(
       escapeStillActive &&
       selectBreakawayOpportunityStageV1(input.stage) !== null &&
       phase4ActualPursuitWorkers < 8
-        ? 0.90 + 0.10 * clamp(phase4ActualPursuitWorkers / 8, 0, 1)
+        ? 0.82 + 0.18 * clamp(phase4ActualPursuitWorkers / 8, 0, 1)
         : 1
     const effectivePelotonPaceKmh = calculateRoadPhysicalGroupPaceKmh(
       input.stage,
