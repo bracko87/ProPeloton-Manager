@@ -13694,6 +13694,24 @@ export function resolveRoadPhase3Decisive(
         (stepDistanceKm / Math.max(5, pelotonPaceKmh)) * 3600 -
         (stepDistanceKm / Math.max(5, escapePaceKmh)) * 3600,
     )
+    // Synthetic Bačka only: audit Phase-3 road speed and chase actors.
+    // Diagnostics never alter physical groups, replay or race results.
+    if (input.engine.deterministicSeed.startsWith('breakaway-BACKA-registered-roster-') &&
+        Math.floor(stepEndKm / 4) !== Math.floor(phase3PhysicalKm / 4)) {
+      console.log('BREAKAWAY_PHASE3_SPEED_DIAGNOSTIC='+JSON.stringify({
+        seed:input.engine.deterministicSeed,km:stepMidKm,
+        escapeRiders:physicalEscapeRiderIds.length,
+        explicitChasingTeams:explicitPhase3ChasingTeamIds.length,
+        automaticChasingTeams:phase3AutomaticFinishInterestTeamIds.length,
+        gcChasingTeams:phase3GcThreatTeamIds.length,
+        chasingTeams:physicalChasingTeamIds.length,
+        chaseWorkers:phase3FiniteChaseAssets,
+        cooperation:phase3DynamicCooperationMultiplier,
+        pelotonKmh:pelotonPaceKmh,escapeKmh:escapePaceKmh,
+        gapBefore:physicalCurrentGapSeconds,gapAfterPhysics:calculatedNextGapSeconds,
+        responseMode:response.responseMode,
+      }))
+    }
     physicalCurrentGapSeconds = limitRoadChaseGapClosure(
       physicalCurrentGapSeconds,
       calculatedNextGapSeconds,
