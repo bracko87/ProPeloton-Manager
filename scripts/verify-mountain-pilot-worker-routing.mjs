@@ -59,10 +59,11 @@ assert.match(resume,/selectedCore=engineLaneV1 !== "baseline_universal"/)
 assert.match(resume,/!input \|\| !calculationInput \|\| !phase9Modifiers/)
 console.log('PASS safe-resume pilot/baseline engine initialized before Phase 9')
 
-// The first official breakaway release is deliberately one stage only.
+// Exactly two user-approved official breakaway releases; Danube remains shadow-only.
 const officialPilot=readFileSync('src/universal-race-engine/breakawayOfficialPilotV1.ts','utf8')
 assert.match(officialPilot,/5523cf76-8fd4-4a12-ab28-7f285c9829ff/)
-assert.doesNotMatch(officialPilot,/335708f7-d56a-4816-9068-38399e8f74e3|f5af8665-91c1-4585-937e-11fb94f65819/)
+assert.match(officialPilot,/335708f7-d56a-4816-9068-38399e8f74e3/)
+assert.doesNotMatch(officialPilot,/f5af8665-91c1-4585-937e-11fb94f65819/)
 assert.match(safe,/Saved experimental engine lane no longer matches its stage/)
 assert.match(safe,/Mandatory Breakaway V1 pilot cannot resume on baseline/)
 assert.match(safe,/Breakaway V1 checkpoint source commit does not match deployed release/)
