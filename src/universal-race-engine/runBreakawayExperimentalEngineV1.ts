@@ -10257,12 +10257,21 @@ export function resolveRoadPhase1Opening(
    * grow or be caught, but closure ramps in over roughly 5-9 km instead of
    * becoming maximal immediately.
    */
+  // Breakaway specialist: when no team has given a genuine chase or race-
+  // control order, the peloton cannot immediately erase an opening move as
+  // though an organized pursuit were under way. This changes only how fast
+  // the existing deterministic physical gap may close; it never assigns a
+  // winner, fabricates an attack, or changes the accepted universal solver.
+  // It also allows a second-wave counterattack to join a *still living* B1.
+  const noOrganizedOpeningChase =
+    selectBreakawayOpportunityStageV1(input.stage) !== null &&
+    phase1ChasingTeamIds.length === 0
   const phase1OpeningMomentumWindowKm = deterministicRound(
-    5 +
+    (5 +
       calculateDeterministicUnitRoll(
         `${input.engine.deterministicSeed}|${input.stage.stageId}|phase11r-opening-momentum-window-v1`,
       ) *
-        4,
+        4) * (noOrganizedOpeningChase ? 2.4 : 1),
     6,
   )
 
@@ -10443,7 +10452,10 @@ export function resolveRoadPhase1Opening(
       1,
     )
     const maximumOpeningClosureSeconds =
-      stepDistanceKm * (1.1 + (1 - openingMomentum) * 2.4)
+      stepDistanceKm *
+      (noOrganizedOpeningChase
+        ? 0.12 + (1 - openingMomentum) * 1.05
+        : 1.1 + (1 - openingMomentum) * 2.4)
     const momentumGuardedNextGapSeconds =
       openingMomentum > 0
         ? Math.max(
