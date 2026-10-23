@@ -8,6 +8,7 @@ on:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - 'supabase/functions/universal-race-stage-*/index.ts'
+      - 'supabase/functions/breakaway-full-engine-canary/index.ts'
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-mountain-pilot-worker-routing.mjs'
       - '.github/workflows/race-engine-validation.yml'
@@ -18,6 +19,7 @@ on:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - 'supabase/functions/universal-race-stage-*/index.ts'
+      - 'supabase/functions/breakaway-full-engine-canary/index.ts'
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-mountain-pilot-worker-routing.mjs'
       - '.github/workflows/race-engine-validation.yml'
@@ -66,6 +68,9 @@ jobs:
         run: |
           npx esbuild src/universal-race-engine/breakawayOpportunityEngineV1.ts --bundle --platform=node --format=esm --outfile=/tmp/breakawayOpportunityEngineV1.mjs
           npx --yes vitest@3.2.4 run src/universal-race-engine/breakawayOpportunityEngineV1.test.ts src/universal-race-engine/breakawayOpportunityRealRoster.test.ts --reporter=dot
+
+      - name: Compile isolated complete-breakaway Edge runtime canary
+        run: npx esbuild supabase/functions/breakaway-full-engine-canary/index.ts --bundle --platform=neutral --format=esm --external:'https://*' --external:'npm:*' --outfile=/tmp/breakaway-full-engine-canary.mjs
 
       - name: Compile isolated complete Breakaway V1 race engine
         run: npx esbuild src/universal-race-engine/runBreakawayExperimentalEngineV1.ts --bundle --platform=node --format=esm --outfile=/tmp/runBreakawayExperimentalEngineV1.mjs
