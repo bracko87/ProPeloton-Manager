@@ -156,7 +156,9 @@
 
   /* Modals begin below the persistent header. Their close buttons stay
      reachable even with shorter viewports or a mobile keyboard. */
-  [data-ppm-dashboard-main='true'] .fixed.inset-0:is([aria-modal='true'], [role='dialog']),
+  /* Covers older modal components that have not yet received dialog roles,
+     too. Exclude the mobile-navigation backdrop, which lives outside main. */
+  [data-ppm-dashboard-main='true'] .fixed.inset-0,
   [data-ppm-dashboard-main='true'] [data-ppm-mobile-modal='true'] {
     top: var(--ppm-mobile-fixed-header-height, 92px) !important;
     bottom: 0 !important;
