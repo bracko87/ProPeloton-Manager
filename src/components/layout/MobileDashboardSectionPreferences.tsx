@@ -4,8 +4,9 @@ import { createPortal } from 'react-dom'
 const MOBILE_MEDIA_QUERY = '(max-width: 767px)'
 const STORAGE_PREFIX = 'ppm-mobile-section-layout-v1:'
 
+// Overview uses React-native collapsible sections to avoid a delayed layout
+// collapse during initial loading. Leave the shared enhancer on other pages.
 const ENABLED_PAGE_KEYS = new Set([
-  'overview',
   'squad',
   'staff',
   'calendar',

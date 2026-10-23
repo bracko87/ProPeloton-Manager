@@ -4459,6 +4459,62 @@ const STAFF_BRIEFING_ROLES: StaffBriefingRole[] = [
   },
 ];
 
+/**
+ * A mobile Overview section applies its saved visibility during React's first
+ * render. This prevents the large load-time jump caused by the previous
+ * MutationObserver + animation-frame collapse enhancer.
+ */
+function MobileOverviewSection({
+  sectionId, title, defaultCollapsed = false, children,
+}: {
+  sectionId: string;
+  title: string;
+  defaultCollapsed?: boolean;
+  children: React.ReactNode;
+}) {
+  const storageKey = `ppm-overview-mobile-section-v2:${sectionId}`;
+  const [collapsed, setCollapsed] = React.useState(() => {
+    if (typeof window === "undefined") return defaultCollapsed;
+    try {
+      const saved = window.localStorage.getItem(storageKey);
+      return saved === null ? defaultCollapsed : saved === "collapsed";
+    } catch {
+      return defaultCollapsed;
+    }
+  });
+
+  const toggle = () => {
+    const next = !collapsed;
+    try {
+      window.localStorage.setItem(storageKey, next ? "collapsed" : "expanded");
+    } catch {
+      // Browser storage is optional, not a prerequisite for interaction.
+    }
+    setCollapsed(next);
+  };
+
+  return (
+    <section className="relative min-w-0" data-ppm-native-overview-section={sectionId}>
+      <button
+        type="button"
+        onClick={toggle}
+        aria-expanded={!collapsed}
+        aria-controls={`ppm-overview-panel-${sectionId}`}
+        aria-label={`${collapsed ? "Expand" : "Collapse"} ${title}`}
+        className={collapsed
+          ? "flex min-h-[48px] w-full items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-sm font-semibold text-slate-950 shadow-sm md:hidden"
+          : "absolute right-3 top-3 z-10 flex h-11 w-11 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 shadow-sm md:hidden"}
+      >
+        <span className={collapsed ? "min-w-0 flex-1 truncate" : "sr-only"}>{title}</span>
+        <span aria-hidden="true" className="shrink-0 text-lg">{collapsed ? "+" : "−"}</span>
+      </button>
+      <div id={`ppm-overview-panel-${sectionId}`} className={collapsed ? "hidden md:block" : ""}>
+        {children}
+      </div>
+    </section>
+  );
+}
+
 function StaffBriefingCentre({
   clubId,
   inboxUnread,
@@ -9902,22 +9958,29 @@ export default function OverviewPage() {
 
   return (
     <div className="w-full space-y-6">
-      {/* Compact Staff Briefing Centre design placeholder. */}
+      {/* Mobile Overview sections apply their saved state on first paint. */}
       <div data-tutorial-target="overview-attention">
-        <StaffBriefingCentre
-          clubId={data.club.id?.trim() || null}
-          inboxUnread={data.club.inboxUnread}
-          notificationsUnread={data.club.notificationsUnread}
-          coinBalance={coinBalance}
-          coinBalanceLoading={coinBalanceLoading}
-          refreshing={refreshing}
-        />
+        <MobileOverviewSection
+          sectionId="staff-briefing"
+          title={t("staffBriefing.title")}
+          defaultCollapsed
+        >
+          <StaffBriefingCentre
+            clubId={data.club.id?.trim() || null}
+            inboxUnread={data.club.inboxUnread}
+            notificationsUnread={data.club.notificationsUnread}
+            coinBalance={coinBalance}
+            coinBalanceLoading={coinBalanceLoading}
+            refreshing={refreshing}
+          />
+        </MobileOverviewSection>
       </div>
 
       <div className="space-y-6">
         <div className="grid grid-cols-12 gap-6">
           <div className="col-span-12 space-y-6 xl:col-span-8">
             <div data-tutorial-target="overview-manager-focus">
+              <MobileOverviewSection sectionId="manager-focus" title={t("managerFocus.title")}>
               <ManagerFocusCard
                 upcomingRaceCount={raceWorld.upcomingSchedule.length}
                 todayRaceCount={raceWorld.todayRaces.length}
@@ -9927,22 +9990,30 @@ export default function OverviewPage() {
                 copilotLoading={copilotContextLoading}
                 onCopilotItemOpened={handleCopilotItemOpened}
               />
+              </MobileOverviewSection>
             </div>
 
+            <MobileOverviewSection sectionId="squad-pulse" title={t("squad.title")}>
             <SquadPulseOverviewCard
               pulse={visibleSquadPulse}
               isPremium={isPremium}
               premiumStatusLoading={premiumStatusLoading}
               onUnlock={openPremiumPage}
             />
+            </MobileOverviewSection>
 
+            <MobileOverviewSection sectionId="upcoming-races" title={t("races.upcomingTitle")}>
             <UpcomingRaceScheduleCard schedule={raceWorld.upcomingSchedule} />
+            </MobileOverviewSection>
 
+            <MobileOverviewSection sectionId="today-races" title={t("races.todayTitle")}>
             <TodayRaceCard
               dateLabel={data.club.dateLabel}
               races={raceWorld.todayRaces}
             />
+            </MobileOverviewSection>
 
+            <MobileOverviewSection sectionId="world-news" title={t("news.boardTitle")}>
             <NewsCommandCenter
               alerts={attentionItems}
               feed={data.feed}
@@ -9956,30 +10027,38 @@ export default function OverviewPage() {
                 data.news.length === 0
               }
             />
+            </MobileOverviewSection>
 
+            <MobileOverviewSection sectionId="cycling-news" title={t("news.cyclingWorldTitle")}>
             <CyclingWorldNewsCard
               items={externalCyclingNews}
               loading={externalCyclingNewsLoading}
             />
+            </MobileOverviewSection>
           </div>
 
           <div className="col-span-12 space-y-6 xl:col-span-4">
             {/* Main right-side replacement for Activity Feed */}
             <div data-tutorial-target="overview-next-team-race">
+              <MobileOverviewSection sectionId="next-race" title={t("races.nextTitle")}>
               <NextTeamRaceCard
                 race={raceHub.nextTeamRace}
                 loading={raceHubLoading}
               />
+              </MobileOverviewSection>
             </div>
             <div data-tutorial-target="overview-last-team-race">
+              <MobileOverviewSection sectionId="last-race" title={t("races.lastTitle")}>
               <LastTeamRaceCard
                 race={raceHub.lastTeamRace}
                 loading={raceHubLoading}
               />
+              </MobileOverviewSection>
             </div>
 
             <div data-tutorial-target="overview-main-sponsor">
-              <Card className="p-5">
+              <MobileOverviewSection sectionId="main-sponsor" title={t("sponsor.title")}>
+                <Card className="p-5">
                 <SectionTitle
                   title={t("sponsor.title")}
                   subtitle={t("sponsor.subtitle")}
@@ -9987,20 +10066,28 @@ export default function OverviewPage() {
                 <div className="mt-5">
                   <MainSponsorPanel sponsor={data.mainSponsor} />
                 </div>
-              </Card>
+                </Card>
+              </MobileOverviewSection>
             </div>
 
+            <MobileOverviewSection sectionId="finance" title={t("finance.healthTitle")}>
             <FinanceOverviewCard finance={data.finance} />
+            </MobileOverviewSection>
 
+            <MobileOverviewSection sectionId="operations" title={t("operations.title")}>
             <CompactOperationsCard operations={data.operations} />
+            </MobileOverviewSection>
 
+            <MobileOverviewSection sectionId="honours" title={t("honours.title")}>
             <ClubHonoursCard
               items={clubHonours}
               loading={clubHonoursLoading}
             />
+            </MobileOverviewSection>
           </div>
         </div>
 
+        <MobileOverviewSection sectionId="season-snapshot" title={t("seasonSnapshot.title")}>
         {premiumStatusLoading || seasonSnapshotLoadState === "loading" ? (
           <div className="h-32 animate-pulse rounded-2xl border border-slate-200 bg-white shadow-sm" />
         ) : seasonSnapshotLoadState === "unavailable" || !seasonSnapshot ? (
@@ -10055,6 +10142,7 @@ export default function OverviewPage() {
             </button>
           </Card>
         )}
+        </MobileOverviewSection>
       </div>
 
       {!tutorialLoading && tutorialMode === "invite" ? (
