@@ -287,6 +287,7 @@ function scenario(chase:'minimal'|'organized'):UniversalRaceEngineInput {
   }
   const selected=[...best.values()].sort((a,b)=>skill(b)-skill(a)).slice(0,5)
   const leaders=new Set(selected.map(a=>a.i))
+  const leadAttackIndex=selected[0]?.i
   const teamIds=[...new Set(attrs.map(a=>a.team))].sort((a,b)=>a-b)
   const allRiders=attrs.map(a=>{
     const id='R'+String(a.i+1).padStart(3,'0'),teamId='T'+String(a.team+1).padStart(2,'0')
@@ -329,7 +330,7 @@ function scenario(chase:'minimal'|'organized'):UniversalRaceEngineInput {
           stageRole:hasBreak?'breakaway_rider' as const:
             chase==='organized'?'breakaway_chaser' as const:'rouleur' as const,
           commands:hasBreak
-            ? {phase1:'join_breakaway' as const,phase2:'control_tempo' as const,
+            ? {phase1:r.i===leadAttackIndex?'attack' as const:'join_breakaway' as const,phase2:'control_tempo' as const,
                 phase3:'conserve_energy' as const,phase4:'ride_for_stage_result' as const}
             : chase==='organized'
               ? {phase1:'stay_near_front' as const,phase2:'chase_breakaway' as const,
