@@ -69,6 +69,7 @@ jobs:
           src/universal-race-engine/mountainEngineLaneV1.test.ts
           src/universal-race-engine/runSelectedRaceEngineV1.test.ts
           src/universal-race-engine/mountainOpeningBreakawayV1.test.ts
+          src/universal-race-engine/mountainProfileAuditV2.test.ts
           --reporter=dot
 
       - name: Production build
