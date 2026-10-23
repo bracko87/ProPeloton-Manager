@@ -9,6 +9,7 @@
  * verified by the same server-side RPC as official race workers.
  */
 import { createClient } from "npm:@supabase/supabase-js@2.57.4";
+import { DURMITOR_STAGE_ID, DURMITOR_DECLARED_GAIN_M, DURMITOR_ROUTE, DURMITOR_RIDERS } from "./durmitorFixture.ts";
 import { runMountainV2SyntheticStage } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/cdc27d8b89004eeddef369a0ef083cd96a427694/src/universal-race-engine/mountainV2SyntheticStage.ts";
 import { auditMountainProfileV2 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/cdc27d8b89004eeddef369a0ef083cd96a427694/src/universal-race-engine/mountainProfileAuditV2.ts";
 import { selectMountainV2Stage } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/cdc27d8b89004eeddef369a0ef083cd96a427694/src/universal-race-engine/mountainV2StageRegistry.ts";
@@ -57,6 +58,59 @@ function summary(scenario:string,result:any,riders:any[],audit:any){
 Deno.serve(async req=>{
  try{
    if(req.method==="GET"){
+     if(new URL(req.url).searchParams.get("fixture")==="durmitor"){
+       // Production-RUNTIME stage evaluation with a frozen, ANONYMOUS real-world
+       // roster snapshot, not a live DB lookup or official stage operation.
+       const selection=selectMountainV2Stage({
+         stageId:DURMITOR_STAGE_ID,stageFormat:"road_race",terrainType:"mountain"});
+       if(selection.mode!=="sandbox_shadow_only")return respond({error:"fixture_not_allowlisted"},503);
+       const profile=DURMITOR_ROUTE.map(([km,elevationM])=>({km,elevationM}));
+       const audit=auditMountainProfileV2(DURMITOR_DECLARED_GAIN_M,profile);
+       if(audit.profileNeedsReview)return respond({error:"fixture_geometry_review_required"},503);
+       const segments=DURMITOR_ROUTE.slice(1).map(([km,elevation],i)=>{
+         const prev=DURMITOR_ROUTE[i],lengthKm=km-prev[0];
+         const gradientPercent=(elevation-prev[1])/(10*lengthKm);
+         return {lengthKm,gradientPercent,
+           terrain:gradientPercent>1?"climb":gradientPercent< -1?"descent":"flat"};
+       });
+       const evalScenario=(scenario:"steady"|"team_attacks")=>{
+         const riders=DURMITOR_RIDERS.map(([team,climbing,endurance,fatigue],i)=>({
+           riderId:"R"+String(i+1).padStart(3,"0"),
+           teamId:"T"+String(team+1).padStart(2,"0"),
+           climbing,endurance,descending:65,
+           energy:Math.max(0,Math.min(100,85-fatigue*0.2)),
+           effort:"steady",gapSeconds:0,
+         }));
+         if(scenario==="team_attacks"){
+           const best=new Map<string,number>(),worst=new Map<string,number>();
+           riders.forEach((r,i)=>{
+             const b=best.get(r.teamId),w=worst.get(r.teamId);
+             if(b===undefined||r.climbing>riders[b].climbing)best.set(r.teamId,i);
+             if(w===undefined||r.climbing<riders[w].climbing)worst.set(r.teamId,i);
+           });
+           riders.forEach((r,i)=>{
+             if(best.get(r.teamId)===i)r.effort="attack";
+             else if(worst.get(r.teamId)===i)r.effort="support";
+           });
+         }
+         const result=runMountainV2SyntheticStage(riders as any,segments as any);
+         const full=summary(scenario,result,riders,audit);
+         return {scenario,group_count:full.group_count,
+           largest_group:Math.max(...full.group_sizes),
+           zero_energy_count:full.zero_energy_count,
+           first_ten:full.standings.slice(0,10),
+           tenth_gap_seconds:full.tenth_gap_seconds,
+           last_gap_seconds:full.last_gap_seconds,
+           segment_count:full.checkpoint_count};
+       };
+       return respond({status:"ok",contract:CONTRACT,authority:"synthetic_only",
+         source_commit:SOURCE_COMMIT,fixture:"durmitor_registered_riders_frozen_2026_10_23",
+         stage_id:DURMITOR_STAGE_ID,
+         roster_size:DURMITOR_RIDERS.length,
+         declared_ascent_m:audit.declaredGainM,sampled_ascent_m:audit.sampledGainM,
+         simulations:[evalScenario("steady"),evalScenario("team_attacks")],
+         live_database_read:false,live_database_write:false,official_engine_unchanged:true});
+     }
      // Unprivileged readiness probe runs real V2 on a three-rider synthetic course.
      // No database access, user data, secrets or official-race mutation.
      const segments=[{lengthKm:4,gradientPercent:5,terrain:"climb"},{lengthKm:3,gradientPercent:-4,terrain:"descent"}];
