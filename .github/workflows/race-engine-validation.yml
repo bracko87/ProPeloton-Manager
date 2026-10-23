@@ -8,8 +8,10 @@ on:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - 'supabase/functions/universal-race-stage-*/index.ts'
+      - 'supabase/functions/mountain-v2-shadow-canary/**'
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-mountain-pilot-worker-routing.mjs'
+      - 'scripts/verify-mountain-v2-baseline.mjs'
       - '.github/workflows/race-engine-validation.yml'
   push:
     branches:
@@ -18,8 +20,10 @@ on:
       - 'src/universal-race-engine/**'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - 'supabase/functions/universal-race-stage-*/index.ts'
+      - 'supabase/functions/mountain-v2-shadow-canary/**'
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-mountain-pilot-worker-routing.mjs'
+      - 'scripts/verify-mountain-v2-baseline.mjs'
       - '.github/workflows/race-engine-validation.yml'
 
 permissions:
@@ -44,6 +48,9 @@ jobs:
       - name: Install application dependencies
         run: npm ci
 
+      - name: Protect unchanged universal race engine during mountain V2 development
+        run: node scripts/verify-mountain-v2-baseline.mjs
+
       - name: Verify production race worker summit source pins
         run: node scripts/verify-summit-worker-pins.mjs
 
@@ -56,11 +63,19 @@ jobs:
             npx esbuild "supabase/functions/${function_name}/index.ts" --bundle --platform=neutral --format=esm --external:'https://*' --external:'npm:*' --external:'jsr:*' --outfile="/tmp/${function_name}.mjs"
           done
 
+      - name: Compile and audit isolated V2 canary endpoint
+        run: |
+          npx esbuild supabase/functions/mountain-v2-shadow-canary/index.ts --bundle --platform=neutral --format=esm --external:'https://*' --external:'npm:*' --external:'jsr:*' --outfile=/tmp/mountainV2ShadowCanary.mjs
+          node scripts/verify-mountain-v2-shadow-canary.mjs
+
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
 
       - name: Compile isolated mountain experimental solver
         run: npx esbuild src/universal-race-engine/runMountainExperimentalEngineV1.ts --bundle --platform=node --format=esm --outfile=/tmp/runMountainExperimentalEngineV1.mjs
+
+      - name: Compile synthetic experimental mountain contact model
+        run: npx esbuild src/universal-race-engine/mountainContactPhysicsV2.ts --bundle --platform=node --format=esm --outfile=/tmp/mountainContactPhysicsV2.mjs
 
       - name: Verify stage-scoped baseline and mountain engine isolation
         run: >-
@@ -69,6 +84,18 @@ jobs:
           src/universal-race-engine/mountainEngineLaneV1.test.ts
           src/universal-race-engine/runSelectedRaceEngineV1.test.ts
           src/universal-race-engine/mountainOpeningBreakawayV1.test.ts
+          src/universal-race-engine/mountainProfileAuditV2.test.ts
+          src/universal-race-engine/mountainContactPhysicsV2.test.ts
+          src/universal-race-engine/mountainV2TimeReconciliation.test.ts
+          src/universal-race-engine/mountainV2SyntheticStageClock.test.ts
+          src/universal-race-engine/mountainV2SyntheticFinishReplay.test.ts
+          src/universal-race-engine/mountainV2SyntheticStage.test.ts
+          src/universal-race-engine/mountainV2AuthorityReadiness.test.ts
+          src/universal-race-engine/mountainV2SportingPreview.test.ts
+          src/universal-race-engine/mountainV2OfficialEventComparison.test.ts
+          src/universal-race-engine/mountainV2DurmitorSandbox.test.ts
+          src/universal-race-engine/mountainV2StageRegistry.test.ts
+          src/universal-race-engine/mountainV2CurrentRosterSandbox.test.ts
           --reporter=dot
 
       - name: Production build

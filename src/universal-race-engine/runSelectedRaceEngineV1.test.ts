@@ -6,7 +6,8 @@ import {
   type UniversalRaceEngineInput,
 } from './runRaceEngine.ts'
 import { runRaceEngine as runExperimentalMountainCoreV1 } from './runMountainExperimentalEngineV1.ts'
-import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1 } from './runSelectedRaceEngineV1.ts'
+import { compareMountainV2WithOfficialEvents } from './mountainV2OfficialEventComparison.ts'
+import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1, runSelectedRaceEngineWithMountainV2Shadow } from './runSelectedRaceEngineV1.ts'
 
 /**
  * All data below are synthetic test fixtures, copied from the original
@@ -296,6 +297,37 @@ function syntheticMountainPilotInput(): UniversalRaceEngineInput {
 }
 
 describe('isolated experimental mountain executable', () => {
+
+  it('prepares a V2 stage-selective fail-safe shadow without changing an official finish',()=>{
+    const source = syntheticMountainPilotInput()
+    const stageId = 'be7ce2aa-ec52-4b6b-a6c6-48bfab89ab9b'
+    const input = {
+      ...source,
+      stage:{...source.stage,stageId},
+      points:source.points.map(point=>({...point,stageId})),
+    }
+    const expected = runBaselineRaceEngine(input)
+    const serializedInput = JSON.stringify(input)
+    const result = runSelectedRaceEngineWithMountainV2Shadow(input)
+    expect(result.official).toEqual(expected)
+    expect(result.official.finishResolution.classification).toEqual(
+      expected.finishResolution.classification)
+    expect(result.official.replayTimeline).toEqual(expected.replayTimeline)
+    expect(result.v2ShadowFailed).toBe(false)
+    expect(result.v2?.selection.mode).toBe('sandbox_shadow_only')
+    expect(result.v2?.preview?.status).toBe('evaluated_non_authoritative')
+    expect(result.v2?.preview?.syntheticTiming?.finish).toHaveLength(input.riders.length)
+    expect(JSON.stringify(input)).toBe(serializedInput)
+  })
+
+  it('never executes a V2 preview for unlisted official stages',()=>{
+    const input=createValidInput()
+    const expected=runBaselineRaceEngine(input)
+    const result=runSelectedRaceEngineWithMountainV2Shadow(input)
+    expect(result.official).toEqual(expected)
+    expect(result.v2).toBeNull()
+    expect(result.v2ShadowFailed).toBe(false)
+  })
   it('runs the original solver unchanged for nonpilot races', () => {
     const normal = createValidInput()
     expect(runSelectedRaceEngineV1(normal)).toEqual(runBaselineRaceEngine(normal))
@@ -328,6 +360,124 @@ describe('isolated experimental mountain executable', () => {
     expect(selected).toEqual(direct)
     expect(selected.finishResolution.complete).toBe(true)
     expect(selected.finishResolution.classification).toHaveLength(mountain.riders.length)
+  })
+
+  it('integrates mountain V2 as non-authoritative Phase 4 group checkpoints on verified geometry', () => {
+    const seed = syntheticMountainPilotInput()
+    const mountain = {
+      ...seed,
+      stage: {
+        ...seed.stage,
+        distanceKm: 128.4,
+        elevationGainM: 3700,
+        profilePoints: [
+          { km: 0, elevationM: 200 },
+          { km: 20, elevationM: 1400 },
+          { km: 40, elevationM: 200 },
+          { km: 60, elevationM: 1600 },
+          { km: 80, elevationM: 300 },
+          { km: 100, elevationM: 1400 },
+          { km: 128.4, elevationM: 300 },
+        ],
+      },
+    }
+    const baseline = runBaselineRaceEngine(mountain)
+    const experimental = runExperimentalMountainCoreV1(mountain)
+    const shadow = experimental.roadRaceResolution.phase4Finish?.mountainV2Shadow
+    expect(shadow?.authority).toBe('non_authoritative')
+    expect(shadow?.status).toBe('evaluated_non_authoritative')
+    expect(shadow?.segmentCount).toBe(6)
+    expect(shadow?.checkpoints).toHaveLength(6)
+    expect(shadow?.profileAudit.sampledGainM).toBe(3700)
+    expect(shadow?.starterCount).toBe(mountain.riders.length)
+    // Shadow elapsed time, finish ranks and replay must all reconcile;
+    // official classifications and existing replay remain unchanged below.
+    expect(shadow?.syntheticTiming?.finish).toHaveLength(mountain.riders.length)
+    expect(shadow?.syntheticTiming?.replay).toHaveLength(6)
+    expect(shadow?.sportingEventsStatus).toBe('unreconciled')
+    // The real engine's Phase 10 statuses and bonus/event ledgers are read
+    // only after finishing. The preview must not mutate authoritative output.
+    const officialBefore = JSON.stringify({
+      finish: experimental.finishResolution,
+      replay: experimental.replayTimeline,
+      incidents: experimental.phase10Incidents,
+      points: experimental.intermediatePointFinalization,
+    })
+    const eventAudit = compareMountainV2WithOfficialEvents(mountain, experimental, shadow!)
+    expect(eventAudit.authority).toBe('non_authoritative')
+    expect(eventAudit.readyForAuthority).toBe(false)
+    expect(eventAudit.blockers).toContain('authoritative_finish_gc_points_prizes_replay_not_integrated')
+    expect(eventAudit.syntheticSportingPreview?.classified).toHaveLength(mountain.riders.length)
+    expect(eventAudit.officialStatusByRiderId).toEqual(
+      Object.fromEntries(experimental.finishResolution.classification.map(row =>
+        [row.riderId, row.status])),
+    )
+    expect(eventAudit.bonuses.every(row => row.bonusSeconds > 0)).toBe(true)
+    expect(JSON.stringify({
+      finish: experimental.finishResolution,
+      replay: experimental.replayTimeline,
+      incidents: experimental.phase10Incidents,
+      points: experimental.intermediatePointFinalization,
+    })).toBe(officialBefore)
+    const syntheticLast = shadow!.syntheticTiming!.replay.at(-1)!
+    for (const finisher of shadow!.syntheticTiming!.finish) {
+      expect(finisher.elapsedSeconds)
+        .toBe(syntheticLast.riderElapsedSeconds[finisher.riderId])
+      expect(finisher.gapSeconds).toBeCloseTo(
+        finisher.elapsedSeconds - shadow!.syntheticTiming!.finish[0].elapsedSeconds, 5)
+    }
+    const finalCheckpoint = shadow!.checkpoints.at(-1)!
+    expect(finalCheckpoint.km).toBe(128.4)
+    expect(
+      new Set(finalCheckpoint.groups.flatMap((group) => group.riderIds)).size,
+    ).toBe(mountain.riders.length)
+    for (const checkpoint of shadow!.checkpoints) {
+      expect(checkpoint.groups.flatMap((group) => group.riderIds))
+        .toHaveLength(mountain.riders.length)
+      expect(checkpoint.groups.every((group) => group.leaderGapSeconds >= 0))
+        .toBe(true)
+    }
+    // Shadow calculations cannot change any of the existing authoritative
+    // classification, prizes, grouping or race finish contracts.
+    expect(experimental.finishResolution).toEqual(baseline.finishResolution)
+    expect(experimental.groupAndTimeResolution).toEqual(baseline.groupAndTimeResolution)
+    expect(experimental.calibrationSummary).toEqual(baseline.calibrationSummary)
+    const replay = experimental.replayTimeline
+    expect(replay).toBeDefined()
+  })
+
+  it('flags under-sampled geometry without changing official finishing results', () => {
+    const fixture = syntheticMountainPilotInput()
+    // The stage declares substantially more climbing than its sparse
+    // elevation samples can explain. It must not invent route segments.
+    const mountain = {
+      ...fixture,
+      stage: { ...fixture.stage, elevationGainM: 8000 },
+    }
+    const baseline = runBaselineRaceEngine(mountain)
+    const experimental = runExperimentalMountainCoreV1(mountain)
+    const shadow = experimental.roadRaceResolution.phase4Finish?.mountainV2Shadow
+    expect(shadow?.status).toBe('geometry_review_required')
+    expect(shadow?.checkpoints).toHaveLength(0)
+    expect(shadow?.syntheticTiming).toBeUndefined()
+    expect(shadow?.sportingEventsStatus).toBe('unreconciled')
+    expect(shadow?.warningCodes)
+      .toContain('coarse_samples_capture_less_than_half_declared_ascent')
+    expect(experimental.finishResolution).toEqual(baseline.finishResolution)
+  })
+
+  it('never attaches mountain V2 simulation data to a nonpilot mountain stage', () => {
+    const seed = syntheticMountainPilotInput()
+    const stageId = 'unapproved-mountain-stage'
+    const nonpilot = {
+      ...seed, stage: { ...seed.stage, stageId },
+      points: seed.points.map((point) => ({ ...point, stageId })),
+    }
+    const baseline = runBaselineRaceEngine(nonpilot)
+    const experimental = runExperimentalMountainCoreV1(nonpilot)
+    expect(experimental.roadRaceResolution.phase4Finish?.mountainV2Shadow)
+      .toBeUndefined()
+    expect(experimental.finishResolution).toEqual(baseline.finishResolution)
   })
 
   it('preserves official sporting results when changing mountain replay grouping only', () => {
