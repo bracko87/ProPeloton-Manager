@@ -562,12 +562,15 @@ export default function Header({
         originalClubName,
   )
 
-  const displayCountry =
-    liveClubCountryName ||
-    clubCountryName ||
-    t('header.clubCountry')
   const effectiveCountryCode =
     liveClubCountryCode || clubCountryCode
+  const countryPlaceholder = t('header.clubCountry')
+  const displayCountry =
+    [liveClubCountryName, clubCountryName].find(
+      value => Boolean(value?.trim()) && value !== countryPlaceholder,
+    ) ||
+    effectiveCountryCode?.toUpperCase() ||
+    countryPlaceholder
   const effectiveLogoUrl = resolveClubLogoUrl(
     liveLogoPath ?? clubLogoUrl ?? null,
     logoCacheKey,
