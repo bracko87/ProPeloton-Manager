@@ -769,7 +769,7 @@ export default function HomePage(): JSX.Element {
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png"
               alt="ProPeloton Manager"
-              className="h-12 w-auto shrink-0 object-contain sm:h-20 lg:h-24"
+              className="h-16 w-auto shrink-0 object-contain sm:h-20 lg:h-24"
             />
             <div className="min-w-0 break-words text-base font-semibold sm:text-xl">ProPeloton Manager</div>
           </div>
@@ -1194,7 +1194,7 @@ export default function HomePage(): JSX.Element {
             </div>
           </div>
 
-          <div className="grid min-w-0 grid-cols-2 items-start" data-mobile-footer-links>
+          <div className="grid min-w-0 grid-cols-2 items-stretch" data-mobile-footer-links>
           <nav aria-label={t('footer.gameAria')} className="min-w-0 pr-3 sm:pr-6">
             <div className="break-words text-sm font-semibold text-white">{t('footer.game')}</div>
             <div className="mt-3 flex flex-col">
