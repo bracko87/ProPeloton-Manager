@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 const file = slug => readFileSync(`supabase/functions/${slug}/index.ts`,'utf8')
-const sha='2d2c4290ecea56e5a66d89705c4e1655383da1b3'
+const sha='10dc6e7b7470f2c859a7019515a46708a5792024'
 const [runner,pass1,pass2,safe]=['universal-race-stage-runner','universal-race-stage-pass1-resume','universal-race-stage-pass2-resume','universal-race-stage-safe-resume'].map(file)
 for(const code of [runner,pass1,pass2,safe])assert.ok(code.includes(`const SOURCE_COMMIT = "${sha}"`))
 for(const code of [runner,pass2]) {
@@ -64,4 +64,11 @@ const officialPilot=readFileSync('src/universal-race-engine/breakawayOfficialPil
 assert.match(officialPilot,/5523cf76-8fd4-4a12-ab28-7f285c9829ff/)
 assert.doesNotMatch(officialPilot,/335708f7-d56a-4816-9068-38399e8f74e3|f5af8665-91c1-4585-937e-11fb94f65819/)
 assert.match(safe,/Saved experimental engine lane no longer matches its stage/)
+assert.match(safe,/Mandatory Breakaway V1 pilot cannot resume on baseline/)
+assert.match(safe,/Breakaway V1 checkpoint source commit does not match deployed release/)
+assert.match(safe,/selectedEngineLaneV1:engineLaneV1/)
+assert.match(runner,/Mandatory Breakaway V1 pilot cannot publish baseline fallback/)
+assert.match(pass2,/Mandatory Breakaway V1 pilot cannot publish baseline fallback/)
+assert.match(runner,/selectedEngineLaneV1: !useFallback/)
+assert.match(pass2,/selectedEngineLaneV1: !useFallback/)
 console.log('PASS experimental breakaway pilot has isolated stage source and safe resume lane')
