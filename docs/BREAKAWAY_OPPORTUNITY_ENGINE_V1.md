@@ -80,3 +80,24 @@ Latest complete-solver results:
 **Blocking result:** The technical regression contract passes, but the specialist has not demonstrated its core requirement: plausible long-range survival, individual gaps and an occasional justified breakaway victory under genuinely permissive tactics. It must not be promoted merely because the stage ID is allowlisted. The experimental fork uses a complete sporting contract; however, the four live Supabase race workers are still pinned to accepted historical source commit `878aa8ae0db95d97fa5385513d2c1394e3a791a2` and do not use this new fork.
 
 **Required next work before approval:** calibrate the specialist's actual full-stage chase and escape-pace interaction across Phase 1 through Phase 4, test *multiple deterministic seeds and different team orders*, confirm synchronized complete replay and valid winner/points/GC/payout contracts, and independently validate a coordinated worker-pin release with a clear fallback. Do not change official stage results or trigger a real race for calibration.
+
+## 2026-10-23 Phase-1/Phase-2 physical recalibration — halfway gate passed; release closed
+
+GitHub Actions [run 40019029799](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40019029799) passed the complete race-engine workflow after scoped experimental-only changes at commit `caf34a308b47978b5a4983827b47ac3f7b51e206`. The production build, replay synchronization, full Bačka roster simulation and **557/557 accepted-engine legacy tests** passed.
+
+Measured 96-rider Bačka simulation checkpoints, synthetic team orders/readiness:
+
+| Deterministic scenario | Successful opening escapees | Physical gap at 25% | Physical gap at 50% | Breakaway winner |
+| --- | ---: | ---: | ---: | --- |
+| Minimal pursuit / original seed | 3 | 0 seconds | 0 seconds | No |
+| Minimal pursuit / seed A | 4 | 100.932151 seconds | **18.505104 seconds** | No |
+| Minimal pursuit / seed B | 0 | 0 seconds | 0 seconds | No |
+| Organized pursuit / original seed | 0 | 0 seconds | 0 seconds | No |
+| Organized pursuit / seed A | 0 | 0 seconds | 0 seconds | No |
+| Organized pursuit / seed B | 5 | 60.942402 seconds | 0 seconds | No |
+
+The specialist now demonstrably supports at least one physically computed, cooperative escape still ahead at the halfway checkpoint, while the coordinated chase can catch a different escape. The threshold-based regression gate remains enabled.
+
+Diagnosis: the specialist's pace model double-counted lost pull efficiency as energy fell, and a single control team with only 3–5 workers was allowed nearly full road tempo against an escape. The experimental-only changes compensate partially for ongoing group rotation in the absence of pursuit and moderate Phase-2 peloton speed when there is at most one weak control team and no chase orders. They never set a winner, invent a gap, bypass replay synchronization, or change accepted universal engine code.
+
+**Remaining blockers:** Neither tested cooperative escape won the stage. Diagnose Phase-3/Phase-4 attack orders, energy/cooperation and actual group speed, then expand independent seeds, team orders and different terrain/stage scenarios. Require physically justified occasional late survival and complete winner/replay/GC/points/financial contracts before requesting an authoritative worker-pin pilot. All four production race workers remain unchanged; no live race write was performed.
