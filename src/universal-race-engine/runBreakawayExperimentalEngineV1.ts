@@ -18056,9 +18056,9 @@ export function resolveRoadPhase4Finish(
       escapeStillActive &&
       selectBreakawayOpportunityStageV1(input.stage) !== null &&
       phase4ActualPursuitWorkers < 8
-        ? 0.77 + 0.23 * clamp(phase4ActualPursuitWorkers / 8, 0, 1)
+        ? 0.86 + 0.14 * clamp(phase4ActualPursuitWorkers / 8, 0, 1)
         : 1
-    const effectivePelotonPaceKmh = calculateRoadPhysicalGroupPaceKmh(
+    const uncommittedPelotonPaceKmh = calculateRoadPhysicalGroupPaceKmh(
       input.stage,
       phase4StepMidKm,
       physicalPelotonRiderIds,
@@ -18072,7 +18072,6 @@ export function resolveRoadPhase4Finish(
       // returns without inventing any target gap or scripted catch.
       response.selectedResponseMultiplier *
         explicitChaseCoalitionMultiplier *
-        phase4SpecialistRollingFactor *
         freshFrontResponseOrganizationMultiplier,
       response.pelotonWorkIntensityFraction,
       phase4WindSpeedMultiplier,
@@ -18083,6 +18082,15 @@ export function resolveRoadPhase4Finish(
         stepEndKm,
         0.25,
       ),
+    )
+    // The general physical-group solver clamps its cooperation multiplier
+    // to 0.9, so applying a rolling-tempo factor inside it cannot model an
+    // uninterested bunch. Apply only this specialist, worker-based tempo
+    // factor to the resulting physical speed. Explicit coalitions can still
+    // restore full speed, and no outcome or time gap is prescribed.
+    const effectivePelotonPaceKmh = deterministicRound(
+      clamp(uncommittedPelotonPaceKmh * phase4SpecialistRollingFactor, 18, 58),
+      6,
     )
     const stepEscapePaceKmh = calculateRoadPhysicalGroupPaceKmh(
       input.stage,
