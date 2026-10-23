@@ -92,6 +92,19 @@ describe('Mountain V2 explicit stage registry and execution isolation',()=>{
     expect(selectMountainEngineLaneV1(fixture(URUBICI).stage)).toBe('baseline_universal')
     expect(selectMountainEngineLaneV1(fixture(OROPA).stage)).toBe('experimental_mountain_v1')
   })
+  it('does not crash the selected diagnostic path when the shadow solver fails',()=>{
+    const valid=fixture(DURMITOR)
+    const invalid={
+      ...valid,
+      riders:valid.riders.map((r,i)=>i===0
+        ?{...r,startStamina:Number.NaN}:r),
+    }
+    const result=evaluateSelectedMountainV2Stage(invalid)
+    expect(result.selection.mode).toBe('sandbox_shadow_only')
+    expect(result.preview?.status).toBe('simulation_error')
+    expect(result.preview?.warningCodes).toContain('v2_shadow_simulation_failed')
+    expect(result.preview?.syntheticTiming).toBeUndefined()
+  })
   it('never upgrades any listed or unlisted stage to authoritative output',()=>{
     for(const id of [DURMITOR,URUBICI,OROPA,'random']){
       expect(canMountainV2WriteOfficialResults(fixture(id).stage)).toBe(false)
