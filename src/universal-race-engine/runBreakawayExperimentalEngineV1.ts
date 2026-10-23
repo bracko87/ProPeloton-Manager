@@ -11901,6 +11901,21 @@ export function resolveRoadPhase2Development(
       0,
       currentGapSeconds + pelotonStepSeconds - escapeStepSeconds,
     )
+    // Read-only synthetic test diagnostics: observe the phase-2 transition
+    // before the gap closure limiter; never change replay or race state.
+    if (input.engine.deterministicSeed.startsWith('breakaway-BACKA-registered-roster-') &&
+        breakawayActive && stepMidKm >= 35 && stepMidKm <= 72 &&
+        Math.floor(stepEndKm / 6) !== Math.floor(currentKm / 6)) {
+      console.log('BREAKAWAY_PHASE2_SPEED_DIAGNOSTIC='+JSON.stringify({
+        seed: input.engine.deterministicSeed, km: stepMidKm,
+        chasingTeams: chasingTeamIds.length, controllingTeams: controllingTeamIds.length,
+        chaseWorkers: phase2FiniteChaseAssets,
+        cooperationPaceRatio, cooperation: phase2DynamicCooperationMultiplier,
+        pelotonKmh: effectivePelotonPaceKmh, escapeKmh: variedEscapePaceKmh,
+        gapBefore: currentGapSeconds, gapAfterPhysics: calculatedNextGapSeconds,
+        responseMode: pelotonComponents.responseMode, postAttackPenaltyFraction,
+      }))
+    }
     currentGapSeconds = limitRoadChaseGapClosure(
       currentGapSeconds,
       calculatedNextGapSeconds,
