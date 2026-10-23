@@ -879,7 +879,7 @@ export default function YouthAcademyPage(): JSX.Element {
     const left = selected.getBoundingClientRect().left - strip.getBoundingClientRect().left
       + strip.scrollLeft - (strip.clientWidth - selected.clientWidth) / 2
     strip.scrollTo({ left: Math.max(0, left), behavior: 'auto' })
-  }, [tab])
+  }, [tab, data?.activated])
   const [activationBudget, setActivationBudget] = useState(100000)
   const [draftRange, setDraftRange] =
     useState<'local' | 'regional' | 'continental' | 'world'>('local')
@@ -2297,8 +2297,8 @@ export default function YouthAcademyPage(): JSX.Element {
         </div>
       ) : null}
 
-      <div ref={youthTabScrollRef} className="mb-1 max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-gray-100 bg-white shadow-sm" aria-label={t('title')}>
-        <div role="tablist" className="flex w-max min-w-full flex-nowrap gap-0.5 p-1">
+      <div ref={youthTabScrollRef} className="mb-1 max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-gray-100 bg-white shadow-sm md:overflow-visible" aria-label={t('title')}>
+        <div role="tablist" className="flex w-max min-w-full flex-nowrap gap-0.5 p-1 md:w-auto md:flex-wrap">
         {tabKeys.map(key => (
           <button
             key={key}
@@ -2306,7 +2306,7 @@ export default function YouthAcademyPage(): JSX.Element {
             onClick={() => setTab(key)}
             role="tab"
             aria-selected={tab === key}
-            className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-md px-4 py-2 text-sm font-medium transition ${
+            className={`min-h-[44px] shrink-0 whitespace-nowrap rounded-md px-4 py-2 md:min-h-0 md:whitespace-normal text-sm font-medium transition ${
               tab === key
                 ? 'bg-yellow-400 text-black'
                 : 'text-gray-600 hover:bg-gray-100'

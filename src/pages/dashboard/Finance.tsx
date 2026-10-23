@@ -288,7 +288,7 @@ function TabButton({
       onClick={onClick}
       role="tab"
       aria-selected={active}
-      className={`min-h-[44px] shrink-0 whitespace-nowrap px-4 py-2 rounded-md text-sm font-medium transition ${
+      className={`min-h-[44px] shrink-0 whitespace-nowrap px-4 py-2 rounded-md md:min-h-0 md:whitespace-normal text-sm font-medium transition ${
         active ? 'bg-yellow-400 text-black' : 'text-gray-600 hover:bg-gray-100'
       }`}
     >
@@ -637,8 +637,8 @@ export default function FinancePage(): JSX.Element {
         </div>
       </div>
 
-      <div ref={financeTabScrollRef} className="mb-5 max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-gray-100 bg-white shadow-sm" aria-label={t('page.title')}>
-        <div role="tablist" className="flex w-max min-w-full flex-nowrap gap-0.5 p-1">
+      <div ref={financeTabScrollRef} className="mb-5 max-w-full overflow-x-auto overscroll-x-contain rounded-lg border border-gray-100 bg-white shadow-sm md:overflow-visible" aria-label={t('page.title')}>
+        <div role="tablist" className="flex w-max min-w-full flex-nowrap gap-0.5 p-1 md:w-auto md:flex-wrap">
         <TabButton active={tab === 'overview'} onClick={() => setTab('overview')}>
           {t('tabs.overview')}
         </TabButton>
