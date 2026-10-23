@@ -13,6 +13,13 @@
     overflow-x: hidden;
   }
 
+  /* SEO navigation is injected before the auth nav and is intentionally hidden.
+     Never let mobile action-grid rules override its display:none: doing so
+     creates a tall invisible gap between branding and Sign In. */
+  #public-homepage > header nav[data-seo-primary-nav='true'] {
+    display: none !important;
+  }
+
   /* Public header: move from one crowded desktop row to a clean stacked
      mobile layout so branding, Sign In, Start Playing and language controls
      never overlap. */
@@ -45,7 +52,7 @@
     text-overflow: ellipsis;
   }
 
-  #public-homepage > header nav {
+  #public-homepage > header > div > nav:not([data-seo-primary-nav='true']) {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: stretch !important;
@@ -55,8 +62,8 @@
     min-width: 0;
   }
 
-  #public-homepage > header nav > a,
-  #public-homepage > header nav > button {
+  #public-homepage > header > div > nav:not([data-seo-primary-nav='true']) > a,
+  #public-homepage > header > div > nav:not([data-seo-primary-nav='true']) > button {
     display: inline-flex;
     width: 100%;
     min-width: 0;
@@ -68,14 +75,14 @@
     text-align: center;
   }
 
-  #public-homepage > header nav > a {
+  #public-homepage > header > div > nav:not([data-seo-primary-nav='true']) > a {
     border: 1px solid rgb(255 255 255 / 0.2);
     background: rgb(255 255 255 / 0.05);
   }
 
   /* LanguageSelectorHost portals this control as the third nav child. Give it
      its own full-width row instead of squeezing it beside both CTA buttons. */
-  #public-homepage > header nav > div {
+  #public-homepage > header > div > nav:not([data-seo-primary-nav='true']) > div {
     grid-column: 1 / -1;
     display: grid !important;
     grid-template-columns: auto minmax(0, 1fr);
@@ -84,7 +91,7 @@
     gap: 0.5rem !important;
   }
 
-  #public-homepage > header nav > div > button {
+  #public-homepage > header > div > nav:not([data-seo-primary-nav='true']) > div > button {
     width: 100%;
     min-width: 0 !important;
     min-height: 44px;
