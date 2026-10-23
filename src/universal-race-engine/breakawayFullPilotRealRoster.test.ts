@@ -320,7 +320,7 @@ function scenario(chase:'minimal'|'organized'):UniversalRaceEngineInput {
     return {
       teamId,
       teamTactic:hasAttacker?'aggressive' as const:
-        chase==='organized'?'control' as const:'balanced' as const,
+        chase==='organized'?'balanced' as const:'balanced' as const,
       status:'locked' as const,locked:true,defaulted:false,
       riders:inTeam.map((r,j)=>{
         const hasBreak=leaders.has(r.i)
@@ -369,6 +369,18 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     expect(getSelectedRaceEngineModuleV1(input.stage).runRaceEngine).toBe(specialistEngine)
     const before=JSON.stringify(input)
     const result=runSelectedRaceEngineV1(input)
+    console.log('BREAKAWAY_FULL_PILOT_DIAGNOSTIC='+JSON.stringify({
+      phase1PlanJoiners:input.stagePlans.flatMap(p=>p.riders)
+        .filter(x=>x.commands.phase1==='join_breakaway').length,
+      roadJoinerCount:result.roadCommandResolution.riders.filter(x=>
+        x.phases[0]?.resolvedCommand==='join_breakaway').length,
+      firstWaveAttacks:result.roadRaceResolution.phase1Opening?.attackAttempts.map(x=>({
+        riderId:x.riderId,command:x.command,attackSucceeded:x.attackSucceeded,
+        acceptedEscapeLaunch:x.acceptedEscapeLaunch,
+        probability:x.attackSuccessProbability,roll:x.deterministicOutcomeRoll,
+      })),
+      phase1Active:result.roadRaceResolution.active,
+    }))
     expect(JSON.stringify(input)).toBe(before)
     expect(result.validationPassed).toBe(true)
     expect(result.finishResolution.complete).toBe(true)
