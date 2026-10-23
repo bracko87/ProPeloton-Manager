@@ -152,7 +152,7 @@ export function compareMountainV2WithOfficialEvents(
   if (shadow.status !== 'evaluated_non_authoritative' || !shadow.syntheticTiming) {
     blockers.add('mountain_shadow_geometry_or_timing_unavailable')
   }
-  if (shadow.stageId !== input.stage.stageId || result.finishResolution.stageClassification.stageFormat !== input.stage.stageFormat) {
+  if (shadow.stageId !== input.stage.stageId || input.stage.stageFormat !== 'road_race') {
     blockers.add('shadow_stage_contract_mismatch')
   }
   const shadowIds = new Set(shadow.syntheticTiming?.finish.map(row => row.riderId) ?? [])
