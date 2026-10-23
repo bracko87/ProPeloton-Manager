@@ -51,3 +51,18 @@ Allow regrouping on descents/flat roads only with physically achievable time gap
 
 ## Rollout rule
 No experimental climbing-physics code moves to production just because these checks were written. Keep this branch as a development contract; add isolated code and run synthetic tests before requesting any release.
+
+## Verified sporting-contract audit — diagnostic-only continuation
+
+The complete experimental engine source was reviewed, not inferred from the small shadow adapter. Its actual output carries `finishResolution.classification` with `finished/dns/dnf/otl`, `phase10Incidents.statusByRiderId` and per-rider `riderConsequences`, `intermediatePointFinalization.pointLedger`, Phase 4 finish rankings with bonus awards, and `replayTimeline.checkpoints[].riderStates`.
+
+`mountainV2OfficialEventComparison.ts` reads these contracts **after** a full synthetic race calculation, keeping the underlying result immutable. It records Phase 10 penalties **per consequence rather than the incident's aggregate time loss**, preserves actual rejoin-km and `sprintZoneProtection.applied`, maintains separate sources for intermediate and finishing bonuses, and distinguishes an earlier intermediate award from the rider's final DNF/OTL eligibility. It rejects inconsistent incident IDs, duplicate ledger entries and mismatched official rider membership. The adapter can produce an illustrative synthetic adjusted-time preview but never labels it as GC or official time.
+
+**Still blocked from authority:**
+- The Mountain V2 contact model does not run physical incident separation, exact autonomous rejoin and support-team chase in its own checkpoint lineage. Mapping the Phase 10 event records is not equivalent to replaying those events physically.
+- A real `otl` classification, `dns` state and crash-induced `dnf` may require event checkpoints and changing active rider sets. The synthetic contact model currently retains each starting rider through the physical finish.
+- Late-crash sprint-zone time protection and the official team rescue correction cannot simply be expressed as additive time penalties.
+- Awards recorded in the intermediate and finish ledgers must not be assumed to change official physical stage finishing order. True GC and payout aggregation are separate contracts; they have not been replaced.
+- A valid event comparison still returns `readyForAuthority:false` and never modifies official finish, points, prize money or replay structures.
+
+The comparison is covered by contract-shaped tests (DNS, DNF, OTL, rejoined incidents, bonus ledgers, incorrect membership) and by the full synthetic pilot-stage test, and its test file is explicitly included in the race-engine validation workflow. Do **not** treat this milestone as release approval. Tests and source-pinned worker verification must be green before advancing to an isolated, event-aware replay adapter.
