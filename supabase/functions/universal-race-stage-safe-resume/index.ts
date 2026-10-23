@@ -1,8 +1,7 @@
 
 /// <reference lib="deno.ns" />
-import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runRaceEngine.ts";
-import { getSelectedRaceEngineModuleV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runSelectedRaceEngineV1.ts";
-import { selectMountainEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/mountainEngineLaneV1.ts";
+import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runRaceEngine.ts";
+import { getSelectedRaceEngineModuleV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
@@ -43,15 +42,15 @@ import {
   isUniversalPhase78IssueNonBlocking,
   buildUniversalRaceCalibrationSummary,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
-const SOURCE_COMMIT = "878aa8ae0db95d97fa5385513d2c1394e3a791a2";
+const SOURCE_COMMIT = "2d2c4290ecea56e5a66d89705c4e1655383da1b3";
 const PREVIOUS_SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
 
 function object(value: unknown): JsonObject {
@@ -578,7 +577,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
   let calculationInput: any;
   let scenarioPreserved = false;
   let selectedCore: typeof acceptedCore = acceptedCore;
-  let engineLaneV1: "baseline_universal" | "experimental_mountain_v1" = "baseline_universal";
+  let engineLaneV1: "baseline_universal" | "experimental_mountain_v1" | "experimental_breakaway_v1" = "baseline_universal";
 
   if(step===0){
     const built=await buildInput(supabase,stageId,runId);
@@ -586,8 +585,8 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     scenarioPreserved=Boolean(built.scenario);
     // Select the lane as soon as we have a stage. Phase 9 uses this same
     // executable; do not reference selectedCore before initializing it.
-    engineLaneV1=selectMountainEngineLaneV1(input.stage);
-    selectedCore=engineLaneV1 === "experimental_mountain_v1"
+    engineLaneV1=selectCompleteRaceEngineLaneV1(input.stage);
+    selectedCore=engineLaneV1 !== "baseline_universal"
       ? getSelectedRaceEngineModuleV1(input.stage) : acceptedCore;
     phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);
     calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);
@@ -601,9 +600,14 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     }
     // Resume only the original lane, never switch an in-flight baseline
     // checkpoint to experimental mountain code after a production release.
-    engineLaneV1=text(checkpoint.selectedEngineLaneV1) === "experimental_mountain_v1"
-      ? "experimental_mountain_v1" : "baseline_universal";
-    selectedCore=engineLaneV1 === "experimental_mountain_v1"
+    const savedLane=text(checkpoint.selectedEngineLaneV1);
+    engineLaneV1=savedLane === "experimental_mountain_v1" ||
+      savedLane === "experimental_breakaway_v1" ? savedLane : "baseline_universal";
+    const eligibleLane=selectCompleteRaceEngineLaneV1(calculationInput.stage);
+    if(engineLaneV1 !== "baseline_universal" && eligibleLane !== engineLaneV1){
+      throw new Error("Saved experimental engine lane no longer matches its stage.");
+    }
+    selectedCore=engineLaneV1 !== "baseline_universal"
       ? getSelectedRaceEngineModuleV1(calculationInput.stage) : acceptedCore;
   }
 
