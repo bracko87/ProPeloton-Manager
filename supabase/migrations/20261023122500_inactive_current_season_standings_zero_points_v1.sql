@@ -100,7 +100,7 @@ AS $function$
     END AS competition_label,
     t.calculated_rank_position AS rank_position
   FROM target t LIMIT 1;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.team_ranking_get_ordered_standings_v1(p_season_year integer DEFAULT NULL::integer, p_club_tier text DEFAULT NULL::text, p_division text DEFAULT NULL::text)
  RETURNS TABLE(ranking_position integer, season_year integer, team_id uuid, team_name text, club_tier text, division text, international_points numeric, completed_race_count integer, race_reputation_value numeric)
@@ -167,4 +167,4 @@ AS $function$
     base.international_points,base.completed_race_count,base.race_reputation_value
   from base order by base.inactive_for_standings asc,base.international_points desc,base.completed_race_count desc,
     base.race_reputation_value desc,lower(base.team_name) asc,base.team_id asc;
-$function$
+$function$;
