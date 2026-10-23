@@ -15,7 +15,6 @@ import {
   type MountainV2Segment,
 } from './mountainContactPhysicsV2.ts'
 import { runMountainV2SyntheticStage } from './mountainV2SyntheticStage.ts'
-import { buildMountainV2SportingPreview, type MountainV2SportingPreview } from './mountainV2SportingPreview.ts'
 
 export type MountainV2ShadowStatus =
   | 'evaluated_non_authoritative'
@@ -46,8 +45,8 @@ export interface MountainV2ShadowAudit {
   readonly checkpoints: readonly MountainV2ShadowCheckpoint[]
   readonly finalRiderGapsSeconds: Readonly<Record<string, number>>
   /** Diagnostic preview only; not official elapsed time, placing or replay. */
-  /** Event-free test fixture only: NOT a projection of real incident/bonus/DNF events. */
-  readonly syntheticSportingNoEvents?: MountainV2SportingPreview
+  /** Real incident, bonus and DNF feeds have not been mapped; fail closed. */
+  readonly sportingEventsStatus: 'unreconciled'
   readonly syntheticTiming?: {
     readonly finish: readonly { readonly riderId: string; readonly rank: number; readonly elapsedSeconds: number; readonly gapSeconds: number }[]
     readonly replay: readonly { readonly km: number; readonly riderElapsedSeconds: Readonly<Record<string, number>>; readonly groupRiderIds: readonly (readonly string[])[] }[]
@@ -139,6 +138,7 @@ export function buildMountainV2ShadowAudit(
     profileAudit,
     warningCodes,
     segmentCount: route.segments.length,
+    sportingEventsStatus: 'unreconciled' as const,
     starterCount: riders.length,
   }
   if (riders.length < 2) {
@@ -173,9 +173,5 @@ export function buildMountainV2ShadowAudit(
       preview.finalRiders.map((rider) => [rider.riderId, rider.gapSeconds]),
     ),
     syntheticTiming: { finish: synthetic.finish, replay: synthetic.replay },
-    // Deliberately named no-events: never represent this as real event reconciliation.
-    syntheticSportingNoEvents: buildMountainV2SportingPreview(synthetic.finish, {
-      nonFinisherIds: [], incidents: [], bonuses: [],
-    }),
   }
 }
