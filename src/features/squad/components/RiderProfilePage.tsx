@@ -5430,7 +5430,7 @@ export default function RiderProfilePage({
 
   const isTransferListed = !!activeTransferListing
   const tabButtonClass = (tab: RiderProfileTab) =>
-    `border-b-2 px-4 py-3 text-sm font-medium transition ${
+    `min-h-[44px] shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition ${
       activeTab === tab
         ? 'border-yellow-500 text-slate-900'
         : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -5511,15 +5511,15 @@ export default function RiderProfilePage({
         </div>
       ) : null}
 
-      <div className="mb-6 rounded-xl border border-yellow-500 bg-yellow-400 p-6 shadow">
-        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div className="min-w-0">
-            <h2 className="truncate text-3xl font-semibold tracking-tight text-slate-950">
+      <div className="mb-6 rounded-xl border border-yellow-500 bg-yellow-400 p-4 shadow sm:p-6">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 gap-y-4 lg:flex lg:items-center lg:justify-between lg:gap-6">
+          <div className="contents lg:block lg:min-w-0">
+            <h2 className="min-w-0 break-words text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl lg:truncate">
               {selectedRider ? `${selectedRider.first_name} ${selectedRider.last_name}` : t('ownedProfile.title')}
             </h2>
 
             {selectedRider ? (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="col-span-2 flex flex-wrap gap-2 lg:mt-4">
                 <span className="inline-flex items-center gap-2 rounded-full border border-yellow-600/25 bg-white/55 px-3 py-1.5 text-sm font-bold text-slate-950">
                   <CountryFlag countryCode={selectedRider.country_code} />
                   <span>{getCountryName(selectedRider.country_code)}</span>
@@ -5543,22 +5543,22 @@ export default function RiderProfilePage({
           </div>
 
           {selectedRider?.id ? (
-            <div className="flex flex-1 flex-wrap items-center justify-center gap-2">
+            <div className="col-start-2 row-start-1 flex max-w-[176px] flex-wrap items-start justify-end gap-2 lg:max-w-none lg:flex-1 lg:items-center lg:justify-center">
               <NationalChampionBadge riderId={selectedRider.id} />
             </div>
           ) : null}
-          <div className="w-full lg:max-w-xl">
-            <div className="flex items-center justify-end rounded-2xl px-2">
+          <div className="col-span-2 w-full lg:max-w-xl">
+            <div className="flex w-full items-center justify-between rounded-2xl px-1 lg:justify-end lg:px-2">
               {[
                 { label: t('common.points'), value: seasonOverview.points },
                 { label: t('common.podiums'), value: seasonOverview.podiums },
                 { label: t('common.jerseys'), value: seasonOverview.jerseys },
               ].map((item, index) => (
                 <React.Fragment key={item.label}>
-                  {index > 0 ? <div className="mx-6 h-12 w-px bg-black/25" /> : null}
-                  <div className="min-w-[120px] text-center">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-900/80">{item.label}</div>
-                    <div className="mt-2 text-4xl font-semibold leading-none text-slate-950">{item.value}</div>
+                  {index > 0 ? <div className="mx-2 h-10 w-px shrink-0 bg-black/25 lg:mx-6 lg:h-12" /> : null}
+                  <div className="min-w-0 flex-1 text-center lg:min-w-[120px] lg:flex-none">
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-900/80 sm:text-[11px] lg:tracking-[0.18em]">{item.label}</div>
+                    <div className="mt-2 text-2xl font-semibold leading-none text-slate-950 sm:text-4xl">{item.value}</div>
                   </div>
                 </React.Fragment>
               ))}
@@ -5585,8 +5585,8 @@ export default function RiderProfilePage({
         </div>
       ) : null}
 
-      <div className="mb-6 border-b border-slate-200">
-        <div className="flex flex-wrap gap-1">
+      <div className="mb-6 max-w-full overflow-x-auto overscroll-x-contain border-b border-slate-200" aria-label={t('tabs.overview')}>
+        <div className="flex w-max min-w-full flex-nowrap gap-1">
           <button type="button" onClick={() => setActiveTab('overview')} className={tabButtonClass('overview')}>{t('tabs.overview')}</button>
           <button type="button" onClick={() => setActiveTab('contract')} className={tabButtonClass('contract')}>{t('tabs.contract')}</button>
           <button type="button" onClick={() => setActiveTab('training')} className={tabButtonClass('training')}>{t('tabs.training')}</button>
@@ -5617,7 +5617,7 @@ export default function RiderProfilePage({
             <div className="grid grid-cols-1 gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
               <div className="space-y-4">
                 <SectionCard title={t('ownedProfile.riderImage')} subtitle={t('ownedProfile.imageCostSubtitle')}>
-                  <div className="flex h-[340px] items-center justify-center rounded-lg bg-slate-100 p-4">
+                  <div className="flex h-[340px] items-center justify-center rounded-lg bg-white p-4 sm:bg-slate-100">
                     <img src={getRiderImageUrl(selectedRider.image_url)} alt={selectedRider.display_name ?? t('common.rider')} className="h-full w-full object-contain" />
                   </div>
                   <div className="mt-4">
