@@ -19,7 +19,7 @@ Effective 2026-10-20; **main-only write preference updated by the owner on 2026-
 - Prefer the established morning/evening Europe/Berlin review windows for unrequested or discretionary releases, but perform user-requested, explicitly authorized and validated `main` updates in the current task. Never schedule unattended merges or unreviewed deployments.
 - Confirm Netlify production configuration and dependencies before pushing. After a `main` update, verify GitHub Actions, Netlify deployment status and live-game functionality when available; a successful Git commit or GitHub build is not proof of production deployment.
 - Keep `.github/workflows/race-engine-validation.yml` and existing regression gates; never remove, loosen or hide tests to obtain passing checks.
-- For local development: `git fetch origin && git switch main && git pull --ff-only origin main`, then create a short-lived branch, `npm run build` and `npm run dev`.
+- For local development: `git fetch origin && git switch main && git pull --ff-only origin main`, edit and test in an isolated local worktree/copy, then run `npm run build` and `npm run dev`. Confirm no unexpected remote changes before pushing `main`.
 
 ## 3. Critical game data and Supabase
 
@@ -32,5 +32,5 @@ Effective 2026-10-20; **main-only write preference updated by the owner on 2026-
 ## 4. Coordination and protection
 
 - This policy supersedes the 2026-10-19 staging-first instructions and the 2026-10-20 feature-PR default for this repository. **Owner preference: validated user-requested changes are integrated into `main` during the task; staging remains a backup only.**
-- README/docs do not technically block pushes. An administrator should configure GitHub branch rules requiring PRs and appropriate successful checks on `main` if available.
+- README/docs do not technically block pushes. An administrator may configure checks on `main`; if existing protections mandate PRs, honor them while ensuring the validated change is integrated into `main` instead of left pending.
 - This file governs ProPeloton Manager. The owner has also stated a cross-project preference for `main` as the only pushed destination; apply that preference in other project work while checking each repository's own technical protections and release risks.
