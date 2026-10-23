@@ -18006,6 +18006,20 @@ export function resolveRoadPhase4Finish(
       1 -
       freshFrontReactionFraction *
         freshFrontResponseLagStrength
+    // The full-size peloton's aerodynamic advantage is not the same as
+    // purposeful chase effort. With zero pursuit workers an uninterested
+    // peloton was still riding ~44.6 km/h against a 38.7 km/h escape.
+    // On selected specialist stages only, model a rolling tempo that rises
+    // continuously as physical chase workers commit. A real coalition
+    // restores the normal peloton pace; no gap or winner is prescribed.
+    const phase4ActualPursuitWorkers =
+      effectiveExplicitChaserCount + activeAutomaticWorkerCount
+    const phase4SpecialistRollingFactor =
+      escapeStillActive &&
+      selectBreakawayOpportunityStageV1(input.stage) !== null &&
+      phase4ActualPursuitWorkers < 8
+        ? 0.90 + 0.10 * clamp(phase4ActualPursuitWorkers / 8, 0, 1)
+        : 1
     const effectivePelotonPaceKmh = calculateRoadPhysicalGroupPaceKmh(
       input.stage,
       phase4StepMidKm,
@@ -18020,6 +18034,7 @@ export function resolveRoadPhase4Finish(
       // returns without inventing any target gap or scripted catch.
       response.selectedResponseMultiplier *
         explicitChaseCoalitionMultiplier *
+        phase4SpecialistRollingFactor *
         freshFrontResponseOrganizationMultiplier,
       response.pelotonWorkIntensityFraction,
       phase4WindSpeedMultiplier,
