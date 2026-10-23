@@ -9,6 +9,8 @@ import {
   runRaceEngine as runExperimentalMountainCoreV1,
 } from './runMountainExperimentalEngineV1.ts'
 import { dispatchSelectedRaceEngineV1, selectMountainEngineLaneV1 } from './mountainEngineLaneV1.ts'
+import { evaluateSelectedMountainV2Stage, type MountainV2SelectedPreview } from './runSelectedMountainV2Stage.ts'
+import { selectMountainV2Stage } from './mountainV2StageRegistry.ts'
 
 /**
  * Stage-scoped executable boundary for the experimental mountain solver.
@@ -44,4 +46,34 @@ export function getSelectedRaceEngineModuleV1(
   return selectMountainEngineLaneV1(stage) === 'experimental_mountain_v1'
     ? mountainCore
     : acceptedCore
+}
+
+/**
+ * Side-effect-free V2 shadow orchestration boundary for future production use.
+ *
+ * The selected official solver runs ONCE and is never recalculated or changed
+ * to accommodate V2. The shadow may fail without rejecting the race. This
+ * function does not persist, pay out, dispatch, or update any worker pin.
+ *
+ * Production checkpointed workers still use their existing source-pinned
+ * phase orchestration. Do not deploy this wrapper in place of those workers.
+ */
+export function runSelectedRaceEngineWithMountainV2Shadow(
+  input: UniversalRaceEngineInput,
+): {
+  readonly official: UniversalRaceEngineResult
+  readonly v2: MountainV2SelectedPreview | null
+  readonly v2ShadowFailed: boolean
+} {
+  const official = runSelectedRaceEngineV1(input)
+  if (selectMountainV2Stage(input.stage).mode === 'baseline_universal') {
+    return { official, v2: null, v2ShadowFailed: false }
+  }
+  try {
+    return { official, v2: evaluateSelectedMountainV2Stage(input), v2ShadowFailed: false }
+  } catch {
+    // Fail open for THE SHADOW ONLY; never mask or alter the official result.
+    // Omit sensitive thrown details from game-visible output.
+    return { official, v2: null, v2ShadowFailed: true }
+  }
 }
