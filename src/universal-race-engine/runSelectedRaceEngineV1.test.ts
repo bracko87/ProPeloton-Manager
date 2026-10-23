@@ -7,6 +7,7 @@ import {
 } from './runRaceEngine.ts'
 import { runRaceEngine as runExperimentalMountainCoreV1 } from './runMountainExperimentalEngineV1.ts'
 import { runSelectedRaceEngineV1, getSelectedRaceEngineModuleV1 } from './runSelectedRaceEngineV1.ts'
+import { runOfficialWithBreakawayShadowV1 } from './runBreakawayShadowWithOfficialV1.ts'
 
 /**
  * All data below are synthetic test fixtures, copied from the original
@@ -339,5 +340,82 @@ describe('isolated experimental mountain executable', () => {
     expect(experimental.finishResolution).toEqual(baseline.finishResolution)
     expect(experimental.groupAndTimeResolution).toEqual(baseline.groupAndTimeResolution)
     expect(experimental.calibrationSummary).toEqual(baseline.calibrationSummary)
+  })
+})
+
+
+describe('Breakaway V1: official result identity and failure isolation',()=>{
+  const BACKA='5523cf76-8fd4-4a12-ab28-7f285c9829ff'
+  function selectedInput(){
+    const base=createValidInput()
+    return {
+      ...base,
+      stage:{...base.stage,stageId:BACKA,distanceKm:139.2},
+      points:base.points.map(point=>({...point,stageId:BACKA})),
+    }
+  }
+  const preview=(input:UniversalRaceEngineInput)=>({
+    stage:{
+      stageId:input.stage.stageId,stageFormat:input.stage.stageFormat,
+      terrainType:input.stage.terrainType,distanceKm:input.stage.distanceKm,
+    },
+    pelotonChaseIntensity:0.15,
+    riders:input.riders.map((r,i)=>({
+      riderId:r.riderId,teamId:r.teamId,flat:r.flat,
+      climbing:r.climbing,endurance:r.endurance,
+      fatigue:r.fatigueBeforeStage,
+      intent:i===0||i===2?'breakaway' as const:'neutral' as const,
+      cooperation:0.9,
+    })),
+  })
+  it('computes the official result ONCE and preserves finish, replay, scoring',()=>{
+    const input=selectedInput(),before=JSON.stringify(input)
+    const expected=runSelectedRaceEngineV1(input)
+    let officialExecutions=0,previewBuilds=0
+    const result=runOfficialWithBreakawayShadowV1(
+      input,(v)=>{
+        officialExecutions++
+        return runSelectedRaceEngineV1(v)
+      },
+      (v)=>{previewBuilds++;return preview(v)},
+    )
+    expect(officialExecutions).toBe(1)
+    expect(previewBuilds).toBe(1)
+    expect(result.officialResult).toEqual(expected)
+    expect(result.officialResult.finishResolution).toEqual(expected.finishResolution)
+    expect(result.officialResult.replayTimeline).toEqual(expected.replayTimeline)
+    expect(result.officialResultAuthoritative).toBe(true)
+    expect(result.shadowStatus).toBe('evaluated')
+    expect(result.shadowResult?.authority).toBe('shadow_only')
+    expect(result.shadowResult?.status).not.toBe('not_selected')
+    expect(JSON.stringify(input)).toBe(before)
+  })
+  it('bypasses the preview entirely for unlisted flat/mountain races',()=>{
+    const input=createValidInput(),before=JSON.stringify(input)
+    let builderCalled=false
+    const result=runOfficialWithBreakawayShadowV1(
+      input,runSelectedRaceEngineV1,()=>{builderCalled=true;throw new Error('unexpected')},
+    )
+    expect(builderCalled).toBe(false)
+    expect(result.shadowStatus).toBe('not_selected')
+    expect(result.shadowResult).toBeNull()
+    expect(result.officialResult).toEqual(runSelectedRaceEngineV1(input))
+    expect(JSON.stringify(input)).toBe(before)
+  })
+  it('retains official results when preview mapping throws or mismatches the stage',()=>{
+    const input=selectedInput(),expected=runSelectedRaceEngineV1(input)
+    const failed=runOfficialWithBreakawayShadowV1(
+      input,runSelectedRaceEngineV1,()=>{throw new Error('preview is broken')},
+    )
+    expect(failed.shadowStatus).toBe('failed')
+    expect(failed.officialResult).toEqual(expected)
+    const mismatched=runOfficialWithBreakawayShadowV1(
+      input,runSelectedRaceEngineV1,(v)=>({
+        ...preview(v),stage:{...preview(v).stage,stageId:'wrong-stage'},
+      }),
+    )
+    expect(mismatched.shadowStatus).toBe('failed')
+    expect(mismatched.officialResult).toEqual(expected)
+    expect(mismatched.officialResultAuthoritative).toBe(true)
   })
 })
