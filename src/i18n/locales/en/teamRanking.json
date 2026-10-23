@@ -5,6 +5,8 @@
     "selectTier": "Select tier",
     "selectDivision": "Select division",
     "noDivisionNeeded": "No division selection needed",
+    "rankingUnavailable": "Team standings are temporarily unavailable. The server may be busy.",
+    "retryStandings": "Retry standings",
     "selectTierDivision": "Select a tier and division",
     "standingsDescription": "Current season standings based on international points. Ties are ordered by races completed, team race reputation, then team name A-Z.",
     "chooseStanding": "Choose a tier and division to view the standings.",

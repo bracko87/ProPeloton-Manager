@@ -5,6 +5,8 @@
     "selectTier": "Odaberite rang natjecanja",
     "selectDivision": "Odaberite diviziju",
     "noDivisionNeeded": "Odabir divizije nije potreban",
+    "rankingUnavailable": "Poredak timova trenutačno nije dostupan. Poslužitelj je možda preopterećen.",
+    "retryStandings": "Pokušaj ponovno",
     "selectTierDivision": "Odaberite rang i diviziju",
     "standingsDescription": "Poredak tekuće sezone prema međunarodnim bodovima. Kod istog broja bodova redosled određuju broj završenih utrka, reputacija tima na utrkama, a zatim naziv tima A-Z.",
     "chooseStanding": "Odaberite rang i diviziju da biste videli tabelu.",

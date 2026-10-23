@@ -5,6 +5,8 @@
     "selectTier": "Seleccionar nivel",
     "selectDivision": "Seleccionar división",
     "noDivisionNeeded": "No se necesita selección de división",
+    "rankingUnavailable": "La clasificación por equipos no está disponible temporalmente. Puede que el servidor esté ocupado.",
+    "retryStandings": "Volver a intentarlo",
     "selectTierDivision": "Selecciona un nivel y una división",
     "standingsDescription": "Las competiciones completan las ligas, la reputación de la carrera en equipo y el nombre del equipo A-Z.",
     "chooseStanding": "Elige un nivel y división para ver la clasificación.",

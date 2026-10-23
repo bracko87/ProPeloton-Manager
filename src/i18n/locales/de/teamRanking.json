@@ -5,6 +5,8 @@
     "selectTier": "Ebene auswählen",
     "selectDivision": "Auswahl der Division",
     "noDivisionNeeded": "Keine Division-Auswahl erforderlich",
+    "rankingUnavailable": "Die Team-Rangliste ist vorübergehend nicht verfügbar. Der Server ist möglicherweise ausgelastet.",
+    "retryStandings": "Erneut versuchen",
     "selectTierDivision": "Wählen Sie eine Ebene und Division",
     "standingsDescription": "Aktuelle Saison-Platzierungen basierend auf internationalen Punkten. Krawatten werden nach Rennen abgeschlossen, Team-Rennruf, dann Teamname A-Z bestellt.",
     "chooseStanding": "Wählen Sie eine Ebene und Division, um die Rangliste anzuzeigen.",

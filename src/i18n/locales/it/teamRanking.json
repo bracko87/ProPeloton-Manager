@@ -5,6 +5,8 @@
     "selectTier": "Seleziona livello",
     "selectDivision": "Seleziona divisione",
     "noDivisionNeeded": "Nessuna selezione di divisione necessaria",
+    "rankingUnavailable": "La classifica a squadre è temporaneamente non disponibile. Il server potrebbe essere sovraccarico.",
+    "retryStandings": "Riprova",
     "selectTierDivision": "Seleziona un livello e una divisione",
     "standingsDescription": "La classifica stagionale attuale si basa su punti internazionali. Le cravatte sono ordinate per gare completate, la reputazione della squadra, poi il nome della squadra A-Z.",
     "chooseStanding": "Scegliere un livello e una divisione per visualizzare la classifica.",

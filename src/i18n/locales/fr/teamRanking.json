@@ -5,6 +5,8 @@
     "selectTier": "Sélectionner le niveau",
     "selectDivision": "Sélectionner la division",
     "noDivisionNeeded": "Pas de sélection de division nécessaire",
+    "rankingUnavailable": "Le classement des équipes est temporairement indisponible. Le serveur est peut-être surchargé.",
+    "retryStandings": "Réessayer",
     "selectTierDivision": "Sélectionnez un niveau et une division",
     "standingsDescription": "Les cravates sont commandées par des courses terminées, la réputation de course par équipe, puis le nom d'équipe A-Z.",
     "chooseStanding": "Choisissez un niveau et une division pour voir le classement.",
