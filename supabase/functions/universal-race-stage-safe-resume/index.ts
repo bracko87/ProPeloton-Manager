@@ -1,7 +1,7 @@
 
 /// <reference lib="deno.ns" />
-import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runRaceEngine.ts";
-import { getSelectedRaceEngineModuleV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/runRaceEngine.ts";
+import { getSelectedRaceEngineModuleV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
@@ -42,15 +42,15 @@ import {
   isUniversalPhase78IssueNonBlocking,
   buildUniversalRaceCalibrationSummary,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/2d2c4290ecea56e5a66d89705c4e1655383da1b3/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/10dc6e7b7470f2c859a7019515a46708a5792024/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
-const SOURCE_COMMIT = "2d2c4290ecea56e5a66d89705c4e1655383da1b3";
+const SOURCE_COMMIT = "10dc6e7b7470f2c859a7019515a46708a5792024";
 const PREVIOUS_SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
 
 function object(value: unknown): JsonObject {
@@ -611,6 +611,14 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       ? getSelectedRaceEngineModuleV1(calculationInput.stage) : acceptedCore;
   }
 
+  // A resumed pilot must preserve both its exact stage and reviewed source.
+  if(stageId === "5523cf76-8fd4-4a12-ab28-7f285c9829ff" && engineLaneV1 !== "experimental_breakaway_v1"){
+    throw new Error("Mandatory Breakaway V1 pilot cannot resume on baseline.");
+  }
+  if(engineLaneV1 === "experimental_breakaway_v1" && step>0 &&
+     text(checkpoint.selectedEngineSourceCommit) !== SOURCE_COMMIT){
+    throw new Error("Breakaway V1 checkpoint source commit does not match deployed release.");
+  }
   const effectiveSourceCommit = step === 0 ? SOURCE_COMMIT
     : text(checkpoint.selectedEngineSourceCommit) || PREVIOUS_SOURCE_COMMIT;
   let next: JsonObject={...checkpoint};
@@ -1239,6 +1247,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         safeMode:true,
         safeModeContract:CONTRACT,
         primarySourceCommit:effectiveSourceCommit,
+        selectedEngineLaneV1:engineLaneV1,
         engineLaneV1,
         recoveryPolicy:"checkpointed_safe_mode_v2",
         scenarioPreserved:scenarioPreserved,
