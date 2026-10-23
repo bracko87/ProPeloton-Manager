@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = process.cwd()
-const RELEASE_SHA = '878aa8ae0db95d97fa5385513d2c1394e3a791a2'
+const RELEASE_SHA = '2d2c4290ecea56e5a66d89705c4e1655383da1b3'
 const prefix = 'https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/'
 const workers = new Map([
   ['universal-race-stage-runner', [
@@ -27,7 +27,6 @@ const workers = new Map([
   ['universal-race-stage-safe-resume', [
     'runRaceEngine.ts',
     'runSelectedRaceEngineV1.ts',
-    'mountainEngineLaneV1.ts',
     'buildProductionRaceInput.ts',
     'buildProductionRaceOutput.ts',
   ]],
@@ -48,8 +47,6 @@ for (const [name, requiredPrimaryModules] of workers) {
         ? 'buildProductionUniversalRaceEngineInput as buildBaseInput'
         : moduleName === 'runSelectedRaceEngineV1.ts'
           ? (name === 'universal-race-stage-safe-resume' ? 'getSelectedRaceEngineModuleV1' : 'runSelectedRaceEngineV1')
-        : moduleName === 'mountainEngineLaneV1.ts'
-          ? 'selectMountainEngineLaneV1'
         : moduleName === 'buildProductionRaceOutput.ts'
           ? 'buildProductionUniversalRaceOutput'
           : 'runRaceEngine'
@@ -60,6 +57,9 @@ for (const [name, requiredPrimaryModules] of workers) {
       source.includes(primaryName),
       `${name}: missing pinned primary module ${moduleName}`,
     )
+  }
+  if (name === 'universal-race-stage-safe-resume') {
+    assert.ok(source.includes('selectCompleteRaceEngineLaneV1'), 'Safe Resume must dispatch the complete three-way stage selector')
   }
   if (name === 'universal-race-stage-pass2-resume') {
     assert.ok(source.includes('7e4299371f452e5d1d0a706e48fb083340362d11'), 'legacy fallback engine changed')
