@@ -589,6 +589,12 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     expect(samples[1].km70PhysicalGapSeconds).toBeGreaterThan(0)
     expect(samples[1].km70PhysicalGapSeconds)
       .toBeGreaterThan(samples[0].km70PhysicalGapSeconds)
+    // A rotating 4-rider escape with 113 seconds at the 70% mark should
+    // be capable of defeating an unorganized pursuit. This asserts the
+    // measured sporting outcome rather than forcing a result in the engine.
+    expect(samples[1].phase4StartGapSeconds).toBeGreaterThan(100)
+    expect(samples[1].phase4EscapeSurvived).toBe(true)
+    expect(samples[1].finishGapSeconds).toBeGreaterThan(0)
   })
 
 })
