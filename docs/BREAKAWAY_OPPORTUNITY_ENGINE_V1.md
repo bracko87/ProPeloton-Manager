@@ -30,3 +30,32 @@ The `escapeOpportunity` is a modest, published stage-specific physical speed inf
 ## Current release status
 
 **A coded, independently tested shadow prototype is present on `main`; no new official stage engine has been activated.** The ordinary race engine remains authoritative for all stages. Review the isolated test reports and full legacy engine suite before any future stage-specific controlled release.
+
+## First actual-roster scenario validation — 2026-10-23
+
+The three whitelisted stages remain unprocessed and have **zero official results** and **zero locked stage plans** at snapshot time. Production database roster attributes were read without writing any data. Exact IDs and names were omitted from the numeric fixtures; each participant was represented by an anonymous rider and team token.
+
+| Stage | Registered / teams | Currently not fully fit | Cooperative escape / chase 0.15 | Balanced chase 0.43 | Organized chase 0.85 | Uncooperative escape 0.40 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Bačka Plains Opener | 96 / 16 | 60 | Escape survived +223.04 sec | Caught km 95.58 | Caught km 17.07 | Caught km 34.52 |
+| Binche–Chimay–Binche | 120 / 20 | 119 | Escape survived +372.26 sec | Caught km 165.00 | Caught km 24.92 | Caught km 69.49 |
+| Fruška Gora Finale | 96 / 16 | 60 | Escape survived +300.43 sec | Caught km 108.85 | Caught km 18.60 | Caught km 37.60 |
+
+All scenarios use five consenting **synthetically selected** breakaway riders from distinct teams based on the snapshot's terrain skill, endurance and fatigue; the rest receive neutral instructions. Cooperation, peloton response, weather and tactics are **hypothetical**, not locked player stage plans. There is no forced breakaway win. In all three cases an input with no breakaway intent correctly produces `no_escape`.
+
+A deterministic sensitivity sweep with strong cooperation and chase intensity from 0.1 to 0.9 in 0.1 increments returned `survived` at 0.1–0.4 and `caught` at 0.5–0.9 for the three current cohorts. **This is a test sensitivity matrix, not a 44% real-world win probability**, because equally spaced chase intensities are not actual frequency-weighted race conditions.
+
+The test suite `breakawayOpportunityRealRoster.test.ts` includes 18 cases (three stages × five scenario configurations, plus one chase sweep per stage), 27 tests when combined with core breakaway physics tests; all passed in [GitHub Actions run 40004812242](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40004812242). The original 557 accepted race-engine tests and build also passed.
+
+## Shadow integration boundary — first production release preparation
+
+`runBreakawayShadowWithOfficialV1.ts` provides an in-memory comparison interface that:
+
+- Calls the **accepted** official calculator once and retains its output verbatim;
+- Runs the independent escape preview only when the exact stage UUID/terrain/road-race format matches the stage whitelist;
+- Requires the caller to explicitly translate *actual locked* game-team tactics and physical rider inputs rather than silently fabricate them;
+- Retains the accepted official result unchanged if the shadow throws, provides mismatched stage data or is ineligible.
+
+Additional official-finish/replay identity tests exist in `runSelectedRaceEngineV1.test.ts`. The four production Supabase Edge Function race workers are **not connected to this wrapper and are not redeployed**. These tests prove in-memory orchestration invariants only.
+
+**Release decision:** Only Bačka Plains Opener is the recommended **first candidate**. Do not switch its authoritative race engine yet: this model outputs a group-vs-peloton escape survival sketch, not official individual gaps, finish rank, incidents, replay frames, GC, classifications, stage points or prizes. Implementation of a complete separate authoritative stage solver, all checkpointed worker source pins, safe resume and sporting settlement remains necessary. The user must explicitly approve the first authoritative pilot only after those checks pass.
