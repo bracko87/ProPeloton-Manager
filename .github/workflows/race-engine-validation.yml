@@ -83,6 +83,7 @@ jobs:
           src/universal-race-engine/mountainV2SyntheticStageClock.test.ts
           src/universal-race-engine/mountainV2SyntheticFinishReplay.test.ts
           src/universal-race-engine/mountainV2SyntheticStage.test.ts
+          src/universal-race-engine/mountainV2AuthorityReadiness.test.ts
           --reporter=dot
 
       - name: Production build
