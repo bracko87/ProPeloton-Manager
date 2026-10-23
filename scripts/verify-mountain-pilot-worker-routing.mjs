@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 const file = slug => readFileSync(`supabase/functions/${slug}/index.ts`,'utf8')
-const sha='878aa8ae0db95d97fa5385513d2c1394e3a791a2'
+const sha='2d2c4290ecea56e5a66d89705c4e1655383da1b3'
 const [runner,pass1,pass2,safe]=['universal-race-stage-runner','universal-race-stage-pass1-resume','universal-race-stage-pass2-resume','universal-race-stage-safe-resume'].map(file)
 for(const code of [runner,pass1,pass2,safe])assert.ok(code.includes(`const SOURCE_COMMIT = "${sha}"`))
 for(const code of [runner,pass2]) {
@@ -13,10 +13,10 @@ for(const code of [runner,pass2]) {
 }
 assert.ok(pass1.includes(`${sha}/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts`))
 assert.ok(safe.includes(`${sha}/src/universal-race-engine/runSelectedRaceEngineV1.ts`))
-assert.ok(safe.includes(`${sha}/src/universal-race-engine/mountainEngineLaneV1.ts`))
+assert.match(safe,/selectCompleteRaceEngineLaneV1/)
 assert.match(safe,/selectedEngineLaneV1:engineLaneV1/)
 assert.match(safe,/selectedEngineSourceCommit:effectiveSourceCommit/)
-assert.match(safe,/text\(checkpoint.selectedEngineLaneV1\) === "experimental_mountain_v1"/)
+assert.match(safe,/savedLane === "experimental_breakaway_v1"/)
 assert.match(safe,/\? getSelectedRaceEngineModuleV1\(calculationInput.stage\)/)
 for(const method of ['resolveRoadPhase1Opening','resolveRoadPhase2Development','resolveRoadPhase3Decisive','resolveRoadPhase4Finish','buildUniversalPhase5GroupingSummary','resolveUniversalFinishResolution','buildUniversalReplayTimeline','resolveUniversalPhase10Incidents','buildUniversalReplaySynchronizationSummary'])assert.ok(safe.includes(`selectedCore.${method}(`))
 assert.match(safe,/primarySourceCommit:effectiveSourceCommit/)
@@ -44,8 +44,8 @@ const stepZeroStart = safeStep.indexOf('if(step===0){', safeStep.indexOf('let en
 const stepZeroEnd = safeStep.indexOf('} else {', stepZeroStart)
 const stepZero = safeStep.slice(stepZeroStart, stepZeroEnd)
 const stageLoaded = stepZero.indexOf('input=built.input;')
-const selection = stepZero.indexOf('engineLaneV1=selectMountainEngineLaneV1(input.stage);')
-const executable = stepZero.indexOf('selectedCore=engineLaneV1 === "experimental_mountain_v1"')
+const selection = stepZero.indexOf('engineLaneV1=selectCompleteRaceEngineLaneV1(input.stage);')
+const executable = stepZero.indexOf('selectedCore=engineLaneV1 !== "baseline_universal"')
 const phase9 = stepZero.indexOf('phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);')
 const phase9Application = stepZero.indexOf('calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);')
 assert.ok(
@@ -54,7 +54,14 @@ assert.ok(
   'Safe Resume Phase 9 must select/initialize stage engine BEFORE first use'
 )
 const resume = safeStep.slice(stepZeroEnd,safeStep.indexOf('const effectiveSourceCommit ='))
-assert.match(resume,/engineLaneV1=text\(checkpoint.selectedEngineLaneV1\)/)
-assert.match(resume,/selectedCore=engineLaneV1 === "experimental_mountain_v1"/)
+assert.match(resume,/const savedLane=text\(checkpoint.selectedEngineLaneV1\)/)
+assert.match(resume,/selectedCore=engineLaneV1 !== "baseline_universal"/)
 assert.match(resume,/!input \|\| !calculationInput \|\| !phase9Modifiers/)
 console.log('PASS safe-resume pilot/baseline engine initialized before Phase 9')
+
+// The first official breakaway release is deliberately one stage only.
+const officialPilot=readFileSync('src/universal-race-engine/breakawayOfficialPilotV1.ts','utf8')
+assert.match(officialPilot,/5523cf76-8fd4-4a12-ab28-7f285c9829ff/)
+assert.doesNotMatch(officialPilot,/335708f7-d56a-4816-9068-38399e8f74e3|f5af8665-91c1-4585-937e-11fb94f65819/)
+assert.match(safe,/Saved experimental engine lane no longer matches its stage/)
+console.log('PASS experimental breakaway pilot has isolated stage source and safe resume lane')
