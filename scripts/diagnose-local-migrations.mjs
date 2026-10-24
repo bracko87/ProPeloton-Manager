@@ -18,6 +18,18 @@ function run(binary,args,timeout=120000) {
   const raw=(result.stdout||'')+'\n'+(result.stderr||'');
   const versions=[...raw.matchAll(/\b(20\d{12})_[a-zA-Z0-9_-]+\.sql\b/g)]
     .filter(match=>migrationFiles.has(match[0])).map(match=>match[1]);
+  // Allowlisted signal only. Never expose arbitrary error text or SQL excerpts.
+  const stateMatch=raw.match(/\\bSQLSTATE[\\s:=(]*([A-Z0-9]{5})\\b/i);
+  const sqlstate=stateMatch ? stateMatch[1].toUpperCase() : null;
+  let sqlCategory=null;
+  if (/relation [^\\n]{0,120} does not exist/i.test(raw)) sqlCategory='MISSING_RELATION';
+  else if (/function [^\\n]{0,120} does not exist/i.test(raw)) sqlCategory='MISSING_FUNCTION';
+  else if (/type [^\\n]{0,120} does not exist/i.test(raw)) sqlCategory='MISSING_TYPE';
+  else if (/schema [^\\n]{0,120} does not exist/i.test(raw)) sqlCategory='MISSING_SCHEMA';
+  else if (/already exists|duplicate (key|object|table)/i.test(raw)) sqlCategory='DUPLICATE_OBJECT';
+  else if (/syntax error/i.test(raw)) sqlCategory='SYNTAX_ERROR';
+  else if (/permission denied/i.test(raw)) sqlCategory='PERMISSION_ERROR';
+  else if (/violates.*constraint/i.test(raw)) sqlCategory='CONSTRAINT_ERROR';
   let category='UNCLASSIFIED';
   if(result.error?.code==='ETIMEDOUT') category='TIMEOUT';
   else if(/config\.toml.*(not found|missing)|failed to load config|cannot read config|supabase init/i.test(raw)) category='LOCAL_CONFIG';
@@ -25,10 +37,12 @@ function run(binary,args,timeout=120000) {
   else if(/failed to (start|create|inspect).*container|health.check|unhealthy|connection refused|port is already allocated/i.test(raw)) category='CONTAINER_OR_HEALTH';
   else if(/applying migration|migration.*failed|error.*migration|sqlstate|ERROR:\s/i.test(raw)) category='MIGRATION_OR_SQL';
   else if(result.error?.code==='ENOENT') category='COMMAND_UNAVAILABLE';
-  return {ok:result.status===0&&!result.error,category,lastMentionedVersion:versions.at(-1)||null};
+  return {ok:result.status===0&&!result.error,category,sqlstate,sqlCategory,lastMentionedVersion:versions.at(-1)||null};
 }
 function status(step,result){
   lines.push(step+': '+(result.ok?'PASSED':'FAILED')+(result.ok?'':' ('+result.category+')')+'.');
+  if(!result.ok && result.sqlCategory) lines.push('SQL error class: '+result.sqlCategory+'.');
+  if(!result.ok && result.sqlstate) lines.push('SQLSTATE: '+result.sqlstate+'.');
   if(!result.ok && result.lastMentionedVersion) {
     lines.push('Last migration filename mentioned: version '+result.lastMentionedVersion+' (not necessarily the failing statement).');
   }
