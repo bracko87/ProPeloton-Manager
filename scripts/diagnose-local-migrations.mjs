@@ -54,6 +54,18 @@ function run(binary,args,timeout=120000) {
     configFailure:/config.toml|failed to read config|failed to parse config/i.test(raw),
     databaseFailure:/database.*failed|postgres.*failed|SQLSTATE|ERROR:/i.test(raw),
   };
+  const allowedErrorWords=new Set([
+    'error','fatal','relation','type','function','operator','schema','column','constraint',
+    'cannot','does','not','exist','exists','default','for','of','must','record','extension',
+    'syntax','at','or','near','invalid','permission','denied','duplicate','object','missing',
+    'required','database','cast','reference','create','trigger','policy','conflict','row',
+    'value','procedure','call','expected','aggregate','enum','table','sequence','dependency',
+    'unknown','unrecognized','insufficient','privilege','has','no','been','was','result',
+    'in','wrong','number','is','be','used','references','defined','failed','language',
+    'unsupported','with','without','input','already','available','automatically','data'
+  ]);
+  // Output only a finite vocabulary of SQL error concepts; discard all untrusted identifiers/values.
+  const safeErrorSignature=errorContext.toLowerCase().match(/[a-z]+/g)?.filter(word=>allowedErrorWords.has(word)).slice(0,28).join(' ') || 'NO_ALLOWLISTED_TERMS';
   const errorLineCount=normalized.split(/\r?\n/).map(line=>line.trim()).filter(line=>/^(?:ERROR|FATAL)(?:\s|:)|^Error:/i.test(line)).length;
   const registry=/(?:ghcr\\.io|docker\\.io|registry-1\\.docker\\.io|public\\.ecr\\.aws)/i.exec(normalized)?.[0]?.toLowerCase() || 'UNKNOWN';
   let imageReason='UNCLASSIFIED';
@@ -65,7 +77,7 @@ function run(binary,args,timeout=120000) {
   else if(/no space left|out of memory|cannot allocate/i.test(normalized)) imageReason='RESOURCE';
   const exitCode=Number.isInteger(result.status)&&result.status>=0&&result.status<=255?result.status:null;
   const processError=['ETIMEDOUT','ENOENT','ENOBUFS','EACCES'].includes(result.error?.code)?result.error.code:null;
-  return {ok:result.status===0&&!result.error,category,sqlstate,sqlCategory,exitCode,processError,lastMentionedVersion:versions.at(-1)||null,phaseSignals,registry,imageReason,errorLineCount,stdoutBytes:Buffer.byteLength(result.stdout||''),stderrBytes:Buffer.byteLength(result.stderr||'')};
+  return {ok:result.status===0&&!result.error,category,sqlstate,sqlCategory,exitCode,processError,lastMentionedVersion:versions.at(-1)||null,phaseSignals,registry,imageReason,errorLineCount,safeErrorSignature,stdoutBytes:Buffer.byteLength(result.stdout||''),stderrBytes:Buffer.byteLength(result.stderr||'')};
 }
 function status(step,result){
   lines.push(step+': '+(result.ok?'PASSED':'FAILED')+(result.ok?'':' ('+result.category+')')+'.');
@@ -76,6 +88,7 @@ function status(step,result){
     if(result.phaseSignals.imageFailure) lines.push('Image registry: '+result.registry+'; image error category: '+result.imageReason+'.');
     lines.push('CLI output sizes: stdout='+result.stdoutBytes+' bytes, stderr='+result.stderrBytes+' bytes; error lines='+result.errorLineCount+'.');
   }
+  if(!result.ok && result.errorLineCount) lines.push('Allowlisted error concepts: '+result.safeErrorSignature+'.');
   if(!result.ok && result.sqlCategory) lines.push('SQL error class: '+result.sqlCategory+'.');
   if(!result.ok && result.sqlstate) lines.push('SQLSTATE: '+result.sqlstate+'.');
   if(!result.ok && result.lastMentionedVersion) {
