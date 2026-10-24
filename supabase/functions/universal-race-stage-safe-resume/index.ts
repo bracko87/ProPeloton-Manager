@@ -1,7 +1,7 @@
 
 /// <reference lib="deno.ns" />
-import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/runRaceEngine.ts";
-import { getSelectedRaceEngineModuleV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runRaceEngine.ts";
+import { getSelectedRaceEngineModuleV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
@@ -42,16 +42,16 @@ import {
   isUniversalPhase78IssueNonBlocking,
   buildUniversalRaceCalibrationSummary,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/runRaceEngine.ts";
-import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/buildProductionRaceInput.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
-const SOURCE_COMMIT = "e9cf5541f1cd83618266eaaa44a355b921222161";
-const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3"]);
+const SOURCE_COMMIT = "e00c4e694c0629efa5b06497dd514b505b166934";
+const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3", "7f69e552-b116-453c-bf55-16ef655ea021"]);
 const PREVIOUS_SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
 
 function object(value: unknown): JsonObject {
