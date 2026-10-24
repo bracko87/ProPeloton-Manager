@@ -87,3 +87,22 @@ Supabase read-back verified deployment to project `okuravitxocyevkexfgi`:
 - Existing Pass 1 input-preparation worker remains v43, unchanged.
 
 **Production-usage qualification:** These fixes passed synthetic/replay regression tests and are available in the deployed workers. They have **not yet been exercised by a new official race**: the two nominated pilots already finished on the previous source. Their historical submission provenance remains pinned to `decf613ae309ee9f1216c2085a4f69deab255260` in the database to protect already-published results. Before nominating a future new official pilot, approve its exact stage ID, update the authoritative stage allowlist and matching database fail-closed submission rule, and confirm the corrected commit is pinned on every worker. Do not activate an unapproved candidate automatically.
+
+## Third production pilot activation — Tacx Zeeland Classic, 12 October 2000 game time
+
+On 2026-10-24 the owner explicitly approved the next Breakaway V1 candidate. **Only the exact official stage** `7f69e552-b116-453c-bf55-16ef655ea021` — Tacx Zeeland Classic / Ronde van Zeeland — has been added to the experimental release gate.
+
+- Race starts game-time **2000-10-12 13:30**, on a **204.6 km flat road stage**, 360 m elevation gain, 96% flat / 4% hilly. Race has a registered **120 riders from 20 teams** and had no calculation or published result during activation.
+- `breakawayOpportunityEngineV1.ts` has the stage-specific research entry (flat, escape opportunity 0.72), and `breakawayOfficialPilotV1.ts` explicitly authorizes its full sporting Breakaway V1 engine. Danube / Fruška Gora Finale remains excluded from the official release selector.
+- Immutable solver import pin for Tacx and future test executions: `e00c4e694c0629efa5b06497dd514b505b166934`. It includes the previously corrected tempo-vs-explicit-chase physics and post-catch replay lineage fix.
+- Full GitHub Actions validation https://github.com/bracko87/ProPeloton-Manager/actions/runs/40076224067 passed all 23 steps including 557/557 universal race-engine tests, the full synthetic 120-rider, 20-team, Zeeland-route simulation, builds, and stage routing gates. In the new 120-rider synthetic input the opening attackers did not establish a breakaway, so this verifies full execution/replay but **does not** pre-prove the sporting success of an escape in this stage. The independent 96-rider tempo-vs-chase regression continues to prove the corrected physical separation behavior.
+- Read-only live canary `?stage=zeeland` returned `status=ok`, `engine_lane=experimental_breakaway_v1`, source pin `e00c4e...`, complete finish, synchronized replay, Phase 9 and Phase 7/8 acceptance, and zero DB writes. Historical Bačka and Binche canaries also passed.
+- Production Edge deployment verified by live read-back:
+  - `universal-race-stage-runner` v46 / `9a8cf62c2bb8b9abdce59825fbb0cfa7aea63358324963d64348b195e522657f`
+  - `universal-race-stage-pass2-resume` v64 / `f5d0d27337545e2eefb23e787f1c88769281c4aeba0d3c5d98ee57ed046306c5`
+  - `universal-race-stage-safe-resume` v69 / `881b5afe62bce09ed135b066fb7fbaa284be5ae4b5cdc2b0c5b7524a1f220db6`
+  - `breakaway-full-engine-canary` v5 / `ac09b403d511974c3281ca27b2dfb7b67e12e91d0c4ab7944fb62b1679e11f32`
+- All three live execution workers retain their previous accepted baseline source and strictly refuse sporting fallback or unsynchronized replay for exact Breakaway V1 pilot IDs. Pass 1 remains unchanged in production (input builder).
+- Database RPC `public.universal_race_stage_submit_calculation_v1` has a **separate Tacx-specific fail-closed provenance guard** requiring `experimental_breakaway_v1`, source `e00c4e...`, no fallback, and no explicitly degraded/raw-unsynchronized replay. Probes verified 6 invalid provenance/replay inputs rejected and 2 correct inputs advanced to the expected missing-dummy-run check.
+- The **existing historical** Bačka and Binche DB guard still expects their original `decf613...` production source. Read-only probes established that old publication provenance passes its contract and the new commit cannot retroactively overwrite old race results. Neither historical official result was modified.
+- **Official result pending.** The third race must execute on its in-game schedule before the real-world production outcome (escape gap/lineage/replay/results) can be established. No production simulation was manually triggered.
