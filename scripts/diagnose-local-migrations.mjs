@@ -55,9 +55,17 @@ function run(binary,args,timeout=120000) {
     databaseFailure:/database.*failed|postgres.*failed|SQLSTATE|ERROR:/i.test(raw),
   };
   const errorLineCount=normalized.split(/\r?\n/).map(line=>line.trim()).filter(line=>/^(?:ERROR|FATAL)(?:\s|:)|^Error:/i.test(line)).length;
+  const registry=/(?:ghcr\\.io|docker\\.io|registry-1\\.docker\\.io|public\\.ecr\\.aws)/i.exec(normalized)?.[0]?.toLowerCase() || 'UNKNOWN';
+  let imageReason='UNCLASSIFIED';
+  if(/unauthorized|authentication required|denied:|forbidden|http 403/i.test(normalized)) imageReason='AUTHORIZATION';
+  else if(/rate limit|too many requests|http 429|toomanyrequests/i.test(normalized)) imageReason='RATE_LIMIT';
+  else if(/manifest unknown|manifest not found|not found|http 404/i.test(normalized)) imageReason='IMAGE_NOT_FOUND';
+  else if(/x509|certificate|TLS handshake/i.test(normalized)) imageReason='TLS_OR_CERTIFICATE';
+  else if(/no such host|dial tcp|dns lookup|timeout|context deadline|network is unreachable|connection reset|EOF/i.test(normalized)) imageReason='NETWORK_OR_DNS';
+  else if(/no space left|out of memory|cannot allocate/i.test(normalized)) imageReason='RESOURCE';
   const exitCode=Number.isInteger(result.status)&&result.status>=0&&result.status<=255?result.status:null;
   const processError=['ETIMEDOUT','ENOENT','ENOBUFS','EACCES'].includes(result.error?.code)?result.error.code:null;
-  return {ok:result.status===0&&!result.error,category,sqlstate,sqlCategory,exitCode,processError,lastMentionedVersion:versions.at(-1)||null,phaseSignals,errorLineCount,stdoutBytes:Buffer.byteLength(result.stdout||''),stderrBytes:Buffer.byteLength(result.stderr||'')};
+  return {ok:result.status===0&&!result.error,category,sqlstate,sqlCategory,exitCode,processError,lastMentionedVersion:versions.at(-1)||null,phaseSignals,registry,imageReason,errorLineCount,stdoutBytes:Buffer.byteLength(result.stdout||''),stderrBytes:Buffer.byteLength(result.stderr||'')};
 }
 function status(step,result){
   lines.push(step+': '+(result.ok?'PASSED':'FAILED')+(result.ok?'':' ('+result.category+')')+'.');
@@ -65,6 +73,7 @@ function status(step,result){
   if(!result.ok && result.processError) lines.push('Process error category: '+result.processError+'.');
   if(!result.ok) {
     lines.push('Sanitized CLI signal flags: '+Object.entries(result.phaseSignals).filter(([key,v])=>v).map(([key])=>key).join(', ')+'.');
+    if(result.phaseSignals.imageFailure) lines.push('Image registry: '+result.registry+'; image error category: '+result.imageReason+'.');
     lines.push('CLI output sizes: stdout='+result.stdoutBytes+' bytes, stderr='+result.stderrBytes+' bytes; error lines='+result.errorLineCount+'.');
   }
   if(!result.ok && result.sqlCategory) lines.push('SQL error class: '+result.sqlCategory+'.');
