@@ -879,7 +879,10 @@ export default function WorldNationsEventPage(): JSX.Element {
   }
   // Historical snapshots use the separate authoritative point totals for each
   // race day, not the latest final group rank or its later-race points.
-  const finalGroupConfirmed = ['completed', 'finished'].includes(groupStatus.toLowerCase())
+  // A team is only qualified in the historical table after the last race day.
+  // Earlier-day views show the provisional cutoff as it stood on that day.
+  const finalGroupConfirmed = ['completed', 'finished'].includes(groupStatus.toLowerCase()) &&
+    selectedRaceDay >= Math.max(...groupStageOptions.map(stage => Number(stage.race_day)), selectedRaceDay)
   const canAdvance = data.round_type !== 'world_final' && data.advancing_places > 0
   const qualifyingForFinal = data.round_type === 'final_qualification'
   const groupPointsRows: GroupPointsRow[] = generalStandings
