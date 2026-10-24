@@ -1,0 +1,37 @@
+name: Isolated migration replay diagnostic
+on:
+  workflow_dispatch:
+  pull_request:
+    branches: [staging]
+    paths:
+      - 'supabase/migrations/**'
+      - 'scripts/diagnose-local-migrations.mjs'
+      - 'scripts/check-migration-terminators.mjs'
+      - '.github/workflows/isolated-migration-replay.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate diagnostic syntax
+        run: node --check scripts/diagnose-local-migrations.mjs
+      - name: Check migration function terminators
+        run: node scripts/check-migration-terminators.mjs
+      - uses: supabase/setup-cli@v3
+        with:
+          version: 2.122.0
+      - name: Execute isolated local migration replay
+        run: node scripts/diagnose-local-migrations.mjs
+      - name: Publish sanitized result
+        if: always()
+        run: |
+          if [ -f migration-replay-status.md ]; then
+            cat migration-replay-status.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'No sanitized diagnostic was produced.' >> "$GITHUB_STEP_SUMMARY"
+          fi

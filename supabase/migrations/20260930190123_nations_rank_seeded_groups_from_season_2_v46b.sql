@@ -175,5 +175,5 @@ begin
     'plan',v_plan
   );
 end;
-$function$
+$function$;
 
