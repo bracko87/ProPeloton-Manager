@@ -338,6 +338,8 @@ type GroupPointsRow = {
   stage_points: number
   total_points: number
   rank: number
+  qualification_status?: 'qualified' | 'advanced' | 'provisional' | null
+  qualification_label?: string | null
 }
 
 function ResultNationFlag({ code, name }: { code?: string | null; name?: string | null }): JSX.Element {
@@ -368,9 +370,23 @@ function GroupPointsTable({ rows, limit }: { rows: GroupPointsRow[]; limit?: num
               <td className="px-3 py-3">
                 <div className="flex items-center gap-3">
                   <ResultNationFlag code={row.country_code} name={row.association_name} />
-                  <span className="font-semibold text-slate-900">
-                    {nationDisplayName(row.association_name, row.country_code)}
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-slate-900">
+                      {nationDisplayName(row.association_name, row.country_code)}
+                    </span>
+                    {row.qualification_status ? (
+                      <span
+                        className={row.qualification_status === 'provisional'
+                          ? 'rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700'
+                          : 'rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700'}
+                        title={row.qualification_status === 'provisional'
+                          ? 'Current qualification position only; not yet confirmed'
+                          : 'Final group classification confirms advancement'}
+                      >
+                        {row.qualification_label}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
               </td>
               <td className="px-3 py-3 text-right font-semibold text-slate-900">{row.stage_points}</td>
@@ -526,6 +542,8 @@ export default function WorldNationsEventPage(): JSX.Element {
   const [raceFavorites, setRaceFavorites] = useState<RaceFavorite[]>([])
   const [stageResults, setStageResults] = useState<StageResultRow[]>([])
   const [generalStandings, setGeneralStandings] = useState<GeneralStanding[]>([])
+  const [groupStatus, setGroupStatus] = useState<string>('')
+  const [loadedStageResultsId, setLoadedStageResultsId] = useState<string | null>(null)
   const [groupStages, setGroupStages] = useState<GroupStage[]>([])
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
   const [selectedEventData, setSelectedEventData] = useState<EventData | null>(null)
@@ -662,6 +680,7 @@ export default function WorldNationsEventPage(): JSX.Element {
       setRaceTeams([])
       setRaceFavorites([])
       setGeneralStandings([])
+      setGroupStatus('')
       return
     }
 
@@ -727,6 +746,7 @@ export default function WorldNationsEventPage(): JSX.Element {
       const group = rounds
         .flatMap((round: any) => (Array.isArray(round.groups) ? round.groups : []))
         .find((candidate: any) => candidate?.id === data.group_id)
+      setGroupStatus(String(group?.status ?? ''))
       setGeneralStandings(Array.isArray(group?.entries)
         ? group.entries.map((entry: any) => ({
             association_id: String(entry.association_id ?? ''),
@@ -742,17 +762,19 @@ export default function WorldNationsEventPage(): JSX.Element {
     }
     void loadRaceInformation()
     return () => { cancelled = true }
-  }, [data?.event_id, data?.race_id, data?.group_id, data?.season_number])
+  }, [data?.event_id, data?.race_id, data?.group_id, data?.season_number, resultsVisible, selectedEventId])
 
   // Fetch the chosen day's real rider result rows, including previously
   // completed days. No unpublished race results are read into the table.
   useEffect(() => {
     if (!resultsVisible || !resultStageId || resultEvent?.race_type === 'team_time_trial') {
       setStageResults([])
+      setLoadedStageResultsId(null)
       return
     }
     let cancelled = false
     setStageResults([])
+    setLoadedStageResultsId(null)
     void (async () => {
       const { data: resultRows, error: resultError } = await supabase
         .from('race_stage_results')
@@ -771,6 +793,7 @@ export default function WorldNationsEventPage(): JSX.Element {
         ...row,
         rider_name_snapshot: (row.rider_id ? fullNames.get(row.rider_id) : null) ?? row.rider_name_snapshot ?? null,
       })))
+      setLoadedStageResultsId(resultStageId)
     })()
     return () => { cancelled = true }
   }, [resultsVisible, resultStageId, resultEvent?.race_type])
@@ -844,11 +867,14 @@ export default function WorldNationsEventPage(): JSX.Element {
   const pointsForStage = (standing: GeneralStanding, stage: GroupStage): number => {
     const type = stage.race_type
     if (type === 'team_time_trial') return standing.ttt_points
-    if (type === 'flat' || (type === 'road_race' && Number(stage.race_day) === 2)) return standing.flat_points
+    if (type === 'flat_road_race' || type === 'flat' || (type === 'road_race' && Number(stage.race_day) === 2)) return standing.flat_points
     return standing.mountain_points
   }
   // Historical snapshots use the separate authoritative point totals for each
   // race day, not the latest final group rank or its later-race points.
+  const finalGroupConfirmed = ['completed', 'finished'].includes(groupStatus.toLowerCase())
+  const canAdvance = data.round_type !== 'world_final' && data.advancing_places > 0
+  const qualifyingForFinal = data.round_type === 'final_qualification'
   const groupPointsRows: GroupPointsRow[] = generalStandings
     .map(standing => ({
       association_id: standing.association_id,
@@ -859,21 +885,40 @@ export default function WorldNationsEventPage(): JSX.Element {
         .filter(stage => Number(stage.race_day) <= selectedRaceDay)
         .reduce((total, stage) => total + pointsForStage(standing, stage), 0),
       rank: 0,
+      final_group_rank: standing.final_group_rank,
     }))
     .sort((a, b) =>
       b.total_points - a.total_points ||
       b.stage_points - a.stage_points ||
       nationDisplayName(a.association_name, a.country_code)
         .localeCompare(nationDisplayName(b.association_name, b.country_code)))
-    .map((standing, index, ordered) => ({
-      ...standing,
-      rank: index > 0 && standing.total_points === ordered[index - 1].total_points
+    .map((standing, index, ordered) => {
+      const rank = index > 0 && standing.total_points === ordered[index - 1].total_points
         ? ordered.findIndex(other => other.total_points === standing.total_points) + 1
-        : index + 1,
-    }))
+        : index + 1
+      // A confirmed place is taken from the completed group's final ranking;
+      // an interim top-N position must never be labelled as qualified.
+      const confirmed = canAdvance && finalGroupConfirmed &&
+        standing.final_group_rank != null &&
+        standing.final_group_rank > 0 &&
+        standing.final_group_rank <= data.advancing_places
+      const provisional = canAdvance && !finalGroupConfirmed &&
+        rank <= data.advancing_places
+      return {
+        ...standing,
+        rank,
+        qualification_status: confirmed
+          ? (qualifyingForFinal ? 'qualified' : 'advanced')
+          : provisional ? 'provisional' : null,
+        qualification_label: confirmed
+          ? (qualifyingForFinal ? 'Qualified for final' : 'Advanced')
+          : provisional ? 'Qualifying position' : null,
+      }
+    })
+  const visibleStageRows = loadedStageResultsId === resultStageId ? stageResults : []
   const stageResultRowCount = resultEvent?.race_type === 'team_time_trial'
     ? (resultEvent.results ?? []).length
-    : stageResults.length
+    : visibleStageRows.length
 
 
   return (
@@ -1422,6 +1467,12 @@ export default function WorldNationsEventPage(): JSX.Element {
                         Standings after stage {selectedRaceDay}
                       </div>
                     </div>
+                    {canAdvance ? (
+                      <div className="mt-1 text-xs text-slate-500">
+                        Top {data.advancing_places} advance
+                        {finalGroupConfirmed ? ' · confirmed after all stages' : ' · positions provisional until qualification ends'}
+                      </div>
+                    ) : null}
                     <GroupPointsTable rows={groupPointsRows} limit={15} />
                     {groupPointsRows.length > 15 ? (
                       <div className="mt-4 flex justify-end">
@@ -1441,7 +1492,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                         ? 'National Team Time Trial result'
                         : 'Riders who participated in this race'}
                     </div>
-                    <NationsStageResultTable event={resultEvent} riderRows={stageResults} limit={15} />
+                    <NationsStageResultTable event={resultEvent} riderRows={visibleStageRows} limit={15} />
                     {stageResultRowCount > 15 ? (
                       <div className="mt-4 flex justify-end">
                         <button type="button" onClick={() => setFullResultsModal('stage')}
@@ -1471,7 +1522,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                     </div>
                     {fullResultsModal === 'teams'
                       ? <GroupPointsTable rows={groupPointsRows} />
-                      : <NationsStageResultTable event={resultEvent} riderRows={stageResults} />}
+                      : <NationsStageResultTable event={resultEvent} riderRows={visibleStageRows} />}
                   </div>
                 </div>
               ) : null}
