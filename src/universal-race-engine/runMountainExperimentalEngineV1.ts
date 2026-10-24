@@ -1,5 +1,6 @@
 import { mountainOpeningBreakawayPhysicallyActiveV1 } from './mountainOpeningBreakawayV1.ts'
 import { calculateSummitFinishSelectivityV1 } from './summitFinishSelectivityV1.ts'
+import { isFinalSummitApproachV1, getFinalSummitPhysicalGapSecondsV1 } from './summitFinishPhysicalHandoffV1.ts'
 import {
   applyRoadScenarioFinishFragmentationV1,
   applyRoadScenarioGapGuidanceV1,
@@ -16750,7 +16751,7 @@ export function resolveRoadPhase4Finish(
     const frontClimbCandidateRows =
       input.stage.summitFinishSelectivityV1 === true &&
       input.stage.summitFinish &&
-      Math.abs(effort.kmEnd - input.stage.distanceKm) <= 0.000001
+      isFinalSummitApproachV1(input.stage.distanceKm, effort.kmEnd, input.stage.summitFinish)
         ? roadCommandResolution.riders
             .filter((row) =>
               row.eligibleToStart &&
@@ -19443,7 +19444,7 @@ export function resolveRoadPhase4Finish(
   const finalSummitDetachedByRiderId = new Map(
     profileClimbSelections
       .filter((selection) =>
-        Math.abs(selection.kmEnd - input.stage.distanceKm) <= 0.000001,
+        isFinalSummitApproachV1(input.stage.distanceKm, selection.kmEnd, input.stage.summitFinish),
       )
       .flatMap((selection) =>
         selection.riders
@@ -19451,8 +19452,7 @@ export function resolveRoadPhase4Finish(
             rider.finalDetached &&
             rider.rejoinKm === null &&
             rider.gapAtSummitSeconds > 0 &&
-            (rider.gapSamples.at(-1)?.kmEnd ?? 0) >=
-              input.stage.distanceKm - 0.000001,
+            getFinalSummitPhysicalGapSecondsV1(rider.gapSamples, input.stage.distanceKm) !== null,
           )
           .map((rider) => [rider.riderId, rider] as const),
       ),
@@ -19477,7 +19477,9 @@ export function resolveRoadPhase4Finish(
         ? {
             samples: finalSummitTrajectory.gapSamples,
             rejoinKm: null,
-            finalGapBehindPelotonSeconds: finalSummitTrajectory.gapAtSummitSeconds,
+            finalGapBehindPelotonSeconds:
+              getFinalSummitPhysicalGapSecondsV1(finalSummitTrajectory.gapSamples, input.stage.distanceKm) ??
+              finalSummitTrajectory.gapAtSummitSeconds,
           }
         : buildPhysicalDetachedTrajectory(
             state.riderId,
