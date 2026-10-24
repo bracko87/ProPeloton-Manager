@@ -27,7 +27,10 @@ function run(binary,args,timeout=120000) {
   const stateMatch=normalized.match(/\\bSQLSTATE[\\s:=(]*([A-Z0-9]{5})\\b/i);
   const sqlstate=stateMatch ? stateMatch[1].toUpperCase() : null;
   const errorContext=normalized.split(/\r?\n/).map(line=>line.trim()).filter(line=>/^(?:ERROR|FATAL)(?:\s|:)|^Error:/i.test(line)).slice(0,8).join('\n');
-  let sqlCategory=null;
+  // This migration contains an explicit 54-row equipment catalog prerequisite.
+  // Report only its fixed error class, never the raw message or catalog records.
+  const equipmentSeedPrerequisite=/National Team equipment option seed is incomplete:/i.test(normalized);
+  let sqlCategory=equipmentSeedPrerequisite ? 'NATIONAL_EQUIPMENT_SEED_PREREQUISITE' : null;
   if (/relation [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_RELATION';
   else if (/function [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_FUNCTION';
   else if (/type [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_TYPE';
