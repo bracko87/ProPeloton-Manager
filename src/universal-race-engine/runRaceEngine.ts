@@ -9008,6 +9008,36 @@ type UniversalRoadPhysicalPaceRole = 'front' | 'peloton' | 'chase'
  * B/F/P/C-like groups; only cooperation/work intent differs. This prevents a
  * chase from receiving a separate artificial speed scale.
  */
+/**
+ * A large peloton's drafting advantage is not a free organized pursuit.
+ * With an active flat-road escape and no dedicated chase workers, most riders
+ * are sheltering instead of contributing to the pace at the front. As willing
+ * automatic workers join, the physically attainable peloton pace recovers.
+ *
+ * Phase-4 Baseline flat finishes only. A genuine explicit chase is not
+ * penalized. The physical-gap integrator still uses actual group speeds:
+ * this function never sets a target gap, scripted catch or forced winner.
+ */
+export function calculateBaselinePelotonCruiseMultiplierV1(
+  stage: Pick<UniversalStageInput, 'stageFormat' | 'terrainType' | 'finishType'>,
+  activeFrontRiders: number,
+  explicitChaseWorkers: number,
+  automaticChaseWorkers: number,
+): number {
+  if (
+    stage.stageFormat !== 'road_race' ||
+    stage.terrainType !== 'flat' ||
+    stage.finishType !== 'flat_finish' ||
+    activeFrontRiders <= 0 ||
+    explicitChaseWorkers > 0
+  ) return 1
+
+  const activeWorkers = Number.isFinite(automaticChaseWorkers)
+    ? Math.max(0, automaticChaseWorkers)
+    : 0
+  return deterministicRound(0.885 + 0.115 * clamp(activeWorkers / 12, 0, 1), 6)
+}
+
 function calculateRoadPhysicalGroupPaceKmh(
   stage: UniversalStageInput,
   km: number,
@@ -17631,12 +17661,38 @@ export function resolveRoadPhase4Finish(
         !bridgeRiderSet.has(row.riderId) &&
         !riderHasLostContactByKm(row.riderId),
     ).length
-    const effectiveAutomaticWorkerRows = automaticWorkerRows.filter(
-      (row) =>
-        !currentFrontRiderSet.has(row.riderId) &&
-        !bridgeRiderSet.has(row.riderId) &&
-        !riderHasLostContactByKm(row.riderId),
-    )
+    // A team's possible rouleurs are not automatically a peloton-wide
+    // pursuit force. Only finish-interested teams can contribute workers.
+    // Count at most two energetic workers per team in this *automatic*
+    // (non-commanded) chase; explicit chase orders keep their full roster.
+    // Otherwise every ordinary rouleur was being charged as a chaser even
+    // when its team had no chase interest, producing 100% late catches.
+    const automaticTeamSet = new Set(effectiveAutomaticChasingTeamIds)
+    const explicitWorkerIds = new Set(explicitChasers.map((row) => row.riderId))
+    const eligibleAutomaticWorkers = automaticWorkerRows
+      .filter(
+        (row) =>
+          automaticTeamSet.has(row.teamId) &&
+          !explicitWorkerIds.has(row.riderId) &&
+          !currentFrontRiderSet.has(row.riderId) &&
+          !bridgeRiderSet.has(row.riderId) &&
+          !riderHasLostContactByKm(row.riderId) &&
+          (phase3EnergyByRiderId.get(row.riderId) ?? 0) >= 12,
+      )
+      .sort(
+        (a, b) =>
+          a.teamId.localeCompare(b.teamId) ||
+          getPhase4ChaseSkill(ridersById.get(b.riderId)!) -
+            getPhase4ChaseSkill(ridersById.get(a.riderId)!) ||
+          a.riderId.localeCompare(b.riderId),
+      )
+    const automaticWorkerCountByTeam = new Map<string, number>()
+    const effectiveAutomaticWorkerRows = eligibleAutomaticWorkers.filter((row) => {
+      const assigned = automaticWorkerCountByTeam.get(row.teamId) ?? 0
+      if (assigned >= 2) return false
+      automaticWorkerCountByTeam.set(row.teamId, assigned + 1)
+      return true
+    })
     const automaticActivityFactor = clamp(
       (progress - chaseStartFraction) /
         Math.max(0.000001, 1 - chaseStartFraction),
@@ -17668,8 +17724,9 @@ export function resolveRoadPhase4Finish(
         automaticActivityFactor *
         finiteWorkerAvailability,
     )
-    const activeAutomaticTeamCount = Math.ceil(
-      effectiveAutomaticChasingTeamIds.length * automaticActivityFactor,
+    const activeAutomaticTeamCount = Math.min(
+      activeAutomaticWorkerCount,
+      Math.ceil(effectiveAutomaticChasingTeamIds.length * automaticActivityFactor),
     )
     const response = calculatePelotonResponseComponents(
       progress,
@@ -17840,7 +17897,7 @@ export function resolveRoadPhase4Finish(
       1 -
       freshFrontReactionFraction *
         freshFrontResponseLagStrength
-    const effectivePelotonPaceKmh = calculateRoadPhysicalGroupPaceKmh(
+    const unopposedPhysicalPelotonPaceKmh = calculateRoadPhysicalGroupPaceKmh(
       input.stage,
       phase4StepMidKm,
       physicalPelotonRiderIds,
@@ -17864,6 +17921,20 @@ export function resolveRoadPhase4Finish(
         stepEndKm,
         0.25,
       ),
+    )
+    const effectivePelotonPaceKmh = deterministicRound(
+      clamp(
+        unopposedPhysicalPelotonPaceKmh *
+          calculateBaselinePelotonCruiseMultiplierV1(
+            input.stage,
+            currentFrontRiderIds.length,
+            effectiveExplicitChaserCount,
+            activeAutomaticWorkerCount,
+          ),
+        18,
+        58,
+      ),
+      6,
     )
     const stepEscapePaceKmh = calculateRoadPhysicalGroupPaceKmh(
       input.stage,
