@@ -65,7 +65,13 @@ function run(binary,args,timeout=120000) {
     'value','procedure','call','expected','aggregate','enum','table','sequence','dependency',
     'unknown','unrecognized','insufficient','privilege','has','no','been','was','result',
     'in','wrong','number','is','be','used','references','defined','failed','language',
-    'unsupported','with','without','input','already','available','automatically','data'
+    'unsupported','with','without','input','already','available','automatically','data',
+    'insert','multiple','commands','into','prepared','statement','use','change','drop',
+    'index','other','objects','depend','convert','initialize','execute','inside',
+    'temporary','transaction','during','recovery','alter','when','replication',
+    'protocol','generated','same','new','null','role','existing','arguments',
+    'query','parse','find','some','as','having','primary','key','configuration',
+    'tables','sequences','functions','commands','return','via','through','update','delete'
   ]);
   // Output only a finite vocabulary of SQL error concepts; discard all untrusted identifiers/values.
   const safeErrorSignature=errorContext.toLowerCase().match(/[a-z]+/g)?.filter(word=>allowedErrorWords.has(word)).slice(0,28).join(' ') || 'NO_ALLOWLISTED_TERMS';
