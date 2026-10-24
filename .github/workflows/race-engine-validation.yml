@@ -18,6 +18,7 @@ on:
       - 'scripts/tests/persistent-output-v2-integration.sql'
       - 'scripts/tests/safe-worker-admission-fixtures.sql'
       - 'scripts/tests/safe-worker-admission-integration.sql'
+      - 'scripts/tests/safe-worker-admission-concurrency.sh'
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
@@ -43,6 +44,7 @@ on:
       - 'scripts/tests/persistent-output-v2-integration.sql'
       - 'scripts/tests/safe-worker-admission-fixtures.sql'
       - 'scripts/tests/safe-worker-admission-integration.sql'
+      - 'scripts/tests/safe-worker-admission-concurrency.sh'
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
@@ -187,3 +189,7 @@ jobs:
         env:
           PGDATABASE: race_capacity_ci
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/tests/safe-worker-admission-integration.sql
+
+      - name: Stress-test 24 concurrent safe-worker claims
+        run: bash scripts/tests/safe-worker-admission-concurrency.sh
+
