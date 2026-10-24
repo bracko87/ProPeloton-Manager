@@ -10,6 +10,13 @@ on:
       - 'supabase/functions/universal-race-stage-safe-resume/**'
       - 'supabase/functions/_shared/idempotentChunkRetryV1.mjs'
       - 'scripts/test-race-safe-chunk-retries.mjs'
+      - 'supabase/functions/_shared/replayNormalizationWindowV1.mjs'
+      - 'scripts/test-race-replay-normalization-pages.mjs'
+      - 'scripts/test-race-safe-admission-cap.mjs'
+      - 'scripts/test-race-worker-capacity-model.mjs'
+      - 'scripts/lib/race-worker-capacity-model.mjs'
+      - 'scripts/simulate-race-worker-capacity.mjs'
+      - 'docs/engineering/safe_step_admission_cap_proposal_20261024.sql'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - '.github/workflows/race-engine-validation.yml'
   push:
@@ -21,6 +28,13 @@ on:
       - 'supabase/functions/universal-race-stage-safe-resume/**'
       - 'supabase/functions/_shared/idempotentChunkRetryV1.mjs'
       - 'scripts/test-race-safe-chunk-retries.mjs'
+      - 'supabase/functions/_shared/replayNormalizationWindowV1.mjs'
+      - 'scripts/test-race-replay-normalization-pages.mjs'
+      - 'scripts/test-race-safe-admission-cap.mjs'
+      - 'scripts/test-race-worker-capacity-model.mjs'
+      - 'scripts/lib/race-worker-capacity-model.mjs'
+      - 'scripts/simulate-race-worker-capacity.mjs'
+      - 'docs/engineering/safe_step_admission_cap_proposal_20261024.sql'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - '.github/workflows/race-engine-validation.yml'
 
@@ -48,6 +62,16 @@ jobs:
 
       - name: Verify race worker idempotent chunk retries
         run: node --test scripts/test-race-safe-chunk-retries.mjs
+
+      - name: Verify race replay paging and capacity policies
+        run: >-
+          node --test
+          scripts/test-race-replay-normalization-pages.mjs
+          scripts/test-race-safe-admission-cap.mjs
+          scripts/test-race-worker-capacity-model.mjs
+
+      - name: Compare synthetic 2x and 12x worker pressure
+        run: node scripts/simulate-race-worker-capacity.mjs
 
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
