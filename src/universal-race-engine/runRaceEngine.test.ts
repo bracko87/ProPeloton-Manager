@@ -25,6 +25,7 @@ import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 import * as resumableMountain from './runMountainResumableEngineV1.ts'
+import * as resumableBaseline from './runBaselineResumableEngineV1.ts'
 
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
@@ -19203,5 +19204,119 @@ describe('Mountain replay bounded-window generation', () => {
     expect(() => resumableMountain.buildUniversalReplayTimeline(...args, { start: -1, count: 5 })).toThrow()
     expect(() => resumableMountain.buildUniversalReplayTimeline(...args, { start: 0, count: 33 })).toThrow()
     expect(() => resumableMountain.buildUniversalReplayTimeline(...args, { start: 1.5, count: 5 })).toThrow()
+  })
+})
+
+
+describe('Baseline replay bounded-window generation', () => {
+  const fixture = (sourceInput: UniversalRaceEngineInput = createValidInput()) => {
+    const engineResult = resumableBaseline.runRaceEngine(sourceInput)
+    const calculationInput = resumableBaseline.applyUniversalPhase9ModifiersToInput(
+      sourceInput, engineResult.phase9Modifiers,
+    )
+    const provisionalBattles = resumableBaseline.buildUniversalIntermediatePointBattles(
+      calculationInput,
+      engineResult.riderReadiness,
+      engineResult.roadRaceResolution,
+      engineResult.intermediatePointPlan,
+    )
+    const provisionalFinalization = resumableBaseline.buildUniversalIntermediatePointFinalization(
+      calculationInput,
+      engineResult.riderReadiness,
+      engineResult.roadCommandResolution,
+      engineResult.intermediatePointPlan,
+      provisionalBattles,
+    )
+    const baseFinish = resumableBaseline.resolveUniversalFinishResolution({
+      input: calculationInput,
+      stageClassification: engineResult.stageClassification,
+      riderReadiness: engineResult.riderReadiness,
+      riderSuitability: engineResult.riderSuitability,
+      roadCommandResolution: engineResult.roadCommandResolution,
+      roadRaceResolution: engineResult.roadRaceResolution,
+      groupAndTimeResolution: engineResult.groupAndTimeResolution,
+    })
+    const args = [
+      calculationInput,
+      engineResult.riderReadiness,
+      engineResult.roadCommandResolution,
+      engineResult.roadRaceResolution,
+      provisionalBattles,
+      provisionalFinalization,
+      engineResult.groupAndTimeResolution,
+      baseFinish,
+    ] as const
+    return args
+  }
+
+  it('reassembles exactly the same JSON checkpoints, global IDs and group states', () => {
+    const args = fixture()
+    const uninterrupted = resumableBaseline.buildUniversalReplayTimeline(...args)
+    expect(uninterrupted.checkpoints.length).toBeGreaterThan(1)
+    const restored = []
+    for (let start = 0; start < uninterrupted.checkpoints.length; start += 7) {
+      const page = resumableBaseline.buildUniversalReplayTimeline(
+        ...args, { start, count: 7 },
+      )
+      expect(page.finalCheckpointId).toBe(uninterrupted.finalCheckpointId)
+      expect(page.baseCheckpointCount).toBe(uninterrupted.baseCheckpointCount)
+      expect(page.eventCheckpointCount).toBe(uninterrupted.eventCheckpointCount)
+      expect(page.checkpoints.every((row,index) =>
+        row.checkpointIndex === start + index)).toBe(true)
+      // Each finished page is safely serializable across a worker handoff.
+      restored.push(...JSON.parse(JSON.stringify(page.checkpoints)))
+    }
+    expect(restored).toEqual(JSON.parse(JSON.stringify(uninterrupted.checkpoints)))
+  })
+
+  it('keeps baseline group identities, gaps and finish states identical across 48-rider replay windows', () => {
+    const base=createExpandedFieldInput(48)
+    const hillyStage: UniversalRaceEngineInput = {
+      ...base,
+      stage:{
+        ...base.stage,
+        terrainType:'hilly',
+        profileType:'rolling',
+        finishType:base.stage.finishType,
+        elevationGainM:840,
+        terrainPercentages:{flat:35,hilly:65,mountain:0,cobbled:0},
+        profilePoints:[
+          {km:0,elevationM:120},
+          {km:60,elevationM:330},
+          {km:80,elevationM:180},
+          {km:120,elevationM:450},
+        ],
+      },
+    }
+    const args=fixture(hillyStage)
+    const full=resumableBaseline.buildUniversalReplayTimeline(...args)
+    expect(full.checkpoints.length).toBeGreaterThan(8)
+    const recovered=[]
+    for(let start=0;start<full.checkpoints.length;start+=8){
+      const partial=resumableBaseline.buildUniversalReplayTimeline(...args,{start,count:8})
+      recovered.push(...JSON.parse(JSON.stringify(partial.checkpoints)))
+    }
+    expect(recovered).toEqual(JSON.parse(JSON.stringify(full.checkpoints)))
+    expect(recovered.at(-1)?.checkpointId).toBe(full.checkpoints.at(-1)?.checkpointId)
+    expect(recovered.every((row) => row.riderStates.length === 48)).toBe(true)
+  })
+
+  it('resumes a serialized partial page instead of recomputing saved checkpoints', () => {
+    const args = fixture()
+    const uninterrupted = resumableBaseline.buildUniversalReplayTimeline(...args)
+    const first = resumableBaseline.buildUniversalReplayTimeline(...args, { start: 0, count: 5 })
+    const persisted = JSON.parse(JSON.stringify({
+      cursor: first.checkpoints.length,
+      checkpoints: first.checkpoints,
+    }))
+    const laterPages = []
+    for (let start = persisted.cursor; start < uninterrupted.checkpoints.length; start += 5) {
+      const page = resumableBaseline.buildUniversalReplayTimeline(...args, { start, count: 5 })
+      laterPages.push(...page.checkpoints)
+    }
+    expect([...persisted.checkpoints, ...laterPages]).toEqual(uninterrupted.checkpoints)
+    expect(() => resumableBaseline.buildUniversalReplayTimeline(...args, { start: -1, count: 5 })).toThrow()
+    expect(() => resumableBaseline.buildUniversalReplayTimeline(...args, { start: 0, count: 33 })).toThrow()
+    expect(() => resumableBaseline.buildUniversalReplayTimeline(...args, { start: 1.5, count: 5 })).toThrow()
   })
 })
