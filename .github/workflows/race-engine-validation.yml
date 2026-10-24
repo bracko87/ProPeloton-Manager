@@ -7,6 +7,9 @@ on:
       - staging
     paths:
       - 'src/universal-race-engine/**'
+      - 'supabase/functions/universal-race-stage-safe-resume/**'
+      - 'supabase/functions/_shared/idempotentChunkRetryV1.mjs'
+      - 'scripts/test-race-safe-chunk-retries.mjs'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - '.github/workflows/race-engine-validation.yml'
   push:
@@ -15,6 +18,9 @@ on:
       - fix/race-engine-replay-sync-gap-exhaustion
     paths:
       - 'src/universal-race-engine/**'
+      - 'supabase/functions/universal-race-stage-safe-resume/**'
+      - 'supabase/functions/_shared/idempotentChunkRetryV1.mjs'
+      - 'scripts/test-race-safe-chunk-retries.mjs'
       - 'src/pages/dashboard/RaceDetailPage.tsx'
       - '.github/workflows/race-engine-validation.yml'
 
@@ -39,6 +45,9 @@ jobs:
 
       - name: Install application dependencies
         run: npm ci
+
+      - name: Verify race worker idempotent chunk retries
+        run: node --test scripts/test-race-safe-chunk-retries.mjs
 
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
