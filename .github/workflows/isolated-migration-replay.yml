@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: Validate diagnostic syntax
+        run: node --check scripts/diagnose-local-migrations.mjs
       - uses: supabase/setup-cli@v1
         with:
           version: 2.79.0
