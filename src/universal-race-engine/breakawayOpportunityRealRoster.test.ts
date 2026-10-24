@@ -113,9 +113,11 @@ function report(source:Source,scenario:Scenario){
   return result
 }
 describe('registered rosters — breakaway experimental scenario matrix',()=>{
-  it('matches exactly the 3 allowed stage IDs and recorded fields',()=>{
+  it('keeps the three historical captured rosters immutable while new Zeeland candidate has separate synthetic coverage',()=>{
     expect(STAGES).toHaveLength(3)
-    expect(STAGES.map(s=>s.id)).toEqual(BREAKAWAY_V1_STAGE_REGISTRY.map(s=>s.stageId))
+    expect(STAGES.map(s=>s.id)).toEqual(
+      BREAKAWAY_V1_STAGE_REGISTRY.filter(s=>s.stageId!=='7f69e552-b116-453c-bf55-16ef655ea021').map(s=>s.stageId))
+    expect(BREAKAWAY_V1_STAGE_REGISTRY.some(s=>s.stageId==='7f69e552-b116-453c-bf55-16ef655ea021')).toBe(true)
     for(const source of STAGES){
       expect(source.attrs).toHaveLength(source.registered)
       expect(new Set(source.attrs.map(r=>r[0])).size).toBe(source.teams)
