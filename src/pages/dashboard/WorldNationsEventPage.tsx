@@ -85,6 +85,15 @@ type RaceFavorite = {
   role_snapshot?: string | null
 }
 
+type GroupStage = {
+  event_id: string
+  group_id: string
+  race_day: number
+  race_type: string
+  stage_id?: string | null
+  status?: string | null
+}
+
 type StageResultRow = {
   rank?: number | null
   rider_id?: string | null
@@ -321,6 +330,164 @@ function NationCell({
   )
 }
 
+
+type GroupPointsRow = {
+  association_id: string
+  association_name: string
+  country_code: string
+  stage_points: number
+  total_points: number
+  rank: number
+  qualification_status?: 'qualified' | 'advanced' | 'provisional' | null
+  qualification_label?: string | null
+}
+
+function ResultNationFlag({ code, name }: { code?: string | null; name?: string | null }): JSX.Element {
+  const src = flagUrl(code)
+  return src ? (
+    <img src={src} alt={name ?? code ?? 'Nation'} className="h-5 w-8 shrink-0 rounded border border-slate-200 object-cover" />
+  ) : (
+    <span className="inline-block h-5 w-8 shrink-0 rounded border border-slate-200 bg-slate-100" aria-hidden="true" />
+  )
+}
+
+function GroupPointsTable({ rows, limit }: { rows: GroupPointsRow[]; limit?: number }): JSX.Element {
+  return (
+    <div className="mt-4 overflow-x-auto rounded-xl bg-white">
+      <table className="min-w-full table-fixed text-sm">
+        <thead>
+          <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th className="w-[8%] px-3 py-3">#</th>
+            <th className="w-[52%] px-3 py-3">Team</th>
+            <th className="w-[20%] px-3 py-3 text-right">Stage pts</th>
+            <th className="w-[20%] px-3 py-3 text-right">Total pts</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.slice(0, limit ?? rows.length).map(row => (
+            <tr key={row.association_id} className="border-b border-slate-100">
+              <td className="px-3 py-3 font-semibold text-slate-900">{row.rank}</td>
+              <td className="px-3 py-3">
+                <div className="flex items-center gap-3">
+                  <ResultNationFlag code={row.country_code} name={row.association_name} />
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-slate-900">
+                      {nationDisplayName(row.association_name, row.country_code)}
+                    </span>
+                    {row.qualification_status ? (
+                      <span
+                        className={row.qualification_status === 'provisional'
+                          ? 'rounded-full border border-sky-200 bg-sky-50 px-2 py-0.5 text-[10px] font-semibold text-sky-700'
+                          : 'rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700'}
+                        title={row.qualification_status === 'provisional'
+                          ? 'Current qualification position only; not yet confirmed'
+                          : 'Final group classification confirms advancement'}
+                      >
+                        {row.qualification_label}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </td>
+              <td className="px-3 py-3 text-right font-semibold text-slate-900">{row.stage_points}</td>
+              <td className="px-3 py-3 text-right text-slate-500">{row.total_points}</td>
+            </tr>
+          ))}
+          {rows.length === 0 ? (
+            <tr><td colSpan={4} className="px-4 py-5 text-sm text-slate-500">No published classification points available.</td></tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+function NationsStageResultTable({
+  event,
+  riderRows,
+  limit,
+}: {
+  event: EventData
+  riderRows: StageResultRow[]
+  limit?: number
+}): JSX.Element {
+  const isTeamTimeTrial = event.race_type === 'team_time_trial'
+  const teamRows = [...(event.results ?? [])]
+    .sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER))
+  const riders = [...riderRows]
+    .sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER))
+  const displayedTeams = teamRows.slice(0, limit ?? teamRows.length)
+  const displayedRiders = riders.slice(0, limit ?? riders.length)
+
+  return (
+    <div className="mt-4 overflow-x-auto rounded-xl bg-white">
+      <table className="min-w-full table-fixed text-sm">
+        <thead>
+          <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+            <th className="w-[8%] px-3 py-3">#</th>
+            <th className="w-[52%] px-3 py-3">{isTeamTimeTrial ? 'Team' : 'Rider'}</th>
+            <th className="w-[22%] px-3 py-3 text-right">Time</th>
+            <th className="w-[18%] px-3 py-3 text-right">Gap</th>
+          </tr>
+        </thead>
+        <tbody>
+          {isTeamTimeTrial
+            ? displayedTeams.map((result, index) => (
+                <tr key={result.association_id} className="border-b border-slate-100">
+                  <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? index + 1}</td>
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-3">
+                      <ResultNationFlag code={result.country_code} name={result.association_name} />
+                      <span className="font-semibold text-slate-900">
+                        {nationDisplayName(result.association_name, result.country_code)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatRaceTime(result.elapsed_seconds)}</td>
+                  <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
+                </tr>
+              ))
+            : displayedRiders.map((result, index) => {
+                const participant = event.participants.find(team => team.team_id === result.team_id)
+                return (
+                  <tr key={`stage-${result.rider_id ?? index}`} className="border-b border-slate-100">
+                    <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? '—'}</td>
+                    <td className="px-3 py-3">
+                      <div>
+                        {result.rider_id ? (
+                          <Link
+                            to={riderProfilePath(result.rider_id)}
+                            className="font-semibold text-slate-900 no-underline hover:text-slate-900 hover:no-underline"
+                          >
+                            {result.rider_name_snapshot ?? '—'}
+                          </Link>
+                        ) : (
+                          <span className="font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</span>
+                        )}
+                        {participant ? (
+                          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
+                            <ResultNationFlag code={participant.country_code} name={participant.association_name} />
+                            <span>{nationDisplayName(participant.association_name, participant.country_code)}</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    </td>
+                    <td className="px-3 py-3 text-right font-semibold text-slate-900">
+                      {result.elapsed_seconds == null ? (result.status?.toUpperCase() ?? '—') : formatRaceTime(result.elapsed_seconds)}
+                    </td>
+                    <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
+                  </tr>
+                )
+              })}
+          {(isTeamTimeTrial ? teamRows.length : riders.length) === 0 ? (
+            <tr><td colSpan={4} className="px-4 py-5 text-sm text-slate-500">No stage result data available.</td></tr>
+          ) : null}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 function TerrainSplit({
   route,
   t,
@@ -375,7 +542,14 @@ export default function WorldNationsEventPage(): JSX.Element {
   const [raceFavorites, setRaceFavorites] = useState<RaceFavorite[]>([])
   const [stageResults, setStageResults] = useState<StageResultRow[]>([])
   const [generalStandings, setGeneralStandings] = useState<GeneralStanding[]>([])
+  const [groupStatus, setGroupStatus] = useState<string>('')
+  const [loadedStageResultsId, setLoadedStageResultsId] = useState<string | null>(null)
+  const [groupStages, setGroupStages] = useState<GroupStage[]>([])
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [selectedEventData, setSelectedEventData] = useState<EventData | null>(null)
+  const [fullResultsModal, setFullResultsModal] = useState<'teams' | 'stage' | null>(null)
   const [replayAvailability, setReplayAvailability] = useState<ReplayAvailability | null>(null)
+  const [availabilityStageId, setAvailabilityStageId] = useState<string | null>(null)
   const [raceInformationOpen, setRaceInformationOpen] = useState(true)
 
   const load = async (): Promise<void> => {
@@ -409,56 +583,117 @@ export default function WorldNationsEventPage(): JSX.Element {
   }, [eventId])
 
   useEffect(() => {
-    const stageId = data?.generated_stage_id ?? data?.route?.stage_id ?? null
-    if (!stageId) {
+    setSelectedEventId(data?.event_id ?? null)
+    setSelectedEventData(data)
+    setGroupStages([])
+    setFullResultsModal(null)
+  }, [data?.event_id])
+
+  // The event schedule identifies all three race days in this qualification group.
+  // Keep the selection local to the results panel rather than navigating away.
+  useEffect(() => {
+    if (!data?.edition_id || !data.group_id) return
+    let cancelled = false
+
+    void (async () => {
+      const { data: response, error: scheduleError } = await supabase.rpc(
+        'get_nations_competition_event_schedule_v2',
+        { p_edition_id: data.edition_id },
+      )
+      if (cancelled) return
+      if (scheduleError) {
+        console.warn('Could not load World Nations group stages:', scheduleError.message)
+        setGroupStages([])
+        return
+      }
+      setGroupStages(((response ?? []) as GroupStage[])
+        .filter(stage => stage.group_id === data.group_id)
+        .sort((a, b) => Number(a.race_day) - Number(b.race_day)))
+    })()
+    return () => { cancelled = true }
+  }, [data?.edition_id, data?.group_id])
+
+  useEffect(() => {
+    if (!data || !selectedEventId) {
+      setSelectedEventData(null)
+      return
+    }
+    if (selectedEventId === data.event_id) {
+      setSelectedEventData(data)
+      return
+    }
+    let cancelled = false
+    setSelectedEventData(null)
+    void (async () => {
+      const { data: response, error: eventError } = await supabase.rpc(
+        'get_nations_competition_event_page_v2',
+        { p_event_id: selectedEventId },
+      )
+      if (cancelled) return
+      if (eventError) {
+        console.warn('Could not load selected World Nations stage:', eventError.message)
+        return
+      }
+      const event = (response ?? null) as EventData | null
+      // Never display results from a different competition group.
+      setSelectedEventData(event?.group_id === data.group_id ? event : null)
+    })()
+    return () => { cancelled = true }
+  }, [data, selectedEventId])
+
+  const groupStageOptions = groupStages.length > 0
+    ? groupStages
+    : data ? [{ event_id: data.event_id, group_id: data.group_id, race_day: data.race_day, race_type: data.race_type }] : []
+  const selectedGroupStage = groupStageOptions.find(stage => stage.event_id === selectedEventId)
+    ?? groupStageOptions[0] ?? null
+  const resultEvent = selectedEventData?.event_id === selectedEventId
+    ? selectedEventData : null
+  const resultStageId = resultEvent?.generated_stage_id ?? resultEvent?.route?.stage_id ?? null
+
+  useEffect(() => {
+    if (!resultStageId) {
       setReplayAvailability(null)
+      setAvailabilityStageId(null)
       return
     }
 
     let cancelled = false
-
+    setReplayAvailability(null)
+    setAvailabilityStageId(null)
     async function loadReplayAvailability(): Promise<void> {
       const { data: response, error: availabilityError } = await supabase.rpc(
         'get_universal_race_stage_replay_availability_v1',
-        { p_stage_id: stageId },
+        { p_stage_id: resultStageId },
       )
-
       if (cancelled) return
-
-      if (availabilityError) {
-        setReplayAvailability(null)
-        return
-      }
-
-      setReplayAvailability((response ?? null) as ReplayAvailability | null)
+      setReplayAvailability(availabilityError ? null : (response ?? null) as ReplayAvailability | null)
+      setAvailabilityStageId(availabilityError ? null : resultStageId)
     }
-
     void loadReplayAvailability()
     const interval = window.setInterval(() => void loadReplayAvailability(), 5000)
-
     return () => {
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [data?.generated_stage_id, data?.route?.stage_id])
+  }, [resultStageId])
 
-  const resultsVisible = replayAvailability?.results_visible === true
+  const resultsVisible = Boolean(
+    resultEvent && resultStageId && availabilityStageId === resultStageId &&
+    replayAvailability?.results_visible === true,
+  )
 
   useEffect(() => {
     if (!data) {
       setRaceTeams([])
       setRaceFavorites([])
-      setStageResults([])
       setGeneralStandings([])
+      setGroupStatus('')
       return
     }
 
     let cancelled = false
-
     async function loadRaceInformation(): Promise<void> {
-      const raceId = data?.race_id ?? null
-      const stageId = data?.generated_stage_id ?? data?.route?.stage_id ?? null
-
+      const raceId = data.race_id ?? null
       if (raceId) {
         const [teamsResponse, ridersResponse, favoritesResponse] = await Promise.all([
           supabase
@@ -478,30 +713,18 @@ export default function WorldNationsEventPage(): JSX.Element {
           const rawFavorites = ((favoritesResponse.data ?? []) as RaceFavorite[]).slice(0, 5)
           const fullNames = await loadFullRiderNames([
             ...rawRiders.map(rider => rider.rider_id),
-            ...rawFavorites
-              .map(favorite => favorite.rider_id ?? '')
-              .filter(Boolean),
+            ...rawFavorites.map(favorite => favorite.rider_id ?? '').filter(Boolean),
           ])
-
           if (cancelled) return
-
           const riders = rawRiders.map(rider => ({
             ...rider,
-            rider_name_snapshot:
-              fullNames.get(rider.rider_id) ??
-              rider.rider_name_snapshot ??
-              null,
+            rider_name_snapshot: fullNames.get(rider.rider_id) ?? rider.rider_name_snapshot ?? null,
           }))
-
           const favorites = rawFavorites.map(favorite => ({
             ...favorite,
-            rider_name:
-              (favorite.rider_id ? fullNames.get(favorite.rider_id) : null) ??
-              favorite.rider_name ??
-              null,
+            rider_name: (favorite.rider_id ? fullNames.get(favorite.rider_id) : null) ?? favorite.rider_name ?? null,
           }))
-
-          const teams = ((teamsResponse.data ?? []) as Omit<RaceParticipantTeam, 'riders'>[]).map(team => {
+          setRaceTeams(((teamsResponse.data ?? []) as Omit<RaceParticipantTeam, 'riders'>[]).map(team => {
             const ids = new Set(
               [team.id, team.team_id, team.club_id, team.participating_club_id, team.race_team_entry_id]
                 .filter((value): value is string => Boolean(value)),
@@ -512,8 +735,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                 .filter(rider => ids.has(rider.team_id) || (rider.club_id ? ids.has(rider.club_id) : false))
                 .sort((a, b) => (a.start_number ?? 999) - (b.start_number ?? 999)),
             }
-          })
-          setRaceTeams(teams)
+          }))
           setRaceFavorites(favorites)
         }
       } else if (!cancelled) {
@@ -521,79 +743,67 @@ export default function WorldNationsEventPage(): JSX.Element {
         setRaceFavorites([])
       }
 
-      if (!resultsVisible) {
-        if (!cancelled) {
-          setStageResults([])
-          setGeneralStandings([])
-        }
+      // The overview contains points earned in each of the three distinct races.
+      const { data: overviewData, error: overviewError } = await supabase.rpc(
+        'get_nations_competition_overview_v1', { p_season_number: data.season_number },
+      )
+      if (cancelled || overviewError) return
+      const overview = (overviewData ?? {}) as any
+      const rounds = Array.isArray(overview.rounds) ? overview.rounds : []
+      const group = rounds
+        .flatMap((round: any) => (Array.isArray(round.groups) ? round.groups : []))
+        .find((candidate: any) => candidate?.id === data.group_id)
+      setGroupStatus(String(group?.status ?? ''))
+      setGeneralStandings(Array.isArray(group?.entries)
+        ? group.entries.map((entry: any) => ({
+            association_id: String(entry.association_id ?? ''),
+            association_name: String(entry.association_name ?? entry.country_code ?? ''),
+            country_code: String(entry.country_code ?? ''),
+            final_group_rank: entry.final_group_rank == null ? null : Number(entry.final_group_rank),
+            total_points: Number(entry.total_points ?? 0),
+            ttt_points: Number(entry.ttt_points ?? 0),
+            flat_points: Number(entry.flat_points ?? 0),
+            mountain_points: Number(entry.mountain_points ?? 0),
+            status: String(entry.status ?? 'entered'),
+          })) : [])
+    }
+    void loadRaceInformation()
+    return () => { cancelled = true }
+  }, [data?.event_id, data?.race_id, data?.group_id, data?.season_number, resultsVisible, selectedEventId])
+
+  // Fetch the chosen day's real rider result rows, including previously
+  // completed days. No unpublished race results are read into the table.
+  useEffect(() => {
+    if (!resultsVisible || !resultStageId || resultEvent?.race_type === 'team_time_trial') {
+      setStageResults([])
+      setLoadedStageResultsId(null)
+      return
+    }
+    let cancelled = false
+    setStageResults([])
+    setLoadedStageResultsId(null)
+    void (async () => {
+      const { data: resultRows, error: resultError } = await supabase
+        .from('race_stage_results')
+        .select('rank, rider_id, team_id, rider_name_snapshot, elapsed_seconds, gap_seconds, status')
+        .eq('stage_id', resultStageId)
+        .order('rank', { ascending: true })
+      if (cancelled) return
+      if (resultError) {
+        console.warn('Could not load selected World Nations stage results:', resultError.message)
         return
       }
-
-      if (stageId) {
-        const { data: resultRows } = await supabase
-          .from('race_stage_results')
-          .select('rank, rider_id, team_id, rider_name_snapshot, elapsed_seconds, gap_seconds, status')
-          .eq('stage_id', stageId)
-          .order('rank', { ascending: true })
-
-        if (!cancelled) {
-          const rawResults = (resultRows ?? []) as StageResultRow[]
-          const fullNames = await loadFullRiderNames(
-            rawResults
-              .map(result => result.rider_id ?? '')
-              .filter(Boolean),
-          )
-
-          if (cancelled) return
-
-          setStageResults(
-            rawResults.map(result => ({
-              ...result,
-              rider_name_snapshot:
-                (result.rider_id ? fullNames.get(result.rider_id) : null) ??
-                result.rider_name_snapshot ??
-                null,
-            })),
-          )
-        }
-      } else if (!cancelled) {
-        setStageResults([])
-      }
-
-      const { data: overviewData } = await supabase.rpc('get_nations_competition_overview_v1', {
-        p_season_number: data.season_number,
-      })
-
-      if (!cancelled) {
-        const overview = (overviewData ?? {}) as any
-        const rounds = Array.isArray(overview.rounds) ? overview.rounds : []
-        const group = rounds
-          .flatMap((round: any) => (Array.isArray(round.groups) ? round.groups : []))
-          .find((candidate: any) => candidate?.id === data.group_id)
-        setGeneralStandings(
-          Array.isArray(group?.entries)
-            ? group.entries.map((entry: any) => ({
-                association_id: String(entry.association_id ?? ''),
-                association_name: String(entry.association_name ?? entry.country_code ?? ''),
-                country_code: String(entry.country_code ?? ''),
-                final_group_rank: entry.final_group_rank == null ? null : Number(entry.final_group_rank),
-                total_points: Number(entry.total_points ?? 0),
-                ttt_points: Number(entry.ttt_points ?? 0),
-                flat_points: Number(entry.flat_points ?? 0),
-                mountain_points: Number(entry.mountain_points ?? 0),
-                status: String(entry.status ?? 'entered'),
-              }))
-            : [],
-        )
-      }
-    }
-
-    void loadRaceInformation()
-    return () => {
-      cancelled = true
-    }
-  }, [data?.event_id, data?.race_id, data?.generated_stage_id, data?.group_id, data?.season_number, data?.route?.stage_id, resultsVisible])
-
+      const rawResults = (resultRows ?? []) as StageResultRow[]
+      const fullNames = await loadFullRiderNames(rawResults.map(row => row.rider_id ?? '').filter(Boolean))
+      if (cancelled) return
+      setStageResults(rawResults.map(row => ({
+        ...row,
+        rider_name_snapshot: (row.rider_id ? fullNames.get(row.rider_id) : null) ?? row.rider_name_snapshot ?? null,
+      })))
+      setLoadedStageResultsId(resultStageId)
+    })()
+    return () => { cancelled = true }
+  }, [resultsVisible, resultStageId, resultEvent?.race_type])
 
   const points = useMemo(() => {
     const authoritative = (data?.route?.profile_points ?? [])
@@ -659,6 +869,68 @@ export default function WorldNationsEventPage(): JSX.Element {
   const weatherRain = Number(weather.avg_precip_mm)
   const hasWeather = Object.keys(weather).length > 0
   const title = `${data.round_label} · ${data.group_label} · ${raceTypeLabel}`
+
+  const selectedRaceDay = Number(selectedGroupStage?.race_day ?? data.race_day)
+  const pointsForStage = (standing: GeneralStanding, stage: GroupStage): number => {
+    const type = stage.race_type
+    if (type === 'team_time_trial') return standing.ttt_points
+    if (type === 'flat_road_race' || type === 'flat' || (type === 'road_race' && Number(stage.race_day) === 2)) return standing.flat_points
+    return standing.mountain_points
+  }
+  // Historical snapshots use the separate authoritative point totals for each
+  // race day, not the latest final group rank or its later-race points.
+  // A team is only qualified in the historical table after the last race day.
+  // Earlier-day views show the provisional cutoff as it stood on that day.
+  const finalGroupConfirmed = ['completed', 'finished'].includes(groupStatus.toLowerCase()) &&
+    selectedRaceDay >= Math.max(...groupStageOptions.map(stage => Number(stage.race_day)), selectedRaceDay)
+  const canAdvance = data.round_type !== 'world_final' && data.advancing_places > 0
+  const qualifyingForFinal = data.round_type === 'final_qualification'
+  const groupPointsRows: GroupPointsRow[] = generalStandings
+    .map(standing => ({
+      association_id: standing.association_id,
+      association_name: standing.association_name,
+      country_code: standing.country_code,
+      stage_points: selectedGroupStage ? pointsForStage(standing, selectedGroupStage) : 0,
+      total_points: groupStageOptions
+        .filter(stage => Number(stage.race_day) <= selectedRaceDay)
+        .reduce((total, stage) => total + pointsForStage(standing, stage), 0),
+      rank: 0,
+      final_group_rank: standing.final_group_rank,
+    }))
+    .sort((a, b) =>
+      b.total_points - a.total_points ||
+      b.stage_points - a.stage_points ||
+      nationDisplayName(a.association_name, a.country_code)
+        .localeCompare(nationDisplayName(b.association_name, b.country_code)))
+    .map((standing, index, ordered) => {
+      const rank = index > 0 && standing.total_points === ordered[index - 1].total_points
+        ? ordered.findIndex(other => other.total_points === standing.total_points) + 1
+        : index + 1
+      // A confirmed place is taken from the completed group's final ranking;
+      // an interim top-N position must never be labelled as qualified.
+      const confirmed = canAdvance && finalGroupConfirmed &&
+        standing.final_group_rank != null &&
+        standing.final_group_rank > 0 &&
+        standing.final_group_rank <= data.advancing_places
+      const provisional = canAdvance && !finalGroupConfirmed &&
+        rank <= data.advancing_places
+      const qualificationStatus: GroupPointsRow['qualification_status'] = confirmed
+        ? (qualifyingForFinal ? 'qualified' : 'advanced')
+        : provisional ? 'provisional' : null
+      return {
+        ...standing,
+        rank,
+        qualification_status: qualificationStatus,
+        qualification_label: confirmed
+          ? (qualifyingForFinal ? 'Qualified for final' : 'Advanced')
+          : provisional ? 'Qualifying position' : null,
+      }
+    })
+  const visibleStageRows = loadedStageResultsId === resultStageId ? stageResults : []
+  const stageResultRowCount = resultEvent?.race_type === 'team_time_trial'
+    ? (resultEvent.results ?? []).length
+    : visibleStageRows.length
+
 
   return (
     <div className="w-full space-y-6">
@@ -1164,201 +1436,107 @@ export default function WorldNationsEventPage(): JSX.Element {
             </div>
           ) : (
             <div className="mt-6">
-              {!resultsVisible ? (
+
+              <div className="mb-5 flex flex-wrap items-center gap-3">
+                <label htmlFor="nations-results-stage" className="text-sm font-semibold text-slate-700">
+                  Results after stage
+                </label>
+                <select
+                  id="nations-results-stage"
+                  value={selectedGroupStage?.event_id ?? ''}
+                  onChange={event => {
+                    setSelectedEventId(event.target.value)
+                    setFullResultsModal(null)
+                  }}
+                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900"
+                >
+                  {groupStageOptions.map(stage => (
+                    <option key={stage.event_id} value={stage.event_id}>
+                      {t('world.eventPage.dayRace', {
+                        day: stage.race_day,
+                        race: t(`raceTypes.${stage.race_type}`, { defaultValue: humanize(stage.race_type) }),
+                      })}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              {!resultEvent ? (
+                <div className="rounded-2xl bg-slate-50 px-5 py-6 text-sm text-slate-600">
+                  Loading selected stage…
+                </div>
+              ) : !resultsVisible ? (
                 <div className="rounded-2xl border border-slate-200 bg-slate-50 px-5 py-6 text-sm text-slate-600">
                   <div className="font-semibold text-slate-900">{t('world.eventPage.resultsNotPublished')}</div>
-                  <div className="mt-1">
-                    {t('world.eventPage.publicationExplanation')}
-                  </div>
+                  <div className="mt-1">{t('world.eventPage.publicationExplanation')}</div>
                 </div>
               ) : (
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <div>
+                <div className="grid gap-6 xl:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]">
+                  <div className="rounded-2xl bg-slate-50 p-4">
+                    <div>
+                      <div className="font-semibold text-slate-950">{t('world.eventPage.nationalTeamClassification')}</div>
+                      <div className="mt-0.5 text-xs text-slate-500">
+                        Standings after stage {selectedRaceDay}
+                      </div>
+                    </div>
+                    {canAdvance ? (
+                      <div className="mt-1 text-xs text-slate-500">
+                        Top {data.advancing_places} advance
+                        {finalGroupConfirmed ? ' · confirmed after all stages' : ' · positions provisional until qualification ends'}
+                      </div>
+                    ) : null}
+                    <GroupPointsTable rows={groupPointsRows} limit={15} />
+                    {groupPointsRows.length > 15 ? (
+                      <div className="mt-4 flex justify-end">
+                        <button type="button" onClick={() => setFullResultsModal('teams')}
+                          className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                          Full classification ({groupPointsRows.length})
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                  <div className="rounded-2xl bg-slate-50 p-4">
                     <div className="font-semibold text-slate-950">
-                      {t('world.eventPage.nationalTeamClassification')}
+                      Stage {selectedRaceDay} results
                     </div>
                     <div className="mt-0.5 text-xs text-slate-500">
-                      {t('world.eventPage.currentGroupStanding')}
+                      {resultEvent.race_type === 'team_time_trial'
+                        ? 'National Team Time Trial result'
+                        : 'Riders who participated in this race'}
                     </div>
-                  </div>
-
-                  <div className="mt-4 overflow-x-auto rounded-xl bg-white">
-                    <table className="min-w-full table-fixed text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          <th className="w-[8%] px-3 py-3">#</th>
-                          <th className="w-[52%] px-3 py-3">Team</th>
-                          <th className="w-[22%] px-3 py-3 text-right">
-                            {data.race_type === 'team_time_trial' ? 'Time' : 'Points'}
-                          </th>
-                          <th className="w-[18%] px-3 py-3 text-right">
-                            {data.race_type === 'team_time_trial' ? 'Gap' : 'Total'}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.race_type === 'team_time_trial' && data.results.length > 0
-                          ? data.results.map((result, index) => {
-                              const team = data.participants.find(candidate => candidate.association_id === result.association_id)
-                              return (
-                                <tr key={result.association_id} className="border-b border-slate-100 bg-white">
-                                  <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? index + 1}</td>
-                                  <td className="px-3 py-2">
-                                    <div className="flex items-center gap-3">
-                                      {team?.jersey_url ? (
-                                        <div className="flex h-9 w-24 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
-                                          <img src={team.jersey_url} alt="" className="h-12 w-full object-cover object-top" />
-                                        </div>
-                                      ) : null}
-                                      <span className="font-semibold text-slate-900">
-                                        {nationDisplayName(result.association_name, result.country_code)}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-3 text-right font-semibold text-slate-900">
-                                    {formatRaceTime(result.elapsed_seconds)}
-                                  </td>
-                                  <td className="px-3 py-3 text-right text-slate-500">
-                                    {formatGap(result.gap_seconds)}
-                                  </td>
-                                </tr>
-                              )
-                            })
-                          : [...generalStandings]
-                              .sort((a, b) => (a.final_group_rank ?? 999) - (b.final_group_rank ?? 999) || b.total_points - a.total_points)
-                              .map((standing, index) => {
-                                const team = data.participants.find(candidate => candidate.association_id === standing.association_id)
-                                return (
-                                  <tr key={standing.association_id} className="border-b border-slate-100 bg-white">
-                                    <td className="px-3 py-3 font-semibold text-slate-900">
-                                      {standing.final_group_rank ?? index + 1}
-                                    </td>
-                                    <td className="px-3 py-2">
-                                      <div className="flex items-center gap-3">
-                                        {team?.jersey_url ? (
-                                          <div className="flex h-9 w-24 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
-                                            <img src={team.jersey_url} alt="" className="h-12 w-full object-cover object-top" />
-                                          </div>
-                                        ) : null}
-                                        <span className="font-semibold text-slate-900">
-                                          {nationDisplayName(standing.association_name, standing.country_code)}
-                                        </span>
-                                      </div>
-                                    </td>
-                                    <td className="px-3 py-3 text-right font-semibold text-slate-900">
-                                      {standing.total_points}
-                                    </td>
-                                    <td className="px-3 py-3 text-right text-slate-500">
-                                      {standing.ttt_points + standing.flat_points + standing.mountain_points}
-                                    </td>
-                                  </tr>
-                                )
-                              })}
-                      </tbody>
-                    </table>
+                    <NationsStageResultTable event={resultEvent} riderRows={visibleStageRows} limit={15} />
+                    {stageResultRowCount > 15 ? (
+                      <div className="mt-4 flex justify-end">
+                        <button type="button" onClick={() => setFullResultsModal('stage')}
+                          className="rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                          Full stage results ({stageResultRowCount})
+                        </button>
+                      </div>
+                    ) : null}
                   </div>
                 </div>
-
-                <div className="rounded-2xl bg-slate-50 p-4">
-                  <div className="font-semibold text-slate-950">
-                    Stage results
-                  </div>
-                  <div className="mt-0.5 text-xs text-slate-500">
-                    {data.race_type === 'team_time_trial'
-                      ? 'National Team Time Trial result'
-                      : 'Riders who participated in this race'}
-                  </div>
-
-                  <div className="mt-4 overflow-x-auto rounded-xl bg-white">
-                    <table className="min-w-full table-fixed text-sm">
-                      <thead>
-                        <tr className="border-b border-slate-200 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                          <th className="w-[8%] px-3 py-3">#</th>
-                          <th className="w-[52%] px-3 py-3">
-                            {data.race_type === 'team_time_trial' ? 'Team' : 'Rider'}
-                          </th>
-                          <th className="w-[22%] px-3 py-3 text-right">Time</th>
-                          <th className="w-[18%] px-3 py-3 text-right">Gap</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {data.race_type === 'team_time_trial'
-                          ? data.results.map((result, index) => {
-                              const team = data.participants.find(candidate => candidate.association_id === result.association_id)
-                              return (
-                                <tr key={`ttt-${result.association_id}`} className="border-b border-slate-100 bg-white">
-                                  <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? index + 1}</td>
-                                  <td className="px-3 py-2">
-                                    <div className="flex items-center gap-3">
-                                      {team?.jersey_url ? (
-                                        <div className="flex h-9 w-24 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
-                                          <img src={team.jersey_url} alt="" className="h-12 w-full object-cover object-top" />
-                                        </div>
-                                      ) : null}
-                                      <span className="font-semibold text-slate-900">
-                                        {nationDisplayName(result.association_name, result.country_code)}
-                                      </span>
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatRaceTime(result.elapsed_seconds)}</td>
-                                  <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
-                                </tr>
-                              )
-                            })
-                          : stageResults.map((result, index) => {
-                              const participant = data.participants.find(team => team.team_id === result.team_id)
-                              return (
-                                <tr key={`stage-${result.rider_id ?? index}`} className="border-b border-slate-100 bg-white">
-                                  <td className="px-3 py-3 font-semibold text-slate-900">{result.rank ?? '—'}</td>
-                                  <td className="px-3 py-3">
-                                    <div className="flex items-center gap-3">
-                                      {participant?.jersey_url ? (
-                                        <div className="flex h-9 w-24 items-center justify-center overflow-hidden rounded-lg border border-slate-200 bg-white">
-                                          <img
-                                            src={participant.jersey_url}
-                                            alt=""
-                                            className="h-12 w-full object-cover object-top"
-                                          />
-                                        </div>
-                                      ) : null}
-                                      <div>
-                                        {result.rider_id ? (
-                                          <Link
-                                            to={riderProfilePath(result.rider_id)}
-                                            className="font-semibold text-slate-900 no-underline hover:text-slate-900 hover:no-underline"
-                                          >
-                                            {result.rider_name_snapshot ?? '—'}
-                                          </Link>
-                                        ) : (
-                                          <div className="font-semibold text-slate-900">{result.rider_name_snapshot ?? '—'}</div>
-                                        )}
-                                        {participant ? (
-                                          <div className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-500">
-                                            {flagUrl(participant.country_code) ? (
-                                              <img
-                                                src={flagUrl(participant.country_code) ?? ''}
-                                                alt=""
-                                                className="h-3.5 w-5 rounded-sm border border-slate-200 object-cover"
-                                              />
-                                            ) : null}
-                                            <span>{nationDisplayName(participant.association_name, participant.country_code)}</span>
-                                          </div>
-                                        ) : null}
-                                      </div>
-                                    </div>
-                                  </td>
-                                  <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatRaceTime(result.elapsed_seconds)}</td>
-                                  <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
-                                </tr>
-                              )
-                            })}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
               )}
+              {fullResultsModal && resultEvent && resultsVisible ? (
+                <div role="dialog" aria-modal="true"
+                  aria-label={fullResultsModal === 'teams' ? 'Full national team classification' : 'Full stage results'}
+                  className="fixed inset-0 z-[100] overflow-y-auto bg-slate-950/60 p-4">
+                  <div className="mx-auto my-8 max-w-5xl rounded-2xl bg-white p-5 shadow-2xl">
+                    <div className="flex items-center justify-between gap-4">
+                      <h3 className="text-lg font-semibold text-slate-950">
+                        {fullResultsModal === 'teams'
+                          ? `Full classification after stage ${selectedRaceDay}`
+                          : `Full stage ${selectedRaceDay} results`}
+                      </h3>
+                      <button type="button" onClick={() => setFullResultsModal(null)}
+                        className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                        Close
+                      </button>
+                    </div>
+                    {fullResultsModal === 'teams'
+                      ? <GroupPointsTable rows={groupPointsRows} />
+                      : <NationsStageResultTable event={resultEvent} riderRows={visibleStageRows} />}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
 
