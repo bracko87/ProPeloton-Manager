@@ -22,6 +22,11 @@ on:
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-migration-parity.mjs'
       - 'scripts/test-race-worker-measured-scenarios.mjs'
+      - 'scripts/test-step7-replay-window-recovery.mjs'
+      - 'supabase/functions/_shared/replayWindowAssemblyV1.mjs'
+      - 'src/universal-race-engine/runMountainResumableEngineV1.ts'
+      - 'src/universal-race-engine/mountainOpeningBreakawayV1.ts'
+      - 'src/universal-race-engine/summitFinishPhysicalHandoffV1.ts'
       - 'scripts/run-race-worker-measured-scenarios.mjs'
       - 'scripts/fixtures/race_worker_measured_20261024.json'
       - 'supabase/migrations/**'
@@ -57,6 +62,11 @@ on:
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-migration-parity.mjs'
       - 'scripts/test-race-worker-measured-scenarios.mjs'
+      - 'scripts/test-step7-replay-window-recovery.mjs'
+      - 'supabase/functions/_shared/replayWindowAssemblyV1.mjs'
+      - 'src/universal-race-engine/runMountainResumableEngineV1.ts'
+      - 'src/universal-race-engine/mountainOpeningBreakawayV1.ts'
+      - 'src/universal-race-engine/summitFinishPhysicalHandoffV1.ts'
       - 'scripts/run-race-worker-measured-scenarios.mjs'
       - 'scripts/fixtures/race_worker_measured_20261024.json'
       - 'supabase/migrations/**'
@@ -122,6 +132,15 @@ jobs:
         run: |
           node --test scripts/test-race-worker-measured-scenarios.mjs
           node scripts/run-race-worker-measured-scenarios.mjs
+
+      - name: Verify resumable mountain replay cursor and lease restart logic
+        run: node --test scripts/test-step7-replay-window-recovery.mjs
+
+      - name: Compile staged mountain replay window engine
+        run: >-
+          npx esbuild src/universal-race-engine/runMountainResumableEngineV1.ts
+          --bundle --platform=node --format=esm
+          --outfile=/tmp/ppm-mountain-resumable-engine.mjs
 
       - name: Compile staged safe-resume Edge worker
         run: >-
