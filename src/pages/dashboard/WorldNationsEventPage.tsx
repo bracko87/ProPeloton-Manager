@@ -904,12 +904,13 @@ export default function WorldNationsEventPage(): JSX.Element {
         standing.final_group_rank <= data.advancing_places
       const provisional = canAdvance && !finalGroupConfirmed &&
         rank <= data.advancing_places
+      const qualificationStatus: GroupPointsRow['qualification_status'] = confirmed
+        ? (qualifyingForFinal ? 'qualified' : 'advanced')
+        : provisional ? 'provisional' : null
       return {
         ...standing,
         rank,
-        qualification_status: confirmed
-          ? (qualifyingForFinal ? 'qualified' : 'advanced')
-          : provisional ? 'provisional' : null,
+        qualification_status: qualificationStatus,
         qualification_label: confirmed
           ? (qualifyingForFinal ? 'Qualified for final' : 'Advanced')
           : provisional ? 'Qualifying position' : null,
