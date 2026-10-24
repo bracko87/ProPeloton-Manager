@@ -16,6 +16,8 @@ export const BREAKAWAY_OFFICIAL_PILOT_STAGE_IDS_V1: readonly string[] = [
   '5523cf76-8fd4-4a12-ab28-7f285c9829ff',
   // Binche–Chimay–Binche / Mémorial Franco Vandenbroeck — Oct 7, hilly.
   '335708f7-d56a-4816-9068-38399e8f74e3',
+  // Tacx Zeeland Classic / Ronde van Zeeland — Oct 12, flat 204.6 km.
+  '7f69e552-b116-453c-bf55-16ef655ea021',
 ] as const
 
 const pilotIds=new Set(BREAKAWAY_OFFICIAL_PILOT_STAGE_IDS_V1)
