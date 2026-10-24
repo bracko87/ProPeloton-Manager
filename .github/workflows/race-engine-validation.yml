@@ -14,6 +14,8 @@ on:
       - 'scripts/test-race-replay-normalization-pages.mjs'
       - 'docs/engineering/persistent_race_output_v2_proposal_20261024.sql'
       - 'scripts/test-race-persistent-output-contract.mjs'
+      - 'scripts/tests/persistent-output-v2-fixtures.sql'
+      - 'scripts/tests/persistent-output-v2-integration.sql'
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
@@ -35,6 +37,8 @@ on:
       - 'scripts/test-race-replay-normalization-pages.mjs'
       - 'docs/engineering/persistent_race_output_v2_proposal_20261024.sql'
       - 'scripts/test-race-persistent-output-contract.mjs'
+      - 'scripts/tests/persistent-output-v2-fixtures.sql'
+      - 'scripts/tests/persistent-output-v2-integration.sql'
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
@@ -121,3 +125,43 @@ jobs:
       - name: Run full legacy race-engine suite for visibility
         continue-on-error: true
         run: npx --yes vitest@3.2.4 run src/universal-race-engine/runRaceEngine.test.ts --reporter=dot
+
+  persistent-output-postgres:
+    name: Isolated PostgreSQL 17 output-resume integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: ci_ephemeral_only
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: ci_ephemeral_only
+      PGDATABASE: postgres
+    steps:
+      - name: Checkout test SQL
+        uses: actions/checkout@v4
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Create disposable game API fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/tests/persistent-output-v2-fixtures.sql
+
+      - name: Apply actual version 2 output RPC proposal
+        run: psql -X -v ON_ERROR_STOP=1 -f docs/engineering/persistent_race_output_v2_proposal_20261024.sql
+
+      - name: Test restart-safe upload and exactly-once publication
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/tests/persistent-output-v2-integration.sql
