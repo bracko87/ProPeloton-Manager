@@ -1,6 +1,7 @@
 
 /// <reference lib="deno.ns" />
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
+import { writeIdempotentChunkWithRetry } from "../_shared/idempotentChunkRetryV1.mjs";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
@@ -1231,11 +1232,17 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     let outputChunkIndex=0;
     let outputBuffer="";
     const uploadOutputChunk=async(piece:string)=>{
-      const saved=await rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
-        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
-        p_chunk_index:outputChunkIndex,p_chunk_text:piece,
+      await writeIdempotentChunkWithRetry({
+        chunkIndex: outputChunkIndex,
+        label: "Replay output",
+        write: () => rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
+          p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+          p_chunk_index:outputChunkIndex,p_chunk_text:piece,
+        }),
+        onRetry: ({failedAttempt}) => console.warn(JSON.stringify({
+          event:"safe_output_chunk_retry",stageId,step,chunk_index:outputChunkIndex,failed_attempt:failedAttempt,
+        })),
       });
-      if(saved.status!=="saved_chunk")throw new Error(`Output chunk ${outputChunkIndex} rejected: ${JSON.stringify(saved)}`);
       outputChunkIndex++;
     };
     for await(const piece of serializedPieces(output)){
@@ -1322,11 +1329,17 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     let chunkIndex=0;
     let buffer="";
     const sendChunk=async(piece:string)=>{
-      const result=await rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
-        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
-        p_chunk_index:chunkIndex,p_chunk_text:piece,
+      await writeIdempotentChunkWithRetry({
+        chunkIndex,
+        label: "Race checkpoint",
+        write: () => rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
+          p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+          p_chunk_index:chunkIndex,p_chunk_text:piece,
+        }),
+        onRetry: ({failedAttempt}) => console.warn(JSON.stringify({
+          event:"safe_checkpoint_chunk_retry",stageId,step,chunk_index:chunkIndex,failed_attempt:failedAttempt,
+        })),
       });
-      if(result.status!=="saved_chunk")throw new Error(`Checkpoint chunk ${chunkIndex} failed: ${JSON.stringify(result)}`);
       chunkIndex++;
     };
     for await(const piece of serializedPieces(next)){
