@@ -1,5 +1,6 @@
 /// <reference lib="deno.ns" />
-import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1, isMountainEnginePilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEnginePilotV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import {
   classifyUniversalReplaySynchronizationForPublication,
@@ -16,6 +17,7 @@ declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 
 type JsonObject = Record<string, unknown>;
 const SOURCE_COMMIT = "e00c4e694c0629efa5b06497dd514b505b166934";
+const MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS = new Set(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1);
 const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3", "7f69e552-b116-453c-bf55-16ef655ea021"]);
 const FALLBACK_SOURCE_COMMIT = "7e4299371f452e5d1d0a706e48fb083340362d11";
 const CONTRACT = "universal_race_pass2_resume_v19";
@@ -435,6 +437,9 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
   // Phase 4 loop. Use the accepted lighter sporting fallback after the bounded
   // checkpoint retry budget is exhausted.
   const useFallback = legacyFallbackRequested;
+  if (useFallback && MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId)) {
+    throw new Error("Mandatory October Mountain V2 pilot cannot publish baseline fallback.");
+  }
   if (useFallback && MANDATORY_BREAKAWAY_PILOT_IDS.has(stageId)) {
     throw new Error("Mandatory Breakaway V1 pilot cannot publish baseline fallback.");
   }
@@ -531,6 +536,9 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
         selected_engine_source_commit: SOURCE_COMMIT,
       });
 
+      if (MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) && !isMountainEnginePilotStageV1(input.stage)) {
+        throw new Error("Mandatory October Mountain V2 stage eligibility mismatch.");
+      }
       const rawResult = runSelectedRaceEngineV1(input as any) as UniversalRaceEngineResult;
       if (selectCompleteRaceEngineLaneV1(input.stage) === "experimental_breakaway_v1" &&
           (!rawResult.replaySynchronization.synchronized || !rawResult.phase78Acceptance.passed)) {
@@ -551,8 +559,10 @@ async function executeOne(supabase: SupabaseClient): Promise<JsonObject> {
       verification: {
         ...object(output.verification),
         resumedPass2: true,
-        primarySourceCommit: SOURCE_COMMIT,
+        primarySourceCommit: !useFallback && MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "726682eaf58385c4d60a9b664d2b9696b8cfc1a0" : SOURCE_COMMIT,
         selectedEngineLaneV1: !useFallback ? selectCompleteRaceEngineLaneV1(input.stage) : null,
+        engineLaneV1: !useFallback && MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "experimental_mountain_v1" : null,
+        routingSourceCommit: MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "7bb8cffa1631077d893f60ae0d10bbde3803b751" : null,
         fallbackUsed: useFallback,
         fallbackReason,
         fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
