@@ -15,6 +15,7 @@ import { MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1, isMountainEnginePilotStageV
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import { writeIdempotentChunkWithRetry } from "../_shared/idempotentChunkRetryV1.mjs";
 import { planReplayNormalizationWindow } from "../_shared/replayNormalizationWindowV1.mjs";
+import { assembleReplayWindowV1 } from "../_shared/replayWindowAssemblyV1.mjs";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
@@ -744,43 +745,32 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       checkpoint.baseFinishResolution as any,
       {start:cursor,count:8},
     );
-    if(!page.active)throw new Error("Paged mountain replay was not active");
-    const totalFrames=page.baseCheckpointCount+page.eventCheckpointCount;
-    if(totalFrames<=0 || cursor>=totalFrames || page.checkpoints.length===0 ||
-       cursor+page.checkpoints.length>totalFrames){
-      throw new Error("Paged mountain replay returned an invalid window");
-    }
-    const priorMeta=object(checkpoint.step7ReplayMetadata);
-    const pageMeta={...page,checkpoints:[]};
-    if(cursor>0 && (
-       !priorMeta || !Object.keys(priorMeta).length ||
-       priorMeta.finalCheckpointId!==pageMeta.finalCheckpointId ||
-       priorMeta.modelVersion!==pageMeta.modelVersion ||
-       priorMeta.baseCheckpointCount!==pageMeta.baseCheckpointCount ||
-       priorMeta.eventCheckpointCount!==pageMeta.eventCheckpointCount)){
-      throw new Error("Mountain replay metadata changed after worker resume");
-    }
-    const compactPage=page.checkpoints.map((row:any,index:number)=>{
-      if(row.checkpointIndex!==cursor+index)throw new Error("Mountain replay checkpoint index drift");
-      const riderStates=Array.isArray(row?.riderStates)
-        ?row.riderStates.map((state:any)=>{
-          const {teamId:_teamId,condition:_condition,readinessScore:_readinessScore,
-            finishRank:_finishRank,officialTimeSeconds:_officialTimeSeconds,
-            ...compactState}=state;
-          return compactState;
-        }):[];
-      return {...row,intermediateResults:[],activeCommands:[],teamStates:[],riderStates};
+    const compiled=assembleReplayWindowV1({
+      cursor,
+      previousFrames,
+      previousMetadata:checkpoint.step7ReplayMetadata,
+      page,
+      compact:(row:any)=>{
+        const riderStates=Array.isArray(row?.riderStates)
+          ?row.riderStates.map((state:any)=>{
+            const {teamId:_teamId,condition:_condition,readinessScore:_readinessScore,
+              finishRank:_finishRank,officialTimeSeconds:_officialTimeSeconds,
+              ...compactState}=state;
+            return compactState;
+          }):[];
+        return {...row,intermediateResults:[],activeCommands:[],teamStates:[],riderStates};
+      },
     });
-    const assembled=[...previousFrames,...compactPage];
-    if(assembled.length===totalFrames){
+    if(compiled.completed){
       next={...checkpoint,step7ReplayCursor:undefined,step7ReplayFrames:undefined,
-        step7ReplayMetadata:undefined,baseReplayTimeline:{...pageMeta,checkpoints:assembled},
+        step7ReplayMetadata:undefined,
+        baseReplayTimeline:{...compiled.metadata,checkpoints:compiled.frames},
         replayWindowedSourceCommit:"561b1c0129f7f3fcbebffee6bc9344e03ff34c11",
         mountainReplayOptimizationSourceCommit:OPTIMIZED_MOUNTAIN_SOURCE_COMMIT,
         originalEnginePhysicsSourceCommit:text(checkpoint.selectedEngineSourceCommit)||SOURCE_COMMIT};
     }else{
-      next={...checkpoint,step7ReplayCursor:assembled.length,
-        step7ReplayFrames:assembled,step7ReplayMetadata:pageMeta,
+      next={...checkpoint,step7ReplayCursor:compiled.nextCursor,
+        step7ReplayFrames:compiled.frames,step7ReplayMetadata:compiled.metadata,
         replayWindowedSourceCommit:"561b1c0129f7f3fcbebffee6bc9344e03ff34c11"};
     }
   } else if(step===7){
