@@ -30514,15 +30514,33 @@ export function buildUniversalReplayTimeline(
   // next routine chase checkpoint. A binary search locates the first point
   // where the rider's authoritative group has changed.
   const physicalChaseDropGroupsAt = (km: number) => groupsAtKm(km)
-  const groupOfRiderAt = (riderId: string, km: number): string | null =>
-    physicalChaseDropGroupsAt(km).find((g) => g.riderIds.includes(riderId))
-      ?.displayCode ?? null
   const physicalDropProbeKms = Array.from(new Set([
     phase4.phaseBoundary.startKm,
     ...eventDefinitions.map((d) => d.kmFromStart)
       .filter((km) => km >= phase4.phaseBoundary.startKm),
     stageDistanceKm - 0.00002,
   ])).sort((a,b) => a-b)
+  // Shared physical event-probe kilometres are queried once per rider in the
+  // old implementation, which repeatedly recomputes a full group snapshot.
+  // Memoize only those stable probes. Binary-search midpoints remain uncached
+  // so unusually large races do not retain unbounded sampled kilometre keys.
+  const sharedPhysicalDropProbeKms = new Set(physicalDropProbeKms)
+  const sharedPhysicalGroupCodesAtKm = new Map<number, Map<string, string>>()
+  const groupOfRiderAt = (riderId: string, km: number): string | null => {
+    if (!sharedPhysicalDropProbeKms.has(km)) {
+      return physicalChaseDropGroupsAt(km).find((group) =>
+        group.riderIds.includes(riderId))?.displayCode ?? null
+    }
+    let riderCodes = sharedPhysicalGroupCodesAtKm.get(km)
+    if (!riderCodes) {
+      riderCodes = new Map<string, string>()
+      for (const group of physicalChaseDropGroupsAt(km)) {
+        for (const id of group.riderIds) riderCodes.set(id, group.displayCode)
+      }
+      sharedPhysicalGroupCodesAtKm.set(km, riderCodes)
+    }
+    return riderCodes.get(riderId) ?? null
+  }
   const alreadyAnnouncedAt = (riderId: string, km: number): boolean =>
     eventDefinitions.some((d) =>
       d.eventType === 'group_split' &&
