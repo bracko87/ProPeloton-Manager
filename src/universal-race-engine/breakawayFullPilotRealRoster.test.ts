@@ -709,6 +709,10 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     // can still be caught; there is deliberately no mandatory survival.
     expect(maximumPhysicalGap(tempoOpening)).toBeGreaterThan(7)
     expect(maximumPhysicalGap(tempoOpening)).toBeGreaterThan(maximumPhysicalGap(chasedOpening))
+    const chasedFull=runSelectedRaceEngineV1(chasers)
+    expect(chasedFull.validationPassed).toBe(true)
+    expect(chasedFull.replaySynchronization.synchronized).toBe(true)
+    expect(chasedFull.phase78Acceptance.passed).toBe(true)
     const official=runSelectedRaceEngineV1(tempo)
     expect(official.validationPassed).toBe(true)
     expect(official.replaySynchronization.synchronized).toBe(true)
