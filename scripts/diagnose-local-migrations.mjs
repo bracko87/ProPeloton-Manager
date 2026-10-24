@@ -21,15 +21,16 @@ function run(binary,args,timeout=120000) {
   // Allowlisted signal only. Never expose arbitrary error text or SQL excerpts.
   const stateMatch=raw.match(/\\bSQLSTATE[\\s:=(]*([A-Z0-9]{5})\\b/i);
   const sqlstate=stateMatch ? stateMatch[1].toUpperCase() : null;
+  const errorContext=raw.split(/\r?\n/).filter(line=>/(?:^|\s)(?:ERROR|FATAL):|(?:^|\s)Error:/i.test(line)).slice(-8).join('\n');
   let sqlCategory=null;
-  if (/relation [^\\n]{0,120} does not exist/i.test(raw)) sqlCategory='MISSING_RELATION';
-  else if (/function [^\\n]{0,120} does not exist/i.test(raw)) sqlCategory='MISSING_FUNCTION';
-  else if (/type [^\\n]{0,120} does not exist/i.test(raw)) sqlCategory='MISSING_TYPE';
-  else if (/schema [^\\n]{0,120} does not exist/i.test(raw)) sqlCategory='MISSING_SCHEMA';
-  else if (/already exists|duplicate (key|object|table)/i.test(raw)) sqlCategory='DUPLICATE_OBJECT';
-  else if (/syntax error/i.test(raw)) sqlCategory='SYNTAX_ERROR';
-  else if (/permission denied/i.test(raw)) sqlCategory='PERMISSION_ERROR';
-  else if (/violates.*constraint/i.test(raw)) sqlCategory='CONSTRAINT_ERROR';
+  if (/relation [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_RELATION';
+  else if (/function [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_FUNCTION';
+  else if (/type [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_TYPE';
+  else if (/schema [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_SCHEMA';
+  else if (/already exists|duplicate (key|object|table)/i.test(errorContext)) sqlCategory='DUPLICATE_OBJECT';
+  else if (/syntax error/i.test(errorContext)) sqlCategory='SYNTAX_ERROR';
+  else if (/permission denied/i.test(errorContext)) sqlCategory='PERMISSION_ERROR';
+  else if (/violates.*constraint/i.test(errorContext)) sqlCategory='CONSTRAINT_ERROR';
   let category='UNCLASSIFIED';
   if(result.error?.code==='ETIMEDOUT') category='TIMEOUT';
   else if(/config\.toml.*(not found|missing)|failed to load config|cannot read config|supabase init/i.test(raw)) category='LOCAL_CONFIG';
