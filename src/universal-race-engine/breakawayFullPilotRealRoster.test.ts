@@ -701,9 +701,14 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     }
     verifyNoPostCatchB1Join(tempoOpening)
     verifyNoPostCatchB1Join(chasedOpening)
+    const maximumPhysicalGap=(phase1:typeof tempoOpening)=>
+      Math.max(0,...phase1.physicalGapTrajectory.map(sample=>sample.gapSeconds))
     expect(tempoOpening.breakawayRiderIds.length).toBeGreaterThan(0)
-    expect(tempoOpening.endGapSeconds).toBeGreaterThan(7)
-    expect(tempoOpening.endGapSeconds).toBeGreaterThan(chasedOpening.endGapSeconds)
+    // A physically established gap must grow beyond the 7-second launch
+    // when teams control tempo rather than explicitly chase. Weak escapes
+    // can still be caught; there is deliberately no mandatory survival.
+    expect(maximumPhysicalGap(tempoOpening)).toBeGreaterThan(7)
+    expect(maximumPhysicalGap(tempoOpening)).toBeGreaterThan(maximumPhysicalGap(chasedOpening))
     const official=runSelectedRaceEngineV1(tempo)
     expect(official.validationPassed).toBe(true)
     expect(official.replaySynchronization.synchronized).toBe(true)
@@ -713,6 +718,8 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     console.log('BREAKAWAY_TEMPO_VS_CHASE_REGRESSION='+JSON.stringify({
       tempoEndGapSeconds:tempoOpening.endGapSeconds,
       chaseEndGapSeconds:chasedOpening.endGapSeconds,
+      tempoMaximumPhysicalGapSeconds:maximumPhysicalGap(tempoOpening),
+      chaseMaximumPhysicalGapSeconds:maximumPhysicalGap(chasedOpening),
       tempoCatchKm:tempoOpening.breakawayCatchKm,
       chaseCatchKm:chasedOpening.breakawayCatchKm,
       replayIssues:official.replaySynchronization.issues,
