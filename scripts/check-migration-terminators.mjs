@@ -24,7 +24,7 @@ for(const file of files) {
     }
     for(let i=1;i<indexes.length;i+=2) {
       const end=indexes[i]+tag.length;
-      if(!/^\s*;/.test(sql.slice(end,end+50))) defects++;
+      if(sql.slice(end).trim() && !/^\s*;/.test(sql.slice(end,end+50))) defects++;
     }
   }
   if(defects) {

@@ -255,7 +255,7 @@ begin
     'national_individual_events',v_individual_events
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.submit_national_team_lineup_v1(p_squad_id uuid, p_race_day integer, p_rider_ids uuid[])
@@ -451,7 +451,7 @@ begin
     'participant_sync',v_sync_result
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.save_my_national_team_race_strategy_v1(p_event_id uuid, p_team_plan text, p_rider_roles jsonb DEFAULT '{}'::jsonb)
@@ -665,7 +665,7 @@ begin
     'system_covered',true
   );
 end;
-$function$
+$function$;
 
 
 grant execute on function public.get_my_unified_race_preparation_special_events_v1() to authenticated;

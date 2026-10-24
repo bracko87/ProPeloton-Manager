@@ -255,7 +255,7 @@ begin
     'route_request',v_route_request
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.submit_nations_host_application_v3(p_host_scope text, p_ttt_stage_id uuid, p_flat_stage_id uuid, p_mountain_stage_id uuid, p_statement text DEFAULT NULL::text)
@@ -369,7 +369,7 @@ begin
 
   return v_id;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.submit_nations_host_route_request_v1(p_requested_types text[], p_note text DEFAULT NULL::text)
@@ -482,7 +482,7 @@ begin
 
   return v_id;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.materialize_future_nations_host_applications_v1(p_edition_id uuid)
@@ -532,7 +532,7 @@ begin
 
   return v_inserted;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.trg_materialize_future_nations_hosts_v1()
@@ -545,7 +545,7 @@ begin
   perform private.materialize_future_nations_host_applications_v1(new.id);
   return new;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.get_my_national_association_overview_v2()
@@ -652,7 +652,7 @@ begin
     'upcoming_events',v_events
   );
 end;
-$function$
+$function$;
 
 
 drop trigger if exists trg_materialize_future_nations_hosts_v1 on public.nations_competition_editions;
