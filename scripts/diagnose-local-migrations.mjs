@@ -37,10 +37,14 @@ function run(binary,args,timeout=120000) {
   else if(/failed to (start|create|inspect).*container|health.check|unhealthy|connection refused|port is already allocated/i.test(raw)) category='CONTAINER_OR_HEALTH';
   else if(/applying migration|migration.*failed|error.*migration|sqlstate|ERROR:\s/i.test(raw)) category='MIGRATION_OR_SQL';
   else if(result.error?.code==='ENOENT') category='COMMAND_UNAVAILABLE';
-  return {ok:result.status===0&&!result.error,category,sqlstate,sqlCategory,lastMentionedVersion:versions.at(-1)||null};
+  const exitCode=Number.isInteger(result.status)&&result.status>=0&&result.status<=255?result.status:null;
+  const processError=['ETIMEDOUT','ENOENT','ENOBUFS','EACCES'].includes(result.error?.code)?result.error.code:null;
+  return {ok:result.status===0&&!result.error,category,sqlstate,sqlCategory,exitCode,processError,lastMentionedVersion:versions.at(-1)||null};
 }
 function status(step,result){
   lines.push(step+': '+(result.ok?'PASSED':'FAILED')+(result.ok?'':' ('+result.category+')')+'.');
+  if(!result.ok && result.exitCode!==null) lines.push('Exit status: '+result.exitCode+'.');
+  if(!result.ok && result.processError) lines.push('Process error category: '+result.processError+'.');
   if(!result.ok && result.sqlCategory) lines.push('SQL error class: '+result.sqlCategory+'.');
   if(!result.ok && result.sqlstate) lines.push('SQLSTATE: '+result.sqlstate+'.');
   if(!result.ok && result.lastMentionedVersion) {
@@ -60,7 +64,7 @@ try {
     if(!docker.ok) failed=true;
   }
   if(!failed) {
-    const start=run('supabase',['start'],20*60*1000);
+    const start=run('supabase',['start','-x','studio,imgproxy,edge-runtime,logflare,vector'],12*60*1000);
     status('Local stack startup and initial migrations',start);
     if(!start.ok) failed=true;
     else {
