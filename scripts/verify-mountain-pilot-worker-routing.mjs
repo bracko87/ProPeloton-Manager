@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 const file = slug => readFileSync(`supabase/functions/${slug}/index.ts`,'utf8')
-const sha='decf613ae309ee9f1216c2085a4f69deab255260'
+const sha='e9cf5541f1cd83618266eaaa44a355b921222161'
 const [runner,pass1,pass2,safe]=['universal-race-stage-runner','universal-race-stage-pass1-resume','universal-race-stage-pass2-resume','universal-race-stage-safe-resume'].map(file)
 for(const code of [runner,pass1,pass2,safe])assert.ok(code.includes(`const SOURCE_COMMIT = "${sha}"`))
 for(const code of [runner,pass2]) {
@@ -72,6 +72,7 @@ assert.match(runner,/Mandatory Breakaway V1 pilot cannot publish baseline fallba
 assert.match(pass2,/Mandatory Breakaway V1 pilot cannot publish baseline fallback/)
 assert.match(runner,/selectedEngineLaneV1: !useFallback/)
 assert.match(pass2,/selectedEngineLaneV1: !useFallback/)
+for (const runtime of [runner,pass2,safe]) assert.match(runtime,/Breakaway V1 replay synchronization failed: refusing degraded official publication/)
 console.log('PASS experimental breakaway pilot has isolated stage source and safe resume lane')
 
 // The two pilot stage IDs must stay explicit in fail-closed worker guards.
