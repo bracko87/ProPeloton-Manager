@@ -59,10 +59,11 @@ assert.match(resume,/selectedCore=engineLaneV1 !== "baseline_universal"/)
 assert.match(resume,/!input \|\| !calculationInput \|\| !phase9Modifiers/)
 console.log('PASS safe-resume pilot/baseline engine initialized before Phase 9')
 
-// Exactly two user-approved official breakaway releases; Danube remains shadow-only.
+// Exactly three user-approved official breakaway releases; Danube remains shadow-only.
 const officialPilot=readFileSync('src/universal-race-engine/breakawayOfficialPilotV1.ts','utf8')
 assert.match(officialPilot,/5523cf76-8fd4-4a12-ab28-7f285c9829ff/)
 assert.match(officialPilot,/335708f7-d56a-4816-9068-38399e8f74e3/)
+assert.match(officialPilot,/7f69e552-b116-453c-bf55-16ef655ea021/)
 assert.doesNotMatch(officialPilot,/f5af8665-91c1-4585-937e-11fb94f65819/)
 assert.match(safe,/Saved experimental engine lane no longer matches its stage/)
 assert.match(safe,/Mandatory Breakaway V1 pilot cannot resume on baseline/)
@@ -75,7 +76,7 @@ assert.match(pass2,/selectedEngineLaneV1: !useFallback/)
 for (const runtime of [runner,pass2,safe]) assert.match(runtime,/Breakaway V1 replay synchronization failed: refusing degraded official publication/)
 console.log('PASS experimental breakaway pilot has isolated stage source and safe resume lane')
 
-// The two pilot stage IDs must stay explicit in fail-closed worker guards.
+// All three approved pilot IDs must stay explicit in fail-closed worker guards.
 for(const live of [runner,pass2,safe]) {
  assert.ok(live.includes('5523cf76-8fd4-4a12-ab28-7f285c9829ff'))
  assert.ok(live.includes('335708f7-d56a-4816-9068-38399e8f74e3'))
