@@ -1,0 +1,38 @@
+name: World Nations results UI validation
+
+on:
+  pull_request:
+    branches:
+      - staging
+      - main
+    paths:
+      - 'src/pages/dashboard/WorldNationsEventPage.tsx'
+      - 'src/i18n/locales/**/nations.json'
+      - '.github/workflows/world-nations-results-validation.yml'
+  push:
+    branches:
+      - staging
+      - main
+    paths:
+      - 'src/pages/dashboard/WorldNationsEventPage.tsx'
+      - 'src/i18n/locales/**/nations.json'
+      - '.github/workflows/world-nations-results-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Validate translations and production bundle
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Production build (includes localization validation)
+        run: npm run build
