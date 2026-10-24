@@ -50,3 +50,17 @@ FROM supabase_migrations.schema_migrations;
 ## Release gate
 
 The replay blocker remains open. The successful PR #185 mountain batch parity test is not a substitute for full-schema hosted worker tests. No migration state or production result was changed by this read-only audit.
+
+## Aggregate risk screen (read-only, no SQL bodies exported)
+
+A direct production aggregate of stored history SQL returned **9,481,611 SQL text bytes** across 999 rows. Case-insensitive keyword/phrase screens marked:
+
+| Screen | Matching migration records |
+| --- | ---: |
+| Possible data changes (INSERT/UPDATE/DELETE/TRUNCATE) | 648 |
+| Possible schema changes (CREATE/ALTER/DROP) | 853 |
+| Sensitive terms (password/secret/key/token/credential) | 65 |
+| SECURITY DEFINER | 752 |
+| GRANT or REVOKE | 276 |
+
+**These are overlapping, conservative text matches, not parsed SQL or confirmed leaks/data changes** (e.g. a function body can contain the words). They must not be interpreted as safe/unsafe counts, nor used to reconstruct migrations automatically. The screens nevertheless strengthen the case for privately reviewing a schema-only baseline before replaying historical DML. No SQL text, credentials or user rows were copied into this report.
