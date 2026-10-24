@@ -4,12 +4,12 @@
  * No database, user identities, secrets, production race tasks or mutation.
  */
 import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 }
-  from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/decf613ae309ee9f1216c2085a4f69deab255260/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+  from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { PPM_UNIVERSAL_RACE_ENGINE_KEY, PPM_UNIVERSAL_RACE_ENGINE_VERSION,
   type UniversalRaceEngineInput } from
-  "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/decf613ae309ee9f1216c2085a4f69deab255260/src/universal-race-engine/runRaceEngine.ts";
+  "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/runRaceEngine.ts";
 
-const SOURCE_COMMIT="decf613ae309ee9f1216c2085a4f69deab255260";
+const SOURCE_COMMIT="e9cf5541f1cd83618266eaaa44a355b921222161";
 const CONTRACT="breakaway_full_official_contract_synthetic_canary_v1";
 const PILOT="5523cf76-8fd4-4a12-ab28-7f285c9829ff";
 const BINCHE="335708f7-d56a-4816-9068-38399e8f74e3";
