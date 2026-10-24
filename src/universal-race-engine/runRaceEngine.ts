@@ -10187,8 +10187,7 @@ export function resolveRoadPhase1Opening(
         .filter(
           ({ row, phase }) =>
             !phase1BreakawayTeamIds.has(row.teamId) &&
-            (phase.behaviour === 'chase' ||
-              phase.behaviour === 'race_control'),
+            phase.behaviour === 'chase',
         )
         .map(({ row }) => row.teamId),
     ),
@@ -10346,7 +10345,8 @@ export function resolveRoadPhase1Opening(
         point.kmFromStart <= stepEndKm + 2,
     )
     const provisionalEscapePaceKmh =
-      stepReferencePaceKmh * escapeAbilityMultiplier * cooperationMultiplier
+      stepReferencePaceKmh * escapeAbilityMultiplier *
+        (1 + (cooperationMultiplier - 1) * 0.35)
     const response = calculatePelotonResponseComponents(
       stepEndKm / input.stage.distanceKm,
       input.stage.distanceKm - stepEndKm,
@@ -10375,6 +10375,7 @@ export function resolveRoadPhase1Opening(
     )
     const pelotonPaceKmh = clamp(
       stepReferencePaceKmh * response.selectedResponseMultiplier *
+        (phase1ChasingTeamIds.length === 0 ? 0.955 : 1) *
         windSpeedMultiplier +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,
@@ -11564,7 +11565,7 @@ export function resolveRoadPhase2Development(
   ])
   const phase2ChaseWorkerRows = phase2Rows.filter(
     ({ row, phase }) =>
-      interestedTeamIds.has(row.teamId) &&
+      chasingTeamIds.includes(row.teamId) &&
       (
         phase.behaviour === 'chase' ||
         phase.behaviour === 'race_control' ||
@@ -11701,7 +11702,7 @@ export function resolveRoadPhase2Development(
     const stepEscapeReferencePaceKmh = deterministicRound(
       stepReferencePaceKmh *
         cooperationPaceRatio *
-        phase2DynamicCooperationMultiplier,
+        (1 + (phase2DynamicCooperationMultiplier - 1) * 0.35),
       6,
     )
     const phase2WorkloadFraction = clamp(
@@ -11752,7 +11753,7 @@ export function resolveRoadPhase2Development(
           ),
         ).size,
       ),
-      chasingTeamIds.length + controllingTeamIds.length,
+      chasingTeamIds.length,
       phase2FiniteChaseAssets,
       totalSprintAssets,
       totalProtectedAssets,
@@ -11787,6 +11788,7 @@ export function resolveRoadPhase2Development(
     effectivePelotonPaceKmh = clamp(
       stepReferencePaceKmh *
         pelotonComponents.selectedResponseMultiplier *
+        (chasingTeamIds.length === 0 ? 0.97 : 1) *
         phase2WindSpeedMultiplier +
         pelotonVariationKmh,
       20,
