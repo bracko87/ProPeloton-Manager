@@ -57,3 +57,33 @@ The shared `public.universal_race_stage_submit_calculation_v1(uuid,uuid,jsonb,js
 Read-only live canary tests for both stage IDs passed, including Phase 9/Phase 7-8 contracts and synchronized replay. The complete 96-rider synthetic roster Binche hilly regression passed in GitHub Actions run 40030272445; no real stage or rider results were created or overwritten.
 
 Danube and Fruška Gora Finale, `f5af8665-91c1-4585-937e-11fb94f65819` on 2000-10-08, remains **shadow-only**. No global terrain-wide change is authorized.
+
+## Corrective release — Breakaway V1 opening physics and replay (2026-10-24)
+
+### Root-cause findings from the completed production pilot records
+Both Bačka and Binche **did** execute `experimental_breakaway_v1` at source `decf613ae309ee9f1216c2085a4f69deab255260`. Their recorded opening breaks reached only seven seconds, were caught around km 10.4–10.5 and the raw replays were degraded (six Bačka issues, two Binche issues). These already-published historical results are unchanged.
+
+Live evidence showed a systematic opening-pursuit misclassification: `control_tempo` produced `race_control` behaviour for 24 riders across 14 Bačka teams and 32 riders across 19 Binche teams. The specialist's Phase 1 solver previously counted `race_control` as an explicit breakaway chase, producing an almost fully organized early pursuit when the teams were controlling pace rather than selecting `chase_breakaway`.
+
+The specialist's accepted opening-attack list also retained second-wave attacks at kilometres after the original B1 escape had already been physically caught. This could create replay lineage and `successful_attack_without_physical_group` inconsistencies.
+
+### Fix (only the specialist engine)
+- Phase 1 organized chase coalitions now require **explicit `chase` behaviour**, not generic `race_control`. Peloton tempo still affects the underlying physical speed; it is not counted as active breakaway pursuit. Explicit pursuits retain their stronger response.
+- When an opening B1 group is caught, later successful attack rolls cannot be marked as physically accepted members of that already-dissolved B1 group. The physical event contract and replay use the filtered accepted list; no time gaps or race results are injected.
+- Official Breakaway V1 worker paths now fail closed if the raw replay is unsynchronized or the Phase 7/8 acceptance fails. They must not publish results by silently upgrading degraded replay to a passing state. Baseline and Mountain engines are unchanged.
+
+### Validation and release provenance
+- Corrected and tested solver source: `e9cf5541f1cd83618266eaaa44a355b921222161`.
+- Validated main release (worker pins and fail-closed checks): `66bf56669d1036ab798cb1abdc386cfe5186eac8`.
+- GitHub Actions final run: https://github.com/bracko87/ProPeloton-Manager/actions/runs/40073933122 — passed all steps, including 557/557 legacy tests and the specialist/worker routing regression gates.
+- Controlled synthetic 96-rider comparison, same race seed and riders: control-tempo maximum physical gap **45.046535 seconds**, physical catch at **km 30.668782**; explicit breakaway pursuit maximum gap **7.093516 seconds**, physical catch at **km 11.434259**. Both completed without replay inconsistencies in their full-race tests.
+- Read-only full engine canaries for both Bačka and Binche returned completion, Phase 9 and Phase 7/8 acceptance and synchronized replay, without database writes.
+
+Supabase read-back verified deployment to project `okuravitxocyevkexfgi`:
+- `universal-race-stage-runner` v45 — `355014ab40b7bd5acfd89d15eb5ddf1432e5dd513dfd9002504fba440fd39a7d`.
+- `universal-race-stage-pass2-resume` v63 — `b9afdf82f9612e02bfa5239dcec1bdd049cd05994af014519300f49feac818fb`.
+- `universal-race-stage-safe-resume` v68 — `dacdd6e282f16690938bac535001edef5474a068c6521686a7c844d599799c2d`.
+- `breakaway-full-engine-canary` v4 — `5c4b032a4713a03390f4748d75b4e99e1d9468ece635bf035b25769ef1cf2781`.
+- Existing Pass 1 input-preparation worker remains v43, unchanged.
+
+**Production-usage qualification:** These fixes passed synthetic/replay regression tests and are available in the deployed workers. They have **not yet been exercised by a new official race**: the two nominated pilots already finished on the previous source. Their historical submission provenance remains pinned to `decf613ae309ee9f1216c2085a4f69deab255260` in the database to protect already-published results. Before nominating a future new official pilot, approve its exact stage ID, update the authoritative stage allowlist and matching database fail-closed submission rule, and confirm the corrected commit is pinned on every worker. Do not activate an unapproved candidate automatically.
