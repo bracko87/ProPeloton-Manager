@@ -238,5 +238,5 @@ begin
     'newly_assigned_groups',v_assigned
   );
 end;
-$function$
+$function$;
 
