@@ -21,8 +21,8 @@ The three changed functions were deployed with Supabase Edge deployments and rea
 
 ### Preserved production data and recovery
 - `World Nations Hilly / Mountain Road Race` run `443093df-f1a3-4b8c-882a-ca4e4f2b186d` completed at 2026-10-24 16:50:13 UTC, before this rollout.
-- `Trofeo Tessile & Moda - Valdengo-Oropa`, stage `0885f370-5082-4bbe-994f-3938f00b7b11`, remains quarantined on historical safe replay step 7 after CPU exhaustion. Never reset it or silently overwrite its physical checkpoint.
-- Four other older pending safe-calculation checkpoints and two failed states remain separate operational work; do not force-resume them as part of physics deployment.
+- **Recovery update:** `Trofeo Tessile & Moda - Valdengo-Oropa`, stage `0885f370-5082-4bbe-994f-3938f00b7b11`, was supervised-resumed from its older source checkpoint, advanced through replay step 7 and completed on 2026-10-24 17:02:11 UTC. The quarantine was cleared; the official authority row was activated at 17:02:12 UTC, with 120 unique rider result rows (118 finishers) and full replay quality / empty replay-only issues in the output summary. **This was an old `878aa8ae...` source-pinned continuation (with the separately optimized Mountain replay path), not a newly started race under the calibrated `726682ea...` physics.**
+- Four other older pending safe-calculation checkpoints and one other failed state remain separate operational work; do not force-resume them as part of physics deployment.
 - No official classifications, replay, payments, rider rosters or game-clock records were altered by these read-only audits and Edge deployments.
 
 ### Outstanding acceptance and maintenance
