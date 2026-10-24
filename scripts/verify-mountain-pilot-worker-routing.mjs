@@ -4,10 +4,11 @@ import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 const file = slug => readFileSync(`supabase/functions/${slug}/index.ts`,'utf8')
 const sha='e00c4e694c0629efa5b06497dd514b505b166934'
+const selectorSha='7bb8cffa1631077d893f60ae0d10bbde3803b751'
 const [runner,pass1,pass2,safe]=['universal-race-stage-runner','universal-race-stage-pass1-resume','universal-race-stage-pass2-resume','universal-race-stage-safe-resume'].map(file)
 for(const code of [runner,pass1,pass2,safe])assert.ok(code.includes(`const SOURCE_COMMIT = "${sha}"`))
 for(const code of [runner,pass2]) {
- assert.ok(code.includes(`${sha}/src/universal-race-engine/runSelectedRaceEngineV1.ts`))
+ assert.ok(code.includes(`${selectorSha}/src/universal-race-engine/runSelectedRaceEngineV1.ts`))
  assert.match(code,/runSelectedRaceEngineV1\(input/)
  assert.doesNotMatch(code,/const rawResult = runRaceEngine\(/)
 }

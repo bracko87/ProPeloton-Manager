@@ -7,6 +7,8 @@ import { join } from 'node:path'
 
 const ROOT = process.cwd()
 const RELEASE_SHA = 'e00c4e694c0629efa5b06497dd514b505b166934'
+// Stage selection was independently released and deliberately pins its own reviewed SHA.
+const SELECTOR_SHA = '7bb8cffa1631077d893f60ae0d10bbde3803b751'
 const prefix = 'https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/'
 const workers = new Map([
   ['universal-race-stage-runner', [
@@ -51,7 +53,8 @@ for (const [name, requiredPrimaryModules] of workers) {
           ? 'buildProductionUniversalRaceOutput'
           : 'runRaceEngine'
     const lines = source.split('\n')
-    const primaryUrl = `${prefix}${RELEASE_SHA}/src/universal-race-engine/${moduleName}`
+    const primarySha = moduleName === 'runSelectedRaceEngineV1.ts' ? SELECTOR_SHA : RELEASE_SHA
+    const primaryUrl = `${prefix}${primarySha}/src/universal-race-engine/${moduleName}`
     assert.ok(
       lines.some((line) => line.includes(primaryUrl)) &&
       source.includes(primaryName),
