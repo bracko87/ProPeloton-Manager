@@ -30519,16 +30519,35 @@ export function buildUniversalReplayTimeline(
   // Inspect the actual road-group model instead of inventing a split at the
   // next routine chase checkpoint. A binary search locates the first point
   // where the rider's authoritative group has changed.
+  // A physical group sample is deterministic for its kilometre. During
+  // mountain replay the old implementation rebuilt the same expensive group
+  // snapshot for every rider at every event kilometre (120 riders x many
+  // probes). Cache only shared event probes; individual binary-search midpoints
+  // keep their original exact semantics without unbounded cache growth.
   const physicalChaseDropGroupsAt = (km: number) => groupsAtKm(km)
-  const groupOfRiderAt = (riderId: string, km: number): string | null =>
-    physicalChaseDropGroupsAt(km).find((g) => g.riderIds.includes(riderId))
-      ?.displayCode ?? null
   const physicalDropProbeKms = Array.from(new Set([
     phase4.phaseBoundary.startKm,
     ...eventDefinitions.map((d) => d.kmFromStart)
       .filter((km) => km >= phase4.phaseBoundary.startKm),
     stageDistanceKm - 0.00002,
   ])).sort((a,b) => a-b)
+  const sharedPhysicalDropProbeKms = new Set(physicalDropProbeKms)
+  const cachedPhysicalGroupCodesAtKm = new Map<number, Map<string, string>>()
+  const groupOfRiderAt = (riderId: string, km: number): string | null => {
+    if (!sharedPhysicalDropProbeKms.has(km)) {
+      return physicalChaseDropGroupsAt(km).find((group) =>
+        group.riderIds.includes(riderId))?.displayCode ?? null
+    }
+    let riderCodes = cachedPhysicalGroupCodesAtKm.get(km)
+    if (!riderCodes) {
+      riderCodes = new Map<string, string>()
+      for (const group of physicalChaseDropGroupsAt(km)) {
+        for (const id of group.riderIds) riderCodes.set(id, group.displayCode)
+      }
+      cachedPhysicalGroupCodesAtKm.set(km, riderCodes)
+    }
+    return riderCodes.get(riderId) ?? null
+  }
   const alreadyAnnouncedAt = (riderId: string, km: number): boolean =>
     eventDefinitions.some((d) =>
       d.eventType === 'group_split' &&
