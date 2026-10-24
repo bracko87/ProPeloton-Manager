@@ -13,6 +13,9 @@ import {runSelectedRaceEngineV1,getSelectedRaceEngineModuleV1,
   selectCompleteRaceEngineLaneV1} from './runSelectedRaceEngineV1.ts'
 import {runRaceEngine as specialistEngine,
   calculateBreakawayAutomaticPursuitCommitmentV1} from './runBreakawayExperimentalEngineV1.ts'
+import * as baselineRoadCore from './runRaceEngine.ts'
+import * as mountainRoadCore from './runMountainExperimentalEngineV1.ts'
+import * as breakawayRoadCore from './runBreakawayExperimentalEngineV1.ts'
 
 describe('Phase 4 experimental automatic chase effort budget', () => {
   const team = (workerCount: number, averageEnergy: number) => ({
@@ -820,6 +823,56 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
       breakawaySurvived:result.calibrationSummary.breakawaySurvived,
       replayIssues:result.replaySynchronization.issues,
     }))
+  })
+
+
+  it('keeps tempo-control from silently becoming a breakaway chase across all three cores',()=>{
+    const source=scenario('minimal',true)
+    const inputFor=(chase:boolean):UniversalRaceEngineInput=>({
+      ...source,
+      riders:source.riders.map(r=>({...r,
+        // Typical fresh racing fitness: the historical roster was heavily fatigued.
+        fatigueBeforeStage:Math.min(35,r.fatigueBeforeStage),
+        startStamina:Math.max(82,r.startStamina),
+      })),
+      stagePlans:source.stagePlans.map(plan=>({
+        ...plan,riders:plan.riders.map(row=>row.stageRole==='breakaway_rider'
+          ? row:{...row,commands:{...row.commands,
+              phase1:chase?'chase_breakaway' as const:'control_tempo' as const,
+              phase2:chase?'chase_breakaway' as const:'control_tempo' as const,
+            }}),
+      })),
+    })
+    const readOpening=(core:typeof baselineRoadCore,input:UniversalRaceEngineInput)=>{
+      const p9=core.buildUniversalPhase9ModifierSummary(input)
+      const calc=core.applyUniversalPhase9ModifiersToInput(input,p9)
+      const readiness=core.calculateAllRiderReadiness(calc.riders)
+      const commands=core.buildRoadCommandResolution(calc,readiness)
+      return core.resolveRoadPhase1Opening(calc,readiness,commands).phase1Opening!
+    }
+    for(const [lane,core] of [
+      ['baseline',baselineRoadCore],
+      ['mountain',mountainRoadCore],
+      ['specialist',breakawayRoadCore],
+    ] as const){
+      const easy=readOpening(core,inputFor(false))
+      const hard=readOpening(core,inputFor(true))
+      const maxGap=(p:typeof easy)=>Math.max(0,
+        ...p.physicalGapTrajectory.map(step=>step.gapSeconds))
+      const easyMax=maxGap(easy),hardMax=maxGap(hard)
+      console.log('SHARED_OPENING_PHYSICS_AUDIT='+JSON.stringify({
+        lane,easyMaximumGapSeconds:easyMax,hardMaximumGapSeconds:hardMax,
+        easyCatchKm:easy.breakawayCatchKm,hardCatchKm:hard.breakawayCatchKm,
+        easyEndGapSeconds:easy.endGapSeconds,
+        hardEndGapSeconds:hard.endGapSeconds,
+      }))
+      expect(easy.attackAttempts.some(a=>a.acceptedEscapeLaunch)).toBe(true)
+      expect(hard.attackAttempts.some(a=>a.acceptedEscapeLaunch)).toBe(true)
+      expect(easyMax).toBeGreaterThan(7)
+      expect(easyMax).toBeGreaterThan(hardMax)
+      expect(easy.physicalGapTrajectory.every(step=>step.gapSeconds>=0)).toBe(true)
+      expect(hard.physicalGapTrajectory.every(step=>step.gapSeconds>=0)).toBe(true)
+    }
   })
 
 })
