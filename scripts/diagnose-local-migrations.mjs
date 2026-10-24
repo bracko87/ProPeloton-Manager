@@ -45,7 +45,7 @@ function run(binary,args,timeout=120000) {
     migration:/applying migration|applying local migrations|migration file/i.test(raw),
     containerFailure:/container.*(?:exited|failed)|failed.*container|container .* unhealthy/i.test(raw),
     imageFailure:/failed to pull|toomanyrequests|manifest unknown|image not found/i.test(raw),
-    networkFailure:/i\\/o timeout|context deadline exceeded|TLS handshake timeout|dial tcp|network is unreachable/i.test(raw),
+    networkFailure:/timeout|context deadline exceeded|TLS handshake timeout|dial tcp|network is unreachable/i.test(raw),
     resourceFailure:/no space left on device|out of memory|cannot allocate memory|killed by signal/i.test(raw),
     dependencyFailure:/extension .*not available|depends on|missing dependency/i.test(raw),
     flagFailure:/unknown flag|unknown shorthand flag|invalid value for.*-x/i.test(raw),
