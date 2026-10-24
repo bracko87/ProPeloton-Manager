@@ -10,6 +10,7 @@ import {
 const BACKA='5523cf76-8fd4-4a12-ab28-7f285c9829ff'
 const BINCHE='335708f7-d56a-4816-9068-38399e8f74e3'
 const FRUSKA='f5af8665-91c1-4585-937e-11fb94f65819'
+const ZEELAND='7f69e552-b116-453c-bf55-16ef655ea021'
 
 function fixture(
   stageId=BACKA,
@@ -36,12 +37,12 @@ function fixture(
 }
 
 describe('independent breakaway opportunity engine: shadow only',()=>{
-  it('limits stage selection to three exact flat/hilly road-race UUIDs',()=>{
+  it('limits stage selection to four exact flat/hilly road-race UUIDs',()=>{
     expect(BREAKAWAY_V1_STAGE_REGISTRY.map(row=>row.stageId))
-      .toEqual([BACKA,BINCHE,FRUSKA])
-    expect(new Set(BREAKAWAY_V1_STAGE_REGISTRY.map(row=>row.stageId)).size).toBe(3)
-    for(const id of [BACKA,BINCHE,FRUSKA]){
-      const type=id===BACKA?'flat':'hilly'
+      .toEqual([BACKA,BINCHE,ZEELAND,FRUSKA])
+    expect(new Set(BREAKAWAY_V1_STAGE_REGISTRY.map(row=>row.stageId)).size).toBe(4)
+    for(const id of [BACKA,BINCHE,ZEELAND,FRUSKA]){
+      const type=id===BACKA||id===ZEELAND?'flat':'hilly'
       expect(selectBreakawayOpportunityStageV1(fixture(id,.25,type).stage)?.authority)
         .toBe('shadow_only')
       expect(selectBreakawayOpportunityStageV1(fixture(id,.25,'mountain').stage))
