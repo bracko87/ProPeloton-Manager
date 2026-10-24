@@ -1,7 +1,8 @@
 
 /// <reference lib="deno.ns" />
 import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runRaceEngine.ts";
-import { getSelectedRaceEngineModuleV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { getSelectedRaceEngineModuleV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1, isMountainEnginePilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEnginePilotV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
@@ -51,6 +52,7 @@ declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 type JsonObject = Record<string, unknown>;
 const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
 const SOURCE_COMMIT = "e00c4e694c0629efa5b06497dd514b505b166934";
+const MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS = new Set(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1);
 const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3", "7f69e552-b116-453c-bf55-16ef655ea021"]);
 const PREVIOUS_SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
 
@@ -612,6 +614,13 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       ? getSelectedRaceEngineModuleV1(calculationInput.stage) : acceptedCore;
   }
 
+  // A resumed pilot must preserve the October experimental solver and source.
+  if(MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) &&
+     (engineLaneV1 !== "experimental_mountain_v1" ||
+      !isMountainEnginePilotStageV1(calculationInput.stage) ||
+      (step > 0 && text(checkpoint.selectedEngineSourceCommit) !== "726682eaf58385c4d60a9b664d2b9696b8cfc1a0"))){
+    throw new Error("Mandatory October Mountain V2 checkpoint engine/source mismatch.");
+  }
   // A resumed pilot must preserve both its exact stage and reviewed source.
   if(MANDATORY_BREAKAWAY_PILOT_IDS.has(stageId) && engineLaneV1 !== "experimental_breakaway_v1"){
     throw new Error("Mandatory Breakaway V1 pilot cannot resume on baseline.");
@@ -620,7 +629,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
      text(checkpoint.selectedEngineSourceCommit) !== SOURCE_COMMIT){
     throw new Error("Breakaway V1 checkpoint source commit does not match deployed release.");
   }
-  const effectiveSourceCommit = step === 0 ? SOURCE_COMMIT
+  const effectiveSourceCommit = step === 0 ? (MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "726682eaf58385c4d60a9b664d2b9696b8cfc1a0" : SOURCE_COMMIT)
     : text(checkpoint.selectedEngineSourceCommit) || PREVIOUS_SOURCE_COMMIT;
   let next: JsonObject={...checkpoint};
 
