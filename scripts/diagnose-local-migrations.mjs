@@ -84,14 +84,12 @@ try {
     if(!docker.ok) failed=true;
   }
   if(!failed) {
-    const start=run('supabase',['start','-x','studio,imgproxy,edge-runtime,logflare,vector'],12*60*1000);
-    status('Local stack startup and initial migrations',start);
+    // Database-only startup applies checked-in migrations in a fresh local Postgres container.
+    // Deliberately avoid the full Supabase stack and its unrelated image pulls.
+    const start=run('supabase',['db','start'],12*60*1000);
+    status('LOCAL Postgres startup and repository migration replay',start);
     if(!start.ok) failed=true;
-    else {
-      const reset=run('supabase',['db','reset','--local','--no-seed','--yes'],20*60*1000);
-      status('Fresh LOCAL schema replay',reset);
-      if(!reset.ok) failed=true;
-    }
+    else lines.push('Fresh LOCAL migration application completed; race workload/parity checks still required.');
   }
 } finally {
   // Cleanup is best-effort even after failed initialization; runner is disposable.
