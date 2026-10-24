@@ -19094,8 +19094,7 @@ describe('Phase 11G organic race physics and replay continuity', () => {
 
 
 describe('Mountain replay bounded-window generation', () => {
-  const fixture = () => {
-    const sourceInput = createValidInput()
+  const fixture = (sourceInput: UniversalRaceEngineInput = createValidInput()) => {
     const engineResult = resumableMountain.runRaceEngine(sourceInput)
     const calculationInput = resumableMountain.applyUniversalPhase9ModifiersToInput(
       sourceInput, engineResult.phase9Modifiers,
@@ -19153,6 +19152,38 @@ describe('Mountain replay bounded-window generation', () => {
       restored.push(...JSON.parse(JSON.stringify(page.checkpoints)))
     }
     expect(restored).toEqual(JSON.parse(JSON.stringify(uninterrupted.checkpoints)))
+  })
+
+  it('keeps mountain group identities, gaps and finish states identical across 48-rider replay windows', () => {
+    const base=createExpandedFieldInput(48)
+    const mountainStage: UniversalRaceEngineInput = {
+      ...base,
+      stage:{
+        ...base.stage,
+        terrainType:'mountain',
+        profileType:'climber',
+        finishType:'summit_finish',
+        elevationGainM:1200,
+        terrainPercentages:{flat:20,hilly:10,mountain:70,cobbled:0},
+        profilePoints:[
+          {km:0,elevationM:0},
+          {km:60,elevationM:0},
+          {km:80,elevationM:1200},
+          {km:120,elevationM:1200},
+        ],
+      },
+    }
+    const args=fixture(mountainStage)
+    const full=resumableMountain.buildUniversalReplayTimeline(...args)
+    expect(full.checkpoints.length).toBeGreaterThan(8)
+    const recovered=[]
+    for(let start=0;start<full.checkpoints.length;start+=8){
+      const partial=resumableMountain.buildUniversalReplayTimeline(...args,{start,count:8})
+      recovered.push(...JSON.parse(JSON.stringify(partial.checkpoints)))
+    }
+    expect(recovered).toEqual(JSON.parse(JSON.stringify(full.checkpoints)))
+    expect(recovered.at(-1)?.checkpointId).toBe(full.checkpoints.at(-1)?.checkpointId)
+    expect(recovered.every((row) => row.riderStates.length === 48)).toBe(true)
   })
 
   it('resumes a serialized partial page instead of recomputing saved checkpoints', () => {
