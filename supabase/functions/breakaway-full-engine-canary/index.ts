@@ -4,15 +4,16 @@
  * No database, user identities, secrets, production race tasks or mutation.
  */
 import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 }
-  from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+  from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { PPM_UNIVERSAL_RACE_ENGINE_KEY, PPM_UNIVERSAL_RACE_ENGINE_VERSION,
   type UniversalRaceEngineInput } from
-  "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e9cf5541f1cd83618266eaaa44a355b921222161/src/universal-race-engine/runRaceEngine.ts";
+  "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runRaceEngine.ts";
 
-const SOURCE_COMMIT="e9cf5541f1cd83618266eaaa44a355b921222161";
+const SOURCE_COMMIT="e00c4e694c0629efa5b06497dd514b505b166934";
 const CONTRACT="breakaway_full_official_contract_synthetic_canary_v1";
 const PILOT="5523cf76-8fd4-4a12-ab28-7f285c9829ff";
 const BINCHE="335708f7-d56a-4816-9068-38399e8f74e3";
+const ZEELAND="7f69e552-b116-453c-bf55-16ef655ea021";
 const respond=(data:unknown,status=200)=>new Response(JSON.stringify(data),{
   status,headers:{"content-type":"application/json","cache-control":"no-store"}
 });
@@ -278,11 +279,14 @@ Deno.serve(async req=>{
   if(req.method!=="GET")return respond({error:"method_not_allowed"},405);
   try{
     const fixture=createValidInput();
-    const binche=new URL(req.url).searchParams.get("stage")==="binche";
-    const target=binche?BINCHE:PILOT;
+    const stageParam=new URL(req.url).searchParams.get("stage");
+    const binche=stageParam==="binche";
+    const zeeland=stageParam==="zeeland";
+    const target=zeeland?ZEELAND:binche?BINCHE:PILOT;
     const input:UniversalRaceEngineInput={
       ...fixture,
       engine:{...fixture.engine,deterministicSeed:"read_only_breakaway_release_canary_v1"},
+      weather:{...fixture.weather,windKmh:zeeland?27:fixture.weather.windKmh},
       stage:{...fixture.stage,stageId:target,...(binche?{
         terrainType:"hilly" as const,profileType:"sprinter" as const,
         distanceKm:203.2,elevationGainM:1710,
@@ -291,10 +295,23 @@ Deno.serve(async req=>{
           {km:77,elevationM:310},{km:101,elevationM:125},
           {km:111,elevationM:225},{km:160,elevationM:118},
           {km:203.2,elevationM:120}],
+      }:zeeland?{
+        terrainType:"flat" as const,profileType:"sprinter" as const,
+        distanceKm:204.6,elevationGainM:360,
+        terrainPercentages:{flat:96,hilly:4,mountain:0,cobbled:0},
+        profilePoints:[{km:0,elevationM:3},{km:28,elevationM:2},
+          {km:72.5,elevationM:4},{km:86,elevationM:15},
+          {km:143,elevationM:9},{km:174,elevationM:14},
+          {km:204.6,elevationM:5}],
       }: {})},
-      points:fixture.points.map(row=>({...row,stageId:target,kmFromStart:binche
-        ? (row.pointType==="FINISH"?203.2:row.pointType==="KOM"?77:row.pointType==="INTERMEDIATE_SPRINT"?64:0)
-        : row.kmFromStart})),
+      points:fixture.points.map(row=>({...row,stageId:target,
+        pointType:zeeland&&row.pointType==="KOM"?"INTERMEDIATE_SPRINT" as const:row.pointType,
+        komCategory:zeeland?null:row.komCategory,
+        kmFromStart:zeeland
+          ? (row.pointType==="FINISH"?204.6:row.pointType==="KOM"?143:row.pointType==="INTERMEDIATE_SPRINT"?72.5:0)
+          :binche
+            ? (row.pointType==="FINISH"?203.2:row.pointType==="KOM"?77:row.pointType==="INTERMEDIATE_SPRINT"?64:0)
+            : row.kmFromStart})),
     };
     const selected=selectCompleteRaceEngineLaneV1(input.stage);
     if(selected!=="experimental_breakaway_v1")
