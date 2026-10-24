@@ -54,7 +54,7 @@ function run(binary,args,timeout=120000) {
     configFailure:/config.toml|failed to read config|failed to parse config/i.test(raw),
     databaseFailure:/database.*failed|postgres.*failed|SQLSTATE|ERROR:/i.test(raw),
   };
-  const errorLineCount=raw.split(/\\r?\\n/).filter(line=>/(?:^|\\s)(?:ERROR|FATAL):|(?:^|\\s)Error:/i.test(line)).length;
+  const errorLineCount=normalized.split(/\r?\n/).map(line=>line.trim()).filter(line=>/^(?:ERROR|FATAL)(?:\s|:)|^Error:/i.test(line)).length;
   const exitCode=Number.isInteger(result.status)&&result.status>=0&&result.status<=255?result.status:null;
   const processError=['ETIMEDOUT','ENOENT','ENOBUFS','EACCES'].includes(result.error?.code)?result.error.code:null;
   return {ok:result.status===0&&!result.error,category,sqlstate,sqlCategory,exitCode,processError,lastMentionedVersion:versions.at(-1)||null,phaseSignals,errorLineCount,stdoutBytes:Buffer.byteLength(result.stdout||''),stderrBytes:Buffer.byteLength(result.stderr||'')};
