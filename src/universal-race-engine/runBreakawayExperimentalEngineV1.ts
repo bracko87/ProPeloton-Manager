@@ -10409,8 +10409,7 @@ export function resolveRoadPhase1Opening(
         point.kmFromStart <= stepEndKm + 2,
     )
     const provisionalEscapePaceKmh =
-      stepReferencePaceKmh * escapeAbilityMultiplier *
-        (1 + (cooperationMultiplier - 1) * 0.35) *
+      stepReferencePaceKmh * escapeAbilityMultiplier * cooperationMultiplier *
         breakawayV1PhysicalEscapePaceFactor(input, activeAcceptedRiderIds.length,
           cooperationMultiplier, finiteWorkerAssets, stepMidKm)
     const response = calculatePelotonResponseComponents(
@@ -10444,7 +10443,7 @@ export function resolveRoadPhase1Opening(
         // Without chase workers, the peloton rides in a conservative rolling
         // formation rather than converting its full response into pursuit.
         // This modifies its *physical speed*, not the gap or classification.
-        (noOrganizedOpeningChase ? 0.955 : 1) *
+        (noOrganizedOpeningChase ? 0.965 : 1) *
         windSpeedMultiplier +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,
@@ -11836,7 +11835,7 @@ export function resolveRoadPhase2Development(
     const stepEscapeReferencePaceKmh = deterministicRound(
       stepReferencePaceKmh *
         cooperationPaceRatio *
-        (1 + (phase2DynamicCooperationMultiplier - 1) * 0.35),
+        phase2DynamicCooperationMultiplier,
       6,
     )
     const phase2WorkloadFraction = clamp(
