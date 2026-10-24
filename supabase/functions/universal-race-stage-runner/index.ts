@@ -1,5 +1,6 @@
 /// <reference lib="deno.ns" />
-import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1, isMountainEnginePilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEnginePilotV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import {
   classifyUniversalReplaySynchronizationForPublication,
@@ -21,6 +22,7 @@ import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalR
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
 const SOURCE_COMMIT = "e00c4e694c0629efa5b06497dd514b505b166934";
+const MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS = new Set(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1);
 const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3", "7f69e552-b116-453c-bf55-16ef655ea021"]);
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
 const WORKER_BUILD = "race_director_v2_accelerated_checkpointed_2026_10_13";
@@ -474,6 +476,9 @@ await heartbeat(supabase, stageId, simulationRunId, "scenario_reserved", {
         selected_engine_source_commit: SOURCE_COMMIT,
       });
       try {
+        if (MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) && !isMountainEnginePilotStageV1(input.stage)) {
+          throw new Error("Mandatory October Mountain V2 stage eligibility mismatch.");
+        }
         const rawResult = runSelectedRaceEngineV1(input);
         if (selectCompleteRaceEngineLaneV1(input.stage) === "experimental_breakaway_v1" &&
             (!rawResult.replaySynchronization.synchronized || !rawResult.phase78Acceptance.passed)) {
@@ -500,6 +505,9 @@ await heartbeat(supabase, stageId, simulationRunId, "scenario_reserved", {
     }
 
     if (useFallback) {
+      if (MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId)) {
+        throw new Error("Mandatory October Mountain V2 pilot cannot publish baseline fallback.");
+      }
       if (MANDATORY_BREAKAWAY_PILOT_IDS.has(stageId)) {
         throw new Error("Mandatory Breakaway V1 pilot cannot publish baseline fallback.");
       }
@@ -536,8 +544,10 @@ fallbackReason || "primary_not_official",
         calculationSurvivalModel: "race_calculation_survival_v1",
         fallbackUsed: useFallback,
         fallbackReason: fallbackReason || null,
-        primarySourceCommit: SOURCE_COMMIT,
+        primarySourceCommit: !useFallback && MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "726682eaf58385c4d60a9b664d2b9696b8cfc1a0" : SOURCE_COMMIT,
         selectedEngineLaneV1: !useFallback ? selectCompleteRaceEngineLaneV1(input.stage) : null,
+        engineLaneV1: !useFallback && MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "experimental_mountain_v1" : null,
+        routingSourceCommit: MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "7bb8cffa1631077d893f60ae0d10bbde3803b751" : null,
         fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
         degradedComponents,
       },
