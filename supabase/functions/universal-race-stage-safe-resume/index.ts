@@ -1234,11 +1234,20 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     // Supabase RPC body otherwise duplicates the payload and kills the isolate.
     let outputChunkIndex=0;
     let outputBuffer="";
+    // Disabled unless the v2 SQL is installed and independently tested.
+    // A broken v2 deployment must fail closed, not silently switch protocols.
+    const persistentOutputV2=Deno.env.get("PPM_PERSISTENT_RACE_OUTPUT_V2")==="enabled";
+    const outputWriteRpc=persistentOutputV2
+      ? "universal_race_stage_write_persistent_output_chunk_v2"
+      : "universal_race_stage_write_checkpoint_chunk_v1";
+    const outputSubmitRpc=persistentOutputV2
+      ? "universal_race_stage_submit_persistent_output_v2"
+      : "universal_race_stage_submit_chunked_calculation_v1";
     const uploadOutputChunk=async(piece:string)=>{
       await writeIdempotentChunkWithRetry({
         chunkIndex: outputChunkIndex,
         label: "Replay output",
-        write: () => rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
+        write: () => rpc<JsonObject>(supabase,outputWriteRpc,{
           p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
           p_chunk_index:outputChunkIndex,p_chunk_text:piece,
         }),
@@ -1264,7 +1273,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       }else outputBuffer+=piece;
     }
     if(outputBuffer)await uploadOutputChunk(outputBuffer);
-    const submit=await rpc<JsonObject>(supabase,"universal_race_stage_submit_chunked_calculation_v1",{
+    const submit=await rpc<JsonObject>(supabase,outputSubmitRpc,{
       p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
       p_chunk_count:outputChunkIndex,p_input_snapshot:input,
     });
