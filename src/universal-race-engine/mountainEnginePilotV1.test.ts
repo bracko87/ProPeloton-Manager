@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isMountainEnginePilotStageV1,
   MOUNTAIN_ENGINE_PILOT_STAGE_IDS_V1,
+  MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1,
 } from './mountainEnginePilotV1.ts'
 
 const stage = (
@@ -14,6 +15,8 @@ describe('explicit mountain pilot isolation', () => {
   it('allows exactly the approved historical and eight October mountain stages', () => {
     expect(MOUNTAIN_ENGINE_PILOT_STAGE_IDS_V1).toHaveLength(11)
     expect(new Set(MOUNTAIN_ENGINE_PILOT_STAGE_IDS_V1).size).toBe(11)
+    expect(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1).toHaveLength(8)
+    expect(MOUNTAIN_ENGINE_PILOT_STAGE_IDS_V1.slice(3)).toEqual(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1)
     for (const stageId of MOUNTAIN_ENGINE_PILOT_STAGE_IDS_V1) {
       expect(isMountainEnginePilotStageV1(stage(stageId))).toBe(true)
     }
@@ -21,7 +24,7 @@ describe('explicit mountain pilot isolation', () => {
 
 
   it('authorizes only the eight scheduled October 2000 pilot additions', () => {
-    expect(MOUNTAIN_ENGINE_PILOT_STAGE_IDS_V1.slice(3)).toEqual([
+    expect(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1).toEqual([
       'e00c9ead-91fd-41ce-95f0-de3e4d241e16',
       'dd6681d1-e565-43f3-8449-0bb203b0eb07',
       'a448f8a2-7c9a-426f-8482-d098de506bdb',
