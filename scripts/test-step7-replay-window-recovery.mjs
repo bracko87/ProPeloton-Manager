@@ -6,7 +6,7 @@ const mk=(start,end,total=19)=>({
  finalCheckpointId:"stage|replay|finish",resultsVisibleFromCheckpointId:"stage|replay|finish",
  modelVersion:"universal_replay_timeline_v1",checkpoints:Array.from({length:end-start},(_,i)=>({
    checkpointIndex:start+i,checkpointId:`replay-${start+i}`,
-   groups:[{groupCode:"P",gapSeconds:0}],riderStates:[{riderId:"R1",energy:10+i}],
+   groups:[{groupCode:"P",gapSeconds:0}],riderStates:[{riderId:"R1",energy:10+start+i}],
  })),
 });
 test("interrupted worker resumes from exact checkpoint, preserving output and indices",()=>{
