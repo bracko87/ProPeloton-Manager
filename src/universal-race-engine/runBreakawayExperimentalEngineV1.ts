@@ -10170,10 +10170,10 @@ export function resolveRoadPhase1Opening(
         left.selectedRank - right.selectedRank ||
         left.riderId.localeCompare(right.riderId),
     )
-  const acceptedRiderIds = acceptedAttemptsForPhysics.map(
+  let acceptedRiderIds = acceptedAttemptsForPhysics.map(
     (attempt) => attempt.riderId,
   )
-  const acceptedRiderIdSet = new Set(acceptedRiderIds)
+  let acceptedRiderIdSet = new Set(acceptedRiderIds)
   const attackAttemptByRiderId = new Map(
     pendingAttempts.map((attempt) => [attempt.riderId, attempt]),
   )
@@ -10242,8 +10242,7 @@ export function resolveRoadPhase1Opening(
         .filter(
           ({ row, phase }) =>
             !phase1BreakawayTeamIds.has(row.teamId) &&
-            (phase.behaviour === 'chase' ||
-              phase.behaviour === 'race_control'),
+            phase.behaviour === 'chase',
         )
         .map(({ row }) => row.teamId),
     ),
@@ -10532,6 +10531,17 @@ export function resolveRoadPhase1Opening(
       kmFromStart: deterministicRound(stepEndKm, 6),
       gapSeconds: deterministicRound(phase1PhysicalGapSeconds, 6),
     })
+  }
+  // Once the B1 group is physically caught, later successful attack rolls
+  // cannot retroactively add riders to that dissolved opening lineage.
+  // They are not accepted B1 launches and must never appear as successful
+  // physical breakaway transfers in the replay. Their attack energy is
+  // still charged, but the event is not promoted to an established group.
+  if (phase1CatchKm !== null) {
+    acceptedRiderIds = acceptedAttemptsForPhysics
+      .filter((attempt) => attempt.attemptKm <= phase1CatchKm + 0.000001)
+      .map((attempt) => attempt.riderId)
+    acceptedRiderIdSet = new Set(acceptedRiderIds)
   }
   const phase1EndGapSeconds = deterministicRound(
     phase1CatchKm === null ? phase1PhysicalGapSeconds : 0,
