@@ -34,6 +34,8 @@ type ExpectedChampion = {
   champion_club_name: string | null
   champion_jersey_url?: string | null
   entry_status: string | null
+  rider_availability_status?: string | null
+  medical_selection_blocked?: boolean
   participation_decision: string | null
   final_participation_decision: string | null
   national_status: string | null
@@ -139,6 +141,16 @@ export function WorldChampionshipExpectedField({
                 const unavailable = isUnavailable(row)
                 const waitingForChampion = !row.champion_rider_id
                 const pending = !confirmed
+                // A medical hold is different from reduced readiness / fatigue.
+                // The latter is not a reason to exclude an already-approved rider.
+                const fitnessState = (row.rider_availability_status ?? '').toLowerCase()
+                const unavailableReason = row.entry_status === 'unavailable'
+                  ? row.medical_selection_blocked || ['injured', 'sick', 'retired'].includes(fitnessState)
+                    ? t('participants.worldChampionshipMedicalHold', { defaultValue: 'Medically unavailable' })
+                    : fitnessState === 'not_fully_fit'
+                      ? t('participants.worldChampionshipReducedFitness', { defaultValue: 'Reduced fitness (not injured)' })
+                      : null
+                  : null
                 const status = waitingForChampion
                   ? t('participants.worldChampionshipWaiting', { defaultValue: 'Qualification ongoing' })
                   : unavailable
@@ -170,7 +182,7 @@ export function WorldChampionshipExpectedField({
                           {t('participants.worldChampionshipTbd', { defaultValue: 'Participant not yet known' })}
                         </span>
                       )}
-                      <div className={`mt-1 text-xs ${confirmed ? 'text-emerald-700' : unavailable ? 'text-rose-600' : 'text-slate-500'}`}>{status}</div>
+                      <div className={`mt-1 text-xs ${confirmed ? 'text-emerald-700' : unavailable ? 'text-rose-600' : 'text-slate-500'}`}>{status}{unavailableReason ? ` — ${unavailableReason}` : ''}</div>
                     </td>
                     <td className="px-4 py-3">{row.champion_rider_id
                       ? row.champion_club_name?.trim() || t('participants.freeAgent', { defaultValue: 'Free Agent' })
