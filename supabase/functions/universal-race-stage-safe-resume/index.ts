@@ -2,6 +2,7 @@
 /// <reference lib="deno.ns" />
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import { writeIdempotentChunkWithRetry } from "../_shared/idempotentChunkRetryV1.mjs";
+import { planReplayNormalizationWindow } from "../_shared/replayNormalizationWindowV1.mjs";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
@@ -1009,8 +1010,10 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         .map((team:any)=>String(team?.teamId??""))
         .filter(Boolean);
       const step9ReplayCheckpoints=(replayTimeline as any).checkpoints as any[];
-      const step9Start=Math.max(0,Math.trunc(finite(checkpoint.step9ReplayCursor,0)));
-      const step9End=Math.min(step9ReplayCheckpoints.length,step9Start+1024);
+      const { start:step9Start, end:step9End }=planReplayNormalizationWindow(
+        step9ReplayCheckpoints.length,
+        checkpoint.step9ReplayCursor===undefined?0:Number(checkpoint.step9ReplayCursor),
+      );
       let step9PreviousCheckpoint:any=step9Start>0?step9ReplayCheckpoints[step9Start-1]:null;
       for(let step9Index=step9Start;step9Index<step9End;step9Index++){
         const replayCheckpoint=step9ReplayCheckpoints[step9Index];
