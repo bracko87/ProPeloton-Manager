@@ -94,6 +94,7 @@ jobs:
         run: >-
           npx --yes vitest@3.2.4 run
           src/universal-race-engine/summitFinishSelectivityV1.test.ts
+          src/universal-race-engine/summitFinishPhysicalHandoffV1.test.ts
           --reporter=dot
 
       - name: Run simulation-only French Tour 2000 summit stages through engine
