@@ -549,6 +549,7 @@ export default function WorldNationsEventPage(): JSX.Element {
   const [selectedEventData, setSelectedEventData] = useState<EventData | null>(null)
   const [fullResultsModal, setFullResultsModal] = useState<'teams' | 'stage' | null>(null)
   const [replayAvailability, setReplayAvailability] = useState<ReplayAvailability | null>(null)
+  const [availabilityStageId, setAvailabilityStageId] = useState<string | null>(null)
   const [raceInformationOpen, setRaceInformationOpen] = useState(true)
 
   const load = async (): Promise<void> => {
@@ -652,11 +653,13 @@ export default function WorldNationsEventPage(): JSX.Element {
   useEffect(() => {
     if (!resultStageId) {
       setReplayAvailability(null)
+      setAvailabilityStageId(null)
       return
     }
 
     let cancelled = false
     setReplayAvailability(null)
+    setAvailabilityStageId(null)
     async function loadReplayAvailability(): Promise<void> {
       const { data: response, error: availabilityError } = await supabase.rpc(
         'get_universal_race_stage_replay_availability_v1',
@@ -664,6 +667,7 @@ export default function WorldNationsEventPage(): JSX.Element {
       )
       if (cancelled) return
       setReplayAvailability(availabilityError ? null : (response ?? null) as ReplayAvailability | null)
+      setAvailabilityStageId(availabilityError ? null : resultStageId)
     }
     void loadReplayAvailability()
     const interval = window.setInterval(() => void loadReplayAvailability(), 5000)
@@ -673,7 +677,10 @@ export default function WorldNationsEventPage(): JSX.Element {
     }
   }, [resultStageId])
 
-  const resultsVisible = Boolean(resultEvent && replayAvailability?.results_visible === true)
+  const resultsVisible = Boolean(
+    resultEvent && resultStageId && availabilityStageId === resultStageId &&
+    replayAvailability?.results_visible === true,
+  )
 
   useEffect(() => {
     if (!data) {
