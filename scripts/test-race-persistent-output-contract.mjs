@@ -13,7 +13,7 @@ test("same simulation + chunk index persists across different leases",()=>{
 });
 test("writing and publishing require a current live step-10 lease",()=>{
   const leaseConditions=sql.match(/lease_token=p_lease_token AND status='running' AND step=10/g)||[];
-  assert.equal(leaseConditions.length,2);
+  assert.equal(leaseConditions.length,3); // write lock + lease refresh + final submission guard
   const expirations=sql.match(/lease_expires_at>clock_timestamp\(\)/g)||[];
   assert.equal(expirations.length,2);
   assert.match(sql,/FOR UPDATE/);
