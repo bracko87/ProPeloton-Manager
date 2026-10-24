@@ -16,6 +16,8 @@ on:
       - 'scripts/test-race-persistent-output-contract.mjs'
       - 'scripts/tests/persistent-output-v2-fixtures.sql'
       - 'scripts/tests/persistent-output-v2-integration.sql'
+      - 'scripts/tests/safe-worker-admission-fixtures.sql'
+      - 'scripts/tests/safe-worker-admission-integration.sql'
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
@@ -39,6 +41,8 @@ on:
       - 'scripts/test-race-persistent-output-contract.mjs'
       - 'scripts/tests/persistent-output-v2-fixtures.sql'
       - 'scripts/tests/persistent-output-v2-integration.sql'
+      - 'scripts/tests/safe-worker-admission-fixtures.sql'
+      - 'scripts/tests/safe-worker-admission-integration.sql'
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
@@ -165,3 +169,21 @@ jobs:
 
       - name: Test restart-safe upload and exactly-once publication
         run: psql -X -v ON_ERROR_STOP=1 -f scripts/tests/persistent-output-v2-integration.sql
+
+      - name: Create second isolated worker-capacity database
+        run: createdb race_capacity_ci
+
+      - name: Create admission-limit fixture
+        env:
+          PGDATABASE: race_capacity_ci
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/tests/safe-worker-admission-fixtures.sql
+
+      - name: Compile the actual safe-step admission policy
+        env:
+          PGDATABASE: race_capacity_ci
+        run: psql -X -v ON_ERROR_STOP=1 -f docs/engineering/safe_step_admission_cap_proposal_20261024.sql
+
+      - name: Verify cap, deferred work and lease expiration
+        env:
+          PGDATABASE: race_capacity_ci
+        run: psql -X -v ON_ERROR_STOP=1 -f scripts/tests/safe-worker-admission-integration.sql
