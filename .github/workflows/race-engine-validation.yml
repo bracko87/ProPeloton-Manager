@@ -136,6 +136,19 @@ jobs:
       - name: Verify resumable mountain replay cursor and lease restart logic
         run: node --test scripts/test-step7-replay-window-recovery.mjs
 
+      - name: REQUIRED baseline replay generation full-versus-resumed parity
+        run: >-
+          npx --yes vitest@3.2.4 run
+          src/universal-race-engine/runRaceEngine.test.ts
+          --reporter=verbose
+          -t "Baseline replay bounded-window generation"
+
+      - name: Compile staged baseline replay window engine
+        run: >-
+          npx esbuild src/universal-race-engine/runBaselineResumableEngineV1.ts
+          --bundle --platform=node --format=esm
+          --outfile=/tmp/ppm-baseline-resumable-engine.mjs
+
       - name: Compile staged mountain replay window engine
         run: >-
           npx esbuild src/universal-race-engine/runMountainResumableEngineV1.ts
