@@ -13,7 +13,7 @@ for(const code of [runner,pass2]) {
  assert.doesNotMatch(code,/const rawResult = runRaceEngine\(/)
 }
 assert.ok(pass1.includes(`${sha}/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts`))
-assert.ok(safe.includes(`${sha}/src/universal-race-engine/runSelectedRaceEngineV1.ts`))
+assert.ok(safe.includes(`${selectorSha}/src/universal-race-engine/runSelectedRaceEngineV1.ts`))
 assert.match(safe,/selectCompleteRaceEngineLaneV1/)
 assert.match(safe,/selectedEngineLaneV1:engineLaneV1/)
 assert.match(safe,/selectedEngineSourceCommit:effectiveSourceCommit/)
