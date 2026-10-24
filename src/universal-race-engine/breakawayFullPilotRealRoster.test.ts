@@ -661,4 +661,61 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     }))
   })
 
+
+  it('distinguishes widespread tempo-control orders from an actual opening chase',()=>{
+    const tempo=scenario('minimal',true)
+    // Reconstruct the production tactic mix without using private rider data:
+    // most teams control tempo but nobody has ordered an opening pursuit.
+    tempo.stagePlans=tempo.stagePlans.map(plan=>({
+      ...plan,
+      riders:plan.riders.map(row=>row.stageRole==='breakaway_rider'
+        ? row : {...row,commands:{...row.commands,phase1:'control_tempo' as const}}),
+    }))
+    const chasers:UniversalRaceEngineInput={
+      ...tempo,
+      stagePlans:tempo.stagePlans.map(plan=>({
+        ...plan,
+        riders:plan.riders.map(row=>row.stageRole==='breakaway_rider'
+          ? row : {...row,commands:{...row.commands,phase1:'chase_breakaway' as const}}),
+      })),
+    }
+    const opening=(input:UniversalRaceEngineInput)=>{
+      const core=getSelectedRaceEngineModuleV1(input.stage)
+      const p9=core.buildUniversalPhase9ModifierSummary(input)
+      const calc=core.applyUniversalPhase9ModifiersToInput(input,p9)
+      const readiness=core.calculateAllRiderReadiness(calc.riders)
+      const commands=core.buildRoadCommandResolution(calc,readiness)
+      return core.resolveRoadPhase1Opening(calc,readiness,commands).phase1Opening!
+    }
+    const tempoOpening=opening(tempo)
+    const chasedOpening=opening(chasers)
+    const verifyNoPostCatchB1Join=(phase1:typeof tempoOpening)=>{
+      const catchKm=phase1.breakawayCatchKm
+      if(catchKm!==null){
+        for(const attempt of phase1.attackAttempts){
+          if(attempt.attemptKm>catchKm+0.000001){
+            expect(attempt.acceptedEscapeLaunch).toBe(false)
+          }
+        }
+      }
+    }
+    verifyNoPostCatchB1Join(tempoOpening)
+    verifyNoPostCatchB1Join(chasedOpening)
+    expect(tempoOpening.breakawayRiderIds.length).toBeGreaterThan(0)
+    expect(tempoOpening.endGapSeconds).toBeGreaterThan(7)
+    expect(tempoOpening.endGapSeconds).toBeGreaterThan(chasedOpening.endGapSeconds)
+    const official=runSelectedRaceEngineV1(tempo)
+    expect(official.validationPassed).toBe(true)
+    expect(official.replaySynchronization.synchronized).toBe(true)
+    expect(official.phase78Acceptance.passed).toBe(true)
+    expect(official.finishResolution.complete).toBe(true)
+    expect(official.finishResolution.classification).toHaveLength(96)
+    console.log('BREAKAWAY_TEMPO_VS_CHASE_REGRESSION='+JSON.stringify({
+      tempoEndGapSeconds:tempoOpening.endGapSeconds,
+      chaseEndGapSeconds:chasedOpening.endGapSeconds,
+      tempoCatchKm:tempoOpening.breakawayCatchKm,
+      chaseCatchKm:chasedOpening.breakawayCatchKm,
+      replayIssues:official.replaySynchronization.issues,
+    }))
+  })
 })
