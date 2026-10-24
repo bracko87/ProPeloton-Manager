@@ -9729,6 +9729,42 @@ function calculateOpeningAttackOutcome(
  * probability/roll pair. There is deliberately no phase-wide success quota.
  */
 
+/**
+ * Convert the measured acceleration pulse into its projected road separation.
+ * The follow-through factor represents the part of the attack where the rider
+ * keeps accelerating while the bunch has not yet organized its response.
+ * Crucially, there is no seven-second launch floor and no stage-wide target gap.
+ */
+export function calculateRoadOpeningLaunchGapSecondsV1(
+  burstDurationSeconds: number,
+  burstSpeedMultiplier: number,
+  attackExecutionSkillScore: number,
+  energyAfterAttackAttempt: number,
+): number {
+  const burstSeparation = Math.max(0, burstDurationSeconds) *
+    Math.max(0, burstSpeedMultiplier - 1)
+  if (!Number.isFinite(burstSeparation) || burstSeparation <= 0) return 0
+  const skill = clamp((attackExecutionSkillScore - 45) / 50, 0, 1)
+  const remainingEnergy = clamp((energyAfterAttackAttempt - 20) / 80, 0, 1)
+  // Stronger execution and remaining reserve sustain separation longer.
+  const followThrough = 2.2 + skill * 1.2 + remainingEnergy * 0.7
+  return deterministicRound(clamp(burstSeparation * followThrough, 0.25, 18), 6)
+}
+
+/**
+ * A probability-roll success is not automatically a physical breakaway.
+ * If the first physical front was caught, an already-scheduled later wave
+ * must not be attached to a group which no longer exists. Without a new
+ * front-formation trajectory its attempt is covered, not an escaped rider.
+ */
+export function isOpeningAttemptPhysicallyLaunchedV1(
+  attemptKm: number,
+  firstFrontCatchKm: number | null,
+): boolean {
+  return firstFrontCatchKm === null ||
+    attemptKm < firstFrontCatchKm - 0.000001
+}
+
 function getOpeningSeparationBand(
   physicallyValidAttempt: boolean,
   attackSucceeded: boolean,
@@ -10092,10 +10128,11 @@ export function resolveRoadPhase1Opening(
       6,
     )
     const rawInitialGapSeconds = attackSucceeded
-      ? Math.max(
-          7,
-          outcome.projectedBurstDurationSeconds *
-            Math.max(0, outcome.projectedBurstSpeedMultiplier - 1),
+      ? calculateRoadOpeningLaunchGapSecondsV1(
+          outcome.projectedBurstDurationSeconds,
+          outcome.projectedBurstSpeedMultiplier,
+          outcome.attackExecutionSkillScore,
+          energyAfterAttackAttempt,
         )
       : 0
 
@@ -10153,7 +10190,7 @@ export function resolveRoadPhase1Opening(
   const attackAttemptByRiderId = new Map(
     pendingAttempts.map((attempt) => [attempt.riderId, attempt]),
   )
-  const initialGapSeconds = deterministicRound(
+  let initialGapSeconds = deterministicRound(
     Math.max(
       0,
       ...acceptedAttemptsForPhysics.map(
@@ -10480,13 +10517,34 @@ export function resolveRoadPhase1Opening(
     phase1CatchKm === null ? phase1PhysicalGapSeconds : 0,
     6,
   )
+  // Only attacks occurring while a front actually exists belong to that
+  // lineage. Dordrecht's first B1 was caught before the second wave; those
+  // later successful *rolls* cannot be published as physical escape launches.
+  const physicallyAcceptedOpeningAttempts = acceptedAttemptsForPhysics.filter(
+    (attempt) =>
+      isOpeningAttemptPhysicallyLaunchedV1(attempt.attemptKm, phase1CatchKm),
+  )
+  const physicallyAcceptedOpeningRiderIds = physicallyAcceptedOpeningAttempts
+    .map((attempt) => attempt.riderId)
+  const physicallyAcceptedOpeningRiderIdSet = new Set(
+    physicallyAcceptedOpeningRiderIds,
+  )
+  // Do not count a probabilistic second-wave success as measured launch
+  // separation when there is no matching physical group after the catch.
+  initialGapSeconds = deterministicRound(
+    Math.max(0, ...physicallyAcceptedOpeningAttempts.map(
+      (attempt) => attempt.rawInitialGapSeconds,
+    )),
+    6,
+  )
+
   const phase1BreakawaySurvives =
     acceptedRiderIds.length > 0 &&
     phase1EndGapSeconds > PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS
 
   const attackAttempts: UniversalRoadOpeningAttackAttempt[] =
     pendingAttempts.map((attempt) => {
-      const acceptedEscapeLaunch = acceptedRiderIdSet.has(attempt.riderId)
+      const acceptedEscapeLaunch = physicallyAcceptedOpeningRiderIdSet.has(attempt.riderId)
       return {
         selectedRank: attempt.selectedRank,
         waveCode: attempt.waveCode,
@@ -10650,7 +10708,7 @@ export function resolveRoadPhase1Opening(
       endGapSeconds: phase1EndGapSeconds,
       breakawayCatchKm: phase1CatchKm,
       physicalGapTrajectory: phase1PhysicalGapTrajectory,
-      breakawayRiderIds: [...acceptedRiderIds],
+      breakawayRiderIds: [...physicallyAcceptedOpeningRiderIds],
       pelotonRiderIds,
       attackAttempts,
       riderEnergy,
@@ -29144,7 +29202,7 @@ export function buildUniversalReplayTimeline(
       (attempt) =>
         attempt.command === 'attack' &&
         attempt.physicallyValidAttempt &&
-        !attempt.attackSucceeded,
+        (!attempt.attackSucceeded || !attempt.acceptedEscapeLaunch),
     )
     .slice()
     .sort(
@@ -29171,7 +29229,9 @@ export function buildUniversalReplayTimeline(
       title: attempt.reactiveCounterattack
         ? 'Reactive counterattack is covered'
         : 'Attack is covered',
-      description: attempt.reactiveCounterattack
+      description: attempt.attackSucceeded && !attempt.acceptedEscapeLaunch
+        ? `${replayRiderTeamLabel(attempt.riderId)} tries a later attack after the first breakaway has been caught; no new physical front was established, so the move is covered.`
+        : attempt.reactiveCounterattack
         ? `${replayRiderTeamLabel(attempt.riderId)} reacts to the established first wave, but the counterattack is covered.`
         : `${replayRiderTeamLabel(attempt.riderId)} attacks, but the move is immediately neutralized.`,
       riderIds: [attempt.riderId],
@@ -29243,7 +29303,7 @@ export function buildUniversalReplayTimeline(
       checkpointKind: 'event',
       phase: 1,
       kmFromStart: phase1.breakawayCatchKm,
-      sortOrder: 180,
+      sortOrder: 60,
       groups: groupsAtKm(phase1.breakawayCatchKm),
       energyByRiderId: energyAtKm(1, phase1.breakawayCatchKm),
       eventType: 'catch',

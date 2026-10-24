@@ -87,6 +87,9 @@ jobs:
           src/universal-race-engine/mountainOpeningBreakawayV1.test.ts
           --reporter=dot
 
+      - name: Validate opening launch physics and post-catch replay contract
+        run: npx --yes vitest@3.2.4 run src/universal-race-engine/roadOpeningPhysicalContractV1.test.ts --reporter=dot
+
       - name: Validate Baseline flat peloton cruise worker bounds
         run: npx --yes vitest@3.2.4 run src/universal-race-engine/baselinePelotonCruiseV1.test.ts --reporter=dot
 
