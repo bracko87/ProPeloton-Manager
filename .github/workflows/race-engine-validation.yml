@@ -20,6 +20,11 @@ on:
       - 'scripts/tests/safe-worker-admission-integration.sql'
       - 'scripts/tests/safe-worker-admission-concurrency.sh'
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
+      - 'scripts/test-migration-parity.mjs'
+      - 'scripts/check-migration-parity.mjs'
+      - 'scripts/lib/migrationParityV1.mjs'
+      - 'docs/engineering/prod_applied_migration_versions_20261024.json'
+      - 'docs/engineering/SUPABASE_MIGRATION_HISTORY_DRIFT_20261024.md'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
       - 'scripts/lib/race-worker-capacity-model.mjs'
@@ -46,6 +51,11 @@ on:
       - 'scripts/tests/safe-worker-admission-integration.sql'
       - 'scripts/tests/safe-worker-admission-concurrency.sh'
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
+      - 'scripts/test-migration-parity.mjs'
+      - 'scripts/check-migration-parity.mjs'
+      - 'scripts/lib/migrationParityV1.mjs'
+      - 'docs/engineering/prod_applied_migration_versions_20261024.json'
+      - 'docs/engineering/SUPABASE_MIGRATION_HISTORY_DRIFT_20261024.md'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
       - 'scripts/lib/race-worker-capacity-model.mjs'
@@ -94,6 +104,19 @@ jobs:
 
       - name: Protect production-calibrated engine selection
         run: node --test scripts/test-race-live-engine-pin-preservation.mjs
+
+      - name: Verify known Supabase migration drift is explicitly detected
+        run: |
+          node --test scripts/test-migration-parity.mjs
+          node scripts/check-migration-parity.mjs
+
+      - name: Compile staged safe-resume Edge worker
+        run: >-
+          npx esbuild supabase/functions/universal-race-stage-safe-resume/index.ts
+          --bundle --platform=neutral --format=esm
+          --external:https://*
+          --external:npm:*
+          --outfile=/tmp/ppm-universal-safe-resume.mjs
 
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
