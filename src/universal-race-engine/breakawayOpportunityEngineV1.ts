@@ -69,6 +69,14 @@ export const BREAKAWAY_V1_STAGE_REGISTRY: readonly BreakawayStageApprovalV1[] = 
     authority: 'shadow_only',
   },
   {
+    stageId: '7f69e552-b116-453c-bf55-16ef655ea021',
+    stageName: 'Tacx Zeeland Classic / Ronde van Zeeland',
+    gameDate: '2000-10-12',
+    terrainType: 'flat',
+    escapeOpportunity: 0.72,
+    authority: 'shadow_only',
+  },
+  {
     stageId: 'f5af8665-91c1-4585-937e-11fb94f65819',
     stageName: 'Trka kroz Vojvodinu — Danube and Fruska Gora Finale',
     gameDate: '2000-10-08',
