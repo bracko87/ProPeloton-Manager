@@ -729,4 +729,97 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
       replayIssues:official.replaySynchronization.issues,
     }))
   })
+
+  it('executes Zeeland 204.6 km exposed flat route with 120 synthetic riders from 20 teams',()=>{
+    const ZEELAND='7f69e552-b116-453c-bf55-16ef655ea021'
+    const base=scenario('minimal',true)
+    // Expand the existing anonymized 96-rider fixture to the registered
+    // 120-rider / 20-team field size. These are synthetic clones, NOT live
+    // user riders or copied race tactics.
+    const sourceTeams=base.teams.slice(0,4)
+    const extraTeams=sourceTeams.map((team,i)=>{
+      const suffix='-Z'+String(i+1)
+      return {...team,teamId:team.teamId+suffix,
+        participantTeamId:team.participantTeamId+suffix,
+        clubId:team.clubId+suffix,
+        participatingClubId:team.participatingClubId+suffix,
+        ownerClubId:team.ownerClubId+suffix,
+        raceTeamEntryId:team.raceTeamEntryId+suffix,
+        acceptedRiderIds:team.acceptedRiderIds.map(id=>id+suffix),
+        snapshot:{...team.snapshot,teamName:team.snapshot.teamName+suffix}}
+    })
+    const extraRiders=sourceTeams.flatMap((team,i)=>{
+      const suffix='-Z'+String(i+1)
+      return base.riders.filter(r=>r.teamId===team.teamId)
+        .map(r=>({...r,riderId:r.riderId+suffix,
+          participantRiderId:r.participantRiderId+suffix,
+          teamId:r.teamId+suffix,
+          participatingClubId:r.participatingClubId+suffix,
+          snapshot:{...r.snapshot,displayName:r.riderId+suffix}}))
+    })
+    const extraPlans=base.stagePlans.slice(0,4).map((plan,i)=>{
+      const suffix='-Z'+String(i+1)
+      return {...plan,teamId:plan.teamId+suffix,
+        riders:plan.riders.map(row=>({
+          ...row,riderId:row.riderId+suffix,
+          commands:{...row.commands,phase1:'control_tempo' as const},
+        }))}
+    })
+    const route:UniversalRaceEngineInput={
+      ...base,
+      engine:{...base.engine,deterministicSeed:'zeeland-official-flat-120-rider-synthetic-regression'},
+      race:{...base.race,raceId:'zeeland-test-race'},
+      stage:{...base.stage,raceId:'zeeland-test-race',
+        stageId:ZEELAND,stageFormat:'road_race',terrainType:'flat',
+        profileType:'sprinter',finishType:'flat_finish',
+        distanceKm:204.6,elevationGainM:360,
+        terrainPercentages:{flat:96,hilly:4,mountain:0,cobbled:0},
+        profilePoints:[[0,3],[10,5],[28,2],[52,5],[72.5,4],
+          [86,15],[104,4],[122,12],[143,9],[174,14],[185,2],
+          [201,15],[204.6,5]]
+          .map(([km,elevationM])=>({km,elevationM})),
+      },
+      points:[
+        {...base.points[0],stageId:ZEELAND,kmFromStart:0},
+        {...base.points[1],stageId:ZEELAND,kmFromStart:72.5,
+          pointId:'zeeland-sprint-1',pointsScheme:[12,8,5,3,1],
+          timeBonusSeconds:[],sortOrder:10},
+        {...base.points[1],stageId:ZEELAND,kmFromStart:143,
+          pointId:'zeeland-sprint-2',pointsScheme:[10,6,4,2,1],
+          timeBonusSeconds:[],sortOrder:20},
+        {...base.points.at(-1)!,stageId:ZEELAND,kmFromStart:204.6,
+          pointId:'zeeland-finish',pointsScheme:[25,20,16,14,12,10,8,6,4,2],
+          timeBonusSeconds:[],sortOrder:30},
+      ],
+      weather:{...base.weather,windKmh:27,source:'synthetic-test'},
+      teams:[...base.teams,...extraTeams],
+      riders:[...base.riders,...extraRiders],
+      stagePlans:[...base.stagePlans,...extraPlans],
+    }
+    expect(route.teams).toHaveLength(20)
+    expect(route.riders).toHaveLength(120)
+    expect(new Set(route.riders.map(r=>r.riderId)).size).toBe(120)
+    expect(selectCompleteRaceEngineLaneV1(route.stage)).toBe('experimental_breakaway_v1')
+    expect(getSelectedRaceEngineModuleV1(route.stage).runRaceEngine).toBe(specialistEngine)
+    const immutable=JSON.stringify(route)
+    const result=runSelectedRaceEngineV1(route)
+    expect(JSON.stringify(route)).toBe(immutable)
+    expect(result.validationPassed).toBe(true)
+    expect(result.finishResolution.complete).toBe(true)
+    expect(result.finishResolution.classification).toHaveLength(120)
+    expect(result.replaySynchronization.synchronized).toBe(true)
+    expect(result.phase78Acceptance.passed).toBe(true)
+    expect(result.phase9Acceptance.passed).toBe(true)
+    expect(result.postStageUpdate.persistenceContract.directDatabaseWritePerformed).toBe(false)
+    console.log('ZEELAND_PILOT_AUDIT='+JSON.stringify({
+      stageId:ZEELAND,
+      riderCount:result.finishResolution.classification.length,
+      teams:route.teams.length,
+      openingBreakawayRiders:result.roadRaceResolution.phase1Opening?.breakawayRiderIds.length??0,
+      maxGap:result.calibrationSummary.maximumBreakawayGapSeconds,
+      breakawaySurvived:result.calibrationSummary.breakawaySurvived,
+      replayIssues:result.replaySynchronization.issues,
+    }))
+  })
+
 })
