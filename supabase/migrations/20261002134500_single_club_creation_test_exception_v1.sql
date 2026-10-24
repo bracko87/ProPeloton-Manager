@@ -13,11 +13,14 @@ alter table public.club_creation_test_exceptions enable row level security;
 
 revoke all on table public.club_creation_test_exceptions from anon, authenticated;
 
+-- This one-off live test exception is meaningful only if its existing
+-- profile is present. Do not fabricate an authentication/profile record on a
+-- fresh isolated schema solely to satisfy the exception's foreign key.
 insert into public.club_creation_test_exceptions(user_id,reason)
-values(
-  '13747fea-414a-4fa6-87c6-c5e47de373d5'::uuid,
+select p.id,
   'Single testing exception for Soda_Meckel while public club creation is disabled.'
-)
+from public.profiles p
+where p.id='13747fea-414a-4fa6-87c6-c5e47de373d5'::uuid
 on conflict(user_id) do update
 set reason=excluded.reason,
     revoked_at=null;
