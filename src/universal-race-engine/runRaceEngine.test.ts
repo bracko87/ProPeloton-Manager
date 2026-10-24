@@ -19277,7 +19277,7 @@ describe('Baseline replay bounded-window generation', () => {
         ...base.stage,
         terrainType:'hilly',
         profileType:'rolling',
-        finishType:'flat',
+        finishType:base.stage.finishType,
         elevationGainM:840,
         terrainPercentages:{flat:35,hilly:65,mountain:0,cobbled:0},
         profilePoints:[
