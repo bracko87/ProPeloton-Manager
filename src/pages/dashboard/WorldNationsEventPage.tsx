@@ -85,6 +85,15 @@ type RaceFavorite = {
   role_snapshot?: string | null
 }
 
+type GroupStage = {
+  event_id: string
+  group_id: string
+  race_day: number
+  race_type: string
+  stage_id?: string | null
+  status?: string | null
+}
+
 type StageResultRow = {
   rank?: number | null
   rider_id?: string | null
@@ -375,6 +384,10 @@ export default function WorldNationsEventPage(): JSX.Element {
   const [raceFavorites, setRaceFavorites] = useState<RaceFavorite[]>([])
   const [stageResults, setStageResults] = useState<StageResultRow[]>([])
   const [generalStandings, setGeneralStandings] = useState<GeneralStanding[]>([])
+  const [groupStages, setGroupStages] = useState<GroupStage[]>([])
+  const [selectedEventId, setSelectedEventId] = useState<string | null>(null)
+  const [selectedEventData, setSelectedEventData] = useState<EventData | null>(null)
+  const [fullResultsModal, setFullResultsModal] = useState<'teams' | 'stage' | null>(null)
   const [replayAvailability, setReplayAvailability] = useState<ReplayAvailability | null>(null)
   const [raceInformationOpen, setRaceInformationOpen] = useState(true)
 
@@ -409,56 +422,110 @@ export default function WorldNationsEventPage(): JSX.Element {
   }, [eventId])
 
   useEffect(() => {
-    const stageId = data?.generated_stage_id ?? data?.route?.stage_id ?? null
-    if (!stageId) {
+    setSelectedEventId(data?.event_id ?? null)
+    setSelectedEventData(data)
+    setGroupStages([])
+    setFullResultsModal(null)
+  }, [data?.event_id])
+
+  // The event schedule identifies all three race days in this qualification group.
+  // Keep the selection local to the results panel rather than navigating away.
+  useEffect(() => {
+    if (!data?.edition_id || !data.group_id) return
+    let cancelled = false
+
+    void (async () => {
+      const { data: response, error: scheduleError } = await supabase.rpc(
+        'get_nations_competition_event_schedule_v2',
+        { p_edition_id: data.edition_id },
+      )
+      if (cancelled) return
+      if (scheduleError) {
+        console.warn('Could not load World Nations group stages:', scheduleError.message)
+        setGroupStages([])
+        return
+      }
+      setGroupStages(((response ?? []) as GroupStage[])
+        .filter(stage => stage.group_id === data.group_id)
+        .sort((a, b) => Number(a.race_day) - Number(b.race_day)))
+    })()
+    return () => { cancelled = true }
+  }, [data?.edition_id, data?.group_id])
+
+  useEffect(() => {
+    if (!data || !selectedEventId) {
+      setSelectedEventData(null)
+      return
+    }
+    if (selectedEventId === data.event_id) {
+      setSelectedEventData(data)
+      return
+    }
+    let cancelled = false
+    setSelectedEventData(null)
+    void (async () => {
+      const { data: response, error: eventError } = await supabase.rpc(
+        'get_nations_competition_event_page_v2',
+        { p_event_id: selectedEventId },
+      )
+      if (cancelled) return
+      if (eventError) {
+        console.warn('Could not load selected World Nations stage:', eventError.message)
+        return
+      }
+      const event = (response ?? null) as EventData | null
+      // Never display results from a different competition group.
+      setSelectedEventData(event?.group_id === data.group_id ? event : null)
+    })()
+    return () => { cancelled = true }
+  }, [data, selectedEventId])
+
+  const groupStageOptions = groupStages.length > 0
+    ? groupStages
+    : data ? [{ event_id: data.event_id, group_id: data.group_id, race_day: data.race_day, race_type: data.race_type }] : []
+  const selectedGroupStage = groupStageOptions.find(stage => stage.event_id === selectedEventId)
+    ?? groupStageOptions[0] ?? null
+  const resultEvent = selectedEventData?.event_id === selectedEventId
+    ? selectedEventData : null
+  const resultStageId = resultEvent?.generated_stage_id ?? resultEvent?.route?.stage_id ?? null
+
+  useEffect(() => {
+    if (!resultStageId) {
       setReplayAvailability(null)
       return
     }
 
     let cancelled = false
-
+    setReplayAvailability(null)
     async function loadReplayAvailability(): Promise<void> {
       const { data: response, error: availabilityError } = await supabase.rpc(
         'get_universal_race_stage_replay_availability_v1',
-        { p_stage_id: stageId },
+        { p_stage_id: resultStageId },
       )
-
       if (cancelled) return
-
-      if (availabilityError) {
-        setReplayAvailability(null)
-        return
-      }
-
-      setReplayAvailability((response ?? null) as ReplayAvailability | null)
+      setReplayAvailability(availabilityError ? null : (response ?? null) as ReplayAvailability | null)
     }
-
     void loadReplayAvailability()
     const interval = window.setInterval(() => void loadReplayAvailability(), 5000)
-
     return () => {
       cancelled = true
       window.clearInterval(interval)
     }
-  }, [data?.generated_stage_id, data?.route?.stage_id])
+  }, [resultStageId])
 
-  const resultsVisible = replayAvailability?.results_visible === true
+  const resultsVisible = Boolean(resultEvent && replayAvailability?.results_visible === true)
 
   useEffect(() => {
     if (!data) {
       setRaceTeams([])
       setRaceFavorites([])
-      setStageResults([])
       setGeneralStandings([])
       return
     }
 
     let cancelled = false
-
     async function loadRaceInformation(): Promise<void> {
-      const raceId = data?.race_id ?? null
-      const stageId = data?.generated_stage_id ?? data?.route?.stage_id ?? null
-
+      const raceId = data.race_id ?? null
       if (raceId) {
         const [teamsResponse, ridersResponse, favoritesResponse] = await Promise.all([
           supabase
@@ -478,30 +545,18 @@ export default function WorldNationsEventPage(): JSX.Element {
           const rawFavorites = ((favoritesResponse.data ?? []) as RaceFavorite[]).slice(0, 5)
           const fullNames = await loadFullRiderNames([
             ...rawRiders.map(rider => rider.rider_id),
-            ...rawFavorites
-              .map(favorite => favorite.rider_id ?? '')
-              .filter(Boolean),
+            ...rawFavorites.map(favorite => favorite.rider_id ?? '').filter(Boolean),
           ])
-
           if (cancelled) return
-
           const riders = rawRiders.map(rider => ({
             ...rider,
-            rider_name_snapshot:
-              fullNames.get(rider.rider_id) ??
-              rider.rider_name_snapshot ??
-              null,
+            rider_name_snapshot: fullNames.get(rider.rider_id) ?? rider.rider_name_snapshot ?? null,
           }))
-
           const favorites = rawFavorites.map(favorite => ({
             ...favorite,
-            rider_name:
-              (favorite.rider_id ? fullNames.get(favorite.rider_id) : null) ??
-              favorite.rider_name ??
-              null,
+            rider_name: (favorite.rider_id ? fullNames.get(favorite.rider_id) : null) ?? favorite.rider_name ?? null,
           }))
-
-          const teams = ((teamsResponse.data ?? []) as Omit<RaceParticipantTeam, 'riders'>[]).map(team => {
+          setRaceTeams(((teamsResponse.data ?? []) as Omit<RaceParticipantTeam, 'riders'>[]).map(team => {
             const ids = new Set(
               [team.id, team.team_id, team.club_id, team.participating_club_id, team.race_team_entry_id]
                 .filter((value): value is string => Boolean(value)),
@@ -512,8 +567,7 @@ export default function WorldNationsEventPage(): JSX.Element {
                 .filter(rider => ids.has(rider.team_id) || (rider.club_id ? ids.has(rider.club_id) : false))
                 .sort((a, b) => (a.start_number ?? 999) - (b.start_number ?? 999)),
             }
-          })
-          setRaceTeams(teams)
+          }))
           setRaceFavorites(favorites)
         }
       } else if (!cancelled) {
@@ -521,79 +575,63 @@ export default function WorldNationsEventPage(): JSX.Element {
         setRaceFavorites([])
       }
 
-      if (!resultsVisible) {
-        if (!cancelled) {
-          setStageResults([])
-          setGeneralStandings([])
-        }
+      // The overview contains points earned in each of the three distinct races.
+      const { data: overviewData, error: overviewError } = await supabase.rpc(
+        'get_nations_competition_overview_v1', { p_season_number: data.season_number },
+      )
+      if (cancelled || overviewError) return
+      const overview = (overviewData ?? {}) as any
+      const rounds = Array.isArray(overview.rounds) ? overview.rounds : []
+      const group = rounds
+        .flatMap((round: any) => (Array.isArray(round.groups) ? round.groups : []))
+        .find((candidate: any) => candidate?.id === data.group_id)
+      setGeneralStandings(Array.isArray(group?.entries)
+        ? group.entries.map((entry: any) => ({
+            association_id: String(entry.association_id ?? ''),
+            association_name: String(entry.association_name ?? entry.country_code ?? ''),
+            country_code: String(entry.country_code ?? ''),
+            final_group_rank: entry.final_group_rank == null ? null : Number(entry.final_group_rank),
+            total_points: Number(entry.total_points ?? 0),
+            ttt_points: Number(entry.ttt_points ?? 0),
+            flat_points: Number(entry.flat_points ?? 0),
+            mountain_points: Number(entry.mountain_points ?? 0),
+            status: String(entry.status ?? 'entered'),
+          })) : [])
+    }
+    void loadRaceInformation()
+    return () => { cancelled = true }
+  }, [data?.event_id, data?.race_id, data?.group_id, data?.season_number])
+
+  // Fetch the chosen day's real rider result rows, including previously
+  // completed days. No unpublished race results are read into the table.
+  useEffect(() => {
+    if (!resultsVisible || !resultStageId || resultEvent?.race_type === 'team_time_trial') {
+      setStageResults([])
+      return
+    }
+    let cancelled = false
+    setStageResults([])
+    void (async () => {
+      const { data: resultRows, error: resultError } = await supabase
+        .from('race_stage_results')
+        .select('rank, rider_id, team_id, rider_name_snapshot, elapsed_seconds, gap_seconds, status')
+        .eq('stage_id', resultStageId)
+        .order('rank', { ascending: true })
+      if (cancelled) return
+      if (resultError) {
+        console.warn('Could not load selected World Nations stage results:', resultError.message)
         return
       }
-
-      if (stageId) {
-        const { data: resultRows } = await supabase
-          .from('race_stage_results')
-          .select('rank, rider_id, team_id, rider_name_snapshot, elapsed_seconds, gap_seconds, status')
-          .eq('stage_id', stageId)
-          .order('rank', { ascending: true })
-
-        if (!cancelled) {
-          const rawResults = (resultRows ?? []) as StageResultRow[]
-          const fullNames = await loadFullRiderNames(
-            rawResults
-              .map(result => result.rider_id ?? '')
-              .filter(Boolean),
-          )
-
-          if (cancelled) return
-
-          setStageResults(
-            rawResults.map(result => ({
-              ...result,
-              rider_name_snapshot:
-                (result.rider_id ? fullNames.get(result.rider_id) : null) ??
-                result.rider_name_snapshot ??
-                null,
-            })),
-          )
-        }
-      } else if (!cancelled) {
-        setStageResults([])
-      }
-
-      const { data: overviewData } = await supabase.rpc('get_nations_competition_overview_v1', {
-        p_season_number: data.season_number,
-      })
-
-      if (!cancelled) {
-        const overview = (overviewData ?? {}) as any
-        const rounds = Array.isArray(overview.rounds) ? overview.rounds : []
-        const group = rounds
-          .flatMap((round: any) => (Array.isArray(round.groups) ? round.groups : []))
-          .find((candidate: any) => candidate?.id === data.group_id)
-        setGeneralStandings(
-          Array.isArray(group?.entries)
-            ? group.entries.map((entry: any) => ({
-                association_id: String(entry.association_id ?? ''),
-                association_name: String(entry.association_name ?? entry.country_code ?? ''),
-                country_code: String(entry.country_code ?? ''),
-                final_group_rank: entry.final_group_rank == null ? null : Number(entry.final_group_rank),
-                total_points: Number(entry.total_points ?? 0),
-                ttt_points: Number(entry.ttt_points ?? 0),
-                flat_points: Number(entry.flat_points ?? 0),
-                mountain_points: Number(entry.mountain_points ?? 0),
-                status: String(entry.status ?? 'entered'),
-              }))
-            : [],
-        )
-      }
-    }
-
-    void loadRaceInformation()
-    return () => {
-      cancelled = true
-    }
-  }, [data?.event_id, data?.race_id, data?.generated_stage_id, data?.group_id, data?.season_number, data?.route?.stage_id, resultsVisible])
-
+      const rawResults = (resultRows ?? []) as StageResultRow[]
+      const fullNames = await loadFullRiderNames(rawResults.map(row => row.rider_id ?? '').filter(Boolean))
+      if (cancelled) return
+      setStageResults(rawResults.map(row => ({
+        ...row,
+        rider_name_snapshot: (row.rider_id ? fullNames.get(row.rider_id) : null) ?? row.rider_name_snapshot ?? null,
+      })))
+    })()
+    return () => { cancelled = true }
+  }, [resultsVisible, resultStageId, resultEvent?.race_type])
 
   const points = useMemo(() => {
     const authoritative = (data?.route?.profile_points ?? [])
