@@ -22,6 +22,11 @@ on:
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-migration-parity.mjs'
       - 'scripts/test-race-worker-measured-scenarios.mjs'
+      - 'scripts/test-step7-replay-window-recovery.mjs'
+      - 'supabase/functions/_shared/replayWindowAssemblyV1.mjs'
+      - 'src/universal-race-engine/runMountainResumableEngineV1.ts'
+      - 'src/universal-race-engine/mountainOpeningBreakawayV1.ts'
+      - 'src/universal-race-engine/summitFinishPhysicalHandoffV1.ts'
       - 'scripts/run-race-worker-measured-scenarios.mjs'
       - 'scripts/fixtures/race_worker_measured_20261024.json'
       - 'supabase/migrations/**'
@@ -57,6 +62,11 @@ on:
       - 'scripts/test-race-live-engine-pin-preservation.mjs'
       - 'scripts/test-migration-parity.mjs'
       - 'scripts/test-race-worker-measured-scenarios.mjs'
+      - 'scripts/test-step7-replay-window-recovery.mjs'
+      - 'supabase/functions/_shared/replayWindowAssemblyV1.mjs'
+      - 'src/universal-race-engine/runMountainResumableEngineV1.ts'
+      - 'src/universal-race-engine/mountainOpeningBreakawayV1.ts'
+      - 'src/universal-race-engine/summitFinishPhysicalHandoffV1.ts'
       - 'scripts/run-race-worker-measured-scenarios.mjs'
       - 'scripts/fixtures/race_worker_measured_20261024.json'
       - 'supabase/migrations/**'
@@ -123,6 +133,15 @@ jobs:
           node --test scripts/test-race-worker-measured-scenarios.mjs
           node scripts/run-race-worker-measured-scenarios.mjs
 
+      - name: Verify resumable mountain replay cursor and lease restart logic
+        run: node --test scripts/test-step7-replay-window-recovery.mjs
+
+      - name: Compile staged mountain replay window engine
+        run: >-
+          npx esbuild src/universal-race-engine/runMountainResumableEngineV1.ts
+          --bundle --platform=node --format=esm
+          --outfile=/tmp/ppm-mountain-resumable-engine.mjs
+
       - name: Compile staged safe-resume Edge worker
         run: >-
           npx esbuild supabase/functions/universal-race-stage-safe-resume/index.ts
@@ -163,6 +182,13 @@ jobs:
           src/universal-race-engine/runRaceEngine.test.ts
           --reporter=dot
           -t "uses one 82% reactive-counterattack decision for the whole second opening wave and exposes it in replay|stores accepted opening attacks and the one original breakaway formation|never freezes an established opening escape at its launch gap|never publishes a road finisher with zero usable reserve|keeps every successful peloton attack in a physical F lifecycle|does not retroactively drop a rider before a later successful peloton attack|lets some successful decisive attacks establish a meaningful physical move before the chase fully organizes"
+
+      - name: REQUIRED mountain replay generation full-versus-resumed parity
+        run: >-
+          npx --yes vitest@3.2.4 run
+          src/universal-race-engine/runRaceEngine.test.ts
+          --reporter=verbose
+          -t "Mountain replay bounded-window generation"
 
       - name: Run full legacy race-engine suite for visibility
         continue-on-error: true

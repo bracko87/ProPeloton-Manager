@@ -5,6 +5,7 @@ import * as calibratedBaselineCore from "https://raw.githubusercontent.com/brack
 import * as correctedFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2/src/universal-race-engine/runRaceEngine.ts";
 import * as calibratedBreakawayCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
 import * as optimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ef5f0d4f2a91be80834140fbda977b5da614908b/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
+import * as windowedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/561b1c0129f7f3fcbebffee6bc9344e03ff34c11/src/universal-race-engine/runMountainResumableEngineV1.ts";
 import * as previousOptimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
 import { getSelectedRaceEngineModuleV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runSelectedRaceEngineV1.ts";
 import { selectMountainEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEngineLaneV1.ts";
@@ -14,6 +15,7 @@ import { MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1, isMountainEnginePilotStageV
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import { writeIdempotentChunkWithRetry } from "../_shared/idempotentChunkRetryV1.mjs";
 import { planReplayNormalizationWindow } from "../_shared/replayNormalizationWindowV1.mjs";
+import { assembleReplayWindowV1 } from "../_shared/replayWindowAssemblyV1.mjs";
 import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
@@ -717,6 +719,60 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       groupAndTimeResolution,
     });
     next={...checkpoint,groupAndTimeResolution,baseFinishResolution};
+  } else if(step===7 && engineLaneV1==="experimental_mountain_v1" &&
+      text(checkpoint.selectedEngineSourceCommit)===OPTIMIZED_MOUNTAIN_SOURCE_COMMIT &&
+      calculationInput.stage.stageFormat==="road_race" &&
+      (Deno.env.get("PPM_STEP7_REPLAY_WINDOWS")==="enabled" ||
+       Number(checkpoint.step7ReplayCursor??0)>0)){
+    // Opt-in bounded replay renderer. This must NOT change the physics source
+    // already pinned by the calculation checkpoint. Each completed window is
+    // persisted before the next Edge invocation, so CPU terminations restart
+    // only the unfinished window, never previously rendered checkpoints.
+    const cursor=Number(checkpoint.step7ReplayCursor??0);
+    const previousFrames=Array.isArray(checkpoint.step7ReplayFrames)
+      ? checkpoint.step7ReplayFrames as any[] : [];
+    if(!Number.isInteger(cursor)||cursor<0 || previousFrames.length!==cursor){
+      throw new Error("Resumable step-7 cursor/checkpoint mismatch");
+    }
+    const page=windowedMountainCore.buildUniversalReplayTimeline(
+      calculationInput,
+      checkpoint.riderReadiness as any,
+      checkpoint.roadCommandResolution as any,
+      checkpoint.roadRaceResolution as any,
+      checkpoint.provisionalIntermediatePointBattles as any,
+      checkpoint.provisionalIntermediatePointFinalization as any,
+      checkpoint.groupAndTimeResolution as any,
+      checkpoint.baseFinishResolution as any,
+      {start:cursor,count:8},
+    );
+    const compiled=assembleReplayWindowV1({
+      cursor,
+      previousFrames,
+      previousMetadata:checkpoint.step7ReplayMetadata,
+      page,
+      compact:(row:any)=>{
+        const riderStates=Array.isArray(row?.riderStates)
+          ?row.riderStates.map((state:any)=>{
+            const {teamId:_teamId,condition:_condition,readinessScore:_readinessScore,
+              finishRank:_finishRank,officialTimeSeconds:_officialTimeSeconds,
+              ...compactState}=state;
+            return compactState;
+          }):[];
+        return {...row,intermediateResults:[],activeCommands:[],teamStates:[],riderStates};
+      },
+    });
+    if(compiled.completed){
+      next={...checkpoint,step7ReplayCursor:undefined,step7ReplayFrames:undefined,
+        step7ReplayMetadata:undefined,
+        baseReplayTimeline:{...compiled.metadata,checkpoints:compiled.frames},
+        replayWindowedSourceCommit:"561b1c0129f7f3fcbebffee6bc9344e03ff34c11",
+        mountainReplayOptimizationSourceCommit:OPTIMIZED_MOUNTAIN_SOURCE_COMMIT,
+        originalEnginePhysicsSourceCommit:text(checkpoint.selectedEngineSourceCommit)||SOURCE_COMMIT};
+    }else{
+      next={...checkpoint,step7ReplayCursor:compiled.nextCursor,
+        step7ReplayFrames:compiled.frames,step7ReplayMetadata:compiled.metadata,
+        replayWindowedSourceCommit:"561b1c0129f7f3fcbebffee6bc9344e03ff34c11"};
+    }
   } else if(step===7){
     const builtBaseReplayTimeline=selectedCore.buildUniversalReplayTimeline(
       calculationInput,
@@ -1375,7 +1431,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     throw new Error(`Unsupported safe-mode step ${step}`);
   }
 
-  const nextStep=step===9&&Number(next.step9ReplayCursor??0)>0?9:step+1;
+  const nextStep=step===7&&Number(next.step7ReplayCursor??0)>0?7:step===9&&Number(next.step9ReplayCursor??0)>0?9:step+1;
   // Large replay checkpoints must be serialized incrementally; JSON.stringify
   // of the entire object duplicates tens of MB in the isolate heap.
   async function* serializedPieces(value:any):AsyncGenerator<string>{
@@ -1388,7 +1444,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       yield JSON.stringify(key)+":";
       if(key==="universalResult"&&field&&typeof field==="object"){
         yield* serializedPieces(field);
-      }else if(key==="replayTimeline"&&field&&typeof field==="object"&&
+      }else if((key==="replayTimeline"||key==="baseReplayTimeline")&&field&&typeof field==="object"&&
          Array.isArray((field as any).checkpoints)){
         yield "{";
         let firstTimeline=true;
@@ -1409,12 +1465,23 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
           }else yield JSON.stringify(tvalue);
         }
         yield "}";
+      }else if(key==="step7ReplayFrames"&&Array.isArray(field)){
+        yield "[";
+        let firstWindowFrame=true;
+        for(const frame of field){
+          if(!firstWindowFrame)yield ",";
+          firstWindowFrame=false;
+          yield JSON.stringify(frame);
+        }
+        yield "]";
       }else yield JSON.stringify(field);
     }
     yield "}";
   }
   let save:JsonObject;
-  if(step>=8){
+  if(step>=8 || (step===7 && (Deno.env.get("PPM_STEP7_REPLAY_WINDOWS")==="enabled" ||
+     Number(checkpoint.step7ReplayCursor??0)>0 || next.baseReplayTimeline!==undefined &&
+     next.replayWindowedSourceCommit!==undefined))){
     let chunkIndex=0;
     let buffer="";
     const sendChunk=async(piece:string)=>{
