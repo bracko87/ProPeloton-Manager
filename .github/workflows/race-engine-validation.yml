@@ -12,6 +12,8 @@ on:
       - 'scripts/test-race-safe-chunk-retries.mjs'
       - 'supabase/functions/_shared/replayNormalizationWindowV1.mjs'
       - 'scripts/test-race-replay-normalization-pages.mjs'
+      - 'docs/engineering/persistent_race_output_v2_proposal_20261024.sql'
+      - 'scripts/test-race-persistent-output-contract.mjs'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
       - 'scripts/lib/race-worker-capacity-model.mjs'
@@ -30,6 +32,8 @@ on:
       - 'scripts/test-race-safe-chunk-retries.mjs'
       - 'supabase/functions/_shared/replayNormalizationWindowV1.mjs'
       - 'scripts/test-race-replay-normalization-pages.mjs'
+      - 'docs/engineering/persistent_race_output_v2_proposal_20261024.sql'
+      - 'scripts/test-race-persistent-output-contract.mjs'
       - 'scripts/test-race-safe-admission-cap.mjs'
       - 'scripts/test-race-worker-capacity-model.mjs'
       - 'scripts/lib/race-worker-capacity-model.mjs'
@@ -72,6 +76,9 @@ jobs:
 
       - name: Compare synthetic 2x and 12x worker pressure
         run: node scripts/simulate-race-worker-capacity.mjs
+
+      - name: Check persistent output resume contract
+        run: node --test scripts/test-race-persistent-output-contract.mjs
 
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
