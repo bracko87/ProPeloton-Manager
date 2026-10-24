@@ -13,6 +13,9 @@ const environment={...process.env};
 for(const key of Object.keys(environment)) {
   if (/^(SUPABASE_|PGPASSWORD$|PGHOST$|PGUSER$|DATABASE_URL$|POSTGRES_)/.test(key)) delete environment[key];
 }
+// The public Supabase CLI action uses GHCR to avoid unauthenticated Docker Hub rate limits.
+// Preserve ONLY this nonsensitive image source, never project tokens, URLs or passwords.
+environment.SUPABASE_INTERNAL_IMAGE_REGISTRY='ghcr.io';
 function run(binary,args,timeout=120000) {
   const result=spawnSync(binary,args,{env:environment,encoding:'utf8',timeout,maxBuffer:16*1024*1024,stdio:['ignore','pipe','pipe']});
   const raw=(result.stdout||'')+'\n'+(result.stderr||'');
