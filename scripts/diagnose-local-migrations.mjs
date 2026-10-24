@@ -88,7 +88,18 @@ try {
   if(!failed) {
     // Database-only startup applies checked-in migrations in a fresh local Postgres container.
     // Deliberately avoid the full Supabase stack and its unrelated image pulls.
-    const start=run('supabase',['db','start'],12*60*1000);
+    let start=run('supabase',['db','start'],12*60*1000);
+    // Exactly one retry for pre-migration image/network download errors.
+    // Never retry when any checked-in migration was mentioned or SQL error detected.
+    const preMigrationDownloadFailure=!start.ok &&
+      !start.phaseSignals.migration && !start.lastMentionedVersion &&
+      !start.sqlCategory && !start.sqlstate &&
+      (start.phaseSignals.imageFailure || start.phaseSignals.networkFailure);
+    if(preMigrationDownloadFailure) {
+      lines.push('Pre-migration image/network failure; one isolated retry authorized.');
+      start=run('supabase',['db','start'],12*60*1000);
+      lines.push('Pre-migration retry attempted (no production connection).');
+    }
     status('LOCAL Postgres startup and repository migration replay',start);
     if(!start.ok) failed=true;
     else lines.push('Fresh LOCAL migration application completed; race workload/parity checks still required.');
