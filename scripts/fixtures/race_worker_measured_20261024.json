@@ -1,0 +1,447 @@
+{
+  "description": "Anonymized, read-only sample of completed production race calculations from the most recent 36-hour window on 2026-10-24. Does not contain rider/club IDs, private game data, complete races, or live CPU duration.",
+  "sourceMetric": "sim_run.started_at to published automation details.calculated_at_real; real elapsed calculation interval, not CPU execution time or full replay-publication wall time.",
+  "clockSpeedAtCapture": 12,
+  "stages": [
+    {
+      "id": "sample-1",
+      "startGameMinute": 0,
+      "workerServiceRealMinutes": 2.1
+    },
+    {
+      "id": "sample-2",
+      "startGameMinute": 15,
+      "workerServiceRealMinutes": 2.306
+    },
+    {
+      "id": "sample-3",
+      "startGameMinute": 135,
+      "workerServiceRealMinutes": 2.059
+    },
+    {
+      "id": "sample-4",
+      "startGameMinute": 150,
+      "workerServiceRealMinutes": 2.01
+    },
+    {
+      "id": "sample-5",
+      "startGameMinute": 150,
+      "workerServiceRealMinutes": 2.204
+    },
+    {
+      "id": "sample-6",
+      "startGameMinute": 285,
+      "workerServiceRealMinutes": 2.024
+    },
+    {
+      "id": "sample-7",
+      "startGameMinute": 1440,
+      "workerServiceRealMinutes": 2.097
+    },
+    {
+      "id": "sample-8",
+      "startGameMinute": 1455,
+      "workerServiceRealMinutes": 4.121
+    },
+    {
+      "id": "sample-9",
+      "startGameMinute": 1515,
+      "workerServiceRealMinutes": 2.02
+    },
+    {
+      "id": "sample-10",
+      "startGameMinute": 1575,
+      "workerServiceRealMinutes": 2.008
+    },
+    {
+      "id": "sample-11",
+      "startGameMinute": 1620,
+      "workerServiceRealMinutes": 2.031
+    },
+    {
+      "id": "sample-12",
+      "startGameMinute": 1725,
+      "workerServiceRealMinutes": 2.01
+    },
+    {
+      "id": "sample-13",
+      "startGameMinute": 2880,
+      "workerServiceRealMinutes": 2.076
+    },
+    {
+      "id": "sample-14",
+      "startGameMinute": 2895,
+      "workerServiceRealMinutes": 2.21
+    },
+    {
+      "id": "sample-15",
+      "startGameMinute": 3015,
+      "workerServiceRealMinutes": 2.106
+    },
+    {
+      "id": "sample-16",
+      "startGameMinute": 3030,
+      "workerServiceRealMinutes": 2.173
+    },
+    {
+      "id": "sample-17",
+      "startGameMinute": 3165,
+      "workerServiceRealMinutes": 2.046
+    },
+    {
+      "id": "sample-18",
+      "startGameMinute": 4335,
+      "workerServiceRealMinutes": 2.113
+    },
+    {
+      "id": "sample-19",
+      "startGameMinute": 4605,
+      "workerServiceRealMinutes": 2.099
+    },
+    {
+      "id": "sample-20",
+      "startGameMinute": 5730,
+      "workerServiceRealMinutes": 1.942
+    },
+    {
+      "id": "sample-21",
+      "startGameMinute": 5850,
+      "workerServiceRealMinutes": 2.343
+    },
+    {
+      "id": "sample-22",
+      "startGameMinute": 5850,
+      "workerServiceRealMinutes": 2.05
+    },
+    {
+      "id": "sample-23",
+      "startGameMinute": 5850,
+      "workerServiceRealMinutes": 1.978
+    },
+    {
+      "id": "sample-24",
+      "startGameMinute": 5850,
+      "workerServiceRealMinutes": 1.967
+    },
+    {
+      "id": "sample-25",
+      "startGameMinute": 5850,
+      "workerServiceRealMinutes": 1.889
+    },
+    {
+      "id": "sample-26",
+      "startGameMinute": 7170,
+      "workerServiceRealMinutes": 1.914
+    },
+    {
+      "id": "sample-27",
+      "startGameMinute": 7290,
+      "workerServiceRealMinutes": 1.995
+    },
+    {
+      "id": "sample-28",
+      "startGameMinute": 8610,
+      "workerServiceRealMinutes": 1.871
+    },
+    {
+      "id": "sample-29",
+      "startGameMinute": 8730,
+      "workerServiceRealMinutes": 2.02
+    },
+    {
+      "id": "sample-30",
+      "startGameMinute": 8760,
+      "workerServiceRealMinutes": 4.134
+    },
+    {
+      "id": "sample-31",
+      "startGameMinute": 9870,
+      "workerServiceRealMinutes": 2.049
+    },
+    {
+      "id": "sample-32",
+      "startGameMinute": 10050,
+      "workerServiceRealMinutes": 1.93
+    },
+    {
+      "id": "sample-33",
+      "startGameMinute": 10065,
+      "workerServiceRealMinutes": 6.094
+    },
+    {
+      "id": "sample-34",
+      "startGameMinute": 10065,
+      "workerServiceRealMinutes": 2.284
+    },
+    {
+      "id": "sample-35",
+      "startGameMinute": 10425,
+      "workerServiceRealMinutes": 2.097
+    },
+    {
+      "id": "sample-36",
+      "startGameMinute": 11310,
+      "workerServiceRealMinutes": 2.018
+    },
+    {
+      "id": "sample-37",
+      "startGameMinute": 11490,
+      "workerServiceRealMinutes": 2.008
+    },
+    {
+      "id": "sample-38",
+      "startGameMinute": 11550,
+      "workerServiceRealMinutes": 2.122
+    },
+    {
+      "id": "sample-39",
+      "startGameMinute": 11895,
+      "workerServiceRealMinutes": 1.999
+    },
+    {
+      "id": "sample-40",
+      "startGameMinute": 12750,
+      "workerServiceRealMinutes": 2.079
+    },
+    {
+      "id": "sample-41",
+      "startGameMinute": 12930,
+      "workerServiceRealMinutes": 2.097
+    },
+    {
+      "id": "sample-42",
+      "startGameMinute": 12930,
+      "workerServiceRealMinutes": 1.917
+    },
+    {
+      "id": "sample-43",
+      "startGameMinute": 13050,
+      "workerServiceRealMinutes": 1.849
+    },
+    {
+      "id": "sample-44",
+      "startGameMinute": 14190,
+      "workerServiceRealMinutes": 2.036
+    },
+    {
+      "id": "sample-45",
+      "startGameMinute": 14370,
+      "workerServiceRealMinutes": 1.941
+    },
+    {
+      "id": "sample-46",
+      "startGameMinute": 14445,
+      "workerServiceRealMinutes": 2.08
+    },
+    {
+      "id": "sample-47",
+      "startGameMinute": 14445,
+      "workerServiceRealMinutes": 2.357
+    },
+    {
+      "id": "sample-48",
+      "startGameMinute": 14520,
+      "workerServiceRealMinutes": 2.095
+    },
+    {
+      "id": "sample-49",
+      "startGameMinute": 15570,
+      "workerServiceRealMinutes": 1.868
+    },
+    {
+      "id": "sample-50",
+      "startGameMinute": 15570,
+      "workerServiceRealMinutes": 1.971
+    },
+    {
+      "id": "sample-51",
+      "startGameMinute": 15630,
+      "workerServiceRealMinutes": 1.996
+    },
+    {
+      "id": "sample-52",
+      "startGameMinute": 15810,
+      "workerServiceRealMinutes": 2.015
+    },
+    {
+      "id": "sample-53",
+      "startGameMinute": 15945,
+      "workerServiceRealMinutes": 2.021
+    },
+    {
+      "id": "sample-54",
+      "startGameMinute": 16155,
+      "workerServiceRealMinutes": 2.194
+    },
+    {
+      "id": "sample-55",
+      "startGameMinute": 17040,
+      "workerServiceRealMinutes": 1.891
+    },
+    {
+      "id": "sample-56",
+      "startGameMinute": 17250,
+      "workerServiceRealMinutes": 1.937
+    },
+    {
+      "id": "sample-57",
+      "startGameMinute": 17340,
+      "workerServiceRealMinutes": 4.216
+    },
+    {
+      "id": "sample-58",
+      "startGameMinute": 17595,
+      "workerServiceRealMinutes": 2.072
+    },
+    {
+      "id": "sample-59",
+      "startGameMinute": 17610,
+      "workerServiceRealMinutes": 1.847
+    },
+    {
+      "id": "sample-60",
+      "startGameMinute": 18480,
+      "workerServiceRealMinutes": 2.023
+    },
+    {
+      "id": "sample-61",
+      "startGameMinute": 18690,
+      "workerServiceRealMinutes": 1.927
+    },
+    {
+      "id": "sample-62",
+      "startGameMinute": 19035,
+      "workerServiceRealMinutes": 2.188
+    },
+    {
+      "id": "sample-63",
+      "startGameMinute": 19080,
+      "workerServiceRealMinutes": 1.981
+    },
+    {
+      "id": "sample-64",
+      "startGameMinute": 19845,
+      "workerServiceRealMinutes": 2.169
+    },
+    {
+      "id": "sample-65",
+      "startGameMinute": 19920,
+      "workerServiceRealMinutes": 1.997
+    },
+    {
+      "id": "sample-66",
+      "startGameMinute": 20130,
+      "workerServiceRealMinutes": 2.023
+    },
+    {
+      "id": "sample-67",
+      "startGameMinute": 20190,
+      "workerServiceRealMinutes": 2.002
+    },
+    {
+      "id": "sample-68",
+      "startGameMinute": 20250,
+      "workerServiceRealMinutes": 1.931
+    },
+    {
+      "id": "sample-69",
+      "startGameMinute": 20250,
+      "workerServiceRealMinutes": 1.878
+    },
+    {
+      "id": "sample-70",
+      "startGameMinute": 20265,
+      "workerServiceRealMinutes": 2.135
+    },
+    {
+      "id": "sample-71",
+      "startGameMinute": 20475,
+      "workerServiceRealMinutes": 2.263
+    },
+    {
+      "id": "sample-72",
+      "startGameMinute": 20550,
+      "workerServiceRealMinutes": 1.966
+    },
+    {
+      "id": "sample-73",
+      "startGameMinute": 21285,
+      "workerServiceRealMinutes": 2.035
+    },
+    {
+      "id": "sample-74",
+      "startGameMinute": 21315,
+      "workerServiceRealMinutes": 2.085
+    },
+    {
+      "id": "sample-75",
+      "startGameMinute": 21570,
+      "workerServiceRealMinutes": 1.891
+    },
+    {
+      "id": "sample-76",
+      "startGameMinute": 21645,
+      "workerServiceRealMinutes": 6.057
+    },
+    {
+      "id": "sample-77",
+      "startGameMinute": 21645,
+      "workerServiceRealMinutes": 2.028
+    },
+    {
+      "id": "sample-78",
+      "startGameMinute": 21690,
+      "workerServiceRealMinutes": 3.99
+    },
+    {
+      "id": "sample-79",
+      "startGameMinute": 21690,
+      "workerServiceRealMinutes": 3.267
+    },
+    {
+      "id": "sample-80",
+      "startGameMinute": 21720,
+      "workerServiceRealMinutes": 3.074
+    },
+    {
+      "id": "sample-81",
+      "startGameMinute": 21915,
+      "workerServiceRealMinutes": 3.995
+    },
+    {
+      "id": "sample-82",
+      "startGameMinute": 22725,
+      "workerServiceRealMinutes": 3.054
+    },
+    {
+      "id": "sample-83",
+      "startGameMinute": 22755,
+      "workerServiceRealMinutes": 2.975
+    },
+    {
+      "id": "sample-84",
+      "startGameMinute": 22800,
+      "workerServiceRealMinutes": 3.032
+    },
+    {
+      "id": "sample-85",
+      "startGameMinute": 23025,
+      "workerServiceRealMinutes": 1.862
+    },
+    {
+      "id": "sample-86",
+      "startGameMinute": 23130,
+      "workerServiceRealMinutes": 1.887
+    },
+    {
+      "id": "sample-87",
+      "startGameMinute": 24195,
+      "workerServiceRealMinutes": 2.104
+    },
+    {
+      "id": "sample-88",
+      "startGameMinute": 24585,
+      "workerServiceRealMinutes": 1.967
+    }
+  ]
+}
