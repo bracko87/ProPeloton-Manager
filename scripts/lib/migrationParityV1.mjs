@@ -9,10 +9,11 @@ export function compareMigrationHistory(fileNames, appliedVersions) {
   const appliedSet = new Set(appliedVersions.map(String));
   const repoSet = new Set(files.map(versionFromFile));
   const byVersion = new Map();
+  const duplicateVersions=[];
   for(const name of files){
     const version=versionFromFile(name);
-    if(byVersion.has(version))throw Error(`Duplicate local migration version ${version}`);
-    byVersion.set(version,name);
+    if(byVersion.has(version))duplicateVersions.push({version,files:[byVersion.get(version),name]});
+    else byVersion.set(version,name);
   }
   if(appliedSet.size!==appliedVersions.length)throw Error("Duplicate applied migration version");
   const appliedMissingFiles=appliedVersions.filter(v=>!repoSet.has(String(v)));
@@ -22,7 +23,8 @@ export function compareMigrationHistory(fileNames, appliedVersions) {
     productionApplied:appliedVersions.length, repositoryFiles:files.length,
     matching:matching.length, productionVersionsWithoutFile:appliedMissingFiles.length,
     repositoryVersionsNotApplied:localWithoutApplied.length,
-    canReplayCompleteHistory:appliedMissingFiles.length===0 && localWithoutApplied.length===0,
+    duplicateLocalVersions:duplicateVersions,
+    canReplayCompleteHistory:appliedMissingFiles.length===0 && localWithoutApplied.length===0 && duplicateVersions.length===0,
     firstMissingAppliedVersions:appliedMissingFiles.slice(0,12),
     firstUnappliedRepositoryFiles:localWithoutApplied.slice(0,12),
   };
