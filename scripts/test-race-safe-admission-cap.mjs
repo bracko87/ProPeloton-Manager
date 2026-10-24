@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-const sql=readFileSync(new URL("../supabase/migrations/proposed_safe_step_admission_cap_20261024.sql",import.meta.url),"utf8");
+const sql=readFileSync(new URL("../docs/engineering/safe_step_admission_cap_proposal_20261024.sql",import.meta.url),"utf8");
 
 test("admission guard runs before the existing pending-stage selection",()=>{
   const guard=sql.indexOf("FROM public.race_stage_safe_calculation_v1\n  WHERE status='running'");
