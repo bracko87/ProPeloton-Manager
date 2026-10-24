@@ -7,8 +7,8 @@ DECLARE
   expired_stage uuid;
 BEGIN
   INSERT INTO public.race_stage_safe_calculation_v1(stage_id,status)
-  SELECT ('00000000-0000-4000-8000-'||lpad(i::text,12,'0'))::uuid,'pending'
-  FROM generate_series(1,5) i;
+  SELECT ('00000000-0000-4000-8000-'||lpad(g.idx::text,12,'0'))::uuid,'pending'
+  FROM generate_series(1,5) AS g(idx);
 
   FOR i IN 1..3 LOOP
     result:=public.universal_race_stage_claim_safe_step_v2('integration');
