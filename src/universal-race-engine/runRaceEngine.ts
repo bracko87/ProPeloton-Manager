@@ -13479,7 +13479,8 @@ export function resolveRoadPhase3Decisive(
     const stepEscapePaceReferenceKmh =
       phase3EscapePaceKmh *
       phase3TerrainScale *
-      phase3DynamicCooperationMultiplier
+      // Like Phase 2, avoid charging the complete live cooperation penalty twice.
+      (1 + (phase3DynamicCooperationMultiplier - 1) * 0.35)
     const phase3WorkloadFraction = clamp(
       (stepEndKm - phaseBoundary.startKm) /
         Math.max(1, (phaseBoundary.endKm - phaseBoundary.startKm)),
@@ -13545,6 +13546,8 @@ export function resolveRoadPhase3Decisive(
     const pelotonPaceKmh = clamp(
       stepReferencePaceKmh *
         response.selectedResponseMultiplier *
+        // No organized chase: ordinary peloton tempo is not an active pursuit.
+        (physicalChasingTeamIds.length === 0 ? 0.92 : 1) *
         phase3WindSpeedMultiplier +
         phase11fPaceVariationKmh(
           input.engine.deterministicSeed,

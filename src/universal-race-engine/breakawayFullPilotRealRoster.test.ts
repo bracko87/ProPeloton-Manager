@@ -733,6 +733,64 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     }))
   })
 
+  it('validates Baseline decisive-phase unopposed breaks, chase and possible victory',()=>{
+    const input=scenario('minimal',true)
+    const testStageId='synthetic-baseline-breakaway-96-no-prod'
+    input.stage={...input.stage,stageId:testStageId}
+    input.points=input.points.map(row=>({...row,stageId:testStageId}))
+    input.engine={...input.engine,deterministicSeed:'baseline-readonly-cohort-same-seed-1'}
+    const plans=(chase=false)=>input.stagePlans.map(plan=>({
+      ...plan,
+      riders:plan.riders.map((row,index)=>{
+        if(row.stageRole==='breakaway_rider')return row
+        const pursuing=chase && (plan.teamId==='T07'||plan.teamId==='T10') && index<2
+        return {...row,
+          stageRole:pursuing?'breakaway_chaser' as const:'rouleur' as const,
+          commands:{...row.commands,
+            phase1:pursuing?'chase_breakaway' as const:'conserve_energy' as const,
+            phase2:pursuing?'chase_breakaway' as const:'conserve_energy' as const,
+            phase3:pursuing?'chase_breakaway' as const:'conserve_energy' as const,
+            phase4:pursuing?'chase_breakaway' as const:'stay_near_front' as const,
+          },
+        }
+      }),
+    }))
+    input.stagePlans=plans()
+    expect(selectCompleteRaceEngineLaneV1(input.stage)).toBe('baseline_universal')
+    const normal=runSelectedRaceEngineV1(input)
+    expect(normal.validationPassed).toBe(true)
+    expect(normal.finishResolution.classification).toHaveLength(96)
+    expect(normal.replaySynchronization.synchronized).toBe(true)
+    expect(normal.replaySynchronization.issues).toEqual([])
+    expect(normal.phase78Acceptance.passed).toBe(true)
+    expect(normal.phase9Acceptance.passed).toBe(true)
+    expect(normal.postStageUpdate.persistenceContract.directDatabaseWritePerformed).toBe(false)
+    expect(normal.roadRaceResolution.phase1Opening?.breakawayRiderIds.length).toBeGreaterThan(0)
+    expect(normal.roadRaceResolution.phase2Development?.endGapSeconds).toBeGreaterThan(30)
+    expect(normal.roadRaceResolution.phase3Decisive?.physicalChasingTeamIds).toEqual([])
+    expect(normal.roadRaceResolution.phase3Decisive?.physicalEndGapSeconds).toBeGreaterThan(30)
+    const chased=runSelectedRaceEngineV1({...input,stagePlans:plans(true)})
+    expect(chased.validationPassed).toBe(true)
+    expect(chased.replaySynchronization.synchronized).toBe(true)
+    expect(chased.phase78Acceptance.passed).toBe(true)
+    expect(chased.roadRaceResolution.phase2Development?.endGapSeconds).toBe(0)
+    const chosen=new Set(input.stagePlans.flatMap(plan=>plan.riders)
+      .filter(row=>row.stageRole==='breakaway_rider').map(row=>row.riderId))
+    const fresh={...input,riders:input.riders.map(row=>chosen.has(row.riderId)
+      ? {...row,fatigueBeforeStage:8,startStamina:96,
+          flat:Math.max(86,row.flat),endurance:Math.max(90,row.endurance),
+          raceIQ:Math.max(85,row.raceIQ),teamwork:Math.max(86,row.teamwork)}
+      : row)}
+    const escaped=runSelectedRaceEngineV1(fresh)
+    expect(escaped.validationPassed).toBe(true)
+    expect(escaped.finishResolution.classification).toHaveLength(96)
+    expect(escaped.replaySynchronization.synchronized).toBe(true)
+    expect(escaped.phase78Acceptance.passed).toBe(true)
+    expect(escaped.phase9Acceptance.passed).toBe(true)
+    expect(escaped.calibrationSummary.breakawaySurvived).toBe(true)
+    expect(escaped.roadRaceResolution.phase4Finish?.endGapSeconds).toBeGreaterThan(30)
+  })
+
   it('executes Zeeland 204.6 km exposed flat route with 120 synthetic riders from 20 teams',()=>{
     const ZEELAND='7f69e552-b116-453c-bf55-16ef655ea021'
     const base=scenario('minimal',true)
