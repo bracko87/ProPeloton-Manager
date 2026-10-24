@@ -16,12 +16,14 @@ for(const key of Object.keys(environment)) {
 function run(binary,args,timeout=120000) {
   const result=spawnSync(binary,args,{env:environment,encoding:'utf8',timeout,maxBuffer:16*1024*1024,stdio:['ignore','pipe','pipe']});
   const raw=(result.stdout||'')+'\n'+(result.stderr||'');
+  // Strip terminal color/control markers before detecting PostgreSQL errors.
+  const normalized=raw.replace(/\x1b\[[0-?]*[ -/]*[@-~]/g,'');
   const versions=[...raw.matchAll(/\b(20\d{12})_[a-zA-Z0-9_-]+\.sql\b/g)]
     .filter(match=>migrationFiles.has(match[0])).map(match=>match[1]);
   // Allowlisted signal only. Never expose arbitrary error text or SQL excerpts.
-  const stateMatch=raw.match(/\\bSQLSTATE[\\s:=(]*([A-Z0-9]{5})\\b/i);
+  const stateMatch=normalized.match(/\\bSQLSTATE[\\s:=(]*([A-Z0-9]{5})\\b/i);
   const sqlstate=stateMatch ? stateMatch[1].toUpperCase() : null;
-  const errorContext=raw.split(/\r?\n/).filter(line=>/(?:^|\s)(?:ERROR|FATAL):|(?:^|\s)Error:/i.test(line)).slice(-8).join('\n');
+  const errorContext=normalized.split(/\r?\n/).map(line=>line.trim()).filter(line=>/^(?:ERROR|FATAL)(?:\s|:)|^Error:/i.test(line)).slice(0,8).join('\n');
   let sqlCategory=null;
   if (/relation [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_RELATION';
   else if (/function [^\\n]{0,120} does not exist/i.test(errorContext)) sqlCategory='MISSING_FUNCTION';
