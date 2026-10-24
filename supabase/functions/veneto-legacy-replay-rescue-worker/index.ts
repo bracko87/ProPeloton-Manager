@@ -1,0 +1,1513 @@
+
+/// <reference lib="deno.ns" />
+import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runRaceEngine.ts";
+import * as calibratedBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runRaceEngine.ts";
+import * as correctedFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/8db593c61bfe0193d281a116a0028d47b54dfee7/src/universal-race-engine/runRaceEngine.ts";
+import * as previousFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/a9ad36c6f9eb9c5864cec8827f8eb57669bf0d72/src/universal-race-engine/runRaceEngine.ts";
+import * as historicalFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2/src/universal-race-engine/runRaceEngine.ts";
+import * as venetoLegacyReplayOptimizedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/643039a7e78b814c62499eb3a84ed38b2d138e73/src/universal-race-engine/runVenetoLegacyReplayOptimizedV1.ts";
+import * as calibratedBreakawayCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
+import * as optimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ef5f0d4f2a91be80834140fbda977b5da614908b/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
+import * as previousOptimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
+import { getSelectedRaceEngineModuleV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { selectMountainEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEngineLaneV1.ts";
+import * as breakawayPilotCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
+import { isBreakawayOfficialPilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/breakawayOfficialPilotV1.ts";
+import { MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1, isMountainEnginePilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEnginePilotV1.ts";
+import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
+import * as openpgp from "https://cdn.jsdelivr.net/npm/openpgp@6.2.2/dist/openpgp.mjs";
+import {
+  PPM_UNIVERSAL_RACE_ENGINE_KEY,
+  PPM_UNIVERSAL_RACE_ENGINE_VERSION,
+  validateRunInput,
+  UniversalRaceEngineValidationError,
+  buildUniversalPhase9ModifierSummary,
+  applyUniversalPhase9ModifiersToInput,
+  classifyStage,
+  analyzeTerrain,
+  calculateDifficulty,
+  calculateAllRiderReadiness,
+  calculateStageSkillModel,
+  buildTeamTimeTrialSuitabilityRules,
+  calculateRiderSuitabilityScores,
+  calculateStageTeamStrength,
+  buildUniversalFavouritesSummary,
+  buildRoadCommandResolution,
+  resolveRoadPhase1Opening,
+  resolveRoadPhase2Development,
+  resolveRoadPhase3Decisive,
+  resolveRoadPhase4Finish,
+  buildUniversalIntermediatePointPlan,
+  buildUniversalIntermediatePointBattles,
+  buildUniversalIntermediatePointFinalization,
+  buildUniversalPhase5GroupingSummary,
+  resolveUniversalFinishResolution,
+  buildUniversalReplayTimeline,
+  resolveUniversalPhase10Incidents,
+  reconcileFinishLineIntermediatePointBattlesV1,
+  reconcileReplayTimelineIntermediatePointsV1,
+  buildUniversalReplaySynchronizationSummary,
+  classifyUniversalReplaySynchronizationForPublication,
+  buildUniversalPostStageUpdateSummary,
+  buildUniversalPhase9AcceptanceReport,
+  buildUniversalPhase78AcceptanceReport,
+  isUniversalPhase78IssueNonBlocking,
+  buildUniversalRaceCalibrationSummary,
+  type UniversalRaceEngineResult,
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runRaceEngine.ts";
+import { buildProductionUniversalRaceEngineInput as buildBaseInput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/buildProductionRaceInput.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/buildProductionRaceOutput.ts";
+
+declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
+
+type JsonObject = Record<string, unknown>;
+const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
+const SOURCE_COMMIT = "878aa8ae0db95d97fa5385513d2c1394e3a791a2";
+const OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "ef5f0d4f2a91be80834140fbda977b5da614908b";
+const PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
+const CALIBRATED_ROAD_SOURCE_COMMIT = "726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
+const FLAT_BASELINE_SOURCE_COMMIT = "8db593c61bfe0193d281a116a0028d47b54dfee7";
+const PREVIOUS_FLAT_BASELINE_SOURCE_COMMIT = "a9ad36c6f9eb9c5864cec8827f8eb57669bf0d72";
+const HISTORICAL_FLAT_BASELINE_SOURCE_COMMIT = "fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2";
+const MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS = new Set(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1);
+const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3", "7f69e552-b116-453c-bf55-16ef655ea021"]);
+const PREVIOUS_SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
+
+function object(value: unknown): JsonObject {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
+}
+function rows(value: unknown): JsonObject[] {
+  return Array.isArray(value) ? value.map(object) : [];
+}
+function text(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+function finite(value: unknown, fallback = 0): number {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+function booleanValue(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") return ["true","t","1","yes","y"].includes(value.trim().toLowerCase());
+  return false;
+}
+function env(name: string): string {
+  const value = Deno.env.get(name)?.trim();
+  if (!value) throw new Error(`Missing environment variable ${name}.`);
+  return value;
+}
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { "content-type": "application/json; charset=utf-8" },
+  });
+}
+function errorPayload(error: unknown): JsonObject {
+  return error instanceof Error
+    ? { name: error.name, message: error.message, stack: error.stack ?? null }
+    : { name: "UnknownError", message: String(error) };
+}
+async function rpc<T>(supabase: SupabaseClient, name: string, args: JsonObject = {}): Promise<T> {
+  const { data, error } = await supabase.rpc(name, args);
+  if (error) throw new Error(`${name}: ${error.message}`);
+  return data as T;
+}
+async function authorized(supabase: SupabaseClient, request: Request): Promise<boolean> {
+  const supplied = request.headers.get("x-universal-race-worker-secret")?.trim() ?? "";
+  if (!supplied) return false;
+  const { data, error } = await supabase.rpc("verify_universal_race_worker_secret_v1", { p_secret: supplied });
+  return !error && data === true;
+}
+async function heartbeat(
+  supabase: SupabaseClient,
+  stageId: string,
+  runId: string,
+  phase: string,
+  details: JsonObject = {},
+): Promise<void> {
+  try {
+    await rpc(supabase, "universal_race_stage_survival_heartbeat_v1", {
+      p_stage_id: stageId,
+      p_simulation_run_id: runId,
+      p_phase: phase,
+      p_details: { ...details, safe_mode: true, contract: CONTRACT, source_commit: SOURCE_COMMIT },
+    });
+  } catch {}
+}
+function participantTeamId(row: JsonObject): string {
+  return text(row.participating_club_id ?? row.club_id ?? row.team_id);
+}
+function withScenarioAiMetadata(input: any, participantTeams: JsonObject[]): any {
+  const aiIds = new Set<string>();
+  participantTeams.forEach((row) => {
+    const teamId = participantTeamId(row);
+    const source = text(row.entry_source).toLowerCase();
+    if (teamId && (booleanValue(row.scenario_ai_controlled) || booleanValue(row.is_ai_filler) || source === "ai_fill")) {
+      aiIds.add(teamId);
+    }
+  });
+  return {
+    ...input,
+    teams: Array.isArray(input.teams) ? input.teams.map((team: any) => ({
+      ...team,
+      snapshot: {
+        ...team.snapshot,
+        metadata: {
+          ...team.snapshot?.metadata,
+          scenarioAiControlled: aiIds.has(String(team.teamId ?? "")),
+        },
+      },
+    })) : input.teams,
+  };
+}
+function buildSources(payloadValue: unknown, runId: string, preStageStandings: unknown): any {
+  const payload = object(payloadValue);
+  const race = object(payload.race);
+  const stage = object(payload.stage);
+  const stageId = text(stage.id);
+  const raceId = text(race.id);
+  if (!stageId || !raceId) throw new Error("Payload is missing race/stage identity.");
+  return {
+    race,
+    stage,
+    profile: object(payload.profile),
+    stagePoints: rows(payload.stage_points),
+    participantTeams: rows(payload.participant_teams),
+    participantRiders: rows(payload.participant_riders),
+    riderInputRows: rows(payload.rider_inputs),
+    phaseCommandRows: rows(payload.phase_commands),
+    lockedPlanRows: rows(payload.locked_plans ?? payload.stage_plans),
+    preStageLeaders: payload.pre_stage_leaders,
+    preStageStandings,
+    phase9Payload: rows(payload.phase9_inputs)[0] ?? object(payload.phase9_inputs),
+    deterministicSeed: `universal-production:${raceId}:${stageId}:${runId}`,
+  };
+}
+function metadataKey(terrain: string): string {
+  if (terrain === "flat") return "flatScenarioV1";
+  if (terrain === "hilly") return "hillyScenarioV1";
+  if (terrain === "mountain") return "mountainScenarioV1";
+  if (terrain === "cobbled") return "cobbledScenarioV1";
+  throw new Error(`Unsupported scenario terrain ${terrain}.`);
+}
+function attachStoredScenario(input: any, scenario: JsonObject): any {
+  const scenarioType = text(scenario.scenario_type);
+  const audit: JsonObject = {
+    contract: "road_scenario_template_match_v2",
+    directorVersion: "road_race_director_v2",
+    scenarioType,
+    catalogVersion: scenario.catalog_version ?? null,
+    templateId: scenario.template_id,
+    templateVersion: scenario.template_version,
+    templateFamily: scenario.template_family,
+    similarityGroup: scenario.similarity_group,
+    selectionSeed: scenario.selection_seed,
+    compatibilityScore: finite(scenario.compatibility_score),
+    gameDate: scenario.game_date,
+    selectionModel: "road_race_director_v2",
+    preCalculationSummary: object(scenario.context_snapshot_json).preCalculationSummary ?? null,
+    contextSnapshot: object(scenario.context_snapshot_json),
+    candidateScores: Array.isArray(scenario.candidate_scores_json) ? scenario.candidate_scores_json : [],
+    generatedParameters: object(scenario.generated_parameters_json),
+    appliedDirectives: object(scenario.applied_directives_json),
+    runtimeApplicationProof: {
+      contract: "road_race_director_v2_1_runtime",
+      selectedFromPrecalculation: true,
+      commandsPreserved: true,
+      finalEngineSawTemplate: false,
+      gapGuidanceCalls: 0,
+      gapAdjustments: 0,
+      fragmentationCalls: 0,
+      fragmentationAdjustments: 0,
+      lastGuidedKm: null,
+    },
+  };
+  const key = metadataKey(scenarioType);
+  return {
+    ...input,
+    stagePlans: input.stagePlans.map((plan: any, index: number) => index === 0 ? {
+      ...plan,
+      metadata: { ...plan.metadata, [key]: audit },
+    } : plan),
+  };
+}
+async function loadTimeTrialRules(supabase: SupabaseClient, stageId: string): Promise<JsonObject | null> {
+  const { data, error } = await supabase
+    .from("race_stage_time_trial_rules")
+    .select("start_order_mode,start_interval_seconds,counting_rider_number,equipment_required,replay_duration_seconds,dropped_rider_time_mode,rules_json")
+    .eq("stage_id", stageId)
+    .maybeSingle();
+  if (error) throw new Error(`race_stage_time_trial_rules: ${error.message}`);
+  return data ? object(data) : null;
+}
+function buildInputWithTimeTrialRules(baseInput: any, rule: JsonObject | null): any {
+  const stageFormat = baseInput.stage.stageFormat;
+  const requiresRules = ["individual_time_trial","team_time_trial","pair_time_trial","prologue"].includes(stageFormat);
+  if (!requiresRules) return baseInput;
+  if (!rule) throw new Error(`Stage ${baseInput.stage.stageId} (${stageFormat}) is missing race_stage_time_trial_rules.`);
+  const countingRaw = rule.counting_rider_number;
+  const countingRiderNumber = countingRaw === null || countingRaw === undefined || countingRaw === ""
+    ? null : Math.trunc(Number(countingRaw));
+  return {
+    ...baseInput,
+    stage: {
+      ...baseInput.stage,
+      timeTrialRules: {
+        startOrderMode: String(rule.start_order_mode ?? "automatic"),
+        startIntervalSeconds: Math.max(1, Math.trunc(Number(rule.start_interval_seconds ?? 60))),
+        countingRiderNumber: Number.isFinite(countingRiderNumber as number) ? countingRiderNumber : null,
+        equipmentRequired: rule.equipment_required === true,
+        replayDurationSeconds: Math.max(1, Math.trunc(Number(rule.replay_duration_seconds ?? 900))),
+        droppedRiderTimeMode: String(rule.dropped_rider_time_mode ?? "personal_time"),
+        metadata: object(rule.rules_json),
+      },
+    },
+  };
+}
+async function buildInput(supabase: SupabaseClient, stageId: string, runId: string): Promise<{input:any, scenario:JsonObject|null}> {
+  const payload = object(await rpc(supabase, "universal_race_stage_get_calculation_payload_v1", { p_stage_id: stageId }));
+  const stageNumber = Math.max(1, Math.trunc(finite(object(payload.stage).stage_number, 1)));
+  let standings: unknown = [];
+  try {
+    standings = await rpc(supabase, "get_race_stage_pre_stage_standings_v1", { p_stage_id: stageId });
+  } catch (error) {
+    if (stageNumber > 1) throw error;
+  }
+  const { data: scenarioData, error: scenarioError } = await supabase
+    .from("race_engine_scenario_runs")
+    .select("*")
+    .eq("simulation_run_id", runId)
+    .eq("selection_status", "reserved")
+    .maybeSingle();
+  if (scenarioError) throw new Error(`scenario lookup: ${scenarioError.message}`);
+  const sources = buildSources(payload, runId, standings);
+  const timeTrialRules = await loadTimeTrialRules(supabase, stageId);
+  let input = buildBaseInput(sources as any) as any;
+  input = withScenarioAiMetadata(input, sources.participantTeams);
+  if (scenarioData) input = attachStoredScenario(input, object(scenarioData));
+  input = buildInputWithTimeTrialRules(input, timeTrialRules);
+  return { input, scenario: scenarioData ? object(scenarioData) : null };
+}
+function applyAtomicIntermediatePointReplayPublication(input: any, result: UniversalRaceEngineResult): UniversalRaceEngineResult {
+  const checkpoints = result.replayTimeline?.checkpoints ?? [];
+  if (!Array.isArray(checkpoints) || checkpoints.length === 0) return result;
+  const distanceKm = Math.max(0, finite(input.stage.distanceKm));
+  const winnerTimeSeconds = finite(result.finishResolution?.classification?.[0]?.officialTimeSeconds);
+  if (!(distanceKm > 0) || !(winnerTimeSeconds > 0)) return result;
+  const averageWinnerSpeedKmPerSecond = distanceKm / winnerTimeSeconds;
+  const guardedCheckpoints = checkpoints.map((checkpoint: any) => {
+    const checkpointRecord = object(checkpoint);
+    const progress = object(checkpointRecord.raceProgress);
+    const leaderKm = finite(progress.kmFromStart, -1);
+    const riderStates = rows(checkpointRecord.riderStates);
+    const intermediateResults = rows(checkpointRecord.intermediateResults);
+    if (leaderKm < 0 || intermediateResults.length === 0) return checkpoint;
+    const riderGapSeconds = new Map<string, number>();
+    riderStates.forEach((state) => {
+      const riderId = text(state.riderId);
+      if (riderId) riderGapSeconds.set(riderId, Math.max(0, finite(state.gapSeconds)));
+    });
+    const visible = intermediateResults.filter((event) => {
+      const pointKm = finite(event.kmFromStart, -1);
+      if (pointKm < 0) return true;
+      const scorers = rows(event.rankings).filter((ranking) => finite(ranking.pointsAwarded) > 0 || finite(ranking.bonusSecondsAwarded) > 0);
+      if (!scorers.length) return true;
+      return scorers.every((ranking) => {
+        const riderId = text(ranking.riderId);
+        const gapSeconds = riderGapSeconds.get(riderId);
+        if (!riderId || gapSeconds === undefined) return false;
+        const estimatedRiderKm = leaderKm - gapSeconds * averageWinnerSpeedKmPerSecond;
+        return estimatedRiderKm + 0.000001 >= pointKm;
+      });
+    });
+    return visible.length === intermediateResults.length ? checkpoint : { ...checkpoint, intermediateResults: visible };
+  });
+  return { ...result, replayTimeline: { ...result.replayTimeline, checkpoints: guardedCheckpoints } };
+}
+function stabilizeFinalReplayPhysicalState(timeline: any): any {
+  const checkpoints = Array.isArray(timeline?.checkpoints) ? timeline.checkpoints : [];
+  if (checkpoints.length < 2) return timeline;
+
+  const finalIndex = checkpoints.findLastIndex(
+    (checkpoint: any) => object(checkpoint).finalResultsVisible === true,
+  );
+  if (finalIndex <= 0) return timeline;
+
+  const finalCheckpoint = object(checkpoints[finalIndex]);
+  const finalKm = finite(object(finalCheckpoint.raceProgress).kmFromStart, -1);
+  if (finalKm < 0) return timeline;
+
+  const finalStatesByRider = new Map(
+    rows(finalCheckpoint.riderStates)
+      .map((state) => [text(state.riderId), state] as const)
+      .filter(([riderId]) => Boolean(riderId)),
+  );
+
+  const stabilized = checkpoints.map((checkpoint: any, index: number) => {
+    if (index >= finalIndex) return checkpoint;
+    const row = object(checkpoint);
+    const checkpointKm = finite(object(row.raceProgress).kmFromStart, -1);
+    if (Math.abs(checkpointKm - finalKm) > 0.000001) return checkpoint;
+
+    const isFinishObservation =
+      text(row.checkpointId).endsWith("|replay|winner-finish") ||
+      rows(row.commentary).some((entry) => text(entry.eventType) === "finish");
+    if (!isFinishObservation) return checkpoint;
+
+    const riderStates = rows(row.riderStates).map((state) => {
+      const finalState = finalStatesByRider.get(text(state.riderId));
+      if (!finalState) return state;
+      return {
+        ...state,
+        groupCode: finalState.groupCode ?? state.groupCode,
+        displayCode: finalState.displayCode ?? state.displayCode,
+        gapSeconds: finalState.gapSeconds ?? state.gapSeconds,
+      };
+    });
+
+    return {
+      ...row,
+      groups: Array.isArray(finalCheckpoint.groups) ? finalCheckpoint.groups : row.groups,
+      gaps: Array.isArray(finalCheckpoint.gaps)
+        ? rows(finalCheckpoint.gaps).map((gap) => ({ ...gap, officialTimeSeconds: null }))
+        : row.gaps,
+      riderStates,
+    };
+  });
+
+  return { ...timeline, checkpoints: stabilized };
+}
+
+function isRecoverableReplayOnlyIssue(issue: string): boolean {
+  const normalized = String(issue ?? "").trim().toLowerCase();
+  return normalized.startsWith("bridge_progress_invalid:")
+    || normalized.startsWith("successful_attack_without_physical_group:")
+    || normalized.startsWith("opening_breakaway_lineage_changed:")
+    || normalized.startsWith("opening_breakaway_lineage_changed_without_bridge_merge:")
+    || normalized.startsWith("bridge_merge_invalid:")
+    || normalized.startsWith("front_group_transfer_without_physical_transition:");
+}
+
+function isRecoverablePhase78ReplayIssue(issue: string): boolean {
+  const normalized = String(issue ?? "").trim().toLowerCase();
+  return normalized === "phase7_replay_synchronized"
+    || normalized === "phase7_front_group_transfers_physically_valid"
+    || normalized === "phase7_opening_breakaway_lineage_stable";
+}
+
+function buildOutputWithReplayProgressGuarantee(input: any, result: UniversalRaceEngineResult): any {
+  const replayPolicy = classifyUniversalReplaySynchronizationForPublication(result.replaySynchronization);
+  const hardBlockingIssues = replayPolicy.blockingIssues.filter((issue) => !isRecoverableReplayOnlyIssue(issue));
+  if (hardBlockingIssues.length > 0) {
+    throw new Error(`Blocking replay synchronization issues: ${hardBlockingIssues.slice(0, 12).join(" | ")}`);
+  }
+  if (result.replaySynchronization.synchronized && !replayPolicy.nonBlockingIssues.length) {
+    return buildProductionUniversalRaceOutput(input, result);
+  }
+  const builderResult: UniversalRaceEngineResult = {
+    ...result,
+    replaySynchronization: { ...result.replaySynchronization, synchronized: true },
+    postStageUpdate: {
+      ...result.postStageUpdate,
+      persistenceContract: { ...result.postStageUpdate.persistenceContract, sourceReplaySynchronized: true },
+    },
+    phase78Acceptance: {
+      ...result.phase78Acceptance,
+      passed: true,
+      issues: result.phase78Acceptance.issues.filter((issue) =>
+        !isUniversalPhase78IssueNonBlocking(issue) && !isRecoverablePhase78ReplayIssue(issue)
+      ),
+      invariants: result.phase78Acceptance.invariants.map((invariant) =>
+        (isUniversalPhase78IssueNonBlocking(invariant.key) || isRecoverablePhase78ReplayIssue(invariant.key))
+          ? { ...invariant, passed: true }
+          : invariant
+      ),
+      phase7: { ...result.phase78Acceptance.phase7, replaySynchronized: true },
+    },
+  };
+  const built = buildProductionUniversalRaceOutput(input, builderResult);
+  return {
+    ...built,
+    universalResult: result,
+    applicationManifest: {
+      ...built.applicationManifest,
+      validation: { ...built.applicationManifest.validation, replaySynchronized: false },
+    },
+    verification: {
+      ...built.verification,
+      replayQuality: "degraded",
+      degradedReplayIssues: [...replayPolicy.blockingIssues, ...replayPolicy.nonBlockingIssues],
+      officialResultsUnchanged: true,
+      rawReplaySynchronized: false,
+    },
+  };
+}
+function addFinishRankAlias(output: any): any {
+  const universalResult = object(output?.universalResult);
+  const finishResolution = object(universalResult.finishResolution);
+  const classification = rows(finishResolution.classification);
+  if (!classification.length) return output;
+  return {
+    ...output,
+    universalResult: {
+      ...universalResult,
+      finishResolution: {
+        ...finishResolution,
+        classification: classification.map((row) => row.finishRank !== undefined ? row : ({ ...row, finishRank: finite(row.rank) })),
+      },
+    },
+  };
+}
+function outcomeSummary(result: any): JsonObject {
+  const classification = rows(result?.finishResolution?.classification);
+  const gaps = classification.map((row) => Math.max(0, finite(row.gapSeconds ?? row.officialGapSeconds, 0)));
+  return {
+    winner_rider_id: classification[0]?.riderId ?? null,
+    classification_rider_count: classification.length,
+    same_time_rider_count: gaps.filter((gap) => gap <= 0.5).length,
+    max_gap_seconds: gaps.length ? Math.max(...gaps) : 0,
+    replay_checkpoint_count: Array.isArray(result?.replayTimeline?.checkpoints) ? result.replayTimeline.checkpoints.length : 0,
+  };
+}
+function isTransientSubmitError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return /\b(500|502|503|504|520|522|524)\b|failed to fetch|connection|timeout|temporar/i.test(message);
+}
+async function submitWithRetry<T>(supabase: SupabaseClient, args: JsonObject): Promise<T> {
+  let lastError: unknown = null;
+  for (let attempt=1; attempt<=3; attempt+=1) {
+    try { return await rpc<T>(supabase, "universal_race_stage_submit_calculation_v1", args); }
+    catch (error) {
+      lastError = error;
+      if (!isTransientSubmitError(error) || attempt >= 3) throw error;
+      await new Promise((resolve) => setTimeout(resolve, attempt * 1200));
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+async function triggerNext(request: Request): Promise<void> {
+  const secret = request.headers.get("x-universal-race-worker-secret")?.trim() ?? "";
+  if (!secret) return;
+  try {
+    await fetch(new URL(request.url).toString(), {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-universal-race-worker-secret": secret,
+      },
+      body: JSON.stringify({ action: "tick", chained: true }),
+    });
+  } catch {}
+}
+
+async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise<JsonObject> {
+  const stageId=text(claim.stage_id);
+  const runId=text(claim.simulation_run_id);
+  const leaseToken=text(claim.lease_token);
+  const step=Math.max(0,Math.trunc(finite(claim.step,0)));
+  // Do not retain multiple full-size copies of large replay checkpoint text.
+  // Keeping both the RPC claim string and the parsed replay exceeds the Edge
+  // isolate heap for mountain stages even when CPU work is bounded.
+  console.log(JSON.stringify({event:"safe_claim_decode",phase:"claim_received",stageId,step}));
+  let checkpointText:string|null=typeof claim.checkpoint_text==="string"
+    ? claim.checkpoint_text : "{}";
+  if(typeof claim.checkpoint_pgp_base64==="string"&&claim.checkpoint_pgp_base64.length>0){
+    const encoded=claim.checkpoint_pgp_base64;
+    const compressedBytes=Uint8Array.from(atob(encoded),(char)=>char.charCodeAt(0));
+    const message=await openpgp.readMessage({binaryMessage:compressedBytes});
+    console.log(JSON.stringify({event:"safe_claim_decode",phase:"before_decrypt",stageId,step,compressedBytes:compressedBytes.length}));
+    const decrypted=await openpgp.decrypt({
+      message,passwords:[`safe_checkpoint:${stageId}`],format:"utf8",
+    });
+    checkpointText=String(decrypted.data);
+    console.log(JSON.stringify({event:"safe_claim_decode",phase:"after_decrypt",stageId,step,bytes:checkpointText.length}));
+  }
+  let checkpoint: JsonObject;
+  console.log(JSON.stringify({event:"safe_claim_decode",phase:"before_parse",stageId,step}));
+  try { checkpoint=object(JSON.parse(checkpointText)); }
+  catch { throw new Error("Safe-mode checkpoint text is invalid JSON."); }
+  console.log(JSON.stringify({event:"safe_claim_decode",phase:"after_parse",stageId,step}));
+  checkpointText=null;
+  delete claim.checkpoint_text;
+  delete claim.checkpoint_pgp_base64;
+  if(claim.checkpoint_sharded===true&&step>=9){
+    // The database holds the original checkpoint unchanged. Read lightweight
+    // metadata and one bounded replay page at a time instead of materializing
+    // 50+ MB of JSON and decompression buffers in one Edge invocation.
+    const head=object(await rpc<JsonObject>(supabase,"universal_race_stage_read_checkpoint_shards_v1",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+      p_start:-1,p_limit:8,
+    }));
+    if(head.status!=="ready")throw new Error("Safe checkpoint shards unavailable: "+JSON.stringify(head));
+    checkpoint=object(head.checkpoint);
+    const replayTimeline=object(checkpoint.replayTimeline);
+    const replayFrames:any[]=[];
+    const frameCount=Math.max(0,Math.trunc(finite(head.frames,0)));
+    if(frameCount===0)throw new Error("Sharded replay has zero frames");
+    for(let index=0;index<frameCount;index+=8){
+      const page=object(await rpc<JsonObject>(supabase,"universal_race_stage_read_checkpoint_shards_v1",{
+        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+        p_start:index,p_limit:8,
+      }));
+      if(page.status!=="page"||!Array.isArray(page.frames))throw new Error("Replay page "+index+" unavailable");
+      replayFrames.push(...page.frames);
+    }
+    if(replayFrames.length!==frameCount)throw new Error("Incomplete replay frames: "+replayFrames.length+"/"+frameCount);
+    // JSONB shards canonicalize object key ordering. The deterministic
+    // synchronization contract compares JSON.stringify on replay commands and
+    // final physical groups, so restore their engine-defined property order
+    // WITHOUT changing any actual field values or masking mismatches.
+    for(const frame of replayFrames){
+      if(Array.isArray(frame?.activeCommands)){
+        frame.activeCommands=frame.activeCommands.map((command:any)=>({
+          riderId:command.riderId,
+          teamId:command.teamId,
+          phaseNumber:command.phaseNumber,
+          stageRole:command.stageRole,
+          savedCommand:command.savedCommand,
+          resolvedCommand:command.resolvedCommand,
+          resolvedSource:command.resolvedSource,
+          behaviour:command.behaviour,
+        }));
+      }
+    }
+    const finalFrame=replayFrames[replayFrames.length-1];
+    if(finalFrame&&Array.isArray(finalFrame.groups)){
+      finalFrame.groups=finalFrame.groups.map((group:any)=>({
+        groupCode:group.groupCode,
+        displayCode:group.displayCode,
+        physicalLineageId:group.physicalLineageId??null,
+        physicalPosition:group.physicalPosition,
+        colorKey:group.colorKey,
+        riderIds:group.riderIds,
+      }));
+    }
+    replayTimeline.checkpoints=replayFrames;
+    checkpoint.replayTimeline=replayTimeline;
+    console.log(JSON.stringify({event:"safe_claim_decode",phase:"sharded_frames_loaded",stageId,step,frames:replayFrames.length}));
+  }
+  if(!stageId || !runId || !leaseToken) throw new Error("Safe-mode claim missing identity or lease.");
+
+  const started=performance.now();
+  await heartbeat(supabase,stageId,runId,`safe_step_${step}_started`,{step});
+
+  let input: any;
+  let phase9Modifiers: any;
+  let calculationInput: any;
+  let scenarioPreserved = false;
+  let selectedCore: typeof acceptedCore = acceptedCore;
+  let engineLaneV1: "baseline_universal" | "experimental_mountain_v1" | "experimental_breakaway_v1" = "baseline_universal";
+
+  if(step===0){
+    const built=await buildInput(supabase,stageId,runId);
+    input=built.input;
+    scenarioPreserved=Boolean(built.scenario);
+    // Select the lane as soon as we have a stage. Phase 9 uses this same
+    // executable; do not reference selectedCore before initializing it.
+    engineLaneV1=isBreakawayOfficialPilotStageV1(input.stage)
+      ? "experimental_breakaway_v1" : selectMountainEngineLaneV1(input.stage);
+    selectedCore=engineLaneV1 === "experimental_breakaway_v1"
+      ? calibratedBreakawayCore : engineLaneV1 === "experimental_mountain_v1"
+      ? optimizedMountainCore : correctedFlatBaselineCore;
+    phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);
+    calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);
+  } else {
+    input=checkpoint.sourceInput as any;
+    phase9Modifiers=checkpoint.phase9Modifiers as any;
+    calculationInput=checkpoint.calculationInput as any;
+    scenarioPreserved=Boolean(checkpoint.scenarioPreserved);
+    if(!input || !calculationInput || !phase9Modifiers){
+      throw new Error("Checkpoint is missing the preserved engine input.");
+    }
+    // Resume only the original lane, never switch an in-flight baseline
+    // checkpoint to experimental mountain code after a production release.
+    const savedLane=text(checkpoint.selectedEngineLaneV1);
+    engineLaneV1=savedLane === "experimental_breakaway_v1"
+      ? "experimental_breakaway_v1"
+      : savedLane === "experimental_mountain_v1"
+      ? "experimental_mountain_v1" : "baseline_universal";
+    // Resume the *checkpoint's* pinned engine, never a later production default.
+    const savedEngineSourceCommit=text(checkpoint.selectedEngineSourceCommit);
+    selectedCore=engineLaneV1 === "experimental_breakaway_v1"
+      ? (savedEngineSourceCommit === CALIBRATED_ROAD_SOURCE_COMMIT
+          ? calibratedBreakawayCore : breakawayPilotCore)
+      : engineLaneV1 === "experimental_mountain_v1"
+      ? (savedEngineSourceCommit === OPTIMIZED_MOUNTAIN_SOURCE_COMMIT
+          ? optimizedMountainCore : savedEngineSourceCommit === PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT
+          ? previousOptimizedMountainCore : getSelectedRaceEngineModuleV1(calculationInput.stage))
+      : (savedEngineSourceCommit === FLAT_BASELINE_SOURCE_COMMIT
+          ? correctedFlatBaselineCore : savedEngineSourceCommit === PREVIOUS_FLAT_BASELINE_SOURCE_COMMIT
+          ? previousFlatBaselineCore : savedEngineSourceCommit === HISTORICAL_FLAT_BASELINE_SOURCE_COMMIT
+          ? historicalFlatBaselineCore : savedEngineSourceCommit === CALIBRATED_ROAD_SOURCE_COMMIT
+          ? calibratedBaselineCore : acceptedCore);
+  }
+
+  // Preserve October mountain pilot lane and original physical source across resumes.
+  if (MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) &&
+      (engineLaneV1 !== "experimental_mountain_v1" ||
+       !isMountainEnginePilotStageV1(calculationInput.stage) ||
+       (step > 0 && ![OPTIMIZED_MOUNTAIN_SOURCE_COMMIT, PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT].includes(text(checkpoint.selectedEngineSourceCommit))))) {
+    throw new Error("Mandatory October Mountain V2 pilot checkpoint engine/source mismatch.");
+  }
+  // Preserve the solver and its reviewed source across every checkpoint.
+  if (MANDATORY_BREAKAWAY_PILOT_IDS.has(stageId) && engineLaneV1 !== "experimental_breakaway_v1") {
+    throw new Error("Mandatory Breakaway V1 pilot engine mismatch: safe resume refused baseline.");
+  }
+  if (engineLaneV1 === "experimental_breakaway_v1" &&
+      (!isBreakawayOfficialPilotStageV1(calculationInput.stage) ||
+       (step > 0 && !["e00c4e694c0629efa5b06497dd514b505b166934", CALIBRATED_ROAD_SOURCE_COMMIT].includes(text(checkpoint.selectedEngineSourceCommit))))) {
+    throw new Error("Breakaway V1 checkpoint stage/source mismatch.");
+  }
+  const effectiveSourceCommit = step === 0
+    ? (engineLaneV1 === "experimental_mountain_v1" ? OPTIMIZED_MOUNTAIN_SOURCE_COMMIT
+       : engineLaneV1 === "experimental_breakaway_v1" ? CALIBRATED_ROAD_SOURCE_COMMIT
+       : FLAT_BASELINE_SOURCE_COMMIT)
+    : text(checkpoint.selectedEngineSourceCommit) || PREVIOUS_SOURCE_COMMIT;
+  let next: JsonObject={...checkpoint};
+
+  if(step===0){
+    const errors=selectedCore.validateRunInput(input);
+    if(errors.length>0) throw new UniversalRaceEngineValidationError(errors);
+    const stageClassification=selectedCore.classifyStage(calculationInput.stage);
+    const terrain=selectedCore.analyzeTerrain(calculationInput.stage);
+    const difficulty=selectedCore.calculateDifficulty(calculationInput,terrain);
+    const riderReadiness=selectedCore.calculateAllRiderReadiness(calculationInput.riders);
+    const stageSkillModel=selectedCore.calculateStageSkillModel(calculationInput.stage);
+    const teamTimeTrialSuitabilityRules=selectedCore.buildTeamTimeTrialSuitabilityRules(calculationInput.stage);
+    const riderSuitability=selectedCore.calculateRiderSuitabilityScores(calculationInput,riderReadiness,stageSkillModel);
+    const teamStrength=selectedCore.calculateStageTeamStrength(calculationInput,riderSuitability,teamTimeTrialSuitabilityRules);
+    const favourites=selectedCore.buildUniversalFavouritesSummary(calculationInput,riderSuitability,stageSkillModel);
+    const roadCommandResolution=selectedCore.buildRoadCommandResolution(calculationInput,riderReadiness);
+    next={
+      sourceInput:input,
+      calculationInput,
+      phase9Modifiers,
+      scenarioPreserved,
+      selectedEngineLaneV1:engineLaneV1,
+      selectedEngineSourceCommit:effectiveSourceCommit,
+      stageClassification,
+      terrain,
+      difficulty,
+      riderReadiness,
+      stageSkillModel,
+      teamTimeTrialSuitabilityRules,
+      riderSuitability,
+      teamStrength,
+      favourites,
+      roadCommandResolution,
+    };
+  } else if(step===1){
+    next={...checkpoint,phase1RoadRaceResolution:selectedCore.resolveRoadPhase1Opening(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadCommandResolution as any)};
+  } else if(step===2){
+    next={...checkpoint,phase2RoadRaceResolution:selectedCore.resolveRoadPhase2Development(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase1RoadRaceResolution as any)};
+  } else if(step===3){
+    next={...checkpoint,phase3RoadRaceResolution:selectedCore.resolveRoadPhase3Decisive(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase2RoadRaceResolution as any)};
+  } else if(step===4){
+    next={...checkpoint,roadRaceResolution:selectedCore.resolveRoadPhase4Finish(calculationInput,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadCommandResolution as any,checkpoint.phase3RoadRaceResolution as any)};
+  } else if(step===5){
+    const intermediatePointPlan=selectedCore.buildUniversalIntermediatePointPlan(calculationInput,checkpoint.roadCommandResolution as any,checkpoint.roadRaceResolution as any);
+    const provisionalIntermediatePointBattles=selectedCore.buildUniversalIntermediatePointBattles(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadRaceResolution as any,intermediatePointPlan);
+    const provisionalIntermediatePointFinalization=selectedCore.buildUniversalIntermediatePointFinalization(calculationInput,checkpoint.riderReadiness as any,checkpoint.roadCommandResolution as any,intermediatePointPlan,provisionalIntermediatePointBattles);
+    next={...checkpoint,intermediatePointPlan,provisionalIntermediatePointBattles,provisionalIntermediatePointFinalization};
+  } else if(step===6){
+    const groupAndTimeResolution=selectedCore.buildUniversalPhase5GroupingSummary(calculationInput,checkpoint.difficulty as any,checkpoint.riderReadiness as any,checkpoint.riderSuitability as any,checkpoint.roadRaceResolution as any);
+    const baseFinishResolution=selectedCore.resolveUniversalFinishResolution({
+      input:calculationInput,
+      stageClassification:checkpoint.stageClassification as any,
+      riderReadiness:checkpoint.riderReadiness as any,
+      riderSuitability:checkpoint.riderSuitability as any,
+      roadCommandResolution:checkpoint.roadCommandResolution as any,
+      roadRaceResolution:checkpoint.roadRaceResolution as any,
+      groupAndTimeResolution,
+    });
+    next={...checkpoint,groupAndTimeResolution,baseFinishResolution};
+  } else if(step===7){
+    // Replay-only recovery for a preserved October 15 legacy flat-baseline
+    // checkpoint. All physical race phases remain pinned to the original engine.
+    const venetoLegacyReplayRecovery=stageId==="0399e35d-d00c-4411-8957-edd7ef87a574" &&
+      engineLaneV1==="baseline_universal" &&
+      text(checkpoint.selectedEngineSourceCommit)==="fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2";
+    const replayCore=venetoLegacyReplayRecovery?venetoLegacyReplayOptimizedCore:selectedCore;
+    const builtBaseReplayTimeline=replayCore.buildUniversalReplayTimeline(
+      calculationInput,
+      checkpoint.riderReadiness as any,
+      checkpoint.roadCommandResolution as any,
+      checkpoint.roadRaceResolution as any,
+      checkpoint.provisionalIntermediatePointBattles as any,
+      checkpoint.provisionalIntermediatePointFinalization as any,
+      checkpoint.groupAndTimeResolution as any,
+      checkpoint.baseFinishResolution as any,
+    );
+    // Intermediate point results are rebuilt authoritatively in step 8 from
+    // provisionalIntermediatePointBattles/finalization. Keeping the cumulative
+    // arrays inside every checkpoint makes long classics exceed the Edge heap.
+    const baseReplayTimeline={
+      ...builtBaseReplayTimeline,
+      checkpoints:Array.isArray(builtBaseReplayTimeline?.checkpoints)
+        ? builtBaseReplayTimeline.checkpoints.map((row:any)=>({
+            ...row,
+            intermediateResults:[],
+            activeCommands:[],
+            teamStates:[],
+            riderStates:Array.isArray(row?.riderStates)
+              ? row.riderStates.map((state:any)=>{
+                  const {
+                    teamId:_teamId,
+                    condition:_condition,
+                    readinessScore:_readinessScore,
+                    finishRank:_finishRank,
+                    officialTimeSeconds:_officialTimeSeconds,
+                    ...compactState
+                  }=state;
+                  return compactState;
+                })
+              : [],
+          }))
+        : [],
+    };
+    next={...checkpoint,baseReplayTimeline,
+      ...(venetoLegacyReplayRecovery ? {
+        legacyReplayOptimizationSourceCommit: "643039a7e78b814c62499eb3a84ed38b2d138e73",
+        originalEnginePhysicsSourceCommit: "fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2",
+      } : {}),
+      ...(engineLaneV1 === "experimental_mountain_v1" ? {
+        mountainReplayOptimizationSourceCommit: OPTIMIZED_MOUNTAIN_SOURCE_COMMIT,
+        originalEnginePhysicsSourceCommit: text(checkpoint.selectedEngineSourceCommit) || SOURCE_COMMIT,
+      } : {})};
+  } else if(step===8){
+    const baseReplayTimelineSource=checkpoint.baseReplayTimeline as any;
+    const roadCommandResolutionForReplay=checkpoint.roadCommandResolution as any;
+    const activeCommandsByPhase=new Map<number,any[]>();
+    const roadCommandRiders=Array.isArray(roadCommandResolutionForReplay?.riders)
+      ? roadCommandResolutionForReplay.riders
+      : [];
+    for(const rider of roadCommandRiders){
+      if(rider?.eligibleToStart===false) continue;
+      const phases=Array.isArray(rider?.phases)?rider.phases:[];
+      for(const phase of phases){
+        const phaseNumber=Number(phase?.phaseNumber);
+        if(!Number.isFinite(phaseNumber)) continue;
+        const bucket=activeCommandsByPhase.get(phaseNumber)??[];
+        bucket.push({
+          teamId:rider.teamId,
+          riderId:rider.riderId,
+          behaviour:phase.behaviour,
+          stageRole:rider.stageRole,
+          phaseNumber,
+          savedCommand:phase.savedCommand,
+          resolvedSource:phase.resolvedSource,
+          resolvedCommand:phase.resolvedCommand,
+        });
+        activeCommandsByPhase.set(phaseNumber,bucket);
+      }
+    }
+    activeCommandsByPhase.forEach((bucket,phaseNumber)=>{
+      bucket.sort((a:any,b:any)=>String(a.riderId).localeCompare(String(b.riderId)));
+      activeCommandsByPhase.set(phaseNumber,bucket);
+    });
+    const phase10BaseReplayTimeline=baseReplayTimelineSource;
+    if(Array.isArray(phase10BaseReplayTimeline?.checkpoints)){
+      for(const row of phase10BaseReplayTimeline.checkpoints){
+        row.intermediateResults=[];
+        row.teamStates=[];
+        // Phase 10 does not need command payloads to calculate incidents.
+        // Restore them after the incident pass to avoid duplicating thousands
+        // of command objects while the large replay is being transformed.
+        row.activeCommands=[];
+      }
+    }
+    console.log(JSON.stringify({event:"step8_phase10",state:"begin",stageId,frames:phase10BaseReplayTimeline?.checkpoints?.length}));
+    const phase10Resolution=selectedCore.resolveUniversalPhase10Incidents({
+      input:calculationInput,
+      sourceInput:input,
+      phase9:phase9Modifiers,
+      riderReadiness:checkpoint.riderReadiness as any,
+      roadCommandResolution:checkpoint.roadCommandResolution as any,
+      baseFinishResolution:checkpoint.baseFinishResolution as any,
+      baseReplayTimeline:phase10BaseReplayTimeline as any,
+    });
+    console.log(JSON.stringify({event:"step8_phase10",state:"finished",stageId,frames:phase10Resolution?.replayTimeline?.checkpoints?.length}));
+    const replayRiderById=new Map(
+      (Array.isArray(calculationInput?.riders)?calculationInput.riders:[])
+        .map((rider:any)=>[String(rider?.riderId??""),rider] as const)
+        .filter(([riderId]:any)=>Boolean(riderId))
+    );
+    const replayReadinessById=new Map(
+      (Array.isArray(checkpoint.riderReadiness)?checkpoint.riderReadiness:[])
+        .map((row:any)=>[String(row?.riderId??""),row] as const)
+        .filter(([riderId]:any)=>Boolean(riderId))
+    );
+    if(Array.isArray(phase10Resolution?.replayTimeline?.checkpoints)){
+      for(const replayCheckpoint of phase10Resolution.replayTimeline.checkpoints){
+        const checkpointKm=finite(replayCheckpoint?.raceProgress?.kmFromStart,0);
+        const dnfRiderIds=new Set(
+          (Array.isArray(phase10Resolution?.summary?.incidents)?phase10Resolution.summary.incidents:[])
+            .filter((incident:any)=>finite(incident?.kmFromStart,Number.POSITIVE_INFINITY)<=checkpointKm+0.000001)
+            .flatMap((incident:any)=>
+              (Array.isArray(incident?.riderConsequences)?incident.riderConsequences:[])
+                .filter((row:any)=>row?.statusImpact==="dnf")
+                .map((row:any)=>String(row?.riderId??""))
+            )
+            .filter(Boolean)
+        );
+        replayCheckpoint.activeCommands=(activeCommandsByPhase.get(Number(replayCheckpoint?.phase))??[])
+          .filter((command:any)=>!dnfRiderIds.has(String(command?.riderId??"")));
+        if(!Array.isArray(replayCheckpoint?.riderStates)) continue;
+        replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
+          const rider=replayRiderById.get(String(state?.riderId??"")) as any;
+          const readiness=replayReadinessById.get(String(state?.riderId??"")) as any;
+          const startEnergy=Math.max(1,finite(readiness?.fatigueBalance?.startEnergy,100));
+          const energy=finite(state?.energy,0);
+          const liveEnergyPercent=Math.round(
+            Math.min(100,Math.max(0,(Math.max(0,energy)/startEnergy)*100))*10
+          )/10;
+          const condition=
+            liveEnergyPercent>=70?"fresh":
+            liveEnergyPercent>=40?"stable":
+            liveEnergyPercent>=18?"under_pressure":"critical";
+          return {
+            ...state,
+            teamId:rider?.teamId??state?.teamId??null,
+            readinessScore:finite(readiness?.readinessScore,state?.readinessScore??0),
+            liveEnergyPercent,
+            condition,
+          };
+        });
+      }
+    }
+    if(Array.isArray(phase10Resolution?.replayTimeline?.checkpoints)){
+      const teamIds=(Array.isArray(calculationInput?.teams)?calculationInput.teams:[])
+        .map((team:any)=>String(team?.teamId??""))
+        .filter(Boolean);
+      let previousReplayCheckpoint:any=null;
+      for(const replayCheckpoint of phase10Resolution.replayTimeline.checkpoints){
+        if(Array.isArray(replayCheckpoint?.riderStates)){
+          const teamAggregates=new Map<string,any>();
+          for(const teamId of teamIds)teamAggregates.set(teamId,{
+            teamId,activeRiderIds:[],racingRiderCount:0,finishedRiderCount:0,
+            dnsRiderCount:0,dnfRiderCount:0,otlRiderCount:0,
+          });
+          for(const state of replayCheckpoint.riderStates){
+            const team=teamAggregates.get(String(state?.teamId??""));
+            if(!team)continue;
+            const status=String(state?.status??"");
+            if(status==="racing"||status==="finished")team.activeRiderIds.push(String(state?.riderId??""));
+            const counter=({racing:"racingRiderCount",finished:"finishedRiderCount",dns:"dnsRiderCount",dnf:"dnfRiderCount",otl:"otlRiderCount"} as Record<string,string>)[status];
+            if(counter)team[counter]++;
+          }
+          replayCheckpoint.teamStates=teamIds.map((id:string)=>{
+            const team=teamAggregates.get(id);
+            team.activeRiderIds.sort();
+            return team;
+          });
+        }
+        if(previousReplayCheckpoint&&Array.isArray(replayCheckpoint?.riderStates)){
+          const previousByRider=new Map(
+            (Array.isArray(previousReplayCheckpoint?.riderStates)?previousReplayCheckpoint.riderStates:[])
+              .map((row:any)=>[String(row?.riderId??""),row] as const)
+          );
+          const changedRiderIds=replayCheckpoint.riderStates
+            .filter((row:any)=>{
+              const previous=previousByRider.get(String(row?.riderId??"")) as any;
+              const before=previous?.displayCode??null;
+              const after=row?.displayCode??null;
+              return before!==after&&before!==null&&after!==null&&
+                !String(before).startsWith("I")&&!String(after).startsWith("I");
+            })
+            .map((row:any)=>String(row?.riderId??""))
+            .filter(Boolean);
+          const hasPublishedPhysicalTransition=(Array.isArray(replayCheckpoint?.commentary)
+            ? replayCheckpoint.commentary
+            : []
+          ).some((entry:any)=>
+            entry?.eventType==="group_split"||
+            entry?.eventType==="group_merge"||
+            entry?.eventType==="incident"
+          );
+          if(changedRiderIds.length>0&&!hasPublishedPhysicalTransition){
+            const riderTeamIds=Array.from(new Set(
+              changedRiderIds
+                .map((riderId:string)=>(replayRiderById.get(riderId) as any)?.teamId)
+                .filter(Boolean)
+                .map(String)
+            )).sort();
+            replayCheckpoint.commentary=[
+              ...(Array.isArray(replayCheckpoint?.commentary)?replayCheckpoint.commentary:[]),
+              {
+                commentaryId:`${String(replayCheckpoint?.checkpointId??"checkpoint")}:physical-group-transition`,
+                eventType:"group_split",
+                title:"Road groups reorganize",
+                description:"The race formation changes as riders move between road groups.",
+                riderIds:[...changedRiderIds].sort(),
+                teamIds:riderTeamIds,
+              },
+            ];
+          }
+        }
+        previousReplayCheckpoint=replayCheckpoint;
+      }
+    }
+    const phase10Incidents=phase10Resolution.summary;
+    const finishResolution=phase10Resolution.finishResolution;
+    const intermediatePointBattles=selectedCore.reconcileFinishLineIntermediatePointBattlesV1(
+      calculationInput,
+      checkpoint.provisionalIntermediatePointBattles as any,
+      finishResolution,
+    );
+    const intermediatePointFinalization=selectedCore.buildUniversalIntermediatePointFinalization(
+      calculationInput,
+      checkpoint.riderReadiness as any,
+      checkpoint.roadCommandResolution as any,
+      checkpoint.intermediatePointPlan as any,
+      intermediatePointBattles,
+    );
+    const replayTimeline=selectedCore.reconcileReplayTimelineIntermediatePointsV1(
+      phase10Resolution.replayTimeline,
+      intermediatePointFinalization,
+    );
+    next={...checkpoint,phase10Incidents,finishResolution,intermediatePointBattles,intermediatePointFinalization,replayTimeline};
+    // Step 9 no longer needs the heavy construction-only payloads. Removing
+    // them prevents the final validation/submission step from holding both the
+    // base and final replay timelines in the Edge heap.
+    delete next.baseReplayTimeline;
+    delete next.baseFinishResolution;
+    delete next.provisionalIntermediatePointBattles;
+    delete next.provisionalIntermediatePointFinalization;
+    delete next.phase1RoadRaceResolution;
+    delete next.phase2RoadRaceResolution;
+    delete next.phase3RoadRaceResolution;
+  } else if(step===9){
+    // Drop construction-only payloads before final validation. They are no
+    // longer needed and can otherwise keep a second full replay in memory.
+    delete checkpoint.baseReplayTimeline;
+    delete checkpoint.baseFinishResolution;
+    delete checkpoint.provisionalIntermediatePointBattles;
+    delete checkpoint.provisionalIntermediatePointFinalization;
+    delete checkpoint.phase1RoadRaceResolution;
+    delete checkpoint.phase2RoadRaceResolution;
+    delete checkpoint.phase3RoadRaceResolution;
+
+    const replayTimeline=checkpoint.replayTimeline as any;
+    const step9CommandsByPhase=new Map<number,any[]>();
+    const step9CommandRiders=Array.isArray((checkpoint.roadCommandResolution as any)?.riders)
+      ? (checkpoint.roadCommandResolution as any).riders
+      : [];
+    for(const rider of step9CommandRiders){
+      if(rider?.eligibleToStart===false) continue;
+      for(const phase of (Array.isArray(rider?.phases)?rider.phases:[])){
+        const phaseNumber=Number(phase?.phaseNumber);
+        if(!Number.isFinite(phaseNumber)) continue;
+        const bucket=step9CommandsByPhase.get(phaseNumber)??[];
+        bucket.push({
+          riderId:rider.riderId,
+          teamId:rider.teamId,
+          phaseNumber,
+          stageRole:rider.stageRole,
+          savedCommand:phase.savedCommand,
+          resolvedCommand:phase.resolvedCommand,
+          resolvedSource:phase.resolvedSource,
+          behaviour:phase.behaviour,
+        });
+        step9CommandsByPhase.set(phaseNumber,bucket);
+      }
+    }
+    step9CommandsByPhase.forEach((bucket,phaseNumber)=>{
+      bucket.sort((a:any,b:any)=>String(a.riderId).localeCompare(String(b.riderId)));
+      step9CommandsByPhase.set(phaseNumber,bucket);
+    });
+    const normalizeCheckpointPhysicalGroups=(replayCheckpoint:any)=>{
+      if(!Array.isArray(replayCheckpoint?.groups)||replayCheckpoint.groups.length===0) return;
+      const originalGroups=replayCheckpoint.groups;
+      const originalGaps=Array.isArray(replayCheckpoint?.gaps)?replayCheckpoint.gaps:[];
+
+      const usedCodes=new Set<string>();
+      const nextAvailableChaseCode=()=>{
+        let number=1;
+        while(usedCodes.has(`C${number}`)) number+=1;
+        const code=`C${number}`;
+        usedCodes.add(code);
+        return code;
+      };
+
+      const records=originalGroups.map((group:any)=>{
+        const originalCode=String(group?.displayCode??"");
+        let newCode=originalCode;
+        if(originalCode&&usedCodes.has(originalCode)&&/^C\d+$/.test(originalCode)){
+          newCode=nextAvailableChaseCode();
+        }else if(originalCode){
+          usedCodes.add(originalCode);
+        }
+        const sourceGap=
+          originalGaps.find((gap:any)=>
+            String(gap?.displayCode??"")===originalCode&&
+            String(gap?.groupCode??"")===String(group?.groupCode??"")
+          ) ??
+          originalGaps.find((gap:any)=>
+            String(gap?.displayCode??"")===originalCode
+          ) ??
+          null;
+        return {group,originalCode,newCode,sourceGap};
+      });
+
+      const changed=records.some((record:any)=>record.newCode!==record.originalCode);
+      if(!changed) return;
+
+      replayCheckpoint.groups=records.map((record:any)=>({
+        ...record.group,
+        displayCode:record.newCode,
+      }));
+
+      replayCheckpoint.gaps=records.map((record:any)=>({
+        ...(record.sourceGap??{
+          groupCode:record.group?.groupCode,
+          gapSeconds:0,
+          officialTimeSeconds:null,
+        }),
+        displayCode:record.newCode,
+        groupCode:record.group?.groupCode,
+      }));
+
+      const recordByRiderId=new Map<string,any>();
+      for(const record of records){
+        for(const riderId of (Array.isArray(record.group?.riderIds)?record.group.riderIds:[])){
+          recordByRiderId.set(String(riderId),record);
+        }
+      }
+      if(Array.isArray(replayCheckpoint?.riderStates)){
+        replayCheckpoint.riderStates=replayCheckpoint.riderStates.map((state:any)=>{
+          const record=recordByRiderId.get(String(state?.riderId??""));
+          if(!record) return state;
+          return {
+            ...state,
+            groupCode:record.group?.groupCode,
+            displayCode:record.newCode,
+            gapSeconds:record.sourceGap
+              ? finite(record.sourceGap?.gapSeconds,state?.gapSeconds??0)
+              : state?.gapSeconds,
+          };
+        });
+      }
+    };
+
+    if(Array.isArray((replayTimeline as any)?.checkpoints)){
+      const incidents=Array.isArray((checkpoint.phase10Incidents as any)?.incidents)
+        ? (checkpoint.phase10Incidents as any).incidents
+        : [];
+      const step9TeamIds=(Array.isArray(calculationInput?.teams)?calculationInput.teams:[])
+        .map((team:any)=>String(team?.teamId??""))
+        .filter(Boolean);
+      const step9ReplayCheckpoints=(replayTimeline as any).checkpoints as any[];
+      const step9Start=Math.max(0,Math.trunc(finite(checkpoint.step9ReplayCursor,0)));
+      const step9End=Math.min(step9ReplayCheckpoints.length,step9Start+1024);
+      let step9PreviousCheckpoint:any=step9Start>0?step9ReplayCheckpoints[step9Start-1]:null;
+      for(let step9Index=step9Start;step9Index<step9End;step9Index++){
+        const replayCheckpoint=step9ReplayCheckpoints[step9Index];
+        normalizeCheckpointPhysicalGroups(replayCheckpoint);
+        const checkpointKm=finite(replayCheckpoint?.raceProgress?.kmFromStart,0);
+        const dnfRiderIds=new Set(
+          incidents
+            .filter((incident:any)=>finite(incident?.kmFromStart,Number.POSITIVE_INFINITY)<=checkpointKm+0.000001)
+            .flatMap((incident:any)=>
+              (Array.isArray(incident?.riderConsequences)?incident.riderConsequences:[])
+                .filter((row:any)=>row?.statusImpact==="dnf")
+                .map((row:any)=>String(row?.riderId??""))
+            )
+            .filter(Boolean)
+        );
+        replayCheckpoint.activeCommands=(step9CommandsByPhase.get(Number(replayCheckpoint?.phase))??[])
+          .filter((command:any)=>!dnfRiderIds.has(String(command?.riderId??"")));
+
+        if(Array.isArray(replayCheckpoint?.riderStates)){
+          // Single-pass team aggregation: avoid rescanning every rider for every
+          // team and status at each replay kilometre (large mountain stages).
+          const teamStatesById=new Map<string,any>();
+          for(const teamId of step9TeamIds){
+            teamStatesById.set(teamId,{
+              teamId,activeRiderIds:[],racingRiderCount:0,finishedRiderCount:0,
+              dnsRiderCount:0,dnfRiderCount:0,otlRiderCount:0,
+            });
+          }
+          for(const rider of replayCheckpoint.riderStates){
+            const aggregate=teamStatesById.get(String(rider?.teamId??""));
+            if(!aggregate) continue;
+            const status=String(rider?.status??"");
+            if(status==="racing"||status==="finished"){
+              aggregate.activeRiderIds.push(String(rider?.riderId??""));
+            }
+            const counter=({
+              racing:"racingRiderCount",finished:"finishedRiderCount",
+              dns:"dnsRiderCount",dnf:"dnfRiderCount",otl:"otlRiderCount",
+            } as Record<string,string>)[status];
+            if(counter) aggregate[counter]+=1;
+          }
+          replayCheckpoint.teamStates=step9TeamIds.map((teamId:string)=>{
+            const aggregate=teamStatesById.get(teamId);
+            aggregate.activeRiderIds.sort();
+            return aggregate;
+          });
+        }
+
+        if(step9PreviousCheckpoint&&Array.isArray(replayCheckpoint?.riderStates)){
+          const previousByRider=new Map(
+            (Array.isArray(step9PreviousCheckpoint?.riderStates)?step9PreviousCheckpoint.riderStates:[])
+              .map((row:any)=>[String(row?.riderId??""),row] as const)
+          );
+          const changedRiderIds=replayCheckpoint.riderStates
+            .filter((row:any)=>{
+              const previous=previousByRider.get(String(row?.riderId??"")) as any;
+              const before=previous?.displayCode??null;
+              const after=row?.displayCode??null;
+              return before!==after&&before!==null&&after!==null&&
+                !String(before).startsWith("I")&&!String(after).startsWith("I");
+            })
+            .map((row:any)=>String(row?.riderId??""))
+            .filter(Boolean);
+          const hasPublishedPhysicalTransition=(Array.isArray(replayCheckpoint?.commentary)
+            ? replayCheckpoint.commentary
+            : []
+          ).some((entry:any)=>
+            entry?.eventType==="group_split"||
+            entry?.eventType==="group_merge"||
+            entry?.eventType==="incident"
+          );
+          if(changedRiderIds.length>0&&!hasPublishedPhysicalTransition){
+            const riderTeamIds=Array.from(new Set(
+              changedRiderIds
+                .map((riderId:string)=>
+                  replayCheckpoint.riderStates.find((row:any)=>String(row?.riderId??"")===riderId)?.teamId
+                )
+                .filter(Boolean)
+                .map(String)
+            )).sort();
+            replayCheckpoint.commentary=[
+              ...(Array.isArray(replayCheckpoint?.commentary)?replayCheckpoint.commentary:[]),
+              {
+                commentaryId:`${String(replayCheckpoint?.checkpointId??"checkpoint")}:physical-group-transition`,
+                eventType:"group_split",
+                title:"Road groups reorganize",
+                description:"The race formation changes as riders move between road groups.",
+                riderIds:[...changedRiderIds].sort(),
+                teamIds:riderTeamIds,
+              },
+            ];
+          }
+        }
+        step9PreviousCheckpoint=replayCheckpoint;
+      }
+      if(step9End<step9ReplayCheckpoints.length){
+        checkpoint.step9ReplayCursor=step9End;
+      }else{
+        delete checkpoint.step9ReplayCursor;
+      }
+    }
+    // Checkpoint normalized replay separately from final validation/publication.
+    // This bounds each Edge invocation's CPU work and permits deterministic resume.
+    next={...checkpoint};
+  } else if(step===10){
+    const replayTimeline=checkpoint.replayTimeline as any;
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_sync",stageId,step}));
+    const replaySynchronization=selectedCore.buildUniversalReplaySynchronizationSummary(
+      calculationInput,
+      checkpoint.riderReadiness as any,
+      checkpoint.roadCommandResolution as any,
+      checkpoint.intermediatePointFinalization as any,
+      checkpoint.groupAndTimeResolution as any,
+      checkpoint.finishResolution as any,
+      checkpoint.phase10Incidents as any,
+      replayTimeline as any,
+      checkpoint.roadRaceResolution as any,
+    );
+    await heartbeat(supabase,stageId,runId,"step10_replay_synchronized",{checkpoint_count:Array.isArray(replayTimeline?.checkpoints)?replayTimeline.checkpoints.length:0});
+    const replayPublicationPolicy=selectedCore.classifyUniversalReplaySynchronizationForPublication(replaySynchronization);
+    const hardReplayBlockingIssues=replayPublicationPolicy.blockingIssues.filter((issue)=>!isRecoverableReplayOnlyIssue(issue));
+    if(hardReplayBlockingIssues.length>0){
+      throw new Error(`Universal replay synchronization failed: ${hardReplayBlockingIssues.join(", ")}`);
+    }
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_post",stageId,step}));
+    const postStageUpdate=selectedCore.buildUniversalPostStageUpdateSummary(
+      calculationInput,
+      checkpoint.difficulty as any,
+      checkpoint.riderReadiness as any,
+      checkpoint.roadCommandResolution as any,
+      checkpoint.roadRaceResolution as any,
+      checkpoint.intermediatePointFinalization as any,
+      checkpoint.finishResolution as any,
+      checkpoint.phase10Incidents as any,
+      replayTimeline as any,
+      replaySynchronization,
+    );
+    await heartbeat(supabase,stageId,runId,"step10_post_stage_ready",{});
+    const phase9Acceptance=selectedCore.buildUniversalPhase9AcceptanceReport(input,calculationInput,phase9Modifiers,postStageUpdate);
+    if(!phase9Acceptance.passed) throw new Error(`Phase 9 acceptance audit failed: ${phase9Acceptance.warnings.join(", ")}`);
+    const phase78Acceptance=selectedCore.buildUniversalPhase78AcceptanceReport(
+      calculationInput,
+      checkpoint.finishResolution as any,
+      replayTimeline as any,
+      replaySynchronization,
+      postStageUpdate,
+    );
+    const blockingPhase78Issues=phase78Acceptance.issues.filter((issue)=>
+      !selectedCore.isUniversalPhase78IssueNonBlocking(issue) && !isRecoverablePhase78ReplayIssue(issue)
+    );
+    if(blockingPhase78Issues.length>0) throw new Error(`Phase 7 + 8 acceptance audit failed: ${blockingPhase78Issues.join(", ")}`);
+    const calibrationSummary=selectedCore.buildUniversalRaceCalibrationSummary(
+      calculationInput,
+      checkpoint.stageClassification as any,
+      checkpoint.roadRaceResolution as any,
+      checkpoint.groupAndTimeResolution as any,
+      checkpoint.finishResolution as any,
+    );
+    await heartbeat(supabase,stageId,runId,"step10_acceptance_ready",{});
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_result",stageId,step}));
+    let result: UniversalRaceEngineResult={
+      engineKey:PPM_UNIVERSAL_RACE_ENGINE_KEY,
+      engineVersion:PPM_UNIVERSAL_RACE_ENGINE_VERSION,
+      raceId:input.race.raceId,
+      stageId:input.stage.stageId,
+      validationPassed:true,
+      stageClassification:checkpoint.stageClassification as any,
+      terrain:checkpoint.terrain as any,
+      difficulty:checkpoint.difficulty as any,
+      riderReadiness:checkpoint.riderReadiness as any,
+      stageSkillModel:checkpoint.stageSkillModel as any,
+      teamTimeTrialSuitabilityRules:checkpoint.teamTimeTrialSuitabilityRules as any,
+      riderSuitability:checkpoint.riderSuitability as any,
+      teamStrength:checkpoint.teamStrength as any,
+      favourites:checkpoint.favourites as any,
+      roadCommandResolution:checkpoint.roadCommandResolution as any,
+      roadRaceResolution:checkpoint.roadRaceResolution as any,
+      intermediatePointPlan:checkpoint.intermediatePointPlan as any,
+      intermediatePointBattles:checkpoint.intermediatePointBattles as any,
+      intermediatePointFinalization:checkpoint.intermediatePointFinalization as any,
+      groupAndTimeResolution:checkpoint.groupAndTimeResolution as any,
+      finishResolution:checkpoint.finishResolution as any,
+      replayTimeline:replayTimeline as any,
+      replaySynchronization,
+      phase9Modifiers,
+      phase9Acceptance,
+      phase10Incidents:checkpoint.phase10Incidents as any,
+      postStageUpdate,
+      phase78Acceptance,
+      calibrationSummary,
+    };
+    if (engineLaneV1 === "experimental_breakaway_v1" &&
+        (!result.replaySynchronization.synchronized || !result.phase78Acceptance.passed)) {
+      throw new Error("Breakaway V1 replay synchronization failed: refusing degraded official publication.");
+    }
+    try { result=applyAtomicIntermediatePointReplayPublication(input,result); } catch {}
+    await heartbeat(supabase,stageId,runId,"step10_preparing_output",{});
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_output",stageId,step}));
+    let output=buildOutputWithReplayProgressGuarantee(input,result);
+    await heartbeat(supabase,stageId,runId,"step10_output_ready",{});
+    output=addFinishRankAlias(output);
+    output={
+      ...output,
+      verification:{
+        ...object(output.verification),
+        safeMode:true,
+        safeModeContract:CONTRACT,
+        primarySourceCommit:effectiveSourceCommit,
+        engineLaneV1,
+        recoveryPolicy:"checkpointed_safe_mode_v2",
+        scenarioPreserved:scenarioPreserved,
+      },
+      calculationSurvival:{
+        modelVersion:"checkpointed_safe_mode_v2",
+        checkpointed:true,
+        sourceCommit:effectiveSourceCommit,
+        engineLaneV1,
+        totalSteps:11,
+      },
+    };
+    console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_submit",stageId,step}));
+    await heartbeat(supabase,stageId,runId,"safe_mode_submitting",{step,elapsed_ms:performance.now()-started});
+    // Submit the potentially 60+MB replay result in bounded chunks. A single
+    // Supabase RPC body otherwise duplicates the payload and kills the isolate.
+    let outputChunkIndex=0;
+    let outputBuffer="";
+    const uploadOutputChunk=async(piece:string)=>{
+      const saved=await rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
+        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+        p_chunk_index:outputChunkIndex,p_chunk_text:piece,
+      });
+      if(saved.status!=="saved_chunk")throw new Error(`Output chunk ${outputChunkIndex} rejected: ${JSON.stringify(saved)}`);
+      outputChunkIndex++;
+    };
+    for await(const piece of serializedPieces(output)){
+      if(piece.length>650_000){
+        if(outputBuffer){await uploadOutputChunk(outputBuffer);outputBuffer="";}
+        for(let offset=0;offset<piece.length;){
+          let end=Math.min(piece.length,offset+650_000);
+          if(end<piece.length){
+            const c=piece.charCodeAt(end-1),n=piece.charCodeAt(end);
+            if(c>=0xD800&&c<=0xDBFF&&n>=0xDC00&&n<=0xDFFF)end--;
+          }
+          await uploadOutputChunk(piece.slice(offset,end));offset=end;
+        }
+      }else if(outputBuffer.length+piece.length>650_000){
+        await uploadOutputChunk(outputBuffer);outputBuffer=piece;
+      }else outputBuffer+=piece;
+    }
+    if(outputBuffer)await uploadOutputChunk(outputBuffer);
+    const submit=await rpc<JsonObject>(supabase,"universal_race_stage_submit_chunked_calculation_v1",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+      p_chunk_count:outputChunkIndex,p_input_snapshot:input,
+    });
+    if(scenarioPreserved){
+      try{
+        await rpc(supabase,"universal_race_stage_finalize_scenario_v1",{
+          p_stage_id:stageId,
+          p_simulation_run_id:runId,
+          p_actual_outcome:outcomeSummary(result),
+          p_deviations:[],
+        });
+      }catch{}
+    }
+    await rpc(supabase,"universal_race_stage_complete_safe_mode_v2",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+    });
+    await heartbeat(supabase,stageId,runId,"calculated_hidden",{
+      safe_mode:true,checkpointed:true,total_steps:11,elapsed_ms:performance.now()-started,
+    });
+    return {status:"completed",stage_id:stageId,simulation_run_id:runId,step,submit,elapsed_ms:performance.now()-started};
+  } else {
+    throw new Error(`Unsupported safe-mode step ${step}`);
+  }
+
+  const nextStep=step===9&&Number(next.step9ReplayCursor??0)>0?9:step+1;
+  // Large replay checkpoints must be serialized incrementally; JSON.stringify
+  // of the entire object duplicates tens of MB in the isolate heap.
+  async function* serializedPieces(value:any):AsyncGenerator<string>{
+    yield "{";
+    let firstKey=true;
+    for(const [key,field] of Object.entries(value)){
+      if(field===undefined)continue;
+      if(!firstKey)yield ",";
+      firstKey=false;
+      yield JSON.stringify(key)+":";
+      if(key==="universalResult"&&field&&typeof field==="object"){
+        yield* serializedPieces(field);
+      }else if(key==="replayTimeline"&&field&&typeof field==="object"&&
+         Array.isArray((field as any).checkpoints)){
+        yield "{";
+        let firstTimeline=true;
+        for(const [tkey,tvalue] of Object.entries(field as any)){
+          if(tvalue===undefined)continue;
+          if(!firstTimeline)yield ",";
+          firstTimeline=false;
+          yield JSON.stringify(tkey)+":";
+          if(tkey==="checkpoints"){
+            yield "[";
+            let firstCheckpoint=true;
+            for(const frame of tvalue as any[]){
+              if(!firstCheckpoint)yield ",";
+              firstCheckpoint=false;
+              yield JSON.stringify(frame);
+            }
+            yield "]";
+          }else yield JSON.stringify(tvalue);
+        }
+        yield "}";
+      }else yield JSON.stringify(field);
+    }
+    yield "}";
+  }
+  let save:JsonObject;
+  if(step>=8){
+    let chunkIndex=0;
+    let buffer="";
+    const sendChunk=async(piece:string)=>{
+      const result=await rpc<JsonObject>(supabase,"universal_race_stage_write_checkpoint_chunk_v1",{
+        p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+        p_chunk_index:chunkIndex,p_chunk_text:piece,
+      });
+      if(result.status!=="saved_chunk")throw new Error(`Checkpoint chunk ${chunkIndex} failed: ${JSON.stringify(result)}`);
+      chunkIndex++;
+    };
+    for await(const piece of serializedPieces(next)){
+      if(piece.length>650_000){
+        if(buffer){await sendChunk(buffer);buffer="";}
+        for(let offset=0;offset<piece.length;){
+          let end=Math.min(piece.length,offset+650_000);
+          if(end<piece.length){
+            const c=piece.charCodeAt(end-1),n=piece.charCodeAt(end);
+            if(c>=0xD800&&c<=0xDBFF&&n>=0xDC00&&n<=0xDFFF)end--;
+          }
+          await sendChunk(piece.slice(offset,end));offset=end;
+        }
+      }else if(buffer.length+piece.length>650_000){
+        await sendChunk(buffer);
+        buffer=piece;
+      }else buffer+=piece;
+    }
+    if(buffer)await sendChunk(buffer);
+    save=await rpc<JsonObject>(supabase,"universal_race_stage_finalize_checkpoint_chunks_v1",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+      p_chunk_count:chunkIndex,p_next_step:nextStep,p_phase:`safe_mode_step_${step}_complete`,
+    });
+  }else{
+    save=await rpc<JsonObject>(supabase,"universal_race_stage_save_safe_step_v2",{
+      p_stage_id:stageId,p_simulation_run_id:runId,p_lease_token:leaseToken,
+      p_next_step:nextStep,p_checkpoint_text:JSON.stringify(next),
+      p_phase:`safe_mode_step_${step}_complete`,
+    });
+  }
+  if(save.status!=="saved") throw new Error(`Safe-mode checkpoint save failed: ${JSON.stringify(save)}`);
+  if(nextStep>=9){
+    // Separate the large checkpoint commit from replay shard construction:
+    // a combined DB transaction timed out before stage 15 could save.
+    const prepared=object(await rpc(supabase,"universal_race_stage_prepare_checkpoint_shards_v1",{
+      p_stage_id:stageId,
+    }));
+    if(prepared.status!=="prepared"){
+      throw new Error(`Replay checkpoint shard preparation failed: ${JSON.stringify(prepared)}`);
+    }
+  }
+  return {status:"step_completed",stage_id:stageId,simulation_run_id:runId,step,next_step:nextStep,elapsed_ms:performance.now()-started};
+}
+
+Deno.serve(async (request: Request) => {
+  if (request.method === "OPTIONS") return new Response(null,{status:204});
+  const supabase=createClient(env("SUPABASE_URL"),env("SUPABASE_SERVICE_ROLE_KEY"),{
+    auth:{autoRefreshToken:false,persistSession:false},
+  });
+  if(!(await authorized(supabase,request))) return jsonResponse({status:"forbidden",contract:CONTRACT},403);
+
+  const task=(async()=>{
+    const claim=object(await rpc(supabase,"universal_race_stage_claim_safe_step_v2",{p_worker_id:"supabase_edge_safe_mode_v1"}));
+    if(claim.status!=="claimed"){
+      console.log(JSON.stringify({status:"idle",contract:CONTRACT}));
+      return;
+    }
+    try{
+      const result=await executeStep(supabase,claim);
+      console.log(JSON.stringify({...result,contract:CONTRACT}));
+      if(result.status==="step_completed") await triggerNext(request);
+    }catch(error){
+      const serialized=errorPayload(error);
+      console.error(JSON.stringify({
+        status:"safe_step_failed",
+        contract:CONTRACT,
+        error:serialized,
+        claim:{
+          stage_id:claim.stage_id,
+          simulation_run_id:claim.simulation_run_id,
+          step:claim.step,
+          step_attempt_count:claim.step_attempt_count,
+          total_attempt_count:claim.total_attempt_count,
+        },
+      }));
+      try{
+        await rpc(supabase,"universal_race_stage_fail_safe_step_v1",{
+          p_stage_id:text(claim.stage_id),
+          p_simulation_run_id:text(claim.simulation_run_id),
+          p_lease_token:text(claim.lease_token),
+          p_error:text(serialized.message)||"Safe-mode step failed",
+        });
+      }catch{}
+    }
+  })();
+  EdgeRuntime.waitUntil(task);
+  return jsonResponse({status:"accepted",contract:CONTRACT,background_execution:true},202);
+});
