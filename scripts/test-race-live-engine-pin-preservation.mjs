@@ -1,29 +1,42 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { readFileSync } from "node:fs";
-const source=readFileSync(new URL("../supabase/functions/universal-race-stage-safe-resume/index.ts",import.meta.url),"utf8");
-const calibrated="726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
+const worker=readFileSync(new URL("../supabase/functions/universal-race-stage-safe-resume/index.ts",import.meta.url),"utf8");
+const mountain="ef5f0d4f2a91be80834140fbda977b5da614908b";
+const previousMountain="726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
+const flat="fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2";
 
-test("staged reliability inherits the verified mountain source pin",()=>{
- assert.match(source,/import \* as optimizedMountainCore/);
- assert.ok(source.includes(`const OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "${calibrated}";`));
- assert.match(source,/mountainReplayOptimizationSourceCommit: OPTIMIZED_MOUNTAIN_SOURCE_COMMIT/);
- assert.match(source,/\? optimizedMountainCore : calibratedBaselineCore/);
+test("staging matches the protected live version 74 mountain and flat engine pins",()=>{
+  assert.ok(worker.includes(`const OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "${mountain}";`));
+  assert.ok(worker.includes(`const PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "${previousMountain}";`));
+  assert.ok(worker.includes(`const FLAT_BASELINE_SOURCE_COMMIT = "${flat}";`));
+  assert.match(worker,/import \* as correctedFlatBaselineCore/);
+  assert.match(worker,/import \* as optimizedMountainCore/);
+  assert.match(worker,/import \* as previousOptimizedMountainCore/);
+  assert.match(worker,/MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS/);
+  assert.match(worker,/mountainReplayOptimizationSourceCommit: OPTIMIZED_MOUNTAIN_SOURCE_COMMIT/);
 });
-test("in-flight races retain the selected lane, not the latest default",()=>{
- assert.match(source,/savedEngineSourceCommit/);
- assert.match(source,/savedEngineSourceCommit === OPTIMIZED_MOUNTAIN_SOURCE_COMMIT/);
- assert.match(source,/\? optimizedMountainCore : getSelectedRaceEngineModuleV1\(calculationInput\.stage\)/);
- assert.match(source,/MANDATORY_BREAKAWAY_PILOT_IDS/);
+
+test("in-flight mountain calculations honor their saved physics source commit",()=>{
+  assert.match(worker,/savedEngineSourceCommit === OPTIMIZED_MOUNTAIN_SOURCE_COMMIT/);
+  assert.match(worker,/savedEngineSourceCommit === PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT/);
+  assert.match(worker,/savedEngineSourceCommit === FLAT_BASELINE_SOURCE_COMMIT/);
+  assert.match(worker,/previousOptimizedMountainCore/);
+  assert.match(worker,/MANDATORY_BREAKAWAY_PILOT_IDS/);
 });
-test("baseline and breakaway source selection are not downgraded",()=>{
- assert.match(source,/import \* as calibratedBaselineCore/);
- assert.match(source,/import \* as calibratedBreakawayCore/);
- assert.ok(source.includes(`const CALIBRATED_ROAD_SOURCE_COMMIT = "${calibrated}";`));
- assert.match(source,/\? calibratedBreakawayCore : breakawayPilotCore/);
+
+test("baseline and breakaway engine lanes retain source-specific routing",()=>{
+  assert.match(worker,/import \* as calibratedBaselineCore/);
+  assert.match(worker,/import \* as calibratedBreakawayCore/);
+  assert.match(worker,/import \* as correctedFlatBaselineCore/);
+  assert.match(worker,/\? optimizedMountainCore : correctedFlatBaselineCore/);
+  assert.match(worker,/\? calibratedBreakawayCore : breakawayPilotCore/);
 });
-test("new upload protocol requires explicit enablement",()=>{
- assert.match(source,/PPM_PERSISTENT_RACE_OUTPUT_V2/);
- assert.match(source,/\? "universal_race_stage_submit_persistent_output_v2"/);
- assert.match(source,/: "universal_race_stage_submit_chunked_calculation_v1"/);
+
+test("reliability enhancements remain additive and output v2 stays opt-in",()=>{
+  assert.match(worker,/writeIdempotentChunkWithRetry/);
+  assert.match(worker,/planReplayNormalizationWindow/);
+  assert.match(worker,/Deno\.env\.get\("PPM_PERSISTENT_RACE_OUTPUT_V2"\)==="enabled"/);
+  assert.match(worker,/\? "universal_race_stage_submit_persistent_output_v2"/);
+  assert.match(worker,/: "universal_race_stage_submit_chunked_calculation_v1"/);
 });

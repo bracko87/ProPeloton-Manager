@@ -2,12 +2,15 @@
 /// <reference lib="deno.ns" />
 import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runRaceEngine.ts";
 import * as calibratedBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runRaceEngine.ts";
+import * as correctedFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2/src/universal-race-engine/runRaceEngine.ts";
 import * as calibratedBreakawayCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
-import * as optimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
+import * as optimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ef5f0d4f2a91be80834140fbda977b5da614908b/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
+import * as previousOptimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
 import { getSelectedRaceEngineModuleV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runSelectedRaceEngineV1.ts";
-import { selectMountainEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/mountainEngineLaneV1.ts";
+import { selectMountainEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEngineLaneV1.ts";
 import * as breakawayPilotCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
 import { isBreakawayOfficialPilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/breakawayOfficialPilotV1.ts";
+import { MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1, isMountainEnginePilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEnginePilotV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import { writeIdempotentChunkWithRetry } from "../_shared/idempotentChunkRetryV1.mjs";
 import { planReplayNormalizationWindow } from "../_shared/replayNormalizationWindowV1.mjs";
@@ -59,8 +62,11 @@ declare const EdgeRuntime: { waitUntil(promise: Promise<unknown>): void };
 type JsonObject = Record<string, unknown>;
 const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
 const SOURCE_COMMIT = "878aa8ae0db95d97fa5385513d2c1394e3a791a2";
-const OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
+const OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "ef5f0d4f2a91be80834140fbda977b5da614908b";
+const PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
 const CALIBRATED_ROAD_SOURCE_COMMIT = "726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
+const FLAT_BASELINE_SOURCE_COMMIT = "fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2";
+const MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS = new Set(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1);
 const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3", "7f69e552-b116-453c-bf55-16ef655ea021"]);
 const PREVIOUS_SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
 
@@ -600,7 +606,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       ? "experimental_breakaway_v1" : selectMountainEngineLaneV1(input.stage);
     selectedCore=engineLaneV1 === "experimental_breakaway_v1"
       ? calibratedBreakawayCore : engineLaneV1 === "experimental_mountain_v1"
-      ? optimizedMountainCore : calibratedBaselineCore;
+      ? optimizedMountainCore : correctedFlatBaselineCore;
     phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);
     calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);
   } else {
@@ -625,11 +631,20 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
           ? calibratedBreakawayCore : breakawayPilotCore)
       : engineLaneV1 === "experimental_mountain_v1"
       ? (savedEngineSourceCommit === OPTIMIZED_MOUNTAIN_SOURCE_COMMIT
-          ? optimizedMountainCore : getSelectedRaceEngineModuleV1(calculationInput.stage))
-      : (savedEngineSourceCommit === CALIBRATED_ROAD_SOURCE_COMMIT
+          ? optimizedMountainCore : savedEngineSourceCommit === PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT
+          ? previousOptimizedMountainCore : getSelectedRaceEngineModuleV1(calculationInput.stage))
+      : (savedEngineSourceCommit === FLAT_BASELINE_SOURCE_COMMIT
+          ? correctedFlatBaselineCore : savedEngineSourceCommit === CALIBRATED_ROAD_SOURCE_COMMIT
           ? calibratedBaselineCore : acceptedCore);
   }
 
+  // Preserve October mountain pilot lane and original physical source across resumes.
+  if (MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) &&
+      (engineLaneV1 !== "experimental_mountain_v1" ||
+       !isMountainEnginePilotStageV1(calculationInput.stage) ||
+       (step > 0 && ![OPTIMIZED_MOUNTAIN_SOURCE_COMMIT, PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT].includes(text(checkpoint.selectedEngineSourceCommit))))) {
+    throw new Error("Mandatory October Mountain V2 pilot checkpoint engine/source mismatch.");
+  }
   // Preserve the solver and its reviewed source across every checkpoint.
   if (MANDATORY_BREAKAWAY_PILOT_IDS.has(stageId) && engineLaneV1 !== "experimental_breakaway_v1") {
     throw new Error("Mandatory Breakaway V1 pilot engine mismatch: safe resume refused baseline.");
@@ -640,7 +655,9 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     throw new Error("Breakaway V1 checkpoint stage/source mismatch.");
   }
   const effectiveSourceCommit = step === 0
-    ? (engineLaneV1 === "experimental_mountain_v1" ? OPTIMIZED_MOUNTAIN_SOURCE_COMMIT : CALIBRATED_ROAD_SOURCE_COMMIT)
+    ? (engineLaneV1 === "experimental_mountain_v1" ? OPTIMIZED_MOUNTAIN_SOURCE_COMMIT
+       : engineLaneV1 === "experimental_breakaway_v1" ? CALIBRATED_ROAD_SOURCE_COMMIT
+       : FLAT_BASELINE_SOURCE_COMMIT)
     : text(checkpoint.selectedEngineSourceCommit) || PREVIOUS_SOURCE_COMMIT;
   let next: JsonObject={...checkpoint};
 
