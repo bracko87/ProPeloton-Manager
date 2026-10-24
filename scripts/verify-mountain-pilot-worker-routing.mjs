@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { createHash } from 'node:crypto'
 const file = slug => readFileSync(`supabase/functions/${slug}/index.ts`,'utf8')
-const sha='e9cf5541f1cd83618266eaaa44a355b921222161'
+const sha='e00c4e694c0629efa5b06497dd514b505b166934'
 const [runner,pass1,pass2,safe]=['universal-race-stage-runner','universal-race-stage-pass1-resume','universal-race-stage-pass2-resume','universal-race-stage-safe-resume'].map(file)
 for(const code of [runner,pass1,pass2,safe])assert.ok(code.includes(`const SOURCE_COMMIT = "${sha}"`))
 for(const code of [runner,pass2]) {
@@ -80,5 +80,6 @@ console.log('PASS experimental breakaway pilot has isolated stage source and saf
 for(const live of [runner,pass2,safe]) {
  assert.ok(live.includes('5523cf76-8fd4-4a12-ab28-7f285c9829ff'))
  assert.ok(live.includes('335708f7-d56a-4816-9068-38399e8f74e3'))
+ assert.ok(live.includes('7f69e552-b116-453c-bf55-16ef655ea021'))
  assert.match(live,/MANDATORY_BREAKAWAY_PILOT_IDS.has\(stageId\)/)
 }
