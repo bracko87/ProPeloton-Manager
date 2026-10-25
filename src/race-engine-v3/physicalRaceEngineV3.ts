@@ -9,6 +9,7 @@
  */
 
 import {classifyAttackProximityV3} from './physicalAttackLifecycleV3.ts'
+import {advancePhysicalGroupTimelineV3,initializePhysicalGroupTimelineV3,type PhysicalGroupTimelineStateV3,type TrackedPhysicalGroupFrameV3} from './physicalGroupTimelineV3.ts'
 
 export type RoadSurfaceV3 = 'asphalt' | 'cobbled'
 export type RoadActionV3 = 'follow' | 'tempo' | 'attack' | 'chase' | 'recover'
@@ -83,12 +84,15 @@ export interface PhysicalRaceV3State {
   readonly totalMeters: number
   readonly states: PhysicalRiderStateV3[]
   readonly replay: PhysicalReplaySampleV3[]
+  /** Durable group lineage, persisted alongside the simulation checkpoint. */
+  readonly groupTimeline: PhysicalGroupTimelineStateV3
   complete: boolean
 }
 export interface PhysicalRaceV3Result {
   readonly version: 'physical_road_v3_preview'
   readonly finish: readonly PhysicalFinishV3[]
   readonly replay: readonly PhysicalReplaySampleV3[]
+  readonly groupFrames: readonly TrackedPhysicalGroupFrameV3[]
   readonly elapsedSeconds: number
   readonly tickCount: number
 }
@@ -167,7 +171,7 @@ export function initializePhysicalRaceV3(input: PhysicalRaceV3Input): PhysicalRa
     version: 'physical_road_v3_preview', inputFingerprint: fingerprint(input), elapsedSeconds: 0,
     tick: 0, totalMeters: routeLength(input),
     states: input.riders.map(r => ({ riderId:r.riderId, teamId:r.teamId, meters:0, speedMps:0, energy:clamp(1-(r.fatigue??0)/350,.70,1), finishSeconds:null,attackUsedAtKm:null,activeAttackKey:null,attackAttempts:0 })),
-    replay:[], complete:false,
+    replay:[], groupTimeline:initializePhysicalGroupTimelineV3(routeLength(input)), complete:false,
   }
 }
 /** Advance a bounded count of time ticks; state can be serialized and resumed. */
@@ -175,6 +179,7 @@ export function advancePhysicalRaceV3(input: PhysicalRaceV3Input, state: Physica
   validate(input)
   if (state.inputFingerprint !== fingerprint(input) || state.version !== 'physical_road_v3_preview') throw new Error('Checkpoint input/source mismatch')
   if (!Number.isInteger(maxTicks) || maxTicks < 1 || maxTicks > 1_000_000) throw new Error('Invalid checkpoint budget')
+  if(!state.groupTimeline || state.groupTimeline.courseMeters!==state.totalMeters || state.groupTimeline.history.length!==state.replay.length)throw Error('Missing or divergent durable group checkpoint')
   const dt = input.dtSeconds ?? 10, sample = input.sampleEverySeconds ?? 60
   const riders = new Map(input.riders.map(r => [r.riderId, r]))
   for (let tick=0; tick<maxTicks && !state.complete; ++tick) {
@@ -272,15 +277,13 @@ export function advancePhysicalRaceV3(input: PhysicalRaceV3Input, state: Physica
     }
     state.tick++
     state.elapsedSeconds=round6(before+dt)
-    if(state.elapsedSeconds%sample===0){
-      state.replay.push({elapsedSeconds:state.elapsedSeconds,riders:state.states.map(s=>({riderId:s.riderId,meters:s.meters,energy:s.energy}))})
-    }
     state.complete=state.states.every(s=>s.finishSeconds!==null)
-    // A race usually ends BETWEEN regular replay sample boundaries. Persist
-    // an authoritative terminal frame so the replay never ends before the
-    // riders cross the line or merges every finisher into a fictitious pack.
-    if(state.complete && state.replay.at(-1)?.elapsedSeconds!==state.elapsedSeconds){
-      state.replay.push({elapsedSeconds:state.elapsedSeconds,riders:state.states.map(s=>({riderId:s.riderId,meters:s.meters,energy:s.energy}))})
+    // Group identity and replay trajectory are committed at exactly the same
+    // authoritative checkpoint, including a non-periodic final finish frame.
+    if(state.elapsedSeconds%sample===0 || (state.complete && state.replay.at(-1)?.elapsedSeconds!==state.elapsedSeconds)){
+      const frame={elapsedSeconds:state.elapsedSeconds,riders:state.states.map(s=>({riderId:s.riderId,meters:s.meters,energy:s.energy}))}
+      advancePhysicalGroupTimelineV3(state.groupTimeline,frame)
+      state.replay.push(frame)
     }
   }
   return state
@@ -304,7 +307,8 @@ export function finalizePhysicalRaceV3(state: PhysicalRaceV3State): PhysicalRace
       officialGapSeconds:round6(groupSeconds-first),
     }
   })
-  return {version:state.version,finish,replay:state.replay,elapsedSeconds:state.elapsedSeconds,tickCount:state.tick}
+  if(state.groupTimeline.history.length!==state.replay.length)throw Error('Group/replay checkpoint divergence')
+  return {version:state.version,finish,replay:state.replay,groupFrames:state.groupTimeline.history,elapsedSeconds:state.elapsedSeconds,tickCount:state.tick}
 }
 export function runPhysicalRaceV3(input: PhysicalRaceV3Input): PhysicalRaceV3Result {
   const state=initializePhysicalRaceV3(input)
