@@ -20,12 +20,16 @@ const base={raceId:'SYNTHETIC_GUANGXI_RESEARCH',stageId:'SYNTHETIC_GUANGXI_RESEA
 // gate. No attempt to pass a synthetic fixture off as original measurement.
 const incomplete=attrs.map((r,i)=>i? r:{...r,equipmentStagePerformancePct:undefined,inStageEnergyCostMultiplier:undefined})
 assert.throws(()=>initializeExperimentalPowerV3({...base,riders:incomplete,gate:{offlineOnly:true,acknowledgedNoSportingApproval:true,sourceQuality:'source_snapshot'}}),/Missing physical source/)
-const input={...base,gate:{offlineOnly:true,acknowledgedNoSportingApproval:true,sourceQuality:'synthetic_research'}}
+const grid=process.env.V3_EXPERIMENTAL_START_GRID==='4x2'
+const input={...base,...(grid?{experimentalStartFormation:{mode:'synthetic_neutral_rolling',ridersAcross:4,rowSpacingMeters:2}}:{}),gate:{offlineOnly:true,acknowledgedNoSportingApproval:true,sourceQuality:'synthetic_research'}}
 const data=runExperimentalPowerV3(input)
 assert.equal(data.riderCount,168)
 assert.equal(data.officialWrites,0)
 assert.equal(data.sportingApproval,'NOT_APPROVED')
 assert.equal(data.groupFrames.length,data.replay.length)
 const summary={stage:'Guangxi: SYNTHETIC COMPLETENESS STRESS ONLY',riders:168,fullSourceInput:false,missingEquipmentFields:168,missingAscentMeters:718,mode:data.mode,sportingApproved:false,officialWrites:0,finishWinnerSec:data.finish[0].elapsedSeconds,tailGapSec:data.finish.at(-1).gapSeconds,withinOneSecond:data.finish.filter(r=>r.gapSeconds<=1).length,attackAttempts:data.attackAttempts,replayFrames:data.replay.length,caution:'All missing fields were imputed solely to stress the offline model. No real Guangxi source-complete test was performed.'}
+summary.experimentalStartGrid=grid?'SYNTHETIC_4_ACROSS_2_METER_ROWS':'DISABLED'
+summary.distinctPhysicalFinishGaps=new Set(data.finish.map(r=>r.gapSeconds)).size
+summary.largestExactPhysicalFinishCluster=Math.max(...Object.values(data.finish.reduce((acc,r)=>(acc[r.gapSeconds]=(acc[r.gapSeconds]||0)+1,acc),{})))
 if(process.env.V3_AUDIT_OUT)writeFileSync(process.env.V3_AUDIT_OUT,JSON.stringify(summary,null,2)+'\n')
 console.log(JSON.stringify(summary,null,2))
