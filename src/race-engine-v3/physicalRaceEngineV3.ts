@@ -8,6 +8,8 @@
  * reunification or ranking-to-time conversion is permitted.
  */
 
+import {classifyAttackProximityV3} from './physicalAttackLifecycleV3.ts'
+
 export type RoadSurfaceV3 = 'asphalt' | 'cobbled'
 export type RoadActionV3 = 'follow' | 'tempo' | 'attack' | 'chase' | 'recover'
 
@@ -222,7 +224,10 @@ export function advancePhysicalRaceV3(input: PhysicalRaceV3Input, state: Physica
       // Completed attacks must not grant a lifetime escaped-rider pace.
       // Retire the burst only after physical reabsorption into the bunch;
       // a future breakout requires a new explicit tactical instruction.
-      if(action!=='attack' && s.activeAttackKey===null && s.attackUsedAtKm!==null && s.meters<=midfieldMeters+25) s.attackUsedAtKm=null
+      if(action!=='attack' && s.activeAttackKey===null && s.attackUsedAtKm!==null){
+        const proximity=classifyAttackProximityV3(positions,s.riderId)
+        if(proximity.classification==='within_peloton'||proximity.classification==='behind_peloton')s.attackUsedAtKm=null
+      }
       const escaped=s.attackUsedAtKm!==null && s.meters>midfieldMeters+90 && s.energy>.12
       const naturalMountainAttack=mountain && raceProgress>.86 && capability(r,seg)>84
       const attackBoost=1+.25*clamp((s.energy-.16)/.6,0,1)
