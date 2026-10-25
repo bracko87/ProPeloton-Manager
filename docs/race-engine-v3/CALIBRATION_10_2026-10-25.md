@@ -12,9 +12,13 @@
 
 The candidate estimates a **collective** physically attainable group speed by balancing finite rider output against power needed for air drag, rolling resistance and grade. It models reduced effective drag from a group; shareable leading duty prevents arbitrary rider-ID/processing-order advantages. Headwinds, tailwinds, and crosswinds affect aerodynamic cost. Ordered chase and attack can add explicit, energy-dependent temporary watts rather than making an adjacent rider's higher speed contagious. Exhausted riders cannot produce that extra power. No predetermined breakaway gaps, result templates, or stage-specific speed targets are in the module.
 
+### Repeated attacks — explicit extra-energy debit
+
+The candidate now also exports `debitPowerReserveV3`, a pure, deterministic helper that applies only additional attack/chase watt expenditure between checkpoints (baseline aerobic cost is handled by the main solver, not duplicated here). In an isolated 300-W, 83-kg test rider with 95% starting reserve, **four continuous 200-second attack bursts** exhaust the transient bonus; a fifth full-power burst becomes unavailable. The helper preserves the original rider objects and validates the energy-step size. This is a **synthetic bounded-behavior test, not yet a calibrated physiological recovery model**, and the helper is **not active in race execution**.
+
 ## Validation
 
-Locally on Node.js 22.16.0 and TypeScript 5.8.3: **15 existing/new research regression scripts passed**, plus the two-roster shadow audit and strict `tsc --noEmit --strict` checking of the V3 modules. Existing deterministic completed-race and physical-group checkpoint tests continued to pass.
+Locally on Node.js 22.16.0 and TypeScript 5.8.3: **15 existing/new research regression scripts passed**, plus the two-roster shadow audit and strict `tsc --noEmit --strict` checking of the V3 modules. Existing deterministic completed-race and physical-group checkpoint tests continued to pass. The repeated-burst reserve-depletion and nonmutation regression also passed.
 
 The isolated 300-W, 83-kg toy benchmark gives **10.53 m/s solo**, **11.97 m/s in a group of twelve**, **12.03 m/s when one rider chases**, and **12.07 m/s when one attacks**, with the extra contributor explicitly charged for energy. An 8% climb substantially lowers modeled speed. These are provisional mechanical examples, **not calibrated ProPeloton rider speeds or validation against measured cycling data**.
 
