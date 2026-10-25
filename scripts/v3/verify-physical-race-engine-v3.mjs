@@ -131,3 +131,15 @@ test('ordinary chase order does not launch a phantom attack without a front grou
  assert(Math.abs(finA.physicalFinishSeconds-finB.physicalFinishSeconds)<1,
    'phantom chase changed rider finish without a real breakaway')
 })
+test('every completed race has a terminal replay sample at its authoritative finish',()=>{
+ const input=race({route:[{lengthKm:7.35,gradePercent:0}],sampleEverySeconds:60,dtSeconds:10})
+ const direct=runPhysicalRaceV3(input)
+ const final=direct.replay.at(-1)
+ assert(final,'A finished race must contain a replay frame')
+ assert.equal(final.elapsedSeconds,direct.elapsedSeconds)
+ assert.equal(final.riders.length,input.riders.length)
+ assert(final.riders.every(r=>Math.abs(r.meters-7350)<0.00001))
+ let resumed=initializePhysicalRaceV3(input)
+ while(!resumed.complete)resumed=JSON.parse(JSON.stringify(advancePhysicalRaceV3(input,resumed,7)))
+ assert.deepEqual(finalizePhysicalRaceV3(resumed),direct)
+})
