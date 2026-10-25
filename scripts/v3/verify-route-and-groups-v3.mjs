@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {assessRouteFidelityV3} from '../../src/race-engine-v3/routeFidelityV3.ts'
+import {assessRouteFidelityV3,inspectClimbAnchorsV3} from '../../src/race-engine-v3/routeFidelityV3.ts'
 import {derivePhysicalGroupsV3} from '../../src/race-engine-v3/physicalGroupsV3.ts'
 const pts=[[0,115],[18,140],[36,170],[52,130],[60,140],[72,270],[84,110],[96,130],[110,160],[124,240],[134.2,430],[142,165],[154,190],[158,220],[160.8,275],[162.6,415],[165.8,650]].map(([km,elevationM])=>({km,elevationM}))
 const climbs=[{finishKm:72,lengthKm:4.9,averageGradientPercent:4.7},{finishKm:134.2,lengthKm:3,averageGradientPercent:4.8},{finishKm:165.8,lengthKm:3.2,averageGradientPercent:6.8}]
@@ -8,7 +8,16 @@ assert.equal(audit.profiledPositiveGainM,1000)
 assert.equal(audit.missingGainM,718)
 assert.equal(audit.profileIncomplete,true)
 assert.throws(()=>assessRouteFidelityV3([{km:4,elevationM:0},{km:2,elevationM:100}],5,100))
-console.log('PASS Guangxi source profile deficit identified; no invented gradients',audit.missingGainM)
+const anchors=inspectClimbAnchorsV3(pts,climbs)
+assert.equal(anchors.length,3)
+assert(anchors[0].requiresDetailedGeometry,'First KOM is under-resolved')
+assert(anchors[1].requiresDetailedGeometry,'Second KOM is under-resolved')
+assert.equal(anchors[2].requiresDetailedGeometry,false,'Final climb annotation broadly matches sparse points')
+assert.equal(anchors[0].annotationGainM,230.3)
+assert(anchors[0].coarseImpliedGradientPercent<2)
+assert(anchors[1].coarseImpliedGradientPercent<2)
+assert.throws(()=>inspectClimbAnchorsV3(pts,[{finishKm:200,lengthKm:3,averageGradientPercent:5}]))
+console.log('PASS missing ascent and climb annotation discrepancies flagged; geometry NOT invented',audit.missingGainM,anchors)
 const start={elapsedSeconds:0,riders:[{riderId:'lead',meters:0},{riderId:'p1',meters:0},{riderId:'p2',meters:0}]}
 const open={elapsedSeconds:40,riders:[{riderId:'lead',meters:500},{riderId:'p1',meters:100},{riderId:'p2',meters:98}]}
 const catchFrame={elapsedSeconds:80,riders:[{riderId:'lead',meters:650},{riderId:'p1',meters:641},{riderId:'p2',meters:635}]}
