@@ -39,6 +39,12 @@ if(process.env.V3_FULL_ROSTERS==='1'){
  for(const name of ['dordrecht-2000-10-15','guangxi-2000-10-19']){
   const input=source(name,false)
   const direct=runCoupledV3(input)
+  if(process.env.V3_FULL_RESUME==='1'){
+   let checkpoint=initializeCoupledV3(input),n=0
+   while(!checkpoint.complete){checkpoint=JSON.parse(JSON.stringify(advanceCoupledV3(input,checkpoint,[49,13,7,89][n++%4])));assert(n<500)}
+   assert.deepEqual(finalizeCoupledV3(input,checkpoint),direct,'Full stage serialized checkpoint/restart differs')
+   console.log(JSON.stringify({name,fullResumeBatches:n,identicalToUninterrupted:true}))
+  }
   const distinct=new Set(direct.finish.map(r=>r.gapSeconds)).size
   console.log(JSON.stringify({name,fullKm:input.route.reduce((s,x)=>s+x.lengthKm,0),riders:direct.finish.length,ticks:direct.elapsedSeconds/10,frames:direct.frames.length,passes:direct.movement.passes,blocked:direct.movement.wheelLimitedTicks,attacks:direct.movement.attackAttempts,first10Gaps:direct.finish.slice(0,10).map(x=>x.gapSeconds),lastGap:direct.finish.at(-1).gapSeconds,withinOneSecond:direct.finish.filter(x=>x.gapSeconds<=1).length,distinctPhysicalGaps:distinct,sportingApproval:'NOT_APPROVED'}))
  }
