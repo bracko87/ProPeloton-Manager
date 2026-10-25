@@ -1,0 +1,77 @@
+{
+  "status": "READ_ONLY_ROUTE_QUALITY_AUDIT_NOT_SPORTING_APPROVED",
+  "name": "World Nations Hilly / Mountain Road Race",
+  "stageDate": "2000-10-13",
+  "stageId": "2e20e1f0-f7d8-46e4-92b1-91f875e0b14b",
+  "sourceRunId": "443093df-f1a3-4b8c-882a-ca4e4f2b186d",
+  "sourceInputJsonbMd5": "8009590d2296793d5a0665eb4a1567ef",
+  "distanceKm": 150,
+  "declaredElevationGainM": 1785,
+  "startableRiders": 77,
+  "ridersWithAllRequiredPreparationFields": 77,
+  "weatherMeasured": false,
+  "profilePoints": [
+    {
+      "km": 0,
+      "elevationM": 860
+    },
+    {
+      "km": 10,
+      "elevationM": 520
+    },
+    {
+      "km": 22,
+      "elevationM": 430
+    },
+    {
+      "km": 34,
+      "elevationM": 610
+    },
+    {
+      "km": 48,
+      "elevationM": 540
+    },
+    {
+      "km": 62,
+      "elevationM": 470
+    },
+    {
+      "km": 74,
+      "elevationM": 600
+    },
+    {
+      "km": 86,
+      "elevationM": 430
+    },
+    {
+      "km": 98,
+      "elevationM": 330
+    },
+    {
+      "km": 110,
+      "elevationM": 420
+    },
+    {
+      "km": 122,
+      "elevationM": 740
+    },
+    {
+      "km": 132,
+      "elevationM": 620
+    },
+    {
+      "km": 140,
+      "elevationM": 300
+    },
+    {
+      "km": 150,
+      "elevationM": 41
+    }
+  ],
+  "limitations": [
+    "Not a full 77-rider fixture; no rider-level source fields exported",
+    "The sparse profile omits much of the declared positive climbing",
+    "No measured weather or road bearings; do not infer wind exposure",
+    "Fail closed: rider source coverage alone does not confer geometry completeness"
+  ]
+}
