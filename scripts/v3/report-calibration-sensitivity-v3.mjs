@@ -35,12 +35,20 @@ for(const race of [neutral,calm,crosswind]){
 assert.equal(mountain.riders,168)
 assert.equal(mountain.engineeringIntegrity,'PASSED')
 assert(mountain.tailGapSeconds>=0)
+const largestPackAt=(r,pct)=>{
+ const groups=r.progress.find(x=>x.pelotonPassingPct===pct)?.groups??[]
+ if(!groups.length)return null
+ const pack=[...groups].sort((a,b)=>b.riders-a.riders||a.rank-b.rank)[0]
+ return {size:pack.riders,rankFromFront:pack.rank,metresBehindFront:pack.gapMeters}
+}
 const view=r=>({
  weather:r.weatherScenario,windAssumedCrosswindKph:r.windAssumedCrosswindKph,
  roadBearingVerified:r.roadBearingVerified,sameTimeWinner:r.sameTimeWinner,
  lastGapSeconds:r.lastGapSeconds,distinctOfficialGaps:r.distinctOfficialGaps,
  earlyLeadingPackSize:r.progress.find(x=>x.pelotonPassingPct===5)?.groups?.[0]?.riders??null,
+ earlyLargestPhysicalPack:largestPackAt(r,5),
  halfwayLeadingPackSize:r.progress.find(x=>x.pelotonPassingPct===50)?.groups?.[0]?.riders??null,
+ halfwayLargestPhysicalPack:largestPackAt(r,50),
  framesWithB1:r.physicalGroupAudit.framesWithB1,
 })
 const result={
@@ -50,6 +58,8 @@ const result={
  windExposureData:'UNVERIFIED_ROAD_BEARINGS_FOR_DORDRECHT',
  dordrecht:{neutral:view(neutral),calm:view(calm),strongCrosswindSynthetic:view(crosswind),
   crosswindSameTimeSwing:Math.abs(neutral.sameTimeWinner-crosswind.sameTimeWinner),
+  crosswindFrontGroupSizeSwing:Math.abs(view(neutral).earlyLeadingPackSize-view(crosswind).earlyLeadingPackSize),
+  crosswindLargestPackSizeSwing:Math.abs(view(neutral).earlyLargestPhysicalPack.size-view(crosswind).earlyLargestPhysicalPack.size),
   crosswindTailGapSwingSeconds:Math.abs(neutral.lastGapSeconds-crosswind.lastGapSeconds)},
  guangxi:{riders:mountain.riders,sameTimeWinner:mountain.sameTimeWinner,tailGapSeconds:mountain.tailGapSeconds,
   sourceTotalAscentM:1718,sourceSparseAscentM:1000,missingAscentM:718,routeGeometryComplete:false},
@@ -60,5 +70,7 @@ const result={
   'Realistic crosswind response and summit attrition not established',
  ],
 }
+assert.equal(view(neutral).earlyLargestPhysicalPack.size,97,'Neutral benchmark changed; investigate unexpected physics changes')
+assert.equal(view(crosswind).earlyLargestPhysicalPack.size,89,'Synthetic stress-test benchmark changed; investigate physics change')
 if(process.env.V3_AUDIT_OUT)writeFileSync(process.env.V3_AUDIT_OUT,JSON.stringify(result,null,2)+'\n')
 console.log(JSON.stringify(result,null,2))
