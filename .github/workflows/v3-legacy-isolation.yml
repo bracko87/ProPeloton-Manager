@@ -85,5 +85,13 @@ jobs:
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-neutral-start-grid-v3.mjs > /tmp/v3-synthetic-neutral-start-no-go.json
       - name: Audit explicitly hypothetical Guangxi four-abreast grid (sporting NO-GO)
         run: V3_EXPERIMENTAL_START_GRID=4x2 node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-guangxi-synthetic-power-v3.mjs > /tmp/v3-guangxi-start-grid-research.json
+      - name: Verify independent wheel-following, passing and spatial drafting exposure
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-spatial-motion-v3.mjs
+      - name: Stress-test physical wheel clearance at 106 and 168 riders
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/stress-spatial-motion-v3.mjs
+      - name: Verify offline spatial full-race calculations and checkpoint resumption
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-spatial-offline-full-v3.mjs
+      - name: Flag uncalibrated Dordrecht positional race outcomes as research only
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-spatial-peloton-v3.mjs > /tmp/v3-spatial-research-no-go.json
       - name: Type-check V3 research modules
-        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts src/race-engine-v3/windExposureV3.ts src/race-engine-v3/slipstreamResponseCandidateV3.ts src/race-engine-v3/physicalAttackLifecycleV3.ts src/race-engine-v3/cooperativePursuitV3.ts src/race-engine-v3/pelotonPowerBalanceV3.ts src/race-engine-v3/riderPowerAdapterV3.ts src/race-engine-v3/experimentalPowerRaceV3.ts src/race-engine-v3/fatiguePowerEnvelopeV3.ts src/race-engine-v3/neutralStartFormationV3.ts
+        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts src/race-engine-v3/windExposureV3.ts src/race-engine-v3/slipstreamResponseCandidateV3.ts src/race-engine-v3/physicalAttackLifecycleV3.ts src/race-engine-v3/cooperativePursuitV3.ts src/race-engine-v3/pelotonPowerBalanceV3.ts src/race-engine-v3/riderPowerAdapterV3.ts src/race-engine-v3/experimentalPowerRaceV3.ts src/race-engine-v3/fatiguePowerEnvelopeV3.ts src/race-engine-v3/neutralStartFormationV3.ts src/race-engine-v3/pelotonSpatialMotionV3.ts
