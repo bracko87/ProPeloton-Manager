@@ -63,5 +63,9 @@ jobs:
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-pack-power-v3.mjs
       - name: Audit power candidate on both frozen rosters in shadow only
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-pack-power-real-roster-v3.mjs > /tmp/v3-power-shadow-audit.json
+      - name: Verify source input completeness, research-only power mapping and repeated attack reserve
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-rider-power-adapter-v3.mjs
+      - name: Audit power input completeness across frozen 106- and 168-rider research races
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-rider-power-source-coverage-v3.mjs > /tmp/v3-power-source-coverage.json
       - name: Type-check V3 research modules
-        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts src/race-engine-v3/windExposureV3.ts src/race-engine-v3/slipstreamResponseCandidateV3.ts src/race-engine-v3/physicalAttackLifecycleV3.ts src/race-engine-v3/cooperativePursuitV3.ts src/race-engine-v3/pelotonPowerBalanceV3.ts
+        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts src/race-engine-v3/windExposureV3.ts src/race-engine-v3/slipstreamResponseCandidateV3.ts src/race-engine-v3/physicalAttackLifecycleV3.ts src/race-engine-v3/cooperativePursuitV3.ts src/race-engine-v3/pelotonPowerBalanceV3.ts src/race-engine-v3/riderPowerAdapterV3.ts
