@@ -34,3 +34,12 @@ jobs:
         run: node scripts/v3/verify-legacy-isolation.test.mjs
       - name: Validate V3 research-only physical groups and route completeness
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-route-and-groups-v3.mjs
+
+      - name: Verify checkpointed V3 synthetic physics
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-physical-race-engine-v3.mjs
+      - name: Verify frozen 106-rider Dordrecht calculation without official writes
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-dordrecht-real-roster-v3.mjs > /tmp/v3-dordrecht-audit.json
+      - name: Verify frozen 168-rider Guangxi mountain calculation without official writes
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-guangxi-real-roster-v3.mjs > /tmp/v3-guangxi-audit.json
+      - name: Type-check V3 research modules
+        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/routeFidelityV3.ts
