@@ -3,6 +3,7 @@
  * No legacy imports, no time control, database, official results, or live worker.
  * This is a candidate for falsification, NOT a sports-calibrated replacement.
  */
+import {fatiguePowerEnvelopeV3} from './fatiguePowerEnvelopeV3.ts'
 import {calculatePackPowerV3,roadWattsRequiredV3,type PackPowerRiderV3,type PackRoadV3} from './pelotonPowerBalanceV3.ts'
 import {projectRiderPowerV3,type RiderAttributePowerV3} from './riderPowerAdapterV3.ts'
 import {initializePhysicalGroupTimelineV3,advancePhysicalGroupTimelineV3,type PhysicalGroupTimelineStateV3} from './physicalGroupTimelineV3.ts'
@@ -155,11 +156,12 @@ export function advanceExperimentalPowerV3(input:ExperimentalPowerInputV3,state:
           const climbingCap=aeroSoloSpeed(p.watts*(1+.015*s.energy),road,adjustedCdA)
           target=Math.min(target,climbingCap)
         }
-        // Retain the existing flat-race reserve calibration. Do not charge
-        // work that the rider did NOT perform after their speed was limited.
+        // Continuous finite power capacity replaces the artificial 13% hard
+        // cliff; drafting can still support higher collective pace when the
+        // rider has sufficient reserve. No assigned group target or final gap.
         const required=roadWattsRequiredV3(target,83,adjustedCdA,road)
         const lack=Math.max(0,required-p.source.sustainableWatts)
-        if(s.energy<.13&&lack>0){const cap=aeroSoloSpeed(p.source.sustainableWatts*.8,road,adjustedCdA);target=Math.min(target,cap)}
+        if(lack>0){const cap=aeroSoloSpeed(fatiguePowerEnvelopeV3(s.energy,p.source.sustainableWatts).peakDeliverableWatts,road,adjustedCdA);target=Math.min(target,cap)}
         // Charge only the power required at the rider's actual, capped speed.
         // Pre-cap demanded watts never represent performed physical work.
         extraCost+=Math.max(0,roadWattsRequiredV3(target,83,adjustedCdA,road)-p.source.sustainableWatts)*.0000018
