@@ -20,7 +20,7 @@ function source(name,short=false){
 assert.throws(()=>initializeCoupledV3({...source('dordrecht-2000-10-15',true),gate:{offlineOnly:false,acknowledgedNoSportingApproval:true,sourceQuality:'synthetic_research'}}),/offline-only/)
 assert.throws(()=>initializeCoupledV3({...source('dordrecht-2000-10-15',true),gate:{offlineOnly:true,acknowledgedNoSportingApproval:true,sourceQuality:'source_snapshot'},riders:source('dordrecht-2000-10-15',true).riders.map((r,i)=>i===0?{...r,raceSharpness:undefined}:r)}),/Missing physical source/)
 for(const name of ['dordrecht-2000-10-15','guangxi-2000-10-19']){
- const input={...source(name,true),...(process.env.V3_BOTTLENECKS==='1'?{experimentalBottleneckTelemetry:true}:{})}
+ const input={...source(name,true),...(process.env.V3_BOTTLENECKS==='1'?{experimentalBottleneckTelemetry:true}:{}),...(process.env.V3_ANTICIPATORY==='1'?{experimentalAnticipatoryLaneMoves:true}:{})}
  const direct=runCoupledV3(input)
  let resumed=initializeCoupledV3(input),n=0
  while(!resumed.complete){resumed=JSON.parse(JSON.stringify(advanceCoupledV3(input,resumed,[7,3,1,11,5][n++%5])));assert(n<1500)}
@@ -33,11 +33,11 @@ for(const name of ['dordrecht-2000-10-15','guangxi-2000-10-19']){
  assert.equal(direct.groups.at(-1).finishedRiderIds.length,input.riders.length)
  const corrupt=JSON.parse(JSON.stringify(resumed));corrupt.groupTimeline.history.pop()
  assert.throws(()=>advanceCoupledV3(input,corrupt,1),/Divergent checkpoint/)
- console.log(JSON.stringify({name,riders:direct.finish.length,km:3,ticks:resumed.tick,frames:direct.frames.length,passes:direct.movement.passes,blocked:direct.movement.wheelLimitedTicks,attacks:direct.movement.attackAttempts,tailSeconds:direct.finish.at(-1).gapSeconds,batches:n,workJoules:direct.movement.totalWorkJoules,source:'SYNTHETIC_ONLY',sportingApproval:'NOT_APPROVED'}))
+ console.log(JSON.stringify({name,riders:direct.finish.length,km:3,ticks:resumed.tick,frames:direct.frames.length,passes:direct.movement.passes,blocked:direct.movement.wheelLimitedTicks,anticipatoryMoves:direct.movement.anticipatoryMoves??0,attacks:direct.movement.attackAttempts,tailSeconds:direct.finish.at(-1).gapSeconds,batches:n,workJoules:direct.movement.totalWorkJoules,source:'SYNTHETIC_ONLY',sportingApproval:'NOT_APPROVED'}))
 }
 if(process.env.V3_FULL_ROSTERS==='1'){
  for(const name of ['dordrecht-2000-10-15','guangxi-2000-10-19']){
-  const input={...source(name,false),...(process.env.V3_BOTTLENECKS==='1'?{experimentalBottleneckTelemetry:true}:{})}
+  const input={...source(name,false),...(process.env.V3_BOTTLENECKS==='1'?{experimentalBottleneckTelemetry:true}:{}),...(process.env.V3_ANTICIPATORY==='1'?{experimentalAnticipatoryLaneMoves:true}:{})}
   const direct=runCoupledV3(input)
   if(process.env.V3_FULL_RESUME==='1'){
    let checkpoint=initializeCoupledV3(input),n=0
@@ -47,6 +47,6 @@ if(process.env.V3_FULL_ROSTERS==='1'){
   }
   const distinct=new Set(direct.finish.map(r=>r.gapSeconds)).size
   if(direct.bottlenecks)console.log(JSON.stringify({name,bottlenecks:direct.bottlenecks}))
-  console.log(JSON.stringify({name,fullKm:input.route.reduce((s,x)=>s+x.lengthKm,0),riders:direct.finish.length,ticks:direct.elapsedSeconds/10,frames:direct.frames.length,passes:direct.movement.passes,blocked:direct.movement.wheelLimitedTicks,attacks:direct.movement.attackAttempts,first10Gaps:direct.finish.slice(0,10).map(x=>x.gapSeconds),lastGap:direct.finish.at(-1).gapSeconds,withinOneSecond:direct.finish.filter(x=>x.gapSeconds<=1).length,distinctPhysicalGaps:distinct,sportingApproval:'NOT_APPROVED'}))
+  console.log(JSON.stringify({name,fullKm:input.route.reduce((s,x)=>s+x.lengthKm,0),riders:direct.finish.length,ticks:direct.elapsedSeconds/10,frames:direct.frames.length,passes:direct.movement.passes,blocked:direct.movement.wheelLimitedTicks,anticipatoryMoves:direct.movement.anticipatoryMoves??0,attacks:direct.movement.attackAttempts,first10Gaps:direct.finish.slice(0,10).map(x=>x.gapSeconds),lastGap:direct.finish.at(-1).gapSeconds,withinOneSecond:direct.finish.filter(x=>x.gapSeconds<=1).length,distinctPhysicalGaps:distinct,sportingApproval:'NOT_APPROVED'}))
  }
 }
