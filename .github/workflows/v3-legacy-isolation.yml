@@ -1,0 +1,34 @@
+name: V3 legacy isolation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'supabase/functions/**'
+      - 'scripts/v3/**'
+      - '.github/workflows/v3-legacy-isolation.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'supabase/functions/**'
+      - 'scripts/v3/**'
+      - '.github/workflows/v3-legacy-isolation.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  v3-isolation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify legacy production cannot import unfinished V3 modules
+        run: node scripts/v3/verify-legacy-isolation.mjs
+      - name: Verify fail-closed isolation test
+        run: node scripts/v3/verify-legacy-isolation.test.mjs
