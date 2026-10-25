@@ -71,5 +71,11 @@ jobs:
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-offline-power-v3.mjs
       - name: Confirm Guangxi proxy-only mountain stress remains sporting unapproved
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-guangxi-synthetic-power-v3.mjs > /tmp/v3-guangxi-power-unapproved.json
+      - name: Fail closed on incomplete operator-only original-source rider fixture
+        run: node --disable-warning=ExperimentalWarning scripts/v3/verify-private-energy-fixture-contract-v3.mjs
+      - name: Verify real source-covered mountain still fails incomplete elevation-geometry gate
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-third-stage-source-quality-v3.mjs
+      - name: Record known endurance threshold physics discontinuity without approving racing
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-exhaustion-cliff-v3.mjs > /tmp/v3-energy-threshold-no-go.json
       - name: Type-check V3 research modules
         run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts src/race-engine-v3/windExposureV3.ts src/race-engine-v3/slipstreamResponseCandidateV3.ts src/race-engine-v3/physicalAttackLifecycleV3.ts src/race-engine-v3/cooperativePursuitV3.ts src/race-engine-v3/pelotonPowerBalanceV3.ts src/race-engine-v3/riderPowerAdapterV3.ts src/race-engine-v3/experimentalPowerRaceV3.ts
