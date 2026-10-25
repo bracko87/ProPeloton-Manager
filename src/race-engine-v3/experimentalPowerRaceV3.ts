@@ -5,6 +5,7 @@
  */
 import {fatiguePowerEnvelopeV3} from './fatiguePowerEnvelopeV3.ts'
 import {planNeutralStartFormationV3,type NeutralStartGridV3} from './neutralStartFormationV3.ts'
+import {advanceSpatialPelotonV3,type SpatialRoadV3} from './pelotonSpatialMotionV3.ts'
 import {calculatePackPowerV3,roadWattsRequiredV3,type PackPowerRiderV3,type PackRoadV3} from './pelotonPowerBalanceV3.ts'
 import {projectRiderPowerV3,type RiderAttributePowerV3} from './riderPowerAdapterV3.ts'
 import {initializePhysicalGroupTimelineV3,advancePhysicalGroupTimelineV3,type PhysicalGroupTimelineStateV3} from './physicalGroupTimelineV3.ts'
@@ -19,14 +20,16 @@ export interface ExperimentalPowerInputV3 {
   readonly orders?:readonly PowerStageOrderV3[];readonly secondsPerTick?:number;readonly sampleSeconds?:number;
   /** Hypothetical start grid, opt-in research only; NOT a sourced lineup. */
   readonly experimentalStartFormation?: NeutralStartGridV3;
+  /** Optional, independent lane geometry. Explicitly research only. */
+  readonly experimentalSpatialMotion?:Pick<SpatialRoadV3,'laneCount'|'minWheelGapMeters'>;
   readonly gate:{readonly offlineOnly:true;readonly acknowledgedNoSportingApproval:true;readonly sourceQuality:'source_snapshot'|'synthetic_research'}
 }
 export interface PowerRiderDynamicV3 {
   readonly riderId:string;readonly teamId:string;
-  meters:number;speedMps:number;energy:number;finishSeconds:number|null;
-  attackOrderKey:string|null;attackSecsLeft:number;attempts:number;
+  meters:number;speedMps:number;energy:number;finishSeconds:number|null;lane?:number;
+  attackOrderKey:string|null;attackSecsLeft:number;attempts:number;passCount?:number;wheelLimitedTicks?:number;
 }
-export interface PowerSampleV3 {elapsedSeconds:number;riders:{riderId:string;meters:number;energy:number}[]}
+export interface PowerSampleV3 {elapsedSeconds:number;riders:{riderId:string;meters:number;energy:number;lane?:number}[]}
 export interface ExperimentalPowerStateV3 {
   readonly version:'experimental_collective_power_v3_01'
   readonly fingerprint:string;readonly totalMeters:number;
@@ -41,6 +44,7 @@ export interface ExperimentalPowerResultV3 {
   readonly replay:PowerSampleV3[];
   readonly groupFrames:PhysicalGroupTimelineStateV3['history'];
   readonly attackAttempts:number;
+  readonly spatialStats?:{readonly totalPasses:number;readonly totalWheelLimitedTicks:number;readonly laneCount:number};
 }
 const ensure=(condition:boolean,message:string)=>{if(!condition)throw Error(message)}
 const clamp=(value:number,a:number,b:number)=>Math.min(b,Math.max(a,value))
@@ -69,6 +73,12 @@ function validate(input:ExperimentalPowerInputV3):void {
   if(input.experimentalStartFormation){
     planNeutralStartFormationV3([...ids],input.sourceFingerprint,input.experimentalStartFormation)
   }
+  if(input.experimentalSpatialMotion){
+    const cfg=input.experimentalSpatialMotion
+    if(!input.experimentalStartFormation)throw Error('Spatial motion requires explicit neutral start geometry')
+    ensure(Number.isInteger(cfg.laneCount)&&cfg.laneCount>=input.experimentalStartFormation.ridersAcross&&cfg.laneCount<=6,'Invalid spatial lane capacity')
+    ensure((cfg.minWheelGapMeters??1.8)<=input.experimentalStartFormation.rowSpacingMeters,'Initial grid overlaps bicycle wheel clearance')
+  }
   for(const o of input.orders??[]){ensure(ids.has(o.riderId)&&Number.isFinite(o.startKm)&&Number.isFinite(o.endKm)&&o.startKm>=0&&o.startKm<o.endKm&&['follow','tempo','attack','chase','recover'].includes(o.tactic),'Invalid instruction')}
 }
 function stageAt(input:ExperimentalPowerInputV3,meters:number):PowerStageSegmentV3{
@@ -92,10 +102,13 @@ export function initializeExperimentalPowerV3(input:ExperimentalPowerInputV3):Ex
   const lineup=input.experimentalStartFormation
     ?new Map(planNeutralStartFormationV3(input.riders.map(r=>r.riderId),input.sourceFingerprint,input.experimentalStartFormation).map(r=>[r.riderId,r.meters]))
     :new Map<string,number>()
+  const startLanes=input.experimentalStartFormation
+    ?new Map(planNeutralStartFormationV3(input.riders.map(r=>r.riderId),input.sourceFingerprint,input.experimentalStartFormation).map(r=>[r.riderId,r.gridLane]))
+    :new Map<string,number>()
   return {
     version:'experimental_collective_power_v3_01',fingerprint:fingerprint(input),totalMeters:total,
     elapsedSeconds:0,tick:0,complete:false,
-    riders:[...input.riders].sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,meters:lineup.get(r.riderId)??0,speedMps:0,energy:round(r.startStamina===undefined?clamp(1-r.fatigueBeforeStage/200,.4,1):r.startStamina/100),finishSeconds:null,attackOrderKey:null,attackSecsLeft:0,attempts:0})),
+    riders:[...input.riders].sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,meters:lineup.get(r.riderId)??0,...(input.experimentalSpatialMotion?{lane:startLanes.get(r.riderId)??0,passCount:0,wheelLimitedTicks:0}:{}),speedMps:0,energy:round(r.startStamina===undefined?clamp(1-r.fatigueBeforeStage/200,.4,1):r.startStamina/100),finishSeconds:null,attackOrderKey:null,attackSecsLeft:0,attempts:0})),
     replay:[],groupTimeline:initializePhysicalGroupTimelineV3(total)
   }
 }
@@ -179,21 +192,44 @@ export function advanceExperimentalPowerV3(input:ExperimentalPowerInputV3,state:
         desired.set(s.riderId,{speed:round(clamp(target,1,28)),cost:round(baseline+extraCost*seconds-recovery)})
       }
     }
+    // Optical lane geometry is strictly optional. Keep the unmodified
+    // historical solver path byte-for-byte when the feature is absent.
+    const spatial=input.experimentalSpatialMotion
+      ?new Map(advanceSpatialPelotonV3(active.map(s=>{
+        const d=desired.get(s.riderId)!
+        return {riderId:s.riderId,meters:s.meters,lane:s.lane!,energy:s.energy,
+          desiredMps:s.speedMps===0?Math.min(d.speed,6):clamp(d.speed,Math.max(1,s.speedMps-1.1),s.speedMps+1.1),
+          tactic:ordersAt(input,s.riderId,s.meters).tactic}
+      }),{...input.experimentalSpatialMotion,dtSeconds:seconds,
+        gradePercent:stageAt(input,active[0].meters).gradePercent,
+        crosswindMps:stageAt(input,active[0].meters).crosswindMps??0}).map(s=>[s.riderId,s]))
+      :null
     for(const s of active){
       const d=desired.get(s.riderId)!
-      const speed=s.speedMps===0?Math.min(d.speed,6):clamp(d.speed,Math.max(1,s.speedMps-1.1),s.speedMps+1.1)
+      const speed=spatial?.get(s.riderId)?.speedMps??(s.speedMps===0?Math.min(d.speed,6):clamp(d.speed,Math.max(1,s.speedMps-1.1),s.speedMps+1.1))
       const metersLeft=state.totalMeters-s.meters
       s.speedMps=round(speed)
       if(metersLeft<=seconds*speed){s.finishSeconds=round(state.elapsedSeconds+metersLeft/speed);s.meters=state.totalMeters}
       else{s.meters=round(s.meters+seconds*speed)}
-      s.energy=round(clamp(s.energy-d.cost,0,1))
+      if(spatial){
+        const motion=spatial.get(s.riderId)!
+        s.lane=motion.lane
+        s.passCount=(s.passCount??0)+Number(motion.overtook)
+        s.wheelLimitedTicks=(s.wheelLimitedTicks??0)+Number(motion.wheelLimited)
+      }
+      // A blocked rider must not be charged for unperformed tactical power.
+      const plannedSpeed=spatial?.get(s.riderId)?.commandedMps??speed
+      const workFraction=spatial?Math.pow(clamp(speed/Math.max(1,plannedSpeed),0,1),2):1
+      const aerobicBaseline=.000004*seconds
+      const actualCost=spatial?Math.min(d.cost,aerobicBaseline)+Math.max(0,d.cost-aerobicBaseline)*workFraction:d.cost
+      s.energy=round(clamp(s.energy-actualCost,0,1))
       if(s.attackSecsLeft>0){s.attackSecsLeft=Math.max(0,s.attackSecsLeft-seconds)}
     }
     state.tick++
     state.elapsedSeconds=round(state.elapsedSeconds+seconds)
     state.complete=state.riders.every(r=>r.finishSeconds!==null)
     if(state.elapsedSeconds%sample===0||state.complete){
-      const sampleFrame={elapsedSeconds:state.elapsedSeconds,riders:state.riders.map(r=>({riderId:r.riderId,meters:r.meters,energy:r.energy}))}
+      const sampleFrame={elapsedSeconds:state.elapsedSeconds,riders:state.riders.map(r=>({riderId:r.riderId,meters:r.meters,energy:r.energy,...(input.experimentalSpatialMotion?{lane:r.lane}: {})}))}
       if(state.replay.at(-1)?.elapsedSeconds!==sampleFrame.elapsedSeconds){
         advancePhysicalGroupTimelineV3(state.groupTimeline,sampleFrame)
         state.replay.push(sampleFrame)
@@ -209,7 +245,11 @@ export function finalizeExperimentalPowerV3(input:ExperimentalPowerInputV3,state
   const winning=ranking[0]?.finishSeconds??0
   return {mode:'OFFLINE_RESEARCH_ONLY',sportingApproval:'NOT_APPROVED',officialWrites:0,riderCount:ranking.length,sourceQuality:input.gate.sourceQuality,elapsedSeconds:state.elapsedSeconds,
     finish:ranking.map((r,i)=>({riderId:r.riderId,rank:i+1,elapsedSeconds:r.finishSeconds!,gapSeconds:round(r.finishSeconds!-winning),energy:r.energy})),
-    replay:state.replay,groupFrames:state.groupTimeline.history,attackAttempts:state.riders.reduce((sum,r)=>sum+r.attempts,0)}
+    replay:state.replay,groupFrames:state.groupTimeline.history,attackAttempts:state.riders.reduce((sum,r)=>sum+r.attempts,0),
+    ...(input.experimentalSpatialMotion?{spatialStats:{
+      totalPasses:state.riders.reduce((sum,r)=>sum+(r.passCount??0),0),
+      totalWheelLimitedTicks:state.riders.reduce((sum,r)=>sum+(r.wheelLimitedTicks??0),0),
+      laneCount:input.experimentalSpatialMotion.laneCount}}:{})}
 }
 export function runExperimentalPowerV3(input:ExperimentalPowerInputV3):ExperimentalPowerResultV3 {
   const state=initializeExperimentalPowerV3(input)
