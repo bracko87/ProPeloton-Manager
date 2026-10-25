@@ -10,7 +10,7 @@ function load(which){
  if(which.startsWith('dordrecht')){
   const m=JSON.parse(readFileSync(new URL(which+'.metadata.json',root),'utf8'))
   const route=m.profileKmElevationM.slice(1).map(([km,ele],i)=>({lengthKm:km-m.profileKmElevationM[i][0],gradePercent:(ele-m.profileKmElevationM[i][1])/((km-m.profileKmElevationM[i][0])*10)}))
-  const orders=m.preRacePhaseOverrides.split(',').map(text=>{const [id,phase,order]=text.split(':'),p=Number(phase.at(-1));return {riderId:'r'+id.padStart(3,'0'),startKm:(p-1)*m.lengthKm/4,endKm:p*m.lengthKm/4,action:order==='attack'?'attack':order==='chase_breakaway'?'chase':'tempo'}})
+  const orders=m.preRacePhaseOverrides.split(',').map(text=>{const [id,phase,order]=text.split(':'),p=Number(phase.at(-1));return {riderId:'r'+id.padStart(3,'0'),startKm:(p-1)*m.distanceKm/4,endKm:p*m.distanceKm/4,action:order==='attack'?'attack':order==='chase_breakaway'?'chase':'tempo'}})
   return {riders,route,orders,seed:'v3:real-roster:'+m.sourceInputJsonbMd5,raceId:m.raceId,stageId:m.stageId,dtSeconds:10,sampleEverySeconds:60}
  }
  const profile=[[0,115],[18,140],[36,170],[52,130],[60,140],[72,270],[84,110],[96,130],[110,160],[124,240],[134.2,430],[142,165],[154,190],[158,220],[160.8,275],[162.6,415],[165.8,650]]
