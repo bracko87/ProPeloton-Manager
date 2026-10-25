@@ -11,6 +11,8 @@ export interface PackPowerRiderV3 {
   readonly energy: number // [0,1]
   readonly tactic: PowerTacticV3
   readonly massKg?: number
+  /** Research-only per-rider modifier from frozen preparation snapshot. */
+  readonly energyCostScale?: number
 }
 export interface PackRoadV3 {
   readonly gradePercent: number
@@ -63,6 +65,7 @@ export function calculatePackPowerV3(riders:readonly PackPowerRiderV3[],road:Pac
   ensure(Number.isFinite(r.energy)&&r.energy>=0&&r.energy<=1,'Invalid energy')
   ensure(Number.isFinite(r.sustainableWatts)&&r.sustainableWatts>=70&&r.sustainableWatts<=550,'Invalid sustainable watts')
   ensure(Number.isFinite(r.massKg??83)&&(r.massKg??83)>=45&&(r.massKg??83)<=130,'Invalid rider+bike mass')
+  ensure(Number.isFinite(r.energyCostScale??1)&&(r.energyCostScale??1)>=.5&&(r.energyCostScale??1)<=2,'Invalid rider energy cost')
   ensure(['follow','tempo','chase','attack','recover'].includes(r.tactic),'Invalid tactic')
  }
  const ordered=[...riders].sort((a,b)=>a.riderId.localeCompare(b.riderId))
@@ -111,6 +114,8 @@ export function debitPowerReserveV3(
  return riders.map(r=>{
   const duty=costs.get(r.riderId)
   if(duty===undefined||!Number.isFinite(duty)||duty<0)throw new Error('Invalid extra power duty')
-  return {...r,energy:round(clamp(r.energy-duty*seconds,0,1))}
+  const scale=r.energyCostScale??1
+  ensure(Number.isFinite(scale)&&scale>=.5&&scale<=2,'Invalid energy debit modifier')
+  return {...r,energy:round(clamp(r.energy-duty*seconds*scale,0,1))}
  })
 }
