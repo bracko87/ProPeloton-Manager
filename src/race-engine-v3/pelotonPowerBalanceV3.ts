@@ -82,7 +82,7 @@ export function calculatePackPowerV3(riders:readonly PackPowerRiderV3[],road:Pac
   // Increased chase/attack output uses transient energy and is NOT free.
   const bonus=r.tactic==='chase'&&r.energy>.2?.15:r.tactic==='attack'&&r.energy>.27?.25:0
   const dutyWatts=base*bonus
-  return {riderId:r.riderId,watts:base+dutyWatts,dutyWatts,energyCostPerSecond:dutyWatts>0?dutyWatts*1.2e-6:0}
+  return {riderId:r.riderId,watts:base+dutyWatts,dutyWatts,energyCostPerSecond:dutyWatts>0?dutyWatts*(r.tactic==='attack'?1.2e-5:3e-6):0}
  })
  const sustainable=available.reduce((s,r)=>s+r.watts-r.dutyWatts,0)
  const full=available.reduce((s,r)=>s+r.watts,0)
@@ -96,4 +96,21 @@ export function calculatePackPowerV3(riders:readonly PackPowerRiderV3[],road:Pac
  const pace=round(desiredSpeed)
  const perRider=available.map(r=>({...r,watts:round(r.watts),dutyWatts:round(r.dutyWatts),energyCostPerSecond:round(r.energyCostPerSecond)}))
  return {attainableSpeedMps:pace,sustainableSpeedMps:round(sustainableSpeed),totalPowerDemandWatts:round(demand(desiredSpeed)),availablePackWatts:round(full),totalContributorWatts:round(full-sustainable),peakWorkerEnergyCostPerSecond:round(Math.max(...perRider.map(x=>x.energyCostPerSecond))),perRider}
+}
+
+/** Apply only the EXTRA tactical watt expenditure; normal aerobic cost remains
+ * with the authoritative rider-motion solver. Pure, deterministic and safe
+ * to run at persisted checkpoints, never changes its input objects. */
+export function debitPowerReserveV3(
+ riders:readonly PackPowerRiderV3[], plan:PackPowerV3Result, seconds:number,
+): readonly PackPowerRiderV3[]{
+ ensure(Number.isFinite(seconds)&&seconds>0&&seconds<=600,'Invalid energy step duration')
+ ensure(plan.perRider.length===riders.length,'Power plan missing rider')
+ const costs=new Map(plan.perRider.map(r=>[r.riderId,r.energyCostPerSecond]))
+ ensure(costs.size===riders.length,'Power plan duplicated rider')
+ return riders.map(r=>{
+  const duty=costs.get(r.riderId)
+  if(duty===undefined||!Number.isFinite(duty)||duty<0)throw new Error('Invalid extra power duty')
+  return {...r,energy:round(clamp(r.energy-duty*seconds,0,1))}
+ })
 }
