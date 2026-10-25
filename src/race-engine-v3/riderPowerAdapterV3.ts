@@ -48,7 +48,7 @@ export function projectRiderPowerV3(
  const fatigue=bounded(rider.fatigueBeforeStage,0,100,'fatigue')
  const grade=bounded(gradePercent,-22,22,'grade')
  if(!['follow','tempo','attack','chase','recover'].includes(tactic))throw Error('Invalid tactic')
- const absent=['startStamina','raceSharpness','recovery','morale'].filter(k=>rider[k as keyof RiderAttributePowerV3]===undefined)
+ const absent=['startStamina','raceSharpness','recovery','morale','equipmentStagePerformancePct','inStageEnergyCostMultiplier'].filter(k=>rider[k as keyof RiderAttributePowerV3]===undefined)
  if(absent.length&&!allowResearchProxy)throw Error('Missing physical source attributes: '+absent.join(','))
  const source=absent.length===0
  const sharp=bounded(rider.raceSharpness??50,0,100,'race sharpness')
