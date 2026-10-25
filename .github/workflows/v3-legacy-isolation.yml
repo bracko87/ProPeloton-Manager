@@ -43,5 +43,9 @@ jobs:
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-guangxi-real-roster-v3.mjs > /tmp/v3-guangxi-audit.json
       - name: Verify continuous B1 group identity, finishers and real-roster replay lineage
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-physical-group-timeline-v3.mjs
+      - name: Validate route-relative wind exposure without invented bearings
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-wind-exposure-v3.mjs
+      - name: Compare frozen flat and mountain research results across wind assumptions
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/report-calibration-sensitivity-v3.mjs > /tmp/v3-sensitivity-audit.json
       - name: Type-check V3 research modules
-        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts
+        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts src/race-engine-v3/windExposureV3.ts
