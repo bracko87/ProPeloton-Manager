@@ -64,7 +64,9 @@ export function recordWheelBottleneckTickV3(
     const requested= Math.max(0,rider.desiredMps*dtSeconds)
     const achieved=Math.max(0,move.meters-rider.meters)
     check(Number.isFinite(requested)&&Number.isFinite(achieved)&&Math.abs(move.oldMeters-rider.meters)<1e-4&&achieved<=requested+1e-4,'Telemetry cannot accept impossible achieved distance')
-    const blocked=requested-achieved>1e-4
+    // The executed spatial planner owns this classification. Reusing its
+    // exact wheelLimited bit avoids one-tick rounding disagreements.
+    const blocked=move.wheelLimited
     const prevented=Math.max(0,requested-achieved)
     const quarter=Math.min(3,Math.max(0,Math.floor(rider.meters/totalMeters*4)))
     const bucket=telemetry.byRaceQuarter[quarter]
