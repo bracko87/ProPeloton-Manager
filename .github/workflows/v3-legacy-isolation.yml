@@ -32,3 +32,5 @@ jobs:
         run: node scripts/v3/verify-legacy-isolation.mjs
       - name: Verify fail-closed isolation test
         run: node scripts/v3/verify-legacy-isolation.test.mjs
+      - name: Validate V3 research-only physical groups and route completeness
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-route-and-groups-v3.mjs
