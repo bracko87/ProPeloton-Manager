@@ -39,6 +39,12 @@ jobs:
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-physical-race-engine-v3.mjs
       - name: Verify attack retirement after physical catch and deterministic checkpoints
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-breakaway-catch-lifecycle-v3.mjs
+      - name: Verify physical former-attack catch and checkpoint life cycle
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-physical-attack-lifecycle-v3.mjs
+      - name: Verify isolated physically grounded cooperative pursuit bounds
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-cooperative-pursuit-v3.mjs
+      - name: Shadow-check cooperation against frozen 106-rider historical replay
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-cooperative-pursuit-real-roster-v3.mjs
       - name: Verify frozen 106-rider Dordrecht calculation without official writes
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-dordrecht-real-roster-v3.mjs > /tmp/v3-dordrecht-audit.json
       - name: Verify frozen 168-rider Guangxi mountain calculation without official writes
@@ -52,4 +58,4 @@ jobs:
       - name: Verify continuous research-only slipstream response and bounded attack following
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-slipstream-response-candidate-v3.mjs
       - name: Type-check V3 research modules
-        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts src/race-engine-v3/windExposureV3.ts src/race-engine-v3/slipstreamResponseCandidateV3.ts
+        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/physicalRaceEngineV3.ts src/race-engine-v3/physicalGroupsV3.ts src/race-engine-v3/physicalGroupTimelineV3.ts src/race-engine-v3/routeFidelityV3.ts src/race-engine-v3/windExposureV3.ts src/race-engine-v3/slipstreamResponseCandidateV3.ts src/race-engine-v3/physicalAttackLifecycleV3.ts src/race-engine-v3/cooperativePursuitV3.ts
