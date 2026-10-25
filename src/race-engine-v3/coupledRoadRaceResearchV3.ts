@@ -6,6 +6,7 @@
  * No fixed target groups, timings, or stage-specific scripted results.
  */
 import {planNeutralStartFormationV3,type NeutralStartGridV3} from './neutralStartFormationV3.ts'
+import {initializeWheelBottleneckTelemetryV3,recordWheelBottleneckTickV3,summarizeWheelBottlenecksV3,type WheelBottleneckTelemetryV3,type WheelBottleneckSummaryV3} from './wheelBottleneckTelemetryV3.ts'
 import {advanceSpatialPelotonV3,calculateSpatialSlipstreamV3,type SpatialRiderV3} from './pelotonSpatialMotionV3.ts'
 import {projectRiderPowerV3,type RiderAttributePowerV3} from './riderPowerAdapterV3.ts'
 import {fatiguePowerEnvelopeV3} from './fatiguePowerEnvelopeV3.ts'
@@ -22,6 +23,8 @@ export interface CoupledInputV3 {
   readonly orders?:readonly CoupledTacticV3[]
   readonly tickSeconds?:number;readonly sampleSeconds?:number
   readonly grid:NeutralStartGridV3
+  /** Opt-in checkpointed congestion diagnosis. Changes NO rider physics. */
+  readonly experimentalBottleneckTelemetry?:true
   readonly gate:{readonly offlineOnly:true;readonly acknowledgedNoSportingApproval:true;readonly sourceQuality:'source_snapshot'|'synthetic_research'}
 }
 export interface CoupledRiderStateV3 {
@@ -34,6 +37,7 @@ export interface CoupledStateV3 {
   readonly version:'coupled_offline_v3_01';readonly fingerprint:string;readonly totalMeters:number
   elapsedSeconds:number;tick:number;complete:boolean
   riders:CoupledRiderStateV3[];replay:CoupledFrameV3[];groupTimeline:PhysicalGroupTimelineStateV3
+  bottleneckTelemetry?:WheelBottleneckTelemetryV3
 }
 export interface CoupledResultV3 {
   readonly mode:'OFFLINE_RESEARCH_ONLY';readonly sportingApproval:'NOT_APPROVED';readonly officialWrites:0
@@ -41,6 +45,7 @@ export interface CoupledResultV3 {
   readonly groups:PhysicalGroupTimelineStateV3['history']
   readonly finish:readonly {riderId:string;rank:number;finishSeconds:number;gapSeconds:number;energy:number}[]
   readonly movement:{passes:number;wheelLimitedTicks:number;attackAttempts:number;totalWorkJoules:number;powerDebtJoules:number}
+  readonly bottlenecks?:WheelBottleneckSummaryV3
 }
 const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n))
 const round=(n:number)=>Math.round(n*1000000)/1000000
@@ -82,13 +87,15 @@ export function initializeCoupledV3(input:CoupledInputV3):CoupledStateV3{
  validate(input)
  const lineup=new Map(planNeutralStartFormationV3(input.riders.map(r=>r.riderId),input.seed,input.grid).map(r=>[r.riderId,r]))
  const total=input.route.reduce((sum,s)=>sum+s.lengthKm*1000,0)
- return {version:'coupled_offline_v3_01',fingerprint:fingerprint(input),totalMeters:total,elapsedSeconds:0,tick:0,complete:false,replay:[],groupTimeline:initializePhysicalGroupTimelineV3(total),riders:
+ return {version:'coupled_offline_v3_01',fingerprint:fingerprint(input),totalMeters:total,elapsedSeconds:0,tick:0,complete:false,replay:[],groupTimeline:initializePhysicalGroupTimelineV3(total),
+  ...(input.experimentalBottleneckTelemetry?{bottleneckTelemetry:initializeWheelBottleneckTelemetryV3(input.riders.map(r=>r.riderId))}:{}),riders:
   [...input.riders].sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,meters:lineup.get(r.riderId)!.meters,lane:lineup.get(r.riderId)!.gridLane,speedMps:0,energy:round((r.startStamina??75)/100),finishSeconds:null,activeAttackKey:null,attackSeconds:0,attackAttempts:0,passes:0,wheelLimitedTicks:0,cumulativeActualWorkJoules:0,cumulativePowerDebtJoules:0}))}
 }
 export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTicks:number):CoupledStateV3{
  validate(input)
  check(state.version==='coupled_offline_v3_01'&&state.fingerprint===fingerprint(input),'Checkpoint input mismatch')
  check(state.groupTimeline?.courseMeters===state.totalMeters&&state.groupTimeline.history.length===state.replay.length,'Divergent checkpoint replay/group history')
+ check(!input.experimentalBottleneckTelemetry||state.bottleneckTelemetry?.tickCount===state.tick,'Missing or divergent wheel telemetry checkpoint')
  check(Number.isInteger(maxTicks)&&maxTicks>=1&&maxTicks<=100000,'Invalid checkpoint budget')
  const dt=input.tickSeconds??10,sample=input.sampleSeconds??120
  const profile=new Map(input.riders.map(r=>[r.riderId,r]))
@@ -115,6 +122,7 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
    intent.set(rider.riderId,{desired:round(speed),road,drag,baseWatts:projected.sustainableWatts,scale:projected.energyCostScale,action:tactic.action,attack})
   }
   const moves=advanceSpatialPelotonV3(active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,desiredMps:intent.get(r.riderId)!.desired,tactic:intent.get(r.riderId)!.action})),{laneCount:input.grid.ridersAcross,dtSeconds:dt,minWheelGapMeters:1.8})
+  if(input.experimentalBottleneckTelemetry)recordWheelBottleneckTickV3(state.bottleneckTelemetry!,active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,desiredMps:intent.get(r.riderId)!.desired,tactic:intent.get(r.riderId)!.action})),moves,state.totalMeters,dt)
   const movement=new Map(moves.map(m=>[m.riderId,m]))
   for(const rider of active){
    const outcome=movement.get(rider.riderId)!,work=intent.get(rider.riderId)!,before=rider.meters
@@ -156,7 +164,8 @@ export function finalizeCoupledV3(input:CoupledInputV3,state:CoupledStateV3):Cou
  const best=ranking[0].finishSeconds!
  return {mode:'OFFLINE_RESEARCH_ONLY',sportingApproval:'NOT_APPROVED',officialWrites:0,elapsedSeconds:state.elapsedSeconds,frames:state.replay,groups:state.groupTimeline.history,
   finish:ranking.map((r,i)=>({riderId:r.riderId,rank:i+1,finishSeconds:r.finishSeconds!,gapSeconds:round(r.finishSeconds!-best),energy:r.energy})),
-  movement:{passes:ranking.reduce((n,r)=>n+r.passes,0),wheelLimitedTicks:ranking.reduce((n,r)=>n+r.wheelLimitedTicks,0),attackAttempts:ranking.reduce((n,r)=>n+r.attackAttempts,0),totalWorkJoules:round(ranking.reduce((n,r)=>n+r.cumulativeActualWorkJoules,0)),powerDebtJoules:round(ranking.reduce((n,r)=>n+r.cumulativePowerDebtJoules,0))}}
+  movement:{passes:ranking.reduce((n,r)=>n+r.passes,0),wheelLimitedTicks:ranking.reduce((n,r)=>n+r.wheelLimitedTicks,0),attackAttempts:ranking.reduce((n,r)=>n+r.attackAttempts,0),totalWorkJoules:round(ranking.reduce((n,r)=>n+r.cumulativeActualWorkJoules,0)),powerDebtJoules:round(ranking.reduce((n,r)=>n+r.cumulativePowerDebtJoules,0))},
+  ...(input.experimentalBottleneckTelemetry?{bottlenecks:summarizeWheelBottlenecksV3(state.bottleneckTelemetry!)}:{})}
 }
 export function runCoupledV3(input:CoupledInputV3):CoupledResultV3{
  const state=initializeCoupledV3(input)
