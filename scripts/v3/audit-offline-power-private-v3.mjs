@@ -19,7 +19,7 @@ const pts=meta.profileKmElevationM
 const segments=pts.slice(1).map(([km,m],i)=>({lengthKm:km-pts[i][0],gradePercent:(m-pts[i][1])/((km-pts[i][0])*10)}))
 const orders=meta.preRacePhaseOverrides.split(',').map(x=>{
  const [idx,phase,cmd]=x.split(':'),n=Number(phase.at(-1))
- return {riderId:'r'+String(idx).padStart(3,'0'),startKm:(n-1)*meta.lengthKm/4,endKm:n*meta.lengthKm/4,tactic:cmd==='attack'?'attack':cmd==='chase_breakaway'?'chase':'follow'}
+ return {riderId:'r'+String(idx).padStart(3,'0'),startKm:(n-1)*meta.distanceKm/4,endKm:n*meta.distanceKm/4,tactic:cmd==='attack'?'attack':cmd==='chase_breakaway'?'chase':'follow'}
 })
 const input={raceId:meta.raceId,stageId:meta.stageId,sourceFingerprint:meta.sourceInputJsonbMd5,riders,segments,orders,secondsPerTick:10,sampleSeconds:60,gate:{offlineOnly:true,acknowledgedNoSportingApproval:true,sourceQuality:'source_snapshot'}}
 const first=runExperimentalPowerV3(input)
@@ -34,7 +34,7 @@ const extra={
   stage:'Dordrecht Alblasserwaard Circuit',riders:riders.length,sourceEnergyRiders:supplement.size,
   quality:'deidentified_source_snapshot_fields_rounded_to_2_decimal_places',
   mode:first.mode,approved:false,officialWrites:first.officialWrites,
-  totalKm:meta.lengthKm, winnerSeconds:leading,lastGapSeconds:finish.at(-1).gapSeconds,
+  totalKm:meta.distanceKm, winnerSeconds:leading,lastGapSeconds:finish.at(-1).gapSeconds,
   onWinnerTime:grouped,positiveGapRiders:finish.filter(r=>r.gapSeconds>1).length,
   attackAttempts:first.attackAttempts,checkpointBatches:batch,replayFrames:first.replay.length,
   energyMin:Math.min(...finish.map(r=>r.energy)),energyMax:Math.max(...finish.map(r=>r.energy)),

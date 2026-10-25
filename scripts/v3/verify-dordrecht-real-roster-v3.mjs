@@ -31,10 +31,10 @@ const orders=meta.preRacePhaseOverrides.split(',').map(s=>{
  const [idx,phase,sourceAction]=s.split(':')
  const n=Number(phase.slice(-1))
  const action=sourceAction==='attack'?'attack':sourceAction==='chase_breakaway'?'chase':'tempo'
- return {riderId:`r${idx.padStart(3,'0')}`,startKm:(n-1)*meta.lengthKm/4,endKm:n*meta.lengthKm/4,action}
+ return {riderId:`r${idx.padStart(3,'0')}`,startKm:(n-1)*meta.distanceKm/4,endKm:n*meta.distanceKm/4,action}
 })
 const input={raceId:meta.raceId,stageId:meta.stageId,seed:`v3:real-roster:${meta.sourceInputJsonbMd5}`,route,riders,orders,sampleEverySeconds:60,dtSeconds:10}
-function atPercent(frame,pct){return frame.riders.filter(x=>x.meters>=pct*meta.lengthKm*1000).length}
+function atPercent(frame,pct){return frame.riders.filter(x=>x.meters>=pct*meta.distanceKm*1000).length}
 function groupReport(frame){
  const vals=[...frame.riders].sort((a,b)=>b.meters-a.meters)
  let groups=[]
@@ -72,7 +72,7 @@ for(const p of [0.05,0.20,0.50,0.75,0.95]){
  const g=groupReport(frame)
  samples.push({pelotonPassingPct:Math.round(p*100),elapsedSeconds:frame.elapsedSeconds,groups:g})
 }
-const physicalGroupAudits=result.replay.slice(1).map((frame,i)=>derivePhysicalGroupsV3(frame,result.replay[i],meta.lengthKm*1000))
+const physicalGroupAudits=result.replay.slice(1).map((frame,i)=>derivePhysicalGroupsV3(frame,result.replay[i],meta.distanceKm*1000))
 assert(physicalGroupAudits.every(g=>g.assignments.length===riders.length&&new Set(g.assignments.map(a=>a.riderId)).size===riders.length))
 const framesWithB1=physicalGroupAudits.filter(g=>g.groups.some(x=>x.code==='B1')).length
 const sameTime=result.finish.filter(f=>f.officialGapSeconds===0).length
@@ -81,7 +81,7 @@ const extremeTailGap = result.finish.at(-1).officialGapSeconds>900
 const summary={
  stageName:meta.stageName,stageId:meta.stageId,sourceInputMd5:meta.sourceInputJsonbMd5,weatherScenario:scenario,windAssumedCrosswindKph:meta.weather.windKmh*windExposure,wetnessAssumed:wetness,roadBearingVerified:false,windScenarioSynthetic:scenario==='worst_crosswind',
  status:'SIMULATION_ONLY_NOT_PRODUCTION_VALIDATED', sportingAcceptance:'NOT_APPROVED_NEEDS_MULTIPLE_REAL_ROSTER_AND_WIND_BENCHMARKS',riders:riders.length,teams:new Set(riders.map(x=>x.teamId)).size,
- orders:orders.length, routeKm:meta.lengthKm, checkpointBatches:segments,runMilliseconds:durationMs,physicalGroupAudit:{frames:physicalGroupAudits.length,framesWithB1,uniqueAssignmentsAtEveryFrame:true,groupIdentityTrackingNotYetImplemented:true},
+ orders:orders.length, routeKm:meta.distanceKm, checkpointBatches:segments,runMilliseconds:durationMs,physicalGroupAudit:{frames:physicalGroupAudits.length,framesWithB1,uniqueAssignmentsAtEveryFrame:true,groupIdentityTrackingNotYetImplemented:true},
  winner:result.finish[0],sameTimeWinner:sameTime,distinctOfficialGaps:new Set(result.finish.map(x=>x.officialGapSeconds)).size,
  lastGapSeconds:result.finish.at(-1).officialGapSeconds,
  firstTen:result.finish.slice(0,10),progress:samples,sportingQualityFlags:{suspiciousPackConcentration,extremeTailGap},

@@ -16,7 +16,7 @@ function load(name){
   const pts=meta.profileKmElevationM
   const orders=meta.preRacePhaseOverrides.split(',').map(c=>{
    const [idx,phase,v]=c.split(':'),n=Number(phase.slice(-1))
-   return {riderId:'r'+idx.padStart(3,'0'),startKm:(n-1)*meta.lengthKm/4,endKm:n*meta.lengthKm/4,action:v==='attack'?'attack':v==='chase_breakaway'?'chase':'tempo'}
+   return {riderId:'r'+idx.padStart(3,'0'),startKm:(n-1)*meta.distanceKm/4,endKm:n*meta.distanceKm/4,action:v==='attack'?'attack':v==='chase_breakaway'?'chase':'tempo'}
   })
   return {riders,points:pts,orders,seed:'v3:real-roster:'+meta.sourceInputJsonbMd5,raceId:meta.raceId,stageId:meta.stageId}
  }

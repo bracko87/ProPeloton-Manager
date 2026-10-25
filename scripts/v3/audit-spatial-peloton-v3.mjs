@@ -19,7 +19,7 @@ const riders=stage.map(([idx,team,flat,hills,climbing,cobbles,stamina,form,fatig
 })
 const coords=meta.profileKmElevationM
 const segments=coords.slice(1).map(([km,ele],i)=>({lengthKm:km-coords[i][0],gradePercent:(ele-coords[i][1])/((km-coords[i][0])*10)}))
-const orders=meta.preRacePhaseOverrides.split(',').map(c=>{const [idx,phase,v]=c.split(':'),n=Number(phase.at(-1));return {riderId:'r'+idx.padStart(3,'0'),startKm:(n-1)*meta.lengthKm/4,endKm:n*meta.lengthKm/4,tactic:v==='attack'?'attack':v==='chase_breakaway'?'chase':'follow'}})
+const orders=meta.preRacePhaseOverrides.split(',').map(c=>{const [idx,phase,v]=c.split(':'),n=Number(phase.at(-1));return {riderId:'r'+idx.padStart(3,'0'),startKm:(n-1)*meta.distanceKm/4,endKm:n*meta.distanceKm/4,tactic:v==='attack'?'attack':v==='chase_breakaway'?'chase':'follow'}})
 const input={raceId:meta.raceId,stageId:meta.stageId,sourceFingerprint:meta.sourceInputJsonbMd5,riders,segments,orders,secondsPerTick:10,sampleSeconds:60,gate:{offlineOnly:true,acknowledgedNoSportingApproval:true,sourceQuality:privateMap?'source_snapshot':'synthetic_research'}}
 const cases=[['legacy_coincident',null],['grid_4x2', {mode:'synthetic_neutral_rolling',ridersAcross:4,rowSpacingMeters:2}],['grid_3x2', {mode:'synthetic_neutral_rolling',ridersAcross:3,rowSpacingMeters:2}],['spatial_4x2', {mode:'synthetic_neutral_rolling',ridersAcross:4,rowSpacingMeters:2}]]
 const out=[]

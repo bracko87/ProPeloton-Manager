@@ -16,7 +16,7 @@ function inputFor(which){
   raceId=meta.raceId;stageId=meta.stageId;seed='v3:real-roster:'+meta.sourceInputJsonbMd5
   orders=meta.preRacePhaseOverrides.split(',').map(t=>{
    const [idx,phase,order]=t.split(':'),p=Number(phase.at(-1))
-   return {riderId:'r'+idx.padStart(3,'0'),startKm:(p-1)*meta.lengthKm/4,endKm:p*meta.lengthKm/4,action:order==='attack'?'attack':order==='chase_breakaway'?'chase':'tempo'}
+   return {riderId:'r'+idx.padStart(3,'0'),startKm:(p-1)*meta.distanceKm/4,endKm:p*meta.distanceKm/4,action:order==='attack'?'attack':order==='chase_breakaway'?'chase':'tempo'}
   })
  }else{
   points=[[0,115],[18,140],[36,170],[52,130],[60,140],[72,270],[84,110],[96,130],[110,160],[124,240],[134.2,430],[142,165],[154,190],[158,220],[160.8,275],[162.6,415],[165.8,650]]

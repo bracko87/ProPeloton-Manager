@@ -10,7 +10,7 @@ function source(name,short=false){
  if(name.startsWith('dordrecht')){
   const meta=JSON.parse(readFileSync(new URL(name+'.metadata.json',root),'utf8'))
   points=meta.profileKmElevationM
-  orders=meta.preRacePhaseOverrides.split(',').map(text=>{const [idx,phase,command]=text.split(':'),n=Number(phase.at(-1));return {riderId:'r'+idx.padStart(3,'0'),startKm:(n-1)*meta.lengthKm/4,endKm:n*meta.lengthKm/4,tactic:command==='attack'?'attack':command==='chase_breakaway'?'chase':'tempo'}})
+  orders=meta.preRacePhaseOverrides.split(',').map(text=>{const [idx,phase,command]=text.split(':'),n=Number(phase.at(-1));return {riderId:'r'+idx.padStart(3,'0'),startKm:(n-1)*meta.distanceKm/4,endKm:n*meta.distanceKm/4,tactic:command==='attack'?'attack':command==='chase_breakaway'?'chase':'tempo'}})
  }else points=[[0,115],[18,140],[36,170],[52,130],[60,140],[72,270],[84,110],[96,130],[110,160],[124,240],[134.2,430],[142,165],[154,190],[158,220],[160.8,275],[162.6,415],[165.8,650]]
  if(short)points=[[0,20],[1,20],[2,22],[3,20]]
  const route=points.slice(1).map(([km,elev],i)=>({lengthKm:km-points[i][0],gradePercent:(elev-points[i][1])/((km-points[i][0])*10)}))
