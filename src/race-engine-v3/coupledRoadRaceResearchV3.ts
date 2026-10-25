@@ -6,6 +6,7 @@
  * No fixed target groups, timings, or stage-specific scripted results.
  */
 import {planNeutralStartFormationV3,type NeutralStartGridV3} from './neutralStartFormationV3.ts'
+import {planAnticipatoryLanesV3} from './anticipatoryLaneResearchV3.ts'
 import {initializeWheelBottleneckTelemetryV3,recordWheelBottleneckTickV3,summarizeWheelBottlenecksV3,type WheelBottleneckTelemetryV3,type WheelBottleneckSummaryV3} from './wheelBottleneckTelemetryV3.ts'
 import {advanceSpatialPelotonV3,calculateSpatialSlipstreamV3,type SpatialRiderV3} from './pelotonSpatialMotionV3.ts'
 import {projectRiderPowerV3,type RiderAttributePowerV3} from './riderPowerAdapterV3.ts'
@@ -25,12 +26,14 @@ export interface CoupledInputV3 {
   readonly grid:NeutralStartGridV3
   /** Opt-in checkpointed congestion diagnosis. Changes NO rider physics. */
   readonly experimentalBottleneckTelemetry?:true
+  /** OFFLINE-ONLY research probe. Does not alter longitudinal metres this tick. */
+  readonly experimentalAnticipatoryLaneMoves?:true
   readonly gate:{readonly offlineOnly:true;readonly acknowledgedNoSportingApproval:true;readonly sourceQuality:'source_snapshot'|'synthetic_research'}
 }
 export interface CoupledRiderStateV3 {
   riderId:string;teamId:string;meters:number;lane:number;speedMps:number;energy:number
   finishSeconds:number|null;activeAttackKey:string|null;attackSeconds:number;attackAttempts:number
-  passes:number;wheelLimitedTicks:number;cumulativeActualWorkJoules:number;cumulativePowerDebtJoules:number
+  passes:number;wheelLimitedTicks:number;cumulativeActualWorkJoules:number;cumulativePowerDebtJoules:number;anticipatoryMoves?:number
 }
 export interface CoupledFrameV3 {readonly elapsedSeconds:number;readonly riders:readonly {riderId:string;meters:number;energy:number;lane:number}[]}
 export interface CoupledStateV3 {
@@ -44,7 +47,7 @@ export interface CoupledResultV3 {
   readonly elapsedSeconds:number;readonly frames:readonly CoupledFrameV3[]
   readonly groups:PhysicalGroupTimelineStateV3['history']
   readonly finish:readonly {riderId:string;rank:number;finishSeconds:number;gapSeconds:number;energy:number}[]
-  readonly movement:{passes:number;wheelLimitedTicks:number;attackAttempts:number;totalWorkJoules:number;powerDebtJoules:number}
+  readonly movement:{passes:number;wheelLimitedTicks:number;attackAttempts:number;totalWorkJoules:number;powerDebtJoules:number;anticipatoryMoves?:number}
   readonly bottlenecks?:WheelBottleneckSummaryV3
 }
 const clamp=(n:number,a:number,b:number)=>Math.max(a,Math.min(b,n))
@@ -89,7 +92,7 @@ export function initializeCoupledV3(input:CoupledInputV3):CoupledStateV3{
  const total=input.route.reduce((sum,s)=>sum+s.lengthKm*1000,0)
  return {version:'coupled_offline_v3_01',fingerprint:fingerprint(input),totalMeters:total,elapsedSeconds:0,tick:0,complete:false,replay:[],groupTimeline:initializePhysicalGroupTimelineV3(total),
   ...(input.experimentalBottleneckTelemetry?{bottleneckTelemetry:initializeWheelBottleneckTelemetryV3(input.riders.map(r=>r.riderId))}:{}),riders:
-  [...input.riders].sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,meters:lineup.get(r.riderId)!.meters,lane:lineup.get(r.riderId)!.gridLane,speedMps:0,energy:round((r.startStamina??75)/100),finishSeconds:null,activeAttackKey:null,attackSeconds:0,attackAttempts:0,passes:0,wheelLimitedTicks:0,cumulativeActualWorkJoules:0,cumulativePowerDebtJoules:0}))}
+  [...input.riders].sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,meters:lineup.get(r.riderId)!.meters,lane:lineup.get(r.riderId)!.gridLane,speedMps:0,energy:round((r.startStamina??75)/100),finishSeconds:null,activeAttackKey:null,attackSeconds:0,attackAttempts:0,passes:0,wheelLimitedTicks:0,cumulativeActualWorkJoules:0,cumulativePowerDebtJoules:0,...(input.experimentalAnticipatoryLaneMoves?{anticipatoryMoves:0}:{})}))}
 }
 export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTicks:number):CoupledStateV3{
  validate(input)
@@ -123,6 +126,9 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
   }
   const moves=advanceSpatialPelotonV3(active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,desiredMps:intent.get(r.riderId)!.desired,tactic:intent.get(r.riderId)!.action})),{laneCount:input.grid.ridersAcross,dtSeconds:dt,minWheelGapMeters:1.8})
   if(input.experimentalBottleneckTelemetry)recordWheelBottleneckTickV3(state.bottleneckTelemetry!,active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,desiredMps:intent.get(r.riderId)!.desired,tactic:intent.get(r.riderId)!.action})),moves,state.totalMeters,dt)
+  const lateral=input.experimentalAnticipatoryLaneMoves
+    ?new Map(planAnticipatoryLanesV3(active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,desiredMps:intent.get(r.riderId)!.desired,tactic:intent.get(r.riderId)!.action})),moves,input.grid.ridersAcross).riders.map(p=>[p.riderId,p]))
+    :null
   const movement=new Map(moves.map(m=>[m.riderId,m]))
   for(const rider of active){
    const outcome=movement.get(rider.riderId)!,work=intent.get(rider.riderId)!,before=rider.meters
@@ -137,7 +143,8 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
    rider.energy=round(clamp(rider.energy-baseline-extra+regen,0,1))
    rider.cumulativeActualWorkJoules=round(rider.cumulativeActualWorkJoules+physicalWatts*dt)
    rider.cumulativePowerDebtJoules=round(rider.cumulativePowerDebtJoules+energyDebt*dt)
-   rider.lane=outcome.lane;rider.speedMps=actualSpeed
+   if(lateral){rider.anticipatoryMoves=(rider.anticipatoryMoves??0)+Number(lateral.get(rider.riderId)!.promoted)}
+   rider.lane=lateral?.get(rider.riderId)?.lane??outcome.lane;rider.speedMps=actualSpeed
    rider.passes+=Number(outcome.overtook);rider.wheelLimitedTicks+=Number(outcome.wheelLimited)
    if(outcome.meters>=state.totalMeters){
     rider.finishSeconds=round(state.elapsedSeconds+(state.totalMeters-before)/Math.max(.01,actualSpeed))
@@ -164,7 +171,7 @@ export function finalizeCoupledV3(input:CoupledInputV3,state:CoupledStateV3):Cou
  const best=ranking[0].finishSeconds!
  return {mode:'OFFLINE_RESEARCH_ONLY',sportingApproval:'NOT_APPROVED',officialWrites:0,elapsedSeconds:state.elapsedSeconds,frames:state.replay,groups:state.groupTimeline.history,
   finish:ranking.map((r,i)=>({riderId:r.riderId,rank:i+1,finishSeconds:r.finishSeconds!,gapSeconds:round(r.finishSeconds!-best),energy:r.energy})),
-  movement:{passes:ranking.reduce((n,r)=>n+r.passes,0),wheelLimitedTicks:ranking.reduce((n,r)=>n+r.wheelLimitedTicks,0),attackAttempts:ranking.reduce((n,r)=>n+r.attackAttempts,0),totalWorkJoules:round(ranking.reduce((n,r)=>n+r.cumulativeActualWorkJoules,0)),powerDebtJoules:round(ranking.reduce((n,r)=>n+r.cumulativePowerDebtJoules,0))},
+  movement:{passes:ranking.reduce((n,r)=>n+r.passes,0),wheelLimitedTicks:ranking.reduce((n,r)=>n+r.wheelLimitedTicks,0),attackAttempts:ranking.reduce((n,r)=>n+r.attackAttempts,0),totalWorkJoules:round(ranking.reduce((n,r)=>n+r.cumulativeActualWorkJoules,0)),powerDebtJoules:round(ranking.reduce((n,r)=>n+r.cumulativePowerDebtJoules,0)),...(input.experimentalAnticipatoryLaneMoves?{anticipatoryMoves:ranking.reduce((n,r)=>n+(r.anticipatoryMoves??0),0)}:{})},
   ...(input.experimentalBottleneckTelemetry?{bottlenecks:summarizeWheelBottlenecksV3(state.bottleneckTelemetry!)}:{})}
 }
 export function runCoupledV3(input:CoupledInputV3):CoupledResultV3{
