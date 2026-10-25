@@ -160,7 +160,9 @@ export function advanceExperimentalPowerV3(input:ExperimentalPowerInputV3,state:
         const required=roadWattsRequiredV3(target,83,adjustedCdA,road)
         const lack=Math.max(0,required-p.source.sustainableWatts)
         if(s.energy<.13&&lack>0){const cap=aeroSoloSpeed(p.source.sustainableWatts*.8,road,adjustedCdA);target=Math.min(target,cap)}
-        extraCost+=lack*.0000018
+        // Charge only the power required at the rider's actual, capped speed.
+        // Pre-cap demanded watts never represent performed physical work.
+        extraCost+=Math.max(0,roadWattsRequiredV3(target,83,adjustedCdA,road)-p.source.sustainableWatts)*.0000018
         const baseline=.000004*seconds
         const recovery=p.order==='recover'?seconds*.000014:0
         desired.set(s.riderId,{speed:round(clamp(target,1,28)),cost:round(baseline+extraCost*seconds-recovery)})
