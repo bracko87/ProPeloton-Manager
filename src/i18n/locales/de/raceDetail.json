@@ -218,6 +218,8 @@
     "status": "Status",
     "worldChampionshipWaiting": "Qualifikation läuft",
     "worldChampionshipUnavailable": "Nicht bestätigt",
+    "worldChampionshipMedicalHold": "Medizinisch nicht einsatzfähig",
+    "worldChampionshipReducedFitness": "Eingeschränkte Fitness (keine Verletzung)",
     "worldChampionshipConfirmedLabel": "Bestätigt",
     "worldChampionshipInvited": "Bestätigung ausstehend",
     "worldChampionshipTbd": "Teilnehmer noch unbekannt"
