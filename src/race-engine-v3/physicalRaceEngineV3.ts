@@ -219,6 +219,10 @@ export function advancePhysicalRaceV3(input: PhysicalRaceV3Input, state: Physica
       const raceProgress=s.meters/state.totalMeters
       const finalClimbPressure=mountain && raceProgress>.75 ? .11 : mountain ? 0 : 0
       const fieldPace=median*(mountain ? .935 : .91)*(1+finalClimbPressure)
+      // Completed attacks must not grant a lifetime escaped-rider pace.
+      // Retire the burst only after physical reabsorption into the bunch;
+      // a future breakout requires a new explicit tactical instruction.
+      if(action!=='attack' && s.activeAttackKey===null && s.attackUsedAtKm!==null && s.meters<=midfieldMeters+25) s.attackUsedAtKm=null
       const escaped=s.attackUsedAtKm!==null && s.meters>midfieldMeters+90 && s.energy>.12
       const naturalMountainAttack=mountain && raceProgress>.86 && capability(r,seg)>84
       const attackBoost=1+.25*clamp((s.energy-.16)/.6,0,1)
