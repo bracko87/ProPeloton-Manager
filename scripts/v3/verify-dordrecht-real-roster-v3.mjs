@@ -15,7 +15,11 @@ const riders=csv.slice(1).map(line=>{
 assert.equal(riders.length,106)
 assert.equal(new Set(riders.map(x=>x.teamId)).size,18)
 const scenario=process.env.V3_WEATHER_SCENARIO??'forecast_unknown_bearing'
-const windExposure=scenario==='worst_crosswind'?1:scenario==='calm'?0:.4
+// Road bearings are absent from this frozen fixture. Never invent a 40%
+// crosswind from a forecast wind direction. Only the explicitly synthetic
+// worst-case weather scenario may assume 100% crosswind exposure.
+const windExposure=scenario==='worst_crosswind'?1:0
+// A rain probability is NOT an observation that roads are wet.
 const wetness=scenario==='worst_crosswind'?meta.weather.rainProbabilityPct/100:0
 const route=meta.profileKmElevationM.slice(1).map(([km,elevation],idx)=>{
  const [start,fromElevation]=meta.profileKmElevationM[idx]
@@ -75,7 +79,7 @@ const sameTime=result.finish.filter(f=>f.officialGapSeconds===0).length
 const suspiciousPackConcentration = sameTime/result.finish.length>.85
 const extremeTailGap = result.finish.at(-1).officialGapSeconds>900
 const summary={
- stageName:meta.stageName,stageId:meta.stageId,sourceInputMd5:meta.sourceInputJsonbMd5,weatherScenario:scenario,windAssumedCrosswindKph:meta.weather.windKmh*windExposure,wetnessAssumed:wetness,
+ stageName:meta.stageName,stageId:meta.stageId,sourceInputMd5:meta.sourceInputJsonbMd5,weatherScenario:scenario,windAssumedCrosswindKph:meta.weather.windKmh*windExposure,wetnessAssumed:wetness,roadBearingVerified:false,windScenarioSynthetic:scenario==='worst_crosswind',
  status:'SIMULATION_ONLY_NOT_PRODUCTION_VALIDATED', sportingAcceptance:'NOT_APPROVED_NEEDS_MULTIPLE_REAL_ROSTER_AND_WIND_BENCHMARKS',riders:riders.length,teams:new Set(riders.map(x=>x.teamId)).size,
  orders:orders.length, routeKm:meta.lengthKm, checkpointBatches:segments,runMilliseconds:durationMs,physicalGroupAudit:{frames:physicalGroupAudits.length,framesWithB1,uniqueAssignmentsAtEveryFrame:true,groupIdentityTrackingNotYetImplemented:true},
  winner:result.finish[0],sameTimeWinner:sameTime,distinctOfficialGaps:new Set(result.finish.map(x=>x.officialGapSeconds)).size,
