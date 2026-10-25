@@ -217,6 +217,7 @@
     "rider": "Vozač",
     "status": "Status",
     "worldChampionshipWaiting": "Kvalifikacije u tijeku",
+    "worldChampionshipAcceptedUnavailable": "Prihvaćeno — trenutačno nedostupan",
     "worldChampionshipUnavailable": "Nije potvrđeno",
     "worldChampionshipConfirmedLabel": "Potvrđen",
     "worldChampionshipInvited": "Čeka potvrdu",

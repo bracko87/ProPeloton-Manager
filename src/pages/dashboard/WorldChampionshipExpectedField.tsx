@@ -139,9 +139,13 @@ export function WorldChampionshipExpectedField({
                 const unavailable = isUnavailable(row)
                 const waitingForChampion = !row.champion_rider_id
                 const pending = !confirmed
+                const accepted = ['approved', 'auto_approved'].includes(row.participation_decision ?? '') &&
+                  !['refused', 'rejected', 'withdrawn'].includes(row.final_participation_decision ?? '')
                 const status = waitingForChampion
                   ? t('participants.worldChampionshipWaiting', { defaultValue: 'Qualification ongoing' })
-                  : unavailable
+                  : unavailable && accepted
+                    ? t('participants.worldChampionshipAcceptedUnavailable', { defaultValue: 'Accepted — currently unavailable' })
+                    : unavailable
                     ? t('participants.worldChampionshipUnavailable', { defaultValue: 'Not confirmed' })
                     : confirmed
                       ? t('participants.worldChampionshipConfirmedLabel', { defaultValue: 'Confirmed starter' })
