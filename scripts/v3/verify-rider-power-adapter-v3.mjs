@@ -33,5 +33,10 @@ for(let i=0;i<5;i++){
 }
 assert(state[0].energy<one.energy)
 assert.equal(state[0].modelVersion,one.modelVersion)
+const noScale={...one,energyCostScale:1}
+const withScale={...one,energyCostScale:1.5}
+const rechargePlan=calculatePackPowerV3([one],{gradePercent:0})
+assert(debitPowerReserveV3([withScale],rechargePlan,100)[0].energy<debitPowerReserveV3([noScale],rechargePlan,100)[0].energy,'Preparation energy cost multiplier must affect depletion')
+assert.throws(()=>debitPowerReserveV3([{...one,energyCostScale:2.1}],rechargePlan,100))
 console.log('PASS source-only rider power contract; 15 deterministic mapping, validation and depletion assertions')
 console.log(JSON.stringify({sourceWatts:one.sustainableWatts,sourceEnergy:one.energy,climbingWatts:climbing.sustainableWatts,proxyWatts:proxy.sustainableWatts}))
