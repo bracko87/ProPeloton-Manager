@@ -31,6 +31,10 @@ Without the private source data, the public stand-ins yield a very different Dor
 
 The same hypothetical four-abreast, 2 m grid reduces the largest exact-gap cluster to **4** and the within-one-second group to **7/168**, with an approximately **+189.046 s** tail. However, **this is NOT a validated mountain separation**: the outcome is extremely sensitive to unverified starting order/position, missing source equipment fields for 168 riders and **718 m of missing declared ascent**. The smaller cluster is an experimental input-geometry effect, not evidence of more selective mountain cycling.
 
+### Reproducible Guangxi stress switch
+
+The **public** `scripts/v3/audit-guangxi-synthetic-power-v3.mjs` now supports the explicit environment setting `V3_EXPERIMENTAL_START_GRID=4x2`. Without it, the prior synthetic baseline is unchanged; with it, the auditor reports 168 riders, 114 distinct physical gap values, largest exact cluster 4, 7 riders within one second, and a +189.046 s tail. Both scripts are registered in the isolated CI workflow. **No source-complete mountain claim** is made and no undocumented rider-level source records are included.
+
 ## Validation and release protection
 
 - **26/26 locally executed V3 research/regression/audit scripts passed** with a validated private supplement; both the default and optional runner complete with deterministic replay and serialized checkpoint resumption. Strict TypeScript type checking passed. The public audit also passed when executed without the private supplement.
