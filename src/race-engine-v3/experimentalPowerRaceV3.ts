@@ -4,6 +4,7 @@
  * This is a candidate for falsification, NOT a sports-calibrated replacement.
  */
 import {fatiguePowerEnvelopeV3} from './fatiguePowerEnvelopeV3.ts'
+import {planNeutralStartFormationV3,type NeutralStartGridV3} from './neutralStartFormationV3.ts'
 import {calculatePackPowerV3,roadWattsRequiredV3,type PackPowerRiderV3,type PackRoadV3} from './pelotonPowerBalanceV3.ts'
 import {projectRiderPowerV3,type RiderAttributePowerV3} from './riderPowerAdapterV3.ts'
 import {initializePhysicalGroupTimelineV3,advancePhysicalGroupTimelineV3,type PhysicalGroupTimelineStateV3} from './physicalGroupTimelineV3.ts'
@@ -16,6 +17,8 @@ export interface ExperimentalPowerInputV3 {
   readonly raceId:string;readonly stageId:string;readonly sourceFingerprint:string;
   readonly riders:readonly SourcePowerRiderV3[];readonly segments:readonly PowerStageSegmentV3[];
   readonly orders?:readonly PowerStageOrderV3[];readonly secondsPerTick?:number;readonly sampleSeconds?:number;
+  /** Hypothetical start grid, opt-in research only; NOT a sourced lineup. */
+  readonly experimentalStartFormation?: NeutralStartGridV3;
   readonly gate:{readonly offlineOnly:true;readonly acknowledgedNoSportingApproval:true;readonly sourceQuality:'source_snapshot'|'synthetic_research'}
 }
 export interface PowerRiderDynamicV3 {
@@ -63,6 +66,9 @@ function validate(input:ExperimentalPowerInputV3):void {
   }
   ensure((input.secondsPerTick??10)>0&&(input.secondsPerTick??10)<=20&&Number.isInteger(input.secondsPerTick??10),'Invalid tick')
   ensure((input.sampleSeconds??60)>0&&(input.sampleSeconds??60)%(input.secondsPerTick??10)===0,'Invalid replay sampling')
+  if(input.experimentalStartFormation){
+    planNeutralStartFormationV3([...ids],input.sourceFingerprint,input.experimentalStartFormation)
+  }
   for(const o of input.orders??[]){ensure(ids.has(o.riderId)&&Number.isFinite(o.startKm)&&Number.isFinite(o.endKm)&&o.startKm>=0&&o.startKm<o.endKm&&['follow','tempo','attack','chase','recover'].includes(o.tactic),'Invalid instruction')}
 }
 function stageAt(input:ExperimentalPowerInputV3,meters:number):PowerStageSegmentV3{
@@ -83,10 +89,13 @@ function aeroSoloSpeed(watts:number,road:PackRoadV3,drag:number):number{
 export function initializeExperimentalPowerV3(input:ExperimentalPowerInputV3):ExperimentalPowerStateV3{
   validate(input)
   const total=input.segments.reduce((sum,s)=>sum+s.lengthKm*1000,0)
+  const lineup=input.experimentalStartFormation
+    ?new Map(planNeutralStartFormationV3(input.riders.map(r=>r.riderId),input.sourceFingerprint,input.experimentalStartFormation).map(r=>[r.riderId,r.meters]))
+    :new Map<string,number>()
   return {
     version:'experimental_collective_power_v3_01',fingerprint:fingerprint(input),totalMeters:total,
     elapsedSeconds:0,tick:0,complete:false,
-    riders:[...input.riders].sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,meters:0,speedMps:0,energy:round(r.startStamina===undefined?clamp(1-r.fatigueBeforeStage/200,.4,1):r.startStamina/100),finishSeconds:null,attackOrderKey:null,attackSecsLeft:0,attempts:0})),
+    riders:[...input.riders].sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,meters:lineup.get(r.riderId)??0,speedMps:0,energy:round(r.startStamina===undefined?clamp(1-r.fatigueBeforeStage/200,.4,1):r.startStamina/100),finishSeconds:null,attackOrderKey:null,attackSecsLeft:0,attempts:0})),
     replay:[],groupTimeline:initializePhysicalGroupTimelineV3(total)
   }
 }
