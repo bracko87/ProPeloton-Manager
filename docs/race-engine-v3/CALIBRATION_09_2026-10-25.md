@@ -38,6 +38,9 @@ Guangxi was unchanged at +117.25 s (its frozen benchmark has no equivalent saved
 
 A small cooperative pace increase coupled to the present drafting chain causes excessive bunch recombination. Passing isolated helper tests is insufficient. **The failed active-chase implementation was NOT committed.** `cooperativePursuitV3.ts` remains a standalone research/shadow helper and is not imported by the physical solver.
 
+## Checkpoint storage growth — additional capacity warning
+A separate local 168-rider, 263-frame mountain research run serialized to approximately **4.44 MB of uncompressed JSON**, consisting of roughly **2.59 MB of replay samples** and **1.82 MB of physical-group history**, plus rider state. This is a development measurement, **not a production worker/load benchmark**. Writing the entire growing snapshot at every short worker checkpoint would be unnecessarily expensive; persistence must shard/append immutable replay/group frames and save compact resumable cursors. Until this is implemented and capacity-tested, the Group Control Center / live-replay publishing reliability gate is not passed.
+
 ## Remaining blockers / next milestone
 1. Replace rider-to-adjacent-rider velocity inheritance with a true collective speed/power and aerodynamic model. The existing solver is highly sensitive to a modest additional chase gain.
 2. Make the authoritative group timeline drive physical catch classification with consistent pack thresholds rather than computing a separate largest-group proximity proxy.
