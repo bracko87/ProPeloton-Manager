@@ -2,15 +2,14 @@
 import {readFileSync,writeFileSync} from 'node:fs'
 import {createHash} from 'node:crypto'
 import assert from 'node:assert/strict'
+import {parsePrivatePowerSupplementV3} from './privateEnergySupplementV3.mjs'
 import {runExperimentalPowerV3,initializeExperimentalPowerV3,advanceExperimentalPowerV3,finalizeExperimentalPowerV3} from '../../src/race-engine-v3/experimentalPowerRaceV3.ts'
 const root=new URL('./fixtures/',import.meta.url)
 const base=readFileSync(new URL('dordrecht-2000-10-15.csv',root),'utf8').trim().split('\n').slice(1).map(x=>x.split(',').map(Number))
 const meta=JSON.parse(readFileSync(new URL('dordrecht-2000-10-15.metadata.json',root),'utf8'))
 const supplementPath=process.env.V3_PRIVATE_SOURCE_SUPPLEMENT
 if(!supplementPath)throw Error('Missing V3_PRIVATE_SOURCE_SUPPLEMENT: do not guess original energy data')
-const lines=readFileSync(supplementPath,'utf8').trim().split(/\r?\n/)
-const fieldNames=lines[0].split(',')
-const supplement=new Map(lines.slice(1).map(line=>{const values=line.split(',');return [Number(values[0]),Object.fromEntries(fieldNames.map((k,i)=>[k,Number(values[i])]))]}))
+const supplement=parsePrivatePowerSupplementV3(readFileSync(supplementPath,'utf8'),106)
 assert.equal(supplement.size,106)
 const riders=base.map(([idx,team,flat,hills,climbing,cobbles,stamina,form,fatigue])=>{
  const o=supplement.get(idx);assert(o,'Missing source energy for rider '+idx)
