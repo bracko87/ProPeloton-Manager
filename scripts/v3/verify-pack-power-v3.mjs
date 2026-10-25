@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {calculatePackPowerV3,roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
+import {calculatePackPowerV3,roadWattsRequiredV3,debitPowerReserveV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
 const rider=(id,tactic='follow',energy=.9)=>({riderId:id,sustainableWatts:300,energy,tactic,massKg:83})
 const road={gradePercent:0,headwindMps:0,crosswindMps:0}
 const solo=calculatePackPowerV3([rider('a')],road)
@@ -34,5 +34,17 @@ assert(Math.abs(roadWattsRequiredV3(10,83,.36,road)-roadWattsRequiredV3(10,83,.3
 assert.throws(()=>calculatePackPowerV3([rider('a'),rider('a')],road))
 assert.throws(()=>calculatePackPowerV3([rider('a','attack',1.1)],road))
 assert.throws(()=>calculatePackPowerV3([rider('a')],{gradePercent:30}))
+const initial=[rider('attacker','attack',.95)]
+let reserves=initial
+for(let i=0;i<4;i++){
+ const plan=calculatePackPowerV3(reserves,road)
+ assert(plan.totalContributorWatts>0,'Attack should be possible while reserves remain')
+ reserves=debitPowerReserveV3(reserves,plan,200)
+}
+assert(reserves[0].energy<.27,'Four prolonged attacks must remove further full-power burst capability')
+assert.equal(calculatePackPowerV3(reserves,road).totalContributorWatts,0)
+assert.equal(initial[0].energy,.95,'Debiting cannot mutate the original rider input')
+assert.equal(debitPowerReserveV3([rider('a')],solo,200)[0].energy,.9,'No extra tactic, no hidden debit')
+assert.throws(()=>debitPowerReserveV3([rider('a')],solo,-1))
 console.log('PASS pack power: aerodynamic drafting, worker watts, energy, 8% climb, wind, smooth input changes, deterministic order')
 console.log(JSON.stringify({solo:solo.attainableSpeedMps,peloton:group.attainableSpeedMps,oneChaser:chase.attainableSpeedMps,oneAttacker:attack.attainableSpeedMps,climb:hill.attainableSpeedMps,wind:wetCross.attainableSpeedMps},null,2))
