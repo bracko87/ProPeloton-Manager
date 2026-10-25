@@ -49,6 +49,8 @@ jobs:
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-dordrecht-real-roster-v3.mjs > /tmp/v3-dordrecht-audit.json
       - name: Verify frozen 168-rider Guangxi mountain calculation without official writes
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-guangxi-real-roster-v3.mjs > /tmp/v3-guangxi-audit.json
+      - name: Validate authoritative saved group lineage across both 106- and 168-rider race checkpoints
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-authoritative-group-checkpoints-v3.mjs
       - name: Verify continuous B1 group identity, finishers and real-roster replay lineage
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-physical-group-timeline-v3.mjs
       - name: Validate route-relative wind exposure without invented bearings
