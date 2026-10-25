@@ -1,0 +1,22 @@
+{
+  "stageName": "Tour of Guangxi — Yizhou to Nongla",
+  "sourceRunId": "bb6aaf57-a291-426d-a252-b9981b4bc578",
+  "sourceStageId": "dd6681d1-e565-43f3-8449-0bb203b0eb07",
+  "inputSnapshotMd5": "babdde9fd07d315bf59974cc46dde67d",
+  "riderCount": 168,
+  "teamCount": 22,
+  "distanceKm": 165.8,
+  "reportedElevationGainM": 1718,
+  "profiledPositiveGainM": 1000,
+  "unrepresentedElevationGainM": 718,
+  "windKmh": 9,
+  "temperatureC": 30,
+  "rainProbabilityPct": 38,
+  "mountainClimbs": [
+    {"finishKm":72,"lengthKm":4.9,"gradientPercent":4.7,"category":3},
+    {"finishKm":134.2,"lengthKm":3,"gradientPercent":4.8,"category":3},
+    {"finishKm":165.8,"lengthKm":3.2,"gradientPercent":6.8,"category":1}
+  ],
+  "dataStatus": "frozen production input; de-identified fixture; NO official result writes",
+  "limitations": ["No live commands mapped yet", "Wind exposure assumed, not observed", "Heat response not modeled", "Route source has missing climb geometry", "Simulation NOT sporting-approved"]
+}
