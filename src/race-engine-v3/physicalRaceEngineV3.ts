@@ -267,6 +267,12 @@ export function advancePhysicalRaceV3(input: PhysicalRaceV3Input, state: Physica
       state.replay.push({elapsedSeconds:state.elapsedSeconds,riders:state.states.map(s=>({riderId:s.riderId,meters:s.meters,energy:s.energy}))})
     }
     state.complete=state.states.every(s=>s.finishSeconds!==null)
+    // A race usually ends BETWEEN regular replay sample boundaries. Persist
+    // an authoritative terminal frame so the replay never ends before the
+    // riders cross the line or merges every finisher into a fictitious pack.
+    if(state.complete && state.replay.at(-1)?.elapsedSeconds!==state.elapsedSeconds){
+      state.replay.push({elapsedSeconds:state.elapsedSeconds,riders:state.states.map(s=>({riderId:s.riderId,meters:s.meters,energy:s.energy}))})
+    }
   }
   return state
 }
