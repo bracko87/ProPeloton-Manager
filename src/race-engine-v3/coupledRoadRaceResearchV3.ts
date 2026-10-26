@@ -9,6 +9,7 @@ import {planNeutralStartFormationV3,type NeutralStartGridV3} from './neutralStar
 import {planAnticipatoryLanesV3} from './anticipatoryLaneResearchV3.ts'
 import {initializeFinitePassingV3,validateFinitePassingV3,capFinitePassSpeedV3,startFinitePassV3,stepFinitePassV3,type FinitePassingResearchStateV3} from './finitePassingResearchV3.ts'
 import {calculatePathDraftWorkV3} from './pathDraftExposureV3.ts'
+import {draftCounterfactualWattsV3} from './draftCounterfactualV3.ts'
 import {initializeWheelBottleneckTelemetryV3,recordWheelBottleneckTickV3,summarizeWheelBottlenecksV3,type WheelBottleneckTelemetryV3,type WheelBottleneckSummaryV3} from './wheelBottleneckTelemetryV3.ts'
 import {advanceSpatialPelotonV3,calculateSpatialSlipstreamV3,type SpatialRiderV3} from './pelotonSpatialMotionV3.ts'
 import {projectRiderPowerV3,type RiderAttributePowerV3} from './riderPowerAdapterV3.ts'
@@ -42,6 +43,8 @@ export interface CoupledInputV3 {
   readonly experimentalFinitePassSensitivity?:{readonly durationTicks?:2|3|4;readonly additionalWatts?:20|35|50;readonly selection?:'id'|'frontmost'|'mostBlocked';readonly startMaxKm?:2|5}
   /** Strictly offline Batch 24 A/B, depends on W-prime research mode. */
   readonly experimentalSeparatedAerobicPower?:true
+  /** Research only: physically consistent 0/50/100% shelter, opt-in W-prime. */
+  readonly experimentalShelterStrength?:0|0.5|1
   readonly gate:{readonly offlineOnly:true;readonly acknowledgedNoSportingApproval:true;readonly sourceQuality:'source_snapshot'|'synthetic_research'}
 }
 export interface CoupledRiderStateV3 {
@@ -55,7 +58,7 @@ export interface CoupledMotionTraceRowV3 {
  readonly riderId:string;readonly laneBefore:number;readonly laneAfter:number
  readonly metersBefore:number;readonly metersAfter:number
  readonly gradePercent:number;readonly headwindMps:number;readonly crosswindMps:number
- readonly draftLeaderId:string|null;readonly shelterFraction:number;readonly sameLaneLeaderId:string|null
+ readonly draftLeaderId:string|null;readonly shelterFraction:number;readonly integratedShelterFraction:number;readonly sameLaneLeaderId:string|null
  readonly sustainedWatts:number;readonly availableWatts:number;readonly tactic:CoupledOrderV3
  readonly preEnergyRequestedMps:number;readonly postEnergyRequestedMps:number;readonly postPassRequestedMps:number
  readonly commandedMps:number;readonly achievedMps:number;readonly wheelLimited:boolean;readonly preventedMeters:number
@@ -94,6 +97,7 @@ function fingerprint(input:CoupledInputV3):string{
 function validate(input:CoupledInputV3):void{
  check(input.gate?.offlineOnly===true&&input.gate.acknowledgedNoSportingApproval===true,'Missing offline-only sporting NO-GO gate')
  check(!input.experimentalSeparatedAerobicPower||input.experimentalPowerDurationEnergy===true,'Separated aerobic experiment requires power-duration energy mode')
+ check(input.experimentalShelterStrength===undefined||([0,.5,1].includes(input.experimentalShelterStrength)&&input.experimentalPowerDurationEnergy===true&&!input.experimentalPathDraftWork),'Draft-strength research requires offline W-prime without incompatible path-draft setting')
  check(!input.experimentalFinitePassReservation||(input.experimentalPowerDurationEnergy===true&&!input.experimentalAnticipatoryLaneMoves),'Finite passing requires isolated W-prime research without automatic lateral preparation')
  check(input.experimentalFinitePassReservation===true||input.experimentalFinitePassSensitivity===undefined,'Passing sensitivity requires finite passing research')
  if(input.experimentalFinitePassReservation)finitePassSettings(input)
@@ -161,7 +165,7 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
    const road=roadAt(input,rider.meters),spec=profile.get(rider.riderId)!,tactic=tacticAt(input,rider.riderId,rider.meters)
    const riderView=position.find(p=>p.riderId===rider.riderId)!
    const shelterObservation=calculateSpatialSlipstreamV3(riderView,position,road)
-   const shelter=shelterObservation.fraction
+   const shelter=shelterObservation.fraction*(input.experimentalShelterStrength??1)
    const drag=clamp(.36*(1-shelter),.22,.36)
    const projected=projectRiderPowerV3(spec,road.gradePercent,'follow',input.gate.sourceQuality==='synthetic_research')
    if(tactic.action==='attack'&&rider.activeAttackKey!==tactic.key){rider.activeAttackKey=tactic.key;rider.attackSeconds=rider.energy>.24?90:0;if(rider.attackSeconds>0)rider.attackAttempts++}
@@ -201,11 +205,19 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
       new Map(active.map(r=>[r.riderId,intent.get(r.riderId)!.road])),
       lateral?new Map([...lateral].map(([id,v])=>[id,v.lane])):undefined).map(w=>[w.riderId,w]))
     :null
+  // Research-only sensitivity: actual W-prime/work debit uses the same shelter factor
+  // that governed the requested speed, never merely re-labeling the result.
+  const moveWatts=(id:string,v:number,road:PackRoadV3,drag:number)=>{
+   const path=observedDraft?.get(id)
+   const full=path?.wattsWithPathExposure??roadWattsRequiredV3(v,83,drag,road)
+   return input.experimentalShelterStrength===undefined?full:
+    draftCounterfactualWattsV3(v,path?.integratedShelter??0,road,input.experimentalShelterStrength,full)
+  }
   const movement=new Map(moves.map(m=>[m.riderId,m]))
   // Validate achieved work for ALL riders before any rider energy update.
   const acceptedEnergy=input.experimentalPowerDurationEnergy?new Map(active.map(r=>{
     const m=movement.get(r.riderId)!,work=intent.get(r.riderId)!
-    const watts=observedDraft?.get(r.riderId)?.wattsWithPathExposure??roadWattsRequiredV3(m.speedMps,83,work.drag,work.road)
+    const watts=moveWatts(r.riderId,m.speedMps,work.road,work.drag)
     const step=advanceEnergyBalanceResearchV3(r.powerDurationEnergy!,watts+(finitePassTick?.chargedRiderId===r.riderId?passingSettings!.additionalWatts:0),dt)
     if(!step.accepted)throw Error('Research power-duration budget violated by achieved motion')
     return [r.riderId,step.state] as const
@@ -213,7 +225,7 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
   for(const rider of active){
    const outcome=movement.get(rider.riderId)!,work=intent.get(rider.riderId)!,before=rider.meters
    const actualSpeed=outcome.speedMps
-   const physicalWatts=(observedDraft?.get(rider.riderId)?.wattsWithPathExposure??roadWattsRequiredV3(actualSpeed,83,work.drag,work.road))+(finitePassTick?.chargedRiderId===rider.riderId?passingSettings!.additionalWatts:0)
+   const physicalWatts=moveWatts(rider.riderId,actualSpeed,work.road,work.drag)+(finitePassTick?.chargedRiderId===rider.riderId?passingSettings!.additionalWatts:0)
    if(input.experimentalPathDraftWork&&observedDraft)rider.draftPathExtraWorkJoules=round((rider.draftPathExtraWorkJoules??0)+observedDraft.get(rider.riderId)!.extraWattsFromExposureChange*dt)
    const energyDebt=Math.max(0,physicalWatts-work.baseWatts)
    // Cost is based on MECHANICAL WORK ACTUALLY PERFORMED, not a requested
@@ -269,8 +281,8 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
     const rows:CoupledMotionTraceRowV3[]=active.map(r=>{
      const o=observation!.get(r.riderId)!,i=intent.get(r.riderId)!,m=movement.get(r.riderId)!
      const passCostWatts=finitePassTick?.chargedRiderId===r.riderId?passingSettings!.additionalWatts:0
-     const actualMechanicalWatts=(observedDraft?.get(r.riderId)?.wattsWithPathExposure??roadWattsRequiredV3(m.speedMps,83,i.drag,i.road))+passCostWatts
-     return {riderId:r.riderId,laneBefore:o.lane,laneAfter:r.lane,metersBefore:o.meters,metersAfter:r.meters,gradePercent:i.road.gradePercent,headwindMps:i.road.headwindMps??0,crosswindMps:i.road.crosswindMps??0,draftLeaderId:o.draftId,shelterFraction:o.fraction,sameLaneLeaderId:o.leaderId,sustainedWatts:i.baseWatts,availableWatts:o.availableWatts,tactic:i.action,preEnergyRequestedMps:o.beforeLimitMps,postEnergyRequestedMps:o.afterLimitMps,postPassRequestedMps:o.afterPassMps,commandedMps:i.desired,achievedMps:m.speedMps,wheelLimited:m.wheelLimited,preventedMeters:Math.max(0,i.desired*dt-(m.meters-o.meters)),actualMechanicalWatts,passCostWatts,wPrimeBeforeJ:o.wprimeBefore,wPrimeAfterJ:r.powerDurationEnergy?.remainingWPrimeJoules??null}
+     const actualMechanicalWatts=moveWatts(r.riderId,m.speedMps,i.road,i.drag)+passCostWatts
+     return {riderId:r.riderId,laneBefore:o.lane,laneAfter:r.lane,metersBefore:o.meters,metersAfter:r.meters,gradePercent:i.road.gradePercent,headwindMps:i.road.headwindMps??0,crosswindMps:i.road.crosswindMps??0,draftLeaderId:o.draftId,shelterFraction:o.fraction,integratedShelterFraction:observedDraft?.get(r.riderId)?.integratedShelter??o.fraction,sameLaneLeaderId:o.leaderId,sustainedWatts:i.baseWatts,availableWatts:o.availableWatts,tactic:i.action,preEnergyRequestedMps:o.beforeLimitMps,postEnergyRequestedMps:o.afterLimitMps,postPassRequestedMps:o.afterPassMps,commandedMps:i.desired,achievedMps:m.speedMps,wheelLimited:m.wheelLimited,preventedMeters:Math.max(0,i.desired*dt-(m.meters-o.meters)),actualMechanicalWatts,passCostWatts,wPrimeBeforeJ:o.wprimeBefore,wPrimeAfterJ:r.powerDurationEnergy?.remainingWPrimeJoules??null}
     })
     onMotionTrace({tick:state.tick,elapsedSeconds:state.elapsedSeconds,rows})
    }
