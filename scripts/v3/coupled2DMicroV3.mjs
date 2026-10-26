@@ -75,9 +75,10 @@ function chooseNewReservations(rows,g,settings,metrics){
   current.push(r);metrics.reservationsStarted++
  }
 }
-function moveCandidate(r,intended,paths,g,metrics){
+function moveCandidate(r,intended,paths,g,metrics,unplanned){
+ const reserved=[...paths,...unplanned.map(x=>({x0:x.meters,x1:x.meters,y0:x.y,y1:x.y}))]
  // No speculative longitudinal credit: all completed travel is <= demanded.
- const hit=(s)=>{const p={x0:r.meters,x1:r6(r.meters+intended.speed*s),y0:r.y,y1:intended.y};metrics.collisionChecks+=paths.length;return paths.some(q=>isHit(p,q,g))}
+ const hit=(s)=>{const p={x0:r.meters,x1:r6(r.meters+intended.speed*s),y0:r.y,y1:intended.y};metrics.collisionChecks+=reserved.length;return reserved.some(q=>isHit(p,q,g))}
  if(!hit(1))return {fraction:1,steering:true}
  // First try actual lateral path with clipped speed.
  if(!hit(0)){
@@ -87,7 +88,7 @@ function moveCandidate(r,intended,paths,g,metrics){
  }
  // Steering would collide even if the bicycle slowed down. Cancel steering.
  const noSteer={...intended,y:r.y}
- const stableHit=(s)=>{const p={x0:r.meters,x1:r6(r.meters+noSteer.speed*s),y0:r.y,y1:r.y};metrics.collisionChecks+=paths.length;return paths.some(q=>isHit(p,q,g))}
+ const stableHit=(s)=>{const p={x0:r.meters,x1:r6(r.meters+noSteer.speed*s),y0:r.y,y1:r.y};metrics.collisionChecks+=reserved.length;return reserved.some(q=>isHit(p,q,g))}
  if(!stableHit(1))return {fraction:1,steering:false}
  fail(!stableHit(0),'Unable to yield without colliding at current position')
  let low=0,high=1
@@ -115,7 +116,8 @@ export function advanceCoupled2DResearchV3(state,steps=1){
     requested=Math.max(0,lo-1e-6)
    }
    const intended={speed:requested*dt,y:desiredY}
-   const motion=moveCandidate(r,intended,paths,g,out.metrics)
+   const remaining=prioritized.filter(x=>x.riderId!==r.riderId&&!paths.some(p=>p.riderId===x.riderId))
+   const motion=moveCandidate(r,intended,paths,g,out.metrics,remaining)
    if(steeringNow&&!motion.steering){r.reservation=null;out.metrics.abortedPasses++;steeringNow=false}
    const newY=motion.steering?desiredY:r.y
    const newMeters=r6(r.meters+intended.speed*motion.fraction)
