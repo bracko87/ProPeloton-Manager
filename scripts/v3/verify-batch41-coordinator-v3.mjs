@@ -16,7 +16,10 @@ assert.deepEqual(admitCorridorReservationsV3(JSON.parse(JSON.stringify(init)),in
 const one=admitCorridorReservationsV3(createCorridorCoordinatorV3({geometry:geom,capacity:1,forecast:false}),input)
 assert.equal(one.active.length,1);assert.equal(one.stats.blockedByCapacity,1)
 const same=[{riderId:'a',fromLane:0,toLane:1},{riderId:'b',fromLane:0,toLane:1}]
-const conflict=admitCorridorReservationsV3(init,{...input,proposals:same})
+const closeBefore=before.map(x=>x.riderId==='b'?{...x,meters:1}:x)
+const closeMoves=moves.map(x=>x.riderId==='b'?{...x,oldMeters:1,meters:21}:x)
+const closeSubjects=data.map(x=>x.riderId==='b'?{...x,meters:1}:x)
+const conflict=admitCorridorReservationsV3(init,{...input,proposals:same,before:closeBefore,moves:closeMoves,atEnd:closeMoves,sourceRiders:closeSubjects})
 assert.equal(conflict.active.length,1,'Same space at nearby longitudinal metres must be rejected')
 assert.equal(conflict.stats.reservationConflicts,1)
 assert.throws(()=>admitCorridorReservationsV3(init,{...input,proposals:[proposals[0],proposals[0]]}),/Duplicate/)
