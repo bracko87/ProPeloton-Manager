@@ -1,0 +1,43 @@
+name: V3 Batch 26 one-shot lane checkpoint study
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/singleLaneBranchV3.mjs'
+      - 'scripts/v3/verify-single-lane-branch-v3.mjs'
+      - 'scripts/v3/batch26FixtureV3.mjs'
+      - 'scripts/v3/audit-batch26-paired-lane-v3.mjs'
+      - '.github/workflows/v3-batch26-one-shot-lane.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  paired:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [energy, combined]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify single-lane-only checkpoint and fail-closed validation
+        run: node scripts/v3/verify-single-lane-branch-v3.mjs
+      - name: Fixed-initial-physiology full-roster paired checkpoints
+        env:
+          V3_BATCH26_COMBINED: ${{ matrix.mode == 'combined' && '1' || '0' }}
+          V3_BATCH26_OUT_DIR: ${{ runner.temp }}/batch26-${{ matrix.mode }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch26-paired-lane-v3.mjs
+      - name: Publish offline evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch26-${{ matrix.mode }}-one-shot
+          path: ${{ runner.temp }}/batch26-${{ matrix.mode }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Build production application
+        if: matrix.mode == 'energy'
+        run: npm ci --no-audit --no-fund && npm run build
