@@ -1,0 +1,45 @@
+name: V3 Batch 31 finite passing real energy
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/race-engine-v3/finitePassingResearchV3.ts'
+      - 'src/race-engine-v3/coupledRoadRaceResearchV3.ts'
+      - 'scripts/v3/audit-batch31-full-passing-v3.mjs'
+      - 'scripts/v3/verify-batch31-passing-v3.mjs'
+      - '.github/workflows/v3-batch31-passing-energy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-roster:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict TypeScript research check
+        run: npx --yes --package typescript@5.9.3 tsc --strict --noEmit --target ES2022 --module nodenext --moduleResolution nodenext --allowImportingTsExtensions src/race-engine-v3/coupledRoadRaceResearchV3.ts src/race-engine-v3/finitePassingResearchV3.ts
+      - name: Passing clearance and finite energy invariant suite
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch31-passing-v3.mjs
+      - name: Complete 106/168-rider A/B and exact JSON restarts
+        env:
+          V3_BATCH31_FIXTURE: ${{ matrix.fixture }}
+          V3_BATCH31_OUT_DIR: ${{ runner.temp }}/batch31-${{ matrix.fixture }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch31-full-passing-v3.mjs
+      - name: Persist finishing order and passing energy evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch31-${{ matrix.fixture }}
+          path: ${{ runner.temp }}/batch31-${{ matrix.fixture }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Build production application
+        if: matrix.fixture == 'dordrecht-2000-10-15'
+        run: npm ci --no-audit --no-fund && npm run build
