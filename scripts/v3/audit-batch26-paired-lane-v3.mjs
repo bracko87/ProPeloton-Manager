@@ -9,7 +9,7 @@ const r6=x=>Math.round(x*1e6)/1e6,combined=process.env.V3_BATCH26_COMBINED==='1'
 const dest=process.env.V3_BATCH26_OUT_DIR??'/tmp/v3-batch26';mkdirSync(dest,{recursive:true})
 function percentile(values){const s=values.slice().sort((a,b)=>a-b);return r6((s[Math.floor((s.length-1)/2)]+s[Math.floor(s.length/2)])/2)}
 function candidateSnapshots(input){
- const state=initializeCoupledV3(input),available=new Map();let tick=0,firstBlocked=null,opportunities=0
+ const state=initializeCoupledV3(input),available=new Map();let tick=0,firstBlocked=null,opportunities=0,rejectedUnsafePlanners=0
  while(!state.complete){
   const before=state.riders.filter(r=>r.finishSeconds===null).map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,wheelLimitedTicks:r.wheelLimitedTicks,desiredMps:0,tactic:(input.orders??[]).filter(o=>o.riderId===r.riderId&&r.meters/1000>=o.startKm&&r.meters/1000<o.endKm).at(-1)?.tactic??'follow'}))
   advanceCoupledV3(input,state,1);tick++
@@ -19,7 +19,14 @@ function candidateSnapshots(input){
   const early=!available.has('first')
   const climb=nameIsGuangxi(input)&&!available.has('late_climb')&&before.some(r=>r.meters>=160800&&r.meters<=162600)
   if((early||climb)&&before.length>1&&state.elapsedSeconds%(input.sampleSeconds??120)!==0){
-   const planned=planAnticipatoryLanesV3(before,moves,input.grid.ridersAcross,1.8)
+   // Unsafe multi-rider proposals must not stop a safe single-rider research branch.
+   // Reject the entire proposal without modifying positions; never waive geometry.
+   let planned
+   try{planned=planAnticipatoryLanesV3(before,moves,input.grid.ridersAcross,1.8)}
+   catch(error){
+    if(error instanceof Error&&error.message==='Invalid anticipatory bicycle placement'){rejectedUnsafePlanners++;continue}
+    throw error
+   }
    opportunities+=planned.shifted
    const chosen=chooseSingleLaneV3(before,moves,planned)
    if(chosen&&early)available.set('first',{checkpoint:structuredClone(state),choice:chosen,tick})
@@ -32,7 +39,7 @@ function candidateSnapshots(input){
   assert(tick<6000,'Race checkpoint scan exceeded bound')
  }
  const result=finalizeCoupledV3(input,state);assert.equal(result.officialWrites,0);assert.equal(result.sportingApproval,'NOT_APPROVED')
- return {full:result,available,firstBlocked,opportunities,scannedTicks:tick}
+ return {full:result,available,firstBlocked,opportunities,rejectedUnsafePlanners,scannedTicks:tick}
 }
 const nameIsGuangxi=input=>input.raceId.startsWith('guangxi')
 function continuePair(input,record,reference){
@@ -68,8 +75,8 @@ for(const fixture of ['dordrecht-2000-10-15','guangxi-2000-10-19']){
  assert(scan.firstBlocked!==null,'Expected wheel blocking in frozen fixture')
  assert(scan.available.has('first'),'No safe intervention occurred: no invented lane or instant metres permitted')
  const branches=[...scan.available.entries()].map(([type,record])=>({type,...continuePair(input,record,scan.full)}))
- const report={fixture,combined,roster:base.riders.length,mode:'OFFLINE_RESEARCH_ONLY',sportingApproval:'NOT_APPROVED',officialWrites:0,firstBlockedTick:scan.firstBlocked,firstSafeLaneTick:scan.available.get('first').tick,proposedShiftCount:scan.opportunities,originalTailGapSeconds:scan.full.finish.at(-1).gapSeconds,branches,limitations:['Physiology identical at intervention, but future power evolves with positioning and draft','Guangxi synthetic route omits 718 m elevation','No official writes, no promotion, no live race access']}
+ const report={fixture,combined,roster:base.riders.length,mode:'OFFLINE_RESEARCH_ONLY',sportingApproval:'NOT_APPROVED',officialWrites:0,firstBlockedTick:scan.firstBlocked,firstSafeLaneTick:scan.available.get('first').tick,proposedShiftCount:scan.opportunities,rejectedUnsafePlannerTicks:scan.rejectedUnsafePlanners,originalTailGapSeconds:scan.full.finish.at(-1).gapSeconds,branches,limitations:['Physiology identical at intervention, but future power evolves with positioning and draft','Guangxi synthetic route omits 718 m elevation','No official writes, no promotion, no live race access']}
  const path=dest+'/'+fixture+(combined?'-combined':'-energy')+'-one-shot-lane.json'
  writeFileSync(path,JSON.stringify(report,null,2)+'\n')
- console.log(JSON.stringify({fixture,combined,roster:base.riders.length,firstBlockedTick:scan.firstBlocked,firstSafeLaneTick:report.firstSafeLaneTick,interventions:branches.map(({type,choice,branchTick,branchKm,deltaTailGapSeconds,meanGapDeltaSeconds,medianGapDeltaSeconds,deltaBlockedTicks,deltaMechanicalMJ,changedRankCount})=>({type,riderId:choice.riderId,branchTick,branchKm,deltaTailGapSeconds,meanGapDeltaSeconds,medianGapDeltaSeconds,deltaBlockedTicks,deltaMechanicalMJ,changedRankCount})),sportingApproval:'NOT_APPROVED',officialWrites:0,file:path}))
+ console.log(JSON.stringify({fixture,combined,roster:base.riders.length,firstBlockedTick:scan.firstBlocked,firstSafeLaneTick:report.firstSafeLaneTick,rejectedUnsafePlannerTicks:report.rejectedUnsafePlannerTicks,interventions:branches.map(({type,choice,branchTick,branchKm,deltaTailGapSeconds,meanGapDeltaSeconds,medianGapDeltaSeconds,deltaBlockedTicks,deltaMechanicalMJ,changedRankCount})=>({type,riderId:choice.riderId,branchTick,branchKm,deltaTailGapSeconds,meanGapDeltaSeconds,medianGapDeltaSeconds,deltaBlockedTicks,deltaMechanicalMJ,changedRankCount})),sportingApproval:'NOT_APPROVED',officialWrites:0,file:path}))
 }
