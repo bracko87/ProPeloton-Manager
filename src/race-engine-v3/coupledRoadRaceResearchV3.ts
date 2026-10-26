@@ -49,6 +49,21 @@ export interface CoupledRiderStateV3 {
   finishSeconds:number|null;activeAttackKey:string|null;attackSeconds:number;attackAttempts:number
   passes:number;wheelLimitedTicks:number;cumulativeActualWorkJoules:number;cumulativePowerDebtJoules:number;anticipatoryMoves?:number;draftPathExtraWorkJoules?:number;powerDurationEnergy?:ResearchEnergyStateV3
 }
+/** OFFLINE observer: source-side demand and wheel-limited achieved motion.
+ * Passing a callback never mutates the checkpoint or changes default output. */
+export interface CoupledMotionTraceRowV3 {
+ readonly riderId:string;readonly laneBefore:number;readonly laneAfter:number
+ readonly metersBefore:number;readonly metersAfter:number
+ readonly gradePercent:number;readonly headwindMps:number;readonly crosswindMps:number
+ readonly draftLeaderId:string|null;readonly shelterFraction:number;readonly sameLaneLeaderId:string|null
+ readonly sustainedWatts:number;readonly availableWatts:number;readonly tactic:CoupledOrderV3
+ readonly preEnergyRequestedMps:number;readonly postEnergyRequestedMps:number;readonly postPassRequestedMps:number
+ readonly commandedMps:number;readonly achievedMps:number;readonly wheelLimited:boolean;readonly preventedMeters:number
+ readonly actualMechanicalWatts:number;readonly passCostWatts:number
+ readonly wPrimeBeforeJ:number|null;readonly wPrimeAfterJ:number|null
+}
+export interface CoupledMotionTraceTickV3 {readonly tick:number;readonly elapsedSeconds:number;readonly rows:readonly CoupledMotionTraceRowV3[]}
+export type CoupledMotionTraceObserverV3=(sample:CoupledMotionTraceTickV3)=>void
 export interface CoupledFrameV3 {readonly elapsedSeconds:number;readonly riders:readonly {riderId:string;meters:number;energy:number;lane:number}[]}
 export interface CoupledStateV3 {
   readonly version:'coupled_offline_v3_01';readonly fingerprint:string;readonly totalMeters:number
@@ -124,7 +139,7 @@ export function initializeCoupledV3(input:CoupledInputV3):CoupledStateV3{
    ...(input.experimentalFinitePassReservation?{passingResearch:initializeFinitePassingV3()}:{}),riders:
   [...input.riders].sort((a,b)=>a.riderId.localeCompare(b.riderId)).map(r=>({riderId:r.riderId,teamId:r.teamId,meters:lineup.get(r.riderId)!.meters,lane:lineup.get(r.riderId)!.gridLane,speedMps:0,energy:round((r.startStamina??75)/100),finishSeconds:null,activeAttackKey:null,attackSeconds:0,attackAttempts:0,passes:0,wheelLimitedTicks:0,cumulativeActualWorkJoules:0,cumulativePowerDebtJoules:0,...(input.experimentalAnticipatoryLaneMoves?{anticipatoryMoves:0}:{}),...(input.experimentalPathDraftWork?{draftPathExtraWorkJoules:0}:{}),...(input.experimentalPowerDurationEnergy?{powerDurationEnergy:initializeEnergyBalanceResearchV3({criticalWatts:projectRiderPowerV3(r,0,'follow',input.gate.sourceQuality==='synthetic_research').sustainableWatts,wPrimeJoules:20000,initialWPrimeJoules:20000*(r.startStamina??75)/100})}:{})}))}
 }
-export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTicks:number):CoupledStateV3{
+export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTicks:number,onMotionTrace?:CoupledMotionTraceObserverV3):CoupledStateV3{
  validate(input)
  check(state.version==='coupled_offline_v3_01'&&state.fingerprint===fingerprint(input),'Checkpoint input mismatch')
  check(state.groupTimeline?.courseMeters===state.totalMeters&&state.groupTimeline.history.length===state.replay.length,'Divergent checkpoint replay/group history')
@@ -141,10 +156,12 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
   const maxDistance=Math.max(...active.map(r=>r.meters))
   const position:readonly SpatialRiderV3[]=active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,desiredMps:0,energy:r.energy}))
   const intent=new Map<string,{desired:number;road:PackRoadV3;drag:number;baseWatts:number;scale:number;action:CoupledOrderV3;attack:boolean}>()
+  const observation=onMotionTrace?new Map<string,{lane:number;meters:number;fraction:number;draftId:string|null;availableWatts:number;beforeLimitMps:number;afterLimitMps:number;afterPassMps:number;wprimeBefore:number|null;leaderId:string|null}>():null
   for(const rider of active){
    const road=roadAt(input,rider.meters),spec=profile.get(rider.riderId)!,tactic=tacticAt(input,rider.riderId,rider.meters)
    const riderView=position.find(p=>p.riderId===rider.riderId)!
-   const shelter=calculateSpatialSlipstreamV3(riderView,position,road).fraction
+   const shelterObservation=calculateSpatialSlipstreamV3(riderView,position,road)
+   const shelter=shelterObservation.fraction
    const drag=clamp(.36*(1-shelter),.22,.36)
    const projected=projectRiderPowerV3(spec,road.gradePercent,'follow',input.gate.sourceQuality==='synthetic_research')
    if(tactic.action==='attack'&&rider.activeAttackKey!==tactic.key){rider.activeAttackKey=tactic.key;rider.attackSeconds=rider.energy>.24?90:0;if(rider.attackSeconds>0)rider.attackAttempts++}
@@ -162,6 +179,10 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
    const capped=input.experimentalPowerDurationEnergy?boundRequestedSpeedByEnergyV3(rider.powerDurationEnergy!,dt,speed,physicalUpperWatts):speed
    const pendingPassing=state.passingResearch?.pending?.riderId===rider.riderId
     const reservedCap=pendingPassing?capFinitePassSpeedV3(capped,Math.min(available,rider.powerDurationEnergy!.criticalWatts+rider.powerDurationEnergy!.remainingWPrimeJoules/dt),physicalUpperWatts,passingSettings!.additionalWatts):capped
+    if(observation){
+     const ahead=position.filter(p=>p.riderId!==rider.riderId&&p.lane===rider.lane&&p.meters>=rider.meters+1.8-1e-5).sort((a,b)=>a.meters-b.meters||a.riderId.localeCompare(b.riderId))[0]
+     observation.set(rider.riderId,{lane:rider.lane,meters:rider.meters,fraction:shelter,draftId:shelterObservation.leaderId,availableWatts:available,beforeLimitMps:speed,afterLimitMps:capped,afterPassMps:reservedCap,wprimeBefore:rider.powerDurationEnergy?.remainingWPrimeJoules??null,leaderId:ahead?.riderId??null})
+    }
     intent.set(rider.riderId,{desired:input.experimentalPowerDurationEnergy?Math.max(0,Math.floor(reservedCap*1e6)/1e6-0.000002):round(reservedCap),road,drag,baseWatts:projected.sustainableWatts,scale:projected.energyCostScale,action:tactic.action,attack})
   }
   const telemetryBefore=input.experimentalPowerDurationEnergy&&input.experimentalBottleneckTelemetry
@@ -244,6 +265,15 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
     }catch(error){if(!(error instanceof Error&&error.message==='Invalid anticipatory bicycle placement'))throw error}
    }
    state.elapsedSeconds=round(state.elapsedSeconds+dt);state.tick++
+   if(onMotionTrace){
+    const rows:CoupledMotionTraceRowV3[]=active.map(r=>{
+     const o=observation!.get(r.riderId)!,i=intent.get(r.riderId)!,m=movement.get(r.riderId)!
+     const passCostWatts=finitePassTick?.chargedRiderId===r.riderId?passingSettings!.additionalWatts:0
+     const actualMechanicalWatts=(observedDraft?.get(r.riderId)?.wattsWithPathExposure??roadWattsRequiredV3(m.speedMps,83,i.drag,i.road))+passCostWatts
+     return {riderId:r.riderId,laneBefore:o.lane,laneAfter:r.lane,metersBefore:o.meters,metersAfter:r.meters,gradePercent:i.road.gradePercent,headwindMps:i.road.headwindMps??0,crosswindMps:i.road.crosswindMps??0,draftLeaderId:o.draftId,shelterFraction:o.fraction,sameLaneLeaderId:o.leaderId,sustainedWatts:i.baseWatts,availableWatts:o.availableWatts,tactic:i.action,preEnergyRequestedMps:o.beforeLimitMps,postEnergyRequestedMps:o.afterLimitMps,postPassRequestedMps:o.afterPassMps,commandedMps:i.desired,achievedMps:m.speedMps,wheelLimited:m.wheelLimited,preventedMeters:Math.max(0,i.desired*dt-(m.meters-o.meters)),actualMechanicalWatts,passCostWatts,wPrimeBeforeJ:o.wprimeBefore,wPrimeAfterJ:r.powerDurationEnergy?.remainingWPrimeJoules??null}
+    })
+    onMotionTrace({tick:state.tick,elapsedSeconds:state.elapsedSeconds,rows})
+   }
   state.complete=state.riders.every(r=>r.finishSeconds!==null)
   if(state.elapsedSeconds%sample===0||state.complete){
    const frame={elapsedSeconds:state.elapsedSeconds,riders:state.riders.map(r=>({riderId:r.riderId,meters:r.meters,energy:r.energy,lane:r.lane}))}
