@@ -107,7 +107,7 @@ export function advanceCoupled2DResearchV3(state,steps=1){
    if(reserve?.phase==='steering'){desiredY=r6(reserve.fromY+(reserve.targetY-reserve.fromY)*Math.min(1,reserve.progress+1/3));steeringNow=true}
    const extraWatts=steeringNow?35:0
    const road=predicted.road,workAt=v=>roadWattsRequiredV3(v,83,predicted.cdA,road)
-   const maxAllowed=r.cpWatts+r.energy.remainingWPrimeJoules/dt
+   const maxAllowed=Math.max(0,r.cpWatts+r.energy.remainingWPrimeJoules/dt-.5)
    let requested=predicted.speed
    if(workAt(requested)+extraWatts>maxAllowed+1e-5){
     let lo=0,hi=requested
@@ -122,7 +122,7 @@ export function advanceCoupled2DResearchV3(state,steps=1){
    const newSpeed=r6(Math.max(0,(newMeters-r.meters)/dt))
    const actualWatts=workAt(newSpeed)+(steeringNow?35:0)
    const energy=advanceEnergyBalanceResearchV3(r.energy,actualWatts,dt)
-   fail(energy.accepted,'W-prime invalid actual two-dimensional achieved work')
+   fail(energy.accepted,'W-prime invalid actual two-dimensional achieved work '+JSON.stringify({riderId:r.riderId,tick:out.tick,actualWatts,critical:r.cpWatts,remainingWPrime:r.energy.remainingWPrimeJoules,requested,newSpeed,steeringNow,extraWatts}))
    out.metrics.energyJ+=actualWatts*dt
    out.metrics.commandedMeters+=intended.speed
    out.metrics.achievedMeters+=newMeters-r.meters
