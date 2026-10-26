@@ -1,0 +1,30 @@
+name: V3 Batch 22 offline power-duration
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/race-engine-v3/**'
+      - 'scripts/v3/verify-batch22-full-races-v3.mjs'
+      - '.github/workflows/v3-batch22-research.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  batch22:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict research TypeScript validation
+        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/coupledRoadRaceResearchV3.ts src/race-engine-v3/energyBalanceResearchV3.ts
+      - name: Full-length Dordrecht and Guangxi A/B with exact checkpoints
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch22-full-races-v3.mjs
+      - name: Combined lane, path draft, bottlenecks and energy checkpoints
+        run: V3_BATCH22_COMBINED=1 node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch22-full-races-v3.mjs
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Check production application build
+        run: npm run build
