@@ -1,0 +1,53 @@
+name: V3 Batch 25 offline positioning cascades
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/positionCascadeDiagnosticsV3.mjs'
+      - 'scripts/v3/verify-position-cascade-v3.mjs'
+      - 'scripts/v3/audit-batch25-position-cascades-v3.mjs'
+      - 'scripts/v3/verify-batch25-fixed-targets-v3.mjs'
+      - '.github/workflows/v3-batch25-position-cascades.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deterministic cascade detection, order independence and fail closed
+        run: node scripts/v3/verify-position-cascade-v3.mjs
+      - name: Identical-speed geometry-only full-roster shadow, lane safety
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch25-fixed-targets-v3.mjs
+  full-race:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [energy, combined]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Full-roster baseline versus W-prime cascade traces
+        env:
+          V3_BATCH25_COMBINED: ${{ matrix.mode == 'combined' && '1' || '0' }}
+          V3_BATCH25_OUT_DIR: ${{ runner.temp }}/v3-batch25-${{ matrix.mode }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch25-position-cascades-v3.mjs
+      - name: Preserve full rider-level trace evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch25-${{ matrix.mode }}-cascades
+          path: ${{ runner.temp }}/v3-batch25-${{ matrix.mode }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Install locked dependencies and build app
+        if: matrix.mode == 'energy'
+        run: npm ci --no-audit --no-fund && npm run build
