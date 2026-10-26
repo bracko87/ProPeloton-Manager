@@ -46,7 +46,7 @@ export function auditFrozenTickV3(before,rows,{laneCount=4,dtSeconds=10}={}){
  const baseline=advanceSpatialPelotonV3(physicsRows,{laneCount,dtSeconds,minWheelGapMeters:1.8})
  for(const m of baseline){const recorded=expected.get(m.riderId);if(!close(m.meters,recorded.metersAfter,2e-5)||!close(m.speedMps,recorded.achievedMps,2e-5)||m.lane!==recorded.laneAfter||m.wheelLimited!==recorded.wheelLimited)throw Error('Frozen replay does not reproduce actual solver movement')}
  const baseById=new Map(baseline.map(x=>[x.riderId,x]))
- const totals={riderTicks:rows.length,benefitTicks:0,work100J:0,work50J:0,work0J:0}
+ const totals={riderTicks:rows.length,benefitingTicks:0,work100J:0,work50J:0,work0J:0}
  for(const r of rows){
   const road={gradePercent:r.gradePercent,headwindMps:r.headwindMps,crosswindMps:r.crosswindMps}
   const actual=r.actualMechanicalWatts-r.passCostWatts
@@ -54,7 +54,7 @@ export function auditFrozenTickV3(before,rows,{laneCount=4,dtSeconds=10}={}){
   const half=draftCounterfactualWattsV3(r.achievedMps,r.integratedShelterFraction,road,.5)
   const bare=draftCounterfactualWattsV3(r.achievedMps,r.integratedShelterFraction,road,0)
   if(![full,half,bare].every(Number.isFinite)||!close(full,actual,1e-6))throw Error('Changed observed work in shadow')
-  totals.benefitTicks+=Number(bare>full+1e-6);totals.work100J+=full*dtSeconds;totals.work50J+=half*dtSeconds;totals.work0J+=bare*dtSeconds
+  totals.benefitingTicks+=Number(bare>full+1e-6);totals.work100J+=full*dtSeconds;totals.work50J+=half*dtSeconds;totals.work0J+=bare*dtSeconds
  }
  const shadowFactors=[0,.5,1].map(factor=>{
   const modified=physicsRows.map(r=>({...r,desiredMps:factor===1?expected.get(r.riderId).commandedMps:frozenDemandAtShelterV3(byId.get(r.riderId),expected.get(r.riderId),factor,dtSeconds)}))

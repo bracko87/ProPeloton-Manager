@@ -13,7 +13,7 @@ assert.equal(baseline.factorial[2].changedWheelFlag,0)
 assert.equal(baseline.energyWork.riderTicks,24)
 assert(baseline.laneOnly&&baseline.laneOnly.riderIds.length===2)
 const again=auditFrozenTickV3(before.slice().reverse(),trace.rows.slice().reverse())
-assert.deepEqual(baseline.energyWork,again.energyWork)
+for(const k of Object.keys(baseline.energyWork))assert(Math.abs(baseline.energyWork[k]-again.energyWork[k])<1e-8,'Permutation changed frozen shadow '+k)
 for(const row of trace.rows){const from=before.find(x=>x.riderId===row.riderId);assert(Math.abs(frozenDemandAtShelterV3(from,row,1,10)-row.commandedMps)<=.000003)}
 assert.throws(()=>auditFrozenTickV3(before,trace.rows.slice(1)),/Invalid matched/)
 assert.throws(()=>auditFrozenTickV3(before,trace.rows.map(x=>({...x,metersAfter:x.metersAfter+1}))),/Frozen replay/)
