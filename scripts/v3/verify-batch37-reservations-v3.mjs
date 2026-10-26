@@ -24,6 +24,6 @@ const nxt=advanceSpatialPelotonV3(next,road)
 const result=pairedOneTickLanePreparationV3(next,nxt,{riderId:'b',fromLane:next[1].lane,toLane:3},road)
 assert(typeof result.safe==='boolean')
 assert.throws(()=>pairedOneTickLanePreparationV3(next,nxt,{riderId:'x',fromLane:0,toLane:1},road),/Stale/)
-const forced={...setup[2],lane:0,meters:96}
+const forced={...setup[2],lane:0,meters:99}
 assert.throws(()=>advanceSpatialPelotonV3([setup[0],forced],road),/Overlapping/)
 console.log(JSON.stringify({status:'PASS',suite:'Batch37 reservation attribution',riderCount:4,blocked:details.summary.wheelLimitedRiderTicks,clip:details.summary.actualLostMeters,selected:!!selected.candidate}))
