@@ -90,7 +90,7 @@ if(failures.length===0){
   originalBlockedSecondsVsTen:results[6].metrics.blockedRiderSeconds-results[0].metrics.blockedRiderSeconds,
   originalMechanicalEnergyVsTenJ:r6(results[6].metrics.mechanicalEnergyJ-results[0].metrics.mechanicalEnergyJ)
  }
- comparisons={withinGridSensitivity:groups,normalizedVsTen,normalizedVsLegacyFive,deltas}
+ comparisons={withinGridSensitivity:groups,normalizedVsTen,normalizedVsLegacyFive:normalizedVsFive,deltas}
 }
 const report={
  study:'MILESTONE_A2_SECONDS_NORMALIZED_DT',fixture,riderCount:roster.length,
