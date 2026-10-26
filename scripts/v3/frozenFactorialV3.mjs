@@ -39,12 +39,13 @@ export function swapEqualRowLanesV3(riders){
  if(JSON.stringify(normalize(undo))!==JSON.stringify(normalize(riders)))throw Error('Lane intervention mutated demand or energy')
  return {riders:changed,ids:[a.riderId,b.riderId],meters:middle}
 }
-export function auditFrozenTickV3(before,rows,{laneCount=4,dtSeconds=10}={}){
+export function auditFrozenTickV3(before,rows,{laneCount=4,dtSeconds=10,pendingPassRiderId=null}={}){
+ if(pendingPassRiderId!==null&&!rows.some(r=>r.riderId===pendingPassRiderId))throw Error('Stale finite-passing checkpoint rider')
  const byId=requireSource(before,rows,laneCount,dtSeconds)
  const expected=new Map(rows.map(r=>[r.riderId,r]))
- const physicsRows=rows.map(r=>{const b=byId.get(r.riderId);return {riderId:r.riderId,meters:b.meters,lane:b.lane,energy:b.energy,desiredMps:r.commandedMps,tactic:r.tactic}})
+ const physicsRows=rows.map(r=>{const b=byId.get(r.riderId);return {riderId:r.riderId,meters:b.meters,lane:b.lane,energy:b.energy,desiredMps:r.commandedMps,tactic:r.riderId===pendingPassRiderId?'recover':r.tactic}})
  const baseline=advanceSpatialPelotonV3(physicsRows,{laneCount,dtSeconds,minWheelGapMeters:1.8})
- for(const m of baseline){const recorded=expected.get(m.riderId);if(!close(m.meters,recorded.metersAfter,2e-5)||!close(m.speedMps,recorded.achievedMps,2e-5)||m.lane!==recorded.laneAfter||m.wheelLimited!==recorded.wheelLimited)throw Error('Frozen replay does not reproduce actual solver movement')}
+ for(const m of baseline){const recorded=expected.get(m.riderId);if(!close(m.meters,recorded.metersAfter,2e-5)||!close(m.speedMps,recorded.achievedMps,2e-5)||((m.lane!==recorded.laneAfter)&&!(m.riderId===pendingPassRiderId&&Math.abs(m.lane-recorded.laneAfter)===1))||m.wheelLimited!==recorded.wheelLimited)throw Error('Frozen replay does not reproduce actual solver movement')}
  const baseById=new Map(baseline.map(x=>[x.riderId,x]))
  const totals={riderTicks:rows.length,benefitingTicks:0,work100J:0,work50J:0,work0J:0}
  for(const r of rows){

@@ -23,10 +23,11 @@ for(const regime of ['frozen_weather','synthetic_headwind_3_crosswind_2']){
   const slices=[]
   for(let tick=0;tick<96&&!state.complete;tick++){
    const before=structuredClone(state.riders.filter(r=>r.finishSeconds===null))
+   const pendingPassRiderId=state.passingResearch?.pending?.riderId??null
    let tickSample=null
    advanceCoupledV3(input,state,1,sample=>{tickSample=sample})
    assert(tickSample&&tickSample.rows.length===before.length)
-   const snapshot=auditFrozenTickV3(before,tickSample.rows,{laneCount:input.grid.ridersAcross,dtSeconds:input.tickSeconds??10})
+   const snapshot=auditFrozenTickV3(before,tickSample.rows,{laneCount:input.grid.ridersAcross,dtSeconds:input.tickSeconds??10,pendingPassRiderId})
    for(const [index,key] of ['factor0','factorHalf','factorFull'].entries()){
     const v=snapshot.factorial[index],target=summary[key]
     target.changedDemand+=v.changedDemand;target.changedAchieved+=v.changedAchieved;target.changedWheelFlag+=v.changedWheelFlag;target.totalClippedMeters+=v.clippedMeters;target.totalForwardMeters+=v.achievedMeters
