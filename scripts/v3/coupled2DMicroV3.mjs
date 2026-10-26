@@ -57,8 +57,8 @@ function demand(r,all,road,dt){
  const v=clamp(wanted,Math.max(0,r.speedMps-.9),r.speedMps+.9)
  return {speed:r6(v),cdA,road,shelter,watts:r6(workAt(v))}
 }
-export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEOMETRIES[1],allowSteering=false,capacity=2,dt=10,quality='synthetic_research',experimentalPriorityPolicy='rider_id',experimentalPassingTrigger='blocked_2'}={}){
- fail(Array.isArray(riders)&&riders.length>=2&&riders.length<=200&&Array.isArray(route)&&route.length&&Number.isInteger(dt)&&dt>=5&&dt<=20&&[1,2,3].includes(capacity)&&typeof allowSteering==='boolean'&&quality==='synthetic_research'&&['rider_id','rotating_lane'].includes(experimentalPriorityPolicy)&&['blocked_2','closing_wheel'].includes(experimentalPassingTrigger),'Invalid offline 2D research input')
+export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEOMETRIES[1],allowSteering=false,capacity=2,dt=10,quality='synthetic_research',experimentalPriorityPolicy='rider_id',experimentalPassingTrigger='blocked_2',experimentalPassingAdmissionPolicy='global'}={}){
+ fail(Array.isArray(riders)&&riders.length>=2&&riders.length<=200&&Array.isArray(route)&&route.length&&Number.isInteger(dt)&&dt>=5&&dt<=20&&[1,2,3].includes(capacity)&&typeof allowSteering==='boolean'&&quality==='synthetic_research'&&['rider_id','rotating_lane'].includes(experimentalPriorityPolicy)&&['blocked_2','closing_wheel'].includes(experimentalPassingTrigger)&&['global','local_30m'].includes(experimentalPassingAdmissionPolicy),'Invalid offline 2D research input')
  const g=validateRoadScenarioV3(geometry)
  const finishDistanceMeters=r6(route.reduce((sum,segment)=>sum+segment.lengthKm*1000,0))
  fail(Number.isFinite(finishDistanceMeters)&&finishDistanceMeters>0&&finishDistanceMeters<1000000,'Invalid stage finish line')
@@ -70,7 +70,7 @@ export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEO
  })
  for(let i=0;i<initial.length;i++)for(let j=i+1;j<initial.length;j++)fail(!isHit({x0:initial[i].meters,x1:initial[i].meters,y0:initial[i].y,y1:initial[i].y},{x0:initial[j].meters,x1:initial[j].meters,y0:initial[j].y,y1:initial[j].y},g),'Initial two-dimensional bicycle collision')
  for(const s of route)fail(Number.isFinite(s.lengthKm)&&s.lengthKm>0&&Number.isFinite(s.gradePercent)&&Math.abs(s.gradePercent)<=22,'Invalid route')
- return {version:42,gate:'OFFLINE_RESEARCH_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',input:{route:structuredClone(route),geometry:structuredClone(geometry),allowSteering,capacity,dt,quality,experimentalPriorityPolicy,experimentalPassingTrigger,finishDistanceMeters},riders:initial,finish:[],complete:false,tick:0,elapsedSeconds:0,metrics:{commandedMeters:0,achievedMeters:0,blockedRiderTicks:0,preventedMeters:0,pathClips:0,collisionChecks:0,reservationsStarted:0,completedPasses:0,abortedPasses:0,concurrentPeak:0,energyJ:0,lateralMeters:0,first30mGapSecond:null},samples:[]}
+ return {version:42,gate:'OFFLINE_RESEARCH_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',input:{route:structuredClone(route),geometry:structuredClone(geometry),allowSteering,capacity,dt,quality,experimentalPriorityPolicy,experimentalPassingTrigger,...(experimentalPassingAdmissionPolicy==='global'?{}:{experimentalPassingAdmissionPolicy}),finishDistanceMeters},riders:initial,finish:[],complete:false,tick:0,elapsedSeconds:0,metrics:{commandedMeters:0,achievedMeters:0,blockedRiderTicks:0,preventedMeters:0,pathClips:0,collisionChecks:0,reservationsStarted:0,completedPasses:0,abortedPasses:0,concurrentPeak:0,energyJ:0,lateralMeters:0,first30mGapSecond:null},samples:[]}
 }
 function currentReservations(rows){return rows.filter(r=>r.reservation)}
 /** Conservative early closing-wheel predicate, evaluated on current actual
@@ -90,13 +90,23 @@ export function shouldPreparePass2DV3(r,rows,g,trigger='blocked_2'){
  // Within two 10-second reaction intervals, but no longer than 12 metres.
  return closing>.2&&headway>1.8&&headway<=12&&headway-2*10*closing<4.5
 }
+/** A2 research-only overtaking admission study. The historical default is a
+ * global cap; local_30m caps only reservations whose forward positions lie
+ * within 30 metres of the candidate, without weakening continuous collisions.
+ * Spatial admission is an opt-in hypothesis, NOT a production racing rule.
+ */
+export function canAdmitPassingReservationV3(r,current,capacity,policy='global'){
+ fail(Number.isInteger(capacity)&&capacity>=1&&capacity<=3&&['global','local_30m'].includes(policy)&&Number.isFinite(r?.meters)&&Array.isArray(current)&&current.every(x=>Number.isFinite(x?.meters)),'Invalid passing admission study')
+ if(policy==='global')return current.length<capacity
+ return current.filter(x=>Math.abs(x.meters-r.meters)<=30).length<capacity
+}
 function chooseNewReservations(rows,g,settings,metrics){
  if(!settings.allowSteering)return
  const current=currentReservations(rows)
  const options=rows.filter(r=>r.finishSeconds===null&&!r.reservation&&shouldPreparePass2DV3(r,rows,g,settings.experimentalPassingTrigger)&&Math.abs(r.y/g.centerStepM-Math.round(r.y/g.centerStepM))<1e-5)
   .sort((a,b)=>b.blockedStreak-a.blockedStreak||a.riderId.localeCompare(b.riderId))
  for(const r of options){
-  if(current.length>=settings.capacity)break
+  if(!canAdmitPassingReservationV3(r,current,settings.capacity,settings.experimentalPassingAdmissionPolicy??'global')){if((settings.experimentalPassingAdmissionPolicy??'global')==='global')break;continue}
   const lane=Math.round(r.y/g.centerStepM)
   const destinations=[lane-1,lane+1].filter(l=>l>=0&&l<g.laneCount)
   const clear=destinations.filter(l=>{

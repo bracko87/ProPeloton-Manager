@@ -1,0 +1,45 @@
+name: V3 Milestone A2 local passing admission full stages
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/coupled2DMicroV3.mjs'
+      - 'scripts/v3/verify-a2-local-admission-v3.mjs'
+      - 'scripts/v3/audit-a2-local-admission-v3.mjs'
+      - '.github/workflows/v3-a2-local-admission.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-stages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collision, finish, baseline and admission safety
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-local-admission-v3.mjs
+      - name: Four full-stage original and swapped grids for local vs global
+        env:
+          V3_A2_ADMISSION_FIXTURE: ${{ matrix.fixture }}
+          V3_A2_ADMISSION_DIR: ${{ runner.temp }}/a2-admission-${{ matrix.fixture }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-local-admission-v3.mjs
+      - name: Preserve classification and checkpoint evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-local-admission-${{ matrix.fixture }}
+          path: ${{ runner.temp }}/a2-admission-${{ matrix.fixture }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Production application build
+        if: matrix.fixture == 'dordrecht-2000-10-15'
+        run: npm ci --no-audit --no-fund && npm run build
