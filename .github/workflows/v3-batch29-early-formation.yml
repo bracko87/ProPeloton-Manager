@@ -1,0 +1,44 @@
+name: V3 Batch 29 early formation stability
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/earlyFormationResearchV3.mjs'
+      - 'scripts/v3/verify-early-formation-v3.mjs'
+      - 'scripts/v3/audit-batch29-early-formation-v3.mjs'
+      - '.github/workflows/v3-batch29-early-formation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  formation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+        mode: [energy, combined]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Fail-closed lateral move / cooldown / energy unit tests
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-early-formation-v3.mjs
+      - name: Same-grid controlled early formation A/B full races
+        env:
+          V3_BATCH29_FIXTURE: ${{ matrix.fixture }}
+          V3_BATCH29_MODE: ${{ matrix.mode }}
+          V3_BATCH29_OUT_DIR: ${{ runner.temp }}/batch29-${{ matrix.fixture }}-${{ matrix.mode }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch29-early-formation-v3.mjs
+      - name: Persist A/B rider and group evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch29-${{ matrix.fixture }}-${{ matrix.mode }}
+          path: ${{ runner.temp }}/batch29-${{ matrix.fixture }}-${{ matrix.mode }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Production application build
+        if: matrix.fixture == 'dordrecht-2000-10-15' && matrix.mode == 'energy'
+        run: npm ci --no-audit --no-fund && npm run build
