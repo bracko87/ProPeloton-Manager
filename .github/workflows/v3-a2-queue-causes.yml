@@ -1,0 +1,45 @@
+name: V3 A2 exact passing queue causes
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/coupled2DMicroV3.mjs'
+      - 'scripts/v3/verify-a2-queue-causes-v3.mjs'
+      - 'scripts/v3/audit-a2-queue-causes-v3.mjs'
+      - '.github/workflows/v3-a2-queue-causes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-stages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify safety, default invariance and diagnostic trace
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-queue-causes-v3.mjs
+      - name: Compare baseline versus full-stage instrumented run
+        env:
+          V3_A2_QUEUE_FIXTURE: ${{ matrix.fixture }}
+          V3_A2_QUEUE_DIR: ${{ runner.temp }}/a2-queue-${{ matrix.fixture }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-queue-causes-v3.mjs
+      - name: Preserve per-rider audit evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-queue-causes-${{ matrix.fixture }}
+          path: ${{ runner.temp }}/a2-queue-${{ matrix.fixture }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Production application build
+        if: matrix.fixture == 'dordrecht-2000-10-15'
+        run: npm ci --no-audit --no-fund && npm run build

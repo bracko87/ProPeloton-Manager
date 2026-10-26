@@ -57,8 +57,8 @@ function demand(r,all,road,dt){
  const v=clamp(wanted,Math.max(0,r.speedMps-.9),r.speedMps+.9)
  return {speed:r6(v),cdA,road,shelter,watts:r6(workAt(v))}
 }
-export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEOMETRIES[1],allowSteering=false,capacity=2,dt=10,quality='synthetic_research',experimentalPriorityPolicy='rider_id',experimentalPassingTrigger='blocked_2',experimentalPassingAdmissionPolicy='global'}={}){
- fail(Array.isArray(riders)&&riders.length>=2&&riders.length<=200&&Array.isArray(route)&&route.length&&Number.isInteger(dt)&&dt>=5&&dt<=20&&[1,2,3].includes(capacity)&&typeof allowSteering==='boolean'&&quality==='synthetic_research'&&['rider_id','rotating_lane'].includes(experimentalPriorityPolicy)&&['blocked_2','closing_wheel'].includes(experimentalPassingTrigger)&&['global','local_30m'].includes(experimentalPassingAdmissionPolicy),'Invalid offline 2D research input')
+export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEOMETRIES[1],allowSteering=false,capacity=2,dt=10,quality='synthetic_research',experimentalPriorityPolicy='rider_id',experimentalPassingTrigger='blocked_2',experimentalPassingAdmissionPolicy='global',diagnosePassing=false}={}){
+ fail(Array.isArray(riders)&&riders.length>=2&&riders.length<=200&&Array.isArray(route)&&route.length&&Number.isInteger(dt)&&dt>=5&&dt<=20&&[1,2,3].includes(capacity)&&typeof allowSteering==='boolean'&&quality==='synthetic_research'&&['rider_id','rotating_lane'].includes(experimentalPriorityPolicy)&&['blocked_2','closing_wheel'].includes(experimentalPassingTrigger)&&['global','local_30m'].includes(experimentalPassingAdmissionPolicy)&&typeof diagnosePassing==='boolean','Invalid offline 2D research input')
  const g=validateRoadScenarioV3(geometry)
  const finishDistanceMeters=r6(route.reduce((sum,segment)=>sum+segment.lengthKm*1000,0))
  fail(Number.isFinite(finishDistanceMeters)&&finishDistanceMeters>0&&finishDistanceMeters<1000000,'Invalid stage finish line')
@@ -70,7 +70,7 @@ export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEO
  })
  for(let i=0;i<initial.length;i++)for(let j=i+1;j<initial.length;j++)fail(!isHit({x0:initial[i].meters,x1:initial[i].meters,y0:initial[i].y,y1:initial[i].y},{x0:initial[j].meters,x1:initial[j].meters,y0:initial[j].y,y1:initial[j].y},g),'Initial two-dimensional bicycle collision')
  for(const s of route)fail(Number.isFinite(s.lengthKm)&&s.lengthKm>0&&Number.isFinite(s.gradePercent)&&Math.abs(s.gradePercent)<=22,'Invalid route')
- return {version:42,gate:'OFFLINE_RESEARCH_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',input:{route:structuredClone(route),geometry:structuredClone(geometry),allowSteering,capacity,dt,quality,experimentalPriorityPolicy,experimentalPassingTrigger,...(experimentalPassingAdmissionPolicy==='global'?{}:{experimentalPassingAdmissionPolicy}),finishDistanceMeters},riders:initial,finish:[],complete:false,tick:0,elapsedSeconds:0,metrics:{commandedMeters:0,achievedMeters:0,blockedRiderTicks:0,preventedMeters:0,pathClips:0,collisionChecks:0,reservationsStarted:0,completedPasses:0,abortedPasses:0,concurrentPeak:0,energyJ:0,lateralMeters:0,first30mGapSecond:null},samples:[]}
+ return {version:42,gate:'OFFLINE_RESEARCH_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',input:{route:structuredClone(route),geometry:structuredClone(geometry),allowSteering,capacity,dt,quality,experimentalPriorityPolicy,experimentalPassingTrigger,...(experimentalPassingAdmissionPolicy==='global'?{}:{experimentalPassingAdmissionPolicy}),...(diagnosePassing?{diagnosePassing:true}:{}),finishDistanceMeters},riders:initial,finish:[],complete:false,tick:0,elapsedSeconds:0,metrics:{commandedMeters:0,achievedMeters:0,blockedRiderTicks:0,preventedMeters:0,pathClips:0,collisionChecks:0,reservationsStarted:0,completedPasses:0,abortedPasses:0,concurrentPeak:0,energyJ:0,lateralMeters:0,first30mGapSecond:null,...(diagnosePassing?{passingAudit:{eligible:0,admitted:0,capacityDenied:0,physicalLaneDenied:0,reservedLaneDenied:0,collisionAborted:0,finishAborted:0,forwardPairPasses:0,passingByRider:{},queueByRider:{},maxWaitingTicks:0}}:{})},samples:[]}
 }
 function currentReservations(rows){return rows.filter(r=>r.reservation)}
 /** Conservative early closing-wheel predicate, evaluated on current actual
@@ -102,24 +102,61 @@ export function canAdmitPassingReservationV3(r,current,capacity,policy='global')
 }
 function chooseNewReservations(rows,g,settings,metrics){
  if(!settings.allowSteering)return
- const current=currentReservations(rows)
+ const active=currentReservations(rows),audit=metrics.passingAudit
  const options=rows.filter(r=>r.finishSeconds===null&&!r.reservation&&shouldPreparePass2DV3(r,rows,g,settings.experimentalPassingTrigger)&&Math.abs(r.y/g.centerStepM-Math.round(r.y/g.centerStepM))<1e-5)
   .sort((a,b)=>b.blockedStreak-a.blockedStreak||a.riderId.localeCompare(b.riderId))
+ if(audit){
+  const ids=new Set(options.map(r=>r.riderId))
+  for(const id of Object.keys(audit.queueByRider))if(!ids.has(id))audit.queueByRider[id]=0
+ }
  for(const r of options){
-  if(!canAdmitPassingReservationV3(r,current,settings.capacity,settings.experimentalPassingAdmissionPolicy??'global')){if((settings.experimentalPassingAdmissionPolicy??'global')==='global')break;continue}
+  const denied=(kind)=>{
+   if(!audit)return
+   audit.eligible++;audit[kind]++
+   const count=(audit.queueByRider[r.riderId]??0)+1
+   audit.queueByRider[r.riderId]=count
+   audit.maxWaitingTicks=Math.max(audit.maxWaitingTicks,count)
+  }
+  if(!canAdmitPassingReservationV3(r,active,settings.capacity,settings.experimentalPassingAdmissionPolicy??'global')){
+   denied('capacityDenied')
+   // Observational mode counts all waiting candidates even when the global
+   // cap is reached; no further reservation can be added in global mode.
+   if(!audit&&(settings.experimentalPassingAdmissionPolicy??'global')==='global')break
+   continue
+  }
   const lane=Math.round(r.y/g.centerStepM)
   const destinations=[lane-1,lane+1].filter(l=>l>=0&&l<g.laneCount)
-  const clear=destinations.filter(l=>{
+  const physical=destinations.filter(l=>{
    const target=l*g.centerStepM
-   if(rows.some(x=>x.riderId!==r.riderId&&Math.abs(x.y-target)<g.lateralCollisionM&&Math.abs(x.meters-r.meters)<1.8))return false
-   if(current.some(x=>Math.abs(x.meters-r.meters)<15&&Math.abs(x.reservation.targetY-target)<g.centerStepM+.01))return false
-   return true
+   return !rows.some(x=>x.riderId!==r.riderId&&Math.abs(x.y-target)<g.lateralCollisionM&&Math.abs(x.meters-r.meters)<1.8)
   })
-  if(!clear.length)continue
-  const to=clear.sort((a,b)=>a-b)[0]
-  r.reservation={fromY:r.y,targetY:r6(to*g.centerStepM),reactionLeft:2,steeringLeft:3,progress:0,phase:'reaction',chargedJ:0}
-  current.push(r);metrics.reservationsStarted++
+  if(!physical.length){denied('physicalLaneDenied');continue}
+  const clear=physical.filter(l=>{
+   const target=l*g.centerStepM
+   return !active.some(x=>Math.abs(x.meters-r.meters)<15&&Math.abs(x.reservation.targetY-target)<g.centerStepM+.01)
+  })
+  if(!clear.length){denied('reservedLaneDenied');continue}
+  const target=clear.sort((a,b)=>a-b)[0]
+  r.reservation={fromY:r.y,targetY:r6(target*g.centerStepM),reactionLeft:2,steeringLeft:3,progress:0,phase:'reaction',chargedJ:0}
+  active.push(r);metrics.reservationsStarted++
+  if(audit){audit.eligible++;audit.admitted++;audit.queueByRider[r.riderId]=0}
  }
+}
+/** Actual longitudinal crossings at tick endpoints between riders still active.
+ * Equal-row starts and finished riders are excluded. The original collision
+ * checker separately guarantees the continuous 2D swept paths do not intersect.
+ */
+export function observeForwardPairPassesV3(before,after,epsilon=.05){
+ fail(Array.isArray(before)&&Array.isArray(after)&&Number.isFinite(epsilon)&&epsilon>0,'Invalid pair observation')
+ const finished=new Map(after.filter(r=>r.finishSeconds===null).map(r=>[r.riderId,r])),passes=[]
+ for(let i=0;i<before.length;i++)for(let j=i+1;j<before.length;j++){
+  const a=before[i],b=before[j],an=finished.get(a.riderId),bn=finished.get(b.riderId)
+  if(!an||!bn)continue
+  const prev=a.meters-b.meters,next=an.meters-bn.meters
+  if(prev>epsilon&&next< -epsilon)passes.push({passer:b.riderId,passed:a.riderId})
+  else if(prev< -epsilon&&next>epsilon)passes.push({passer:a.riderId,passed:b.riderId})
+ }
+ return passes
 }
 function moveCandidate(r,intended,paths,g,metrics,unplanned){
  const reserved=[...paths,...unplanned.map(x=>({x0:x.meters,x1:x.meters,y0:x.y,y1:x.y}))]
@@ -164,7 +201,7 @@ export function advanceCoupled2DResearchV3(state,steps=1){
    const intended={speed:requested*dt,y:desiredY}
    const remaining=prioritized.filter(x=>x.riderId!==r.riderId&&!paths.some(p=>p.riderId===x.riderId))
    const motion=moveCandidate(r,intended,paths,g,out.metrics,remaining)
-   if(steeringNow&&!motion.steering){r.reservation=null;out.metrics.abortedPasses++;steeringNow=false}
+   if(steeringNow&&!motion.steering){r.reservation=null;out.metrics.abortedPasses++;if(out.metrics.passingAudit)out.metrics.passingAudit.collisionAborted++;steeringNow=false}
    const newY=motion.steering?desiredY:r.y
    const newMeters=r6(r.meters+intended.speed*motion.fraction)
    const newSpeed=r6(Math.max(0,(newMeters-r.meters)/dt))
@@ -191,13 +228,18 @@ export function advanceCoupled2DResearchV3(state,steps=1){
     const crossingFraction=clamp((settings.finishDistanceMeters-r.meters)/(newMeters-r.meters),0,1)
     r.finishSeconds=r6(out.elapsedSeconds+crossingFraction*dt)
     out.finish.push({riderId:r.riderId,finishSeconds:r.finishSeconds,energyRemainingJ:energy.state.remainingWPrimeJoules})
-    if(r.reservation){r.reservation=null;out.metrics.abortedPasses++}
+    if(r.reservation){r.reservation=null;out.metrics.abortedPasses++;if(out.metrics.passingAudit)out.metrics.passingAudit.finishAborted++}
    }
    r.meters=newMeters;r.y=newY;r.speedMps=newSpeed;r.energy=energy.state
   }
   // The update solved every planned bicycle against higher-priority paths;
   // validate ALL pairs continuously after the complete tick.
   for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++)fail(!isHit(paths[i],paths[j],g),'Coupled 2D within-tick collision: '+paths[i].riderId+' / '+paths[j].riderId)
+  if(out.metrics.passingAudit){
+   const d=out.metrics.passingAudit,passes=observeForwardPairPassesV3(initial,out.riders)
+   d.forwardPairPasses+=passes.length
+   for(const p of passes)d.passingByRider[p.passer]=(d.passingByRider[p.passer]??0)+1
+  }
   chooseNewReservations(out.riders,g,settings,out.metrics)
   out.metrics.concurrentPeak=Math.max(out.metrics.concurrentPeak,currentReservations(out.riders).length)
   out.tick++;out.elapsedSeconds+=dt
