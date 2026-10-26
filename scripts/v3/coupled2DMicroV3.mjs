@@ -4,6 +4,7 @@
  * Strict finite envelopes / fail-closed collision, no teleportation.
  */
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
+import {chooseNeighborSpaceLaneV3} from './neighborPassV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
 import {initializeEnergyBalanceResearchV3,advanceEnergyBalanceResearchV3} from '../../src/race-engine-v3/energyBalanceResearchV3.ts'
 import {validateRoadScenarioV3,BATCH40_GEOMETRIES} from './roadWidthLookaheadV3.mjs'
@@ -57,8 +58,8 @@ function demand(r,all,road,dt){
  const v=clamp(wanted,Math.max(0,r.speedMps-.9),r.speedMps+.9)
  return {speed:r6(v),cdA,road,shelter,watts:r6(workAt(v))}
 }
-export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEOMETRIES[1],allowSteering=false,capacity=2,dt=10,quality='synthetic_research',experimentalPriorityPolicy='rider_id',experimentalPassingTrigger='blocked_2',experimentalPassingAdmissionPolicy='global',diagnosePassing=false}={}){
- fail(Array.isArray(riders)&&riders.length>=2&&riders.length<=200&&Array.isArray(route)&&route.length&&Number.isInteger(dt)&&dt>=5&&dt<=20&&[1,2,3].includes(capacity)&&typeof allowSteering==='boolean'&&quality==='synthetic_research'&&['rider_id','rotating_lane'].includes(experimentalPriorityPolicy)&&['blocked_2','closing_wheel'].includes(experimentalPassingTrigger)&&['global','local_30m'].includes(experimentalPassingAdmissionPolicy)&&typeof diagnosePassing==='boolean','Invalid offline 2D research input')
+export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEOMETRIES[1],allowSteering=false,capacity=2,dt=10,quality='synthetic_research',experimentalPriorityPolicy='rider_id',experimentalPassingTrigger='blocked_2',experimentalPassingAdmissionPolicy='global',diagnosePassing=false,experimentalPassLanePolicy='left_first'}={}){
+ fail(Array.isArray(riders)&&riders.length>=2&&riders.length<=200&&Array.isArray(route)&&route.length&&Number.isInteger(dt)&&dt>=5&&dt<=20&&[1,2,3].includes(capacity)&&typeof allowSteering==='boolean'&&quality==='synthetic_research'&&['rider_id','rotating_lane'].includes(experimentalPriorityPolicy)&&['blocked_2','closing_wheel'].includes(experimentalPassingTrigger)&&['global','local_30m'].includes(experimentalPassingAdmissionPolicy)&&typeof diagnosePassing==='boolean'&&['left_first','neighbor_space'].includes(experimentalPassLanePolicy),'Invalid offline 2D research input')
  const g=validateRoadScenarioV3(geometry)
  const finishDistanceMeters=r6(route.reduce((sum,segment)=>sum+segment.lengthKm*1000,0))
  fail(Number.isFinite(finishDistanceMeters)&&finishDistanceMeters>0&&finishDistanceMeters<1000000,'Invalid stage finish line')
@@ -70,7 +71,7 @@ export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEO
  })
  for(let i=0;i<initial.length;i++)for(let j=i+1;j<initial.length;j++)fail(!isHit({x0:initial[i].meters,x1:initial[i].meters,y0:initial[i].y,y1:initial[i].y},{x0:initial[j].meters,x1:initial[j].meters,y0:initial[j].y,y1:initial[j].y},g),'Initial two-dimensional bicycle collision')
  for(const s of route)fail(Number.isFinite(s.lengthKm)&&s.lengthKm>0&&Number.isFinite(s.gradePercent)&&Math.abs(s.gradePercent)<=22,'Invalid route')
- return {version:42,gate:'OFFLINE_RESEARCH_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',input:{route:structuredClone(route),geometry:structuredClone(geometry),allowSteering,capacity,dt,quality,experimentalPriorityPolicy,experimentalPassingTrigger,...(experimentalPassingAdmissionPolicy==='global'?{}:{experimentalPassingAdmissionPolicy}),...(diagnosePassing?{diagnosePassing:true}:{}),finishDistanceMeters},riders:initial,finish:[],complete:false,tick:0,elapsedSeconds:0,metrics:{commandedMeters:0,achievedMeters:0,blockedRiderTicks:0,preventedMeters:0,pathClips:0,collisionChecks:0,reservationsStarted:0,completedPasses:0,abortedPasses:0,concurrentPeak:0,energyJ:0,lateralMeters:0,first30mGapSecond:null,...(diagnosePassing?{passingAudit:{eligible:0,admitted:0,capacityDenied:0,physicalLaneDenied:0,reservedLaneDenied:0,collisionAborted:0,finishAborted:0,forwardPairPasses:0,passingByRider:{},queueByRider:{},maxWaitingTicks:0}}:{})},samples:[]}
+ return {version:42,gate:'OFFLINE_RESEARCH_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',input:{route:structuredClone(route),geometry:structuredClone(geometry),allowSteering,capacity,dt,quality,experimentalPriorityPolicy,experimentalPassingTrigger,...(experimentalPassingAdmissionPolicy==='global'?{}:{experimentalPassingAdmissionPolicy}),...(diagnosePassing?{diagnosePassing:true}:{}),...(experimentalPassLanePolicy==='left_first'?{}:{experimentalPassLanePolicy}),finishDistanceMeters},riders:initial,finish:[],complete:false,tick:0,elapsedSeconds:0,metrics:{commandedMeters:0,achievedMeters:0,blockedRiderTicks:0,preventedMeters:0,pathClips:0,collisionChecks:0,reservationsStarted:0,completedPasses:0,abortedPasses:0,concurrentPeak:0,energyJ:0,lateralMeters:0,first30mGapSecond:null,...(diagnosePassing?{passingAudit:{eligible:0,admitted:0,capacityDenied:0,physicalLaneDenied:0,reservedLaneDenied:0,collisionAborted:0,finishAborted:0,forwardPairPasses:0,passingByRider:{},queueByRider:{},maxWaitingTicks:0}}:{})},samples:[]}
 }
 function currentReservations(rows){return rows.filter(r=>r.reservation)}
 /** Conservative early closing-wheel predicate, evaluated on current actual
@@ -136,7 +137,9 @@ function chooseNewReservations(rows,g,settings,metrics){
    return !active.some(x=>Math.abs(x.meters-r.meters)<15&&Math.abs(x.reservation.targetY-target)<g.centerStepM+.01)
   })
   if(!clear.length){denied('reservedLaneDenied');continue}
-  const target=clear.sort((a,b)=>a-b)[0]
+  const target=(settings.experimentalPassLanePolicy??'left_first')==='neighbor_space'
+   ?chooseNeighborSpaceLaneV3(r,rows,active,clear,g)
+   :clear.sort((a,b)=>a-b)[0]
   r.reservation={fromY:r.y,targetY:r6(target*g.centerStepM),reactionLeft:2,steeringLeft:3,progress:0,phase:'reaction',chargedJ:0}
   active.push(r);metrics.reservationsStarted++
   if(audit){audit.eligible++;audit.admitted++;audit.queueByRider[r.riderId]=0}
