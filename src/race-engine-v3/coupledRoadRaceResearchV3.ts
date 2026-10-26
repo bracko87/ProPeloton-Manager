@@ -38,6 +38,8 @@ export interface CoupledInputV3 {
   readonly experimentalPowerDurationEnergy?:true
   /** OFFLINE ONLY: three-tick power-charged passing study; disabled by default. */
   readonly experimentalFinitePassReservation?:true
+  /** Batch 32: explicitly gated OFFLINE sensitivity; absent means Batch 31 defaults. */
+  readonly experimentalFinitePassSensitivity?:{readonly durationTicks?:2|3|4;readonly additionalWatts?:20|35|50;readonly selection?:'id'|'frontmost'|'mostBlocked';readonly startMaxKm?:2|5}
   /** Strictly offline Batch 24 A/B, depends on W-prime research mode. */
   readonly experimentalSeparatedAerobicPower?:true
   readonly gate:{readonly offlineOnly:true;readonly acknowledgedNoSportingApproval:true;readonly sourceQuality:'source_snapshot'|'synthetic_research'}
@@ -78,6 +80,8 @@ function validate(input:CoupledInputV3):void{
  check(input.gate?.offlineOnly===true&&input.gate.acknowledgedNoSportingApproval===true,'Missing offline-only sporting NO-GO gate')
  check(!input.experimentalSeparatedAerobicPower||input.experimentalPowerDurationEnergy===true,'Separated aerobic experiment requires power-duration energy mode')
  check(!input.experimentalFinitePassReservation||(input.experimentalPowerDurationEnergy===true&&!input.experimentalAnticipatoryLaneMoves),'Finite passing requires isolated W-prime research without automatic lateral preparation')
+ check(input.experimentalFinitePassReservation===true||input.experimentalFinitePassSensitivity===undefined,'Passing sensitivity requires finite passing research')
+ if(input.experimentalFinitePassReservation)finitePassSettings(input)
  check(input.gate.sourceQuality==='source_snapshot'||input.gate.sourceQuality==='synthetic_research','Invalid source quality')
  check(!!input.raceId&&!!input.stageId&&!!input.seed,'Missing deterministic provenance')
  check(input.riders.length>0&&input.riders.length<=260,'Invalid field size')
@@ -88,6 +92,13 @@ function validate(input:CoupledInputV3):void{
  for(const r of input.riders){check(!!r.riderId&&!!r.teamId&&!seen.has(r.riderId),'Missing/duplicate rider');seen.add(r.riderId);projectRiderPowerV3(r,0,'follow',input.gate.sourceQuality==='synthetic_research')}
  planNeutralStartFormationV3([...seen],input.seed,input.grid)
  for(const o of input.orders??[]){check(seen.has(o.riderId)&&Number.isFinite(o.startKm)&&Number.isFinite(o.endKm)&&o.startKm>=0&&o.endKm>o.startKm&&['follow','tempo','chase','attack','recover'].includes(o.tactic),'Invalid order')}
+}
+function finitePassSettings(input:CoupledInputV3){
+ const cfg=input.experimentalFinitePassSensitivity
+ const durationTicks=cfg?.durationTicks??3,additionalWatts=cfg?.additionalWatts??35,selection=cfg?.selection??'id',startMaxKm=cfg?.startMaxKm??5
+ check([2,3,4].includes(durationTicks)&&[20,35,50].includes(additionalWatts)&&['id','frontmost','mostBlocked'].includes(selection)&&[2,5].includes(startMaxKm),'Invalid passing sensitivity settings')
+ check(!cfg||Object.keys(cfg).every(k=>['durationTicks','additionalWatts','selection','startMaxKm'].includes(k)),'Unknown passing sensitivity property')
+ return {durationTicks,additionalWatts,selection,startMaxKm}
 }
 function roadAt(input:CoupledInputV3,meters:number):PackRoadV3{
  let distance=0
@@ -119,9 +130,10 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
  check(state.groupTimeline?.courseMeters===state.totalMeters&&state.groupTimeline.history.length===state.replay.length,'Divergent checkpoint replay/group history')
  check(!input.experimentalBottleneckTelemetry||state.bottleneckTelemetry?.tickCount===state.tick,'Missing or divergent wheel telemetry checkpoint')
  if(input.experimentalPowerDurationEnergy)check(state.riders.every(r=>r.powerDurationEnergy!==undefined),'Missing power-duration checkpoint')
- if(input.experimentalFinitePassReservation){check(!!state.passingResearch,'Missing finite-passing checkpoint');validateFinitePassingV3(state.passingResearch!,state.riders.map(r=>r.riderId),input.grid.ridersAcross)}
+ if(input.experimentalFinitePassReservation){check(!!state.passingResearch,'Missing finite-passing checkpoint');validateFinitePassingV3(state.passingResearch!,state.riders.map(r=>r.riderId),input.grid.ridersAcross,finitePassSettings(input).durationTicks)}
  check(Number.isInteger(maxTicks)&&maxTicks>=1&&maxTicks<=100000,'Invalid checkpoint budget')
  const dt=input.tickSeconds??10,sample=input.sampleSeconds??120
+ const passingSettings=input.experimentalFinitePassReservation?finitePassSettings(input):null
  const profile=new Map(input.riders.map(r=>[r.riderId,r]))
  for(let step=0;step<maxTicks&&!state.complete;step++){
   // Research mode stages rider state so a rejected tick cannot partially debit the checkpoint.
@@ -149,7 +161,7 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
    const physicalUpperWatts=(v:number)=>Math.max(roadWattsRequiredV3(v,83,.22,road),roadWattsRequiredV3(v,83,.36,road))
    const capped=input.experimentalPowerDurationEnergy?boundRequestedSpeedByEnergyV3(rider.powerDurationEnergy!,dt,speed,physicalUpperWatts):speed
    const pendingPassing=state.passingResearch?.pending?.riderId===rider.riderId
-    const reservedCap=pendingPassing?capFinitePassSpeedV3(capped,Math.min(available,rider.powerDurationEnergy!.criticalWatts+rider.powerDurationEnergy!.remainingWPrimeJoules/dt),physicalUpperWatts,35):capped
+    const reservedCap=pendingPassing?capFinitePassSpeedV3(capped,Math.min(available,rider.powerDurationEnergy!.criticalWatts+rider.powerDurationEnergy!.remainingWPrimeJoules/dt),physicalUpperWatts,passingSettings!.additionalWatts):capped
     intent.set(rider.riderId,{desired:input.experimentalPowerDurationEnergy?Math.max(0,Math.floor(reservedCap*1e6)/1e6-0.000002):round(reservedCap),road,drag,baseWatts:projected.sustainableWatts,scale:projected.energyCostScale,action:tactic.action,attack})
   }
   const telemetryBefore=input.experimentalPowerDurationEnergy&&input.experimentalBottleneckTelemetry
@@ -158,7 +170,7 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
    // Pending riders hold their original lane until the third safe reservation tick.
    const spatialBefore=active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,desiredMps:intent.get(r.riderId)!.desired,tactic:state.passingResearch?.pending?.riderId===r.riderId?'recover' as const:intent.get(r.riderId)!.action}))
    const moves=advanceSpatialPelotonV3(spatialBefore,{laneCount:input.grid.ridersAcross,dtSeconds:dt,minWheelGapMeters:1.8})
-   const finitePassTick=input.experimentalFinitePassReservation?stepFinitePassV3(state.passingResearch!,passBefore!,moves,dt,35):null
+   const finitePassTick=input.experimentalFinitePassReservation?stepFinitePassV3(state.passingResearch!,passBefore!,moves,dt,passingSettings!.additionalWatts):null
   if(input.experimentalBottleneckTelemetry&&!input.experimentalPowerDurationEnergy)recordWheelBottleneckTickV3(state.bottleneckTelemetry!,active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,desiredMps:intent.get(r.riderId)!.desired,tactic:intent.get(r.riderId)!.action})),moves,state.totalMeters,dt)
   const lateral=input.experimentalAnticipatoryLaneMoves
     ?new Map(planAnticipatoryLanesV3(active.map(r=>({riderId:r.riderId,meters:r.meters,lane:r.lane,energy:r.energy,desiredMps:intent.get(r.riderId)!.desired,tactic:intent.get(r.riderId)!.action})),moves,input.grid.ridersAcross).riders.map(p=>[p.riderId,p]))
@@ -173,14 +185,14 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
   const acceptedEnergy=input.experimentalPowerDurationEnergy?new Map(active.map(r=>{
     const m=movement.get(r.riderId)!,work=intent.get(r.riderId)!
     const watts=observedDraft?.get(r.riderId)?.wattsWithPathExposure??roadWattsRequiredV3(m.speedMps,83,work.drag,work.road)
-    const step=advanceEnergyBalanceResearchV3(r.powerDurationEnergy!,watts+(finitePassTick?.chargedRiderId===r.riderId?35:0),dt)
+    const step=advanceEnergyBalanceResearchV3(r.powerDurationEnergy!,watts+(finitePassTick?.chargedRiderId===r.riderId?passingSettings!.additionalWatts:0),dt)
     if(!step.accepted)throw Error('Research power-duration budget violated by achieved motion')
     return [r.riderId,step.state] as const
   })):null
   for(const rider of active){
    const outcome=movement.get(rider.riderId)!,work=intent.get(rider.riderId)!,before=rider.meters
    const actualSpeed=outcome.speedMps
-   const physicalWatts=(observedDraft?.get(rider.riderId)?.wattsWithPathExposure??roadWattsRequiredV3(actualSpeed,83,work.drag,work.road))+(finitePassTick?.chargedRiderId===rider.riderId?35:0)
+   const physicalWatts=(observedDraft?.get(rider.riderId)?.wattsWithPathExposure??roadWattsRequiredV3(actualSpeed,83,work.drag,work.road))+(finitePassTick?.chargedRiderId===rider.riderId?passingSettings!.additionalWatts:0)
    if(input.experimentalPathDraftWork&&observedDraft)rider.draftPathExtraWorkJoules=round((rider.draftPathExtraWorkJoules??0)+observedDraft.get(rider.riderId)!.extraWattsFromExposureChange*dt)
    const energyDebt=Math.max(0,physicalWatts-work.baseWatts)
    // Cost is based on MECHANICAL WORK ACTUALLY PERFORMED, not a requested
@@ -222,11 +234,13 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
   }
   // Start a conservative one-at-a-time maneuver only after the completed tick.
    // No instant longitudinal movement or energy debit is permitted at selection.
-   if(input.experimentalFinitePassReservation&&!state.complete&&!state.passingResearch!.pending&&state.tick-state.passingResearch!.lastStartTick>=8&&maxDistance<5000&&active.length>1){
+   if(input.experimentalFinitePassReservation&&!state.complete&&!state.passingResearch!.pending&&state.tick-state.passingResearch!.lastStartTick>=8&&maxDistance<passingSettings!.startMaxKm*1000&&active.length>1){
     try{
      const planned=planAnticipatoryLanesV3(spatialBefore,moves,input.grid.ridersAcross,1.8)
-     const candidate=planned.riders.filter(p=>p.promoted&&p.fromLane!==p.lane).sort((a,b)=>a.riderId.localeCompare(b.riderId))[0]
-     if(candidate)state.passingResearch=startFinitePassV3(state.passingResearch!,candidate,moves,state.tick)
+     const offered=planned.riders.filter(p=>p.promoted&&p.fromLane!==p.lane)
+      const blocks=new Map(active.map(r=>[r.riderId,r.wheelLimitedTicks]))
+      const candidate=offered.sort((a,b)=>passingSettings!.selection==='frontmost'?b.meters-a.meters||a.riderId.localeCompare(b.riderId):passingSettings!.selection==='mostBlocked'?(blocks.get(b.riderId)??0)-(blocks.get(a.riderId)??0)||a.riderId.localeCompare(b.riderId):a.riderId.localeCompare(b.riderId))[0]
+     if(candidate)state.passingResearch=startFinitePassV3(state.passingResearch!,candidate,moves,state.tick,passingSettings!.durationTicks)
     }catch(error){if(!(error instanceof Error&&error.message==='Invalid anticipatory bicycle placement'))throw error}
    }
    state.elapsedSeconds=round(state.elapsedSeconds+dt);state.tick++

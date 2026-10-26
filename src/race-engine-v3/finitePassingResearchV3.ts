@@ -5,9 +5,10 @@ export interface PassingWheelV3 {readonly riderId:string;readonly meters:number;
 export interface PassingMotionV3 extends PassingWheelV3 {readonly oldMeters:number;readonly wheelLimited:boolean}
 function check(v:boolean,m:string):asserts v {if(!v)throw Error(m)}
 export function initializeFinitePassingV3():FinitePassingResearchStateV3{return {pending:null,lastStartTick:-9999,attempts:0,completed:0,rejected:0,cumulativeExtraMechanicalJoules:0}}
-export function validateFinitePassingV3(state:FinitePassingResearchStateV3,ids:readonly string[],lanes:number):void{
+export function validateFinitePassingV3(state:FinitePassingResearchStateV3,ids:readonly string[],lanes:number,durationTicks=3):void{
+ check(Number.isInteger(durationTicks)&&durationTicks>=2&&durationTicks<=4,'Invalid passing duration')
  check(!!state&&Number.isInteger(state.lastStartTick)&&Number.isInteger(state.attempts)&&Number.isInteger(state.completed)&&Number.isInteger(state.rejected)&&Number.isFinite(state.cumulativeExtraMechanicalJoules)&&state.attempts>=0&&state.completed>=0&&state.rejected>=0&&state.cumulativeExtraMechanicalJoules>=0&&state.completed+state.rejected<=state.attempts,'Invalid passing checkpoint counters')
- if(state.pending){const p=state.pending;check(ids.includes(p.riderId)&&p.fromLane>=0&&p.fromLane<lanes&&p.toLane>=0&&p.toLane<lanes&&Number.isInteger(p.fromLane)&&Number.isInteger(p.toLane)&&Math.abs(p.fromLane-p.toLane)===1&&p.requiredTicks===3&&Number.isInteger(p.remainingTicks)&&p.remainingTicks>=1&&p.remainingTicks<=3,'Invalid pending passing checkpoint')}
+ if(state.pending){const p=state.pending;check(ids.includes(p.riderId)&&p.fromLane>=0&&p.fromLane<lanes&&p.toLane>=0&&p.toLane<lanes&&Number.isInteger(p.fromLane)&&Number.isInteger(p.toLane)&&Math.abs(p.fromLane-p.toLane)===1&&p.requiredTicks===durationTicks&&Number.isInteger(p.remainingTicks)&&p.remainingTicks>=1&&p.remainingTicks<=durationTicks,'Invalid pending passing checkpoint')}
 }
 export function capFinitePassSpeedV3(requested:number,watts:number,demand:(v:number)=>number,extraWatts=35):number{
  check(Number.isFinite(requested)&&requested>=0&&requested<=30&&Number.isFinite(watts)&&watts>=0&&Number.isFinite(extraWatts)&&extraWatts>=0&&extraWatts<=100,'Invalid passing power budget')
@@ -19,12 +20,13 @@ export function capFinitePassSpeedV3(requested:number,watts:number,demand:(v:num
  for(let i=0;i<44;i++){const m=(lo+hi)/2,w=demand(m);check(Number.isFinite(w)&&w>=0,'Invalid intermediate power');if(w<=budget)lo=m;else hi=m}
  return Math.max(0,Math.floor(lo*1e6)/1e6-.000002)
 }
-export function startFinitePassV3(s:FinitePassingResearchStateV3,choice:{riderId:string;fromLane:number;lane:number;meters:number},moves:readonly PassingMotionV3[],tick:number):FinitePassingResearchStateV3{
+export function startFinitePassV3(s:FinitePassingResearchStateV3,choice:{riderId:string;fromLane:number;lane:number;meters:number},moves:readonly PassingMotionV3[],tick:number,durationTicks=3):FinitePassingResearchStateV3{
+ check(Number.isInteger(durationTicks)&&durationTicks>=2&&durationTicks<=4,'Invalid passing duration')
  check(s.pending===null&&Number.isInteger(tick)&&tick-s.lastStartTick>=8,'Parallel or early passing')
  const r=moves.find(m=>m.riderId===choice.riderId)
  check(!!r&&r.wheelLimited&&r.lane===choice.fromLane&&Math.abs(r.meters-choice.meters)<.00001&&Math.abs(choice.lane-choice.fromLane)===1,'Stale pass choice')
  check(!moves.some(x=>x.riderId!==choice.riderId&&x.lane===choice.lane&&Math.abs(x.meters-r.meters)<1.8-1e-5),'Unsafe destination')
- return {...s,pending:{riderId:r.riderId,fromLane:r.lane,toLane:choice.lane,remainingTicks:3,requiredTicks:3},lastStartTick:tick,attempts:s.attempts+1}
+ return {...s,pending:{riderId:r.riderId,fromLane:r.lane,toLane:choice.lane,remainingTicks:durationTicks,requiredTicks:durationTicks},lastStartTick:tick,attempts:s.attempts+1}
 }
 export function stepFinitePassV3(s:FinitePassingResearchStateV3,before:readonly PassingWheelV3[],moves:readonly PassingMotionV3[],dt:number,extra=35):{state:FinitePassingResearchStateV3;commitLane:{riderId:string;toLane:number}|null;chargedRiderId:string|null}{
  check(Number.isFinite(dt)&&dt>0&&dt<=20&&Number.isFinite(extra)&&extra>=0&&extra<=100,'Invalid passing cost')
