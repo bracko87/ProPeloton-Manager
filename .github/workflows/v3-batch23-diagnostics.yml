@@ -1,0 +1,44 @@
+name: V3 Batch 23 energy-sector diagnosis
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/race-engine-v3/**'
+      - 'scripts/v3/audit-batch23-energy-sectors-v3.mjs'
+      - '.github/workflows/v3-batch23-diagnostics.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [energy, combined]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check research runner syntax
+        run: node --check scripts/v3/audit-batch23-energy-sectors-v3.mjs
+      - name: Produce per-rider and per-sector full-race evidence
+        env:
+          V3_BATCH23_COMBINED: ${{ matrix.mode == 'combined' && '1' || '0' }}
+          V3_BATCH23_OUT_DIR: ${{ runner.temp }}/batch23-${{ matrix.mode }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch23-energy-sectors-v3.mjs
+      - name: Save full rider and section diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: batch23-${{ matrix.mode }}-rider-traces
+          path: ${{ runner.temp }}/batch23-${{ matrix.mode }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Install production dependencies
+        if: matrix.mode == 'energy'
+        run: npm ci --no-audit --no-fund
+      - name: Verify application build
+        if: matrix.mode == 'energy'
+        run: npm run build
