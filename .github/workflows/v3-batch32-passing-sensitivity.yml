@@ -1,0 +1,45 @@
+name: V3 Batch 32 passing sensitivity
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/race-engine-v3/finitePassingResearchV3.ts'
+      - 'src/race-engine-v3/coupledRoadRaceResearchV3.ts'
+      - 'scripts/v3/verify-batch32-sensitivity-v3.mjs'
+      - 'scripts/v3/audit-batch32-full-passing-v3.mjs'
+      - '.github/workflows/v3-batch32-passing-sensitivity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sensitivity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict coupled research TypeScript validation
+        run: npx --yes --package typescript@5.9.3 tsc --strict --noEmit --target ES2022 --module nodenext --moduleResolution nodenext --allowImportingTsExtensions src/race-engine-v3/coupledRoadRaceResearchV3.ts src/race-engine-v3/finitePassingResearchV3.ts
+      - name: Gated duration cost checkpoint tests
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch32-sensitivity-v3.mjs
+      - name: Full 106 or 168 rider parameter A/B and JSON restarts
+        env:
+          V3_BATCH32_FIXTURE: ${{ matrix.fixture }}
+          V3_BATCH32_OUT_DIR: ${{ runner.temp }}/batch32-${{ matrix.fixture }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch32-full-passing-v3.mjs
+      - name: Preserve rider-level parameter sensitivity
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch32-${{ matrix.fixture }}
+          path: ${{ runner.temp }}/batch32-${{ matrix.fixture }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Verify production application build
+        if: matrix.fixture == 'dordrecht-2000-10-15'
+        run: npm ci --no-audit --no-fund && npm run build
