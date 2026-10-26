@@ -208,7 +208,7 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
    if(finitePassTick?.commitLane){
     const r=active.find(x=>x.riderId===finitePassTick.commitLane!.riderId)
     check(!!r&&r.finishSeconds===null,'Passing rider finished before lane commit')
-    r.lane=finitePassTick.commitLane.toLane
+    r!.lane=finitePassTick.commitLane.toLane
    }
    // The recorder mutates counters as it validates. Clone for atomic opt-in acceptance.
   const acceptedTelemetry=input.experimentalPowerDurationEnergy&&input.experimentalBottleneckTelemetry

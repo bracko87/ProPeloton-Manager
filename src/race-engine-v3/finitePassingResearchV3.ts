@@ -3,7 +3,7 @@ export interface FinitePassReservationV3 {readonly riderId:string;readonly fromL
 export interface FinitePassingResearchStateV3 {pending:FinitePassReservationV3|null;lastStartTick:number;attempts:number;completed:number;rejected:number;cumulativeExtraMechanicalJoules:number}
 export interface PassingWheelV3 {readonly riderId:string;readonly meters:number;readonly lane:number}
 export interface PassingMotionV3 extends PassingWheelV3 {readonly oldMeters:number;readonly wheelLimited:boolean}
-const check=(v:boolean,m:string):void=>{if(!v)throw Error(m)}
+function check(v:boolean,m:string):asserts v {if(!v)throw Error(m)}
 export function initializeFinitePassingV3():FinitePassingResearchStateV3{return {pending:null,lastStartTick:-9999,attempts:0,completed:0,rejected:0,cumulativeExtraMechanicalJoules:0}}
 export function validateFinitePassingV3(state:FinitePassingResearchStateV3,ids:readonly string[],lanes:number):void{
  check(!!state&&Number.isInteger(state.lastStartTick)&&Number.isInteger(state.attempts)&&Number.isInteger(state.completed)&&Number.isInteger(state.rejected)&&Number.isFinite(state.cumulativeExtraMechanicalJoules)&&state.attempts>=0&&state.completed>=0&&state.rejected>=0&&state.cumulativeExtraMechanicalJoules>=0&&state.completed+state.rejected<=state.attempts,'Invalid passing checkpoint counters')
