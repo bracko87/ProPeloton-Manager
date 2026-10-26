@@ -7,7 +7,7 @@ import {chooseSingleLaneV3,forkSingleLaneV3} from './singleLaneBranchV3.mjs'
 import {batch26Input} from './batch26FixtureV3.mjs'
 import {compareFinishOrderV3,measurePelotonSeparationsV3} from './finishOrderSensitivityV3.mjs'
 const r6=x=>Math.round(x*1e6)/1e6,combined=process.env.V3_BATCH27_COMBINED==='1'
-const dest=process.env.V3_BATCH26_OUT_DIR??'/tmp/v3-batch27';mkdirSync(dest,{recursive:true})
+const dest=process.env.V3_BATCH27_OUT_DIR??'/tmp/v3-batch27';mkdirSync(dest,{recursive:true})
 function percentile(values){const s=values.slice().sort((a,b)=>a-b);return r6((s[Math.floor((s.length-1)/2)]+s[Math.floor(s.length/2)])/2)}
 function candidateSnapshots(input){
  const state=initializeCoupledV3(input),available=new Map();let tick=0,firstBlocked=null,opportunities=0,rejectedUnsafePlanners=0
