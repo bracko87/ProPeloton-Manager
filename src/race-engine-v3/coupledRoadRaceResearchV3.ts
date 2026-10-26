@@ -12,6 +12,7 @@ import {initializeWheelBottleneckTelemetryV3,recordWheelBottleneckTickV3,summari
 import {advanceSpatialPelotonV3,calculateSpatialSlipstreamV3,type SpatialRiderV3} from './pelotonSpatialMotionV3.ts'
 import {projectRiderPowerV3,type RiderAttributePowerV3} from './riderPowerAdapterV3.ts'
 import {fatiguePowerEnvelopeV3} from './fatiguePowerEnvelopeV3.ts'
+import {separatedAerobicPeakPowerV3} from './separatedAerobicResearchV3.ts'
 import {initializeEnergyBalanceResearchV3,advanceEnergyBalanceResearchV3,boundRequestedSpeedByEnergyV3,type ResearchEnergyStateV3} from './energyBalanceResearchV3.ts'
 import {roadWattsRequiredV3,type PackRoadV3} from './pelotonPowerBalanceV3.ts'
 import {initializePhysicalGroupTimelineV3,advancePhysicalGroupTimelineV3,type PhysicalGroupTimelineStateV3} from './physicalGroupTimelineV3.ts'
@@ -34,6 +35,8 @@ export interface CoupledInputV3 {
   readonly experimentalPathDraftWork?:true
   /** Finite high-intensity energy. Strictly offline research, never officially selected. */
   readonly experimentalPowerDurationEnergy?:true
+  /** Strictly offline Batch 24 A/B, depends on W-prime research mode. */
+  readonly experimentalSeparatedAerobicPower?:true
   readonly gate:{readonly offlineOnly:true;readonly acknowledgedNoSportingApproval:true;readonly sourceQuality:'source_snapshot'|'synthetic_research'}
 }
 export interface CoupledRiderStateV3 {
@@ -68,6 +71,7 @@ function fingerprint(input:CoupledInputV3):string{
 }
 function validate(input:CoupledInputV3):void{
  check(input.gate?.offlineOnly===true&&input.gate.acknowledgedNoSportingApproval===true,'Missing offline-only sporting NO-GO gate')
+ check(!input.experimentalSeparatedAerobicPower||input.experimentalPowerDurationEnergy===true,'Separated aerobic experiment requires power-duration energy mode')
  check(input.gate.sourceQuality==='source_snapshot'||input.gate.sourceQuality==='synthetic_research','Invalid source quality')
  check(!!input.raceId&&!!input.stageId&&!!input.seed,'Missing deterministic provenance')
  check(input.riders.length>0&&input.riders.length<=260,'Invalid field size')
@@ -128,7 +132,8 @@ export function advanceCoupledV3(input:CoupledInputV3,state:CoupledStateV3,maxTi
    const attack=tactic.action==='attack'&&rider.attackSeconds>0&&rider.energy>.1
    const chased=tactic.action==='chase'&&maxDistance-rider.meters>120
    const effort=tactic.action==='recover'?.73:attack?1.46:chased?1.12:tactic.action==='tempo'?1.05:.98
-   const fatigueMax=fatiguePowerEnvelopeV3(rider.energy,projected.sustainableWatts).peakDeliverableWatts
+   // W-prime still restricts above-critical work through the achieved-speed budget.
+   const fatigueMax=input.experimentalSeparatedAerobicPower?separatedAerobicPeakPowerV3(projected.sustainableWatts):fatiguePowerEnvelopeV3(rider.energy,projected.sustainableWatts).peakDeliverableWatts
    const available=Math.min(fatigueMax,projected.sustainableWatts*effort)
    const ideal=solveSpeed(available,drag,road)
    const speed=rider.speedMps===0?Math.min(6,ideal):clamp(ideal,Math.max(.1,rider.speedMps-.9),rider.speedMps+.9)

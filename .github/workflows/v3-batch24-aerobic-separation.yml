@@ -1,0 +1,47 @@
+name: V3 Batch 24 aerobic reserve separation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/race-engine-v3/**'
+      - 'scripts/v3/verify-batch24-mode-v3.mjs'
+      - 'scripts/v3/audit-batch24-aerobic-separation-v3.mjs'
+      - '.github/workflows/v3-batch24-aerobic-separation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-aerobic-ab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [energy, combined]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Strict V3 research TypeScript checks
+        run: npx --yes --package typescript@5.9.3 tsc --noEmit --strict --allowImportingTsExtensions --target ES2022 --module nodenext --moduleResolution nodenext src/race-engine-v3/coupledRoadRaceResearchV3.ts src/race-engine-v3/separatedAerobicResearchV3.ts
+      - name: Verify gated research physics and serialized restarts
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch24-mode-v3.mjs
+      - name: Compare full-roster rider and route-sector A/B outcomes
+        env:
+          V3_BATCH24_COMBINED: ${{ matrix.mode == 'combined' && '1' || '0' }}
+          V3_BATCH24_OUT_DIR: ${{ runner.temp }}/batch24-${{ matrix.mode }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch24-aerobic-separation-v3.mjs
+      - name: Save full rider and route diagnostics
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch24-${{ matrix.mode }}-sectors
+          path: ${{ runner.temp }}/batch24-${{ matrix.mode }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Install pinned application dependencies
+        if: matrix.mode == 'energy'
+        run: npm ci --no-audit --no-fund
+      - name: Verify production application build
+        if: matrix.mode == 'energy'
+        run: npm run build
