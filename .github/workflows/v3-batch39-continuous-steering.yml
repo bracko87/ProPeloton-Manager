@@ -1,0 +1,44 @@
+name: V3 Batch 39 continuous lateral steering research
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/continuousLateralResearchV3.mjs'
+      - 'scripts/v3/verify-batch39-continuous-v3.mjs'
+      - 'scripts/v3/audit-batch39-continuous-v3.mjs'
+      - '.github/workflows/v3-batch39-continuous-steering.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+        mode: [energy, finite_pass]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify continuous swept mid-tick collision, width, energy and restarts
+        run: node scripts/v3/verify-batch39-continuous-v3.mjs
+      - name: Frozen 24-minute 2D lateral movement and complete baseline races
+        env:
+          V3_BATCH39_FIXTURE: ${{ matrix.fixture }}
+          V3_BATCH39_MODE: ${{ matrix.mode }}
+          V3_BATCH39_OUT_DIR: ${{ runner.temp }}/batch39-${{ matrix.fixture }}-${{ matrix.mode }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch39-continuous-v3.mjs
+      - name: Keep rider queues and continuous 2D steering evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch39-${{ matrix.fixture }}-${{ matrix.mode }}
+          path: ${{ runner.temp }}/batch39-${{ matrix.fixture }}-${{ matrix.mode }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Production application build
+        if: matrix.fixture == 'dordrecht-2000-10-15' && matrix.mode == 'energy'
+        run: npm ci --no-audit --no-fund && npm run build
