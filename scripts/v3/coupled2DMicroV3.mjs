@@ -153,7 +153,7 @@ function chooseNewReservations(rows,g,settings,metrics){
    ?chooseNeighborSpaceLaneV3(r,rows,active,clear,g)
    :clear.sort((a,b)=>a-b)[0]
   const timing=coupled2DTimingV3(settings.dt,settings.experimentalTimingPolicy??'legacy')
-  r.reservation={fromY:r.y,targetY:r6(target*g.centerStepM),reactionLeft:timing.reactionTicks,steeringLeft:timing.steeringTicks,...((settings.experimentalTimingPolicy??'legacy')==='seconds_normalized'?{steeringTicks:timing.steeringTicks}:{}),progress:0,phase:'reaction',chargedJ:0}
+  r.reservation={fromY:r.y,targetY:r6(target*g.centerStepM),reactionLeft:timing.reactionTicks,steeringLeft:timing.steeringTicks,...(timing.steeringTicks!==3?{steeringTicks:timing.steeringTicks}:{}),progress:0,phase:'reaction',chargedJ:0}
   active.push(r);metrics.reservationsStarted++
   if(audit){audit.eligible++;audit.admitted++;audit.queueByRider[r.riderId]=0}
  }
