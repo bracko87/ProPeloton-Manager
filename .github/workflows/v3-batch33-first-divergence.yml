@@ -1,0 +1,44 @@
+name: V3 Batch 33 first divergence tracing
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/pairedFirstDivergenceV3.mjs'
+      - 'scripts/v3/verify-paired-first-divergence-v3.mjs'
+      - 'scripts/v3/audit-batch33-first-divergence-v3.mjs'
+      - '.github/workflows/v3-batch33-first-divergence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  divergence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+        mode: [energy, finite_pass]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate pure spatial diagnostics and fail-closed lane swaps
+        run: node scripts/v3/verify-paired-first-divergence-v3.mjs
+      - name: Exact full-stage paired branch and first group separation diagnostics
+        env:
+          V3_BATCH33_FIXTURE: ${{ matrix.fixture }}
+          V3_BATCH33_MODE: ${{ matrix.mode }}
+          V3_BATCH33_OUT_DIR: ${{ runner.temp }}/batch33-${{ matrix.fixture }}-${{ matrix.mode }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch33-first-divergence-v3.mjs
+      - name: Retain paired tick and rider-level finish evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch33-${{ matrix.fixture }}-${{ matrix.mode }}
+          path: ${{ runner.temp }}/batch33-${{ matrix.fixture }}-${{ matrix.mode }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Verify production application build
+        if: matrix.fixture == 'dordrecht-2000-10-15' && matrix.mode == 'energy'
+        run: npm ci --no-audit --no-fund && npm run build
