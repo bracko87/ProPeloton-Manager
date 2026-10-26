@@ -1,6 +1,6 @@
 # Race Engine V3 — owner-facing milestone register
 
-**Last updated: 2026-10-26, after first full-stage 2D gate.** Research lives on GitHub `main` in isolated V3 files. The game's selected race engine and historical results have NOT been changed.
+**Last updated: 2026-10-26, after Milestone A2 position-bias and overtaking-capacity tests.** Research lives on GitHub `main` in isolated V3 files. The game's selected race engine and historical results have NOT been changed.
 
 ## Why this register exists
 
@@ -8,18 +8,18 @@ A numbered engineering batch is NOT evidence that the engine is nearing release.
 
 ## Milestone A — Complete, credible 2D racing
 
-| Acceptance condition | Status as of Batch 42 | Evidence required to close |
+| Acceptance condition | Latest status | Evidence required to close |
 |---|---|---|
 | True coupled forward/lateral motion, collision and finite W-prime | **Prototype verified** | Collision-free 8, 24, 106 and 168-rider replays |
 | **Complete 106 and 168-rider 2D stages** | **TECHNICAL PASS (6 offline stages)** | Both complete; each race: steering disabled, enabled, two-rider lane swap; every rider classified. Sporting realism remains **FAILED** |
 | Deterministic mid-race recovery | **TECHNICAL PASS for six offline stages** | Serialised 40%-distance checkpoints produced exact full final state in all six scenarios |
-| Start grid / priority fairness | **FAIL** | Two-rider same-row lane swap changed 102/106 Dordrecht ranks and 163/168 Guangxi ranks; winners changed in both |
+| Start grid / priority fairness | **FAIL — A2 controlled tests complete** | Rotating same-row priority caused **zero** rank improvement; increasing simultaneous overtakes from 2 to 3 reduced inverted rider pairs Dordrecht **13.41%→7.62%**, Guangxi **27.98%→18.56%**, but **96/106 and 165/168** still changed rank; finish gaps worsened in both originals |
 | Real stage terrain and road widths | **BLOCKED** | Repair 718 m missing Guangxi, 1065 m missing World Nations; verified source road widths |
 | Authentic breakaways, pursuits, groups and gaps | **BLOCKED** | Historical flat/hilly/mountain benchmarks; credible 30s+ breakaways where applicable |
 | Calibrated drafting, fatigue, weather, sprint and attacks | **OPEN** | Mechanically and sportingly plausible stage-wide rider and team data |
 | Official switch permitted | **NO** | Separate owner approval *after all relevant acceptance gates pass* |
 
-**Immediate focus:** the full-stage technical gate is now closed; next resolve the sporting blockers: 2D collision/finish-time modeling, initial grid priority, authentic real-world routes, power/fatigue, and race tactics. Do not consider gameplay integration ready on the strength of these six research simulations.
+**Immediate focus:** first full-stage technical gate is closed. The follow-up [A2 position-bias report](MILESTONE_A_02_START_GRID_2026-10-26.md) confirms fixed rider-ID priority **is not the cause**; coordinated overtaking capacity materially affects the result but does **not** pass sporting realism. Next: diagnose persistent start-row confinement and queue release under realistic power/road widths, measure fair overtakes, authentic breakaways and tactical pursuit, correct source routes, and repair sub-tick finish energy. Do not consider gameplay integration ready on the strength of these research simulations.
 
 ## Milestone B — Gameplay contract and interface
 
