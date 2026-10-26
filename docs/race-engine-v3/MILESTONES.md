@@ -1,6 +1,6 @@
 # Race Engine V3 — owner-facing milestone register
 
-**Last updated: 2026-10-26, after the three-grid A2 coordinated neighbor-space acceptance test.** Research lives on GitHub `main` in isolated V3 files. The game's selected race engine and historical results have NOT been changed.
+**Last updated: 2026-10-26, after the 5s versus 10s full-stage A2 stability audit.** Research lives on GitHub `main` in isolated V3 files. The game's selected race engine and historical results have NOT been changed.
 
 ## Why this register exists
 
@@ -18,6 +18,7 @@ A numbered engineering batch is NOT evidence that the engine is nearing release.
 | Local vs global overtaking admission | **TEST PASSED; SPORTING FAILED / CANDIDATE REJECTED** | [A2 report](MILESTONE_A_05_LOCAL_ADMISSION_2026-10-26.md): inverted pair share worsened 7.62%→15.76% Dordrecht and 18.56%→26.00% Guangxi despite more steering; Guangxi winner flips under lane swap |
 | Exact overtaking queue and pass diagnostic | **OBSERVATION PASSED, SPORTING STILL FAILED** | [Full verified 106/168-rider report](MILESTONE_A_06_QUEUE_CAUSES_2026-10-26.md): capacity denial 60.69% / 72.62%, physical lane denial 37.58% / 26.43%, zero result changes; distinct cause not yet proven |
 | Coordinated neighbor-space lane preference | **TECHNICAL PASS; SPORTING FAIL / REJECTED** | [12 complete-stage scenarios](MILESTONE_A_07_NEIGHBOR_SPACE_2026-10-26.md): two-rider starting-lane swap inversion share worsened 7.62%→19.12% Dordrecht, 18.56%→24.78% Guangxi; full-grid rotation also worsened |
+| 5s vs 10s tick-size stability | **TECHNICAL PASS; SPORTING FAIL / dt5 NOT APPROVED** | [12 scenarios / full report](MILESTONE_A_08_STEP_SIZE_2026-10-26.md): swapped-grid inversions 7.62%→11.14% Dordrecht, 18.56%→24.05% Guangxi; tick-based reaction/steering times change with dt, so this is not isolated numerical convergence |
 | Real stage terrain and road widths | **BLOCKED** | Repair 718 m missing Guangxi, 1065 m missing World Nations; verified source road widths |
 | Authentic breakaways, pursuits, groups and gaps | **BLOCKED** | Historical flat/hilly/mountain benchmarks; credible 30s+ breakaways where applicable |
 | Calibrated drafting, fatigue, weather, sprint and attacks | **OPEN** | Mechanically and sportingly plausible stage-wide rider and team data |
@@ -25,9 +26,9 @@ A numbered engineering batch is NOT evidence that the engine is nearing release.
 
 **A2 further rejected candidate (closing-wheel anticipation, 2026-10-26):** a conservative forecast of a slower wheel within two reaction ticks passed complete 106/168-rider simulations and exact checkpoint recovery, but did **not** improve classification stability: Dordrecht inversion share **7.619%→7.942%** (worse) and Guangxi **18.556%→18.556%** (unchanged). Original-grid gap and blocked-tick figures were identical; do not activate this option. [Detailed report](MILESTONE_A_03_EARLY_WHEEL_2026-10-26.md).
 
-**Latest A2 sporting test:** [Neighbor-space passing across three starting grids](MILESTONE_A_07_NEIGHBOR_SPACE_2026-10-26.md) completed in 12 full stages and rejected: both fixtures show major instability under a two-rider lane swap, although the engineering/collision/replay checks pass. Do not promote any of the failed overtaking heuristics. The next controlled gate is a **5s vs 10s movement-step/numerical update-order audit** before testing further passing policy changes.
+**Latest A2 numerical sensitivity result:** [5-second versus 10-second full-stage audit](MILESTONE_A_08_STEP_SIZE_2026-10-26.md) passed technical safety/recovery for all 12 scenarios, but the shortened tick interval worsened two-rider-grid inversion share in both races. Crucially, 2-tick reaction and 3-tick steering take half as much physical time at dt5; do not call this proof of numerical convergence or switch the engine. Next: opt-in seconds-normalized dt5 with 20s reaction, 30s steering and equivalent acceleration across the same grids.
 
-**Immediate focus:** first full-stage technical gate is closed. The follow-up [A2 position-bias report](MILESTONE_A_02_START_GRID_2026-10-26.md) confirms fixed rider-ID priority **is not the cause**; coordinated overtaking capacity materially affects the result but does **not** pass sporting realism. Next: test movement time-step and sequential-update numerical sensitivity; then benchmark authentic queue release/pursuit, correct route width/elevation sources, and repair sub-tick finish energy. Do not consider gameplay integration ready on the strength of these research simulations.
+**Immediate focus:** first full-stage technical gate is closed. The follow-up [A2 position-bias report](MILESTONE_A_02_START_GRID_2026-10-26.md) confirms fixed rider-ID priority **is not the cause**; coordinated overtaking capacity materially affects the result but does **not** pass sporting realism. Next: isolate dt numerical behavior with seconds-normalized reaction, steering and acceleration; then benchmark authentic queue release/pursuit, correct route width/elevation sources, and repair sub-tick finish energy. Do not consider gameplay integration ready on the strength of these research simulations.
 
 ## Milestone B — Gameplay contract and interface
 
