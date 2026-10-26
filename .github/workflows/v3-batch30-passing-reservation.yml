@@ -1,0 +1,42 @@
+name: V3 Batch 30 offline passing reservations
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/passingReservationV3.mjs'
+      - 'scripts/v3/verify-passing-reservation-v3.mjs'
+      - 'scripts/v3/audit-batch30-passing-v3.mjs'
+      - '.github/workflows/v3-batch30-passing-reservation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  passing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        scenario: [flat, headwind, climb]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Finite-duration reservation and safety invariants
+        run: node scripts/v3/verify-passing-reservation-v3.mjs
+      - name: Full 106/168 rider fixed-demand observational A/B
+        env:
+          V3_BATCH30_SCENARIO: ${{ matrix.scenario }}
+          V3_BATCH30_OUT_DIR: ${{ runner.temp }}/v3-batch30-${{ matrix.scenario }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch30-passing-v3.mjs
+      - name: Save clip diagnosis and passing economics
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch30-${{ matrix.scenario }}
+          path: ${{ runner.temp }}/v3-batch30-${{ matrix.scenario }}/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Verify frontend production build
+        if: matrix.scenario == 'flat'
+        run: npm ci --no-audit --no-fund && npm run build
