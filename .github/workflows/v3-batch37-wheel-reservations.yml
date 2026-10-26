@@ -1,0 +1,44 @@
+name: V3 Batch 37 wheel-reservation attribution
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/wheelReservationAttributionV3.mjs'
+      - 'scripts/v3/verify-batch37-reservations-v3.mjs'
+      - 'scripts/v3/audit-batch37-reservations-v3.mjs'
+      - '.github/workflows/v3-batch37-wheel-reservations.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  wheel-reservations:
+    runs-on: ubuntu-latest
+    timeout-minutes: 48
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+        mode: [energy, finite_pass]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify wheel leadership, exact replay and collision rejection
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch37-reservations-v3.mjs
+      - name: Full 106 or 168 rider shadow and baseline checkpoint verification
+        env:
+          V3_BATCH37_FIXTURE: ${{ matrix.fixture }}
+          V3_BATCH37_MODE: ${{ matrix.mode }}
+          V3_BATCH37_OUT_DIR: ${{ runner.temp }}/batch37-${{ matrix.fixture }}-${{ matrix.mode }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-batch37-reservations-v3.mjs
+      - name: Save wheel, corridor, lane and rider-level evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-batch37-${{ matrix.fixture }}-${{ matrix.mode }}
+          path: ${{ runner.temp }}/batch37-${{ matrix.fixture }}-${{ matrix.mode }}/*.json
+          retention-days: 30
+          if-no-files-found: error
+      - name: Application production build
+        if: matrix.fixture == 'dordrecht-2000-10-15' && matrix.mode == 'energy'
+        run: npm ci --no-audit --no-fund && npm run build
