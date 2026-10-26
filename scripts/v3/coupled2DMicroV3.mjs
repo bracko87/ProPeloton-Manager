@@ -12,6 +12,18 @@ const fail=(c,m)=>{if(!c)throw Error(m)}
 const r6=x=>Math.round(x*1e6)/1e6
 const clamp=(x,a,b)=>Math.min(b,Math.max(a,x))
 const priorities=(a,b)=>b.meters-a.meters||a.riderId.localeCompare(b.riderId)
+/** Opt-in A2 research controls expressed in physical seconds, not ticks.
+ * The reference 10-second model uses a 20s blocked/reaction threshold,
+ * 30s lane movement and 0.09m/s^2 acceleration envelope. Unsupported
+ * divisors fail closed, while the legacy mode remains byte-identical.
+ */
+export function coupled2DTimingV3(dt,policy='legacy'){
+ fail(Number.isInteger(dt)&&dt>=5&&dt<=20&&['legacy','seconds_normalized'].includes(policy),'Invalid timing policy')
+ if(policy==='legacy')return {reactionTicks:2,steeringTicks:3,blockedTicks:2,maxSpeedChangeMps:.9}
+ fail([5,10].includes(dt),'Normalized timing supports 5s and 10s only')
+ return {reactionTicks:20/dt,steeringTicks:30/dt,blockedTicks:20/dt,maxSpeedChangeMps:r6(.09*dt)}
+}
+
 /** A2 research control: move priority among bicycles exactly abreast can
  * rotate between lanes, instead of permanently favouring lexical rider IDs.
  * This comparator does not change rider position, power, lane, or road physics.
@@ -47,7 +59,7 @@ function aerodynamicShelter(r,all,road){
  const dx=lead.meters-r.meters,dy=Math.abs(lead.y-r.y)
  return r6(.3*clamp((18-dx)/15,0,1)*clamp(1-dy/1.5,0,1)*clamp(1-Math.abs(road.crosswindMps)/16,.18,1)*clamp(1-Math.max(0,road.gradePercent)/9,.1,1))
 }
-function demand(r,all,road,dt){
+function demand(r,all,road,dt,maxSpeedChangeMps=.9){
  const shelter=aerodynamicShelter(r,all,road),cdA=.36*(1-shelter)
  const workAt=(v)=>roadWattsRequiredV3(v,83,cdA,road)
  const tacticBonus=r.tactic==='attack'?65:r.tactic==='chase'?35:0
@@ -55,11 +67,11 @@ function demand(r,all,road,dt){
  let lo=0,hi=20
  for(let k=0;k<35;k++){const m=(lo+hi)/2;if(workAt(m)>granted)hi=m;else lo=m}
  const wanted=(lo+hi)/2
- const v=clamp(wanted,Math.max(0,r.speedMps-.9),r.speedMps+.9)
+ const v=clamp(wanted,Math.max(0,r.speedMps-maxSpeedChangeMps),r.speedMps+maxSpeedChangeMps)
  return {speed:r6(v),cdA,road,shelter,watts:r6(workAt(v))}
 }
-export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEOMETRIES[1],allowSteering=false,capacity=2,dt=10,quality='synthetic_research',experimentalPriorityPolicy='rider_id',experimentalPassingTrigger='blocked_2',experimentalPassingAdmissionPolicy='global',diagnosePassing=false,experimentalPassLanePolicy='left_first'}={}){
- fail(Array.isArray(riders)&&riders.length>=2&&riders.length<=200&&Array.isArray(route)&&route.length&&Number.isInteger(dt)&&dt>=5&&dt<=20&&[1,2,3].includes(capacity)&&typeof allowSteering==='boolean'&&quality==='synthetic_research'&&['rider_id','rotating_lane'].includes(experimentalPriorityPolicy)&&['blocked_2','closing_wheel'].includes(experimentalPassingTrigger)&&['global','local_30m'].includes(experimentalPassingAdmissionPolicy)&&typeof diagnosePassing==='boolean'&&['left_first','neighbor_space'].includes(experimentalPassLanePolicy),'Invalid offline 2D research input')
+export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEOMETRIES[1],allowSteering=false,capacity=2,dt=10,quality='synthetic_research',experimentalPriorityPolicy='rider_id',experimentalPassingTrigger='blocked_2',experimentalPassingAdmissionPolicy='global',diagnosePassing=false,experimentalPassLanePolicy='left_first',experimentalTimingPolicy='legacy'}={}){
+ fail(Array.isArray(riders)&&riders.length>=2&&riders.length<=200&&Array.isArray(route)&&route.length&&Number.isInteger(dt)&&dt>=5&&dt<=20&&[1,2,3].includes(capacity)&&typeof allowSteering==='boolean'&&quality==='synthetic_research'&&['rider_id','rotating_lane'].includes(experimentalPriorityPolicy)&&['blocked_2','closing_wheel'].includes(experimentalPassingTrigger)&&['global','local_30m'].includes(experimentalPassingAdmissionPolicy)&&typeof diagnosePassing==='boolean'&&['left_first','neighbor_space'].includes(experimentalPassLanePolicy)&&['legacy','seconds_normalized'].includes(experimentalTimingPolicy)&&(experimentalTimingPolicy==='legacy'||[5,10].includes(dt)),'Invalid offline 2D research input')
  const g=validateRoadScenarioV3(geometry)
  const finishDistanceMeters=r6(route.reduce((sum,segment)=>sum+segment.lengthKm*1000,0))
  fail(Number.isFinite(finishDistanceMeters)&&finishDistanceMeters>0&&finishDistanceMeters<1000000,'Invalid stage finish line')
@@ -71,7 +83,7 @@ export function initializeCoupled2DResearchV3({riders,route,geometry=BATCH40_GEO
  })
  for(let i=0;i<initial.length;i++)for(let j=i+1;j<initial.length;j++)fail(!isHit({x0:initial[i].meters,x1:initial[i].meters,y0:initial[i].y,y1:initial[i].y},{x0:initial[j].meters,x1:initial[j].meters,y0:initial[j].y,y1:initial[j].y},g),'Initial two-dimensional bicycle collision')
  for(const s of route)fail(Number.isFinite(s.lengthKm)&&s.lengthKm>0&&Number.isFinite(s.gradePercent)&&Math.abs(s.gradePercent)<=22,'Invalid route')
- return {version:42,gate:'OFFLINE_RESEARCH_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',input:{route:structuredClone(route),geometry:structuredClone(geometry),allowSteering,capacity,dt,quality,experimentalPriorityPolicy,experimentalPassingTrigger,...(experimentalPassingAdmissionPolicy==='global'?{}:{experimentalPassingAdmissionPolicy}),...(diagnosePassing?{diagnosePassing:true}:{}),...(experimentalPassLanePolicy==='left_first'?{}:{experimentalPassLanePolicy}),finishDistanceMeters},riders:initial,finish:[],complete:false,tick:0,elapsedSeconds:0,metrics:{commandedMeters:0,achievedMeters:0,blockedRiderTicks:0,preventedMeters:0,pathClips:0,collisionChecks:0,reservationsStarted:0,completedPasses:0,abortedPasses:0,concurrentPeak:0,energyJ:0,lateralMeters:0,first30mGapSecond:null,...(diagnosePassing?{passingAudit:{eligible:0,admitted:0,capacityDenied:0,physicalLaneDenied:0,reservedLaneDenied:0,collisionAborted:0,finishAborted:0,forwardPairPasses:0,passingByRider:{},queueByRider:{},maxWaitingTicks:0}}:{})},samples:[]}
+ return {version:42,gate:'OFFLINE_RESEARCH_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',input:{route:structuredClone(route),geometry:structuredClone(geometry),allowSteering,capacity,dt,quality,experimentalPriorityPolicy,experimentalPassingTrigger,...(experimentalPassingAdmissionPolicy==='global'?{}:{experimentalPassingAdmissionPolicy}),...(diagnosePassing?{diagnosePassing:true}:{}),...(experimentalPassLanePolicy==='left_first'?{}:{experimentalPassLanePolicy}),...(experimentalTimingPolicy==='legacy'?{}:{experimentalTimingPolicy}),finishDistanceMeters},riders:initial,finish:[],complete:false,tick:0,elapsedSeconds:0,metrics:{commandedMeters:0,achievedMeters:0,blockedRiderTicks:0,preventedMeters:0,pathClips:0,collisionChecks:0,reservationsStarted:0,completedPasses:0,abortedPasses:0,concurrentPeak:0,energyJ:0,lateralMeters:0,first30mGapSecond:null,...(diagnosePassing?{passingAudit:{eligible:0,admitted:0,capacityDenied:0,physicalLaneDenied:0,reservedLaneDenied:0,collisionAborted:0,finishAborted:0,forwardPairPasses:0,passingByRider:{},queueByRider:{},maxWaitingTicks:0}}:{})},samples:[]}
 }
 function currentReservations(rows){return rows.filter(r=>r.reservation)}
 /** Conservative early closing-wheel predicate, evaluated on current actual
@@ -79,10 +91,10 @@ function currentReservations(rows){return rows.filter(r=>r.reservation)}
  * A faster rider within the next two 10-second reaction intervals can prepare
  * a lane before experiencing two full blocked ticks.
  */
-export function shouldPreparePass2DV3(r,rows,g,trigger='blocked_2'){
- if(!['blocked_2','closing_wheel'].includes(trigger))throw Error('Invalid passing trigger')
+export function shouldPreparePass2DV3(r,rows,g,trigger='blocked_2',blockedTicks=2){
+ if(!['blocked_2','closing_wheel'].includes(trigger)||!Number.isInteger(blockedTicks)||blockedTicks<1||blockedTicks>8)throw Error('Invalid passing trigger')
  if(r.finishSeconds!==null||r.reservation)return false
- if(r.blockedStreak>=2)return true
+ if(r.blockedStreak>=blockedTicks)return true
  if(trigger==='blocked_2')return false
  const ahead=rows.filter(x=>x.riderId!==r.riderId&&x.finishSeconds===null&&x.meters>r.meters&&Math.abs(x.y-r.y)<g.lateralCollisionM).sort((a,b)=>a.meters-b.meters||a.riderId.localeCompare(b.riderId))[0]
  if(!ahead)return false
@@ -104,7 +116,7 @@ export function canAdmitPassingReservationV3(r,current,capacity,policy='global')
 function chooseNewReservations(rows,g,settings,metrics){
  if(!settings.allowSteering)return
  const active=currentReservations(rows),audit=metrics.passingAudit
- const options=rows.filter(r=>r.finishSeconds===null&&!r.reservation&&shouldPreparePass2DV3(r,rows,g,settings.experimentalPassingTrigger)&&Math.abs(r.y/g.centerStepM-Math.round(r.y/g.centerStepM))<1e-5)
+ const options=rows.filter(r=>r.finishSeconds===null&&!r.reservation&&shouldPreparePass2DV3(r,rows,g,settings.experimentalPassingTrigger,coupled2DTimingV3(settings.dt,settings.experimentalTimingPolicy??'legacy').blockedTicks)&&Math.abs(r.y/g.centerStepM-Math.round(r.y/g.centerStepM))<1e-5)
   .sort((a,b)=>b.blockedStreak-a.blockedStreak||a.riderId.localeCompare(b.riderId))
  if(audit){
   const ids=new Set(options.map(r=>r.riderId))
@@ -140,7 +152,8 @@ function chooseNewReservations(rows,g,settings,metrics){
   const target=(settings.experimentalPassLanePolicy??'left_first')==='neighbor_space'
    ?chooseNeighborSpaceLaneV3(r,rows,active,clear,g)
    :clear.sort((a,b)=>a-b)[0]
-  r.reservation={fromY:r.y,targetY:r6(target*g.centerStepM),reactionLeft:2,steeringLeft:3,progress:0,phase:'reaction',chargedJ:0}
+  const timing=coupled2DTimingV3(settings.dt,settings.experimentalTimingPolicy??'legacy')
+  r.reservation={fromY:r.y,targetY:r6(target*g.centerStepM),reactionLeft:timing.reactionTicks,steeringLeft:timing.steeringTicks,...((settings.experimentalTimingPolicy??'legacy')==='seconds_normalized'?{steeringTicks:timing.steeringTicks}:{}),progress:0,phase:'reaction',chargedJ:0}
   active.push(r);metrics.reservationsStarted++
   if(audit){audit.eligible++;audit.admitted++;audit.queueByRider[r.riderId]=0}
  }
@@ -183,15 +196,15 @@ function moveCandidate(r,intended,paths,g,metrics,unplanned){
 }
 export function advanceCoupled2DResearchV3(state,steps=1){
  fail(state?.version===42&&state.gate==='OFFLINE_RESEARCH_ONLY'&&state.officialWrites===0&&state.sportingApproval==='NOT_APPROVED'&&Array.isArray(state.finish)&&Number.isFinite(state.input?.finishDistanceMeters)&&Number.isInteger(steps)&&steps>=1&&steps<=1000,'Invalid offline 2D checkpoint')
- const out=structuredClone(state),settings=out.input,g=validateRoadScenarioV3(settings.geometry),dt=settings.dt
+ const out=structuredClone(state),settings=out.input,g=validateRoadScenarioV3(settings.geometry),dt=settings.dt,timing=coupled2DTimingV3(dt,settings.experimentalTimingPolicy??'legacy')
  for(let tick=0;tick<steps&&!out.complete;tick++){
-  const initial=out.riders.filter(r=>r.finishSeconds===null).map(x=>({...x})),demanded=new Map(initial.map(r=>[r.riderId,demand(r,initial,roadAt(settings,r.meters),dt)]))
+  const initial=out.riders.filter(r=>r.finishSeconds===null).map(x=>({...x})),demanded=new Map(initial.map(r=>[r.riderId,demand(r,initial,roadAt(settings,r.meters),dt,timing.maxSpeedChangeMps)]))
   const prioritized=out.riders.filter(r=>r.finishSeconds===null).sort((a,b)=>priorityCompareCoupled2DV3(a,b,{tick:out.tick,policy:settings.experimentalPriorityPolicy,centerStepM:g.centerStepM,laneCount:g.laneCount})),paths=[],details=[]
   for(const r of prioritized){
    const predicted=demanded.get(r.riderId)
    let desiredY=r.y,steeringNow=false
    const reserve=r.reservation
-   if(reserve?.phase==='steering'){desiredY=r6(reserve.fromY+(reserve.targetY-reserve.fromY)*Math.min(1,reserve.progress+1/3));steeringNow=true}
+   if(reserve?.phase==='steering'){desiredY=r6(reserve.fromY+(reserve.targetY-reserve.fromY)*Math.min(1,reserve.progress+1/(reserve.steeringTicks??3)));steeringNow=true}
    const extraWatts=steeringNow?35:0
    const road=predicted.road,workAt=v=>roadWattsRequiredV3(v,83,predicted.cdA,road)
    const maxAllowed=Math.max(0,r.cpWatts+r.energy.remainingWPrimeJoules/dt-.5)
@@ -219,7 +232,7 @@ export function advanceCoupled2DResearchV3(state,steps=1){
    const sameWheel=initial.filter(x=>x.riderId!==r.riderId&&x.meters>r.meters&&Math.abs(x.y-r.y)<g.lateralCollisionM).sort((a,b)=>a.meters-b.meters||a.riderId.localeCompare(b.riderId))[0]
    r.blockedStreak=clipped>1e-4&&sameWheel?(r.blockedLeader===sameWheel.riderId?r.blockedStreak+1:1):0
    r.blockedLeader=r.blockedStreak?sameWheel.riderId:null
-   if(steeringNow&&r.reservation){r.reservation.progress=Math.min(1,r.reservation.progress+1/3);r.reservation.steeringLeft--;r.reservation.chargedJ+=35*dt;out.metrics.lateralMeters+=Math.abs(newY-r.y);if(r.reservation.steeringLeft===0){out.metrics.completedPasses++;r.reservation=null}}
+   if(steeringNow&&r.reservation){r.reservation.progress=Math.min(1,r.reservation.progress+1/(r.reservation.steeringTicks??3));r.reservation.steeringLeft--;r.reservation.chargedJ+=35*dt;out.metrics.lateralMeters+=Math.abs(newY-r.y);if(r.reservation.steeringLeft===0){out.metrics.completedPasses++;r.reservation=null}}
    else if(r.reservation?.phase==='reaction'){r.reservation.reactionLeft--;if(r.reservation.reactionLeft===0)r.reservation.phase='steering'}
    paths.push({riderId:r.riderId,x0:r.meters,x1:newMeters,y0:r.y,y1:newY})
    details.push({riderId:r.riderId,requestedMps:round6Safe(requested),actualMps:newSpeed,clippedMeters:r6(clipped),steeringNow,watts:r6(actualWatts)})
