@@ -25,7 +25,7 @@ Both 106-rider Dordrecht and 168-rider Guangxi completed all six full 10-second-
 | Completed steering maneuvers | **573** | 592 | **13** | **905** | 654 | **92** |
 | Aborted steering maneuvers | 264 | 275 | 1 | 279 | 845 | 2 |
 | Blocked rider-ticks | 92,768 | 19,650 | 37,565 | 208,287 | 78,020 | 69,704 |
-| Sum of modeled mechanical work (J) | 278,831,834.723 | 296,691,297.054 | 291,919,356.204 | 714,467,882.608 | 741,340,807.659 | 742,458,707.446 |
+| Sum of modeled mechanical work (J) | 278,831,834.722 | 296,691,297.054 | 291,919,356.204 | 714,467,882.608 | 741,340,807.659 | 742,458,707.446 |
 
 **Sporting stability under the two-rider starting-lane swap:**
 
