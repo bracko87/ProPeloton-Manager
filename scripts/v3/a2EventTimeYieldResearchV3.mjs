@@ -30,7 +30,7 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
  const ordered=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
  need(new Set(ordered.map(p=>p.riderId)).size===ordered.length,'Duplicate A37 rider')
  const scales=new Map(ordered.map(p=>[p.riderId,1])),options={longitudinal:1.8,lateral:g.lateralCollisionM}
- let pairChecks=0,collisionProposals=0,yieldSelections=0,fallbacks=0,rounds=0,contactFractionSum=0,contactSamples=0
+ let pairChecks=0,collisionProposals=0,yieldSelections=0,fallbacks=0,rounds=0,contactFractionSum=0,contactSamples=0,contactBoundaryFallbacks=0
  let resolved=null
  for(let iteration=0;iteration<=maxRounds;iteration++){
   const paths=ordered.map(p=>path(p,scales.get(p.riderId))),hits=[]
@@ -38,9 +38,12 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
    pairChecks++
    if(continuousBicycleCollisionV3(paths[i],paths[j],options)){
     const first=firstSweptContactFractionV3(paths[i],paths[j],options)
-    need(first!==null,'A37 contact interval disagrees with canonical path check')
-    hits.push({a:ordered[i],b:ordered[j],time:first})
-    collisionProposals++;contactSamples++;contactFractionSum+=first
+    // The canonical swept overlap wins even for degenerate floating-point boundaries.
+    // Treat an unlocated overlap as immediate, never as clearance.
+    if(first===null)contactBoundaryFallbacks++
+    const time=first??0
+    hits.push({a:ordered[i],b:ordered[j],time})
+    collisionProposals++;contactSamples++;contactFractionSum+=time
    }
   }
   if(hits.length===0){resolved=paths;break}
@@ -75,6 +78,6 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
  for(let i=0;i<resolved.length;i++)for(let j=i+1;j<resolved.length;j++)
   need(!continuousBicycleCollisionV3(resolved[i],resolved[j],options),'A37 returned swept-unsafe motion')
  return {paths:resolved,scales,pairChecks,collisionProposals,rounds,
-  yieldSelections,fallbacks,contactSamples,contactFractionSum,
+  yieldSelections,fallbacks,contactSamples,contactFractionSum,contactBoundaryFallbacks,
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
