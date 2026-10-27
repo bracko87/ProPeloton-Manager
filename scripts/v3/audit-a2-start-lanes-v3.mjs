@@ -12,6 +12,20 @@ assert([2,3,4,5,6].includes(size));mkdirSync(dir,{recursive:true})
 const lanes=['original','rear_0','rear_2','lead_0','lead_2',...(size>=3?['rival_1','rival_3']:[])]
 const scenarios=['open',...(size>=3?['early','delayed']:[]),...(size>=4?['second_claim']:[])]
 const out=[],failures=[]
+function correctEdgeRoundoff(intents,g){
+ const maxY=(g.laneCount-1)*g.centerStepM
+ let corrections=0
+ const moves=intents.map(move=>{
+  if(move.targetY>maxY&&move.targetY-maxY<=1e-9){
+   const safe=Math.round((maxY-1e-6)*1e6)/1e6
+   assert(maxY-safe<=2e-6&&safe<maxY,'Unsafe edge correction')
+   corrections++
+   return {...move,targetY:safe}
+  }
+  return move
+ })
+ return {moves,corrections}
+}
 function startRiders(g,headway,scenario,variant){
  const c=g.centerStepM,riders=[
   {riderId:'lead',meters:118,y:c,speedMps:4,cpWatts:245,wPrimeJoules:18000},
@@ -55,11 +69,14 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
  const row={size,road:g.id,headway,rearRequest,scenario,lane,gate:'UNKNOWN'}
  try{
   let physics=begin({riders:initial,geometry,dt:10}),policy=startPolicy(),passing=startPassing(physics.riders)
-  let saved=null,haltOther=0
+  let saved=null,haltOther=0,roundoffCorrections=0
   for(let t=1;t<=40;t++){
    const previous=physics.riders
    const action=plan(policy,previous,wishes(physics,scenario,rearRequest,g,intended),geometry)
-   policy=action.state;physics=advance(physics,action.intents)
+   policy=action.state
+   const prepared=correctEdgeRoundoff(action.intents,g)
+   roundoffCorrections+=prepared.corrections
+   physics=advance(physics,prepared.moves)
    checkSweep(previous,physics.riders,g)
    passing=trackPassing(passing,physics.riders,physics.elapsedSeconds)
    assert(physics.officialWrites===0&&physics.sportingApproval==='NOT_APPROVED')
@@ -72,7 +89,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   let p=saved.physics,q=saved.policy,s=saved.passing
   for(let t=21;t<=40;t++){
    const action=plan(q,p.riders,wishes(p,scenario,rearRequest,g,intended),geometry)
-   q=action.state;p=advance(p,action.intents)
+   q=action.state;p=advance(p,correctEdgeRoundoff(action.intents,g).moves)
    s=trackPassing(s,p.riders,p.elapsedSeconds)
   }
   assert.deepEqual(p,physics);assert.deepEqual(q,policy);assert.deepEqual(s,passing)
@@ -81,6 +98,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   row.gate='PASS'
   row.sustained60s=events.some(e=>(e.reversedAtSeconds??passing.elapsedSeconds)-e.atSeconds>=60)
   row.haltedOtherTicks=haltOther
+  row.roundoffCorrections=roundoffCorrections
   row.primaryCenter=scenario==='open'?null:Math.abs(end.get('extra2'))<1e-4
   row.secondCenter=scenario==='second_claim'?Math.abs(end.get('extra3'))<1e-4:null
   row.selectedY=intended
@@ -95,7 +113,7 @@ for(const row of out){
  v.second+=Number(row.secondCenter===true);v.halt+=row.haltedOtherTicks??0;aggregate[k]=v
 }
 const report={study:'A2_ACTUAL_LANE_GRID_SENSITIVITY',size,technicalGate:failures.length?'FAIL':'PASS',cases:out.length,results:out,
- aggregate:Object.values(aggregate),failures,officialWrites:0,sportingApproval:'NOT_APPROVED'}
+ aggregate:Object.values(aggregate),roundoffCorrections:out.reduce((sum,x)=>sum+(x.roundoffCorrections??0),0),failures,officialWrites:0,sportingApproval:'NOT_APPROVED'}
 writeFileSync(dir+'/lane-grid-'+size+'.json',JSON.stringify(report,null,2)+'\n')
 console.log(JSON.stringify({size,technicalGate:report.technicalGate,cases:report.cases,aggregate:report.aggregate,failures:failures.length}))
 assert.equal(failures.length,0,'Starting lane sensitivity technical gate')
