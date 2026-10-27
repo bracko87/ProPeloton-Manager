@@ -1,0 +1,57 @@
+name: V3 A2 Step40 mirror-normalized contact research only
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2EventTimeYieldResearchV3.mjs'
+      - 'scripts/v3/a2SubstepPhysicalResearchV3.mjs'
+      - 'scripts/v3/verify-a2-step40-normalized-v3.mjs'
+      - '.github/workflows/v3-a2-step40-normalized.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mirror-grid-experiment:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: A40 480 physical runs and 120 mirrors and 96 ID renames
+        env:
+          V3_A2_STEP40_DIR: ${{ runner.temp }}/step40
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step40-normalized-v3.mjs
+      - name: Keep all A40 case-level physics and counterexamples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step40-normalized-results
+          path: ${{ runner.temp }}/step40/*.json
+          retention-days: 30
+          if-no-files-found: warn
+  old-policies-and-app:
+    runs-on: ubuntu-latest
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Independent unchanged A39 A38 A37 A36 A35 A34 A33 A32 stage tests
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step39-fairness-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step38-merge-trace-v3.mjs
+          V3_A2_STEP37_FAMILY=following node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step37-event-yield-v3.mjs
+          V3_A2_STEP37_FAMILY=hold node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step37-event-yield-v3.mjs
+          V3_A2_STEP37_FAMILY=merge node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step37-event-yield-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step36-causal-isolation-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step35-substep-sensitivity-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-substep-physical-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-nonlinear-sweep-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-bounded-slot-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Production app build
+        run: npm ci --no-audit --no-fund && npm run build
