@@ -17,7 +17,7 @@ function startRiders(g,headway,scenario,variant){
   {riderId:'lead',meters:118,y:c,speedMps:4,cpWatts:245,wPrimeJoules:18000},
   {riderId:'rear',meters:118-headway,y:c,speedMps:4,cpWatts:325,wPrimeJoules:23000}]
  for(let i=2;i<size;i++)riders.push({riderId:'extra'+i,meters:i===2&&scenario!=='open'?150:i===3&&scenario==='second_claim'?168:76-(i-2)*24,
-  y:i===2&&scenario!=='open'?2*c:i%2===0?3*c-1e-6:0,
+  y:i===2&&scenario!=='open'?2*c:i===3&&scenario==='second_claim'?3*c-1e-6:i%2===0?3*c-1e-6:0,
   speedMps:4,cpWatts:230,wPrimeJoules:18000})
  const [who,dest]=variant.split('_')
  if(variant!=='original'){

@@ -1,0 +1,47 @@
+name: V3 A2 synthetic starting lane grid stress
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/audit-a2-start-lanes-v3.mjs'
+      - '.github/workflows/v3-a2-start-lanes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lanes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        riders: [2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Physics, nonlinear sensitivity and checkpoint regressions
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-nonlinear-sweeps-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-subtick-observer-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-intent-aware-corridor-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Actual starting lateral lane grids under unchanged motion solver
+        env:
+          V3_A2_LANES_SIZE: ${{ matrix.riders }}
+          V3_A2_LANES_DIR: ${{ runner.temp }}/lane-grid-${{ matrix.riders }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-start-lanes-v3.mjs
+      - name: Archive negative sporting and positive technical results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-start-lanes-${{ matrix.riders }}
+          path: ${{ runner.temp }}/lane-grid-${{ matrix.riders }}/*.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Independent production build
+        if: matrix.riders == 2
+        run: npm ci --no-audit --no-fund && npm run build
