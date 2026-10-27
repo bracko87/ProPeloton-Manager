@@ -96,7 +96,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
     const moved=r.meters-previous.get(r.riderId).meters
     if(r.riderId.startsWith('extra')&&moved<.5)otherHalted++
     if(r.riderId==='rear'&&moved<.5)rearHalted++
-    if(scenario==='moving_left'&&r.riderId==='extra2'){
+    if(scenario!=='open'&&r.riderId==='extra2'){
      blockerMovement+=Math.abs(r.y-previous.get(r.riderId).y)
      blockerEntered=blockerEntered||r.y<=g.centerStepM*.5
      if(blockerCompletionSecond===null&&r.y<=g.centerStepM*.5)blockerCompletionSecond=after.elapsedSeconds
@@ -148,6 +148,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   record.firstPassSecond=passes[0]?.atSeconds??null
   record.blockerCompletionSecond=blockerCompletionSecond
   record.reversedLateralMetres=round(reverseMetres)
+  record.blockerObservedMovement=round(blockerMovement)>0
   record.secondClaimantLateralMetres=round(secondClaimMoveMetres)
   record.passAfterBlockerVerified=scenario!=='moving_left'||record.firstPassSecond===null||blockerCompletionSecond!==null&&record.firstPassSecond>blockerCompletionSecond
   if(policy==='slot_after'&&scenario==='moving_left'){
