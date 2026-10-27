@@ -1,0 +1,45 @@
+name: V3 A2 yield-option feasibility 12 24 32 rider diagnosis
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/audit-a2-yield-options-v3.mjs'
+      - '.github/workflows/v3-a2-yield-choice-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  feasibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      matrix:
+        riders: [12, 24, 32]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Baseline exact-path safety and option arithmetic
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-yield-options-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-crossing-aware-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Count feasible passing alternatives in all four grids
+        env:
+          V3_A2_PASS_RIDERS: ${{ matrix.riders }}
+          V3_A2_PASS_DIR: ${{ runner.temp }}/yield-choice-${{ matrix.riders }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-yield-options-v3.mjs
+      - name: Retain conflict cost distribution and checkpoint evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-yield-choice-${{ matrix.riders }}
+          path: ${{ runner.temp }}/yield-choice-${{ matrix.riders }}/*.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: App production build
+        if: matrix.riders == 12
+        run: npm ci --no-audit --no-fund && npm run build
