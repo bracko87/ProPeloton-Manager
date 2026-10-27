@@ -21,7 +21,7 @@ function buildInitial(g,headway,scenario){
  ]
  for(let i=2;i<count;i++){
   const blocker=i===2&&(scenario==='moving_left'||scenario==='occupied_right')
-  initial.push({riderId:'extra'+i,meters:blocker?110:76-(i-2)*24,y:blocker?2*c:(i%2===0?3*c:0),speedMps:4,cpWatts:230,wPrimeJoules:18000})
+  initial.push({riderId:'extra'+i,meters:blocker?110:76-(i-2)*24,y:blocker?2*c:(i%2===0?Math.min(3*c-1e-6,3*c):0),speedMps:4,cpWatts:230,wPrimeJoules:18000})
  }
  return initial
 }
@@ -52,7 +52,7 @@ function desired(state,spec,g,frozenChoice){
   // This is a scripted rider desire, not permission for an unsafe trajectory.
   // Each rider may request at most one track-spacing shift per tick.
   targetY=r.y+Math.max(-c,Math.min(c,targetY-r.y))
-  targetY=Math.max(0,Math.min(3*c,targetY))
+  targetY=Math.max(0,Math.min(3*c-1e-6,targetY))
   return {riderId:r.riderId,forwardMeters,targetY:round(targetY)}
  })
 }
