@@ -1,0 +1,30 @@
+name: V3 A2 Step40 mirror failure root cause (offline)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/audit-a2-step40-mirror-diagnostic-v3.mjs'
+      - '.github/workflows/v3-a2-step40-mirror.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mirror-cause:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Reproduce exact Step39 three mirrored road anomalies at first accepted substep
+        env:
+          V3_A2_STEP40_DIR: ${{ runner.temp }}/step40
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step40-mirror-diagnostic-v3.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: step40-root-cause
+          path: ${{ runner.temp }}/step40/*.json
+          retention-days: 30
+          if-no-files-found: warn
