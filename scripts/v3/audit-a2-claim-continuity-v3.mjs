@@ -115,7 +115,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   row.otherIntentsOverridden=policyId==='outer_lane_guard'?policy.metrics.changedOpponentIntents:policyId==='bounded_hold_1'?policy.metrics.nonconsentingChanges:policyId==='baseline'?0:policy.metrics.otherRiderChanges
   assert(row.otherIntentsOverridden===0)
   row.signalWarnings=policyId.startsWith('signal_')?policy.metrics.preemptiveSignals:0
-  row.activeSelections=['active_only','latched','signal_preemptive'].includes(policyId)?policy.metrics.baselineTicks:0
+  row.activeSelections=['signal_preemptive','signal_latched','signal_memory_3'].includes(policyId)?policy.metrics.baselineTicks:0
   row.roundoffCorrections=roundoffCorrections
   row.primaryCenter=scenario==='open'?null:Math.abs(end.get('extra2'))<1e-4
   row.secondCenter=scenario==='second_claim'?Math.abs(end.get('extra3'))<1e-4:null
