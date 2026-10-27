@@ -4,6 +4,7 @@
  * This adapter NEVER drives player races or stored results.
  */
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
+import {resolveEventTimeYieldV3} from './a2EventTimeYieldResearchV3.mjs'
 import {evaluateObservedPiecewisePairV3} from './a2NonlinearSweepAuditV3.mjs'
 import {validateRoadScenarioV3} from './roadWidthLookaheadV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
@@ -13,10 +14,11 @@ const r6=v=>Math.round(v*1e6)/1e6
 const nonnegative=v=>Number.isFinite(v)&&v>=0
 function hit(a,b,g){return continuousBicycleCollisionV3(a,b,{longitudinal:1.8,lateral:g.lateralCollisionM})}
 function segment(r,x,y){return {x0:r.meters,x1:x,y0:r.y,y1:y}}
-export function initializeSubstepPhysicalResearchV3({riders,geometry,road={gradePercent:0},tickSeconds=10,substeps=4}={}){
+export function initializeSubstepPhysicalResearchV3({riders,geometry,road={gradePercent:0},tickSeconds=10,substeps=4,conflictPolicy='symmetric_halving'}={}){
  const g=validateRoadScenarioV3(geometry)
  check(Array.isArray(riders)&&riders.length>=2&&riders.length<=32,'Invalid A34 roster count')
  check([2,4,5,10].includes(substeps)&&tickSeconds===10&&tickSeconds/substeps<=10,'Invalid A34 research step')
+ check(['symmetric_halving','event_time_yield'].includes(conflictPolicy),'Invalid A37 experimental policy')
  check(road&&Number.isFinite(road.gradePercent)&&Math.abs(road.gradePercent)<=15,'Invalid A34 road grade')
  const ids=new Set(),maxY=(g.laneCount-1)*g.centerStepM
  const ready=riders.map(r=>{
@@ -32,10 +34,11 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
   check(!hit(segment(ready[i],ready[i].meters,ready[i].y),segment(ready[j],ready[j].meters,ready[j].y),g),'Initially colliding A34 riders')
  }
  return {version:1,gate:'A34_OFFLINE_SUBSTEP_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',
-  geometry:structuredClone(geometry),road:structuredClone(road),tickSeconds,substeps,tick:0,elapsedSeconds:0,
+  geometry:structuredClone(geometry),road:structuredClone(road),tickSeconds,substeps,conflictPolicy,tick:0,elapsedSeconds:0,
   riders:ready,metrics:{ticks:0,riderSubsteps:0,conflictPairChecks:0,collisionProposals:0,
     collisionAttenuationRounds:0,attenuatedRiderSubsteps:0,mechanicalJoules:0,observedPairs:0,
-    endpointChordMisses:0,remainingPiecewiseOverlaps:0},lastTickTracks:[]}
+    endpointChordMisses:0,remainingPiecewiseOverlaps:0,yieldSelections:0,symmetricFallbacks:0,
+    contactSamples:0,contactFractionSum:0},lastTickTracks:[]}
 }
 /** Freeze all currently submitted rider choices for this one research tick.
  * The next substep uses ONLY the state that was actually achieved before it.
@@ -46,7 +49,8 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
 export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
  check(checkpoint?.version===1&&checkpoint.gate==='A34_OFFLINE_SUBSTEP_ONLY'&&
   checkpoint.officialWrites===0&&checkpoint.sportingApproval==='NOT_APPROVED'&&
-  Number.isInteger(checkpoint.tick)&&checkpoint.tick>=0,'Invalid A34 replay checkpoint')
+  Number.isInteger(checkpoint.tick)&&checkpoint.tick>=0&&
+  ['symmetric_halving','event_time_yield'].includes(checkpoint.conflictPolicy),'Invalid A34 replay checkpoint')
  const state=structuredClone(checkpoint),g=validateRoadScenarioV3(state.geometry)
  check(Array.isArray(intents)&&intents.length===state.riders.length,'Missing A34 rider commands')
  const command=new Map(intents.map(c=>[c?.riderId,c]))
@@ -72,26 +76,37 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    const speed=Math.max(0,Math.floor(Math.max(0,permitted-1e-7)*1e6)/1e6)
    return {riderId:r.riderId,forward:r6(speed*seconds),y,original:r,command:c}
   })
-  const scales=new Map(proposals.map(p=>[p.riderId,1]))
-  let resolved=null
-  for(let iteration=0;iteration<65;iteration++){
-   const paths=proposals.map(p=>{
-    const f=scales.get(p.riderId)
-    return {...segment(p.original,r6(p.original.meters+p.forward*f),
-      r6(p.original.y+(p.y-p.original.y)*f)),riderId:p.riderId}
-   })
-   const involved=new Set()
-   for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++){
-    state.metrics.conflictPairChecks++
-    if(hit(paths[i],paths[j],g)){
-     involved.add(paths[i].riderId);involved.add(paths[j].riderId)
-     state.metrics.collisionProposals++
+  const event=state.conflictPolicy==='event_time_yield'?resolveEventTimeYieldV3(proposals,g):null
+  const scales=event?.scales??new Map(proposals.map(p=>[p.riderId,1]))
+  let resolved=event?.paths??null
+  if(event){
+   state.metrics.conflictPairChecks+=event.pairChecks
+   state.metrics.collisionProposals+=event.collisionProposals
+   state.metrics.collisionAttenuationRounds+=event.rounds
+   state.metrics.yieldSelections+=event.yieldSelections
+   state.metrics.symmetricFallbacks+=event.fallbacks
+   state.metrics.contactSamples+=event.contactSamples
+   state.metrics.contactFractionSum+=event.contactFractionSum
+  }else{
+   for(let iteration=0;iteration<65;iteration++){
+    const paths=proposals.map(p=>{
+     const f=scales.get(p.riderId)
+     return {...segment(p.original,r6(p.original.meters+p.forward*f),
+       r6(p.original.y+(p.y-p.original.y)*f)),riderId:p.riderId}
+    })
+    const involved=new Set()
+    for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++){
+     state.metrics.conflictPairChecks++
+     if(hit(paths[i],paths[j],g)){
+      involved.add(paths[i].riderId);involved.add(paths[j].riderId)
+      state.metrics.collisionProposals++
+     }
     }
+    if(involved.size===0){resolved=paths;break}
+    check(iteration<64,'A34 no swept-safe synchronized movement')
+    state.metrics.collisionAttenuationRounds++
+    for(const id of involved)scales.set(id,scales.get(id)/2)
    }
-   if(involved.size===0){resolved=paths;break}
-   check(iteration<64,'A34 no swept-safe synchronized movement')
-   state.metrics.collisionAttenuationRounds++
-   for(const id of involved)scales.set(id,scales.get(id)/2)
   }
   check(resolved!==null,'A34 cannot resolve this substep')
   const result=new Map(resolved.map(p=>[p.riderId,p]))
