@@ -39,18 +39,19 @@ export function advanceObservedEscapeV3(snapshot,riders,intents,geometry){
  let contender=null
  if(!esc.active&&Math.abs(rear.y)<epsilon&&Math.abs(lead.y-c)<c*.1&&
     state.guarded.initialOuterLaneEligible===false){
-  // Do not escape for a lone ordinary claimant: A30 already handles
-  // that safely. Only react when at least TWO riders simultaneously and
-  // observably enter the adjacent corridor from lane 2 toward lane 1.
-  // Both present lateral commands are real; no future target is predicted.
+  // React only to a sufficiently CLOSE moving 2-rider cascade:
+  // a rider currently crossing lane 2 -> 1 and another currently moving
+  // left toward the same corridor from lane 3 or 2. Both commands are
+  // observed now. This avoids turning a distant ordinary merge into an
+  // unnecessary evasive move. The 32m screen is synthetic/unvalidated.
   const converging=riders.filter(x=>x.riderId!=='rear'&&x.riderId!=='lead')
    .filter(x=>x.meters-rear.meters>=0&&x.meters-rear.meters<=65)
-   .filter(x=>x.y>1.5*c&&x.y<=2*c+epsilon)
+   .filter(x=>x.y>1.5*c&&x.y<=3*c+epsilon)
    .filter(x=>supplied.get(x.riderId).targetY<x.y-epsilon)
    .sort((a,b)=>a.meters-b.meters||a.riderId.localeCompare(b.riderId))
   const nearest=converging[0]
-  if(converging.length>=2&&nearest&&nearest.meters-rear.meters<=35)
-   contender=nearest
+  if(converging.length>=2&&nearest&&nearest.meters-rear.meters<=32&&
+     nearest.y<=2*c+epsilon)contender=nearest
  }
  if(contender)esc.observedTriggers++
  if(esc.active||contender){
