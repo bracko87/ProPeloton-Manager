@@ -58,7 +58,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
  const record={riders:size,road:g.id,headway,rearRequest,scenario,policy,technical:'UNKNOWN',officialWrites:0}
  try{
   let physics=begin({riders:initial,geometry,dt}),passing=passStart(physics.riders),lease=reserve({leaseTicks:8,maxDeferralsPerRival:2}),fair=fairStart({maxHoldTicks:1,releaseGapM:4,leaseTicks:8}),timed=timedStart({mode:policy==='slot_after'?'rival_first':'pass_first',observeTicks:1,maxHoldTicks:1,maxWaitTicks:8})
-  let checkpoint=null,otherHalted=0,rearHalted=0,blockerEntered=false,blockerMovement=0
+  let checkpoint=null,otherHalted=0,rearHalted=0,blockerEntered=false,blockerMovement=0,blockerCompletionSecond=null
   for(let tick=1;tick<=40;tick++){
    const before=physics.riders,requested=requests(physics,scenario,rearRequest,g,selected)
    let moves=requested
@@ -87,6 +87,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
     if(scenario==='moving_left'&&r.riderId==='extra2'){
      blockerMovement+=Math.abs(r.y-previous.get(r.riderId).y)
      blockerEntered=blockerEntered||r.y<=g.centerStepM*.5
+     if(blockerCompletionSecond===null&&r.y<=g.centerStepM*.5)blockerCompletionSecond=after.elapsedSeconds
     }
    }
    assert(after.metrics.achievedMeters<=after.metrics.requestedMeters+1e-5)
@@ -126,6 +127,12 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   record.technical='PASS'
   record.sustained60s=passes.some(e=>(e.reversedAtSeconds??passing.elapsedSeconds)-e.atSeconds>=60)
   record.firstPassSecond=passes[0]?.atSeconds??null
+  record.blockerCompletionSecond=blockerCompletionSecond
+  record.passAfterBlockerVerified=scenario!=='moving_left'||record.firstPassSecond===null||blockerCompletionSecond!==null&&record.firstPassSecond>blockerCompletionSecond
+  if(policy==='slot_after'&&scenario==='moving_left'){
+   assert(blockerCompletionSecond!==null,'Blocker did not complete during pass-after trial')
+   assert(record.firstPassSecond===null||record.firstPassSecond>blockerCompletionSecond,'Overtake occurred before rival lane completion')
+  }
   record.otherHaltedRiderTicks=otherHalted;record.rearHaltedRiderTicks=rearHalted
   record.blockerEnteredCorridor=blockerEntered;record.blockerLateralMeters=round(blockerMovement)
   record.blockerCompletedMove=scenario==='moving_left'?physics.riders.find(r=>r.riderId==='extra2').y<=g.centerStepM*.5:null
