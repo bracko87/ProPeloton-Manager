@@ -26,10 +26,30 @@ function path(p,scale){return {riderId:p.riderId,x0:p.original.meters,x1:r6(p.or
  * Neither rider's COMMAND is rewritten. No crossing receives immunity.
  */
 export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=false,tiePolicy='id_first'}={}){
- need(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&g&&Number.isFinite(g.lateralCollisionM)&&Number.isInteger(maxRounds)&&maxRounds>=8&&maxRounds<=64&&typeof diagnostics==='boolean'&&['id_first','physical_group'].includes(tiePolicy),'Invalid A37 resolver')
+ need(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&g&&Number.isFinite(g.lateralCollisionM)&&Number.isInteger(maxRounds)&&maxRounds>=8&&maxRounds<=64&&typeof diagnostics==='boolean'&&['id_first','physical_group','physical_group_normalized'].includes(tiePolicy),'Invalid A37 resolver')
  const ordered=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
  need(new Set(ordered.map(p=>p.riderId)).size===ordered.length,'Duplicate A37 rider')
  const scales=new Map(ordered.map(p=>[p.riderId,1])),options={longitudinal:1.8,lateral:g.lateralCollisionM}
+ // A40's independent research policy uses integer-micrometre relative
+ // coordinates to make left-right mirror contact classification symmetric.
+ // The A37/A39 policies and the final raw swept-safety check are unchanged.
+ const normalize=tiePolicy==='physical_group_normalized'
+ const relation=(a,b)=>[{
+  x0:r6(a.x0-b.x0),x1:r6(a.x1-b.x1),
+  y0:r6(a.y0-b.y0),y1:r6(a.y1-b.y1)
+ },{x0:0,x1:0,y0:0,y1:0}]
+ const contact=(a,b)=>{
+  const raw=continuousBicycleCollisionV3(a,b,options)
+  if(!normalize)return raw
+  const [p,q]=relation(a,b)
+  return raw||continuousBicycleCollisionV3(p,q,options)
+ }
+ const firstContact=(a,b)=>{
+  if(!normalize)return firstSweptContactFractionV3(a,b,options)
+  const [p,q]=relation(a,b)
+  const calculated=firstSweptContactFractionV3(p,q,options)
+  return calculated===null?0:r6(calculated)
+ }
  let pairChecks=0,collisionProposals=0,yieldSelections=0,fallbacks=0,hardFallbacks=0,rounds=0,contactFractionSum=0,contactSamples=0,contactBoundaryFallbacks=0,physicalTieGroups=0,physicalTieParticipants=0
  const trace=diagnostics?[]:null
  let resolved=null
@@ -37,8 +57,8 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=fa
   const paths=ordered.map(p=>path(p,scales.get(p.riderId))),hits=[]
   for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++){
    pairChecks++
-   if(continuousBicycleCollisionV3(paths[i],paths[j],options)){
-    const first=firstSweptContactFractionV3(paths[i],paths[j],options)
+   if(contact(paths[i],paths[j])){
+    const first=firstContact(paths[i],paths[j])
     // The canonical swept overlap wins even for degenerate floating-point boundaries.
     // Treat an unlocated overlap as immediate, never as clearance.
     if(first===null)contactBoundaryFallbacks++
@@ -51,7 +71,7 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=fa
   if(iteration>=maxRounds)break
   hits.sort((u,v)=>u.time-v.time||u.a.riderId.localeCompare(v.a.riderId)||u.b.riderId.localeCompare(v.b.riderId))
   const tiedFirstContactPairs=hits.filter(x=>Math.abs(x.time-hits[0].time)<=1e-9).length
-  if(tiePolicy==='physical_group'){
+  if(tiePolicy==='physical_group'||tiePolicy==='physical_group_normalized'){
    const tied=hits.filter(x=>Math.abs(x.time-hits[0].time)<=1e-9)
    const equalX=tied.length===1&&Math.abs(tied[0].a.original.meters-tied[0].b.original.meters)<1e-9
    if(tied.length>1||equalX){
@@ -83,7 +103,7 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=fa
    let clear=true
    for(const opponent of others){
     pairChecks++
-    if(continuousBicycleCollisionV3(candidate,opponent,options)){clear=false;unsafeRatioTrials++;break}
+    if(contact(candidate,opponent)){clear=false;unsafeRatioTrials++;break}
    }
    if(clear){accepted=candidateScale;break}
   }
