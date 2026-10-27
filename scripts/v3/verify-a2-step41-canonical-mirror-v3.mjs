@@ -138,7 +138,7 @@ const summary=[2,2.5,5].map(seconds=>{
   totalInversions:arr.reduce((s,x)=>s+(x.versus2s?.inversions??0),0),
   tieGroups:arr.reduce((s,x)=>s+x.tieGroups,0),
   hardFallbacks:arr.reduce((s,x)=>s+x.hardFallbacks,0),
-  nearStops:arr.reduce((s,x)=>s+x.nearStops,0)
+  nearStops:arr.reduce((s,x)=>s+x.nearStops,0)}
 })
 const report={study:'A2_STEP41_CANONICAL_MIRROR_REPRESENTATION',technicalGate:'PASS',
  representationGate:failMirror===0&&failRename===0?'PASS':'FAIL',
