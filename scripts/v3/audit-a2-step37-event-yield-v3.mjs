@@ -101,7 +101,7 @@ for(const geometry of BATCH40_GEOMETRIES){
  }
 }
 assert.equal(failures.length,0,'A37 physical test failed')
-assert.equal(trials.length,240);assert.equal(comparisons.length,200)
+assert.equal(trials.length,240);assert.equal(comparisons.length,280)
 const summaries=[]
 for(const policy of policies)for(const seconds of [2,2.5,5]){
  const sub=trials.filter(r=>r.policy===policy&&r.seconds===seconds)
