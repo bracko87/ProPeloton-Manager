@@ -1,0 +1,46 @@
+name: V3 A2 current lane versus adjacent policy 1760 matched configurations
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/audit-a2-current-lane-compare-v3.mjs'
+      - '.github/workflows/v3-a2-current-lane-compare.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        riders: [2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit and original 2D regression checks
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-current-lane-first-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-intent-aware-corridor-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Execute matched 2-6 rider policy comparison
+        env:
+          V3_A2_LANECOMP_SIZE: ${{ matrix.riders }}
+          V3_A2_LANECOMP_DIR: ${{ runner.temp }}/lanecomp-${{ matrix.riders }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-current-lane-compare-v3.mjs
+      - name: Archive passed and failed paired trajectories
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-current-lane-compare-${{ matrix.riders }}
+          path: ${{ runner.temp }}/lanecomp-${{ matrix.riders }}/*.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Independent app production build
+        if: matrix.riders == 2
+        run: npm ci --no-audit --no-fund && npm run build
