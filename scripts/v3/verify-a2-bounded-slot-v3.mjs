@@ -20,5 +20,19 @@ assert.deepEqual(reverse.state,run.state)
 assert.equal(run.state.slot.officialWrites,0)
 assert.equal(run.state.sportingApproval,'NOT_APPROVED')
 assert.throws(()=>step({...a.state,slot:{...a.state.slot,officialWrites:1}},next,req,g),/Invalid/)
+
+// A31 rejects this known observed two-rider cascade when headway is 18m;
+// A32 may only adjust its follower forward travel if the full sweep is safe.
+const blocked=[R('rear',204,0),R('lead',208,c),R('extra2',234,2*c),R('extra3',252,3*c)]
+const strict=baseStep(b.state,blocked,req,g)
+const recovered=step(run.state,blocked,req,g)
+assert.equal(strict.state.escape.active===false||strict.decision!=='OBSERVED_SAFE_ESCAPE',true)
+if(recovered.decision==='A32_SAFE_BOUNDED_SLOT'){
+ const newRear=recovered.intents.find(m=>m.riderId==='rear')
+ assert(newRear.forwardMeters<55&&newRear.forwardMeters>=0)
+ assert.equal(newRear.targetY,c)
+ assert.deepEqual(recovered.intents.filter(m=>m.riderId!=='rear'),req.filter(m=>m.riderId!=='rear'))
+ assert.equal(recovered.state.slot.accepted>=1,true)
+}
 console.log(JSON.stringify({study:'A32_BOUNDED_SLOT',gate:'PASS',checkpoint:true,permutation:true,
  nonconsentingIntentsUnchanged:true,officialWrites:0,sportingApproval:'NOT_APPROVED'}))
