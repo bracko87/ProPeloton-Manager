@@ -128,6 +128,11 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   record.secondClaimantOrder=eventIds.includes('extra3')?classify(observer,'extra3').order:null
   record.primaryComplete=eventIds.includes('extra2')?!!observer.laneCompletions.extra2:null
   record.secondClaimantComplete=eventIds.includes('extra3')?!!observer.laneCompletions.extra3:null
+  const finalRiders=new Map(physics.riders.map(x=>[x.riderId,x]))
+  record.primaryFinalLaneCenterReached=eventIds.includes('extra2')?Math.abs(finalRiders.get('extra2').y-(scenario==='reversal'?2*g.centerStepM:0))<1e-4:null
+  record.secondFinalLaneCenterReached=eventIds.includes('extra3')?Math.abs(finalRiders.get('extra3').y)<1e-4:null
+  record.primaryFinalY=eventIds.includes('extra2')?round(finalRiders.get('extra2').y):null
+  record.secondFinalY=eventIds.includes('extra3')?round(finalRiders.get('extra3').y):null
   record.primaryLaneCompletedAtSeconds=observer.laneCompletions.extra2?.seconds??null
   record.secondLaneCompletedAtSeconds=observer.laneCompletions.extra3?.seconds??null
   record.secondClaimantActualLateralMeters=round(observer.lateralMetres.extra3??0)
@@ -144,9 +149,10 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
 const groups={}
 for(const r of results){
  const key=r.scenario+'|'+r.policy+'|'+r.grid
- const a=groups[key]??{scenario:r.scenario,policy:r.policy,grid:r.grid,n:0,passing:0,primaryCompleted:0,secondCompleted:0,secondChangedLane:0,firstBefore:0,firstAfter:0,coincident:0,unobserved:0,secondBefore:0,secondAfter:0,secondCoincident:0,secondUnobserved:0,otherNearStopTicks:0,rearNearStopTicks:0}
+ const a=groups[key]??{scenario:r.scenario,policy:r.policy,grid:r.grid,n:0,passing:0,primaryCompleted:0,secondCompleted:0,primaryFinalCenter:0,secondFinalCenter:0,secondChangedLane:0,firstBefore:0,firstAfter:0,coincident:0,unobserved:0,secondBefore:0,secondAfter:0,secondCoincident:0,secondUnobserved:0,otherNearStopTicks:0,rearNearStopTicks:0}
  a.n++;a.passing+=Number(r.sustained60s)
  a.primaryCompleted+=Number(r.primaryComplete===true);a.secondCompleted+=Number(r.secondClaimantComplete===true)
+ a.primaryFinalCenter+=Number(r.primaryFinalLaneCenterReached===true);a.secondFinalCenter+=Number(r.secondFinalLaneCenterReached===true)
  a.secondChangedLane+=Number(r.secondClaimantActualLateralMeters>0)
  a.firstBefore+=Number(r.primaryOrder==='PASS_BEFORE_LANE_COMPLETION')
  a.firstAfter+=Number(r.primaryOrder==='PASS_AFTER_LANE_COMPLETION')
