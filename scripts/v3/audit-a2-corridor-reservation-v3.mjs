@@ -34,8 +34,7 @@ function requests(state,scenario,rearRequest,g,choice){
   else if(r.riderId.startsWith('extra')){
    forwardMeters=42
    if(scenario==='moving_left'&&r.riderId==='extra2'){
-    if(state.tick===1)targetY=c
-    if(state.tick===2)targetY=0
+    if(state.tick>=1&&r.y>1e-6)targetY=Math.max(0,r.y-c) // Unfinished opponent lane change persists until actually completed
    }
   }
   targetY=r.y+Math.max(-c,Math.min(c,targetY-r.y))
@@ -111,6 +110,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   record.firstPassSecond=passes[0]?.atSeconds??null
   record.otherHaltedRiderTicks=otherHalted;record.rearHaltedRiderTicks=rearHalted
   record.blockerEnteredCorridor=blockerEntered;record.blockerLateralMeters=round(blockerMovement)
+  record.blockerCompletedMove=scenario==='moving_left'?physics.riders.find(r=>r.riderId==='extra2').y<=g.centerStepM*.5:null
   record.progressPercent=round(100*physics.metrics.achievedMeters/physics.metrics.requestedMeters)
   record.leaseMetrics=policy==='baseline'?null:lease.metrics
   record.leaseEvents=policy==='baseline'?[]:lease.events
@@ -122,10 +122,10 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
 const by={}
 for(const row of results){
  const k=[row.scenario,row.policy].join(':')
- const v=by[k]??{scenario:row.scenario,policy:row.policy,total:0,technicalPassed:0,sustainedPasses:0,otherHalted:0,rearHalted:0,deferrals:0,cancellations:0,blockersEntered:0}
+ const v=by[k]??{scenario:row.scenario,policy:row.policy,total:0,technicalPassed:0,sustainedPasses:0,otherHalted:0,rearHalted:0,deferrals:0,cancellations:0,blockersEntered:0,blockersCompleted:0}
  v.total++;v.technicalPassed+=Number(row.technical==='PASS');v.sustainedPasses+=Number(row.sustained60s===true)
  v.otherHalted+=row.otherHaltedRiderTicks??0;v.rearHalted+=row.rearHaltedRiderTicks??0;v.deferrals+=row.leaseMetrics?.acknowledgedDeferrals??0
- v.cancellations+=row.leaseMetrics?.revocations??0;v.blockersEntered+=Number(row.blockerEnteredCorridor===true)
+ v.cancellations+=row.leaseMetrics?.revocations??0;v.blockersEntered+=Number(row.blockerEnteredCorridor===true);v.blockersCompleted+=Number(row.blockerCompletedMove===true)
  by[k]=v
 }
 const report={study:'A2_EXPLICIT_ACKNOWLEDGED_CORRIDOR_LEASE',roster:size,technicalGate:failures.length?'FAIL':'PASS',
