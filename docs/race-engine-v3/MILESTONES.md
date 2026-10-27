@@ -1,6 +1,6 @@
 # Race Engine V3 — owner-facing milestone register
 
-**Last updated: 2026-10-27, after the A2 synchronous frozen-proposal micro safety gate.** Research lives on GitHub `main` in isolated V3 files. The game's selected race engine and historical results have NOT been changed.
+**Last updated: 2026-10-27, after the sustained A2 12/24/32-rider synchronous stress gate.** Research lives on GitHub `main` in isolated V3 files. The game's selected race engine and historical results have NOT been changed.
 
 ## Why this register exists
 
@@ -22,6 +22,7 @@ A numbered engineering batch is NOT evidence that the engine is nearing release.
 | Seconds-normalized 5s vs 10s movement | **TECHNICAL PASS; SPORTING FAIL / DO NOT ACTIVATE** | [18 fully completed scenarios](MILESTONE_A_09_SECONDS_NORMALIZED_2026-10-27.md): Dordrecht swapped-grid 7.62%→9.72% inversions, Guangxi swapped 18.56%→24.37% and rotated 20.28%→27.32%; Guangxi original winner changes |
 | Sequential solve-order counterfactuals | **TECHNICAL PASS; SPORTING FAIL / NOT APPROVED** | [12 full stages](MILESTONE_A_10_SOLVE_ORDER_2026-10-27.md): reversing priority changes gap and grid stability; alternating order lowers inversion share but nearly eliminates steering (Dordrecht 573→13; Guangxi 905→92) |
 | Synchronous frozen-proposal conflict solver | **MICRO ENGINEERING PASS; FULL STAGE NOT TESTED / SPORTING NO-GO** | [Micro safety report](MILESTONE_A_11_SIMULTANEOUS_MICRO_2026-10-27.md): collision-free same-lane yields, four-rider merges, adjacent-lane overtake, order-independent resolutions, finite energy, exact replay; sustained peloton behavior unverified |
+| Sustained 12/24/32-rider synchronous traffic | **TECHNICAL PASS; SPORTING UNVERIFIED / NO-GO** | [12 scenarios × 90 ticks](MILESTONE_A_12_SIMULTANEOUS_STRESS_2026-10-27.md): collision/energy/replay/order independence pass; 32-rider passing test has 4.60% worst-tick fulfilment, 32-rider merging has 49.58% blocked decisions. Need diagnose transient collective slowing |
 | Real stage terrain and road widths | **BLOCKED** | Repair 718 m missing Guangxi, 1065 m missing World Nations; verified source road widths |
 | Authentic breakaways, pursuits, groups and gaps | **BLOCKED** | Historical flat/hilly/mountain benchmarks; credible 30s+ breakaways where applicable |
 | Calibrated drafting, fatigue, weather, sprint and attacks | **OPEN** | Mechanically and sportingly plausible stage-wide rider and team data |
@@ -29,9 +30,9 @@ A numbered engineering batch is NOT evidence that the engine is nearing release.
 
 **A2 further rejected candidate (closing-wheel anticipation, 2026-10-26):** a conservative forecast of a slower wheel within two reaction ticks passed complete 106/168-rider simulations and exact checkpoint recovery, but did **not** improve classification stability: Dordrecht inversion share **7.619%→7.942%** (worse) and Guangxi **18.556%→18.556%** (unchanged). Original-grid gap and blocked-tick figures were identical; do not activate this option. [Detailed report](MILESTONE_A_03_EARLY_WHEEL_2026-10-26.md).
 
-**Latest A2 technical progress:** [Frozen-state simultaneous conflict micro-prototype](MILESTONE_A_11_SIMULTANEOUS_MICRO_2026-10-27.md) passes micro collisions, merge, adjacent passing, input-order invariance, finite W-prime and exact checkpoint replay. It is an isolated new solver, not a full-stage-approved engine. Next: stress repeated motion with 12/24/32 riders, measure excessive collective slowing and physically meaningful passing, then consider the full 106/168-rider bridge.
+**Latest A2 technical evidence:** [Sustained synchronous micro study](MILESTONE_A_12_SIMULTANEOUS_STRESS_2026-10-27.md) passes 12/24/32-rider collision, checkpoint, energy and far-apart-group tests over 900 seconds; simulated passing and merges occur. However, transient severe collective slowing (32-rider passing worst tick 4.60% of requested motion) prevents sporting clearance. Next instrument conflict-graph components and targeted yielding before building any 106/168-rider adapter.
 
-**Immediate focus:** first full-stage technical gate is closed. The follow-up [A2 position-bias report](MILESTONE_A_02_START_GRID_2026-10-26.md) confirms fixed rider-ID priority **is not the cause**; coordinated overtaking capacity materially affects the result but does **not** pass sporting realism. Next: stress the synchronous prototype on sustained 12/24/32-rider movement, then prove full-stage classification and grid robustness; independently correct road width/elevation, fractional finish energy and breakaway/pursuit benchmarks. Do not consider gameplay integration ready on the strength of these research simulations.
+**Immediate focus:** first full-stage technical gate is closed. The follow-up [A2 position-bias report](MILESTONE_A_02_START_GRID_2026-10-26.md) confirms fixed rider-ID priority **is not the cause**; coordinated overtaking capacity materially affects the result but does **not** pass sporting realism. Next: instrument transient synchronous conflict-graph bottlenecks and test a safe, targeted collective-yield alternative; then consider 106/168 full stages. Independently repair road widths/elevation, fractional finish energy and breakaway/pursuit benchmarks. Do not consider gameplay integration ready on the strength of these research simulations.
 
 ## Milestone B — Gameplay contract and interface
 
