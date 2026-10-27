@@ -5,7 +5,7 @@ import {BATCH40_GEOMETRIES,validateRoadScenarioV3} from './roadWidthLookaheadV3.
 import {initializeSubstepPhysicalResearchV3 as begin,advanceSubstepPhysicalResearchV3 as advance} from './a2SubstepPhysicalResearchV3.mjs'
 import {auditObservedTrackSetV3} from './a2NonlinearSweepAuditV3.mjs'
 const rd=x=>Math.round(x*1e6)/1e6
-const nSet=[2,8,12,24,32],sizes=[5,4,2],variants=[0,1],failures=[],bySeconds={},examples=[],mirrors=[],renames=[]
+const nSet=[2,8,12,24,32],sizes=[5,4,2],variants=[0,1],failures=[],bySeconds={},examples=[],mirrors=[],renames=[],baselineRenames=[]
 const entries=(n,g,v)=>Array.from({length:n},(_,i)=>({riderId:'r'+String(i).padStart(3,'0'),
  meters:100+i*6.4+v*2,y:(i%g.laneCount)*g.centerStepM,speedMps:4+i%4,cpWatts:210+(i%7)*18,wPrimeJoules:18000}))
 function command(s,v,g,{mirror=false,names=null}={}){
@@ -64,6 +64,8 @@ function acc(b,record){
   if(x.outcome==='whole_substep_fallback')continue
   b.crossing[x.crossing]=(b.crossing[x.crossing]??0)+1
   b.rejectedRatios+=x.unsafeRatioTrials
+  b.tiedFirstContactChoices+=Number(x.tiedFirstContactPairs>1)
+  b.tiedFirstContactExtraPairs+=Math.max(0,x.tiedFirstContactPairs-1)
   b.contactFractions+=x.contactTimeFraction
   b.minGapM=Math.min(b.minGapM,x.startGapM)
   const key=[x.a,x.b].sort().join('~')
@@ -83,7 +85,7 @@ for(const geom of BATCH40_GEOMETRIES){
    assert.deepEqual(roster,copy)
    for(let i=0;i<sizes.length;i++){
     const rec=candidate[i],ref=original[i],key=String(rec.seconds)
-    const b=bySeconds[key]??{seconds:rec.seconds,cases:0,hard:0,local:0,unilateral:0,boundary:0,rejectedRatios:0,
+    const b=bySeconds[key]??{seconds:rec.seconds,cases:0,hard:0,local:0,unilateral:0,boundary:0,rejectedRatios:0,tiedFirstContactChoices:0,tiedFirstContactExtraPairs:0,
       contactFractions:0,minGapM:Infinity,crossing:{},pairCounts:{},
       yieldDirection:{left:0,right:0,stationary:0},tiePriorities:0,
       baselineInversions:0,candidateInversions:0,baselineMaxM:0,candidateMaxM:0}
@@ -109,6 +111,8 @@ for(const geom of BATCH40_GEOMETRIES){
        const newId='z'+String(n-1-j).padStart(3,'0');names.set(newId,r.riderId);return {...r,riderId:newId}
       })
       const x=run(renamed,geom,g,v,4,{names})
+      const b=run(renamed,geom,g,v,4,{names,policy:'symmetric_halving',trace:false})
+      baselineRenames.push({road:g.id,n,v,...difference(original[i],b)})
       renames.push({road:g.id,n,v,...difference(rec,x),hardDiff:x.hard-rec.hard})
      }
     }
@@ -118,7 +122,7 @@ for(const geom of BATCH40_GEOMETRIES){
 }
 assert.equal(failures.length,0)
 assert.equal(Object.values(bySeconds).reduce((s,x)=>s+x.cases,0),120)
-assert.equal(mirrors.length,40);assert.equal(renames.length,32)
+assert.equal(mirrors.length,40);assert.equal(renames.length,32);assert.equal(baselineRenames.length,32)
 assert.equal(Object.values(bySeconds).reduce((s,x)=>s+x.hard,0),11,'A37 hard fallback reference changed')
 assert.equal(bySeconds['2.5'].baselineInversions,626)
 assert.equal(bySeconds['2.5'].candidateInversions,798)
@@ -130,9 +134,12 @@ const report={study:'A2_STEP38_ACTIVE_MERGE_DIAGNOSTIC',technical:'PASS',sportin
  cases:120,mirrorCases:mirrors.length,renamedCases:renames.length,
  sections,hardFallbackCases:examples,mirrorTests:mirrors,renamedTests:renames,
  mirroredCasesWithPositionDifference:mirrors.filter(x=>x.maxX>1e-4).length,
+ baselineRenamedCasesWithPositionDifference:baselineRenames.filter(x=>x.maxX>1e-4).length,
  renamedCasesWithPositionDifference:renames.filter(x=>x.maxX>1e-4).length,
  maxMirroredPositionDifference:Math.max(...mirrors.map(x=>x.maxX)),
  maxRenamedPositionDifference:Math.max(...renames.map(x=>x.maxX)),
+ maxBaselineRenamedDifference:Math.max(...baselineRenames.map(x=>x.maxX)),
+ baselineRenames,
  officialWrites:0,sportingApproval:'NOT_APPROVED'}
 const dir=process.env.V3_A2_STEP38_DIR??'/tmp/a2-step38'
 mkdirSync(dir,{recursive:true});writeFileSync(dir+'/a2-step38.json',JSON.stringify(report,null,2)+'\n')
@@ -143,4 +150,6 @@ console.log(JSON.stringify({study:report.study,technical:report.technical,cases:
  renamedCasesWithPositionDifference:report.renamedCasesWithPositionDifference,
  maxMirroredPositionDifference:report.maxMirroredPositionDifference,
  maxRenamedPositionDifference:report.maxRenamedPositionDifference,
+ baselineRenamedCasesWithPositionDifference:report.baselineRenamedCasesWithPositionDifference,
+ maxBaselineRenamedDifference:report.maxBaselineRenamedDifference,
  officialWrites:0,sportingApproval:'NOT_APPROVED'}))

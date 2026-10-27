@@ -50,13 +50,14 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=fa
   if(hits.length===0){resolved=paths;break}
   if(iteration>=maxRounds)break
   hits.sort((u,v)=>u.time-v.time||u.a.riderId.localeCompare(v.a.riderId)||u.b.riderId.localeCompare(v.b.riderId))
+  const tiedFirstContactPairs=hits.filter(x=>Math.abs(x.time-hits[0].time)<=1e-9).length
   const {a,b}=hits[0]
   const signA=Math.sign(a.y-a.original.y),signB=Math.sign(b.y-b.original.y)
   const crossType=signA===0&&signB===0?'straight':
    signA!==0&&signB!==0?(signA===signB?'parallel':'opposite'):'one_steering'
   const diag=trace?{round:iteration,a:a.riderId,b:b.riderId,contactTimeFraction:hits[0].time,
    crossing:crossType,signA,signB,startGapM:Math.abs(a.original.meters-b.original.meters),
-   competingPairs:hits.length}:null
+   competingPairs:hits.length,tiedFirstContactPairs}:null
   const rear=a.original.meters<b.original.meters?a:
    a.original.meters>b.original.meters?b:
    a.riderId.localeCompare(b.riderId)<0?a:b
