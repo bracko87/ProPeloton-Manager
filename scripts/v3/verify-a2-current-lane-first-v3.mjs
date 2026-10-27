@@ -6,6 +6,10 @@ const r=(riderId,meters,y)=>({riderId,meters,y})
 const frames=[r('rear',100,0),r('lead',118,1),r('extra2',150,2)]
 const requested=(lateral=2)=>[{riderId:'rear',forwardMeters:75,targetY:1},{riderId:'lead',forwardMeters:45,targetY:1},{riderId:'extra2',forwardMeters:42,targetY:lateral}]
 const safe=advance(start(),frames,requested(),geometry)
+const guarded=advance(start({outerLaneOnly:true}),frames,requested(),geometry)
+assert.equal(guarded.decision,'STAY_CURRENT_CLEAR_LANE')
+const otherLane=advance(start({outerLaneOnly:true}),frames.map(x=>x.riderId==='rear'?{...x,y:2}:x),requested(),geometry)
+assert.equal(otherLane.decision,'LEGACY_CONFLICT_FALLBACK')
 assert.equal(safe.decision,'STAY_CURRENT_CLEAR_LANE')
 assert.equal(safe.intents[0].targetY,0)
 assert.equal(safe.state.metrics.stayFirstTicks,1)
