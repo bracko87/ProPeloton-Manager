@@ -21,7 +21,7 @@ function buildInitial(g,headway,scenario){
  ]
  for(let i=2;i<count;i++){
   const blocker=i===2&&(scenario==='moving_left'||scenario==='occupied_right')
-  initial.push({riderId:'extra'+i,meters:blocker?110:76-(i-2)*24,y:blocker?2*c:(i%2===0?Math.min(3*c-1e-6,3*c):0),speedMps:4,cpWatts:230,wPrimeJoules:18000})
+  initial.push({riderId:'extra'+i,meters:blocker?(scenario==='moving_left'?150:110):76-(i-2)*24,y:blocker?2*c:(i%2===0?Math.min(3*c-1e-6,3*c):0),speedMps:4,cpWatts:230,wPrimeJoules:18000})
  }
  return initial
 }
@@ -81,13 +81,21 @@ for(const spec of specs){
   choiceY:chosen.selectedY,technical:'UNTESTED',officialWrites:0}
  try{
   let state=start({riders:initial,geometry:spec.geometry,dt}),passing=startPass(state.riders)
-  let checkpoint=null,haltedOtherTicks=0,minTickProgress=1,nearStopRearTicks=0
+  let checkpoint=null,haltedOtherTicks=0,minTickProgress=1,nearStopRearTicks=0,blockerLateralMetres=0,blockerEnteredInitiallyOpenSide=false,nearestBlockerGapM=null
   for(let tick=1;tick<=40;tick++){
    const before=state.riders,actions=desired(state,spec,g,chosen.selectedY)
    const after=advance(state,actions)
    verifySweep(before,after.riders,g)
    passing=advancePass(passing,after.riders,after.elapsedSeconds)
    const prev=new Map(before.map(r=>[r.riderId,r]))
+   if(spec.scenario==='moving_left'){
+    const blocker=after.riders.find(r=>r.riderId==='extra2'),previous=prev.get('extra2')
+    const rear=after.riders.find(r=>r.riderId==='rear')
+    blockerLateralMetres+=Math.abs(blocker.y-previous.y)
+    blockerEnteredInitiallyOpenSide=blockerEnteredInitiallyOpenSide||blocker.y<=g.centerStepM*.5
+    const separation=Math.abs(rear.meters-blocker.meters)
+    nearestBlockerGapM=nearestBlockerGapM===null?separation:Math.min(nearestBlockerGapM,separation)
+   }
    for(const r of after.riders){
     const moved=r.meters-prev.get(r.riderId).meters
     if(r.riderId.startsWith('extra')&&moved<.5)haltedOtherTicks++
@@ -120,6 +128,11 @@ for(const spec of specs){
   record.latePassCensored=events.length>0&&!record.sustained60s
   record.unrelatedHaltedRiderTicks=haltedOtherTicks
   record.rearNearStopTicks=nearStopRearTicks
+  if(spec.scenario==='moving_left'){
+   record.blockerLateralMetres=round(blockerLateralMetres)
+   record.blockerEnteredInitiallyOpenSide=blockerEnteredInitiallyOpenSide
+   record.nearestBlockerGapM=round(nearestBlockerGapM)
+  }
   record.progressPercent=round(100*state.metrics.achievedMeters/state.metrics.requestedMeters)
   record.worstTickProgressPercent=round(100*minTickProgress)
   record.finalGapRearMinusLeadM=round(state.riders.find(r=>r.riderId==='rear').meters-state.riders.find(r=>r.riderId==='lead').meters)
@@ -139,7 +152,7 @@ for(const row of result){
  if(row.firstPassSecond!==null&&row.firstPassSecond!==undefined)o.earliestPass=o.earliestPass===null?row.firstPassSecond:Math.min(o.earliestPass,row.firstPassSecond)
  groups[k]=o
 }
-const summary={study:'A2_EARLY_CORRIDOR_WIDTH_CLOSING_DYNAMIC',riders:count,scenarios:result.length,
+const summary={study:'A2_EARLY_CORRIDOR_WIDTH_CLOSING_DYNAMIC_ACTUAL_BLOCKER',riders:count,scenarios:result.length,
  allTechnicalPass:failures.length===0,technicalGate:failures.length?'FAIL':'PASS',
  officialWrites:0,sportingApproval:'NOT_APPROVED',aggregates:Object.values(groups),results:result,failures,
  limitations:['All four road widths and bicycle safety envelopes are synthetic, not official stage measurements',
@@ -150,5 +163,9 @@ const summary={study:'A2_EARLY_CORRIDOR_WIDTH_CLOSING_DYNAMIC',riders:count,scen
 writeFileSync(dir+'/width-corridor-'+count+'.json',JSON.stringify(summary,null,2)+'\n')
 console.log(JSON.stringify({size:count,gate:summary.technicalGate,total:result.length,acceptedPasses:result.filter(x=>x.sustained60s).length,
  roadSummary:roads.map(g=>({id:g.id,technical:result.filter(x=>x.road===g.id&&x.technical==='PASS').length,passes:result.filter(x=>x.road===g.id&&x.sustained60s).length})),
- dynamic:summary.aggregates.filter(x=>x.scenario!=='open'),failed:failures.length,officialWrites:0,sportingApproval:'NOT_APPROVED'}))
+ dynamic:summary.aggregates.filter(x=>x.scenario!=='open'),
+ movingBlockerActual:{entered:result.filter(x=>x.scenario==='moving_left'&&x.blockerEnteredInitiallyOpenSide).length,
+ cases:result.filter(x=>x.scenario==='moving_left').length,
+ closeWithin5m:result.filter(x=>x.scenario==='moving_left'&&x.nearestBlockerGapM<=5).length,
+ minimumGap:Math.min(...result.filter(x=>x.scenario==='moving_left').map(x=>x.nearestBlockerGapM??Infinity))},failed:failures.length,officialWrites:0,sportingApproval:'NOT_APPROVED'}))
 assert.equal(failures.length,0,'Micro road envelope testing did not meet engineering safety')
