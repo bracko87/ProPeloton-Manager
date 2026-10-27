@@ -14,7 +14,7 @@ function roster(mode){
  return Array.from({length:count},(_,i)=>{
   const separate=mode==='separate_packs',half=i<count/2
   const row=separate?Math.floor((i%(count/2))/4):Math.floor(i/(mode==='passing_corridors'?2:4))
-  return {riderId:'r'+String(i).padStart(3,'0'),meters:r6((separate?(half?1000:500):900)-2.4*row),y:mode==='passing_corridors'?2*(i%2):i%4,speedMps:4,cpWatts:205+(i*17)%90,wPrimeJoules:18000}
+  return {riderId:'r'+String(i).padStart(3,'0'),meters:r6((separate?(half?10000:500):900)-2.4*row),y:mode==='passing_corridors'?2*(i%2):i%4,speedMps:4,cpWatts:205+(i*17)%90,wPrimeJoules:18000}
  })
 }
 function intents(state,mode){
