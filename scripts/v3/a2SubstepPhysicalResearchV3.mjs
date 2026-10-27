@@ -14,11 +14,11 @@ const r6=v=>Math.round(v*1e6)/1e6
 const nonnegative=v=>Number.isFinite(v)&&v>=0
 function hit(a,b,g){return continuousBicycleCollisionV3(a,b,{longitudinal:1.8,lateral:g.lateralCollisionM})}
 function segment(r,x,y){return {x0:r.meters,x1:x,y0:r.y,y1:y}}
-export function initializeSubstepPhysicalResearchV3({riders,geometry,road={gradePercent:0},tickSeconds=10,substeps=4,conflictPolicy='symmetric_halving'}={}){
+export function initializeSubstepPhysicalResearchV3({riders,geometry,road={gradePercent:0},tickSeconds=10,substeps=4,conflictPolicy='symmetric_halving',diagnosticTrace=false}={}){
  const g=validateRoadScenarioV3(geometry)
  check(Array.isArray(riders)&&riders.length>=2&&riders.length<=32,'Invalid A34 roster count')
  check([2,4,5,10].includes(substeps)&&tickSeconds===10&&tickSeconds/substeps<=10,'Invalid A34 research step')
- check(['symmetric_halving','event_time_yield'].includes(conflictPolicy),'Invalid A37 experimental policy')
+ check(['symmetric_halving','event_time_yield'].includes(conflictPolicy)&&typeof diagnosticTrace==='boolean','Invalid A38 trace option')
  check(road&&Number.isFinite(road.gradePercent)&&Math.abs(road.gradePercent)<=15,'Invalid A34 road grade')
  const ids=new Set(),maxY=(g.laneCount-1)*g.centerStepM
  const ready=riders.map(r=>{
@@ -34,11 +34,11 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
   check(!hit(segment(ready[i],ready[i].meters,ready[i].y),segment(ready[j],ready[j].meters,ready[j].y),g),'Initially colliding A34 riders')
  }
  return {version:1,gate:'A34_OFFLINE_SUBSTEP_ONLY',officialWrites:0,sportingApproval:'NOT_APPROVED',
-  geometry:structuredClone(geometry),road:structuredClone(road),tickSeconds,substeps,conflictPolicy,tick:0,elapsedSeconds:0,
+  geometry:structuredClone(geometry),road:structuredClone(road),tickSeconds,substeps,conflictPolicy,diagnosticTrace,tick:0,elapsedSeconds:0,
   riders:ready,metrics:{ticks:0,riderSubsteps:0,conflictPairChecks:0,collisionProposals:0,
     collisionAttenuationRounds:0,attenuatedRiderSubsteps:0,mechanicalJoules:0,observedPairs:0,
     endpointChordMisses:0,remainingPiecewiseOverlaps:0,yieldSelections:0,symmetricFallbacks:0,hardFallbacks:0,contactBoundaryFallbacks:0,
-    contactSamples:0,contactFractionSum:0},lastTickTracks:[]}
+    contactSamples:0,contactFractionSum:0},lastTickTracks:[],lastTickConflictTrace:[]}
 }
 /** Freeze all currently submitted rider choices for this one research tick.
  * The next substep uses ONLY the state that was actually achieved before it.
@@ -63,6 +63,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    'Invalid frozen A34 command')
  }
  const tracks=new Map(state.riders.map(r=>[r.riderId,[{t:0,x:r.meters,y:r.y}]]))
+ const tickTrace=[]
  for(let step=1;step<=state.substeps;step++){
   const proposals=state.riders.map(r=>{
    const c=command.get(r.riderId)
@@ -76,10 +77,11 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    const speed=Math.max(0,Math.floor(Math.max(0,permitted-1e-7)*1e6)/1e6)
    return {riderId:r.riderId,forward:r6(speed*seconds),y,original:r,command:c}
   })
-  const event=state.conflictPolicy==='event_time_yield'?resolveEventTimeYieldV3(proposals,g):null
+  const event=state.conflictPolicy==='event_time_yield'?resolveEventTimeYieldV3(proposals,g,{diagnostics:state.diagnosticTrace===true}):null
   const scales=event?.scales??new Map(proposals.map(p=>[p.riderId,1]))
   let resolved=event?.paths??null
   if(event){
+   if(event.diagnosticEvents)for(const x of event.diagnosticEvents)tickTrace.push({substep:step,...x})
    state.metrics.conflictPairChecks+=event.pairChecks
    state.metrics.collisionProposals+=event.collisionProposals
    state.metrics.collisionAttenuationRounds+=event.rounds
@@ -140,5 +142,6 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
  }
  state.tick++;state.elapsedSeconds+=state.tickSeconds;state.metrics.ticks++
  state.lastTickTracks=records
+ state.lastTickConflictTrace=tickTrace
  return state
 }

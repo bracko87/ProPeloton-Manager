@@ -25,12 +25,13 @@ function path(p,scale){return {riderId:p.riderId,x0:p.original.meters,x1:r6(p.or
  * If no unilateral clearance exists we fall back to symmetric halving.
  * Neither rider's COMMAND is rewritten. No crossing receives immunity.
  */
-export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
- need(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&g&&Number.isFinite(g.lateralCollisionM)&&Number.isInteger(maxRounds)&&maxRounds>=8&&maxRounds<=64,'Invalid A37 resolver')
+export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=false}={}){
+ need(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&g&&Number.isFinite(g.lateralCollisionM)&&Number.isInteger(maxRounds)&&maxRounds>=8&&maxRounds<=64&&typeof diagnostics==='boolean','Invalid A37 resolver')
  const ordered=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
  need(new Set(ordered.map(p=>p.riderId)).size===ordered.length,'Duplicate A37 rider')
  const scales=new Map(ordered.map(p=>[p.riderId,1])),options={longitudinal:1.8,lateral:g.lateralCollisionM}
  let pairChecks=0,collisionProposals=0,yieldSelections=0,fallbacks=0,hardFallbacks=0,rounds=0,contactFractionSum=0,contactSamples=0,contactBoundaryFallbacks=0
+ const trace=diagnostics?[]:null
  let resolved=null
  for(let iteration=0;iteration<=maxRounds;iteration++){
   const paths=ordered.map(p=>path(p,scales.get(p.riderId))),hits=[]
@@ -50,11 +51,17 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
   if(iteration>=maxRounds)break
   hits.sort((u,v)=>u.time-v.time||u.a.riderId.localeCompare(v.a.riderId)||u.b.riderId.localeCompare(v.b.riderId))
   const {a,b}=hits[0]
+  const signA=Math.sign(a.y-a.original.y),signB=Math.sign(b.y-b.original.y)
+  const crossType=signA===0&&signB===0?'straight':
+   signA!==0&&signB!==0?(signA===signB?'parallel':'opposite'):'one_steering'
+  const diag=trace?{round:iteration,a:a.riderId,b:b.riderId,contactTimeFraction:hits[0].time,
+   crossing:crossType,signA,signB,startGapM:Math.abs(a.original.meters-b.original.meters),
+   competingPairs:hits.length}:null
   const rear=a.original.meters<b.original.meters?a:
    a.original.meters>b.original.meters?b:
    a.riderId.localeCompare(b.riderId)<0?a:b
   const prior=scales.get(rear.riderId),others=paths.filter(p=>p.riderId!==rear.riderId)
-  let accepted=null
+  let accepted=null,unsafeRatioTrials=0
   for(let k=1;k<=32;k++){
    const candidateScale=r6(prior*(1-k/32))
    if(candidateScale>=prior-1e-7)continue
@@ -62,10 +69,13 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
    let clear=true
    for(const opponent of others){
     pairChecks++
-    if(continuousBicycleCollisionV3(candidate,opponent,options)){clear=false;break}
+    if(continuousBicycleCollisionV3(candidate,opponent,options)){clear=false;unsafeRatioTrials++;break}
    }
    if(clear){accepted=candidateScale;break}
   }
+  if(diag){Object.assign(diag,{yieldingRiderId:rear.riderId,chosenRatio:prior,
+    acceptedRatio:accepted,unsafeRatioTrials,
+    outcome:accepted!==null?'unilateral':'local_symmetric_fallback'});trace.push(diag)}
   if(accepted!==null){scales.set(rear.riderId,accepted);yieldSelections++}
   else{
    scales.set(a.riderId,r6(scales.get(a.riderId)/2))
@@ -79,6 +89,7 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
   // from the untouched proposals with exactly the established A34 symmetric
   // attenuation policy, rather than returning collision-unsafe motion.
   hardFallbacks++
+  if(trace)trace.push({round:maxRounds,outcome:'whole_substep_fallback',attemptedRounds:rounds})
   const control=new Map(ordered.map(p=>[p.riderId,1]))
   for(let k=0;k<=64;k++){
    const candidate=ordered.map(p=>path(p,control.get(p.riderId)))
@@ -101,5 +112,6 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
   need(!continuousBicycleCollisionV3(resolved[i],resolved[j],options),'A37 returned swept-unsafe motion')
  return {paths:resolved,scales,pairChecks,collisionProposals,rounds,
   yieldSelections,fallbacks,hardFallbacks,contactSamples,contactFractionSum,contactBoundaryFallbacks,
+  diagnosticEvents:trace,
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
