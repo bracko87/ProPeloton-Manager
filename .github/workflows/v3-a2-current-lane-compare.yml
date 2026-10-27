@@ -3,6 +3,7 @@ on:
   push:
     branches: [main]
     paths:
+      - 'scripts/v3/a2CurrentLaneFirstV3.mjs'
       - 'scripts/v3/audit-a2-current-lane-compare-v3.mjs'
       - '.github/workflows/v3-a2-current-lane-compare.yml'
   workflow_dispatch:
