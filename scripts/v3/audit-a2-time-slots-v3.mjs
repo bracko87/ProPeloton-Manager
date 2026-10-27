@@ -50,14 +50,14 @@ function swept(before,after,g){
  for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++)
   assert(!collide(paths[i],paths[j],{longitudinal:1.8,lateral:g.lateralCollisionM}), 'Unsafe swept bicycles')
 }
-const scenarios=size>=3?['open','moving_left']:['open'],policies=['baseline','lease_ack','fair_release','slot_after','slot_after_fast','slot_before_ack','slot_before_refused']
+const scenarios=size>=3?['open','moving_left']:['open'],policies=['baseline','lease_ack','fair_release','slot_after','slot_eager_start','slot_before_ack','slot_before_refused']
 const results=[],failures=[]
 for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const rearRequest of [55,75])for(const scenario of scenarios)for(const policy of policies){
  const g=validateRoadScenarioV3(geometry),initial=roster(g,headway,scenario)
  const selected=choose(initial,'rear',geometry).selectedY
  const record={riders:size,road:g.id,headway,rearRequest,scenario,policy,technical:'UNKNOWN',officialWrites:0}
  try{
-  let physics=begin({riders:initial,geometry,dt}),passing=passStart(physics.riders),lease=reserve({leaseTicks:8,maxDeferralsPerRival:2}),fair=fairStart({maxHoldTicks:1,releaseGapM:4,leaseTicks:8}),timed=timedStart({mode:policy.startsWith('slot_after')?'rival_first':'pass_first',observeTicks:policy==='slot_after_fast'?0:1,maxHoldTicks:1,maxWaitTicks:8})
+  let physics=begin({riders:initial,geometry,dt}),passing=passStart(physics.riders),lease=reserve({leaseTicks:8,maxDeferralsPerRival:2}),fair=fairStart({maxHoldTicks:1,releaseGapM:4,leaseTicks:8}),timed=timedStart({mode:['slot_after','slot_eager_start'].includes(policy)?'rival_first':'pass_first',observeTicks:policy==='slot_eager_start'?0:1,maxHoldTicks:1,maxWaitTicks:8})
   let checkpoint=null,otherHalted=0,rearHalted=0,blockerEntered=false,blockerMovement=0,blockerCompletionSecond=null
   for(let tick=1;tick<=40;tick++){
    const before=physics.riders,requested=requests(physics,scenario,rearRequest,g,selected)
@@ -129,7 +129,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   record.firstPassSecond=passes[0]?.atSeconds??null
   record.blockerCompletionSecond=blockerCompletionSecond
   record.passAfterBlockerVerified=scenario!=='moving_left'||record.firstPassSecond===null||blockerCompletionSecond!==null&&record.firstPassSecond>blockerCompletionSecond
-  if(policy.startsWith('slot_after')&&scenario==='moving_left'){
+  if(policy==='slot_after'&&scenario==='moving_left'){
    assert(blockerCompletionSecond!==null,'Blocker did not complete during pass-after trial')
    assert(record.firstPassSecond===null||record.firstPassSecond>blockerCompletionSecond,'Overtake occurred before rival lane completion')
   }
