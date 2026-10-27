@@ -1,0 +1,46 @@
+name: V3 A2 sequential collision-order stress experiment
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/coupled2DOrderResearchV3.mjs'
+      - 'scripts/v3/verify-a2-solver-order-v3.mjs'
+      - 'scripts/v3/audit-a2-solver-order-v3.mjs'
+      - '.github/workflows/v3-a2-solver-order.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  stress-study:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        fixture: [dordrecht-2000-10-15, guangxi-2000-10-19]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Safety and offline controls
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-solver-order-v3.mjs
+      - name: Compare canonical front-first with counterfactual solve priorities
+        env:
+          V3_A2_ORDER_FIXTURE: ${{ matrix.fixture }}
+          V3_A2_ORDER_DIR: ${{ runner.temp }}/a2-solve-order-${{ matrix.fixture }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-solver-order-v3.mjs
+      - name: Save control results and rejected counterfactuals
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-solver-order-${{ matrix.fixture }}
+          path: ${{ runner.temp }}/a2-solve-order-${{ matrix.fixture }}/*.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Production application build
+        if: matrix.fixture == 'dordrecht-2000-10-15'
+        run: npm ci --no-audit --no-fund && npm run build
