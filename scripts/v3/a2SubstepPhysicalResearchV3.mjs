@@ -77,6 +77,27 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    const speed=Math.max(0,Math.floor(Math.max(0,permitted-1e-7)*1e6)/1e6)
    return {riderId:r.riderId,forward:r6(speed*seconds),y,original:r,command:c}
   })
+  // A43: observational-only proposal/contact trace, enabled explicitly.
+  // Actual collision resolution, accepted paths and energy are not changed.
+  let diagnosticProposal=null
+  if(state.diagnosticTrace===true){
+   const pairs=[]
+   for(let i=0;i<proposals.length;i++)for(let j=i+1;j<proposals.length;j++){
+    const a=proposals[i],b=proposals[j]
+    if(hit(segment(a.original,r6(a.original.meters+a.forward),a.y),
+      segment(b.original,r6(b.original.meters+b.forward),b.y),g))
+     pairs.push([a.riderId,b.riderId])
+   }
+   diagnosticProposal={kind:'physical_substep',substep:step,dtSeconds:seconds,
+    tickStartSeconds:state.elapsedSeconds,
+    previewConflictPairs:pairs,
+    previewConflictCount:pairs.length,
+    proposals:proposals.map(p=>({riderId:p.riderId,
+      x0:p.original.meters,y0:p.original.y,oldSpeedMps:p.original.speedMps,
+      proposedMeters:p.forward,proposedY:p.y,
+      requestedSpeedMps:p.command.targetSpeedMps,
+      requestedY:p.command.targetY}))}
+  }
   const event=['event_time_yield','event_time_fair','event_time_fair_normalized'].includes(state.conflictPolicy)?
    resolveEventTimeYieldV3(proposals,g,{diagnostics:state.diagnosticTrace===true,
     tiePolicy:state.conflictPolicy==='event_time_fair_normalized'?'physical_group_normalized':
@@ -118,6 +139,13 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    }
   }
   check(resolved!==null,'A34 cannot resolve this substep')
+  if(diagnosticProposal){
+   diagnosticProposal.achieved=resolved.map(p=>({riderId:p.riderId,
+    x1:p.x1,y1:p.y1,movementScale:scales.get(p.riderId)}))
+   diagnosticProposal.attenuatedRiders=diagnosticProposal.achieved
+    .filter(p=>p.movementScale<1).map(p=>p.riderId)
+   tickTrace.push(diagnosticProposal)
+  }
   const result=new Map(resolved.map(p=>[p.riderId,p]))
   state.riders=state.riders.map(old=>{
    const p=result.get(old.riderId),c=command.get(old.riderId)
