@@ -18,7 +18,7 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
  const g=validateRoadScenarioV3(geometry)
  check(Array.isArray(riders)&&riders.length>=2&&riders.length<=32,'Invalid A34 roster count')
  check([2,4,5,10].includes(substeps)&&tickSeconds===10&&tickSeconds/substeps<=10,'Invalid A34 research step')
- check(['symmetric_halving','event_time_yield'].includes(conflictPolicy)&&typeof diagnosticTrace==='boolean','Invalid A38 trace option')
+ check(['symmetric_halving','event_time_yield','event_time_fair'].includes(conflictPolicy)&&typeof diagnosticTrace==='boolean','Invalid A38 trace option')
  check(road&&Number.isFinite(road.gradePercent)&&Math.abs(road.gradePercent)<=15,'Invalid A34 road grade')
  const ids=new Set(),maxY=(g.laneCount-1)*g.centerStepM
  const ready=riders.map(r=>{
@@ -38,7 +38,7 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
   riders:ready,metrics:{ticks:0,riderSubsteps:0,conflictPairChecks:0,collisionProposals:0,
     collisionAttenuationRounds:0,attenuatedRiderSubsteps:0,mechanicalJoules:0,observedPairs:0,
     endpointChordMisses:0,remainingPiecewiseOverlaps:0,yieldSelections:0,symmetricFallbacks:0,hardFallbacks:0,contactBoundaryFallbacks:0,
-    contactSamples:0,contactFractionSum:0},lastTickTracks:[],lastTickConflictTrace:[]}
+    contactSamples:0,contactFractionSum:0,physicalTieGroups:0,physicalTieParticipants:0},lastTickTracks:[],lastTickConflictTrace:[]}
 }
 /** Freeze all currently submitted rider choices for this one research tick.
  * The next substep uses ONLY the state that was actually achieved before it.
@@ -50,7 +50,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
  check(checkpoint?.version===1&&checkpoint.gate==='A34_OFFLINE_SUBSTEP_ONLY'&&
   checkpoint.officialWrites===0&&checkpoint.sportingApproval==='NOT_APPROVED'&&
   Number.isInteger(checkpoint.tick)&&checkpoint.tick>=0&&
-  ['symmetric_halving','event_time_yield'].includes(checkpoint.conflictPolicy),'Invalid A34 replay checkpoint')
+  ['symmetric_halving','event_time_yield','event_time_fair'].includes(checkpoint.conflictPolicy),'Invalid A34 replay checkpoint')
  const state=structuredClone(checkpoint),g=validateRoadScenarioV3(state.geometry)
  check(Array.isArray(intents)&&intents.length===state.riders.length,'Missing A34 rider commands')
  const command=new Map(intents.map(c=>[c?.riderId,c]))
@@ -77,7 +77,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    const speed=Math.max(0,Math.floor(Math.max(0,permitted-1e-7)*1e6)/1e6)
    return {riderId:r.riderId,forward:r6(speed*seconds),y,original:r,command:c}
   })
-  const event=state.conflictPolicy==='event_time_yield'?resolveEventTimeYieldV3(proposals,g,{diagnostics:state.diagnosticTrace===true}):null
+  const event=['event_time_yield','event_time_fair'].includes(state.conflictPolicy)?resolveEventTimeYieldV3(proposals,g,{diagnostics:state.diagnosticTrace===true,tiePolicy:state.conflictPolicy==='event_time_fair'?'physical_group':'id_first'}):null
   const scales=event?.scales??new Map(proposals.map(p=>[p.riderId,1]))
   let resolved=event?.paths??null
   if(event){
@@ -91,6 +91,8 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    state.metrics.contactBoundaryFallbacks+=event.contactBoundaryFallbacks
    state.metrics.contactSamples+=event.contactSamples
    state.metrics.contactFractionSum+=event.contactFractionSum
+   state.metrics.physicalTieGroups+=event.physicalTieGroups
+   state.metrics.physicalTieParticipants+=event.physicalTieParticipants
   }else{
    for(let iteration=0;iteration<65;iteration++){
     const paths=proposals.map(p=>{
