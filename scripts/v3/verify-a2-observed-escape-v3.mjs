@@ -8,8 +8,8 @@ const initial=[r('rear',158,c),r('lead',163,c),r('extra2',192,3*c),r('extra3',21
 const first=[i('rear',55,0),i('lead',45,c),i('extra2',42,3*c),i('extra3',42,3*c)]
 const one=step(init(),initial,first,geom)
 assert.equal(one.state.guarded.initialOuterLaneEligible,false)
-const observed=[r('rear',213,0),r('lead',208,c),r('extra2',234,2*c),r('extra3',252,3*c)]
-const demand=[i('rear',55,0),i('lead',45,c),i('extra2',42,c),i('extra3',42,2*c)]
+const observed=[r('rear',213,0),r('lead',208,c),r('extra2',234,2*c),r('extra3',252,2*c)]
+const demand=[i('rear',55,0),i('lead',45,c),i('extra2',42,c),i('extra3',42,c)]
 const two=step(one.state,observed,demand,geom)
 assert.equal(two.decision,'OBSERVED_SAFE_ESCAPE')
 assert.equal(two.intents.find(x=>x.riderId==='rear').targetY,c)

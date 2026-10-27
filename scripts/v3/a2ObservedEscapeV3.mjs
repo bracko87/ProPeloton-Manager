@@ -39,12 +39,18 @@ export function advanceObservedEscapeV3(snapshot,riders,intents,geometry){
  let contender=null
  if(!esc.active&&Math.abs(rear.y)<epsilon&&Math.abs(lead.y-c)<c*.1&&
     state.guarded.initialOuterLaneEligible===false){
-  const advancing=riders.filter(x=>x.riderId!=='rear'&&x.riderId!=='lead')
-   .filter(x=>x.meters-rear.meters>=0&&x.meters-rear.meters<=35)
-   .filter(x=>x.y>c*.5&&x.y<=2*c+epsilon)
+  // Do not escape for a lone ordinary claimant: A30 already handles
+  // that safely. Only react when at least TWO riders simultaneously and
+  // observably enter the adjacent corridor from lane 2 toward lane 1.
+  // Both present lateral commands are real; no future target is predicted.
+  const converging=riders.filter(x=>x.riderId!=='rear'&&x.riderId!=='lead')
+   .filter(x=>x.meters-rear.meters>=0&&x.meters-rear.meters<=65)
+   .filter(x=>x.y>1.5*c&&x.y<=2*c+epsilon)
    .filter(x=>supplied.get(x.riderId).targetY<x.y-epsilon)
    .sort((a,b)=>a.meters-b.meters||a.riderId.localeCompare(b.riderId))
-  contender=advancing[0]??null
+  const nearest=converging[0]
+  if(converging.length>=2&&nearest&&nearest.meters-rear.meters<=35)
+   contender=nearest
  }
  if(contender)esc.observedTriggers++
  if(esc.active||contender){
