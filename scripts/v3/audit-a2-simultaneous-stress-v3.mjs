@@ -64,7 +64,7 @@ for(const mode of variants){
  let passes=0,lateral=0,halts=0,activeTicks=0,minRatio=1
  for(let i=0;i<90;i++){
   const before=state.riders,requests=intents(state,mode),after=next(state,requests)
-  checkPaths(before,after);passes+=crossings(before,after)
+  checkPaths(before,after.riders);passes+=crossings(before,after.riders)
   const old=new Map(before.map(r=>[r.riderId,r]))
   for(const r of after.riders){
    const prev=old.get(r.riderId),d=r.meters-prev.meters
