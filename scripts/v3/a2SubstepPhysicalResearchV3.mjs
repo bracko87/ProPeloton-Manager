@@ -37,7 +37,7 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
   geometry:structuredClone(geometry),road:structuredClone(road),tickSeconds,substeps,conflictPolicy,tick:0,elapsedSeconds:0,
   riders:ready,metrics:{ticks:0,riderSubsteps:0,conflictPairChecks:0,collisionProposals:0,
     collisionAttenuationRounds:0,attenuatedRiderSubsteps:0,mechanicalJoules:0,observedPairs:0,
-    endpointChordMisses:0,remainingPiecewiseOverlaps:0,yieldSelections:0,symmetricFallbacks:0,
+    endpointChordMisses:0,remainingPiecewiseOverlaps:0,yieldSelections:0,symmetricFallbacks:0,hardFallbacks:0,contactBoundaryFallbacks:0,
     contactSamples:0,contactFractionSum:0},lastTickTracks:[]}
 }
 /** Freeze all currently submitted rider choices for this one research tick.
@@ -85,6 +85,8 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    state.metrics.collisionAttenuationRounds+=event.rounds
    state.metrics.yieldSelections+=event.yieldSelections
    state.metrics.symmetricFallbacks+=event.fallbacks
+   state.metrics.hardFallbacks+=event.hardFallbacks
+   state.metrics.contactBoundaryFallbacks+=event.contactBoundaryFallbacks
    state.metrics.contactSamples+=event.contactSamples
    state.metrics.contactFractionSum+=event.contactFractionSum
   }else{

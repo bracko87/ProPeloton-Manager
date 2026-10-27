@@ -64,6 +64,7 @@ function doRun(original,geometry,g,v,policy,numSubsteps){
   riderSubsteps:state.metrics.riderSubsteps,contactSamples:state.metrics.contactSamples,
   contactTimeSumSeconds:state.metrics.contactFractionSum*(10/numSubsteps),
   yieldSelections:state.metrics.yieldSelections,fallBacks:state.metrics.symmetricFallbacks,
+  hardFallBacks:state.metrics.hardFallbacks,boundaryContactFallbacks:state.metrics.contactBoundaryFallbacks,
   energyJ:state.metrics.mechanicalJoules,
   riders:state.riders.map(r=>({id:r.riderId,x:r.meters,y:r.y,gap:ahead-r.meters,
     wPrime:r.energy.remainingWPrimeJoules,energy:r.energy.cumulativeMechanicalJoules}))}
@@ -113,6 +114,7 @@ for(const policy of policies)for(const seconds of [2,2.5,5]){
   collisionProposals:sum('collisionProposals'),attenuated:sum('attenuated'),riderSubsteps:sum('riderSubsteps'),
   attenuationFraction:round(sum('attenuated')/sum('riderSubsteps')),
   nearStops:sum('nearStops'),yields:sum('yieldSelections'),fallBacks:sum('fallBacks'),
+  hardFallBacks:sum('hardFallBacks'),boundaryContactFallbacks:sum('boundaryContactFallbacks'),
   contactSamples:sum('contactSamples'),contactTimeSumSeconds:round(sum('contactTimeSumSeconds')),
   changedOrderCases:cmp.filter(r=>r.pairInversions>0).length,
   totalPairInversions:sumcmp('pairInversions'),maximumPositionDeltaM:maxcmp('maxPos'),

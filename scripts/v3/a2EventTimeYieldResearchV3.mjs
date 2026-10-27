@@ -30,7 +30,7 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
  const ordered=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
  need(new Set(ordered.map(p=>p.riderId)).size===ordered.length,'Duplicate A37 rider')
  const scales=new Map(ordered.map(p=>[p.riderId,1])),options={longitudinal:1.8,lateral:g.lateralCollisionM}
- let pairChecks=0,collisionProposals=0,yieldSelections=0,fallbacks=0,rounds=0,contactFractionSum=0,contactSamples=0,contactBoundaryFallbacks=0
+ let pairChecks=0,collisionProposals=0,yieldSelections=0,fallbacks=0,hardFallbacks=0,rounds=0,contactFractionSum=0,contactSamples=0,contactBoundaryFallbacks=0
  let resolved=null
  for(let iteration=0;iteration<=maxRounds;iteration++){
   const paths=ordered.map(p=>path(p,scales.get(p.riderId))),hits=[]
@@ -47,7 +47,7 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
    }
   }
   if(hits.length===0){resolved=paths;break}
-  need(iteration<maxRounds,'A37 cannot find collision-free bounded research movement')
+  if(iteration>=maxRounds)break
   hits.sort((u,v)=>u.time-v.time||u.a.riderId.localeCompare(v.a.riderId)||u.b.riderId.localeCompare(v.b.riderId))
   const {a,b}=hits[0]
   const rear=a.original.meters<b.original.meters?a:
@@ -74,10 +74,32 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64}={}){
   }
   rounds++
  }
+ if(resolved===null){
+  // Research experiment exhausted its iteration budget. Restart this substep
+  // from the untouched proposals with exactly the established A34 symmetric
+  // attenuation policy, rather than returning collision-unsafe motion.
+  hardFallbacks++
+  const control=new Map(ordered.map(p=>[p.riderId,1]))
+  for(let k=0;k<=64;k++){
+   const candidate=ordered.map(p=>path(p,control.get(p.riderId)))
+   const involved=new Set()
+   for(let i=0;i<candidate.length;i++)for(let j=i+1;j<candidate.length;j++){
+    pairChecks++
+    if(continuousBicycleCollisionV3(candidate[i],candidate[j],options)){
+     involved.add(candidate[i].riderId);involved.add(candidate[j].riderId)
+     collisionProposals++
+    }
+   }
+   if(involved.size===0){resolved=candidate;for(const [id,value] of control)scales.set(id,value);break}
+   need(k<64,'A37 safe control fallback failed')
+   for(const id of involved)control.set(id,control.get(id)/2)
+   rounds++
+  }
+ }
  need(resolved!==null,'A37 missing resolved movement')
  for(let i=0;i<resolved.length;i++)for(let j=i+1;j<resolved.length;j++)
   need(!continuousBicycleCollisionV3(resolved[i],resolved[j],options),'A37 returned swept-unsafe motion')
  return {paths:resolved,scales,pairChecks,collisionProposals,rounds,
-  yieldSelections,fallbacks,contactSamples,contactFractionSum,contactBoundaryFallbacks,
+  yieldSelections,fallbacks,hardFallbacks,contactSamples,contactFractionSum,contactBoundaryFallbacks,
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
