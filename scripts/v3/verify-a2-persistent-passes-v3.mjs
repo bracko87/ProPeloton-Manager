@@ -14,7 +14,7 @@ assert.equal(x.crossingEvents,3)
 assert.equal(x.uniqueUnorderedCrossingPairs,1)
 assert.equal(x.uniqueDirectionalCrossingPairs,2)
 assert.equal(x.repeatedCrossingsAfterFirstPerPair,2)
-assert.equal(x.durationWindows['30s'].sustainedEvents,1)
+assert.equal(x.durationWindows['30s'].sustainedEvents,2) // A 30s-held pass counts even if later reversed
 assert.equal(x.durationWindows['30s'].reversedWithinWindow,1)
 assert.equal(x.durationWindows['60s'].rightCensoredRecentEvents,1)
 s=next(s,riders(14,16),110)
