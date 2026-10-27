@@ -1,0 +1,40 @@
+name: V3 A2 Step31 rival-3 pass duration diagnostics
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/audit-a2-step31-rival3-v3.mjs'
+      - '.github/workflows/v3-a2-step31-rival3.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  rival3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        riders: [4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Existing intent/physical-solver safety checks
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-claim-continuity-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
+      - name: Trace 400 480 600 second physical pass persistence and replay
+        env:
+          V3_A2_STEP31_SIZE: ${{ matrix.riders }}
+          V3_A2_STEP31_DIR: ${{ runner.temp }}/step31-${{ matrix.riders }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step31-rival3-v3.mjs
+      - name: Preserve full fixture trajectories and censoring classification
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-step31-rival3-${{ matrix.riders }}
+          path: ${{ runner.temp }}/step31-${{ matrix.riders }}/*.json
+          retention-days: 30
+          if-no-files-found: warn
