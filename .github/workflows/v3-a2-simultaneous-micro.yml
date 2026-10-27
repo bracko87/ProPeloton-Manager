@@ -1,0 +1,28 @@
+name: V3 A2 synchronous conflict micro safety gate
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/simultaneousConflictResearchV3.mjs'
+      - 'scripts/v3/verify-a2-simultaneous-micro-v3.mjs'
+      - '.github/workflows/v3-a2-simultaneous-micro.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  micro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Canonical 2D collision and full-stage gate
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Pure simultaneous proposal, merge, yield, energy and replay tests
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
+      - name: Production app build (independent)
+        run: npm ci --no-audit --no-fund && npm run build
