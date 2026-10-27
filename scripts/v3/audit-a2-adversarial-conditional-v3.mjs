@@ -100,7 +100,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
      blockerMovement+=Math.abs(r.y-previous.get(r.riderId).y)
      blockerEntered=blockerEntered||r.y<=g.centerStepM*.5
      if(blockerCompletionSecond===null&&r.y<=g.centerStepM*.5)blockerCompletionSecond=after.elapsedSeconds
-     if(scenario==='reversal'&&state.tick>=6&&r.y>previous.get(r.riderId).y)reverseMetres+=r.y-previous.get(r.riderId).y
+     if(scenario==='reversal'&&physics.tick>=6&&r.y>previous.get(r.riderId).y)reverseMetres+=r.y-previous.get(r.riderId).y
     }
     if(scenario==='second_claim'&&r.riderId==='extra3')
      secondClaimMoveMetres+=Math.abs(r.y-previous.get(r.riderId).y)
