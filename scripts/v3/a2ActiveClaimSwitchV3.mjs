@@ -9,12 +9,12 @@ import {initializeCurrentLaneFirstV3,advanceCurrentLaneFirstV3} from './a2Curren
 import {validateRoadScenarioV3} from './roadWidthLookaheadV3.mjs'
 const check=(x,m)=>{if(!x)throw Error(m)}
 export function initializeActiveClaimSwitchV3({mode='active_only'}={}){
- check(['active_only','latched','signal_preemptive'].includes(mode),'Invalid active claim mode')
- return {version:1,gate:'A2_ACTIVE_CLAIM_SWITCH_OFFLINE_ONLY',mode,tick:0,latched:false,
+ check(['active_only','latched','signal_preemptive','signal_latched','signal_memory_3'].includes(mode),'Invalid active claim mode')
+ return {version:1,gate:'A2_ACTIVE_CLAIM_SWITCH_OFFLINE_ONLY',mode,tick:0,latched:false,signalMemoryTicks:0,
   guarded:initializeCurrentLaneFirstV3({outerLaneOnly:true}),
   bounded:initializeBoundedLaneReleaseV3({maxHoldTicks:1}),
   baseline:initializeIntentAwareCorridorV3(),
-  metrics:{activeClaims:0,activeSwitches:0,guardTicks:0,baselineTicks:0,latchTicks:0,otherRiderChanges:0,preemptiveSignals:0},
+  metrics:{activeClaims:0,activeSwitches:0,guardTicks:0,baselineTicks:0,latchTicks:0,otherRiderChanges:0,preemptiveSignals:0,signalMemorySelections:0,signalLatches:0},
   actions:[],officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
 export function advanceActiveClaimSwitchV3(snapshot,riders,intents,geometry){
@@ -48,11 +48,19 @@ export function advanceActiveClaimSwitchV3(snapshot,riders,intents,geometry){
   .filter(r=>r.y>lead.y-g.centerStepM+1e-7&&r.y<=2*g.centerStepM+1e-6)
   .filter(r=>requested.get(r.riderId).targetY<r.y-1e-6)
   .map(r=>r.riderId).sort()
- const activeClaim=eligible&&(next.mode==='signal_preemptive'?signalIds.length>0:active.length>0)
+ const signalMode=['signal_preemptive','signal_latched','signal_memory_3'].includes(next.mode)
+ const activeClaim=eligible&&(signalMode?signalIds.length>0:active.length>0)
  if(eligible&&signalIds.length>0)next.metrics.preemptiveSignals+=signalIds.length
  if(activeClaim){next.metrics.activeClaims++;if(!next.latched)next.metrics.activeSwitches++}
- if(activeClaim&&next.mode==='latched')next.latched=true
- const useBaseline=activeClaim||next.mode==='latched'&&next.latched
+ if(activeClaim&&(next.mode==='latched'||next.mode==='signal_latched')&&!next.latched){
+  next.latched=true
+  if(next.mode==='signal_latched')next.metrics.signalLatches++
+ }
+ // Retain only an actually observed claim; no access to unannounced future.
+ if(activeClaim&&next.mode==='signal_memory_3')next.signalMemoryTicks=3
+ const retained=next.mode==='signal_memory_3'&&next.signalMemoryTicks>0
+ const useBaseline=activeClaim||(['latched','signal_latched'].includes(next.mode)&&next.latched)||retained
+ if(retained){next.metrics.signalMemorySelections++;next.signalMemoryTicks--}
  const chosen=useBaseline?base:guard
  if(useBaseline)next.metrics.baselineTicks++;else next.metrics.guardTicks++
  if(next.mode==='latched'&&next.latched)next.metrics.latchTicks++
@@ -62,8 +70,8 @@ export function advanceActiveClaimSwitchV3(snapshot,riders,intents,geometry){
   if(!prior||m.forwardMeters!==prior.forwardMeters||m.targetY!==prior.targetY)next.metrics.otherRiderChanges++
  }
  check(next.metrics.otherRiderChanges===0,'Nonconsenting opponent command altered')
- next.actions.push({tick:next.tick,decision:useBaseline?'BASELINE':'CURRENT_LANE',active:next.mode==='signal_preemptive'?signalIds:active,eligible,
-  rivalCount:next.mode==='signal_preemptive'?signalIds.length:active.length})
+ next.actions.push({tick:next.tick,decision:useBaseline?'BASELINE':'CURRENT_LANE',active:signalMode?signalIds:active,eligible,
+  rivalCount:signalMode?signalIds.length:active.length})
  const selected=new Map(chosen.intents.map(x=>[x.riderId,x]))
  return {state:next,intents:intents.map(x=>selected.get(x.riderId)),decision:useBaseline?'OBSERVED_ACTIVE_BASELINE':'CURRENT_LANE_GUARD'}
 }
