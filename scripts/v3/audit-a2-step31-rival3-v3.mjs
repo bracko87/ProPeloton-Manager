@@ -73,7 +73,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
  try{
   let physics=begin({riders:initial,geometry,dt:10}),policy=policyId==='baseline'?startPolicy():policyId==='outer_lane_guard'?startCurrent({outerLaneOnly:true}):policyId==='bounded_hold_1'?startBounded({maxHoldTicks:1}):startActive({mode:policyId}),passing=startPassing(physics.riders)
   let saved=null,haltOther=0,haltRear=0,roundoffCorrections=0
-  const observed={}
+  const observed={},earlyTrace=[]
   for(let t=1;t<=60;t++){
    const previous=physics.riders
    const requested=wishes(physics,scenario,rearRequest,g,intended)
@@ -84,6 +84,24 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
    physics=advance(physics,prepared.moves)
    checkSweep(previous,physics.riders,g)
    passing=trackPassing(passing,physics.riders,physics.elapsedSeconds)
+   if(t<=12){
+    const rearBefore=previous.find(x=>x.riderId==='rear'),rearNow=physics.riders.find(x=>x.riderId==='rear')
+    const leadBefore=previous.find(x=>x.riderId==='lead'),leadNow=physics.riders.find(x=>x.riderId==='lead')
+    const chosenRear=prepared.moves.find(x=>x.riderId==='rear')
+    const extras=physics.riders.filter(x=>x.riderId.startsWith('extra')).map(x=>{
+     const prev=previous.find(p=>p.riderId===x.riderId),intent=prepared.moves.find(m=>m.riderId===x.riderId)
+     return {id:x.riderId,x:Number(x.meters.toFixed(3)),y:x.y,achieved:Number((x.meters-prev.meters).toFixed(3)),requested:intent.forwardMeters,targetY:intent.targetY}
+    })
+    earlyTrace.push({t,timeSec:physics.elapsedSeconds,policyDecision:action.decision??null,
+      rear:{beforeX:rearBefore.meters,afterX:rearNow.meters,y:rearNow.y,selectedTargetY:chosenRear.targetY,
+       requestedM:chosenRear.forwardMeters,achievedM:Number((rearNow.meters-rearBefore.meters).toFixed(3)),
+       remainingWPrime:rearNow.energy.remainingWPrimeJoules},
+      lead:{beforeX:leadBefore.meters,afterX:leadNow.meters,y:leadNow.y,
+       achievedM:Number((leadNow.meters-leadBefore.meters).toFixed(3))},
+      gap:Number((rearNow.meters-leadNow.meters).toFixed(3)),extras,
+      conflicts:physics.metrics.collisionPairsDetected,solverIterations:physics.metrics.conflictIterations,
+      events:passing.events.filter(e=>e.a==='lead'&&e.b==='rear').map(e=>({at:e.atSeconds,rev:e.reversedAtSeconds}))})
+   }
    assert(physics.officialWrites===0&&physics.sportingApproval==='NOT_APPROVED')
    assert(physics.riders.every(x=>Number.isFinite(x.energy.remainingWPrimeJoules)&&x.energy.remainingWPrimeJoules>=0))
    const rearBefore=previous.find(r=>r.riderId==='rear'),rearAfter=physics.riders.find(r=>r.riderId==='rear')
@@ -113,6 +131,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   const end=new Map(physics.riders.map(r=>[r.riderId,r.y]))
   row.gate='PASS'
   row.observed=observed
+  row.earlyTrace=earlyTrace
   row.passEvents=events.map(e=>({atSeconds:e.atSeconds,reversedAtSeconds:e.reversedAtSeconds}))
   row.sustainedAt400=observed[400].passEvents.some(e=>(e.reversedAtSeconds??400)-e.atSeconds>=60)
   row.sustainedAt480=observed[480].passEvents.some(e=>(e.reversedAtSeconds??480)-e.atSeconds>=60)
@@ -170,7 +189,7 @@ const summary=Object.values(out.reduce((acc,r)=>{
 const samples=out.filter(r=>r.gate==='PASS').slice(0,4).map(r=>({
   policy:r.policy,road:r.road,headway:r.headway,rearRequest:r.rearRequest,
   time400:r.observed[400],time480:r.observed[480],time600:r.observed[600],
-  finalPassEvents:r.passEvents
+  finalPassEvents:r.passEvents,earlyTrace:r.earlyTrace
 }))
 const report={summary,samples,study:'A2_STEP31_600SECOND_RIVAL3_DIAGNOSTIC',size,technicalGate:failures.length?'FAIL':'PASS',cases:out.length,results:out,
  aggregate:Object.values(aggregate),roundoffCorrections:out.reduce((sum,x)=>sum+(x.roundoffCorrections??0),0),failures,officialWrites:0,sportingApproval:'NOT_APPROVED'}
