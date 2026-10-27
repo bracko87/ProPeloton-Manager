@@ -17,7 +17,7 @@ function segment(r,x,y){return {x0:r.meters,x1:x,y0:r.y,y1:y}}
 export function initializeSubstepPhysicalResearchV3({riders,geometry,road={gradePercent:0},tickSeconds=10,substeps=4,conflictPolicy='symmetric_halving',diagnosticTrace=false}={}){
  const g=validateRoadScenarioV3(geometry)
  check(Array.isArray(riders)&&riders.length>=2&&riders.length<=32,'Invalid A34 roster count')
- check([2,4,5,10].includes(substeps)&&tickSeconds===10&&tickSeconds/substeps<=10,'Invalid A34 research step')
+ check([2,4,5,10,20].includes(substeps)&&tickSeconds===10&&tickSeconds/substeps<=10,'Invalid A34 research step')
  check(['symmetric_halving','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(conflictPolicy)&&typeof diagnosticTrace==='boolean','Invalid A38 trace option')
  check(road&&Number.isFinite(road.gradePercent)&&Math.abs(road.gradePercent)<=15,'Invalid A34 road grade')
  const ids=new Set(),maxY=(g.laneCount-1)*g.centerStepM
