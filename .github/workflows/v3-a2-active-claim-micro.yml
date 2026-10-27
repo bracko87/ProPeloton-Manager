@@ -1,0 +1,30 @@
+name: V3 A2 active current-intent conflict admission micro
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2ActiveClaimSwitchV3.mjs'
+      - 'scripts/v3/verify-a2-active-claim-switch-v3.mjs'
+      - '.github/workflows/v3-a2-active-claim-micro.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  micro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Active current-intent switch and original physical regressions
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-active-claim-switch-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-bounded-lane-release-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-current-lane-first-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Application production build
+        run: npm ci --no-audit --no-fund && npm run build
