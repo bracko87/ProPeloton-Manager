@@ -1,0 +1,49 @@
+name: V3 A2 Step32 bounded slot full grid
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2BoundedSlotEscapeV3.mjs'
+      - 'scripts/v3/audit-a2-step32-grid-v3.mjs'
+      - 'scripts/v3/verify-a2-bounded-slot-v3.mjs'
+      - '.github/workflows/v3-a2-step32-bounded-slot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    strategy:
+      fail-fast: false
+      matrix:
+        riders: [2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Collision energy and bounded slot micro regressions
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-bounded-slot-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-observed-escape-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-claim-continuity-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Evaluate all 1760 starting grids under four policies
+        env:
+          V3_A2_STEP32_GRID_SIZE: ${{ matrix.riders }}
+          V3_A2_STEP32_GRID_DIR: ${{ runner.temp }}/step32-${{ matrix.riders }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step32-grid-v3.mjs
+      - name: Preserve full per-fixture outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-step32-bounded-slot-${{ matrix.riders }}
+          path: ${{ runner.temp }}/step32-${{ matrix.riders }}/*.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Independently verify application build
+        if: matrix.riders == 2
+        run: npm ci --no-audit --no-fund && npm run build
