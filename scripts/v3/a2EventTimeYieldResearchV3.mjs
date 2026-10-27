@@ -25,12 +25,12 @@ function path(p,scale){return {riderId:p.riderId,x0:p.original.meters,x1:r6(p.or
  * If no unilateral clearance exists we fall back to symmetric halving.
  * Neither rider's COMMAND is rewritten. No crossing receives immunity.
  */
-export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=false}={}){
- need(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&g&&Number.isFinite(g.lateralCollisionM)&&Number.isInteger(maxRounds)&&maxRounds>=8&&maxRounds<=64&&typeof diagnostics==='boolean','Invalid A37 resolver')
+export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=false,tiePolicy='id_first'}={}){
+ need(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&g&&Number.isFinite(g.lateralCollisionM)&&Number.isInteger(maxRounds)&&maxRounds>=8&&maxRounds<=64&&typeof diagnostics==='boolean'&&['id_first','physical_group'].includes(tiePolicy),'Invalid A37 resolver')
  const ordered=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
  need(new Set(ordered.map(p=>p.riderId)).size===ordered.length,'Duplicate A37 rider')
  const scales=new Map(ordered.map(p=>[p.riderId,1])),options={longitudinal:1.8,lateral:g.lateralCollisionM}
- let pairChecks=0,collisionProposals=0,yieldSelections=0,fallbacks=0,hardFallbacks=0,rounds=0,contactFractionSum=0,contactSamples=0,contactBoundaryFallbacks=0
+ let pairChecks=0,collisionProposals=0,yieldSelections=0,fallbacks=0,hardFallbacks=0,rounds=0,contactFractionSum=0,contactSamples=0,contactBoundaryFallbacks=0,physicalTieGroups=0,physicalTieParticipants=0
  const trace=diagnostics?[]:null
  let resolved=null
  for(let iteration=0;iteration<=maxRounds;iteration++){
@@ -51,6 +51,19 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=fa
   if(iteration>=maxRounds)break
   hits.sort((u,v)=>u.time-v.time||u.a.riderId.localeCompare(v.a.riderId)||u.b.riderId.localeCompare(v.b.riderId))
   const tiedFirstContactPairs=hits.filter(x=>Math.abs(x.time-hits[0].time)<=1e-9).length
+  if(tiePolicy==='physical_group'){
+   const tied=hits.filter(x=>Math.abs(x.time-hits[0].time)<=1e-9)
+   const equalX=tied.length===1&&Math.abs(tied[0].a.original.meters-tied[0].b.original.meters)<1e-9
+   if(tied.length>1||equalX){
+    const involved=new Set()
+    for(const hit of tied){involved.add(hit.a.riderId);involved.add(hit.b.riderId)}
+    for(const id of involved)scales.set(id,r6(scales.get(id)/2))
+    physicalTieGroups++;physicalTieParticipants+=involved.size
+    if(trace)trace.push({round:iteration,outcome:'physical_tie_group',pairs:tied.length,riders:involved.size})
+    rounds++
+    continue
+   }
+  }
   const {a,b}=hits[0]
   const signA=Math.sign(a.y-a.original.y),signB=Math.sign(b.y-b.original.y)
   const crossType=signA===0&&signB===0?'straight':
@@ -112,7 +125,7 @@ export function resolveEventTimeYieldV3(proposals,g,{maxRounds=64,diagnostics=fa
  for(let i=0;i<resolved.length;i++)for(let j=i+1;j<resolved.length;j++)
   need(!continuousBicycleCollisionV3(resolved[i],resolved[j],options),'A37 returned swept-unsafe motion')
  return {paths:resolved,scales,pairChecks,collisionProposals,rounds,
-  yieldSelections,fallbacks,hardFallbacks,contactSamples,contactFractionSum,contactBoundaryFallbacks,
+  yieldSelections,fallbacks,hardFallbacks,contactSamples,contactFractionSum,contactBoundaryFallbacks,physicalTieGroups,physicalTieParticipants,
   diagnosticEvents:trace,
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
