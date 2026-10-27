@@ -109,6 +109,9 @@ export function advanceSimultaneousMicroV3(state,intents){
  out.metrics.largestFirstConflictComponent=Math.max(out.metrics.largestFirstConflictComponent??0,resolved.largestFirstConflictComponent)
  out.metrics.protectedPassEdges=(out.metrics.protectedPassEdges??0)+resolved.protectedPassEdges
  out.metrics.actualPreferenceChanges=(out.metrics.actualPreferenceChanges??0)+resolved.actualPreferenceChanges
+ const options=out.metrics.yieldOptions??{}
+ for(const [key,value] of Object.entries(resolved.yieldOptions))options[key]=(options[key]??0)+value
+ out.metrics.yieldOptions=options
  out.tick++;out.elapsedSeconds+=dt
  return out
 }

@@ -46,6 +46,15 @@ export function resolveTargetedSimultaneousPathsV3(riders,moves,rawGeometry,{dt=
  for(let i=0;i<sorted.length;i++)for(let j=i+1;j<sorted.length;j++)ensure(!isHit(path(sorted[i],map.get(sorted[i].riderId),0),path(sorted[j],map.get(sorted[j].riderId),0),g),'Initial bicycle collision')
  const scales=new Map(sorted.map(r=>[r.riderId,1]))
  let totalChecks=0,firstConflicts=0,largestFirstConflictComponent=0,firstConflictComponents=0,targetedYieldDecisions=0,symmetricFallbackEdges=0,protectedPassEdges=0,actualPreferenceChanges=0
+ // The following counters observe EXISTING swept-safe unilateral options.
+ // No scoring, tie-break or candidate trajectory is changed.
+ const yieldOptions={conflictingPairs:0,zeroFeasible:0,oneFeasible:0,twoFeasible:0,
+  prioritizedPairs:0,priorityZeroFeasible:0,prioritySingleFeasible:0,
+  prioritySingleMustYieldProtected:0,prioritySingleAlreadyPreservesProtected:0,
+  priorityTwoFeasible:0,priorityAlreadyPreserved:0,
+  priorityBothButCostGapOver10m:0,priorityBothCostGapWithin10m:0,
+  priorityActualSwitched:0,twoChoiceCostGap0to2m:0,twoChoiceCostGap2to10m:0,
+  twoChoiceCostGap10to25m:0,twoChoiceCostGapOver25m:0}
  for(let iteration=0;iteration<=maxIterations;iteration++){
   const paths=sorted.map(r=>path(r,map.get(r.riderId),scales.get(r.riderId)))
   const edges=[]
@@ -63,7 +72,7 @@ export function resolveTargetedSimultaneousPathsV3(riders,moves,rawGeometry,{dt=
    const done=new Map(sorted.map((r,i)=>[r.riderId,{...paths[i],requestedMeters:map.get(r.riderId).forwardMeters,achievedMeters:r6(paths[i].x1-paths[i].x0),scale:scales.get(r.riderId)}]))
    const result=riders.map(r=>done.get(r.riderId))
    ensure(result.every(p=>p.achievedMeters>=-1e-7&&p.achievedMeters<=p.requestedMeters+1e-5),'Invented movement')
-   return {paths:result,iterations:iteration,firstConflicts,pairConflictsChecked:totalChecks,blockedRiders:[...scales.values()].filter(s=>s<1).length,allPairsSweptClear:true,largestFirstConflictComponent,firstConflictComponents,targetedYieldDecisions,symmetricFallbackEdges,protectedPassEdges,actualPreferenceChanges}
+   return {paths:result,iterations:iteration,firstConflicts,pairConflictsChecked:totalChecks,blockedRiders:[...scales.values()].filter(s=>s<1).length,allPairsSweptClear:true,largestFirstConflictComponent,firstConflictComponents,targetedYieldDecisions,symmetricFallbackEdges,protectedPassEdges,actualPreferenceChanges,yieldOptions}
   }
   ensure(iteration<maxIterations,'Targeted research conflict failed safely: no convergence')
   const changes=new Map()
@@ -83,10 +92,39 @@ export function resolveTargetedSimultaneousPathsV3(riders,moves,rawGeometry,{dt=
      }
     }
    }
+   yieldOptions.conflictingPairs++
+   yieldOptions[['zeroFeasible','oneFeasible','twoFeasible'][choices.length]]++
+   if(choices.length===2){
+    const diff=Math.abs(choices[0].sacrificed-choices[1].sacrificed)
+    if(diff<=2)yieldOptions.twoChoiceCostGap0to2m++
+    else if(diff<=10)yieldOptions.twoChoiceCostGap2to10m++
+    else if(diff<=25)yieldOptions.twoChoiceCostGap10to25m++
+    else yieldOptions.twoChoiceCostGapOver25m++
+   }
+   // Count priority opportunities even when neither cyclist has a safe
+   // unilateral reduction. These may previously have been invisible.
+   const priorityForAudit=provisionalPassPriorityV3(sorted[i],sorted[j],map.get(sorted[i].riderId),map.get(sorted[j].riderId),g)
+   if(priorityForAudit){
+    yieldOptions.prioritizedPairs++
+    if(choices.length===0)yieldOptions.priorityZeroFeasible++
+    if(choices.length===1){
+     yieldOptions.prioritySingleFeasible++
+     if(choices[0].id===priorityForAudit.protectedRiderId)yieldOptions.prioritySingleMustYieldProtected++
+     else yieldOptions.prioritySingleAlreadyPreservesProtected++
+    }
+    if(choices.length===2)yieldOptions.priorityTwoFeasible++
+   }
    if(choices.length){
     const original=choices.slice().sort((a,b)=>a.sacrificed-b.sacrificed||b.behind-a.behind||a.id.localeCompare(b.id))[0]
     const priority=provisionalPassPriorityV3(sorted[i],sorted[j],map.get(sorted[i].riderId),map.get(sorted[j].riderId),g)
     if(priority)protectedPassEdges++
+    if(priority&&choices.length===2){
+     const other=choices.find(x=>x.id!==priority.protectedRiderId)
+     const protectedChoice=choices.find(x=>x.id===priority.protectedRiderId)
+     if(original.id!==priority.protectedRiderId)yieldOptions.priorityAlreadyPreserved++
+     else if(other.sacrificed-protectedChoice.sacrificed>10)yieldOptions.priorityBothButCostGapOver10m++
+     else yieldOptions.priorityBothCostGapWithin10m++
+    }
     // No more than a 10-metre cost preference for the closing cyclist.
     // Both eligible choices must already pass full continuous collision checks.
     choices.sort((a,b)=>{
@@ -95,7 +133,7 @@ export function resolveTargetedSimultaneousPathsV3(riders,moves,rawGeometry,{dt=
      return costA-costB||b.behind-a.behind||a.id.localeCompare(b.id)
     })
     const best=choices[0],id=best.id
-    if(priority&&best.id!==original.id)actualPreferenceChanges++
+    if(priority&&best.id!==original.id){actualPreferenceChanges++;yieldOptions.priorityActualSwitched++}
     changes.set(id,Math.min(changes.get(id)??1,best.scale))
     targetedYieldDecisions++
    }else{
