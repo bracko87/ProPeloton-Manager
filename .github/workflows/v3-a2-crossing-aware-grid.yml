@@ -1,0 +1,47 @@
+name: V3 A2 crossing-aware four-grid sporting screen
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/audit-a2-crossing-aware-grid-v3.mjs'
+      - '.github/workflows/v3-a2-crossing-aware-grid.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  four-grids:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        riders: [12, 24, 32]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Existing movement and sustained-overtake regression
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-crossing-aware-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-persistent-passes-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-targeted-yield-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Three solvers with four grids across 900 seconds
+        env:
+          V3_A2_PASS_RIDERS: ${{ matrix.riders }}
+          V3_A2_PASS_DIR: ${{ runner.temp }}/cross-aware-${{ matrix.riders }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-crossing-aware-grid-v3.mjs
+      - name: Preserve all complete crossing history and screening flags
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-crossing-aware-grid-${{ matrix.riders }}
+          path: ${{ runner.temp }}/cross-aware-${{ matrix.riders }}/*.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Production application build
+        if: matrix.riders == 12
+        run: npm ci --no-audit --no-fund && npm run build
