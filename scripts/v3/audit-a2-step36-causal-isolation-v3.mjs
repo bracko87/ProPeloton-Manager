@@ -27,7 +27,7 @@ function commandForIds(ids,tick,variation,g,family){
    wantsSteering&&(tick%3===2&&(i+variation)%5===0)?1:0
   const dest=Math.max(0,Math.min(g.laneCount-1,lane+offset))
   return {riderId:id,targetSpeedMps:4.5+(i+tick+variation)%6,
-   targetY:r6(dest*g.centerStepM),steeringWatts:35}
+   targetY:Math.min((g.laneCount-1)*g.centerStepM,r6(dest*g.centerStepM)),steeringWatts:35}
  })
 }
 function runCase(initial,geometry,g,variation,family,substeps){
