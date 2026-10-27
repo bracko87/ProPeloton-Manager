@@ -48,7 +48,7 @@ export function stepCorridorReservationV3(snapshot,riders,rawIntents,rawGeometry
    const nextY=desire.targetY
    const corridorY=next.targetY
    const movingToward=(r.y-corridorY)*(nextY-r.y)<0||(dy!==0&&(r.y-corridorY)*dy<0)
-   const forecast=round(nextY+Math.max(-g.centerStepM,Math.min(g.centerStepM,dy)))
+   const forecast=round(nextY+Math.max(-g.centerStepM,Math.min(g.centerStepM,(nextY-r.y)+dy)))
    const nearLane=Math.abs(nextY-corridorY)<=g.lateralCollisionM+.05||Math.abs(forecast-corridorY)<=g.lateralCollisionM+.05
    const dx=r.meters-rear.meters
    // A bound of 90 m explicitly covers 2 nominal ~10s movement ticks,
