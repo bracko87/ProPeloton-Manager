@@ -4,6 +4,8 @@ on:
     branches: [main]
     paths:
       - 'scripts/v3/audit-a2-step31-rival3-v3.mjs'
+      - 'scripts/v3/a2ObservedEscapeV3.mjs'
+      - 'scripts/v3/verify-a2-observed-escape-v3.mjs'
       - '.github/workflows/v3-a2-step31-rival3.yml'
   workflow_dispatch:
 permissions:
@@ -24,6 +26,7 @@ jobs:
       - name: Existing intent/physical-solver safety checks
         run: |
           node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-claim-continuity-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-observed-escape-v3.mjs
           node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
       - name: Trace 400 480 600 second physical pass persistence and replay
         env:

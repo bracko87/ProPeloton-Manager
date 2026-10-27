@@ -10,6 +10,7 @@ import {initializeActiveClaimSwitchV3 as startActive,advanceActiveClaimSwitchV3 
 import {initializePersistentPassTrackerV3 as startPassing,advancePersistentPassTrackerV3 as trackPassing} from './a2PersistentPassesV3.mjs'
 import {continuousBicycleCollisionV3 as collision} from './continuousLateralResearchV3.mjs'
 import {selectEarlyCorridorV3 as choose} from './a2EarlyCorridorV3.mjs'
+import {initializeObservedEscapeV3 as startEscape,advanceObservedEscapeV3 as planEscape} from './a2ObservedEscapeV3.mjs'
 const size=Number(process.env.V3_A2_STEP31_SIZE??3),dir=process.env.V3_A2_STEP31_DIR??'/tmp/a2-step31'
 assert([4,5,6].includes(size));mkdirSync(dir,{recursive:true})
 const lanes=['rival_3']
@@ -66,18 +67,18 @@ function checkSweep(before,after,g){
  }
 }
 for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const rearRequest of [55,75])
- for(const scenario of scenarios)for(const lane of lanes)for(const policyId of ['baseline','signal_memory_3']){
+ for(const scenario of scenarios)for(const lane of lanes)for(const policyId of ['baseline','signal_memory_3','observed_escape']){
  const g=validateRoadScenarioV3(geometry),initial=startRiders(g,headway,scenario,lane)
  const intended=choose(initial,'rear',geometry).selectedY
  const row={size,road:g.id,headway,rearRequest,scenario,lane,policy:policyId,gate:'UNKNOWN'}
  try{
-  let physics=begin({riders:initial,geometry,dt:10}),policy=policyId==='baseline'?startPolicy():policyId==='outer_lane_guard'?startCurrent({outerLaneOnly:true}):policyId==='bounded_hold_1'?startBounded({maxHoldTicks:1}):startActive({mode:policyId}),passing=startPassing(physics.riders)
+  let physics=begin({riders:initial,geometry,dt:10}),policy=policyId==='baseline'?startPolicy():policyId==='outer_lane_guard'?startCurrent({outerLaneOnly:true}):policyId==='bounded_hold_1'?startBounded({maxHoldTicks:1}):policyId==='observed_escape'?startEscape():startActive({mode:policyId}),passing=startPassing(physics.riders)
   let saved=null,haltOther=0,haltRear=0,roundoffCorrections=0
   const observed={},earlyTrace=[]
   for(let t=1;t<=60;t++){
    const previous=physics.riders
    const requested=wishes(physics,scenario,rearRequest,g,intended)
-   const action=policyId==='baseline'?plan(policy,previous,requested,geometry):policyId==='outer_lane_guard'?planCurrent(policy,previous,requested,geometry):policyId==='bounded_hold_1'?planBounded(policy,previous,requested,geometry):planActive(policy,previous,requested,geometry)
+   const action=policyId==='baseline'?plan(policy,previous,requested,geometry):policyId==='outer_lane_guard'?planCurrent(policy,previous,requested,geometry):policyId==='bounded_hold_1'?planBounded(policy,previous,requested,geometry):policyId==='observed_escape'?planEscape(policy,previous,requested,geometry):planActive(policy,previous,requested,geometry)
    policy=action.state
    const prepared=correctEdgeRoundoff(action.intents,g)
    roundoffCorrections+=prepared.corrections
@@ -122,7 +123,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   let p=saved.physics,q=saved.policy,s=saved.passing
   for(let t=31;t<=60;t++){
    const requested=wishes(p,scenario,rearRequest,g,intended)
-   const action=policyId==='baseline'?plan(q,p.riders,requested,geometry):policyId==='outer_lane_guard'?planCurrent(q,p.riders,requested,geometry):policyId==='bounded_hold_1'?planBounded(q,p.riders,requested,geometry):planActive(q,p.riders,requested,geometry)
+   const action=policyId==='baseline'?plan(q,p.riders,requested,geometry):policyId==='outer_lane_guard'?planCurrent(q,p.riders,requested,geometry):policyId==='bounded_hold_1'?planBounded(q,p.riders,requested,geometry):policyId==='observed_escape'?planEscape(q,p.riders,requested,geometry):planActive(q,p.riders,requested,geometry)
    q=action.state;p=advance(p,correctEdgeRoundoff(action.intents,g).moves)
    s=trackPassing(s,p.riders,p.elapsedSeconds)
   }
@@ -132,6 +133,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   row.gate='PASS'
   row.observed=observed
   row.earlyTrace=earlyTrace
+  row.escapeMetrics=policyId==='observed_escape'?policy.escape:null
   row.passEvents=events.map(e=>({atSeconds:e.atSeconds,reversedAtSeconds:e.reversedAtSeconds}))
   row.sustainedAt400=observed[400].passEvents.some(e=>(e.reversedAtSeconds??400)-e.atSeconds>=60)
   row.sustainedAt480=observed[480].passEvents.some(e=>(e.reversedAtSeconds??480)-e.atSeconds>=60)
@@ -186,7 +188,7 @@ const summary=Object.values(out.reduce((acc,r)=>{
   }
   acc[k]=v;return acc
 },{}))
-const samples=out.filter(r=>r.gate==='PASS').slice(0,4).map(r=>({
+const samples=out.filter(r=>r.gate==='PASS'&&r.rearRequest===55).slice(0,3).map(r=>({
   policy:r.policy,road:r.road,headway:r.headway,rearRequest:r.rearRequest,
   time400:r.observed[400],time480:r.observed[480],time600:r.observed[600],
   finalPassEvents:r.passEvents,earlyTrace:r.earlyTrace
