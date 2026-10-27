@@ -85,7 +85,7 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   row.secondCenter=scenario==='second_claim'?Math.abs(end.get('extra3'))<1e-4:null
   row.selectedY=intended
   row.checkpointExact=true
- }catch(e){row.gate='FAIL';row.reason=String(e?.stack??e);failures.push(row)}
+ }catch(e){row.gate='FAIL';row.reason=String(e?.stack??e);failures.push(row);console.error(JSON.stringify({size,road:g.id,scenario,lane,headway,rearRequest,reason:String(e?.message??e)}))}
  out.push(row)
 }
 const aggregate={}
