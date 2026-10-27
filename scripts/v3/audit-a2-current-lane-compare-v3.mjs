@@ -64,12 +64,12 @@ function checkSweep(before,after,g){
  }
 }
 for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const rearRequest of [55,75])
- for(const scenario of scenarios)for(const lane of lanes)for(const policyId of ['baseline','current_lane_first']){
+ for(const scenario of scenarios)for(const lane of lanes)for(const policyId of ['baseline','current_lane_first','outer_lane_guard']){
  const g=validateRoadScenarioV3(geometry),initial=startRiders(g,headway,scenario,lane)
  const intended=choose(initial,'rear',geometry).selectedY
  const row={size,road:g.id,headway,rearRequest,scenario,lane,policy:policyId,gate:'UNKNOWN'}
  try{
-  let physics=begin({riders:initial,geometry,dt:10}),policy=policyId==='baseline'?startPolicy():startCurrent(),passing=startPassing(physics.riders)
+  let physics=begin({riders:initial,geometry,dt:10}),policy=policyId==='baseline'?startPolicy():startCurrent({outerLaneOnly:policyId==='outer_lane_guard'}),passing=startPassing(physics.riders)
   let saved=null,haltOther=0,haltRear=0,roundoffCorrections=0
   for(let t=1;t<=40;t++){
    const previous=physics.riders
@@ -104,10 +104,10 @@ for(const geometry of BATCH40_GEOMETRIES)for(const headway of [9,18])for(const r
   row.sustained60s=events.some(e=>(e.reversedAtSeconds??passing.elapsedSeconds)-e.atSeconds>=60)
   row.haltedOtherTicks=haltOther
   row.haltedRearTicks=haltRear
-  row.stayTicks=policyId==='current_lane_first'?policy.metrics.stayTicks:0
-  row.fallbackTicks=policyId==='current_lane_first'?policy.metrics.fallbackTicks:0
-  row.currentIntentConflicts=policyId==='current_lane_first'?policy.metrics.observedConflictingIntentTicks:0
-  row.otherIntentsOverridden=policyId==='current_lane_first'?policy.metrics.changedOpponentIntents:0
+  row.stayTicks=policyId!=='baseline'?policy.metrics.stayTicks:0
+  row.fallbackTicks=policyId!=='baseline'?policy.metrics.fallbackTicks:0
+  row.currentIntentConflicts=policyId!=='baseline'?policy.metrics.observedConflictingIntentTicks:0
+  row.otherIntentsOverridden=policyId!=='baseline'?policy.metrics.changedOpponentIntents:0
   row.roundoffCorrections=roundoffCorrections
   row.primaryCenter=scenario==='open'?null:Math.abs(end.get('extra2'))<1e-4
   row.secondCenter=scenario==='second_claim'?Math.abs(end.get('extra3'))<1e-4:null
