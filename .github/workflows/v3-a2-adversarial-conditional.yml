@@ -1,0 +1,47 @@
+name: V3 A2 conditional slots adversarial micro matrix
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/audit-a2-adversarial-conditional-v3.mjs'
+      - '.github/workflows/v3-a2-adversarial-conditional.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  adversarial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        riders: [2, 3, 4, 5, 6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Conditional corridor and continuous micro collision regressions
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-conditional-corridor-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-timed-corridor-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-simultaneous-micro-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-persistent-passes-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Micro test open, delayed, reverse and second-claim scenarios
+        env:
+          V3_A2_ADVERSARY_SIZE: ${{ matrix.riders }}
+          V3_A2_ADVERSARY_DIR: ${{ runner.temp }}/a2-adversarial-${{ matrix.riders }}
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-adversarial-conditional-v3.mjs
+      - name: Preserve complete per-rider checkpoint and scenario outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v3-a2-adversarial-${{ matrix.riders }}
+          path: ${{ runner.temp }}/a2-adversarial-${{ matrix.riders }}/*.json
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Production app build
+        if: matrix.riders == 2
+        run: npm ci --no-audit --no-fund && npm run build
