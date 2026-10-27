@@ -55,6 +55,7 @@ function request(state,mode,grid){
    if(i%4===0)targetY=Math.min(3,Math.max(0,r.y+(phase<10?.4:-.4)))
    if(i%4===2)targetY=Math.min(3,Math.max(0,r.y+(phase<10?-.4:.4)))
   }
+  if(grid==='alternating_row_swaps')targetY=r.y+Math.max(-g.centerStepM,Math.min(g.centerStepM,targetY-r.y))
   return {riderId:r.riderId,forwardMeters,targetY:round(targetY)}
  })
 }
