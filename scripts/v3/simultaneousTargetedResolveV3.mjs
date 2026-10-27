@@ -52,7 +52,7 @@ export function resolveTargetedSimultaneousPathsV3(riders,moves,rawGeometry,{dt=
    const done=new Map(sorted.map((r,i)=>[r.riderId,{...paths[i],requestedMeters:map.get(r.riderId).forwardMeters,achievedMeters:r6(paths[i].x1-paths[i].x0),scale:scales.get(r.riderId)}]))
    const result=riders.map(r=>done.get(r.riderId))
    ensure(result.every(p=>p.achievedMeters>=-1e-7&&p.achievedMeters<=p.requestedMeters+1e-5),'Invented movement')
-   return {paths:result,iterations,firstConflicts,pairConflictsChecked:totalChecks,blockedRiders:[...scales.values()].filter(s=>s<1).length,allPairsSweptClear:true,largestFirstConflictComponent,firstConflictComponents,targetedYieldDecisions,symmetricFallbackEdges}
+   return {paths:result,iterations:iteration,firstConflicts,pairConflictsChecked:totalChecks,blockedRiders:[...scales.values()].filter(s=>s<1).length,allPairsSweptClear:true,largestFirstConflictComponent,firstConflictComponents,targetedYieldDecisions,symmetricFallbackEdges}
   }
   ensure(iteration<maxIterations,'Targeted research conflict failed safely: no convergence')
   const changes=new Map()
