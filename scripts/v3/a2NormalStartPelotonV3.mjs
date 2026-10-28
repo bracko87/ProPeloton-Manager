@@ -19,16 +19,17 @@ const energetic=()=>initializeEnergyBalanceResearchV3({criticalWatts:305,wPrimeJ
  * Tempered and mixed starts share exactly the same geometric initial grid.
  */
 export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false}={}){
- assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure'].includes(mode),'A64 unknown start')
+ assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode),'A64 unknown start')
  const starts=[]
  for(let i=0;i<n;i++){
-  const row=Math.floor(i/5),lane=i%5
+  const activeLanes=mode==='corridor'?3:5
+  const row=Math.floor(i/activeLanes),lane=mode==='corridor'?1+i%3:i%5
   const id='r'+String(i).padStart(3,'0')
   const gridX=600-row*5.2
   const v=mode==='tempered'?9.0+(i%3)*.02:
-   mode==='mixed'?8.45+((i*7)%9)*.14:8.2+((i*11)%13)*.20
+   ['mixed','corridor'].includes(mode)?8.45+((i*7)%9)*.14:8.2+((i*11)%13)*.20
   const desired=mode==='tempered'?9.05:
-    mode==='mixed'?8.6+((i*7)%9)*.14:8.3+((i*11)%13)*.20
+    ['mixed','corridor'].includes(mode)?8.6+((i*7)%9)*.14:8.3+((i*11)%13)*.20
   starts.push({id:renamed?'z'+String(n-i).padStart(4,'0'):id,
    x:round(gridX),y:round(lane*road.centerStepM),
    v:round(v),desired:round(desired),targetY:round(lane*road.centerStepM),
@@ -69,7 +70,11 @@ function chooseLane(s,states){
    Math.abs(t.y-y)<road.lateralCollisionM+L*2)
    .map(t=>Math.abs(t.x-s.x)),Infinity)}))
  .filter(x=>x.margin>=9)
- .sort((a,b)=>b.margin-a.margin||a.y-b.y)
+ .sort((a,b)=>b.margin-a.margin)
+ // Equal openings must not prefer a hard-coded physical side. A mirror-
+ // invariant controller stays in lane until one corridor has an advantage.
+ if(candidates.length>1&&Math.abs(candidates[0].margin-candidates[1].margin)<1e-7)
+  return s.targetY
  return candidates[0]?.y??s.targetY
 }
 /** One synchronized 0.5-second move. The full proposed field is swept
@@ -137,8 +142,8 @@ export function advanceNormalStartV3(snapshot){
  p.pairChecks+=checked;p.brakeEvents+=brakes.size
  p.steerEvents+=paths.filter(a=>Math.abs(a.y1-a.s.y)>1e-7).length
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
- p.completedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7&&
-  Math.abs(a.target-a.y1)<1e-6).length
+ p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
+  Math.abs(a.a.target-a.y1)<1e-6).length
  p.nearStops+=updates.filter(s=>s.v<1.0).length
  p.lowestSpeed=Math.min(p.lowestSpeed,...updates.map(s=>s.v))
  p.maxSpeed=Math.max(p.maxSpeed,...updates.map(s=>s.v))
