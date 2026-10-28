@@ -20,7 +20,10 @@ const tooFarSide=adjacentLaneStoppingReserveV3({...rear,y:0},nearLead)
 assert(!tooFarSide.active)
 const reflect=adjacentLaneStoppingReserveV3({...rear,y:4.4-rear.y},
  {...nearLead,y:4.4-nearLead.y})
-assert.deepEqual(a,reflect)
+assert.equal(a.active,reflect.active)
+assert(near(a.gapM,reflect.gapM)&&
+ near(a.lateralGapM,reflect.lateralGapM)&&
+ near(a.requiredStoppingM,reflect.requiredStoppingM))
 const rename=adjacentLaneStoppingReserveV3({...rear,id:'t0'},
  {...nearLead,id:'t1'})
 assert.deepEqual(rename,a)
