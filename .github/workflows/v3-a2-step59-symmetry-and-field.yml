@@ -1,4 +1,4 @@
-name: V3 A2 Step59-69 physical safety, variable width and merge-chain research
+name: V3 A2 Step59-70 physical safety, capacity and bicycle-edge research
 on:
   push:
     branches: [main]
@@ -15,6 +15,9 @@ on:
       - 'scripts/v3/a2VariableRoadWidthV3.mjs'
       - 'scripts/v3/verify-a2-step68-variable-road-v3.mjs'
       - 'scripts/v3/verify-a2-step69-multi-rider-merge-v3.mjs'
+      - 'scripts/v3/a2LaneCapacityPlannerV3.mjs'
+      - 'scripts/v3/verify-a2-step70-lane-capacity-v3.mjs'
+      - 'scripts/v3/verify-a2-step70-body-clearance-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -63,6 +66,22 @@ jobs:
         env:
           V3_A2_STEP69_DIR: ${{ runner.temp }}/step69
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step69-multi-rider-merge-v3.mjs
+      - name: 'Step70 full-peloton road capacity and upstream speed-wave physical comparisons'
+        env:
+          V3_A2_STEP70_DIR: ${{ runner.temp }}/step70
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step70-lane-capacity-v3.mjs
+      - name: 'Step70 bicycle-body clearance and physical two-lane bottleneck capacity'
+        env:
+          V3_A2_STEP70_DIR: ${{ runner.temp }}/step70
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step70-body-clearance-v3.mjs
+      - name: Retain Step70 group-capacity and bicycle-body-roadside physical failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step70-group-capacity-and-body-clearance
+          path: ${{ runner.temp }}/step70/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step69 multi-rider zipper and chain first-blocker evidence
         if: always()
         uses: actions/upload-artifact@v4
