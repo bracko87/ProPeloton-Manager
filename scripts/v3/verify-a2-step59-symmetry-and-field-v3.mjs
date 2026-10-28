@@ -20,6 +20,7 @@ import {auditCoupledBrakeChoicesV3,buildCoupledBrakeOptionsV3,replayCoupledEarly
 import {initializeEnergyBalanceResearchV3} from '../../src/race-engine-v3/energyBalanceResearchV3.ts'
 import {mirrorRecordedA44V3,relabelRecordedA44V3,mirrorStrategyV3,replayAllRiderAnticipationProbeV3} from './a2MirrorAndFullFieldProbeV3.mjs'
 import {auditFirstFullFieldContactV3} from './a2FirstContactFeasibilityV3.mjs'
+import {precedingPhysicalCheckpointsV3} from './a2UpstreamPredictionV3.mjs'
 const r6=x=>Math.round(x*1e6)/1e6
 const policies=['trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_rear_corridor_leader']
 const quanta=[.5,1,2,2.5,5],counts=[2,8,12,24,32],variations=[0,1]
@@ -166,6 +167,18 @@ const totals=new Map([.5,2,2.5].map(q=>[q,{quantum:q,comparisons:0,
  fullFieldEnergyFailed:0,fullFieldHeadwayReactions:0,
  maxFullFieldLateralMps:0
 }]))
+const a61={scenarios:0,priorCheckpointsAvailable:0,startedEarlier:0,
+ minLeadBeforeAlertSeconds:null,maxLeadBeforeAlertSeconds:0,
+ earlyMatchedLaneIntentClear:0,upstream3sClear:0,upstream5sClear:0,
+ upstream3sRescues:0,upstream3sRegressions:0,
+ upstream5sRescues:0,upstream5sRegressions:0,
+ upstream3sEventPairs:0,upstream5sEventPairs:0,
+ upstream3sBrakes:0,upstream5sBrakes:0,
+ mirrorOutcomeMismatch:0,renameOutcomeMismatch:0,
+ mirrorFirstPairMismatch:0,renameFirstPairMismatch:0,jsonReplayMismatch:0,
+ firstContactBeforeOriginalWarning:0,
+ byQuantum:{'0.5':{scenarios:0,baseClear:0,upstream3Clear:0,upstream5Clear:0},
+ '2.5':{scenarios:0,baseClear:0,upstream3Clear:0,upstream5Clear:0}}}
 const cases=[],errors=[],historical=[]
 const a60={scenarios:0,previousFieldClear:0,fixedBrakeClear:0,
  laneIntentClear:0,laneIntentRegressions:0,laneIntentRescues:0,
@@ -345,6 +358,65 @@ for(const geometry of BATCH40_GEOMETRIES){
        a60.laneIntentRescues+=Number(!legacyFixed.complete&&laneFixed.complete)
        a60.newLaneIntentWarningPairs+=laneFixed.intentWarningPairs
        a60.laneIntentBrakeDecisions+=laneFixed.additionalHeadwayBrakingDecisions
+       // A61 starts the SAME original physical source checkpoint earlier
+       // for all three autonomous policies. No rider is force-braked by
+       // retrospectively identifying the A56 case primary.
+       const prior=precedingPhysicalCheckpointsV3(A.observed,alert,q,{maxSeconds:5})
+       const leadFrames=Math.min(Math.max(1,Math.floor(3/q)),prior.length)
+       const settings={dt:q,intervals:16,controlMode:'autonomous',leadFrames}
+       const earlierBaseline=replayAllRiderAnticipationProbeV3(A.observed,g,
+        [-3,0][v],who,alert,first.firstAcceptedDifferenceSeconds,fixed,
+        {...settings,preStepPolicy:'lane_intent'})
+       const upstream3=replayAllRiderAnticipationProbeV3(A.observed,g,
+        [-3,0][v],who,alert,first.firstAcceptedDifferenceSeconds,fixed,
+        {...settings,preStepPolicy:'upstream_3s'})
+       const upstream5=replayAllRiderAnticipationProbeV3(A.observed,g,
+        [-3,0][v],who,alert,first.firstAcceptedDifferenceSeconds,fixed,
+        {...settings,preStepPolicy:'upstream_5s'})
+       const mirror5=replayAllRiderAnticipationProbeV3(mirroredSource,g,
+        [-3,0][v],who,alert,first.firstAcceptedDifferenceSeconds,fixedMirror,
+        {...settings,preStepPolicy:'upstream_5s'})
+       const rename5=replayAllRiderAnticipationProbeV3(relabeled.source,g,
+        [-3,0][v],newId,alert,first.firstAcceptedDifferenceSeconds,fixedRename,
+        {...settings,preStepPolicy:'upstream_5s'})
+       const serialized5=replayAllRiderAnticipationProbeV3(
+        JSON.parse(JSON.stringify(A.observed)),g,[-3,0][v],who,alert,
+        first.firstAcceptedDifferenceSeconds,JSON.parse(JSON.stringify(fixed)),
+        {...settings,preStepPolicy:'upstream_5s'})
+       const lead=Number((alert-q-upstream5.startSeconds).toFixed(6))
+       a61.scenarios++
+       a61.priorCheckpointsAvailable+=prior.length
+       a61.startedEarlier+=Number(lead>1e-8)
+       a61.minLeadBeforeAlertSeconds=a61.minLeadBeforeAlertSeconds===null?lead:
+        Math.min(a61.minLeadBeforeAlertSeconds,lead)
+       a61.maxLeadBeforeAlertSeconds=Math.max(a61.maxLeadBeforeAlertSeconds,lead)
+       a61.earlyMatchedLaneIntentClear+=Number(earlierBaseline.complete)
+       a61.upstream3sClear+=Number(upstream3.complete)
+       a61.upstream5sClear+=Number(upstream5.complete)
+       a61.upstream3sRescues+=Number(!earlierBaseline.complete&&upstream3.complete)
+       a61.upstream5sRescues+=Number(!earlierBaseline.complete&&upstream5.complete)
+       a61.upstream3sRegressions+=Number(earlierBaseline.complete&&!upstream3.complete)
+       a61.upstream5sRegressions+=Number(earlierBaseline.complete&&!upstream5.complete)
+       a61.upstream3sEventPairs+=upstream3.upstreamEventPairs
+       a61.upstream5sEventPairs+=upstream5.upstreamEventPairs
+       a61.upstream3sBrakes+=upstream3.additionalHeadwayBrakingDecisions
+       a61.upstream5sBrakes+=upstream5.additionalHeadwayBrakingDecisions
+       a61.mirrorOutcomeMismatch+=Number(upstream5.status!==mirror5.status||
+        upstream5.steps!==mirror5.steps)
+       a61.renameOutcomeMismatch+=Number(upstream5.status!==rename5.status||
+        upstream5.steps!==rename5.steps)
+       const firstPair=(x,mapper)=>JSON.stringify(x.firstBlocker?.pair?.map(mapper).sort()??[])
+       a61.mirrorFirstPairMismatch+=Number(firstPair(upstream5,x=>x)!==firstPair(mirror5,x=>x))
+       a61.renameFirstPairMismatch+=Number(firstPair(upstream5,x=>relabeled.map.get(x))!==
+        firstPair(rename5,x=>x))
+       a61.jsonReplayMismatch+=Number(JSON.stringify(upstream5)!==JSON.stringify(serialized5))
+       a61.firstContactBeforeOriginalWarning+=Number(Boolean(upstream5.firstBlocker&&
+        upstream5.firstBlocker.whenSeconds<alert-q-1e-7))
+       const bq=a61.byQuantum[String(q)]
+       assert(bq,'A61 missing bounded quantum group')
+       bq.scenarios++;bq.baseClear+=Number(earlierBaseline.complete)
+       bq.upstream3Clear+=Number(upstream3.complete)
+       bq.upstream5Clear+=Number(upstream5.complete)
        s.fullFieldAttempts++;s.fullFieldSuccess+=Number(probe.complete)
        s.fullFieldCriticalReached+=Number(probe.criticalEventReached)
        s.fullFieldCollisionBlocked+=Number(probe.status==='REJECTED_COLLISION')
@@ -364,7 +436,12 @@ for(const geometry of BATCH40_GEOMETRIES){
         a60:{legacyFixed:legacyFixed.status,laneIntent:laneFixed.status,
          laneIntentWarnings:laneFixed.intentWarningPairs,
          laneIntentBrakes:laneFixed.additionalHeadwayBrakingDecisions,
-         originalFirstContact:contactLegacy,laneIntentFirstContact:contactLane}})
+         originalFirstContact:contactLegacy,laneIntentFirstContact:contactLane},
+        a61:{leadFramesUsed:leadFrames,actualEarlyStartSeconds:upstream5.startSeconds,
+         leadBeforeWarningSeconds:lead,priorFramesIn5Seconds:prior.length,
+         matchedEarlierBaseline:earlierBaseline.status,upstream3s:upstream3.status,
+         upstream5s:upstream5.status,
+         upstream5sFirstBlocker:upstream5.firstBlocker}})
       }
      }
     }
@@ -382,6 +459,12 @@ assert.equal(cases.length,67)
 assert.equal(mirrors,67);assert.equal(renames,67)
 assert.equal(historical.length,4)
 assert.equal(a60.scenarios,67,'A60 missing full-field comparisons')
+assert.equal(a61.scenarios,67,'A61 missing autonomous upstream comparisons')
+assert.equal(a61.mirrorOutcomeMismatch,0,'A61 failed mirror outcomes')
+assert.equal(a61.renameOutcomeMismatch,0,'A61 failed rider-ID outcomes')
+assert.equal(a61.mirrorFirstPairMismatch,0,'A61 failed mirror contact identities')
+assert.equal(a61.renameFirstPairMismatch,0,'A61 failed renamed contact identities')
+assert.equal(a61.jsonReplayMismatch,0,'A61 failed exact serialized replay')
 assert.equal(a60.mirrorOutcomeMismatches,0,'A60 failed reflected 10s outcomes')
 assert.equal(a60.renameOutcomeMismatches,0,'A60 failed ID-invariant 10s outcomes')
 assert.equal(a60.mirrorFirstPairMismatches,0,'A60 failed reflected contact-pair identities')
@@ -398,7 +481,7 @@ assert.equal(byQuantum.reduce((a,x)=>a+x.rightSteerRescues,0),15)
 const study={study:'A2_STEP59_FULL_MIRROR_RELABEL_AND_ALL_FIELD_STRESS',
  technicalGate:'PASS',sportingGate:'NO_GO',physicalRuns:physicsRuns,
  sameCheckpointScenarios:67,mirrorReplays:mirrors,relabelReplays:renames,
- originalA58Options:383,byQuantum,step60:a60,
+ originalA58Options:383,byQuantum,step60:a60,step61:a61,
  positiveThreeRiderFullField:{
   complete10s:true,exactJSON:true,mirror:true,rename:true,
   deliberatelyOverlappingInitialStateRejected:true},
@@ -411,5 +494,6 @@ writeFileSync(dir+'/a2-step59-symmetry-and-all-field.json',JSON.stringify(study,
 console.log(JSON.stringify({study:study.study,technicalGate:study.technicalGate,
  sportingGate:study.sportingGate,physicalRuns:study.physicalRuns,
  mirrorReplays:mirrors,relabelReplays:renames,
- byQuantum,step60:study.step60,positiveThreeRiderFullField:study.positiveThreeRiderFullField,
+ byQuantum,step60:study.step60,step61:study.step61,
+ positiveThreeRiderFullField:study.positiveThreeRiderFullField,
  officialWrites:0,sportingApproval:'NOT_APPROVED'}))
