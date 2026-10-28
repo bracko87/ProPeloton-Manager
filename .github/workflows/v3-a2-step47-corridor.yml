@@ -1,0 +1,53 @@
+name: V3 A2 Step47 selective corridor concession research
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2CollisionPriorityResearchV3.mjs'
+      - 'scripts/v3/a2SubstepPhysicalResearchV3.mjs'
+      - 'scripts/v3/verify-a2-step47-selective-corridor-v3.mjs'
+      - '.github/workflows/v3-a2-step47-corridor.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  selective-corridor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: A47 1216 physical and metamorphic checks including individual regressions
+        env:
+          V3_A2_STEP47_DIR: ${{ runner.temp }}/step47
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step47-selective-corridor-v3.mjs
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step47-individual-sporting-evidence
+          path: ${{ runner.temp }}/step47/*.json
+          retention-days: 30
+          if-no-files-found: warn
+  historic-regressions-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve A46 through A39 and full-stage technical regressions
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step46-corridor-guard-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step45-fallback-fixtures-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step44-priority-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step43-trapezoid-trial-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step42-fixed-quantum-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step41-canonical-mirror-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step40-normalized-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step39-fairness-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Validate production build
+        run: npm ci --no-audit --no-fund && npm run build
