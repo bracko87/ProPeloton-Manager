@@ -21,7 +21,7 @@ const energetic=()=>initializeEnergyBalanceResearchV3({criticalWatts:305,wPrimeJ
 export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false,
  controllerPolicy='legacy',headwayStandOffM=4.5}={}){
  assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode)&&
- ['legacy','coordinated_headway'].includes(controllerPolicy)&&
+ ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
  [3.2,3.8,4.5].includes(headwayStandOffM),'A65 unknown normal-start scenario or policy')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -52,7 +52,7 @@ function checkSnapshot(p){
  assert(p?.dt===DT&&p?.road?.id===road.id&&Number.isInteger(p.acceptedSteps)&&
   p.states?.length>=2&&p.states?.length<=168,'A64 invalid checkpoint')
  assert(Math.abs(p.at-p.acceptedSteps*DT)<1e-6,'A64 time discontinuity')
- assert(['legacy','coordinated_headway'].includes(p.controllerPolicy??'legacy')&&
+ assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5),
   'A65 invalid controller policy')
  const ids=new Set()
@@ -66,12 +66,21 @@ function checkSnapshot(p){
 /** Purely current-state neighbor corridor check before beginning a pass.
  * Does not guess future accepted positions or use rider order/identity.
  */
-function chooseLane(s,states){
+function chooseLane(s,states,{intentMode='actual'}={}){
+ // A66 candidate: continue to seek passing corridors after physically
+ // bounded following has already reduced the rider's current velocity.
+ // Speed desire is present-time rider intent, not a future accepted path.
+ assert(['actual','demand','either'].includes(intentMode),'A66 invalid lane intent')
  if(Math.abs(s.targetY-s.y)>1e-5)return s.targetY
  const sameLane=states.filter(t=>t!==s&&t.x>s.x&&
   Math.abs(t.y-s.y)<road.lateralCollisionM)
  const ahead=sameLane.sort((a,b)=>a.x-b.x)[0]
- if(!ahead||ahead.x-s.x>26||s.v<=ahead.v+.20)return s.targetY
+ const currentDemand=s.v>ahead?.v+.20
+ const sustainedDemand=s.desired>ahead?.desired+.20
+ const wishesPass=intentMode==='actual'?currentDemand:
+  intentMode==='demand'?sustainedDemand:
+  (currentDemand||sustainedDemand)
+ if(!ahead||ahead.x-s.x>26||!wishesPass)return s.targetY
  const candidates=[s.y-road.centerStepM,s.y+road.centerStepM]
  .filter(y=>y>=-1e-6&&y<=height+1e-6)
  .map(y=>({y,margin:Math.min(...states.filter(t=>t!==s&&
@@ -94,7 +103,9 @@ export function advanceNormalStartV3(snapshot){
  assert(p.reason===null,'A64 cannot restart rejected field')
  const byId=new Map(p.states.map(s=>[s.id,s]))
  const plans=p.states.map(s=>{
-  const target=chooseLane(s,p.states)
+  const intentMode=p.controllerPolicy==='coordinated_demand'?'demand':
+   p.controllerPolicy==='coordinated_either'?'either':'actual'
+  const target=chooseLane(s,p.states,{intentMode})
   const y1=round(s.y+clip(target-s.y,-L*DT,L*DT))
   const accel=clip((s.desired-s.v)/DT,-B,A)
   return {id:s.id,accel,y1,target,oldTarget:s.targetY}
@@ -103,7 +114,7 @@ export function advanceNormalStartV3(snapshot){
  // using only the CURRENT state and this step's lateral intentions. Process
  // from ahead to rear, so a follower knows the leader's already-limited
  // acceleration. No hard-coded rider IDs, future accepted paths or repair.
- const coordinated=p.controllerPolicy==='coordinated_headway'
+ const coordinated=['coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy)
  const commanded=new Map(plans.map(a=>[a.id,a.accel]))
  let negotiatedHeadway=0,headwayLimited=0
  if(coordinated){
