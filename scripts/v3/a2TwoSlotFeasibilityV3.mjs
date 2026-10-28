@@ -50,7 +50,8 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
   headwayM>=2.05&&headwayM<=5&&
   crossingSpeedMps>=1&&crossingSpeedMps<=20&&
   slotSpacingSeconds>=headwayM/minSpeedMps&&
-  ['uniform','front_loaded','balanced'].includes(slotSpacingProfile)&&
+  ['uniform','front_loaded','balanced','late_pressure',
+   'mid_pressure','late_peak','late_moderate'].includes(slotSpacingProfile)&&
   minSpeedMps>=1&&minSpeedMps<=10&&
   deadlineSeconds>0&&deadlineSeconds<=3600,
   'A73 invalid narrow-road entry-window parameters')
@@ -80,10 +81,23 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
   // larger physically reachable time slot, while the back retains
   // at least 0.5s full-bike clearance. Physical starting-row order
   // determines allocation, not rider IDs or future accepted paths.
+  // A75: redistribute the SAME total time budget from distant front
+  // reservations into the threatened middle/late rows, preserving >=.5s.
+  // These are positional hypotheses; every final reservation must still
+  // be feasible under the exact current rider's acceleration bounds.
+  const ratio=rowIndex/rows.length
   const rowGap=slotSpacingProfile==='front_loaded'?
    (rowIndex<Math.ceil(rows.length*.75)?.64:.5):
    slotSpacingProfile==='balanced'?
    (rowIndex<Math.ceil(rows.length*2/3)?.63:.54):
+   slotSpacingProfile==='late_pressure'?
+   (ratio<.625?.58:ratio<.893?.70:.5):
+   slotSpacingProfile==='mid_pressure'?
+   (ratio<.50?.57:ratio<.893?.67:.52):
+   slotSpacingProfile==='late_peak'?
+   (ratio<.571?.57:ratio<.893?.70:.5):
+   slotSpacingProfile==='late_moderate'?
+   (ratio<.643?.60:ratio<.893?.66:.5):
    slotSpacingSeconds
   if(blocked){
    unresolved.push({startX:row[0].startX,reason:'BLOCKED_BY_EARLIER_ROW'})
