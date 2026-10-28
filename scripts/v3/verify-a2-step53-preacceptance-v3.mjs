@@ -143,7 +143,7 @@ const grids=new Map([.5,2,2.5].map(q=>[q,{quantum:q,fixtures:0,different:0,
  unionTrials:0,safeUnions:0,blockedUnions:0,
  crossBoundaryBlockedPairs:0,internalBlockedPairs:0,
  firstRoundNewConflicts:0,maxAverageSpeedDifferenceMps:0}]))
-function policies(preview,g){
+function resolvePairPolicies(preview,g){
  const raw=preview.proposals.map(x=>({riderId:x.riderId,
   original:{meters:x.x0,y:x.y0,speedMps:x.oldSpeedMps},
   forward:x.proposedMeters,y:x.proposedY}))
@@ -153,7 +153,7 @@ function policies(preview,g){
  }
 }
 function inspect(preview,g,q,selected,mirrorAndRename){
- const two=policies(preview,g),before=JSON.stringify(two)
+ const two=resolvePairPolicies(preview,g),before=JSON.stringify(two)
  const outcome=auditPreacceptanceDependencyV3(two.rear,two.contact,selected,g,
   {physicalSeconds:q})
  const oracle=auditFullHybridOracleV3(two.rear,two.contact,selected,g)
