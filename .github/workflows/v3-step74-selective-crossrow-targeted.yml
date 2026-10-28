@@ -6,6 +6,7 @@ on:
       - 'scripts/v3/a2CrossRowFollowingV3.mjs'
       - 'scripts/v3/a2NormalStartPelotonV3.mjs'
       - 'scripts/v3/verify-a2-step74-selective-crossrow-v3.mjs'
+      - 'scripts/v3/verify-a2-step74-strong-passing-v3.mjs'
       - '.github/workflows/v3-step74-selective-crossrow-targeted.yml'
   workflow_dispatch:
 permissions:
@@ -23,6 +24,18 @@ jobs:
         env:
           V3_A2_STEP74_DIR: ${{ runner.temp }}/step74
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step74-selective-crossrow-v3.mjs
+      - name: Step74 strong-road independent 3-second passing observer and exact 32/106/168 JSON checkpoint recovery
+        env:
+          V3_A2_STEP74_PASS_DIR: ${{ runner.temp }}/step74pass
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step74-strong-passing-v3.mjs
+      - name: Preserve Step74 observed strong-road genuine pair-pass and replay evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step74-strong-road-sustained-passes
+          path: ${{ runner.temp }}/step74pass/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Save Step74 candidate safety and first-contact counterexamples
         if: always()
         uses: actions/upload-artifact@v4
