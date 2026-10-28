@@ -58,6 +58,26 @@ const advancePair=(current,dt=.5)=>{
   nr=advanceSustainedOvertakeObserverV3(nr,ns,next,.5);ns=next
  }
  assert.equal(nr.confirmedCount,1,'A67 rider ID influenced safety pass')
+ // Adversarial but physically bounded relative acceleration: start/end
+ // follower lead is 2.08m, but at t=.25s the real minimum is only
+ // 2.039375m. Sample-only monitoring would falsely confirm a 3s hold.
+ const midway=startSustainedOvertakeObserverV3(simple())
+ midway.pairs[0].phase='established'
+ midway.pairs[0].establishedSeconds=4
+ midway.pairs[0].holdSeconds=2.5
+ const before=[
+  {id:'rear',x:2.08,y:1.1,v:9},
+  {id:'lead',x:0,y:0,v:9.325}]
+ const after=[
+  {id:'rear',x:6.63625,y:1.1,v:9.225},
+  {id:'lead',x:4.55625,y:0,v:8.9}]
+ const strict=advanceSustainedOvertakeObserverV3(midway,before,after,.5)
+ assert.equal(strict.confirmedCount,0,
+  'A67 wrongly certified a rider whose intra-step clearance dipped')
+ assert.equal(strict.pairs[0].holdSeconds,0,
+  'A67 failed to reset uninterrupted clearance timer')
+ assert.equal(midway.pairs[0].holdSeconds,2.5,
+  'A67 observational update mutated prior checkpoint')
 }
 const cases=[]
 function run(n,mode,seconds,{mirror=false,renamed=false}={}){
