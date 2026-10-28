@@ -44,6 +44,8 @@ assert.equal(metrics.nearStops,0,
 assert(metrics.laneChanges>=300,
  'A77 32r realistic bounded lane changes suppressed')
 assert.equal(passes.durationSeconds,180)
+assert(passes.confirmedSustainedPasses>=80,
+ 'A77 32r staged body-valid start lost >=80 genuine sustained passes')
 const half=simulateCoupled(initial,90)
 const restored=simulateCoupled(initial,90,{
  physical:JSON.parse(JSON.stringify(half.physical)),
