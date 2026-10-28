@@ -81,6 +81,8 @@ function run(n,mode,seconds,{mirror=false,renamed=false}={}){
 // 106/168 grid simply prevents physical lateral access.
 const control=run(32,'corridor',90)
 assert.equal(control.scalar.status,'FULL_HORIZON_CLEAR','A67 damaged 32-rider corridor')
+assert(control.overtake.confirmedSustainedPasses>0,
+ 'A67 observer found no sustained physical pass in confirmed 32-rider corridor')
 assert(control.scalar.completedLaneChanges>=22,
  'A67 damaged Step66 32-rider lane completion reference')
 const initial=control.start
@@ -122,6 +124,13 @@ for(const n of [106,168]){
  // Failure is retained as a result; never mark sporting approval from a
  // no-contact snapshot, synthetic stage grid, or pair-order inversion alone.
  const longer=run(n,'corridor',60)
+ assert.equal(longer.scalar.status,'FULL_HORIZON_CLEAR',
+  'A67 60s interactive 106/168 peloton swept collision regression')
+ assert.equal(longer.scalar.nearStopRiderTicks,0,
+  'A67 60s peloton near-halted')
+ assert(longer.scalar.completedLaneChanges>0&&
+  longer.overtake.confirmedSustainedPasses>0,
+  'A67 60s peloton did not complete physical lane passes')
  if(longer.scalar.status==='FULL_HORIZON_CLEAR'){
   const halfway=replay(longer.start,30)
   const restored=replay(longer.start,30,{
