@@ -19,7 +19,7 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
  const g=validateRoadScenarioV3(geometry)
  check(Array.isArray(riders)&&riders.length>=2&&riders.length<=32,'Invalid A34 roster count')
  check([2,4,5,10,20].includes(substeps)&&tickSeconds===10&&tickSeconds/substeps<=10,'Invalid A34 research step')
- check(['symmetric_halving','symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_lane_priority','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(conflictPolicy)&&typeof diagnosticTrace==='boolean','Invalid A38 trace option')
+ check(['symmetric_halving','symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_rear_corridor_strict','trapezoid_rear_corridor_leader','trapezoid_lane_priority','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(conflictPolicy)&&typeof diagnosticTrace==='boolean','Invalid A38 trace option')
  check(road&&Number.isFinite(road.gradePercent)&&Math.abs(road.gradePercent)<=15,'Invalid A34 road grade')
  const ids=new Set(),maxY=(g.laneCount-1)*g.centerStepM
  const ready=riders.map(r=>{
@@ -53,7 +53,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
  check(checkpoint?.version===1&&checkpoint.gate==='A34_OFFLINE_SUBSTEP_ONLY'&&
   checkpoint.officialWrites===0&&checkpoint.sportingApproval==='NOT_APPROVED'&&
   Number.isInteger(checkpoint.tick)&&checkpoint.tick>=0&&
-  ['symmetric_halving','symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_lane_priority','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(checkpoint.conflictPolicy),'Invalid A34 replay checkpoint')
+  ['symmetric_halving','symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_rear_corridor_strict','trapezoid_rear_corridor_leader','trapezoid_lane_priority','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(checkpoint.conflictPolicy),'Invalid A34 replay checkpoint')
  const state=structuredClone(checkpoint),g=validateRoadScenarioV3(state.geometry)
  check(Array.isArray(intents)&&intents.length===state.riders.length,'Missing A34 rider commands')
  const command=new Map(intents.map(c=>[c?.riderId,c]))
@@ -78,7 +78,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    const power=v=>roadWattsRequiredV3(v,83,.36,state.road)+(turning?(c.steeringWatts??35):0)
    const permitted=boundRequestedSpeedByEnergyV3(r.energy,seconds,desire,power)
    const speed=Math.max(0,Math.floor(Math.max(0,permitted-1e-7)*1e6)/1e6)
-   const trapezoid=['symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_lane_priority'].includes(state.conflictPolicy)
+   const trapezoid=['symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_rear_corridor_strict','trapezoid_rear_corridor_leader','trapezoid_lane_priority'].includes(state.conflictPolicy)
    // A43 opt-in: integrate the start/end velocity linearly across the physical
    // substep instead of applying the terminal velocity for its full duration.
    // Keep terminal speed separate from achieved average travel speed.
@@ -115,6 +115,10 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    resolveContactPriorityV3(proposals,g,{policy:'rear_priority',diagnostics:state.diagnosticTrace===true}):
    state.conflictPolicy==='trapezoid_rear_corridor_guard'?
    resolveContactPriorityV3(proposals,g,{policy:'rear_corridor_guard',diagnostics:state.diagnosticTrace===true}):
+   state.conflictPolicy==='trapezoid_rear_corridor_strict'?
+   resolveContactPriorityV3(proposals,g,{policy:'rear_corridor_strict',diagnostics:state.diagnosticTrace===true}):
+   state.conflictPolicy==='trapezoid_rear_corridor_leader'?
+   resolveContactPriorityV3(proposals,g,{policy:'rear_corridor_leader',diagnostics:state.diagnosticTrace===true}):
    state.conflictPolicy==='trapezoid_lane_priority'?
    resolveContactPriorityV3(proposals,g,{policy:'lane_entry_priority',diagnostics:state.diagnosticTrace===true}):null
   const scales=event?.scales??priority?.scales??new Map(proposals.map(p=>[p.riderId,1]))
@@ -188,7 +192,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    state.metrics.riderSubsteps++
    state.metrics.attenuatedRiderSubsteps+=Number(scales.get(old.riderId)<1)
    tracks.get(old.riderId).push({t:step/state.substeps,x:p.x1,y:p.y1})
-   const clearMotion=['symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_lane_priority'].includes(state.conflictPolicy)&&
+   const clearMotion=['symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_rear_corridor_strict','trapezoid_rear_corridor_leader','trapezoid_lane_priority'].includes(state.conflictPolicy)&&
     scales.get(old.riderId)>=1-1e-10
    const endSpeed=clearMotion?proposalById.get(old.riderId).terminalSpeedMps:achievedSpeed
    return {...old,meters:p.x1,y:p.y1,speedMps:r6(endSpeed),energy}

@@ -10,7 +10,7 @@ const motion=(p,scale)=>({riderId:p.riderId,x0:p.original.meters,
  y1:r6(p.original.y+(p.y-p.original.y)*scale)})
 export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',maxRounds=64,diagnostics=false}={}){
  ensure(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&
-  ['rear_priority','rear_corridor_guard','lane_entry_priority'].includes(policy)&&
+  ['rear_priority','rear_corridor_guard','rear_corridor_strict','rear_corridor_leader','lane_entry_priority'].includes(policy)&&
   Number.isInteger(maxRounds)&&maxRounds===64&&typeof diagnostics==='boolean'&&
   Number.isFinite(g?.lateralCollisionM),'Invalid A44 research contact inputs')
  const riders=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
@@ -45,17 +45,24 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
     reduce.add(steerA?a.riderId:b.riderId)
     enteringYields++
    }else if(Math.abs(gap)>=1e-7&&
-       (!steerA&&!steerB||policy==='rear_priority'||policy==='rear_corridor_guard')){
+       (!steerA&&!steerB||policy==='rear_priority'||policy.startsWith('rear_corridor_')||policy==='rear_corridor_guard')){
     const follower=gap<0?a:b,leader=gap<0?b:a
-    if(policy==='rear_corridor_guard'){
+    if(['rear_corridor_guard','rear_corridor_strict','rear_corridor_leader'].includes(policy)){
      // A46: when stopping the follower does not clear the physical
      // leader's current swept trajectory, one-sided yielding cannot work.
      // Reduce both paths in bounded rounds; original swept fallback remains.
      const leaderPath=paths[gap<0?j:i]
      const stalled=continuousBicycleCollisionV3(motion(follower,0),leaderPath,limits)
      const minuscule=scales.get(follower.riderId)<1/65536
-     if(stalled||minuscule){
-      reduce.add(follower.riderId);reduce.add(leader.riderId)
+     const apply=stalled||(policy==='rear_corridor_guard'&&minuscule)
+     if(apply){
+      // A47: isolate geometry-verified front concessions from the old
+      // tiny-scale shortcut. 'leader' yields leader only when a fully
+      // stationary follower would still be hit by its current swept path.
+      // Both versions use unmodified continuous swept safety and bounded
+      // symmetric fallback; neither guesses future opponent motion.
+      if(policy!=='rear_corridor_leader')reduce.add(follower.riderId)
+      reduce.add(leader.riderId)
       corridorGuardYields++
       if(minuscule)stalledGuardYields++
      }else{reduce.add(follower.riderId);rearYields++}
