@@ -21,7 +21,7 @@ export function createMultiGatePhysicalCandidateV3(n,{
  mode='five_dense',roadGeometry='double_pinch',mirror=false,renamed=false,
  controllerPolicy='coordinated_demand',headwayStandOffM=3.2,
  pacePolicy='timed_safe_corridor',rollingStartSpeedMps=null,
- coreMergePolicy='preview_only'
+ coreMergePolicy='preview_only',startRowSpacingM=5.2
 }={}){
  assert([8,32,106,168].includes(n)&&
   ['five_dense','corridor'].includes(mode)&&
@@ -30,6 +30,7 @@ export function createMultiGatePhysicalCandidateV3(n,{
   [3.2,3.8,4.5].includes(headwayStandOffM)&&
   ['timed_safe_corridor','timed_slot_only','timed_speed_only'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
+  [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
    Number.isFinite(rollingStartSpeedMps)&&rollingStartSpeedMps>=5&&
    rollingStartSpeedMps<=12),
@@ -39,6 +40,13 @@ export function createMultiGatePhysicalCandidateV3(n,{
  const physical=createNormalStartV3(n,{mode,roadGeometry,mirror,renamed,
   controllerPolicy,headwayStandOffM,bodyHalfWidthM:.3,
   roadMergePolicy:coreMergePolicy})
+ // Physical grid-spacing research fixture, fixed before t=0 only.
+ // Do not modify accepted positions, speeds or historic A64 grids.
+ if(startRowSpacingM!==5.2)for(const s of physical.states){
+  const columns=mode==='five_dense'?5:3
+  s.startX=+(600-Math.floor(s.startOrder/columns)*startRowSpacingM).toFixed(6)
+  s.x=s.startX
+ }
  // Optional neutral rolling-start fixture: ALL riders are initialized
  // at the same physically valid speed before the first accepted tick.
  // This is not a post-start speed change, position repair or free braking.
@@ -46,7 +54,7 @@ export function createMultiGatePhysicalCandidateV3(n,{
   for(const s of physical.states)s.v=rollingStartSpeedMps
  const admission=auditMultiGateAdmissionV3(physical.states,roadGeometry)
  return {version:1,researchOnly:true,pacePolicy,coreMergePolicy,
-  rollingStartSpeedMps,
+  rollingStartSpeedMps,startRowSpacingM,
   physical,admission,
   originalDesired:Object.fromEntries(physical.states.map(s=>[s.id,s.desired])),
   commandedRiderTicks:0,lateralRequestTicks:0,headwayWarningTicks:0,
