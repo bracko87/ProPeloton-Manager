@@ -1,4 +1,4 @@
-name: V3 A2 Step59-63 bounded-field and early-checkpoint validation
+name: V3 A2 Step59-64 bounded-field and normal-start research
 on:
   push:
     branches: [main]
@@ -6,6 +6,8 @@ on:
       - 'scripts/v3/a2MirrorAndFullFieldProbeV3.mjs'
       - 'scripts/v3/a2FirstContactFeasibilityV3.mjs'
       - 'scripts/v3/a2UpstreamPredictionV3.mjs'
+      - 'scripts/v3/a2NormalStartPelotonV3.mjs'
+      - 'scripts/v3/verify-a2-step64-normal-start-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -30,6 +32,18 @@ jobs:
         env:
           V3_A2_STEP59_DIR: ${{ runner.temp }}/step59
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs
+      - name: Step64 normal-start sustained 8, 32, 106 and 168-rider pilot, fixed-quantum and recovery controls
+        env:
+          V3_A2_STEP64_DIR: ${{ runner.temp }}/step64
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step64-normal-start-v3.mjs
+      - name: Retain Step64 normal-start physical and sporting diagnostic evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step64-normal-start-physical-field-pilot
+          path: ${{ runner.temp }}/step64/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain blocked, successful, energy and replayed coupled response cases
         if: always()
         uses: actions/upload-artifact@v4
