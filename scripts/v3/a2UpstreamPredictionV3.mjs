@@ -68,7 +68,7 @@ export function precedingPhysicalCheckpointsV3(source,warningEnd,dt,{maxSeconds=
  const frames=source.flatMap(t=>t.previews.map(p=>({
   start:r6(p.tickStartSeconds+(p.substep-1)*dt),
   end:r6(p.tickStartSeconds+p.substep*dt),p
- })).sort((a,b)=>a.start-b.start)
+ }))).sort((a,b)=>a.start-b.start)
  const at=frames.findIndex(f=>Math.abs(f.end-warningEnd)<1e-6)
  check(at>=0,'A61 missing original alert checkpoint')
  return frames.slice(0,at).filter(f=>f.start>=frames[at].start-maxSeconds-1e-8)
