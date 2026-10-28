@@ -33,7 +33,8 @@ const base={mode:'corridor',controllerPolicy:'coordinated_demand',
 const policies=['platoon_gate_schedule','platoon_gate_pairwise',
  'platoon_gate_pairwise_gentle','platoon_gate_interval55',
  'platoon_gate_interval60','platoon_gate_interval65',
- 'platoon_gate_interval70']
+ 'platoon_gate_interval70','platoon_gate_frontload',
+ 'platoon_gate_balanced']
 const cases=[]
 for(const n of [32,106,168]){
  const seconds=n===32?120:90
