@@ -107,8 +107,45 @@ for(const variant of [{mirror:true},{renamed:true}]){
 for(const mode of ['mixed','pressure'])
  run(32,mode,90)
 for(const n of [106,168]){
- run(n,'mixed',30)
- run(n,'corridor',30)
+ const mixed=run(n,'mixed',30)
+ const corridor=run(n,'corridor',30)
+ assert.equal(corridor.scalar.status,'FULL_HORIZON_CLEAR',
+  'A67 normal-start interactive open corridor swept safety regressed')
+ assert(corridor.scalar.completedLaneChanges>0,
+  'A67 large peloton has open road but no physically completed lane changes')
+ assert(corridor.overtake.confirmedSustainedPasses>0,
+  'A67 no sustained position/clearance overtake in open corridor')
+ assert(corridor.overtake.confirmedSustainedPasses>
+  mixed.overtake.confirmedSustainedPasses,
+  'A67 available road corridors did not improve verified passing')
+ // 60s is a diagnostic increase over the previously validated 30s window.
+ // Failure is retained as a result; never mark sporting approval from a
+ // no-contact snapshot, synthetic stage grid, or pair-order inversion alone.
+ const longer=run(n,'corridor',60)
+ if(longer.scalar.status==='FULL_HORIZON_CLEAR'){
+  const halfway=replay(longer.start,30)
+  const restored=replay(longer.start,30,{
+   field:JSON.parse(JSON.stringify(halfway.field)),
+   observer:JSON.parse(JSON.stringify(halfway.observer))})
+  assert.deepEqual(restored.field,longer.field,'A67 large 30+30 physics recovery')
+  assert.deepEqual(restored.observer,longer.observer,'A67 large 30+30 pass audit recovery')
+ }
+ // Both large fields must also be fair under left/right reflection and
+ // bijectively renamed riders, measured on the nontrivial 30s corridor.
+ for(const variant of [{mirror:true},{renamed:true}]){
+  const t=run(n,'corridor',30,variant)
+  assert.equal(t.scalar.status,corridor.scalar.status)
+  assert.equal(t.overtake.confirmedSustainedPasses,
+   corridor.overtake.confirmedSustainedPasses,
+   'A67 large crossed-pair count depends on reflection/renaming')
+  assert.equal(t.overtake.attemptedCrossings,
+   corridor.overtake.attemptedCrossings)
+  for(let i=0;i<n;i++){
+   const a=corridor.field.states[i],b=t.field.states[i]
+   assert(close(a.x,b.x)&&close(a.y,variant.mirror?4.4-b.y:b.y),
+    'A67 large full-field geometry changes with reflection/ID')
+  }
+ }
 }
 const compact=cases.filter(c=>!c.mirror&&!c.renamed)
 const report={study:'A2_STEP67_SUSTAINED_OVERTAKES_AND_LARGE_CORRIDORS',
