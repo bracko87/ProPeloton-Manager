@@ -126,12 +126,26 @@ const waveStrong=trial.filter(x=>x.roadGeometry==='strong_pinch'&&
 assert(waveStrong.length===3,'A71 missing 3 size strong two-slot wave corpus')
 assert(waveStrong.every(x=>x.staggerRiderTicks>0),
  'A71 upstream stagger planner never constrained actual speed')
+const hazard=trial.filter(x=>x.policy==='platoon_two_slot_hazard_hold')
+assert(hazard.length===6,'A71 hazard candidate lacks one field-size/width case')
+assert(hazard.every(x=>x.nearStopRiderTicks===0),
+ 'A71 no-new-pass regulation physically stopped riders')
+assert(hazard.every(x=>{
+ const base=trial.find(y=>y.n===x.n&&y.roadGeometry===x.roadGeometry&&
+  y.policy==='platoon_lane_forecast')
+ return x.acceptedSeconds>=base.acceptedSeconds
+}),'A71 hazard policy cannot regress accepted physical duration')
+const strong32=hazard.find(x=>x.n===32&&x.roadGeometry==='strong_pinch')
+assert(strong32.acceptedSeconds>=20&&
+ strong32.completedLaneChanges>0&&
+ strong32.status==='ROAD_ENVELOPE_VIOLATION',
+ 'A71 32 strong remains rejected at road margin; never mark it complete')
 const report={study:'A2_STEP71_TWO_SLOT_LONGITUDINAL_STAGGER',
  technicalGate:'PASS',sportingGate:'NO_GO',
  totalCases:trial.length,
- candidateClear:trial.filter(x=>x.policy==='platoon_two_slot_stagger'&&
+ candidateClear:trial.filter(x=>x.policy!=='platoon_lane_forecast'&&
  x.status==='FULL_HORIZON_CLEAR').length,
- candidateRegressions:trial.filter(x=>x.policy==='platoon_two_slot_stagger').filter(x=>{
+ candidateRegressions:trial.filter(x=>x.policy!=='platoon_lane_forecast').filter(x=>{
  const b=trial.find(y=>y.n===x.n&&y.roadGeometry===x.roadGeometry&&
   y.policy==='platoon_lane_forecast')
  return x.acceptedSeconds<b.acceptedSeconds
@@ -139,7 +153,7 @@ const report={study:'A2_STEP71_TWO_SLOT_LONGITUDINAL_STAGGER',
  threeAbreastAtNarrowestRejected:true,
  bodyHalfWidthM:.3,sourceGeometry:'SYNTHETIC_UNCALIBRATED',
  noOfficialWrites:true,mirrorAndRenameParity:true,
- knownRejectedVariant,
+ knownRejectedVariant,knownBlockedStrong32:strong32,
  exactRecoveryIfComplete:true,trial,officialWrites:0,
  sportingApproval:'NOT_APPROVED'}
 const dir=process.env.V3_A2_STEP71_DIR??'/tmp/a2-step71'
