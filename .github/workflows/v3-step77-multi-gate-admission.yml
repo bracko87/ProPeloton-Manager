@@ -1,0 +1,65 @@
+name: V3 A77 multi-gate research feasibility and protected A76 physics
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2MultiGateAdmissionV3.mjs'
+      - 'scripts/v3/verify-a2-step77-multi-gate-feasibility-v3.mjs'
+      - 'scripts/v3/a2NormalStartPelotonV3.mjs'
+      - 'scripts/v3/a2VariableRoadWidthV3.mjs'
+      - 'scripts/v3/a2TwoSlotFeasibilityV3.mjs'
+      - 'scripts/v3/verify-a2-step76-double-passing-v3.mjs'
+      - '.github/workflows/v3-step77-multi-gate-admission.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  multi-gate-necessary-window-screen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify Step77 multi-gate 32 106 168 and mirror ID parity with negative controls
+        env:
+          V3_A2_STEP77_DIR: ${{ runner.temp }}/step77
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step77-multi-gate-feasibility-v3.mjs
+      - name: Protect existing A76 180s two-narrowing physical passes and checkpoint recovery
+        env:
+          V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/step76pass
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
+      - name: Protect A76 fail-closed five-abreast and staged road baseline
+        env:
+          V3_A2_STEP76_DIR: ${{ runner.temp }}/step76
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-route-diversity-v3.mjs
+      - name: Preserve Step77 feasibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step77-multi-gate-necessary-not-sufficient
+          path: ${{ runner.temp }}/step77/*.json
+          if-no-files-found: error
+          retention-days: 30
+      - name: Preserve Step76 independent 3s overtake and safety regression
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step77-protected-step76-physics
+          path: |
+            ${{ runner.temp }}/step76pass/*.json
+            ${{ runner.temp }}/step76/*.json
+          if-no-files-found: warn
+          retention-days: 30
+  react-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
