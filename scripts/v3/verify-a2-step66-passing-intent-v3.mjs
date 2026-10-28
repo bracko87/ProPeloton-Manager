@@ -73,6 +73,49 @@ for(const mode of modeNames){
 const corridorBase=scenarios.find(s=>s.mode==='corridor'&&s.policy==='coordinated_headway')
 const corridorCandidates=scenarios.filter(s=>s.mode==='corridor'&&s.policy!=='coordinated_headway')
 assert.equal(corridorBase.completedLaneChanges,13,'A66 reference corridor was altered')
+// The demand-only candidate is promoted only within the OFFLINE research
+// screen, not the game's official selected racing policy.
+const demand90=scenarios.filter(x=>x.policy==='coordinated_demand')
+const demand180=endurance.filter(x=>x.policy==='coordinated_demand')
+assert(demand90.length===3&&demand180.length===3,
+ 'A66 demand-only full matched corpus missing')
+assert([...demand90,...demand180].every(x=>x.status==='FULL_HORIZON_CLEAR'&&
+ x.nearStopRiderTicks===0),'A66 demand-only collision or near-stop regression')
+assert(demand90.find(x=>x.mode==='corridor').completedLaneChanges>=22,
+ 'A66 must restore the original 22 completed open corridor movements')
+assert(demand90.find(x=>x.mode==='pressure').completedLaneChanges>=25,
+ 'A66 aggressive start passing regression')
+assert(demand180.find(x=>x.mode==='mixed').completedLaneChanges>=8,
+ 'A66 mixed field sustained lane completion regression')
+assert(demand180.find(x=>x.mode==='pressure').completedLaneChanges>=63,
+ 'A66 aggressive field sustained lane completion regression')
+assert(demand180.find(x=>x.mode==='corridor').completedLaneChanges>=30,
+ 'A66 corridor sustained lane completion regression')
+// Extend the global demand-only policy without retrospective selected
+// collision points. Longer outcomes are diagnostic, not guaranteed release.
+const longer32=[]
+for(const mode of modeNames){
+ const start=createNormalStartV3(32,{mode,controllerPolicy:'coordinated_demand',headwayStandOffM:3.2})
+ const end=runNormalStartV3(start,{seconds:240})
+ const m=finishNormalStartMetricsV3(start,end)
+ assert(m.seconds<=240&&end.states.every(x=>x.energy.remainingWPrimeJoules>=0))
+ if(!end.reason){
+  const mid=runNormalStartV3(start,{seconds:120})
+  assert.deepEqual(runNormalStartV3(JSON.parse(JSON.stringify(mid)),{seconds:120}),end)
+ }
+ longer32.push({mode,target:240,...m})
+}
+// First nontrivial 30s 106/168 rider normal starts using the same source-free
+// current-state policy. Must retain any failure, never fake complete races.
+const largeScreens=[]
+for(const n of [106,168]){
+ const start=createNormalStartV3(n,{mode:'mixed',
+  controllerPolicy:'coordinated_demand',headwayStandOffM:3.2})
+ const end=runNormalStartV3(start,{seconds:30})
+ const m=finishNormalStartMetricsV3(start,end)
+ assert(m.seconds<=30&&end.states.every(x=>x.energy.remainingWPrimeJoules>=0))
+ largeScreens.push({n,...m})
+}
 const study={
  study:'A2_STEP66_PERSISTENT_PASSING_INTENT',
  technicalGate:'PASS',sportingGate:'NO_GO',
@@ -89,7 +132,7 @@ const study={
    long.every(s=>s.status==='FULL_HORIZON_CLEAR'&&s.nearStopRiderTicks===0)&&
    short.find(s=>s.mode==='corridor').completedLaneChanges>=22
  }),
- allRiderPhysicalConstraintsChecked:true,
+ allRiderPhysicalConstraintsChecked:true,longer32,largeScreens,
  mirroredAndRenamed:true,exactSerializedReplayForClearRuns:true,
  officialWrites:0,scenarios,endurance,sportingApproval:'NOT_APPROVED'
 }
@@ -105,6 +148,12 @@ console.log(JSON.stringify({
  results90s:scenarios.map(s=>({mode:s.mode,policy:s.policy,status:s.status,
    seconds:s.seconds,lanes:s.completedLaneChanges,order:s.uniquePairOrderReversals,
    nearStops:s.nearStopRiderTicks,firstCollision:s.firstCollision})),
+ longer32:longer32.map(s=>({mode:s.mode,status:s.status,seconds:s.seconds,
+   lanes:s.completedLaneChanges,order:s.uniquePairOrderReversals,
+   nearStops:s.nearStopRiderTicks,firstCollision:s.firstCollision})),
+ largeScreens:largeScreens.map(s=>({n:s.n,status:s.status,seconds:s.seconds,
+   lanes:s.completedLaneChanges,order:s.uniquePairOrderReversals,
+   firstCollision:s.firstCollision})),
  results180s:endurance.map(s=>({mode:s.mode,policy:s.policy,status:s.status,
    seconds:s.seconds,lanes:s.completedLaneChanges,order:s.uniquePairOrderReversals,
    nearStops:s.nearStopRiderTicks,firstCollision:s.firstCollision})),
