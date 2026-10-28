@@ -26,10 +26,10 @@ The test separately proves that a synthetic, same-lane crossing is rejected by t
 | 32 | All 5 columns occupied, aggressive | 90s | **90s** | **25** | 135 | **131** | None |
 | 106 | All 5 columns occupied, mixed | 30s | **30s** | **0** | 106 | **55** | None |
 | 106 | Outer corridors available, mixed | 30s | **30s** | **47** | 159 | **126** | None |
-| 106 | Outer corridors available, mixed | 60s | **60s** | **51** | — | **363** | None |
+| 106 | Outer corridors available, mixed | 60s | **60s** | **51** | 406 | **363** | None |
 | 168 | All 5 columns occupied, mixed | 30s | **30s** | **0** | 165 | **81** | None |
 | 168 | Outer corridors available, mixed | 30s | **30s** | **74** | 255 | **201** | None |
-| 168 | Outer corridors available, mixed | 60s | **60s** | **78** | — | **591** | None |
+| 168 | Outer corridors available, mixed | 60s | **60s** | **78** | 660 | **591** | None |
 
 The all-five-column 106/168 fields still have **zero lane changes**, but they can have genuine signed longitudinal passes when riders already in *different* lanes travel alongside one another without colliding. This explains why ordinal inversion and lateral lane completion are distinct metrics.
 
