@@ -101,7 +101,7 @@ const rearCloser=classifyContactTimeRightOfWayV3(
 assert(rearCloser&&rearCloser.reason==='rear_closing_yields')
 assert.deepEqual(rearCloser.yielding,['rear'])
 const ambiguity=classifyContactTimeRightOfWayV3(
- mover('a',100,0,3,1),mover('b',102,1,3,0),road)
+ mover('a',100,0,3,1),mover('b',101.5,1,3,0),road)
 assert(ambiguity&&ambiguity.reason==='ambiguous_mutual')
 const fullY=(road.laneCount-1)*road.centerStepM
 const reflected=classifyContactTimeRightOfWayV3(
