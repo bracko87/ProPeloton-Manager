@@ -5,7 +5,8 @@
 import assert from 'node:assert/strict'
 import {mkdirSync,writeFileSync} from 'node:fs'
 import {phase3QueueWaveV3} from './a2Phase3QueueWaveV3.mjs'
-import {createMultiGatePhysicalCandidateV3,runMultiGatePhysicalCandidateV3,
+import {createMultiGatePhysicalCandidateV3,advanceMultiGatePhysicalCandidateV3,
+ runMultiGatePhysicalCandidateV3,
  multiGatePhysicalMetricsV3} from './a2MultiGatePhysicalCandidateV3.mjs'
 const r4=(x)=>Math.round(x*10000)/10000
 const unitStates=[
@@ -53,7 +54,8 @@ for(const n of [32,106,168]){
       Math.abs(s.energy.seconds-final.physical.at)<1e-6))
      if(final.reason){
       assert.equal(final.status,'REJECTED')
-      assert.throws(()=>runMultiGatePhysicalCandidateV3(final,{seconds:.5}))
+      assert.throws(()=>advanceMultiGatePhysicalCandidateV3(final))
+      assert.deepEqual(runMultiGatePhysicalCandidateV3(final,{seconds:.5}),final)
      }else{
       assert.equal(final.physical.at,180)
      }
