@@ -1,4 +1,4 @@
-name: V3 A2 Step59-74 strong-road 106-rider real passing and 168-capacity research
+name: V3 A2 Step59-75 full 168-rider strong-road physical passing and safe queue research
 on:
   push:
     branches: [main]
@@ -26,6 +26,8 @@ on:
       - 'scripts/v3/a2CrossRowFollowingV3.mjs'
       - 'scripts/v3/verify-a2-step74-selective-crossrow-v3.mjs'
       - 'scripts/v3/verify-a2-step74-strong-passing-v3.mjs'
+      - 'scripts/v3/verify-a2-step75-capacity-distribution-v3.mjs'
+      - 'scripts/v3/verify-a2-step75-168-passing-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -101,6 +103,23 @@ jobs:
         run: |
           node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step74-selective-crossrow-v3.mjs
           node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step74-strong-passing-v3.mjs
+      - name: 'Step75 strong 2.2m 168-rider full 120s clearance, real 3s passes and 60+60s replay'
+        env:
+          V3_A2_STEP75_DIR: ${{ runner.temp }}/step75
+          V3_A2_STEP75_PASS_DIR: ${{ runner.temp }}/step75pass
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step75-capacity-distribution-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step75-168-passing-v3.mjs
+      - name: Retain Step75 full 168-rider body-wide physical travel and observed 3s pair passes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step75-full-168-swept-passing-and-replay
+          path: |
+            ${{ runner.temp }}/step75/*.json
+            ${{ runner.temp }}/step75pass/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step74 spaced scheduling, strong-road physical classification and genuine overtake evidence
         if: always()
         uses: actions/upload-artifact@v4
