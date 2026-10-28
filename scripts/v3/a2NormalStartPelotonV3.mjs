@@ -32,7 +32,8 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
  'platoon_velocity_headway','platoon_capacity_hold',
- 'platoon_capacity_wave','platoon_two_slot_stagger'].includes(roadMergePolicy),
+ 'platoon_capacity_wave','platoon_two_slot_stagger',
+ 'platoon_two_slot_wave'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -77,7 +78,8 @@ function checkSnapshot(p){
   ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
   'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
   'platoon_velocity_headway','platoon_capacity_hold',
-  'platoon_capacity_wave','platoon_two_slot_stagger'].includes(p.roadMergePolicy??'preview_only'),
+  'platoon_capacity_wave','platoon_two_slot_stagger',
+  'platoon_two_slot_wave'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -136,10 +138,12 @@ export function advanceNormalStartV3(snapshot){
  // A71 opt-in stagger: a physically meaningful 2-slot pinch needs a
  // longitudinal offset for the centre rider before the flanks converge.
  // Planner reads only current x/y/v and fixed geographic road shape.
- const twoSlotMode=p.roadMergePolicy==='platoon_two_slot_stagger'&&
+ const twoSlotMode=['platoon_two_slot_stagger','platoon_two_slot_wave']
+  .includes(p.roadMergePolicy)&&
   (p.roadGeometry??'constant')!=='constant'
  const twoSlotDecisions=twoSlotMode?new Map(twoSlotStaggerPlanV3(
-  p.states,p.roadGeometry,{bodyHalfWidthM:p.bodyHalfWidthM??0})
+  p.states,p.roadGeometry,{bodyHalfWidthM:p.bodyHalfWidthM??0,
+   cohortWave:p.roadMergePolicy==='platoon_two_slot_wave'})
   .map(d=>[d.id,d])):new Map()
  const plans=p.states.map(s=>{
   const intentMode=p.controllerPolicy==='coordinated_demand'?'demand':
@@ -149,7 +153,7 @@ export function advanceNormalStartV3(snapshot){
   const laneForecast=['platoon_lane_forecast','platoon_lane_forecast_chain',
    'platoon_lane_forecast_buffer','platoon_velocity_headway',
    'platoon_capacity_hold','platoon_capacity_wave',
-   'platoon_two_slot_stagger'].includes(p.roadMergePolicy)
+   'platoon_two_slot_stagger','platoon_two_slot_wave'].includes(p.roadMergePolicy)
   if(laneForecast&&geometry!=='constant'){
    // A69: do not enter an overtaking lane known from current, static
    // road geometry to disappear within 20 seconds at current speed.
@@ -194,7 +198,8 @@ export function advanceNormalStartV3(snapshot){
  const chainMode=['platoon_soft_yield','platoon_chain','platoon_lane_forecast',
   'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
   'platoon_velocity_headway','platoon_capacity_hold',
-  'platoon_capacity_wave','platoon_two_slot_stagger'].includes(p.roadMergePolicy)
+  'platoon_capacity_wave','platoon_two_slot_stagger',
+  'platoon_two_slot_wave'].includes(p.roadMergePolicy)
  const mergeYield=(p.roadMergePolicy==='yield_reservation'||chainMode)&&
   (p.roadGeometry??'constant')!=='constant'
  const forcedYield=new Set()
