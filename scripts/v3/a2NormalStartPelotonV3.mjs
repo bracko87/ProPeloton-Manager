@@ -5,7 +5,8 @@
  */
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
 import {upstreamWarningsV3} from './a2UpstreamPredictionV3.mjs'
-import {constrainedLaneTargetV3,roadEnvelopeViolationV3} from './a2VariableRoadWidthV3.mjs'
+import {constrainedLaneTargetV3,roadEnvelopeViolationV3,
+ researchRoadEnvelopeV3} from './a2VariableRoadWidthV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
 import {initializeEnergyBalanceResearchV3,commitAchievedSpeedEnergyV3} from '../../src/race-engine-v3/energyBalanceResearchV3.ts'
 const assert=(x,m)=>{if(!x)throw Error(m)}
@@ -20,11 +21,13 @@ const energetic=()=>initializeEnergyBalanceResearchV3({criticalWatts:305,wPrimeJ
  * Tempered and mixed starts share exactly the same geometric initial grid.
  */
 export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false,
- controllerPolicy='legacy',headwayStandOffM=4.5,roadGeometry='constant'}={}){
+ controllerPolicy='legacy',headwayStandOffM=4.5,roadGeometry='constant',
+ roadMergePolicy='preview_only'}={}){
  assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode)&&
  ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
  [3.2,3.8,4.5].includes(headwayStandOffM)&&
- ['constant','mild_pinch','strong_pinch'].includes(roadGeometry),
+ ['constant','mild_pinch','strong_pinch'].includes(roadGeometry)&&
+ ['preview_only','buffered_headway'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -43,12 +46,13 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  }
  if(mirror)for(const s of starts){s.y=round(height-s.y);s.targetY=s.y}
  return {version:1,road:{...road},dt:DT,at:0,states:starts,
-  controllerPolicy,headwayStandOffM,roadGeometry,
+  controllerPolicy,headwayStandOffM,roadGeometry,roadMergePolicy,
   acceptedSteps:0,pairChecks:0,brakeEvents:0,steerEvents:0,
   initiatedLaneChanges:0,completedLaneChanges:0,
   nearStops:0,lowestSpeed:Infinity,maxSpeed:0,
   negotiatedHeadwayPairTicks:0,headwayLimitedRiderTicks:0,
-  roadBoundaryGuardTicks:0,firstRoadViolation:null,
+  roadBoundaryGuardTicks:0,roadMergeBufferedRiderTicks:0,
+  firstRoadViolation:null,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
 }
@@ -58,7 +62,8 @@ function checkSnapshot(p){
  assert(Math.abs(p.at-p.acceptedSteps*DT)<1e-6,'A64 time discontinuity')
  assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
-  ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant'),
+  ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant')&&
+  ['preview_only','buffered_headway'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -125,7 +130,7 @@ export function advanceNormalStartV3(snapshot){
  // acceleration. No hard-coded rider IDs, future accepted paths or repair.
  const coordinated=['coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy)
  const commanded=new Map(plans.map(a=>[a.id,a.accel]))
- let negotiatedHeadway=0,headwayLimited=0
+ let negotiatedHeadway=0,headwayLimited=0,bufferedHeadway=0
  if(coordinated){
   const intents=new Map(plans.map(a=>[a.id,a]))
   const frontFirst=[...p.states].sort((a,b)=>b.x-a.x)
@@ -142,7 +147,18 @@ export function advanceNormalStartV3(snapshot){
    if(!ahead)continue
    const gap=ahead.x-s.x
    const leaderAccel=commanded.get(ahead.id)
-   const targetV=ahead.v+clip((gap-(p.headwayStandOffM??4.5))/1.5,-2,2)
+   // Ahead-of-position spatial road-width forecast provides extra
+   // cooperative following room before a narrowing lane disappears.
+   // This changes only commanded bounded acceleration, never x/y state.
+   const previewX=s.x+s.v*8
+   const projectedWidth=researchRoadEnvelopeV3(
+    p.roadGeometry??'constant',previewX).widthM
+   const missingWidth=Math.max(0,4.4-projectedWidth)
+   const buffered=p.roadMergePolicy==='buffered_headway'?
+    2.4*missingWidth/1.1:0
+   if(buffered>1e-8)bufferedHeadway++
+   const targetGap=(p.headwayStandOffM??4.5)+buffered
+   const targetV=ahead.v+clip((gap-targetGap)/1.5,-2,2)
    const requested=clip((targetV-s.v)/DT,-B,A)
    // 2.05 m conservative end-of-step clearance; +.25m beyond bike length.
    // The formula includes actual bounded lead acceleration, unlike the
@@ -230,6 +246,7 @@ export function advanceNormalStartV3(snapshot){
  p.negotiatedHeadwayPairTicks=(p.negotiatedHeadwayPairTicks??0)+negotiatedHeadway
  p.steerEvents+=paths.filter(a=>Math.abs(a.y1-a.s.y)>1e-7).length
  p.roadBoundaryGuardTicks+=plans.filter(a=>a.roadGuard).length
+ p.roadMergeBufferedRiderTicks+=bufferedHeadway
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
   Math.abs(a.a.target-a.y1)<1e-6).length
@@ -273,6 +290,7 @@ export function finishNormalStartMetricsV3(original,final){
   initiatedLaneChanges:final.initiatedLaneChanges,
   completedLaneChanges:final.completedLaneChanges,
   roadBoundaryGuardRiderTicks:final.roadBoundaryGuardTicks??0,
+  roadMergeBufferedRiderTicks:final.roadMergeBufferedRiderTicks??0,
   firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
