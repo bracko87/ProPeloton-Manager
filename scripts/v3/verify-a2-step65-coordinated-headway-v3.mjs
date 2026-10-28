@@ -128,6 +128,31 @@ for(const n of [106,168]){
  interactiveLarge.push({n,mode:'mixed',targetSeconds:15,
   ...finishNormalStartMetricsV3(start,result)})
 }
+// A65 promotion-blocking technical regression gates. This does NOT
+// authorize sporting production readiness: duration, terrain and width
+// remain synthetic/unvalidated.
+assert.equal(comparisons.filter(x=>x.regression).length,0,
+ 'A65 must preserve all previous 90-second safe starts')
+assert.equal(comparisons.filter(x=>x.rescue).length,2,
+ 'A65 must rescue BOTH dense normal-start failure cases at 4.5m')
+for(const mode of ['mixed','pressure','corridor']){
+ const v=standOffSweep.find(x=>x.mode===mode&&x.standOffMetres===3.2)
+ assert(v&&v.status==='FULL_HORIZON_CLEAR'&&v.seconds===90,
+  'A65 3.2m 32-rider 90s dense/corridor field no longer completes')
+ const e=endurance.find(x=>x.mode===mode)
+ assert(e&&e.status==='FULL_HORIZON_CLEAR'&&e.seconds===180&&
+  e.nearStopRiderTicks===0,'A65 3.2m 180s field regressed or near-halted')
+}
+assert(standOffSweep.find(x=>x.mode==='corridor'&&x.standOffMetres===3.2)
+ .completedLaneChanges>0,
+ 'A65 corridor collision avoidance must not prohibit all physical passing')
+assert(standOffSweep.find(x=>x.mode==='pressure'&&x.standOffMetres===3.2)
+ .completedLaneChanges>0,
+ 'A65 aggressive bunch test must not hide all lane movements')
+assert(interactiveLarge.length===2&&interactiveLarge.every(x=>
+ x.status==='FULL_HORIZON_CLEAR'&&x.seconds===15&&
+ x.uniquePairOrderReversals>0),
+ 'A65 interactive 106/168-rider 15s basic dynamic safety regressed')
 // Explicit impossibility control: no choice of bounded command can unwind
 // a physically pre-overlapping start without violation. Must reject.
 const invalid=createNormalStartV3(8,{controllerPolicy:'coordinated_headway'})
