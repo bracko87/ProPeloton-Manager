@@ -131,7 +131,7 @@ const lateral=inspectConstantAccelerationEnvelopeV3(directPreview,
  nominal.map(x=>x.riderId==='P'?{...x,y1:1}:x),1)
 assert.equal(lateral.riders[0].reason,'LATERAL_RATE_EXCEEDED')
 const curveRisk=conservativeQuadraticSweepV3(directPreview,nominal.map(x=>
- x.riderId==='Q'?{...x,x0:104,y0:0,x1:109}:x),baseG,1)
+ x.riderId==='Q'?{...x,x1:109}:x),baseG,1)
  // intentionally malformed source must fail closed, not provide a certificate
 assert.equal(curveRisk.status,'SKIPPED_INFEASIBLE_VELOCITY')
 assert.throws(()=>inspectConstantAccelerationEnvelopeV3(directPreview,
