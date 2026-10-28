@@ -3,14 +3,44 @@
  * Deterministic all-pair rounds, no priority by rider name or roster order.
  */
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
+import {firstSweptContactFractionV3} from './a2EventTimeYieldResearchV3.mjs'
 const ensure=(ok,m)=>{if(!ok)throw Error(m)}
 const r6=x=>Math.round(x*1e6)/1e6
 const motion=(p,scale)=>({riderId:p.riderId,x0:p.original.meters,
  x1:r6(p.original.meters+p.forward*scale),y0:p.original.y,
  y1:r6(p.original.y+(p.y-p.original.y)*scale)})
+/** A50 hypothesis, NOT a verified cycling rule. Pure physical decision:
+ * entrant yields an occupied lane; straight trailing rider yields leader;
+ * unresolved/ambiguous interactions remain mutual.
+ */
+export function classifyContactTimeRightOfWayV3(a,b,g,{aPath,bPath}={}){
+ ensure(a?.riderId&&b?.riderId&&a.riderId!==b.riderId&&
+  Number.isFinite(g?.lateralCollisionM),'A50 invalid pair')
+ const pa=aPath??motion(a,1),pb=bPath??motion(b,1)
+ const lim={longitudinal:1.8,lateral:g.lateralCollisionM}
+ if(!continuousBicycleCollisionV3(pa,pb,lim))return null
+ const f=firstSweptContactFractionV3(pa,pb,lim)
+ const sa=Math.abs(a.y-a.original.y)>1e-7,sb=Math.abs(b.y-b.original.y)>1e-7
+ let yielding,reason
+ if(sa!==sb){
+  const entering=sa?a:b,staying=sa?b:a
+  const stopped=motion(entering,0),stayingPath=sa?pb:pa
+  if(continuousBicycleCollisionV3(stopped,stayingPath,lim)){
+   yielding=[a.riderId,b.riderId];reason='stationary_entry_still_conflicts'
+  }else{yielding=[entering.riderId];reason='lane_entrant_yields'}
+ }else if(!sa&&!sb&&Math.abs(a.original.meters-b.original.meters)>1e-7){
+  const rear=a.original.meters<b.original.meters?a:b
+  const front=rear===a?b:a
+  if(continuousBicycleCollisionV3(motion(rear,0),front===a?pa:pb,lim)){
+   yielding=[a.riderId,b.riderId];reason='rear_stop_not_clear'
+  }else{yielding=[rear.riderId];reason='rear_closing_yields'}
+ }else{yielding=[a.riderId,b.riderId];reason='ambiguous_mutual'}
+ return {firstFraction:f??0,reason,yielding:yielding.sort(),
+  pair:[a.riderId,b.riderId].sort()}
+}
 export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',maxRounds=64,diagnostics=false}={}){
  ensure(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&
-  ['rear_priority','rear_corridor_guard','rear_corridor_strict','rear_corridor_leader','lane_entry_priority'].includes(policy)&&
+  ['rear_priority','rear_corridor_guard','rear_corridor_strict','rear_corridor_leader','lane_entry_priority','contact_time_lane_occupancy'].includes(policy)&&
   Number.isInteger(maxRounds)&&maxRounds===64&&typeof diagnostics==='boolean'&&
   Number.isFinite(g?.lateralCollisionM),'Invalid A44 research contact inputs')
  const riders=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
@@ -19,13 +49,16 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
  const scales=new Map(riders.map(r=>[r.riderId,1]))
  let accepted=null,pairChecks=0,collisionProposals=0,rounds=0,
   rearYields=0,enteringYields=0,symmetricYields=0,hardFallbacks=0,
-  corridorGuardYields=0,stalledGuardYields=0
+  corridorGuardYields=0,stalledGuardYields=0,
+  contactEntrantYields=0,contactRearYields=0,contactMutualYields=0,
+  contactTieGroups=0
  const diagnosticEvents=diagnostics?[]:null
  let firstCollidingPairs=null,lastCollidingPairs=null
  for(let round=0;round<=maxRounds;round++){
   const paths=riders.map(r=>motion(r,scales.get(r.riderId)))
   const reduce=new Set(),involved=new Set()
   const activePairs=diagnostics?[]:null
+  const timed=[]
   for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++){
    pairChecks++
    if(!continuousBicycleCollisionV3(paths[i],paths[j],limits))continue
@@ -38,6 +71,13 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
     aStartY:a.original.y,bStartY:b.original.y,
     aProposedY:a.y,bProposedY:b.y,
     aScale:scales.get(a.riderId),bScale:scales.get(b.riderId)})
+   if(policy==='contact_time_lane_occupancy'){
+    const decision=classifyContactTimeRightOfWayV3(a,b,g,
+     {aPath:paths[i],bPath:paths[j]})
+    ensure(decision,'A50 contact disappeared between pair scan and decision')
+    timed.push(decision)
+    continue
+   }
    const steerA=Math.abs(a.y-a.original.y)>1e-7
    const steerB=Math.abs(b.y-b.original.y)>1e-7
    const gap=a.original.meters-b.original.meters
@@ -71,6 +111,20 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
     reduce.add(a.riderId);reduce.add(b.riderId)
     symmetricYields++
    }
+  }
+  if(policy==='contact_time_lane_occupancy'&&timed.length){
+   const earliest=Math.min(...timed.map(x=>x.firstFraction))
+   const tied=timed.filter(x=>Math.abs(x.firstFraction-earliest)<=1e-7)
+   if(tied.length>1)contactTieGroups++
+   for(const d of tied){
+    for(const id of d.yielding)reduce.add(id)
+    if(d.reason==='lane_entrant_yields')contactEntrantYields++
+    else if(d.reason==='rear_closing_yields')contactRearYields++
+    else contactMutualYields++
+   }
+   if(diagnostics)diagnosticEvents.push({kind:'contact_time_decision',round,
+    firstContactFraction:r6(earliest),competingPairs:timed.length,
+    tiedPairs:tied.map(d=>({pair:d.pair,reason:d.reason,yielding:d.yielding}))})
   }
   if(diagnostics&&round===0)firstCollidingPairs=activePairs
   if(!involved.size){accepted=paths;break}
@@ -115,6 +169,8 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
    'A44 accepted continuous collision')
  return {paths:accepted,scales,pairChecks,collisionProposals,rounds,
   rearYields,enteringYields,symmetricYields,hardFallbacks,
-  corridorGuardYields,stalledGuardYields,diagnosticEvents,
+  corridorGuardYields,stalledGuardYields,
+  contactEntrantYields,contactRearYields,contactMutualYields,contactTieGroups,
+  diagnosticEvents,
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
