@@ -57,7 +57,7 @@ for(const n of [32,106,168]){
  for(const roadGeometry of ['mild_pinch','strong_pinch']){
   const seconds=n===32?120:90
   for(const roadMergePolicy of ['platoon_lane_forecast',
-   'platoon_two_slot_stagger']){
+   'platoon_two_slot_stagger','platoon_two_slot_wave']){
    const {initial,end,metrics}=run(n,roadGeometry,roadMergePolicy,seconds)
    const mirror=run(n,roadGeometry,roadMergePolicy,seconds,{mirror:true})
    const rename=run(n,roadGeometry,roadMergePolicy,seconds,{renamed:true})
@@ -100,6 +100,11 @@ assert.equal(negative.reason,'SWEPT_CONTACT',
 assert.equal(negative.acceptedSteps,0)
 assert.equal(negative.at,0)
 assert.deepEqual(negative.states,impossible.states)
+const waveStrong=trial.filter(x=>x.roadGeometry==='strong_pinch'&&
+ x.policy==='platoon_two_slot_wave')
+assert(waveStrong.length===3,'A71 missing 3 size strong two-slot wave corpus')
+assert(waveStrong.every(x=>x.staggerRiderTicks>0),
+ 'A71 upstream stagger planner never constrained actual speed')
 const report={study:'A2_STEP71_TWO_SLOT_LONGITUDINAL_STAGGER',
  technicalGate:'PASS',sportingGate:'NO_GO',
  totalCases:trial.length,
