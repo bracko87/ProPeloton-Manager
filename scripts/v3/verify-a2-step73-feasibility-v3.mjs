@@ -6,6 +6,8 @@ import assert from 'node:assert/strict'
 import {mkdirSync,writeFileSync} from 'node:fs'
 import {auditTwoSlotFeasibilityV3,physicalArrivalWindowV3}
  from './a2TwoSlotFeasibilityV3.mjs'
+import {startSustainedOvertakeObserverV3,advanceSustainedOvertakeObserverV3,
+ overtakeObserverSummaryV3} from './a2SustainedOvertakeObserverV3.mjs'
 import {createNormalStartV3,runNormalStartV3,advanceNormalStartV3,
  finishNormalStartMetricsV3} from './a2NormalStartPelotonV3.mjs'
 const close=(a,b)=>Math.abs(a-b)<1e-6
@@ -134,6 +136,22 @@ for(const n of [32,106,168]){
   assert(close(a.energy.remainingWPrimeJoules,b.energy.remainingWPrimeJoules))
   assert(close(a.energy.remainingWPrimeJoules,c.energy.remainingWPrimeJoules))
  }
+ if(n===32){
+  assert.equal(metrics.status,'FULL_HORIZON_CLEAR',
+   'A73 regressed first 32-rider full-bicycle 2.2m 120s clear stage')
+  assert.equal(metrics.seconds,120)
+  assert(metrics.completedLaneChanges>=20&&metrics.nearStopRiderTicks===0&&
+   metrics.roadGateLateWindowRiderTicks===0,
+   'A73 32 strong only cleared by suppressing lanes, late bookings or near stops')
+  assert(actual.states.every(s=>s.x>=1020),
+   'A73 32-rider report did not physically leave widening road')
+ }
+ if(n>32){
+  assert(metrics.seconds>=40,
+   'A73 106/168 physical narrowing progress regressed below 40 seconds')
+  assert(metrics.nearStopRiderTicks===0,
+   'A73 large physical field stalled to postpone collision')
+ }
  if(metrics.status==='FULL_HORIZON_CLEAR'){
   const half=runNormalStartV3(initial,{seconds:seconds/2})
   assert.deepEqual(runNormalStartV3(JSON.parse(JSON.stringify(half)),{
@@ -151,6 +169,39 @@ for(const n of [32,106,168]){
   timetableLateRiderTicks:metrics.roadGateLateWindowRiderTicks,
   firstCollision:metrics.firstCollision,firstRoadViolation:metrics.firstRoadViolation})
 }
+// A separately maintained read-only observer certifies REAL sustained
+// strong-pinch passing and exact combined race+observer restart, not just
+// endpoint inversions or lane moves. It sees only accepted movements.
+const replay=(start,seconds,checkpoint=null)=>{
+ let physical=checkpoint?.physical??structuredClone(start)
+ let observer=checkpoint?.observer??startSustainedOvertakeObserverV3(
+  physical.states)
+ const end=physical.at+seconds
+ while(physical.at<end-1e-7&&!physical.reason){
+  const next=advanceNormalStartV3(physical)
+  if(next.reason){physical=next;break}
+  observer=advanceSustainedOvertakeObserverV3(observer,
+   physical.states,next.states,.5)
+  physical=next
+ }
+ return {physical,observer}
+}
+const clear32=createNormalStartV3(32,{...base,
+ roadMergePolicy:'platoon_gate_schedule'})
+const whole=replay(clear32,120)
+assert.equal(whole.physical.reason,null)
+assert.equal(whole.physical.at,120)
+const passSummary=overtakeObserverSummaryV3(whole.observer)
+assert(passSummary.confirmedSustainedPasses>0,
+ 'A73 no independently proven sustained overtake in clear strong road')
+const saved=replay(clear32,60)
+const resumed=replay(clear32,60,{physical:JSON.parse(
+ JSON.stringify(saved.physical)),observer:JSON.parse(
+ JSON.stringify(saved.observer))})
+assert.deepEqual(resumed.physical,whole.physical,
+ 'A73 first completely clear strong road physical restart not exact')
+assert.deepEqual(resumed.observer,whole.observer,
+ 'A73 strong-road sustained passing observer restart not exact')
 const report={
  study:'A2_STEP73_NECESSARY_TWO_SLOT_REACHABILITY',
  technicalGate:'PASS',sportingGate:'NO_GO',
@@ -162,7 +213,11 @@ const report={
  realStrongPinchStillRejected:true,
  actualAllPairSweptContactUnchanged:true,
  mirroredAndRelabeledBookkeepingParity:true,
- normalStarts:common,physicallyScheduled,adversarial:{
+ normalStarts:common,physicallyScheduled,
+ firstStrongFullyTraversed32:true,
+ firstStrongSustainedPairPasses32:passSummary.confirmedSustainedPasses,
+ firstStrongExactPhysicalAndPassObserverRestart:true,
+ adversarial:{
  lateNoWindow:impossible.unresolved[0],
  cannotBookAfterUnresolvedPredecessor:true,
  shortDeadlineNoWindow:deadline.status,
@@ -179,6 +234,7 @@ console.log(JSON.stringify({study:report.study,
  latestBookedArrival:x.finalScheduledEntrySeconds,
  actualPhysicalStatus:x.actualPhysicalStatus,
  actualAcceptedSeconds:x.actualAcceptedSeconds})),
+ strong32VerifiedSustainedPairPasses:passSummary.confirmedSustainedPasses,
  physicallyScheduled:physicallyScheduled.map(x=>({n:x.n,status:x.status,
  acceptedSeconds:x.acceptedSeconds,laneChanges:x.completedLaneChanges,
  nearStops:x.nearStopRiderTicks,held:x.timetableHeldRiderTicks,
