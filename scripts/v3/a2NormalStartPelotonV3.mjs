@@ -67,7 +67,7 @@ function chooseLane(s,states){
  const candidates=[s.y-road.centerStepM,s.y+road.centerStepM]
  .filter(y=>y>=-1e-6&&y<=height+1e-6)
  .map(y=>({y,margin:Math.min(...states.filter(t=>t!==s&&
-   Math.abs(t.y-y)<road.lateralCollisionM+L*2)
+   Math.abs(t.y-y)<road.lateralCollisionM+1e-7)
    .map(t=>Math.abs(t.x-s.x)),Infinity)}))
  .filter(x=>x.margin>=9)
  .sort((a,b)=>b.margin-a.margin)
