@@ -1,4 +1,4 @@
-name: V3 A2 Step59-61 symmetry and autonomous upstream-field trials
+name: V3 A2 Step59-63 bounded-field and early-checkpoint validation
 on:
   push:
     branches: [main]
@@ -26,7 +26,7 @@ jobs:
         run: node scripts/v3/verify-a2-step60-unit-v3.mjs
       - name: A61 isolated upstream warning and earlier-checkpoint unit controls
         run: node scripts/v3/verify-a2-step61-unit-v3.mjs
-      - name: Audit 67 A58-A61 histories and autonomous field reaction trials
+      - name: Audit all 67 A58-A63 cases with identical-end early starts, symmetry and JSON replays
         env:
           V3_A2_STEP59_DIR: ${{ runner.temp }}/step59
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs
@@ -34,7 +34,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: a2-step59-61-symmetry-field-and-upstream-reaction-evidence
+          name: a2-step59-63-all-field-safety-and-early-start-evidence
           path: ${{ runner.temp }}/step59/*.json
           retention-days: 30
           if-no-files-found: warn
