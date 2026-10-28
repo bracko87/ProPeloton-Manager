@@ -161,7 +161,7 @@ assert.equal(spotlightAudits.length,4,'A51 missing historical source spotlight')
 const byQuantum=[.5,2,2.5].map(quantum=>{
  const rows=cases.filter(x=>x.quantum===quantum)
  const first=rows.filter(x=>x.first)
- const spread=rows.filter(x=>x.spread?.firstOutsideSourceComponentSeconds!==null)
+ const spread=rows.filter(x=>Number.isFinite(x.spread?.firstOutsideSourceComponentSeconds))
  return {quantum,cases:rows.length,firstDifferentCases:first.length,
   differentBy60s:rows.filter(x=>x.spread?.finalChangedRiders>0).length,
   contactGraphSpreadCases:spread.length,
