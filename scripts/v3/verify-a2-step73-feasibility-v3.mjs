@@ -101,18 +101,68 @@ const extended=[...late,...late.map((s,i)=>({
 const blocked=auditTwoSlotFeasibilityV3(extended,'strong_pinch')
 assert.equal(blocked.status,'UNRESOLVED')
 assert(blocked.unresolved.some(r=>r.reason==='BLOCKED_BY_EARLIER_ROW'))
+// An actual coupled-controller experiment follows the pure necessary
+// timetable audit. Unsafe movements must still fail closed, not be "fixed"
+// by jumping a rider into an assigned space-time slot.
+const physicallyScheduled=[]
+for(const n of [32,106,168]){
+ const opts={...base,roadMergePolicy:'platoon_gate_schedule'}
+ const initial=createNormalStartV3(n,opts)
+ assert.equal(initial.roadGateStatus,'NECESSARY_WINDOWS_EXIST')
+ assert.equal(initial.roadGateBookings.length,n)
+ const seconds=n===32?120:90
+ const actual=runNormalStartV3(initial,{seconds})
+ const metrics=finishNormalStartMetricsV3(initial,actual)
+ assert(['FULL_HORIZON_CLEAR','SWEPT_CONTACT','ROAD_ENVELOPE_VIOLATION',
+  'ENERGY_FAILED'].includes(metrics.status),'A73 invalid gate policy outcome')
+ assert(actual.states.every(s=>s.energy.remainingWPrimeJoules>=0&&
+  s.v>=0&&close(s.energy.seconds,actual.at)))
+ const mirroredStart=createNormalStartV3(n,{...opts,mirror:true})
+ const renamedStart=createNormalStartV3(n,{...opts,renamed:true})
+ const mirror=runNormalStartV3(mirroredStart,{seconds})
+ const rename=runNormalStartV3(renamedStart,{seconds})
+ assert.equal(actual.reason,mirror.reason)
+ assert.equal(actual.reason,rename.reason)
+ assert.equal(actual.acceptedSteps,mirror.acceptedSteps)
+ assert.equal(actual.acceptedSteps,rename.acceptedSteps)
+ for(let i=0;i<n;i++){
+  const a=actual.states[i],b=mirror.states[i],c=rename.states[i]
+  assert(close(a.x,b.x)&&close(a.y,4.4-b.y),
+   'A73 gate timetable mirror changed movement '+n+'/'+i)
+  assert(close(a.x,c.x)&&close(a.y,c.y),
+   'A73 rider renaming changed scheduled movement '+n+'/'+i)
+  assert(close(a.energy.remainingWPrimeJoules,b.energy.remainingWPrimeJoules))
+  assert(close(a.energy.remainingWPrimeJoules,c.energy.remainingWPrimeJoules))
+ }
+ if(metrics.status==='FULL_HORIZON_CLEAR'){
+  const half=runNormalStartV3(initial,{seconds:seconds/2})
+  assert.deepEqual(runNormalStartV3(JSON.parse(JSON.stringify(half)),{
+   seconds:seconds/2}),actual,'A73 schedule checkpoint recovery differs')
+ }
+ if(actual.reason){
+  assert.throws(()=>advanceNormalStartV3(actual))
+  assert(actual.at<seconds)
+ }
+ physicallyScheduled.push({n,targetSeconds:seconds,acceptedSeconds:metrics.seconds,
+  status:metrics.status,completedLaneChanges:metrics.completedLaneChanges,
+  nearStopRiderTicks:metrics.nearStopRiderTicks,
+  timetableSteeringRiderTicks:metrics.roadGateWindowRiderTicks,
+  timetableHeldRiderTicks:metrics.roadGateLateralHoldRiderTicks,
+  timetableLateRiderTicks:metrics.roadGateLateWindowRiderTicks,
+  firstCollision:metrics.firstCollision,firstRoadViolation:metrics.firstRoadViolation})
+}
 const report={
  study:'A2_STEP73_NECESSARY_TWO_SLOT_REACHABILITY',
  technicalGate:'PASS',sportingGate:'NO_GO',
  physicsBoundedAccelerationMps2:{increase:.45,decrease:-.85},
  minimumNonStalledSpeedMps:5,roadWidthM:2.2,
- bodyHalfWidthM:.3,gateX:780,slotSpacingSeconds:.42,
+ bodyHalfWidthM:.3,gateX:780,slotSpacingSeconds:.5,
  confirmedKinematicallyInfeasibleLateArrival:true,
  cannotInferRaceFinishFromNecessaryWindows:true,
  realStrongPinchStillRejected:true,
  actualAllPairSweptContactUnchanged:true,
  mirroredAndRelabeledBookkeepingParity:true,
- normalStarts:common,adversarial:{
+ normalStarts:common,physicallyScheduled,adversarial:{
  lateNoWindow:impossible.unresolved[0],
  cannotBookAfterUnresolvedPredecessor:true,
  shortDeadlineNoWindow:deadline.status,
@@ -129,5 +179,11 @@ console.log(JSON.stringify({study:report.study,
  latestBookedArrival:x.finalScheduledEntrySeconds,
  actualPhysicalStatus:x.actualPhysicalStatus,
  actualAcceptedSeconds:x.actualAcceptedSeconds})),
+ physicallyScheduled:physicallyScheduled.map(x=>({n:x.n,status:x.status,
+ acceptedSeconds:x.acceptedSeconds,laneChanges:x.completedLaneChanges,
+ nearStops:x.nearStopRiderTicks,held:x.timetableHeldRiderTicks,
+ late:x.timetableLateRiderTicks,
+ firstContact:x.firstCollision?.pair??null,
+ roadExit:x.firstRoadViolation?.riderId??null})),
  impossibleLateArrival:report.confirmedKinematicallyInfeasibleLateArrival,
  officialWrites:0,sportingApproval:'NOT_APPROVED'}))
