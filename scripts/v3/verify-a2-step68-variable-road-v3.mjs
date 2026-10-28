@@ -135,6 +135,39 @@ for(const n of [32,106,168]){
   }
  }
 }
+// A68c: physics-only trailing yield, explicit lane occupancy reservation.
+// Do not assume the bottleneck is fixed: each result may honestly be rejected.
+for(const n of [32,106,168]){
+ const seconds=n===32?120:90
+ for(const geometry of ['mild_pinch','strong_pinch']){
+  const cfg={roadMergePolicy:'yield_reservation'}
+  const {start,end,report}=run(n,geometry,seconds,cfg)
+  assert(report.roadMergeYieldRiderTicks>0,
+   'A68 physical merge reservation was not exercised')
+  const reflected=runNormalStartV3(createNormalStartV3(n,{
+   ...startOptions,roadGeometry:geometry,...cfg,mirror:true}),{seconds})
+  const renamed=runNormalStartV3(createNormalStartV3(n,{
+   ...startOptions,roadGeometry:geometry,...cfg,renamed:true}),{seconds})
+  assert.equal(reflected.reason,end.reason,
+   'A68 yield physical reflection changed status')
+  assert.equal(renamed.reason,end.reason,'A68 yield identity changed status')
+  assert.equal(reflected.acceptedSteps,end.acceptedSteps)
+  assert.equal(renamed.acceptedSteps,end.acceptedSteps)
+  for(let i=0;i<n;i++){
+   const a=end.states[i],b=reflected.states[i],c=renamed.states[i]
+   assert(approx(a.x,b.x)&&approx(a.y,4.4-b.y),
+    'A68 yield mirror motion changed')
+   assert(approx(a.x,c.x)&&approx(a.y,c.y),'A68 yield ID motion changed')
+   assert(approx(a.energy.remainingWPrimeJoules,b.energy.remainingWPrimeJoules))
+   assert(approx(a.energy.remainingWPrimeJoules,c.energy.remainingWPrimeJoules))
+  }
+  if(!end.reason){
+   const first=runNormalStartV3(start,{seconds:seconds/2})
+   assert.deepEqual(runNormalStartV3(JSON.parse(JSON.stringify(first)),
+    {seconds:seconds/2}),end,'A68 yield checkpoint restart differs')
+  }
+ }
+}
 // Intentionally road-infeasible ordinary state must fail closed at time
 // zero, with no energy, position or race-clock advance.
 const invalid=createNormalStartV3(8,{
@@ -172,6 +205,7 @@ console.log(JSON.stringify({study:study.study,technicalGate:study.technicalGate,
   status:x.status,mergePolicy:x.roadMergePolicy,
   roadGuards:x.roadBoundaryGuardRiderTicks,
   bufferedTicks:x.roadMergeBufferedRiderTicks,
+  yieldTicks:x.roadMergeYieldRiderTicks,
   completedLanes:x.completedLaneChanges,
   firstRoadViolation:x.firstRoadViolation,firstCollision:x.firstCollision})),
  officialWrites:0,sportingApproval:'NOT_APPROVED'}))
