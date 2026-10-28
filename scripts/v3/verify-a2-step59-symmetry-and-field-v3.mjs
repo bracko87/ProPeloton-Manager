@@ -187,6 +187,18 @@ const a62={scenarios:0,substeppedClear:0,coarse3sClear:0,
   fineFirstContactKinds:{},coarseInitiallyOverlapping:0,fineInitiallyOverlapping:0,
   coarseCollisionTimeBeforeOriginalAlert:0,fineCollisionTimeBeforeOriginalAlert:0,
   quantum:{'0.5':{cases:0,coarseClear:0,fineClear:0},'2.5':{cases:0,coarseClear:0,fineClear:0}}}
+// A63 compares a deliberate earlier full-field start, never a retrospective
+// rider-specific steering/velocity change. The 66 A62 cases remain frozen as
+// reference regressions, and new starts must cover the ORIGINAL finish time.
+const a63={cases:0,unchangedCases:0,earlierStarted:0,
+  a62Clear:0,earlyClear:0,rescued:0,regressed:0,
+  earlyContactBlocked:0,earlyEnergyFailures:0,
+  mirroredOutcomeMismatches:0,renamedOutcomeMismatches:0,
+  mirroredContactPairMismatches:0,renamedContactPairMismatches:0,
+  serializedReplayMismatches:0,originalEndMismatches:0,
+  earlyLeadSeconds:[],remainingCases:[],rescuedCases:[],
+  byQuantum:{'0.5':{cases:0,baseClear:0,earlierClear:0},
+             '2.5':{cases:0,baseClear:0,earlierClear:0}}}
 const cases=[],errors=[],historical=[]
 const a60={scenarios:0,previousFieldClear:0,fixedBrakeClear:0,
  laneIntentClear:0,laneIntentRegressions:0,laneIntentRescues:0,
@@ -485,6 +497,64 @@ for(const geometry of BATCH40_GEOMETRIES){
         a62.zeroStepDriftMismatch+=Number(JSON.stringify(normalized(upstream3))!==
          JSON.stringify(normalized(substepped)))
        }
+       // A63 physical-time-controlled earlier-start experiment. On a 2.5s
+       // A44 source frame we add ONE actual pre-alert source checkpoint,
+       // retaining the exact same original A62 clock end via a longer run.
+       // The initial 0.5s cohort does NOT change; retain its exact outcomes.
+       const extra=(q>1&&prior.length>leadFrames)?1:0
+       const earlyLeadFrames=leadFrames+extra
+       const earlyHorizonSeconds=10+extra*q
+       const earlyOpts={...settings,leadFrames:earlyLeadFrames,
+        horizonSeconds:earlyHorizonSeconds,
+        preStepPolicy:'upstream_3s',internalQuantumSeconds:.5}
+       const early=extra?replayAllRiderAnticipationProbeV3(A.observed,g,
+        [-3,0][v],who,alert,first.firstAcceptedDifferenceSeconds,fixed,
+        earlyOpts):substepped
+       const earlyMirror=extra?replayAllRiderAnticipationProbeV3(mirroredSource,g,
+        [-3,0][v],who,alert,first.firstAcceptedDifferenceSeconds,fixedMirror,
+        earlyOpts):subMirror
+       const earlyRename=extra?replayAllRiderAnticipationProbeV3(relabeled.source,g,
+        [-3,0][v],newId,alert,first.firstAcceptedDifferenceSeconds,fixedRename,
+        earlyOpts):subRename
+       const earlyJSON=extra?replayAllRiderAnticipationProbeV3(
+        JSON.parse(JSON.stringify(A.observed)),g,[-3,0][v],who,alert,
+        first.firstAcceptedDifferenceSeconds,JSON.parse(JSON.stringify(fixed)),
+        earlyOpts):subJSON
+       const baseEnd=substepped.startSeconds+10
+       const newEnd=early.startSeconds+earlyHorizonSeconds
+       a63.originalEndMismatches+=Number(Math.abs(newEnd-baseEnd)>1e-7)
+       a63.cases++;a63.unchangedCases+=Number(!extra)
+       a63.earlierStarted+=Number(Boolean(extra))
+       a63.a62Clear+=Number(substepped.complete)
+       a63.earlyClear+=Number(early.complete)
+       a63.rescued+=Number(!substepped.complete&&early.complete)
+       a63.regressed+=Number(substepped.complete&&!early.complete)
+       a63.earlyContactBlocked+=Number(early.status==='REJECTED_COLLISION')
+       a63.earlyEnergyFailures+=Number(early.status==='REJECTED_ENERGY_FAILED')
+       a63.earlyLeadSeconds.push(Number((substepped.startSeconds-early.startSeconds).toFixed(6)))
+       a63.mirroredOutcomeMismatches+=Number(early.status!==earlyMirror.status||
+        early.steps!==earlyMirror.steps)
+       a63.renamedOutcomeMismatches+=Number(early.status!==earlyRename.status||
+        early.steps!==earlyRename.steps)
+       a63.mirroredContactPairMismatches+=Number(firstPair(early,x=>x)!==
+        firstPair(earlyMirror,x=>x))
+       a63.renamedContactPairMismatches+=Number(
+        firstPair(early,x=>relabeled.map.get(x))!==firstPair(earlyRename,x=>x))
+       a63.serializedReplayMismatches+=Number(
+        JSON.stringify(early)!==JSON.stringify(earlyJSON))
+       const summary={road:g.id,n,v,q,warningEnd:alert,
+        a62Start:substepped.startSeconds,a63Start:early.startSeconds,
+        a62End:baseEnd,a63End:newEnd,leadFramesA62:leadFrames,
+        leadFramesA63:earlyLeadFrames,
+        a62First:substepped.firstBlocker,
+        a63First:early.firstBlocker,
+        a62Status:substepped.status,a63Status:early.status}
+       if(!early.complete)a63.remainingCases.push(summary)
+       if(!substepped.complete&&early.complete)a63.rescuedCases.push(summary)
+       const c=a63.byQuantum[String(q)]
+       assert(c,'A63 quantum absent')
+       c.cases++;c.baseClear+=Number(substepped.complete)
+       c.earlierClear+=Number(early.complete)
        const bq=a61.byQuantum[String(q)]
        assert(bq,'A61 missing bounded quantum group')
        bq.scenarios++;bq.baseClear+=Number(earlierBaseline.complete)
@@ -519,7 +589,10 @@ for(const geometry of BATCH40_GEOMETRIES){
          coarseContactKind:contactCategory(upstream3),
          fineContactKind:contactCategory(substepped),
          coarseFirstBlocker:upstream3.firstBlocker,
-         fineFirstBlocker:substepped.firstBlocker}})
+         fineFirstBlocker:substepped.firstBlocker},
+        a63:{status:early.status,originalTimeMatched:true,
+         startSeconds:early.startSeconds,endSeconds:newEnd,
+         extraLeadFrames:extra,firstBlocker:early.firstBlocker}})
       }
      }
     }
@@ -539,6 +612,13 @@ assert.equal(historical.length,4)
 assert.equal(a60.scenarios,67,'A60 missing full-field comparisons')
 assert.equal(a61.scenarios,67,'A61 missing autonomous upstream comparisons')
 assert.equal(a62.scenarios,67,'A62 must test all 67 source checkpoints')
+assert.equal(a63.cases,67,'A63 must preserve all 67 source checkpoints')
+assert.equal(a63.originalEndMismatches,0,'A63 shortened or extended baseline finish clock')
+assert.equal(a63.mirroredOutcomeMismatches,0,'A63 mirror outcomes differ')
+assert.equal(a63.renamedOutcomeMismatches,0,'A63 rider renaming changes outcomes')
+assert.equal(a63.mirroredContactPairMismatches,0,'A63 mirrored contact pair differs')
+assert.equal(a63.renamedContactPairMismatches,0,'A63 renamed contact pair differs')
+assert.equal(a63.serializedReplayMismatches,0,'A63 JSON checkpoint rerun differs')
 assert.equal(a62.zeroStepDriftMismatch,0,'A62 changed old 0.5s physical runs')
 assert.equal(a62.mirrorOutcomeMismatch,0,'A62 mirrored outcomes mismatch')
 assert.equal(a62.renameOutcomeMismatch,0,'A62 renamed outcomes mismatch')
@@ -566,7 +646,7 @@ assert.equal(byQuantum.reduce((a,x)=>a+x.rightSteerRescues,0),15)
 const study={study:'A2_STEP59_FULL_MIRROR_RELABEL_AND_ALL_FIELD_STRESS',
  technicalGate:'PASS',sportingGate:'NO_GO',physicalRuns:physicsRuns,
  sameCheckpointScenarios:67,mirrorReplays:mirrors,relabelReplays:renames,
- originalA58Options:383,byQuantum,step60:a60,step61:a61,step62:a62,
+ originalA58Options:383,byQuantum,step60:a60,step61:a61,step62:a62,step63:a63,
  positiveThreeRiderFullField:{
   complete10s:true,exactJSON:true,mirror:true,rename:true,
   deliberatelyOverlappingInitialStateRejected:true},
@@ -579,6 +659,6 @@ writeFileSync(dir+'/a2-step59-symmetry-and-all-field.json',JSON.stringify(study,
 console.log(JSON.stringify({study:study.study,technicalGate:study.technicalGate,
  sportingGate:study.sportingGate,physicalRuns:study.physicalRuns,
  mirrorReplays:mirrors,relabelReplays:renames,
- byQuantum,step60:study.step60,step61:study.step61,step62:study.step62,
+ byQuantum,step60:study.step60,step61:study.step61,step62:study.step62,step63:study.step63,
  positiveThreeRiderFullField:study.positiveThreeRiderFullField,
  officialWrites:0,sportingApproval:'NOT_APPROVED'}))
