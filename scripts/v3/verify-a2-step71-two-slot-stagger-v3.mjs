@@ -58,7 +58,7 @@ for(const n of [32,106,168]){
   const seconds=n===32?120:90
   for(const roadMergePolicy of ['platoon_lane_forecast',
    'platoon_two_slot_stagger','platoon_two_slot_wave',
-   'platoon_two_slot_extended','platoon_two_slot_hazard_hold']){
+   'platoon_two_slot_hazard_hold']){
    const {initial,end,metrics}=run(n,roadGeometry,roadMergePolicy,seconds)
    const mirror=run(n,roadGeometry,roadMergePolicy,seconds,{mirror:true})
    const rename=run(n,roadGeometry,roadMergePolicy,seconds,{renamed:true})
@@ -91,6 +91,23 @@ for(const n of [32,106,168]){
   }
  }
 }
+// The older 8s extended candidate is intentionally REJECTED for
+// mirror-symmetry failure (106-rider strong pinch, rider 100).
+// Keep this counterexample visible, not inside the promotable test loop.
+const extended=run(106,'strong_pinch','platoon_two_slot_extended',90)
+const extendedMirror=run(106,'strong_pinch',
+ 'platoon_two_slot_extended',90,{mirror:true})
+const parityDifferences=extended.end.states.filter((a,i)=>{
+ const b=extendedMirror.end.states[i]
+ return !same(a.x,b.x)||!same(a.y,4.4-b.y)
+}).length
+assert(parityDifferences>0,
+ 'A71 rejected extended policy counterexample is no longer reproduced')
+const knownRejectedVariant={
+ policy:'platoon_two_slot_extended',
+ case:'106 strong pinch',status:extended.metrics.status,
+ mirrorDifferences:parityDifferences,sportingApproval:'REJECTED'
+}
 // Adversarial three-abreast riders on an already narrow section fail closed.
 const impossible=createNormalStartV3(8,{...base,
  roadGeometry:'strong_pinch',roadMergePolicy:'platoon_two_slot_stagger'})
@@ -122,6 +139,7 @@ const report={study:'A2_STEP71_TWO_SLOT_LONGITUDINAL_STAGGER',
  threeAbreastAtNarrowestRejected:true,
  bodyHalfWidthM:.3,sourceGeometry:'SYNTHETIC_UNCALIBRATED',
  noOfficialWrites:true,mirrorAndRenameParity:true,
+ knownRejectedVariant,
  exactRecoveryIfComplete:true,trial,officialWrites:0,
  sportingApproval:'NOT_APPROVED'}
 const dir=process.env.V3_A2_STEP71_DIR??'/tmp/a2-step71'
@@ -132,6 +150,7 @@ console.log(JSON.stringify({
  study:report.study,technicalGate:report.technicalGate,
  candidateClear:report.candidateClear,
  candidateRegressions:report.candidateRegressions,
+ knownRejectedVariant,
  results:trial.map(x=>({n:x.n,road:x.roadGeometry,policy:x.policy,
   status:x.status,seconds:x.acceptedSeconds,
   lanes:x.completedLaneChanges,staggerTicks:x.staggerRiderTicks,
