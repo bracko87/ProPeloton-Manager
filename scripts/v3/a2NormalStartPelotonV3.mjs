@@ -19,9 +19,10 @@ const energetic=()=>initializeEnergyBalanceResearchV3({criticalWatts:305,wPrimeJ
  * Tempered and mixed starts share exactly the same geometric initial grid.
  */
 export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false,
- controllerPolicy='legacy'}={}){
+ controllerPolicy='legacy',headwayStandOffM=4.5}={}){
  assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode)&&
- ['legacy','coordinated_headway'].includes(controllerPolicy),'A65 unknown normal-start scenario or policy')
+ ['legacy','coordinated_headway'].includes(controllerPolicy)&&
+ [3.2,3.8,4.5].includes(headwayStandOffM),'A65 unknown normal-start scenario or policy')
  const starts=[]
  for(let i=0;i<n;i++){
   const activeLanes=mode==='corridor'?3:5
@@ -39,7 +40,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  }
  if(mirror)for(const s of starts){s.y=round(height-s.y);s.targetY=s.y}
  return {version:1,road:{...road},dt:DT,at:0,states:starts,
-  controllerPolicy,
+  controllerPolicy,headwayStandOffM,
   acceptedSteps:0,pairChecks:0,brakeEvents:0,steerEvents:0,
   initiatedLaneChanges:0,completedLaneChanges:0,
   nearStops:0,lowestSpeed:Infinity,maxSpeed:0,
@@ -51,7 +52,8 @@ function checkSnapshot(p){
  assert(p?.dt===DT&&p?.road?.id===road.id&&Number.isInteger(p.acceptedSteps)&&
   p.states?.length>=2&&p.states?.length<=168,'A64 invalid checkpoint')
  assert(Math.abs(p.at-p.acceptedSteps*DT)<1e-6,'A64 time discontinuity')
- assert(['legacy','coordinated_headway'].includes(p.controllerPolicy??'legacy'),
+ assert(['legacy','coordinated_headway'].includes(p.controllerPolicy??'legacy')&&
+  [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -120,7 +122,7 @@ export function advanceNormalStartV3(snapshot){
    if(!ahead)continue
    const gap=ahead.x-s.x
    const leaderAccel=commanded.get(ahead.id)
-   const targetV=ahead.v+clip((gap-4.5)/1.5,-2,2)
+   const targetV=ahead.v+clip((gap-(p.headwayStandOffM??4.5))/1.5,-2,2)
    const requested=clip((targetV-s.v)/DT,-B,A)
    // 2.05 m conservative end-of-step clearance; +.25m beyond bike length.
    // The formula includes actual bounded lead acceleration, unlike the
