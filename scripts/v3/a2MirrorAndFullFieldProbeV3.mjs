@@ -106,13 +106,17 @@ function firstCollision(paths,g,dt,intervals){
  */
 export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
  warningEnd,event,option,{dt,horizonSeconds=10,intervals=16,preStepPolicy='legacy',
-  controlMode='selected',leadFrames=0}={}){
+  controlMode='selected',leadFrames=0,internalQuantumSeconds=null}={}){
  check(Array.isArray(source)&&source.length===6&&dt>0&&dt<=5&&
   Number.isInteger(intervals)&&intervals>=16&&intervals<=64&&
   option?.reactors?.includes(primary)&&
   ['legacy','lane_intent','upstream_3s','upstream_5s'].includes(preStepPolicy)&&
   ['selected','autonomous'].includes(controlMode)&&Number.isInteger(leadFrames)&&
   leadFrames>=0&&leadFrames<=10&&
+  (internalQuantumSeconds===null||(Number.isFinite(internalQuantumSeconds)&&
+   internalQuantumSeconds>=.25&&internalQuantumSeconds<=dt&&
+   Number.isInteger(Math.round(dt/internalQuantumSeconds))&&
+   Math.abs(Math.round(dt/internalQuantumSeconds)*internalQuantumSeconds-dt)<1e-8))&&
   Number.isFinite(g?.lateralCollisionM),'A59 invalid full-field shadow')
  const preserved=JSON.stringify(source)
  const frames=source.flatMap(t=>t.previews.map(p=>({
@@ -135,7 +139,17 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
  }))
  const log=[],blockers=[]
  let reason=null,maxLateral=0,headwayReactions=0,intentWarningPairs=0,upstreamEventPairs=0
- for(const f of framesToRun){
+ // A62 opt-in: hold original tactical commands constant over one source
+ // frame but run physically coupled steering/braking/energy on a finer grid.
+ // Recompute all-rider decisions from each *new actual physical state*;
+ // never read a future source frame, accepted A44 track or contact result.
+ for(const sourceFrame of framesToRun){
+  const slices=internalQuantumSeconds===null?1:Math.round(dt/internalQuantumSeconds)
+  for(let part=0;part<slices;part++){
+  const f=slices===1?sourceFrame:{
+   ...sourceFrame,t0:now(sourceFrame.t0+part*(dt/slices)),
+   t1:now(sourceFrame.t0+(part+1)*(dt/slices))}
+  const dt=f.t1-f.t0
   const proposed=new Map(f.p.proposals.map(p=>[p.riderId,p]))
   const acts=new Map()
   for(const [id,s] of states){
@@ -225,6 +239,8 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
   }
   log.push({t0:f.t0,t1:f.t1,collision,
    energyFailure,updatedCount:updated.length,
+   startingStateDigest:[...states.values()].map(x=>({
+    id:x.id,x:r6(x.x),y:r6(x.y),v:r6(x.v)})),
    stateDigest:updated.map(x=>({id:x.id,x:r6(x.x),y:r6(x.y),
     v:r6(x.v),w:r6(x.energy.remainingWPrimeJoules)}))})
   if(collision||energyFailure){
@@ -233,6 +249,8 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
    break
   }
   for(const x of updated)states.set(x.id,x)
+  }
+  if(reason)break
  }
  const lastRecord=log.at(-1)
  const completed=Boolean(lastRecord&&lastRecord.t1>=last-1e-7&&!reason)
@@ -245,6 +263,7 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
   additionalHeadwayBrakingDecisions:headwayReactions,
   intentWarningPairs,upstreamEventPairs,preStepPolicy,controlMode,
   leadFramesUsed:actualIndex-index,startSeconds:start,
+  internalQuantumSeconds:internalQuantumSeconds??dt,sourceFrameSeconds:dt,
   maxLateralSpeedMps:r6(maxLateral),steps:log.length,
   groupCount:chosen.size,fieldSize:states.size,
   records:log,originalCommandsReadOnly:true,
