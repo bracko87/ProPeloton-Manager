@@ -14,7 +14,7 @@ const unitStates=[
 ]
 const unitRequests=[
  {id:'a',speed:5,targetY:1.25},
- {id:'b',speed:6,targetY:1.25}
+ {id:'b',speed:9.5,targetY:1.25}
 ]
 const saved=JSON.stringify({unitStates,unitRequests})
 const test=phase3QueueWaveV3(unitStates,unitRequests,{a:8.7,b:9.7},
