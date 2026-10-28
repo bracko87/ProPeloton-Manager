@@ -203,7 +203,7 @@ export function advanceNormalStartV3(snapshot){
    // both side riders. Deny a discretionary new pass during the funnel.
    desired=s.y
    if(gate.slot==='LEFT'||gate.slot==='RIGHT'){
-    const relevant=p.states.filter(t=>t!==s.id&&t.id!==s.id&&
+    const relevant=p.states.filter(t=>t.id!==s.id&&
      Math.abs(t.y-2.2)<.46&&Math.abs(t.x-s.x)<2.35)
     const center=p.states.find(t=>t.startX===s.startX&&
      Math.abs(t.y-2.2)<.46)
