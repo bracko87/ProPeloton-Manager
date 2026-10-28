@@ -134,6 +134,8 @@ const summaries=new Map(expected.map(e=>[e.q,{quantum:e.q,
  geometrySafe:0,geometryRejected:0,
  energyReplayed:0,energyRejected:0,
  provisionalAccelerationViolationCases:0,provisionalAccelerationViolatingRiders:0,
+ baselineAccelerationViolatingRiders:0,introducedAccelerationViolationCases:0,
+ introducedAccelerationViolatingRiders:0,accelerationLimitPasses:0,
  nextStepChecked:0,nextSubstepFailed:0,continuedWithoutNext:0,
  changedOnNextStepTotal:0,
  maximumWPrimeDifferenceJ:0,maximumTerminalSpeedDifferenceMps:0,
@@ -194,7 +196,12 @@ for(const geometry of BATCH40_GEOMETRIES){
         row.energyReplayed++;entry.maxWPrimeDifferenceJ=shadow.maxWPrimeDifferenceJ
         entry.maxTerminalSpeedDifferenceMps=shadow.maxTerminalSpeedDifferenceMps
         entry.provisionalAccelerationViolations=shadow.provisionalAccelViolationCount
+        entry.introducedAccelerationViolations=shadow.introducedAccelViolationCount
         row.provisionalAccelerationViolatingRiders+=shadow.provisionalAccelViolationCount
+        row.baselineAccelerationViolatingRiders+=shadow.baselineAccelViolationCount
+        row.introducedAccelerationViolatingRiders+=shadow.introducedAccelViolationCount
+        row.introducedAccelerationViolationCases+=Number(shadow.introducedAccelViolationCount>0)
+        row.accelerationLimitPasses+=Number(shadow.accelerationLimitPass)
         row.provisionalAccelerationViolationCases+=Number(shadow.provisionalAccelViolationCount>0)
         row.maximumWPrimeDifferenceJ=Math.max(row.maximumWPrimeDifferenceJ,
          shadow.maxWPrimeDifferenceJ)
@@ -269,6 +276,8 @@ const verdict={study:'A2_STEP54_SHADOW_ENERGY_AND_NEXT_SUBSTEP',
  byGrid,sources,individualResults:results,
  energyBudgetRejected:byGrid.reduce((a,x)=>a+x.energyRejected,0),
  provisionalAccelViolationCases:byGrid.reduce((a,x)=>a+x.provisionalAccelerationViolationCases,0),
+ introducedAccelerationViolationCases:byGrid.reduce((a,x)=>a+x.introducedAccelerationViolationCases,0),
+ accelerationLimitPasses:byGrid.reduce((a,x)=>a+x.accelerationLimitPasses,0),
  nextStepReplays:byGrid.reduce((a,x)=>a+x.nextStepChecked,0),
  nextStepNotCovered:byGrid.reduce((a,x)=>a+x.continuedWithoutNext,0),
  activationApproved:false,officialWrites:0,sportingApproval:'NOT_APPROVED'}
@@ -281,6 +290,8 @@ console.log(JSON.stringify({study:verdict.study,technicalGate:verdict.technicalG
  allowed:verdict.localGeometryAllowed,rejected:verdict.localGeometryRejected,
  energyBudgetRejected:verdict.energyBudgetRejected,
  provisionalAccelViolationCases:verdict.provisionalAccelViolationCases,
+ introducedAccelerationViolationCases:verdict.introducedAccelerationViolationCases,
+ accelerationLimitPasses:verdict.accelerationLimitPasses,
  nextStepReplays:verdict.nextStepReplays,nextStepNotCovered:verdict.nextStepNotCovered,
  byGrid:verdict.byGrid,sources:verdict.sources,
  activationApproved:false,officialWrites:0,sportingApproval:'NOT_APPROVED'}))
