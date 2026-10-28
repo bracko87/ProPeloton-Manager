@@ -57,6 +57,7 @@ All failed starts stop at the **last fully accepted 0.5s step**. Every contact i
 - An already-passed gate, a too-short deadline and a row downstream of an unresolved previous row are explicitly marked inadmissible.
 - A road wider than two physical slots is diagnosed **NOT_TWO_SLOT**, preventing the strong-road scheduler from claiming to explain Step 72's successful 3.3m mild-road experiment.
 - Reflection/relabel booking parity, invalid input rejection, physical swept safety, full bicycle-width margin, energy validity, actual traversed x bounds, zero near-stops, actual real overtakes and exact checkpoint recovery are hard, not optional, test assertions.
+- Corrupted serialized strong-pinch bookings are also fail-closed: a missing assignment, duplicated rider ID, nonfinite scheduled time, or off-road lateral target returns `GATE_ENTRY_NO_WINDOW` at time zero with **no accepted step, rider movement or energy charge**. These are explicit adversarial tests, not assumed checkpoint trust.
 
 ## Validation and next milestone
 
