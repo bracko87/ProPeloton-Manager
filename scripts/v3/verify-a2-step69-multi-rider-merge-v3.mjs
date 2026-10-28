@@ -7,7 +7,8 @@ import {mkdirSync,writeFileSync} from 'node:fs'
 import {createNormalStartV3,advanceNormalStartV3,runNormalStartV3,
  finishNormalStartMetricsV3} from './a2NormalStartPelotonV3.mjs'
 const policies=['yield_reservation','platoon_soft_yield','platoon_chain',
- 'platoon_lane_forecast']
+ 'platoon_lane_forecast','platoon_lane_forecast_chain',
+ 'platoon_lane_forecast_buffer']
 const geometries=['mild_pinch','strong_pinch']
 const equal=(x,y)=>Math.abs(x-y)<=1e-5
 const cases=[]
@@ -52,12 +53,20 @@ for(const n of [32,106,168]){
    const {initial,end,metrics,item}=evaluate(n,geometry,policy,seconds)
    // All variants must actually confront the same narrowing, not mask it
    // by choosing a separate grid or relaxing the collision checker.
-   if(policy==='platoon_lane_forecast'){
+   if(policy.startsWith('platoon_lane_forecast')){
     assert(metrics.roadLaneForecastGuardTicks>0,
      'A69 forecast policy failed to prevent any dead-end outside-lane entry')
    }else{
     assert(metrics.roadMergeYieldRiderTicks>0,
      'A69 zipper policy did not exercise any actual occupied-lane yielding')
+   }
+   if(n===32&&policy==='platoon_lane_forecast'){
+    assert.equal(metrics.status,'FULL_HORIZON_CLEAR',
+     'A69 known 32-rider width-transition forecast success regressed')
+    assert.equal(metrics.nearStopRiderTicks,0,
+     'A69 32-rider road pinching caused prohibited near-halts')
+    assert(metrics.completedLaneChanges>0,
+     'A69 32-rider road safety achieved only by suppressing all passes')
    }
    const mirror=evaluate(n,geometry,policy,seconds,{mirror:true})
    const rename=evaluate(n,geometry,policy,seconds,{renamed:true})
