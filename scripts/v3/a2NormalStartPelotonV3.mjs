@@ -23,11 +23,12 @@ const energetic=()=>initializeEnergyBalanceResearchV3({criticalWatts:305,wPrimeJ
  */
 export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false,
  controllerPolicy='legacy',headwayStandOffM=4.5,roadGeometry='constant',
- roadMergePolicy='preview_only'}={}){
+ roadMergePolicy='preview_only',bodyHalfWidthM=0}={}){
  assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode)&&
  ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
  [3.2,3.8,4.5].includes(headwayStandOffM)&&
  ['constant','mild_pinch','strong_pinch'].includes(roadGeometry)&&
+ [0,.3,.4].includes(bodyHalfWidthM)&&
  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
  'platoon_velocity_headway','platoon_capacity_hold',
@@ -50,7 +51,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  }
  if(mirror)for(const s of starts){s.y=round(height-s.y);s.targetY=s.y}
  return {version:1,road:{...road},dt:DT,at:0,states:starts,
-  controllerPolicy,headwayStandOffM,roadGeometry,roadMergePolicy,
+  controllerPolicy,headwayStandOffM,roadGeometry,roadMergePolicy,bodyHalfWidthM,
   acceptedSteps:0,pairChecks:0,brakeEvents:0,steerEvents:0,
   initiatedLaneChanges:0,completedLaneChanges:0,
   nearStops:0,lowestSpeed:Infinity,maxSpeed:0,
@@ -71,6 +72,7 @@ function checkSnapshot(p){
  assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
   ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant')&&
+  [0,.3,.4].includes(p.bodyHalfWidthM??0)&&
   ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
   'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
   'platoon_velocity_headway','platoon_capacity_hold',
@@ -161,7 +163,7 @@ export function advanceNormalStartV3(snapshot){
   }
   if(decision?.paceLimited)capacityPaceCount++
   const corridor=constrainedLaneTargetV3(geometry,
-   s.x,s.v,desired,{previewSeconds:4})
+   s.x,s.v,desired,{previewSeconds:4,bodyHalfWidthM:p.bodyHalfWidthM??0})
   const target=corridor.targetY
   const y1=round(s.y+clip(target-s.y,-L*DT,L*DT))
   const actualSpeedRequest=decision?.speedRequest??s.desired
@@ -401,7 +403,8 @@ export function advanceNormalStartV3(snapshot){
    for(const path of paths){
     const x=path.xAt(t),y=path.yAt(t)
     const failure=roadEnvelopeViolationV3(
-     p.roadGeometry??'constant',x,y)
+     p.roadGeometry??'constant',x,y,
+     {bodyHalfWidthM:p.bodyHalfWidthM??0})
     if(failure){
      p.firstRoadViolation={riderId:path.s.id,
       time:round(p.at+t),withinStep:k+fraction,...failure}
@@ -492,6 +495,7 @@ export function finishNormalStartMetricsV3(original,final){
   roadVelocityHeadwayTicks:final.roadVelocityHeadwayTicks??0,
   roadCapacityHoldRiderTicks:final.roadCapacityHoldRiderTicks??0,
   roadCapacityPaceLimitedRiderTicks:final.roadCapacityPaceLimitedRiderTicks??0,
+  bodyHalfWidthM:final.bodyHalfWidthM??0,
   firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
