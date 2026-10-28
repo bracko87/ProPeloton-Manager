@@ -39,7 +39,7 @@ export function physicalArrivalWindowV3(x,v,gateX,{
  */
 export function auditTwoSlotFeasibilityV3(states,kind,{
  gateX=780,halfBikeM=.3,headwayM=2.35,crossingSpeedMps=8.5,
- slotSpacingSeconds=.42,minSpeedMps=5,deadlineSeconds=120
+ slotSpacingSeconds=.5,minSpeedMps=5,deadlineSeconds=120
 }={}){
  check(Array.isArray(states)&&states.length>0&&states.length<=200&&
   ['constant','mild_pinch','strong_pinch'].includes(kind)&&
@@ -48,7 +48,7 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
   gateX>=680&&gateX<=920&&halfBikeM>=0&&halfBikeM<=.5&&
   headwayM>=2.05&&headwayM<=5&&
   crossingSpeedMps>=1&&crossingSpeedMps<=20&&
-  slotSpacingSeconds>=headwayM/crossingSpeedMps&&
+  slotSpacingSeconds>=headwayM/minSpeedMps&&
   minSpeedMps>=1&&minSpeedMps<=10&&
   deadlineSeconds>0&&deadlineSeconds<=3600,
   'A73 invalid narrow-road entry-window parameters')
