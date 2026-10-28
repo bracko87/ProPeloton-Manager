@@ -1,0 +1,59 @@
+name: V3 A2 Step45 fallback cause and per-fixture fairness audit (offline)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2CollisionPriorityResearchV3.mjs'
+      - 'scripts/v3/a2SubstepPhysicalResearchV3.mjs'
+      - 'scripts/v3/audit-a2-step45-fallback-fixtures-v3.mjs'
+      - '.github/workflows/v3-a2-step45-fallback-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  bounded-fallback-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Examine all A44 fallbacks and per-fixture order/position regressions
+        env:
+          V3_A2_STEP45_DIR: ${{ runner.temp }}/step45
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step45-fallback-fixtures-v3.mjs
+      - name: Preserve full source-level fallbacks and numerical regression evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step45-research-audit
+          path: ${{ runner.temp }}/step45/*.json
+          retention-days: 30
+          if-no-files-found: warn
+  preserve-a44-and-production-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original A44 physics and critical A43 A42 A41 A40 A39 A38 A37 A34 A32 technical gates
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step44-priority-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step43-trapezoid-trial-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step42-fixed-quantum-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step41-canonical-mirror-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step40-normalized-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step39-fairness-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step38-merge-trace-v3.mjs
+          V3_A2_STEP37_FAMILY=following node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step37-event-yield-v3.mjs
+          V3_A2_STEP37_FAMILY=hold node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step37-event-yield-v3.mjs
+          V3_A2_STEP37_FAMILY=merge node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step37-event-yield-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step36-causal-isolation-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-substep-physical-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch42-2d-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Build production React app
+        run: npm ci --no-audit --no-fund && npm run build
