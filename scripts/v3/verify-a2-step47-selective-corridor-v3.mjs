@@ -88,13 +88,13 @@ const three=[
  {riderId:'staying',original:{meters:100,y:0},forward:4,y:0},
  {riderId:'entering',original:{meters:100,y:1},forward:4,y:0}
 ]
-const rear=resolveContactPriorityV3(two,g,{policy:'rear_priority'})
+const rearFixture=resolveContactPriorityV3(two,g,{policy:'rear_priority'})
 const entry=resolveContactPriorityV3(three,g,{policy:'lane_entry_priority'})
-assert(rear.rearYields>0&&rear.scales.get('rear')<1&&rear.scales.get('front')===1,
+assert(rearFixture.rearYields>0&&rearFixture.scales.get('rear')<1&&rearFixture.scales.get('front')===1,
  'Rear-priority physical fixture did not preserve front rider')
 assert(entry.enteringYields>0&&entry.scales.get('entering')<1,
  'Existing lane rider priority direct fixture not exercised')
-assert(rear.hardFallbacks===0&&entry.hardFallbacks===0)
+assert(rearFixture.hardFallbacks===0&&entry.hardFallbacks===0)
 const corridorFixture=[
  {riderId:'follower',original:{meters:100,y:0},forward:3,y:0},
  {riderId:'leader',original:{meters:101,y:1},forward:3,y:0}
