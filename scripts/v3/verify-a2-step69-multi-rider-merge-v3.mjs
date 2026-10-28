@@ -6,7 +6,8 @@ import assert from 'node:assert/strict'
 import {mkdirSync,writeFileSync} from 'node:fs'
 import {createNormalStartV3,advanceNormalStartV3,runNormalStartV3,
  finishNormalStartMetricsV3} from './a2NormalStartPelotonV3.mjs'
-const policies=['yield_reservation','platoon_soft_yield','platoon_chain']
+const policies=['yield_reservation','platoon_soft_yield','platoon_chain',
+ 'platoon_lane_forecast']
 const geometries=['mild_pinch','strong_pinch']
 const equal=(x,y)=>Math.abs(x-y)<=1e-5
 const cases=[]
@@ -39,6 +40,7 @@ function evaluate(n,geometry,policy,seconds,{mirror=false,renamed=false}={}){
   yieldTicks:metrics.roadMergeYieldRiderTicks,
   leaderAssistTicks:metrics.roadPlatoonAssistRiderTicks,
   unresolvedPairConstraints:metrics.roadPlatoonUnresolvedConstraints,
+  deadEndLaneGuards:metrics.roadLaneForecastGuardTicks,
   lastGapM:metrics.frontToLastGapM}
  if(!mirror&&!renamed)cases.push(item)
  return {initial,end,metrics,item}
@@ -51,6 +53,8 @@ for(const n of [32,106,168]){
    // All variants must actually confront the same narrowing, not mask it
    // by choosing a separate grid or relaxing the collision checker.
    assert(metrics.roadMergeYieldRiderTicks>0,'A69 did not exercise zipper')
+   if(policy==='platoon_lane_forecast')assert(metrics.roadLaneForecastGuardTicks>0,
+    'A69 did not exercise the road-aware outside-lane guard')
    const mirror=evaluate(n,geometry,policy,seconds,{mirror:true})
    const rename=evaluate(n,geometry,policy,seconds,{renamed:true})
    assert.equal(mirror.end.reason,end.reason,'A69 mirror status mismatch')
@@ -128,6 +132,7 @@ console.log(JSON.stringify({
   firstCollision:c.contact?.pair??null,firstRoadExit:c.roadExit?.riderId??null,
   nearStopRiderTicks:c.nearStopRiderTicks,completedLaneChanges:c.completedLaneChanges,
   yieldTicks:c.yieldTicks,leaderAssistTicks:c.leaderAssistTicks,
+  deadEndLaneGuards:c.deadEndLaneGuards,
   unresolvedPairConstraints:c.unresolvedPairConstraints})),
  officialWrites:0,sportingApproval:'NOT_APPROVED'
 }))
