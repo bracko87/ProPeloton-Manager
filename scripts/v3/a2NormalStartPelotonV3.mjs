@@ -35,7 +35,8 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  'platoon_velocity_headway','platoon_capacity_hold',
  'platoon_capacity_wave','platoon_two_slot_stagger',
  'platoon_two_slot_wave','platoon_two_slot_extended',
- 'platoon_two_slot_hazard_hold','platoon_space_time_reservation'].includes(roadMergePolicy),
+ 'platoon_two_slot_hazard_hold','platoon_space_time_reservation',
+ 'platoon_no_yield_control'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -83,7 +84,8 @@ function checkSnapshot(p){
   'platoon_velocity_headway','platoon_capacity_hold',
   'platoon_capacity_wave','platoon_two_slot_stagger',
   'platoon_two_slot_wave','platoon_two_slot_extended',
-  'platoon_two_slot_hazard_hold','platoon_space_time_reservation'].includes(p.roadMergePolicy??'preview_only'),
+  'platoon_two_slot_hazard_hold','platoon_space_time_reservation',
+  'platoon_no_yield_control'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -193,7 +195,8 @@ export function advanceNormalStartV3(snapshot){
    'platoon_capacity_hold','platoon_capacity_wave',
    'platoon_two_slot_stagger','platoon_two_slot_wave',
    'platoon_two_slot_extended','platoon_two_slot_hazard_hold',
-   'platoon_space_time_reservation'].includes(p.roadMergePolicy)
+   'platoon_space_time_reservation','platoon_no_yield_control']
+   .includes(p.roadMergePolicy)
   if(laneForecast&&geometry!=='constant'){
    // A69: do not enter an overtaking lane known from current, static
    // road geometry to disappear within 20 seconds at current speed.
@@ -220,7 +223,8 @@ export function advanceNormalStartV3(snapshot){
   const corridor=constrainedLaneTargetV3(geometry,
    s.x,s.v,desired,{previewSeconds:
     ['platoon_two_slot_extended','platoon_two_slot_hazard_hold',
-     'platoon_space_time_reservation'].includes(p.roadMergePolicy)?8:4,
+     'platoon_space_time_reservation','platoon_no_yield_control']
+     .includes(p.roadMergePolicy)?8:4,
     bodyHalfWidthM:p.bodyHalfWidthM??0})
   const target=corridor.targetY
   const y1=round(s.y+clip(target-s.y,-L*DT,L*DT))
