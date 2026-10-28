@@ -201,6 +201,26 @@ export function advanceNormalStartV3(snapshot){
      lateral:road.lateralCollisionM+1e-5}))
      first={pair:[a.s.id,b.s.id].sort(),time:round(p.at+t0),
       step:p.acceptedSteps,withinStep:k}
+     // A68 forensic-only evidence from the rejected physical step.
+     // No path alteration or retroactive contact resolution is permitted.
+     if((p.roadGeometry??'constant')!=='constant'){
+      const describe=q=>({
+       id:q.s.id,xStart:round(q.s.x),yStart:round(q.s.y),
+       speedStartMps:round(q.s.v),commandAcceleration:round(q.accel),
+       speedRequestedMps:round(q.s.desired),
+       currentTargetY:round(q.s.targetY),
+       stepTargetY:round(q.y1),
+       crossingX:round(q.xAt(t0)),crossingY:round(q.yAt(t0)),
+       roadAtCrossing:researchRoadEnvelopeV3(p.roadGeometry,q.xAt(t0))
+      })
+      first.preCollisionField={riders:[describe(a),describe(b)],
+       deltaStartX:round(a.s.x-b.s.x),
+       deltaStartY:round(a.s.y-b.s.y),
+       deltaAtContactX:round(a.xAt(t0)-b.xAt(t0)),
+       deltaAtContactY:round(a.yAt(t0)-b.yAt(t0)),
+       actualLateralM:round(Math.abs(a.yAt(t0)-b.yAt(t0))),
+       actualLongitudinalM:round(Math.abs(a.xAt(t0)-b.xAt(t0)))}
+     }
   }
  }
  if(first){p.firstCollision=first;p.reason='SWEPT_CONTACT';return p}
