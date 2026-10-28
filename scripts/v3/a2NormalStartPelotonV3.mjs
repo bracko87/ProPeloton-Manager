@@ -42,7 +42,9 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  'platoon_gate_crossrow',
  'platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate'].includes(roadMergePolicy),
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -66,7 +68,9 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  const feasibility=['platoon_gate_schedule','platoon_gate_crossrow',
  'platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate']
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip']
   .includes(roadMergePolicy)?
   auditTwoSlotFeasibilityV3(starts,roadGeometry,{
    halfBikeM:bodyHalfWidthM,minSpeedMps:5,
@@ -79,7 +83,12 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
     roadMergePolicy==='platoon_gate_late_pressure'?'late_pressure':
     roadMergePolicy==='platoon_gate_mid_pressure'?'mid_pressure':
     roadMergePolicy==='platoon_gate_late_peak'?'late_peak':
-    roadMergePolicy==='platoon_gate_late_moderate'?'late_moderate':'uniform'}):null
+    roadMergePolicy==='platoon_gate_late_moderate'?'late_moderate':
+    roadMergePolicy==='platoon_gate_tail_surge'?'tail_surge':
+    roadMergePolicy==='platoon_gate_tail_grad'?'tail_grad':
+    roadMergePolicy==='platoon_gate_tail_emphasis'?'tail_emphasis':
+    roadMergePolicy==='platoon_gate_tail_focus'?'tail_focus':
+    roadMergePolicy==='platoon_gate_tail_flip'?'tail_flip':'uniform'}):null
  return {version:1,road:{...road},dt:DT,at:0,states:starts,
   roadGateStatus:feasibility?.status??null,
   roadGateBookings:feasibility?.bookings.map(b=>({
@@ -124,7 +133,9 @@ function checkSnapshot(p){
   'platoon_gate_crossrow',
  'platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate'].includes(p.roadMergePolicy??'preview_only'),
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -175,7 +186,9 @@ export function advanceNormalStartV3(snapshot){
  if(['platoon_gate_schedule','platoon_gate_crossrow',
  'platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate']
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip']
   .includes(p.roadMergePolicy)){
   const booked=p.roadGateBookings
   const ids=new Set(p.states.map(s=>s.id))
@@ -245,7 +258,9 @@ export function advanceNormalStartV3(snapshot){
   if(['platoon_gate_schedule','platoon_gate_crossrow',
  'platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate']
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip']
    .includes(p.roadMergePolicy)&&gate&&s.x<1020){
    // Known geometric two-slot corridor, not an accepted movement.
    // The following central rider must first fall longitudinally behind
@@ -295,7 +310,9 @@ export function advanceNormalStartV3(snapshot){
    'platoon_gate_crossrow',
  'platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate'].includes(p.roadMergePolicy)
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip'].includes(p.roadMergePolicy)
   if(laneForecast&&geometry!=='constant'){
    // A69: do not enter an overtaking lane known from current, static
    // road geometry to disappear within 20 seconds at current speed.
@@ -327,7 +344,9 @@ export function advanceNormalStartV3(snapshot){
      'platoon_gate_crossrow',
  'platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate'].includes(p.roadMergePolicy)?8:4,
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip'].includes(p.roadMergePolicy)?8:4,
     bodyHalfWidthM:p.bodyHalfWidthM??0})
   const target=corridor.targetY
   const y1=round(s.y+clip(target-s.y,-L*DT,L*DT))
@@ -338,7 +357,9 @@ export function advanceNormalStartV3(snapshot){
   const schedulePace=gate&&['platoon_gate_schedule','platoon_gate_crossrow',
  'platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate']
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip']
    .includes(p.roadMergePolicy)&&s.x<gate.gateX&&gateRemaining>DT?
    Math.max(5,Math.min(s.desired,(gate.gateX-s.x)/gateRemaining)):
    s.desired
@@ -451,7 +472,9 @@ export function advanceNormalStartV3(snapshot){
    let targetGap=(p.headwayStandOffM??4.5)+buffered
    if(['platoon_gate_pairwise','platoon_gate_pairwise_gentle','platoon_gate_interval55','platoon_gate_interval60','platoon_gate_interval65','platoon_gate_interval70','platoon_gate_frontload','platoon_gate_balanced','platoon_gate_late_pressure',
  'platoon_gate_mid_pressure','platoon_gate_late_peak',
- 'platoon_gate_late_moderate']
+ 'platoon_gate_late_moderate','platoon_gate_tail_surge',
+ 'platoon_gate_tail_grad','platoon_gate_tail_emphasis',
+ 'platoon_gate_tail_focus','platoon_gate_tail_flip']
     .includes(p.roadMergePolicy)&&s.x<780){
     const active=adjacentLaneStoppingReserveV3(s,ahead,{
      mode:p.roadMergePolicy==='platoon_gate_pairwise_gentle'?'gentle':'selective',
