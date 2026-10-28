@@ -8,7 +8,9 @@ const MAX_ROAD_Y=4.4
 const PROFILES=Object.freeze({
  constant:{id:'constant',edgeInsetM:0},
  mild_pinch:{id:'mild_pinch',edgeInsetM:.55},
- strong_pinch:{id:'strong_pinch',edgeInsetM:1.10}
+ strong_pinch:{id:'strong_pinch',edgeInsetM:1.10},
+ double_pinch:{id:'double_pinch',edgeInsetM:1.10},
+ staged_pinch:{id:'staged_pinch',edgeInsetM:1.10}
 })
 function validate(kind,x){
  if(!Object.hasOwn(PROFILES,kind)||!Number.isFinite(x))
@@ -24,7 +26,15 @@ export function researchRoadEnvelopeV3(kind,x){
  const amount=PROFILES[kind].edgeInsetM
  const factor=x<=680?0:x<780?(x-680)/100:
   x<=920?1:x<1020?(1020-x)/100:0
- const low=amount*factor
+ // A76 research-only multiple constrictions. Keep the original profiles'
+ // exact numerical geometry unchanged, and apply subsequent narrowing
+ // from x1130 to x1470 as a second separate, spatially grounded fixture.
+ // No forecast of a rider's future accepted trajectory is introduced.
+ const second=x<=1130?0:x<1230?(x-1130)/100:
+  x<=1370?1:x<1470?(1470-x)/100:0
+ const low=kind==='double_pinch'?amount*Math.max(factor,second):
+  kind==='staged_pinch'?Math.max(.55*factor,1.10*second):
+  amount*factor
  return {minY:low,maxY:MAX_ROAD_Y-low,widthM:MAX_ROAD_Y-2*low,
   id:kind,spatialX:x,synthetic:true}
 }
