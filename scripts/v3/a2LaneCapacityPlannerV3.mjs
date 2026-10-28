@@ -65,3 +65,24 @@ export function capacityGuidanceV3(plan,id){
  assert(d,'A70 no capacity decision for rider')
  return d
 }
+
+/** Provisional simultaneous lateral slots at a fixed road cross-section.
+ * Count uses BOTH left and right bicycle envelope and >0.8m lateral
+ * separation, so three nominal tracks are NOT always three safe riders.
+ * This is a geometry capacity ceiling, not an acceptance of an entire
+ * moving bunch: longitudinal staggers must still be physically solved.
+ */
+export function physicalLateralCapacityV3(kind,x,{
+ bodyHalfWidthM=.3,lateralSeparationM=.8001}={}){
+ assert(Number.isFinite(bodyHalfWidthM)&&bodyHalfWidthM>=0&&
+  bodyHalfWidthM<=1.1&&Number.isFinite(lateralSeparationM)&&
+  lateralSeparationM>.8&&lateralSeparationM<=2,
+  'A70 invalid bicycle width or lateral clearance')
+ const road=researchRoadEnvelopeV3(kind,x)
+ const usableWidthM=road.widthM-2*bodyHalfWidthM
+ return {x,kind,nominalWidthM:road.widthM,bodyHalfWidthM,
+  usableWidthM,
+  simultaneousLateralSlots:usableWidthM<0?0:
+   Math.max(1,Math.floor((usableWidthM+1e-9)/lateralSeparationM)+1),
+  isCalibrated:false}
+}
