@@ -89,7 +89,7 @@ for(const n of [32,106,168]){
  for(const geometry of ['mild_pinch','strong_pinch']){
   const seconds=n===32?120:90
   for(const policy of ['platoon_two_slot_hazard_hold',
-   'platoon_space_time_reservation']){
+   'platoon_no_yield_control','platoon_space_time_reservation']){
    const base=run(n,geometry,policy,seconds)
    const mirror=run(n,geometry,policy,seconds,{mirror:true})
    const rename=run(n,geometry,policy,seconds,{renamed:true})
@@ -118,6 +118,20 @@ for(const n of [32,106,168]){
   }
  }
 }
+// On mild road, reservations are deliberately INACTIVE. Any improvement
+// over Step71 must therefore be attributed to the matched no-yield steering
+// controller, NOT to A72 future entry window scheduling. Compare exactly.
+for(const n of [32,106,168]){
+ const a=cases.find(x=>x.n===n&&x.geometry==='mild_pinch'&&
+  x.policy==='platoon_no_yield_control')
+ const b=cases.find(x=>x.n===n&&x.geometry==='mild_pinch'&&
+  x.policy==='platoon_space_time_reservation')
+ assert(a&&b&&a.status===b.status&&
+  a.acceptedSeconds===b.acceptedSeconds&&
+  a.lateralCompletions===b.lateralCompletions&&
+  b.reservationRiderTicks===0&&b.upstreamWarnings===0,
+  'A72 falsely attributed mild road physics to inactive two-slot scheduling')
+}
 // Existing three-abreast physical overlap at the worst pinch is NEVER
 // granted a reservation that instantly resolves x/y or commits W-prime.
 const impossible=createNormalStartV3(8,{...options,
@@ -134,6 +148,7 @@ assert.deepEqual(reject.states,impossible.states)
 const study={study:'A2_STEP72_PHYSICAL_TWO_SLOT_RESERVATIONS',
  technicalGate:'PASS',sportingGate:'NO_GO',originalReferenceRetained:true,
  provisionalBicycleHalfWidthM:.3,entryX:780,longitudinalOffsetM:2.6,
+ matchedNoYieldControl:true,mildReservationInactive:true,
  initialThreeAbreastAccepted:false,noUnboundedAcceleration:true,
  deterministicReflectionAndRenaming:true,noOfficialWrites:true,
  cases,fullCrossingSuccesses:cases.filter(x=>
