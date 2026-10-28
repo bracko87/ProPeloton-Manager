@@ -27,10 +27,10 @@ const energetic=()=>initializeEnergyBalanceResearchV3({criticalWatts:305,wPrimeJ
 export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false,
  controllerPolicy='legacy',headwayStandOffM=4.5,roadGeometry='constant',
  roadMergePolicy='preview_only',bodyHalfWidthM=0}={}){
- assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode)&&
+ assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor','five_dense'].includes(mode)&&
  ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
  [3.2,3.8,4.5].includes(headwayStandOffM)&&
- ['constant','mild_pinch','strong_pinch'].includes(roadGeometry)&&
+ ['constant','mild_pinch','strong_pinch','double_pinch','staged_pinch'].includes(roadGeometry)&&
  [0,.3,.4].includes(bodyHalfWidthM)&&
  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
@@ -52,13 +52,16 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
   const row=Math.floor(i/activeLanes),lane=mode==='corridor'?1+i%3:i%5
   const id='r'+String(i).padStart(3,'0')
   const gridX=600-row*5.2
+  // A76 opt-in body-valid five-abreast initial row; each bicycle half-width
+  // is 0.3m inside 4.4m road, with 0.95m lateral centre spacing.
+  const gridY=mode==='five_dense'?.3+(i%5)*.95:lane*road.centerStepM
   const v=mode==='tempered'?9.0+(i%3)*.02:
-   ['mixed','corridor'].includes(mode)?8.45+((i*7)%9)*.14:8.2+((i*11)%13)*.20
+   ['mixed','corridor','five_dense'].includes(mode)?8.45+((i*7)%9)*.14:8.2+((i*11)%13)*.20
   const desired=mode==='tempered'?9.05:
-    ['mixed','corridor'].includes(mode)?8.6+((i*7)%9)*.14:8.3+((i*11)%13)*.20
+    ['mixed','corridor','five_dense'].includes(mode)?8.6+((i*7)%9)*.14:8.3+((i*11)%13)*.20
   starts.push({id:renamed?'z'+String(n-i).padStart(4,'0'):id,
-   x:round(gridX),y:round(lane*road.centerStepM),
-   v:round(v),desired:round(desired),targetY:round(lane*road.centerStepM),
+   x:round(gridX),y:round(gridY),
+   v:round(v),desired:round(desired),targetY:round(gridY),
    energy:energetic(),startOrder:i,startX:gridX})
  }
  if(mirror)for(const s of starts){s.y=round(height-s.y);s.targetY=s.y}
@@ -121,7 +124,7 @@ function checkSnapshot(p){
  assert(Math.abs(p.at-p.acceptedSteps*DT)<1e-6,'A64 time discontinuity')
  assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
-  ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant')&&
+  ['constant','mild_pinch','strong_pinch','double_pinch','staged_pinch'].includes(p.roadGeometry??'constant')&&
   [0,.3,.4].includes(p.bodyHalfWidthM??0)&&
   ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
   'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
