@@ -63,7 +63,7 @@ export function phase3QueueWaveV3(states,requests,originalDesired,{
  // Propagate the already-protected leading rider's planned deceleration
  // upstream over multiple rows. No acceleration spikes are allowed:
  // requests go through unchanged +0.45/-0.85 physical acceleration.
- for(const rear of [...front].reverse()){
+ for(const rear of front){
   const available=front.filter(lead=>lead.x>rear.x+EPS&&
    lead.x-rear.x<=rangeM&&pairNear(lead,rear))
    .sort((a,b)=>a.x-b.x)
