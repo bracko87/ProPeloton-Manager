@@ -146,7 +146,7 @@ export function auditHybridEnergyNextV3(preview,nextPreview,g,road,selectedIds,
   identical(x,baselineById.get(x.riderId)))
  ensure(unchangedExact,'A54 changed unselected rider energy or speed')
  let maxW=0,maxTerminalDelta=0,largestAverageAcceleration=0
- let newlyViolatingAccel=0
+ let newlyViolatingAccel=0,baselineViolatingAccel=0,introducedViolatingAccel=0
  for(const id of changed){
   const a=newStateById.get(id),b=baselineById.get(id)
   maxW=Math.max(maxW,Math.abs(a.energy.remainingWPrimeJoules-b.energy.remainingWPrimeJoules))
@@ -154,6 +154,9 @@ export function auditHybridEnergyNextV3(preview,nextPreview,g,road,selectedIds,
   largestAverageAcceleration=Math.max(largestAverageAcceleration,
    Math.abs(a.terminalSpeedDeltaMps)/physicalSeconds)
   if(a.violatesProvisionalAcceleration) newlyViolatingAccel++
+  if(b.violatesProvisionalAcceleration) baselineViolatingAccel++
+  if(a.violatesProvisionalAcceleration&&!b.violatesProvisionalAcceleration)
+   introducedViolatingAccel++
  }
  let next=null,replayVerified=false,baselineNextMatches=null,secondSweptSafe=null
  let nextStateChanged=0,maxSecondDelta=0,maxSecondWDelta=0
@@ -212,6 +215,10 @@ export function auditHybridEnergyNextV3(preview,nextPreview,g,road,selectedIds,
   maxTerminalSpeedDifferenceMps:r6(maxTerminalDelta),
   largestPostSubstepAccelerationMps2:r6(largestAverageAcceleration),
   provisionalAccelViolationCount:newlyViolatingAccel,
+  baselineAccelViolationCount:baselineViolatingAccel,
+  introducedAccelViolationCount:introducedViolatingAccel,
+  accelerationLimitPass:newlyViolatingAccel===0,
+  shadowPhysicsApproval:'NOT_APPROVED_UNTIL_FULL_TICK_AND_VELOCITY_CONTINUITY',
   nextStepChecked:next!==null,replayVerified,
   baselineNextMatches,secondSweptSafe,
   changedNextRiders:nextStateChanged,
