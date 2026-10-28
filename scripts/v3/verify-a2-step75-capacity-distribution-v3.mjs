@@ -77,6 +77,16 @@ for(const [policy,profile] of profiles){
   firstCollision:metrics.firstCollision,
   firstRoadExit:metrics.firstRoadViolation})
 }
+// Strong 168-rider full-body clearance is now experimentally proven
+// under TWO distinct generic capacity schedules, and must not regress.
+for(const key of ['platoon_gate_tail_surge','platoon_gate_tail_focus']){
+ const good=observed.find(o=>o.policy===key)
+ assert(good&&good.plannedStatus==='NECESSARY_WINDOWS_EXIST'&&
+  good.plannedRiders===168&&good.status==='FULL_HORIZON_CLEAR'&&
+  good.acceptedSeconds===120&&good.minX>1020&&
+  good.completedLaneChanges>=150&&good.nearStopRiderTicks===0,
+  'A75 lost verified all-168-rider full 2.2m road clearance: '+key)
+}
 // Matched existing proven field sizes, avoiding any promotion that breaks
 // already accepted 32/106 strong-rider entry or passing baselines.
 for(const [n,policy] of [[32,'platoon_gate_schedule'],
