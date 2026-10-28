@@ -111,9 +111,9 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
     tiePolicy:state.conflictPolicy==='event_time_fair_normalized'?'physical_group_normalized':
      state.conflictPolicy==='event_time_fair'?'physical_group':'id_first'}):null
   const priority=state.conflictPolicy==='trapezoid_rear_priority'?
-   resolveContactPriorityV3(proposals,g,{policy:'rear_priority'}):
+   resolveContactPriorityV3(proposals,g,{policy:'rear_priority',diagnostics:state.diagnosticTrace===true}):
    state.conflictPolicy==='trapezoid_lane_priority'?
-   resolveContactPriorityV3(proposals,g,{policy:'lane_entry_priority'}):null
+   resolveContactPriorityV3(proposals,g,{policy:'lane_entry_priority',diagnostics:state.diagnosticTrace===true}):null
   const scales=event?.scales??priority?.scales??new Map(proposals.map(p=>[p.riderId,1]))
   let resolved=event?.paths??priority?.paths??null
   if(event){
@@ -130,6 +130,8 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    state.metrics.physicalTieGroups+=event.physicalTieGroups
    state.metrics.physicalTieParticipants+=event.physicalTieParticipants
   }else if(priority){
+   if(priority.diagnosticEvents)
+    for(const event of priority.diagnosticEvents)tickTrace.push({substep:step,...event})
    state.metrics.conflictPairChecks+=priority.pairChecks
    state.metrics.collisionProposals+=priority.collisionProposals
    state.metrics.collisionAttenuationRounds+=priority.rounds

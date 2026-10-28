@@ -8,10 +8,10 @@ const r6=x=>Math.round(x*1e6)/1e6
 const motion=(p,scale)=>({riderId:p.riderId,x0:p.original.meters,
  x1:r6(p.original.meters+p.forward*scale),y0:p.original.y,
  y1:r6(p.original.y+(p.y-p.original.y)*scale)})
-export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',maxRounds=64}={}){
+export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',maxRounds=64,diagnostics=false}={}){
  ensure(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&
   ['rear_priority','lane_entry_priority'].includes(policy)&&
-  Number.isInteger(maxRounds)&&maxRounds===64&&
+  Number.isInteger(maxRounds)&&maxRounds===64&&typeof diagnostics==='boolean'&&
   Number.isFinite(g?.lateralCollisionM),'Invalid A44 research contact inputs')
  const riders=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
  ensure(new Set(riders.map(r=>r.riderId)).size===riders.length,'A44 duplicate rider IDs')
@@ -19,15 +19,24 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
  const scales=new Map(riders.map(r=>[r.riderId,1]))
  let accepted=null,pairChecks=0,collisionProposals=0,rounds=0,
   rearYields=0,enteringYields=0,symmetricYields=0,hardFallbacks=0
+ const diagnosticEvents=diagnostics?[]:null
+ let firstCollidingPairs=null,lastCollidingPairs=null
  for(let round=0;round<=maxRounds;round++){
   const paths=riders.map(r=>motion(r,scales.get(r.riderId)))
   const reduce=new Set(),involved=new Set()
+  const activePairs=diagnostics?[]:null
   for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++){
    pairChecks++
    if(!continuousBicycleCollisionV3(paths[i],paths[j],limits))continue
    collisionProposals++
    const a=riders[i],b=riders[j]
    involved.add(a.riderId);involved.add(b.riderId)
+   if(diagnostics)activePairs.push({
+    a:a.riderId,b:b.riderId,
+    aStartX:a.original.meters,bStartX:b.original.meters,
+    aStartY:a.original.y,bStartY:b.original.y,
+    aProposedY:a.y,bProposedY:b.y,
+    aScale:scales.get(a.riderId),bScale:scales.get(b.riderId)})
    const steerA=Math.abs(a.y-a.original.y)>1e-7
    const steerB=Math.abs(b.y-b.original.y)>1e-7
    const gap=a.original.meters-b.original.meters
@@ -43,7 +52,9 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
     symmetricYields++
    }
   }
+  if(diagnostics&&round===0)firstCollidingPairs=activePairs
   if(!involved.size){accepted=paths;break}
+  if(diagnostics)lastCollidingPairs=activePairs
   if(round===maxRounds)break
   for(const id of reduce)scales.set(id,scales.get(id)/2)
   rounds++
@@ -52,6 +63,16 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
  // one-sided yielding cannot produce a safe space-time path in bounded rounds.
  if(!accepted){
   hardFallbacks++
+  if(diagnostics){
+   const exhaustedScales=[...scales.values()]
+   diagnosticEvents.push({kind:'priority_full_fallback',
+    policy,primaryRounds:maxRounds,firstContactCount:firstCollidingPairs?.length??0,
+    unresolvedContactCount:lastCollidingPairs?.length??0,
+    minimumScale:Math.min(...exhaustedScales),
+    nearZeroScaleCount:exhaustedScales.filter(x=>x<=1e-12).length,
+    firstPairs:(firstCollidingPairs??[]).slice(0,8),
+    unresolvedPairs:(lastCollidingPairs??[]).slice(0,8)})
+  }
   const original=new Map(riders.map(p=>[p.riderId,1]))
   for(let round=0;round<=64;round++){
    const paths=riders.map(p=>motion(p,original.get(p.riderId))),involved=new Set()
@@ -73,6 +94,6 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
   ensure(!continuousBicycleCollisionV3(accepted[i],accepted[j],limits),
    'A44 accepted continuous collision')
  return {paths:accepted,scales,pairChecks,collisionProposals,rounds,
-  rearYields,enteringYields,symmetricYields,hardFallbacks,
+  rearYields,enteringYields,symmetricYields,hardFallbacks,diagnosticEvents,
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
