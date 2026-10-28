@@ -107,7 +107,12 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
       x0:p.original.meters,y0:p.original.y,oldSpeedMps:p.original.speedMps,
       proposedMeters:p.forward,proposedY:p.y,
       requestedSpeedMps:p.command.targetSpeedMps,
-      requestedY:p.command.targetY}))}
+      requestedY:p.command.targetY,
+      // A54: opt-in state snapshot for independent shadow energy replay.
+      // Research diagnostics only; neither energy nor solver is modified.
+      energyBefore:structuredClone(p.original.energy),
+      terminalSpeedMps:p.terminalSpeedMps,
+      steeringWatts:p.command.steeringWatts??35}))}
   }
   const event=['event_time_yield','event_time_fair','event_time_fair_normalized'].includes(state.conflictPolicy)?
    resolveEventTimeYieldV3(proposals,g,{diagnostics:state.diagnosticTrace===true,
