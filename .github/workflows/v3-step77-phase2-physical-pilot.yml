@@ -9,6 +9,7 @@ on:
       - 'scripts/v3/probe-a2-step77-physical-policies-v3.mjs'
       - 'scripts/v3/verify-a2-step77-phase2-staged-success-v3.mjs'
       - 'scripts/v3/probe-a2-step77-neutral-rolling-start-v3.mjs'
+      - 'scripts/v3/probe-a2-step77-chain-coupling-v3.mjs'
       - '.github/workflows/v3-step77-phase2-physical-pilot.yml'
   workflow_dispatch:
 permissions:
@@ -42,6 +43,10 @@ jobs:
         env:
           V3_A2_STEP77_NEUTRAL_DIR: ${{ runner.temp }}/step77neutral
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-neutral-rolling-start-v3.mjs
+      - name: Compare existing bounded chain and yielding for 32 106 168 five-abreast fields
+        env:
+          V3_A2_STEP77_CHAIN_DIR: ${{ runner.temp }}/step77chain
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-chain-coupling-v3.mjs
       - name: Preserve first-contact and passage evidence even if physical candidate fails
         if: always()
         uses: actions/upload-artifact@v4
@@ -52,6 +57,7 @@ jobs:
             ${{ runner.temp }}/step77probe/*.json
             ${{ runner.temp }}/step77staged/*.json
             ${{ runner.temp }}/step77neutral/*.json
+            ${{ runner.temp }}/step77chain/*.json
             ${{ runner.temp }}/step76pass/*.json
           if-no-files-found: warn
           retention-days: 30
