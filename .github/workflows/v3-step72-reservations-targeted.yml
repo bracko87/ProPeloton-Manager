@@ -1,0 +1,33 @@
+name: V3 Step72 physical two-slot reservations research
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2TwoSlotReservationsV3.mjs'
+      - 'scripts/v3/a2NormalStartPelotonV3.mjs'
+      - 'scripts/v3/verify-a2-step72-space-time-reservations-v3.mjs'
+      - '.github/workflows/v3-step72-reservations-targeted.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-reservation-physics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 'Step72 full-body 32/106/168 real lane-slot reservations, exact restart and mirrored rider parity'
+        env:
+          V3_A2_STEP72_DIR: ${{ runner.temp }}/step72
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step72-space-time-reservations-v3.mjs
+      - name: Keep fail-closed Step72 normal-start and pure slot evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step72-space-time-physical-reservation-evidence
+          path: ${{ runner.temp }}/step72/*.json
+          retention-days: 30
+          if-no-files-found: warn
