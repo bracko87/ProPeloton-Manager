@@ -18,8 +18,10 @@ const energetic=()=>initializeEnergyBalanceResearchV3({criticalWatts:305,wPrimeJ
 /** A reproducible ordinary grid, rather than an alert-time state.
  * Tempered and mixed starts share exactly the same geometric initial grid.
  */
-export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false}={}){
- assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode),'A64 unknown start')
+export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false,
+ controllerPolicy='legacy'}={}){
+ assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode)&&
+ ['legacy','coordinated_headway'].includes(controllerPolicy),'A65 unknown normal-start scenario or policy')
  const starts=[]
  for(let i=0;i<n;i++){
   const activeLanes=mode==='corridor'?3:5
@@ -37,9 +39,11 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  }
  if(mirror)for(const s of starts){s.y=round(height-s.y);s.targetY=s.y}
  return {version:1,road:{...road},dt:DT,at:0,states:starts,
+  controllerPolicy,
   acceptedSteps:0,pairChecks:0,brakeEvents:0,steerEvents:0,
   initiatedLaneChanges:0,completedLaneChanges:0,
   nearStops:0,lowestSpeed:Infinity,maxSpeed:0,
+  negotiatedHeadwayPairTicks:0,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
 }
@@ -47,6 +51,8 @@ function checkSnapshot(p){
  assert(p?.dt===DT&&p?.road?.id===road.id&&Number.isInteger(p.acceptedSteps)&&
   p.states?.length>=2&&p.states?.length<=168,'A64 invalid checkpoint')
  assert(Math.abs(p.at-p.acceptedSteps*DT)<1e-6,'A64 time discontinuity')
+ assert(['legacy','coordinated_headway'].includes(p.controllerPolicy??'legacy'),
+  'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
   assert(!ids.has(s.id),'A64 duplicate rider')
@@ -91,11 +97,47 @@ export function advanceNormalStartV3(snapshot){
   const accel=clip((s.desired-s.v)/DT,-B,A)
   return {id:s.id,accel,y1,target,oldTarget:s.targetY}
  })
- const warnings=upstreamWarningsV3(p.states,plans,p.road,DT,{lookaheadSeconds:3})
- const brakes=new Set(warnings.brakeRiders)
+ // A65 experimental dense-field following: compute a simultaneous plan
+ // using only the CURRENT state and this step's lateral intentions. Process
+ // from ahead to rear, so a follower knows the leader's already-limited
+ // acceleration. No hard-coded rider IDs, future accepted paths or repair.
+ const coordinated=p.controllerPolicy==='coordinated_headway'
+ const commanded=new Map(plans.map(a=>[a.id,a.accel]))
+ let negotiatedHeadway=0,headwayLimited=0
+ if(coordinated){
+  const intents=new Map(plans.map(a=>[a.id,a]))
+  const frontFirst=[...p.states].sort((a,b)=>b.x-a.x)
+  for(const s of frontFirst){
+   const a=intents.get(s.id)
+   const ahead=frontFirst.filter(t=>{
+    if(t.x<=s.x+1e-9)return false // no ID-based priority on same row
+    const b=intents.get(t.id)
+    const lateral0=s.y-t.y,lateral1=a.y1-b.y1
+    return Math.abs(lateral0)<=p.road.lateralCollisionM+1e-7||
+     Math.abs(lateral1)<=p.road.lateralCollisionM+1e-7||
+     lateral0*lateral1<0 // projected lateral crossing
+   }).sort((a,b)=>a.x-b.x)[0]
+   if(!ahead)continue
+   const gap=ahead.x-s.x
+   const leaderAccel=commanded.get(ahead.id)
+   const targetV=ahead.v+clip((gap-4.5)/1.5,-2,2)
+   const requested=clip((targetV-s.v)/DT,-B,A)
+   // 2.05 m conservative end-of-step clearance; +.25m beyond bike length.
+   // The formula includes actual bounded lead acceleration, unlike the
+   // fixed-leader A61 rear-only alarm. It cannot override brake limits.
+   const maxSafe=leaderAccel+2*(gap-2.05+(ahead.v-s.v)*DT)/(DT*DT)
+   const limited=Math.max(-B,Math.min(a.accel,requested,maxSafe))
+   if(limited<a.accel-1e-9){commanded.set(s.id,limited);headwayLimited++}
+   negotiatedHeadway++
+  }
+ }
+ const warnings=coordinated?null:
+  upstreamWarningsV3(p.states,plans,p.road,DT,{lookaheadSeconds:3})
+ const brakes=new Set(warnings?.brakeRiders??[])
  const paths=plans.map(a=>{
   const s=byId.get(a.id)
-  const accel=brakes.has(a.id)?-B:a.accel
+  const accel=coordinated?commanded.get(a.id):
+   brakes.has(a.id)?-B:a.accel
   const nextV=Math.max(0,s.v+accel*DT)
   const travel=Math.max(0,s.v*DT+.5*accel*DT*DT)
   return {s,a,accel,x1:s.x+travel,y1:a.y1,v1:nextV,
@@ -140,7 +182,8 @@ export function advanceNormalStartV3(snapshot){
    targetY:round(a.a.target),energy})
  }
  p.states=updates;p.at=round(p.at+DT);p.acceptedSteps++
- p.pairChecks+=checked;p.brakeEvents+=brakes.size
+ p.pairChecks+=checked;p.brakeEvents+=coordinated?headwayLimited:brakes.size
+ p.negotiatedHeadwayPairTicks=(p.negotiatedHeadwayPairTicks??0)+negotiatedHeadway
  p.steerEvents+=paths.filter(a=>Math.abs(a.y1-a.s.y)>1e-7).length
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
@@ -179,6 +222,7 @@ export function finishNormalStartMetricsV3(original,final){
   frontToLastGapM:round(Math.max(...xs)-Math.min(...xs)),
   minimumSpeedMps:final.lowestSpeed,maximumSpeedMps:final.maxSpeed,
   nearStopRiderTicks:final.nearStops,brakeRiderTicks:final.brakeEvents,
+  headwayPairDecisionTicks:final.negotiatedHeadwayPairTicks??0,
   laneSteeringRiderTicks:final.steerEvents,
   initiatedLaneChanges:final.initiatedLaneChanges,
   completedLaneChanges:final.completedLaneChanges,
