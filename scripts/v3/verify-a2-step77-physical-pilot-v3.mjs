@@ -20,7 +20,7 @@ for(const n of [8,32,106,168]){
    ...opts,roadGeometry:geometry})
   assert.equal(initial.admission.status,'NECESSARY_WINDOWS_EXIST')
   assert.equal(initial.admission.bookedCount,n*2)
-  assert.equal(initial.physical.roadMergePolicy,'platoon_no_yield_control')
+  assert.equal(initial.physical.roadMergePolicy,'preview_only')
   const first=advanceMultiGatePhysicalCandidateV3(initial)
   if(first.reason){
    assert.equal(first.physical.at,0)
