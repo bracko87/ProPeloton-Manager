@@ -1,0 +1,61 @@
+name: V3 A2 Step54 shadow hybrid energy and next contact audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2HybridEnergyNextAuditV3.mjs'
+      - 'scripts/v3/a2SubstepPhysicalResearchV3.mjs'
+      - 'scripts/v3/verify-a2-step54-shadow-energy-v3.mjs'
+      - '.github/workflows/v3-a2-step54-shadow-energy.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  shadow-energy-next:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Shadow W-prime, speed and next swept substep across A53 interventions
+        env:
+          V3_A2_STEP54_DIR: ${{ runner.temp }}/step54
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step54-shadow-energy-v3.mjs
+      - name: Retain safe/unsafe shadow outcomes and individual energy/next evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step54-shadow-energy-evidence
+          path: ${{ runner.temp }}/step54/*.json
+          retention-days: 30
+          if-no-files-found: warn
+  prior-and-app-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 95
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve A53-A39 physics and complete-stage validation
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step53-preacceptance-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step52-isolated-components-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step51-contact-propagation-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step50-contact-time-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step49-common-reference-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step48-first-pair-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step47-selective-corridor-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step46-corridor-guard-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step45-fallback-fixtures-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step44-priority-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step43-trapezoid-trial-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step42-fixed-quantum-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step41-canonical-mirror-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step40-normalized-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step39-fairness-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Build React production application
+        run: npm ci --no-audit --no-fund && npm run build
