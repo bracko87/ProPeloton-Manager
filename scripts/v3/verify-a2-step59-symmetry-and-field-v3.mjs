@@ -179,6 +179,14 @@ const a61={scenarios:0,priorCheckpointsAvailable:0,startedEarlier:0,
  firstContactBeforeOriginalWarning:0,
  byQuantum:{'0.5':{scenarios:0,baseClear:0,upstream3Clear:0,upstream5Clear:0},
  '2.5':{scenarios:0,baseClear:0,upstream3Clear:0,upstream5Clear:0}}}
+const a62={scenarios:0,substeppedClear:0,coarse3sClear:0,
+  rescued:0,regressed:0,coarseCollisions:0,fineCollisions:0,
+  zeroStepDriftMismatch:0,mirrorOutcomeMismatch:0,renameOutcomeMismatch:0,
+  mirrorFirstPairMismatch:0,renameFirstPairMismatch:0,
+  jsonReplayMismatch:0,coarseFirstContactKinds:{},
+  fineFirstContactKinds:{},coarseInitiallyOverlapping:0,fineInitiallyOverlapping:0,
+  coarseCollisionTimeBeforeOriginalAlert:0,fineCollisionTimeBeforeOriginalAlert:0,
+  quantum:{'0.5':{cases:0,coarseClear:0,fineClear:0},'2.5':{cases:0,coarseClear:0,fineClear:0}}}
 const cases=[],errors=[],historical=[]
 const a60={scenarios:0,previousFieldClear:0,fixedBrakeClear:0,
  laneIntentClear:0,laneIntentRegressions:0,laneIntentRescues:0,
@@ -412,6 +420,71 @@ for(const geometry of BATCH40_GEOMETRIES){
        a61.jsonReplayMismatch+=Number(JSON.stringify(upstream5)!==JSON.stringify(serialized5))
        a61.firstContactBeforeOriginalWarning+=Number(Boolean(upstream5.firstBlocker&&
         upstream5.firstBlocker.whenSeconds<alert-q-1e-7))
+       // A62 uses identical A61 start and *same* 3-second advisory.
+       // The ONLY physical change is recalculating the entire coupled field
+       // every 0.5 seconds while holding current coarse tactical intentions.
+       const substepped=replayAllRiderAnticipationProbeV3(A.observed,g,
+        [-3,0][v],who,alert,first.firstAcceptedDifferenceSeconds,fixed,
+        {...settings,preStepPolicy:'upstream_3s',internalQuantumSeconds:.5})
+       const subMirror=replayAllRiderAnticipationProbeV3(mirroredSource,g,
+        [-3,0][v],who,alert,first.firstAcceptedDifferenceSeconds,fixedMirror,
+        {...settings,preStepPolicy:'upstream_3s',internalQuantumSeconds:.5})
+       const subRename=replayAllRiderAnticipationProbeV3(relabeled.source,g,
+        [-3,0][v],newId,alert,first.firstAcceptedDifferenceSeconds,fixedRename,
+        {...settings,preStepPolicy:'upstream_3s',internalQuantumSeconds:.5})
+       const subJSON=replayAllRiderAnticipationProbeV3(
+        JSON.parse(JSON.stringify(A.observed)),g,[-3,0][v],who,alert,
+        first.firstAcceptedDifferenceSeconds,JSON.parse(JSON.stringify(fixed)),
+        {...settings,preStepPolicy:'upstream_3s',internalQuantumSeconds:.5})
+       const contactCategory=(x)=>{
+        if(!x.firstBlocker)return 'CLEAR'
+        const contact=x.records.find(r=>r.collision)
+        if(!contact)return 'UNKNOWN'
+        const m=new Map(contact.startingStateDigest.map(s=>[s.id,s]))
+        const a=m.get(x.firstBlocker.pair[0]),b=m.get(x.firstBlocker.pair[1])
+        if(!a||!b)return 'MISSING_CONTACT_STATES'
+        const dx=Math.abs(a.x-b.x),dy=Math.abs(a.y-b.y)
+        return dx<=1.8+1e-7&&dy<=g.lateralCollisionM+1e-7?
+          'PRESENT_AT_STEP_START':dy<=g.lateralCollisionM+1e-7?
+          'LONGITUDINAL_CLOSING':'LATERAL_CONVERGENCE'
+       }
+       const increment=(obj,key)=>{obj[key]=(obj[key]??0)+1}
+       increment(a62.coarseFirstContactKinds,contactCategory(upstream3))
+       increment(a62.fineFirstContactKinds,contactCategory(substepped))
+       a62.coarseInitiallyOverlapping+=Number(contactCategory(upstream3)==='PRESENT_AT_STEP_START')
+       a62.fineInitiallyOverlapping+=Number(contactCategory(substepped)==='PRESENT_AT_STEP_START')
+       a62.coarseCollisionTimeBeforeOriginalAlert+=Number(Boolean(upstream3.firstBlocker&&
+        upstream3.firstBlocker.whenSeconds<alert-q-1e-7))
+       a62.fineCollisionTimeBeforeOriginalAlert+=Number(Boolean(substepped.firstBlocker&&
+        substepped.firstBlocker.whenSeconds<alert-q-1e-7))
+       a62.scenarios++;a62.coarse3sClear+=Number(upstream3.complete)
+       a62.substeppedClear+=Number(substepped.complete)
+       a62.coarseCollisions+=Number(upstream3.status==='REJECTED_COLLISION')
+       a62.fineCollisions+=Number(substepped.status==='REJECTED_COLLISION')
+       a62.rescued+=Number(!upstream3.complete&&substepped.complete)
+       a62.regressed+=Number(upstream3.complete&&!substepped.complete)
+       a62.mirrorOutcomeMismatch+=Number(substepped.status!==subMirror.status||
+        substepped.steps!==subMirror.steps)
+       a62.renameOutcomeMismatch+=Number(substepped.status!==subRename.status||
+        substepped.steps!==subRename.steps)
+       a62.mirrorFirstPairMismatch+=Number(firstPair(substepped,x=>x)!==
+        firstPair(subMirror,x=>x))
+       a62.renameFirstPairMismatch+=Number(firstPair(substepped,x=>relabeled.map.get(x))!==
+        firstPair(subRename,x=>x))
+       a62.jsonReplayMismatch+=Number(JSON.stringify(substepped)!==JSON.stringify(subJSON))
+       const aq=a62.quantum[String(q)]
+       assert(aq,'A62 unknown source frame quantum')
+       aq.cases++;aq.coarseClear+=Number(upstream3.complete)
+       aq.fineClear+=Number(substepped.complete)
+       if(q===.5){
+        const normalized=(x)=>{
+         const c=JSON.parse(JSON.stringify(x))
+         c.internalQuantumSeconds=.5
+         return c
+        }
+        a62.zeroStepDriftMismatch+=Number(JSON.stringify(normalized(upstream3))!==
+         JSON.stringify(normalized(substepped)))
+       }
        const bq=a61.byQuantum[String(q)]
        assert(bq,'A61 missing bounded quantum group')
        bq.scenarios++;bq.baseClear+=Number(earlierBaseline.complete)
@@ -441,7 +514,12 @@ for(const geometry of BATCH40_GEOMETRIES){
          leadBeforeWarningSeconds:lead,priorFramesIn5Seconds:prior.length,
          matchedEarlierBaseline:earlierBaseline.status,upstream3s:upstream3.status,
          upstream5s:upstream5.status,
-         upstream5sFirstBlocker:upstream5.firstBlocker}})
+         upstream5sFirstBlocker:upstream5.firstBlocker},
+        a62:{coarse3s:upstream3.status,fineHalfSecond:substepped.status,
+         coarseContactKind:contactCategory(upstream3),
+         fineContactKind:contactCategory(substepped),
+         coarseFirstBlocker:upstream3.firstBlocker,
+         fineFirstBlocker:substepped.firstBlocker}})
       }
      }
     }
@@ -460,6 +538,13 @@ assert.equal(mirrors,67);assert.equal(renames,67)
 assert.equal(historical.length,4)
 assert.equal(a60.scenarios,67,'A60 missing full-field comparisons')
 assert.equal(a61.scenarios,67,'A61 missing autonomous upstream comparisons')
+assert.equal(a62.scenarios,67,'A62 must test all 67 source checkpoints')
+assert.equal(a62.zeroStepDriftMismatch,0,'A62 changed old 0.5s physical runs')
+assert.equal(a62.mirrorOutcomeMismatch,0,'A62 mirrored outcomes mismatch')
+assert.equal(a62.renameOutcomeMismatch,0,'A62 renamed outcomes mismatch')
+assert.equal(a62.mirrorFirstPairMismatch,0,'A62 mirrored contact identity mismatch')
+assert.equal(a62.renameFirstPairMismatch,0,'A62 renamed contact identity mismatch')
+assert.equal(a62.jsonReplayMismatch,0,'A62 exact serialized shadow replay mismatch')
 assert.equal(a61.mirrorOutcomeMismatch,0,'A61 failed mirror outcomes')
 assert.equal(a61.renameOutcomeMismatch,0,'A61 failed rider-ID outcomes')
 assert.equal(a61.mirrorFirstPairMismatch,0,'A61 failed mirror contact identities')
@@ -481,7 +566,7 @@ assert.equal(byQuantum.reduce((a,x)=>a+x.rightSteerRescues,0),15)
 const study={study:'A2_STEP59_FULL_MIRROR_RELABEL_AND_ALL_FIELD_STRESS',
  technicalGate:'PASS',sportingGate:'NO_GO',physicalRuns:physicsRuns,
  sameCheckpointScenarios:67,mirrorReplays:mirrors,relabelReplays:renames,
- originalA58Options:383,byQuantum,step60:a60,step61:a61,
+ originalA58Options:383,byQuantum,step60:a60,step61:a61,step62:a62,
  positiveThreeRiderFullField:{
   complete10s:true,exactJSON:true,mirror:true,rename:true,
   deliberatelyOverlappingInitialStateRejected:true},
@@ -494,6 +579,6 @@ writeFileSync(dir+'/a2-step59-symmetry-and-all-field.json',JSON.stringify(study,
 console.log(JSON.stringify({study:study.study,technicalGate:study.technicalGate,
  sportingGate:study.sportingGate,physicalRuns:study.physicalRuns,
  mirrorReplays:mirrors,relabelReplays:renames,
- byQuantum,step60:study.step60,step61:study.step61,
+ byQuantum,step60:study.step60,step61:study.step61,step62:study.step62,
  positiveThreeRiderFullField:study.positiveThreeRiderFullField,
  officialWrites:0,sportingApproval:'NOT_APPROVED'}))
