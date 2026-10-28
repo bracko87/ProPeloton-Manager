@@ -1,4 +1,4 @@
-name: V3 A2 Step59-64 bounded-field and normal-start research
+name: V3 A2 Step59-65 physical safety, normal-start and negotiated headway research
 on:
   push:
     branches: [main]
@@ -8,6 +8,7 @@ on:
       - 'scripts/v3/a2UpstreamPredictionV3.mjs'
       - 'scripts/v3/a2NormalStartPelotonV3.mjs'
       - 'scripts/v3/verify-a2-step64-normal-start-v3.mjs'
+      - 'scripts/v3/verify-a2-step65-coordinated-headway-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -36,6 +37,18 @@ jobs:
         env:
           V3_A2_STEP64_DIR: ${{ runner.temp }}/step64
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step64-normal-start-v3.mjs
+      - name: Step65 matched crowded and open-corridor coordinated normal starts
+        env:
+          V3_A2_STEP65_DIR: ${{ runner.temp }}/step65
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step65-coordinated-headway-v3.mjs
+      - name: Retain Step65 matched headway, swept-failure and parity comparisons
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step65-cooperative-headway-evidence
+          path: ${{ runner.temp }}/step65/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step64 normal-start physical and sporting diagnostic evidence
         if: always()
         uses: actions/upload-artifact@v4
