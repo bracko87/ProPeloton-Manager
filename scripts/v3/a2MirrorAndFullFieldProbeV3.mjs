@@ -3,6 +3,7 @@
  */
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
 import {currentLaneIntentWarningsV3} from './a2FirstContactFeasibilityV3.mjs'
+import {upstreamWarningsV3} from './a2UpstreamPredictionV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
 import {commitAchievedSpeedEnergyV3} from '../../src/race-engine-v3/energyBalanceResearchV3.ts'
 const check=(x,msg)=>{if(!x)throw Error(msg)}
@@ -104,32 +105,36 @@ function firstCollision(paths,g,dt,intervals){
  * This is a stress-control model, not an approved physical peloton solver.
  */
 export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
- warningEnd,event,option,{dt,horizonSeconds=10,intervals=16,preStepPolicy='legacy'}={}){
+ warningEnd,event,option,{dt,horizonSeconds=10,intervals=16,preStepPolicy='legacy',
+  controlMode='selected',leadFrames=0}={}){
  check(Array.isArray(source)&&source.length===6&&dt>0&&dt<=5&&
   Number.isInteger(intervals)&&intervals>=16&&intervals<=64&&
   option?.reactors?.includes(primary)&&
-  ['legacy','lane_intent'].includes(preStepPolicy)&&
+  ['legacy','lane_intent','upstream_3s','upstream_5s'].includes(preStepPolicy)&&
+  ['selected','autonomous'].includes(controlMode)&&Number.isInteger(leadFrames)&&
+  leadFrames>=0&&leadFrames<=10&&
   Number.isFinite(g?.lateralCollisionM),'A59 invalid full-field shadow')
  const preserved=JSON.stringify(source)
  const frames=source.flatMap(t=>t.previews.map(p=>({
   t0:now(p.tickStartSeconds+(p.substep-1)*dt),
   t1:now(p.tickStartSeconds+p.substep*dt),p
  }))).sort((a,b)=>a.t0-b.t0)
- const index=frames.findIndex(x=>Math.abs(x.t1-warningEnd)<1e-6)
- check(index>=0,'A59 actual warning state missing')
+ const actualIndex=frames.findIndex(x=>Math.abs(x.t1-warningEnd)<1e-6)
+ check(actualIndex>=0,'A59 actual warning state missing')
+ const index=Math.max(0,actualIndex-leadFrames)
  const first=frames[index],start=first.t0,last=Math.min(60,start+horizonSeconds)
  const framesToRun=frames.slice(index).filter(f=>f.t1<=last+1e-8)
  const orig=new Map(first.p.proposals.map(p=>[p.riderId,p]))
  const states=new Map(first.p.proposals.map(p=>[p.riderId,{
   id:p.riderId,x:p.x0,y:p.y0,v:p.oldSpeedMps,energy:structuredClone(p.energyBefore)
  }]))
- const chosen=new Set(option.reactors)
- const chosenStart=new Map(option.reactors.map(id=>{
+ const chosen=new Set(controlMode==='autonomous'?[]:option.reactors)
+ const chosenStart=new Map([...chosen].map(id=>{
   const p=orig.get(id);check(p,'A59 unknown chosen rider')
   return [id,{originalY:p.y0}]
  }))
  const log=[],blockers=[]
- let reason=null,maxLateral=0,headwayReactions=0,intentWarningPairs=0
+ let reason=null,maxLateral=0,headwayReactions=0,intentWarningPairs=0,upstreamEventPairs=0
  for(const f of framesToRun){
   const proposed=new Map(f.p.proposals.map(p=>[p.riderId,p]))
   const acts=new Map()
@@ -172,6 +177,21 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
     [...acts].map(([id,a])=>({id,accel:a.accel,y1:a.y1})),g,dt)
    intentWarningPairs+=warnings.reasons.length
    for(const id of warnings.brakeRiders){
+    if(!chosen.has(id)&&acts.get(id).accel>-B+1e-8){
+     acts.get(id).accel=-B
+     headwayReactions++
+    }
+   }
+  }
+  // A61: forecast uses CURRENT (not future accepted) states and commanded
+  // lateral rates. Both warning horizons re-evaluate at every physical step.
+  if(preStepPolicy==='upstream_3s'||preStepPolicy==='upstream_5s'){
+   const lookaheadSeconds=preStepPolicy==='upstream_3s'?3:5
+   const advice=upstreamWarningsV3([...states.values()],
+    [...acts].map(([id,a])=>({id,accel:a.accel,y1:a.y1})),g,dt,
+    {lookaheadSeconds})
+   upstreamEventPairs+=advice.events.length
+   for(const id of advice.brakeRiders){
     if(!chosen.has(id)&&acts.get(id).accel>-B+1e-8){
      acts.get(id).accel=-B
      headwayReactions++
@@ -223,7 +243,8 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
   firstBlocker:blockers[0]??null,energyFailure:log.at(-1)?.energyFailure??null,
   fullFieldIntegrated:true,usedOriginalA44FrozenObstacles:false,
   additionalHeadwayBrakingDecisions:headwayReactions,
-  intentWarningPairs,preStepPolicy,
+  intentWarningPairs,upstreamEventPairs,preStepPolicy,controlMode,
+  leadFramesUsed:actualIndex-index,startSeconds:start,
   maxLateralSpeedMps:r6(maxLateral),steps:log.length,
   groupCount:chosen.size,fieldSize:states.size,
   records:log,originalCommandsReadOnly:true,
