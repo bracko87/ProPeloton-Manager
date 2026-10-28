@@ -51,7 +51,8 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
   crossingSpeedMps>=1&&crossingSpeedMps<=20&&
   slotSpacingSeconds>=headwayM/minSpeedMps&&
   ['uniform','front_loaded','balanced','late_pressure',
-   'mid_pressure','late_peak','late_moderate'].includes(slotSpacingProfile)&&
+   'mid_pressure','late_peak','late_moderate','tail_surge','tail_grad',
+   'tail_emphasis','tail_focus','tail_flip'].includes(slotSpacingProfile)&&
   minSpeedMps>=1&&minSpeedMps<=10&&
   deadlineSeconds>0&&deadlineSeconds<=3600,
   'A73 invalid narrow-road entry-window parameters')
@@ -98,6 +99,16 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
    (ratio<.571?.57:ratio<.893?.70:.5):
    slotSpacingProfile==='late_moderate'?
    (ratio<.643?.60:ratio<.893?.66:.5):
+   slotSpacingProfile==='tail_surge'?
+   (ratio<.571?.56:ratio<.893?.69:.60):
+   slotSpacingProfile==='tail_grad'?
+   (ratio<.625?.57:ratio<.875?.68:.60):
+   slotSpacingProfile==='tail_emphasis'?
+   (ratio<.50?.56:ratio<.839?.68:.61):
+   slotSpacingProfile==='tail_focus'?
+   (ratio<.446?.55:ratio<.893?.66:.64):
+   slotSpacingProfile==='tail_flip'?
+   (ratio<.625?.58:ratio<.857?.67:.61):
    slotSpacingSeconds
   if(blocked){
    unresolved.push({startX:row[0].startX,reason:'BLOCKED_BY_EARLIER_ROW'})
