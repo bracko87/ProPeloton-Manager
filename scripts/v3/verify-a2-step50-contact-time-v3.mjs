@@ -187,8 +187,8 @@ for(const geometry of BATCH40_GEOMETRIES){
     const rhs=values.trapezoid_contact_time_occupancy[String(spec.quantum)]
     const first=firstComparedDivergenceV3(lhs,rhs,g,spec.quantum)
     const all=rhs.observed.flatMap(t=>t.previews)
-    const contactEvents=all.reduce((a,t)=>a+t.previewConflictCount,0)
-    const candidatesAt=rhs.observed.flatMap(t=>t.previews).filter(t=>
+    const contactEvents=lhs.observed.flatMap(t=>t.previews).reduce((a,t)=>a+t.previewConflictCount,0)
+    const candidatesAt=lhs.observed.flatMap(t=>t.previews).filter(t=>
      t.tickStartSeconds+(t.substep)*t.dtSeconds>=spec.expected-1e-9&&
      t.tickStartSeconds+(t.substep)*t.dtSeconds<=spec.expected+1e-9)
     const classified=candidatesAt.flatMap(e=>{
