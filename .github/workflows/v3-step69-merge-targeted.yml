@@ -1,0 +1,33 @@
+name: V3 Step69 targeted 2D multi-rider merging audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2NormalStartPelotonV3.mjs'
+      - 'scripts/v3/a2VariableRoadWidthV3.mjs'
+      - 'scripts/v3/verify-a2-step69-multi-rider-merge-v3.mjs'
+      - '.github/workflows/v3-step69-merge-targeted.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-merge-feasibility:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 'A69 targeted: physical 32/106/168 lane admission, normal-start checkpoint, parity and first-failure evidence'
+        env:
+          V3_A2_STEP69_DIR: ${{ runner.temp }}/step69
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step69-multi-rider-merge-v3.mjs
+      - name: Save exact Step69 test corpus and rejected contacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step69-physical-merging-targeted
+          path: ${{ runner.temp }}/step69/*.json
+          retention-days: 30
+          if-no-files-found: warn
