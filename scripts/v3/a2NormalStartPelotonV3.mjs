@@ -73,7 +73,8 @@ function chooseLane(s,states){
  .sort((a,b)=>b.margin-a.margin)
  // Equal openings must not prefer a hard-coded physical side. A mirror-
  // invariant controller stays in lane until one corridor has an advantage.
- if(candidates.length>1&&Math.abs(candidates[0].margin-candidates[1].margin)<1e-7)
+ if(candidates.length>1&&(candidates[0].margin===candidates[1].margin||
+  Math.abs(candidates[0].margin-candidates[1].margin)<1e-7))
   return s.targetY
  return candidates[0]?.y??s.targetY
 }
@@ -180,6 +181,7 @@ export function finishNormalStartMetricsV3(original,final){
   nearStopRiderTicks:final.nearStops,brakeRiderTicks:final.brakeEvents,
   laneSteeringRiderTicks:final.steerEvents,
   initiatedLaneChanges:final.initiatedLaneChanges,
+  completedLaneChanges:final.completedLaneChanges,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
