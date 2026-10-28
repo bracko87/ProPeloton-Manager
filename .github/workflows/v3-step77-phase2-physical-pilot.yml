@@ -7,6 +7,7 @@ on:
       - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
       - 'scripts/v3/verify-a2-step77-physical-pilot-v3.mjs'
       - 'scripts/v3/probe-a2-step77-physical-policies-v3.mjs'
+      - 'scripts/v3/verify-a2-step77-phase2-staged-success-v3.mjs'
       - '.github/workflows/v3-step77-phase2-physical-pilot.yml'
   workflow_dispatch:
 permissions:
@@ -28,6 +29,14 @@ jobs:
         env:
           V3_A2_STEP77_PROBE_DIR: ${{ runner.temp }}/step77probe
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-physical-policies-v3.mjs
+      - name: Validate 32r five-abreast 180s staged coupled sweeps, 90+90 replay, mirror parity, independent overtakes, larger field counterexamples
+        env:
+          V3_A2_STEP77_STAGED_DIR: ${{ runner.temp }}/step77staged
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step77-phase2-staged-success-v3.mjs
+      - name: Protect Step76 32 106 168 180s real sustained passes and collision-free narrowings
+        env:
+          V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/step76pass
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
       - name: Preserve first-contact and passage evidence even if physical candidate fails
         if: always()
         uses: actions/upload-artifact@v4
@@ -36,5 +45,7 @@ jobs:
           path: |
             ${{ runner.temp }}/step77physics/*.json
             ${{ runner.temp }}/step77probe/*.json
+            ${{ runner.temp }}/step77staged/*.json
+            ${{ runner.temp }}/step76pass/*.json
           if-no-files-found: warn
           retention-days: 30
