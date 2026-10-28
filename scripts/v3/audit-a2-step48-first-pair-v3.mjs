@@ -100,6 +100,7 @@ const rename=auditFirstContactPairV3({...pA,riderId:'z99'},{...pB,riderId:'z01'}
 assert.equal(rename.movementType,geometrySanity.movementType)
 assert.equal(rename.stationaryFollowerHit,geometrySanity.stationaryFollowerHit)
 const cases=[],regressions=[],errors=[]
+let extraReferenceRuns=0,referenceOnlyCases=0
 const qvalues=[.5,1,2,2.5,5]
 for(const geometry of BATCH40_GEOMETRIES){
  const g=validateRoadScenarioV3(geometry)
@@ -133,12 +134,32 @@ for(const geometry of BATCH40_GEOMETRIES){
      finalGap:{rear:rear.maxGap,guard:guard.maxGap,leader:leader.maxGap}}
     cases.push(base)
     if(Object.values(leaderVsRear).slice(0,3).some(Boolean)){
-     const firstVsRear=firstComparedDivergenceV3(
+     const firstCoarseRear=firstComparedDivergenceV3(
       runs.trapezoid_rear_priority,runs.trapezoid_rear_corridor_leader,g,quantum)
-     const firstVsGuard=firstComparedDivergenceV3(
+     const firstCoarseGuard=firstComparedDivergenceV3(
       runs.trapezoid_rear_corridor_guard,runs.trapezoid_rear_corridor_leader,g,quantum)
-     assert(firstVsRear,'A48 individual regression without any observed differing accepted path')
-     regressions.push({...base,firstVsRear,firstVsGuard})
+     let firstRefRear=null,firstRefGuard=null
+     if(!firstCoarseRear||!firstCoarseGuard){
+      const fine=Object.fromEntries(physicalPolicies.map(policy=>[
+       policy,simulate(geometry,g,n,v,policy,.5,{diagnostics:true})]))
+      extraReferenceRuns+=physicalPolicies.length
+      for(const policy of physicalPolicies)assert.deepEqual(
+       fine[policy].riders,ref[policy].riders,
+       'A48 independent 0.5s diagnostic changed physics')
+      firstRefRear=firstComparedDivergenceV3(
+       fine.trapezoid_rear_priority,fine.trapezoid_rear_corridor_leader,g,.5)
+      firstRefGuard=firstComparedDivergenceV3(
+       fine.trapezoid_rear_corridor_guard,fine.trapezoid_rear_corridor_leader,g,.5)
+     }
+     const firstVsRear=firstCoarseRear??firstRefRear
+     const firstVsGuard=firstCoarseGuard??firstRefGuard
+     assert(firstVsRear,'A48 regression has no difference in either physical run')
+     if(!firstCoarseRear)referenceOnlyCases++
+     regressions.push({...base,firstVsRear,firstVsGuard,
+      firstRearGridSeconds:firstCoarseRear?quantum:.5,
+      coarseRunsSame:!firstCoarseRear,
+      finerReferenceRunsDifferent:!!firstRefRear,
+      firstGuardGridSeconds:firstCoarseGuard?quantum:firstRefGuard?.simulationSeconds===undefined?null:.5})
     }
    }
   }catch(e){const err={road:g.id,n,v,error:String(e.stack??e)}
@@ -164,6 +185,8 @@ const firstPairFeatures=regressions.map(entry=>{
  const first=entry.firstVsRear
  const pairs=[...first.left.pairs,...first.right.pairs]
  return {road:entry.road,n:entry.n,v:entry.v,quantum:entry.quantum,
+  firstOriginPhysicalStepSeconds:entry.firstRearGridSeconds,
+  coarseRunsSame:entry.coarseRunsSame,
   firstTime:first.simulationSeconds,firstRider:first.offendingRiderId,
   leftConflictCount:first.left.previewCount,rightConflictCount:first.right.previewCount,
   movements:[...new Set(pairs.map(p=>p.movementType))],
@@ -178,7 +201,8 @@ const sourceM=regressions.reduce((a,x)=>Math.min(a,x.firstVsRear.simulationSecon
 const report={study:'A2_STEP48_FIRST_PAIR_GEOMETRY_AUDIT',technicalGate:'PASS',
  sportingGate:'NO_GO',source:'independent frozen-trajectory observer, NO physics changes',
  fixtures:40,gridComparisons:cases.length,
- analyzedPhysicalRuns:600, // 40 fixtures x 3 policies x (reference + 4 physical time grids)
+ analyzedPhysicalRuns:600+extraReferenceRuns,
+ extraReferenceRuns,referenceOnlyCases,
  expectedLeaderOnlyRegressions:11,
  observedLeaderOnlyRegressions:regressions.length,
  observedGuardRegressions:10,
@@ -193,6 +217,7 @@ writeFileSync(folder+'/a2-step48-pair-geometry.json',JSON.stringify(report,null,
 console.log(JSON.stringify({study:report.study,technicalGate:report.technicalGate,
  sportingGate:report.sportingGate,fixtures:report.fixtures,gridComparisons:report.gridComparisons,
  analyzedPhysicalRuns:report.analyzedPhysicalRuns,
+ referenceOnlyCases:report.referenceOnlyCases,extraReferenceRuns:report.extraReferenceRuns,
  observedLeaderOnlyRegressions:report.observedLeaderOnlyRegressions,
  observedGuardRegressions:report.observedGuardRegressions,
  byQuantum,categories,firstDivergenceAtSeconds:report.firstDivergenceAtSeconds,
