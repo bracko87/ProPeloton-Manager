@@ -50,8 +50,8 @@ function run(n,geometry,seconds,variant={}){
    'A68 missing first actual swept road breach')
   assert.throws(()=>advanceNormalStartV3(end),'A68 rejected state accepted by retry')
  }
- const report={n,geometry,requestedSeconds:seconds,
-  ...metrics,mode:'corridor'}
+ const report={n,geometry,roadMergePolicy:start.roadMergePolicy,
+  requestedSeconds:seconds,...metrics,mode:'corridor'}
  trials.push(report)
  return {start,end,report}
 }
@@ -102,6 +102,39 @@ for(const n of [32,106,168]){
   }
  }
 }
+// Matched A68b: buffered following increases a spatially forecast headway
+// before a narrowed lane closes. Every acceleration remains bounded and
+// all same-pair swept contacts remain fail-closed. Never select a policy
+// retrospectively per rider, per road case or from future accepted motion.
+for(const n of [32,106,168]){
+ const seconds=n===32?120:90
+ for(const geometry of ['mild_pinch','strong_pinch']){
+  const cfg={roadMergePolicy:'buffered_headway'}
+  const {start,end,report}=run(n,geometry,seconds,cfg)
+  assert(report.roadMergeBufferedRiderTicks>0,
+   'A68 buffered policy did not see spatial pinch in time')
+  const reflected=runNormalStartV3(createNormalStartV3(n,{
+   ...startOptions,roadGeometry:geometry,...cfg,mirror:true}),{seconds})
+  const renamed=runNormalStartV3(createNormalStartV3(n,{
+   ...startOptions,roadGeometry:geometry,...cfg,renamed:true}),{seconds})
+  assert.equal(reflected.reason,end.reason,'A68 buffered mirror status differs')
+  assert.equal(renamed.reason,end.reason,'A68 buffered rename status differs')
+  assert.equal(reflected.acceptedSteps,end.acceptedSteps)
+  assert.equal(renamed.acceptedSteps,end.acceptedSteps)
+  for(let i=0;i<n;i++){
+   const a=end.states[i],b=reflected.states[i],c=renamed.states[i]
+   assert(approx(a.x,b.x)&&approx(a.y,4.4-b.y),
+    'A68 buffered mirrored geometry differs')
+   assert(approx(a.x,c.x)&&approx(a.y,c.y),
+    'A68 buffered renamed rider changes accepted movement')
+  }
+  if(!end.reason){
+   const first=runNormalStartV3(start,{seconds:seconds/2})
+   assert.deepEqual(runNormalStartV3(JSON.parse(JSON.stringify(first)),
+    {seconds:seconds/2}),end,'A68 buffered accepted restart is not exact')
+  }
+ }
+}
 // Intentionally road-infeasible ordinary state must fail closed at time
 // zero, with no energy, position or race-clock advance.
 const invalid=createNormalStartV3(8,{
@@ -136,7 +169,9 @@ console.log(JSON.stringify({study:study.study,technicalGate:study.technicalGate,
  sportingGate:study.sportingGate,roadGrid:study.widthAtNarrowest,
  testResults:trials.map(x=>({n:x.n,profile:x.geometry,
   requestedSeconds:x.requestedSeconds,acceptedSeconds:x.seconds,
-  status:x.status,roadGuards:x.roadBoundaryGuardRiderTicks,
+  status:x.status,mergePolicy:x.roadMergePolicy,
+  roadGuards:x.roadBoundaryGuardRiderTicks,
+  bufferedTicks:x.roadMergeBufferedRiderTicks,
   completedLanes:x.completedLaneChanges,
   firstRoadViolation:x.firstRoadViolation,firstCollision:x.firstCollision})),
  officialWrites:0,sportingApproval:'NOT_APPROVED'}))
