@@ -33,17 +33,20 @@ export function researchRoadEnvelopeV3(kind,x){
  * to a centered corridor that stays on the forthcoming road width.
  * The bounded 0.38m/s physical steering remains the solver's responsibility.
  */
-export function constrainedLaneTargetV3(kind,x,v,target,{previewSeconds=4.0}={}){
+export function constrainedLaneTargetV3(kind,x,v,target,{previewSeconds=4.0,
+ bodyHalfWidthM=0}={}){
  validate(kind,x)
  if(!Number.isFinite(v)||v<0||!Number.isFinite(target)||v>50||
-  !Number.isFinite(previewSeconds)||previewSeconds<0||previewSeconds>8)
+  !Number.isFinite(previewSeconds)||previewSeconds<0||previewSeconds>8||
+  !Number.isFinite(bodyHalfWidthM)||bodyHalfWidthM<0||bodyHalfWidthM>1.1)
   throw Error('A68 invalid preview target')
  const now=researchRoadEnvelopeV3(kind,x)
  const ahead=researchRoadEnvelopeV3(kind,x+v*previewSeconds)
  // The road may widen or narrow, but the next desired lane must be in
  // BOTH current and upcoming corridor. No immediate state displacement.
- const lo=Math.max(now.minY,ahead.minY)
- const hi=Math.min(now.maxY,ahead.maxY)
+ const lo=Math.max(now.minY,ahead.minY)+bodyHalfWidthM
+ const hi=Math.min(now.maxY,ahead.maxY)-bodyHalfWidthM
+ if(lo>hi)throw Error('A70 bicycle wider than usable road')
  return {targetY:Math.max(lo,Math.min(hi,target)),
   changed:target<lo-1e-9||target>hi+1e-9,
   minimumWidthM:Math.min(now.widthM,ahead.widthM)}
@@ -52,12 +55,15 @@ export function constrainedLaneTargetV3(kind,x,v,target,{previewSeconds=4.0}={})
  * midpoint, so a road boundary cannot be crossed between full steps.
  * This is fail-closed: never clips the accepted rider coordinates.
  */
-export function roadEnvelopeViolationV3(kind,x,y,{toleranceM=1e-6}={}){
+export function roadEnvelopeViolationV3(kind,x,y,{toleranceM=1e-6,
+ bodyHalfWidthM=0}={}){
  validate(kind,x)
- if(!Number.isFinite(y)||!Number.isFinite(toleranceM)||toleranceM<0)
+ if(!Number.isFinite(y)||!Number.isFinite(toleranceM)||toleranceM<0||
+  !Number.isFinite(bodyHalfWidthM)||bodyHalfWidthM<0||bodyHalfWidthM>1.1)
   throw Error('A68 invalid swept road point')
  const road=researchRoadEnvelopeV3(kind,x)
- return y<road.minY-toleranceM||y>road.maxY+toleranceM?
+ return y-bodyHalfWidthM<road.minY-toleranceM||
+  y+bodyHalfWidthM>road.maxY+toleranceM?
   {x,y,minY:road.minY,maxY:road.maxY,
-   roadWidthM:road.widthM,kind}:null
+   roadWidthM:road.widthM,bodyHalfWidthM,kind}:null
 }
