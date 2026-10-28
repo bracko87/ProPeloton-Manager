@@ -33,7 +33,7 @@ export function createMultiGatePhysicalCandidateV3(n,{
   'A77 invalid reflection or identity options')
  const physical=createNormalStartV3(n,{mode,roadGeometry,mirror,renamed,
   controllerPolicy,headwayStandOffM,bodyHalfWidthM:.3,
-  roadMergePolicy:'platoon_no_yield_control'})
+  roadMergePolicy:'preview_only'})
  const admission=auditMultiGateAdmissionV3(physical.states,roadGeometry)
  return {version:1,researchOnly:true,pacePolicy,physical,admission,
   originalDesired:Object.fromEntries(physical.states.map(s=>[s.id,s.desired])),
