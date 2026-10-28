@@ -46,7 +46,7 @@ const comparePlan=(n,variant)=>{
  assert.equal(left.activeReservationCount,other.activeReservationCount)
  for(let i=0;i<n;i++){
   const x=left.decisions[i],y=other.decisions[i]
-  assert.equal(x.slot,variant.mirror?
+  assert.equal(y.slot,variant.mirror?
    ({LEFT:'RIGHT',RIGHT:'LEFT',FOLLOWING_ROW:'FOLLOWING_ROW',
      null:null})[x.slot]:x.slot)
   assert.equal(x.requiredTwoSlots,y.requiredTwoSlots)
