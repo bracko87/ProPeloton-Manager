@@ -14,7 +14,12 @@ const profiles=[
  ['platoon_gate_late_pressure','late_pressure'],
  ['platoon_gate_mid_pressure','mid_pressure'],
  ['platoon_gate_late_peak','late_peak'],
- ['platoon_gate_late_moderate','late_moderate']]
+ ['platoon_gate_late_moderate','late_moderate'],
+ ['platoon_gate_tail_surge','tail_surge'],
+ ['platoon_gate_tail_grad','tail_grad'],
+ ['platoon_gate_tail_emphasis','tail_emphasis'],
+ ['platoon_gate_tail_focus','tail_focus'],
+ ['platoon_gate_tail_flip','tail_flip']]
 const observed=[]
 for(const [policy,profile] of profiles){
  const original=createNormalStartV3(168,{...base,roadMergePolicy:policy})
@@ -83,7 +88,7 @@ for(const [n,policy] of [[32,'platoon_gate_schedule'],
  assert(finish.states.every(s=>s.x>1020)&&
   metrics.nearStopRiderTicks===0,'A75 broke proven 32/106 strong traverse')
 }
-const report={study:'A2_STEP75_LARGE_PEL0TON_CAPACITY_REDISTRIBUTION',
+const report={study:'A2_STEP75_LARGE_PELOTON_CAPACITY_REDISTRIBUTION',
  technicalGate:'PASS',sportingGate:'NO_GO',
  allPoliciesReachabilityChecked:true,
  physicalMirrorAndIdParity:true,original32And106Safe:true,
