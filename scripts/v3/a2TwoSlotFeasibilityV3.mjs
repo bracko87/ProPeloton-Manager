@@ -39,7 +39,8 @@ export function physicalArrivalWindowV3(x,v,gateX,{
  */
 export function auditTwoSlotFeasibilityV3(states,kind,{
  gateX=780,halfBikeM=.3,headwayM=2.35,crossingSpeedMps=8.5,
- slotSpacingSeconds=.5,minSpeedMps=5,deadlineSeconds=120
+ slotSpacingSeconds=.5,minSpeedMps=5,deadlineSeconds=120,
+ slotSpacingProfile='uniform'
 }={}){
  check(Array.isArray(states)&&states.length>0&&states.length<=200&&
   ['constant','mild_pinch','strong_pinch'].includes(kind)&&
@@ -49,6 +50,7 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
   headwayM>=2.05&&headwayM<=5&&
   crossingSpeedMps>=1&&crossingSpeedMps<=20&&
   slotSpacingSeconds>=headwayM/minSpeedMps&&
+  ['uniform','front_loaded','balanced'].includes(slotSpacingProfile)&&
   minSpeedMps>=1&&minSpeedMps<=10&&
   deadlineSeconds>0&&deadlineSeconds<=3600,
   'A73 invalid narrow-road entry-window parameters')
@@ -73,7 +75,16 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
  const rows=[...grouped.values()].sort((a,b)=>b[0].startX-a[0].startX)
  const bookings=[],unresolved=[]
  let release=0,blocked=false
- for(const row of rows){
+ for(const [rowIndex,row] of rows.entries()){
+  // A74 queue-capacity experiment. The first 75% of rows may need a
+  // larger physically reachable time slot, while the back retains
+  // at least 0.5s full-bike clearance. Physical starting-row order
+  // determines allocation, not rider IDs or future accepted paths.
+  const rowGap=slotSpacingProfile==='front_loaded'?
+   (rowIndex<Math.ceil(rows.length*.75)?.64:.5):
+   slotSpacingProfile==='balanced'?
+   (rowIndex<Math.ceil(rows.length*2/3)?.63:.54):
+   slotSpacingSeconds
   if(blocked){
    unresolved.push({startX:row[0].startX,reason:'BLOCKED_BY_EARLIER_ROW'})
    continue
@@ -102,7 +113,7 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
    Math.max(release,...flanks.map(({s,targetY})=>Math.max(
     earliest(s),Math.abs(s.y-targetY)/L))):null
   const centerTime=center?Math.max(earliest(center),
-   (flankTime??release)+slotSpacingSeconds):null
+   (flankTime??release)+rowGap):null
   const proposed=[...flanks.map(({s,slot,targetY})=>({
    s,slot,targetY,time:flankTime})),...(center?[{
     s:center,slot:'CENTER_AFTER_FLANKS',targetY:2.2,time:centerTime}]:[])]
@@ -124,13 +135,14 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
     slot:p.slot,gateX,targetY:p.targetY,scheduledSeconds:p.time,
     earliestSeconds:w.earliestSeconds,latestSeconds:w.latestSeconds,
     lateralMoveSeconds:Math.abs(p.s.y-p.targetY)/L,
-    researchOnly:true})
+    researchOnly:true,entrySpacingSeconds:rowGap})
   }
-  release=(centerTime??flankTime??release)+slotSpacingSeconds
+  release=(centerTime??flankTime??release)+rowGap
  }
  return {status:unresolved.length?'UNRESOLVED':'NECESSARY_WINDOWS_EXIST',
   kind,gateX,slots,halfBikeM,headwayM,crossingSpeedMps,minSpeedMps,
-  slotSpacingSeconds,deadlineSeconds,bookedCount:bookings.length,
+  slotSpacingSeconds,slotSpacingProfile,deadlineSeconds,
+  bookedCount:bookings.length,
   rowCount:rows.length,bookings,unresolved,lastSlotReleaseSeconds:release,
   noTrajectoryGuarantee:true,noCollisionGuarantee:true,
   actualSweptSolverStillRequired:true,
