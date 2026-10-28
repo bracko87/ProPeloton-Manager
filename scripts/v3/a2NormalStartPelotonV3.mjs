@@ -198,7 +198,7 @@ export function advanceNormalStartV3(snapshot){
     {x0:a.xAt(t0),x1:a.xAt(t1),y0:a.yAt(t0),y1:a.yAt(t1)},
     {x0:b.xAt(t0),x1:b.xAt(t1),y0:b.yAt(t0),y1:b.yAt(t1)},
     {longitudinal:LEAD+(Math.abs(a.accel)+Math.abs(b.accel))*h*h/8+1e-5,
-     lateral:road.lateralCollisionM+1e-5}))
+     lateral:road.lateralCollisionM+1e-5})){
      first={pair:[a.s.id,b.s.id].sort(),time:round(p.at+t0),
       step:p.acceptedSteps,withinStep:k}
      // A68 forensic-only evidence from the rejected physical step.
@@ -220,6 +220,7 @@ export function advanceNormalStartV3(snapshot){
        deltaAtContactY:round(a.yAt(t0)-b.yAt(t0)),
        actualLateralM:round(Math.abs(a.yAt(t0)-b.yAt(t0))),
        actualLongitudinalM:round(Math.abs(a.xAt(t0)-b.xAt(t0)))}
+     }
      }
   }
  }
