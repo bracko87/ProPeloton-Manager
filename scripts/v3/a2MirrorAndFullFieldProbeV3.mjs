@@ -2,6 +2,7 @@
  * Isolated V3 research. Never used for official race calculations.
  */
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
+import {currentLaneIntentWarningsV3} from './a2FirstContactFeasibilityV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
 import {commitAchievedSpeedEnergyV3} from '../../src/race-engine-v3/energyBalanceResearchV3.ts'
 const check=(x,msg)=>{if(!x)throw Error(msg)}
@@ -74,20 +75,23 @@ function stepTrack(s,dt,sel,act,steerTarget,elapsed){
   yAt:t=>s.y+(act.y1-s.y)*t/dt,
   lateralCurvature:0}
 }
+/** Chronologically first swept-contact interval across ALL rider pairs.
+ * A59's former pair-major scan could return a later event from an earlier pair.
+ * This correction changes reporting order only, never path acceptance.
+ */
 function firstCollision(paths,g,dt,intervals){
  const h=dt/intervals
- for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++){
-  const a=paths[i],b=paths[j]
-  for(let k=0;k<intervals;k++){
-   const t0=k*h,t1=(k+1)*h
+ for(let k=0;k<intervals;k++){
+  const t0=k*h,t1=(k+1)*h
+  for(let i=0;i<paths.length;i++)for(let j=i+1;j<paths.length;j++){
+   const a=paths[i],b=paths[j]
    const first={x0:a.xAt(t0),x1:a.xAt(t1),y0:a.yAt(t0),y1:a.yAt(t1)}
    const second={x0:b.xAt(t0),x1:b.xAt(t1),y0:b.yAt(t0),y1:b.yAt(t1)}
    const errX=(Math.abs(a.accel)+Math.abs(b.accel))*h*h/8+1e-5
    const errY=(a.lateralCurvature+b.lateralCurvature)*h*h/8+1e-5
    if(continuousBicycleCollisionV3(first,second,{
     longitudinal:1.8+errX,lateral:g.lateralCollisionM+errY}))
-    return {pair:[a.id,b.id].sort(),microinterval:k,
-     timeFraction:r6(k/intervals)}
+    return {pair:[a.id,b.id].sort(),microinterval:k,timeFraction:r6(k/intervals)}
   }
  }
  return null
@@ -100,10 +104,11 @@ function firstCollision(paths,g,dt,intervals){
  * This is a stress-control model, not an approved physical peloton solver.
  */
 export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
- warningEnd,event,option,{dt,horizonSeconds=10,intervals=16}={}){
+ warningEnd,event,option,{dt,horizonSeconds=10,intervals=16,preStepPolicy='legacy'}={}){
  check(Array.isArray(source)&&source.length===6&&dt>0&&dt<=5&&
   Number.isInteger(intervals)&&intervals>=16&&intervals<=64&&
   option?.reactors?.includes(primary)&&
+  ['legacy','lane_intent'].includes(preStepPolicy)&&
   Number.isFinite(g?.lateralCollisionM),'A59 invalid full-field shadow')
  const preserved=JSON.stringify(source)
  const frames=source.flatMap(t=>t.previews.map(p=>({
@@ -124,7 +129,7 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
   return [id,{originalY:p.y0}]
  }))
  const log=[],blockers=[]
- let reason=null,maxLateral=0,headwayReactions=0
+ let reason=null,maxLateral=0,headwayReactions=0,intentWarningPairs=0
  for(const f of framesToRun){
   const proposed=new Map(f.p.proposals.map(p=>[p.riderId,p]))
   const acts=new Map()
@@ -147,7 +152,7 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
     const ahead=[...states.values()].filter(o=>o.id!==id&&
      o.x>s.x&&Math.abs(o.y-s.y)<=g.lateralCollisionM+1e-7)
      .sort((a,b)=>a.x-b.x)[0]
-    if(ahead&&s.v>ahead.v+1e-7){
+    if(preStepPolicy==='legacy'&&ahead&&s.v>ahead.v+1e-7){
      const closing=s.v-ahead.v
      if(ahead.x-s.x<=1.8+closing*dt+closing*closing/(2*B)){
       accel=-B;headwayReactions++
@@ -158,6 +163,20 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
    check(lateralSpeed<=L+1e-6,'A59 unbounded lateral motion')
    maxLateral=Math.max(maxLateral,lateralSpeed)
    acts.set(id,{accel,y1,steerTarget,originalY:chosenStart.get(id)?.originalY})
+  }
+  // A60: strictly current-state lane-intent lookahead. The source's future
+  // accepted paths and retrospective A58 success choice are never consulted.
+  // Extra reactions stay within the same ordinary braking bound.
+  if(preStepPolicy==='lane_intent'){
+   const warnings=currentLaneIntentWarningsV3([...states.values()],
+    [...acts].map(([id,a])=>({id,accel:a.accel,y1:a.y1})),g,dt)
+   intentWarningPairs+=warnings.reasons.length
+   for(const id of warnings.brakeRiders){
+    if(!chosen.has(id)&&acts.get(id).accel>-B+1e-8){
+     acts.get(id).accel=-B
+     headwayReactions++
+    }
+   }
   }
   const elapsed=f.t0-start
   const paths=[...states.values()].map(s=>stepTrack(s,dt,chosen.has(s.id),
@@ -204,6 +223,7 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
   firstBlocker:blockers[0]??null,energyFailure:log.at(-1)?.energyFailure??null,
   fullFieldIntegrated:true,usedOriginalA44FrozenObstacles:false,
   additionalHeadwayBrakingDecisions:headwayReactions,
+  intentWarningPairs,preStepPolicy,
   maxLateralSpeedMps:r6(maxLateral),steps:log.length,
   groupCount:chosen.size,fieldSize:states.size,
   records:log,originalCommandsReadOnly:true,
