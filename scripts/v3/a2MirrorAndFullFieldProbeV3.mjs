@@ -147,8 +147,8 @@ export function replayAllRiderAnticipationProbeV3(source,g,grade,primary,
   const slices=internalQuantumSeconds===null?1:Math.round(dt/internalQuantumSeconds)
   for(let part=0;part<slices;part++){
   const f=slices===1?sourceFrame:{
-   ...sourceFrame,t0:now(sourceFrame.t0+part*(dt/slices)),
-   t1:now(sourceFrame.t0+(part+1)*(dt/slices))}
+   ...sourceFrame,t0:now(sourceFrame.t0+part*((sourceFrame.t1-sourceFrame.t0)/slices)),
+   t1:now(sourceFrame.t0+(part+1)*((sourceFrame.t1-sourceFrame.t0)/slices))}
   const dt=f.t1-f.t0
   const proposed=new Map(f.p.proposals.map(p=>[p.riderId,p]))
   const acts=new Map()
