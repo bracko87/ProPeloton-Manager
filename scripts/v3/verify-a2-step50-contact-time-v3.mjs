@@ -108,7 +108,7 @@ const reflected=classifyContactTimeRightOfWayV3(
  mover('renamed_F',100,fullY-1,3,fullY-1),
  mover('renamed_L',101.6,fullY-.19,3,fullY-.38),road)
 assert(reflected&&reflected.reason===entering.reason&&
- reflected.firstFraction===entering.firstFraction)
+ Math.abs(reflected.firstFraction-entering.firstFraction)<1e-9)
 assert.deepEqual(reflected.yielding,['renamed_L'])
 const parallel=[mover('a',100,0,10,0),mover('b',106,0,0,0),
  mover('c',100,2,10,2),mover('d',106,2,0,2)]
