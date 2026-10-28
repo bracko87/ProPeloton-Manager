@@ -5,6 +5,8 @@ on:
     paths:
       - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
       - 'scripts/v3/probe-a2-step77-phase3-launch-spacing-v3.mjs'
+      - 'scripts/v3/a2Phase3QueueWaveV3.mjs'
+      - 'scripts/v3/probe-a2-step77-phase3-anticipatory-wave-v3.mjs'
       - '.github/workflows/v3-step77-phase3-large-peloton-physical.yml'
   workflow_dispatch:
 permissions:
@@ -22,6 +24,10 @@ jobs:
         env:
           V3_A2_STEP77_PHASE3_DIR: ${{ runner.temp }}/step77phase3
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-phase3-launch-spacing-v3.mjs
+      - name: Compare bounded 32 106 168 cooperative leader retention and anticipatory queue waves against collision sweeps
+        env:
+          V3_A2_STEP77_WAVE_DIR: ${{ runner.temp }}/step77wave
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-phase3-anticipatory-wave-v3.mjs
       - name: Preserve baseline 32r five-abreast 180s pass 80+ sustained overtakes replay and ID mirror
         env:
           V3_A2_STEP77_STAGED_DIR: ${{ runner.temp }}/step77staged
@@ -33,6 +39,7 @@ jobs:
           name: a77-phase3-physical-106-and-168-spacing-trials
           path: |
             ${{ runner.temp }}/step77phase3/*.json
+            ${{ runner.temp }}/step77wave/*.json
             ${{ runner.temp }}/step77staged/*.json
           if-no-files-found: warn
           retention-days: 30
