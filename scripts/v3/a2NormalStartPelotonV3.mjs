@@ -5,6 +5,7 @@
  */
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
 import {upstreamWarningsV3} from './a2UpstreamPredictionV3.mjs'
+import {constrainedLaneTargetV3,roadEnvelopeViolationV3} from './a2VariableRoadWidthV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
 import {initializeEnergyBalanceResearchV3,commitAchievedSpeedEnergyV3} from '../../src/race-engine-v3/energyBalanceResearchV3.ts'
 const assert=(x,m)=>{if(!x)throw Error(m)}
@@ -19,10 +20,12 @@ const energetic=()=>initializeEnergyBalanceResearchV3({criticalWatts:305,wPrimeJ
  * Tempered and mixed starts share exactly the same geometric initial grid.
  */
 export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=false,
- controllerPolicy='legacy',headwayStandOffM=4.5}={}){
+ controllerPolicy='legacy',headwayStandOffM=4.5,roadGeometry='constant'}={}){
  assert([8,32,106,168].includes(n)&&['tempered','mixed','pressure','corridor'].includes(mode)&&
  ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
- [3.2,3.8,4.5].includes(headwayStandOffM),'A65 unknown normal-start scenario or policy')
+ [3.2,3.8,4.5].includes(headwayStandOffM)&&
+ ['constant','mild_pinch','strong_pinch'].includes(roadGeometry),
+ 'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
   const activeLanes=mode==='corridor'?3:5
@@ -40,11 +43,12 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  }
  if(mirror)for(const s of starts){s.y=round(height-s.y);s.targetY=s.y}
  return {version:1,road:{...road},dt:DT,at:0,states:starts,
-  controllerPolicy,headwayStandOffM,
+  controllerPolicy,headwayStandOffM,roadGeometry,
   acceptedSteps:0,pairChecks:0,brakeEvents:0,steerEvents:0,
   initiatedLaneChanges:0,completedLaneChanges:0,
   nearStops:0,lowestSpeed:Infinity,maxSpeed:0,
   negotiatedHeadwayPairTicks:0,headwayLimitedRiderTicks:0,
+  roadBoundaryGuardTicks:0,firstRoadViolation:null,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
 }
@@ -53,7 +57,8 @@ function checkSnapshot(p){
   p.states?.length>=2&&p.states?.length<=168,'A64 invalid checkpoint')
  assert(Math.abs(p.at-p.acceptedSteps*DT)<1e-6,'A64 time discontinuity')
  assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
-  [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5),
+  [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
+  ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -105,10 +110,14 @@ export function advanceNormalStartV3(snapshot){
  const plans=p.states.map(s=>{
   const intentMode=p.controllerPolicy==='coordinated_demand'?'demand':
    p.controllerPolicy==='coordinated_either'?'either':'actual'
-  const target=chooseLane(s,p.states,{intentMode})
+  const desired=chooseLane(s,p.states,{intentMode})
+  const corridor=constrainedLaneTargetV3(p.roadGeometry??'constant',
+   s.x,s.v,desired,{previewSeconds:4})
+  const target=corridor.targetY
   const y1=round(s.y+clip(target-s.y,-L*DT,L*DT))
   const accel=clip((s.desired-s.v)/DT,-B,A)
-  return {id:s.id,accel,y1,target,oldTarget:s.targetY}
+  return {id:s.id,accel,y1,target,oldTarget:s.targetY,
+   roadGuard: corridor.changed}
  })
  // A65 experimental dense-field following: compute a simultaneous plan
  // using only the CURRENT state and this step's lateral intentions. Process
@@ -179,6 +188,26 @@ export function advanceNormalStartV3(snapshot){
   }
  }
  if(first){p.firstCollision=first;p.reason='SWEPT_CONTACT';return p}
+ // A68 independent spatial road-boundary sweep: evaluate all riders'
+ // continuous accepted motion at each 1/16th physical step and midpoint.
+ // A failure rejects the WHOLE proposed field before any energy or x/y
+ // movement is committed. No teleport/clamp or relaxed collision check.
+ for(let k=0;k<pieces;k++){
+  for(const fraction of [0,.5,1]){
+   const t=(k+fraction)*h
+   for(const path of paths){
+    const x=path.xAt(t),y=path.yAt(t)
+    const failure=roadEnvelopeViolationV3(
+     p.roadGeometry??'constant',x,y)
+    if(failure){
+     p.firstRoadViolation={riderId:path.s.id,
+      time:round(p.at+t),withinStep:k+fraction,...failure}
+     p.reason='ROAD_ENVELOPE_VIOLATION'
+     return p
+    }
+   }
+  }
+ }
  // Reject without committing anything if physically required watts exceed
  // W-prime. Future stages must also model critical-power-limited acceleration.
  const updates=[]
@@ -200,6 +229,7 @@ export function advanceNormalStartV3(snapshot){
  p.headwayLimitedRiderTicks=(p.headwayLimitedRiderTicks??0)+headwayLimited
  p.negotiatedHeadwayPairTicks=(p.negotiatedHeadwayPairTicks??0)+negotiatedHeadway
  p.steerEvents+=paths.filter(a=>Math.abs(a.y1-a.s.y)>1e-7).length
+ p.roadBoundaryGuardTicks+=plans.filter(a=>a.roadGuard).length
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
   Math.abs(a.a.target-a.y1)<1e-6).length
@@ -242,6 +272,8 @@ export function finishNormalStartMetricsV3(original,final){
   laneSteeringRiderTicks:final.steerEvents,
   initiatedLaneChanges:final.initiatedLaneChanges,
   completedLaneChanges:final.completedLaneChanges,
+  roadBoundaryGuardRiderTicks:final.roadBoundaryGuardTicks??0,
+  firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
