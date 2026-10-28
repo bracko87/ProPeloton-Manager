@@ -1,0 +1,33 @@
+name: V3 A77 phase2 real swept five-abreast multi-gate candidate
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2MultiGateAdmissionV3.mjs'
+      - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
+      - 'scripts/v3/verify-a2-step77-physical-pilot-v3.mjs'
+      - '.github/workflows/v3-step77-phase2-physical-pilot.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  phase2-physical-counterexamples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: A77 physical candidate with honest 8/32/106/168 full-body sweeps, geometry, restart and mirror tests
+        env:
+          V3_A2_STEP77_PHYSICAL_DIR: ${{ runner.temp }}/step77physics
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step77-physical-pilot-v3.mjs
+      - name: Preserve first-contact and passage evidence even if physical candidate fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a77-phase2-actual-physical-body-sweeps
+          path: ${{ runner.temp }}/step77physics/*.json
+          if-no-files-found: warn
+          retention-days: 30
