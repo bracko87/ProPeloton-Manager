@@ -57,7 +57,8 @@ for(const n of [32,106,168]){
  for(const roadGeometry of ['mild_pinch','strong_pinch']){
   const seconds=n===32?120:90
   for(const roadMergePolicy of ['platoon_lane_forecast',
-   'platoon_two_slot_stagger','platoon_two_slot_wave']){
+   'platoon_two_slot_stagger','platoon_two_slot_wave',
+   'platoon_two_slot_extended']){
    const {initial,end,metrics}=run(n,roadGeometry,roadMergePolicy,seconds)
    const mirror=run(n,roadGeometry,roadMergePolicy,seconds,{mirror:true})
    const rename=run(n,roadGeometry,roadMergePolicy,seconds,{renamed:true})
