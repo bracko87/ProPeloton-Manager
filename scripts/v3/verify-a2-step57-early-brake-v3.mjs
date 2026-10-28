@@ -312,7 +312,7 @@ assert.equal(totals.reduce((a,x)=>a+x.noEarlierWarningObservations,0),43)
 assert.equal(totals.reduce((a,x)=>a+x.optimisticLeadSatisfiedObservations,0),21)
 const report={study:'A2_STEP57_ACTUAL_CHECKPOINT_EARLY_BRAKE_SHADOW',
  technicalGate:'PASS',sportingGate:'NO_GO',
- physicsRuns,localComponents:75,geometricallyBlocked:5,
+ physicsRuns:physicalRuns,localComponents:75,geometricallyBlocked:5,
  brakingObservations:episodeCount,
  recordedEarlyWarningObservations:67,absentEarlyWarningObservations:43,
  actualPreSubstepCheckpointInterventions:67,
