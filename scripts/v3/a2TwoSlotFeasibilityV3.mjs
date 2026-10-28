@@ -43,7 +43,7 @@ export function auditTwoSlotFeasibilityV3(states,kind,{
  slotSpacingProfile='uniform'
 }={}){
  check(Array.isArray(states)&&states.length>0&&states.length<=200&&
-  ['constant','mild_pinch','strong_pinch'].includes(kind)&&
+  ['constant','mild_pinch','strong_pinch','double_pinch','staged_pinch'].includes(kind)&&
   [gateX,halfBikeM,headwayM,crossingSpeedMps,slotSpacingSeconds,
    minSpeedMps,deadlineSeconds].every(Number.isFinite)&&
   gateX>=680&&gateX<=920&&halfBikeM>=0&&halfBikeM<=.5&&
