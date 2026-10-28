@@ -1,4 +1,4 @@
-name: V3 A2 Step59-70 physical safety, capacity and bicycle-edge research
+name: V3 A2 Step59-71 bicycle-wide capacity, passing and stagger research
 on:
   push:
     branches: [main]
@@ -18,6 +18,7 @@ on:
       - 'scripts/v3/a2LaneCapacityPlannerV3.mjs'
       - 'scripts/v3/verify-a2-step70-lane-capacity-v3.mjs'
       - 'scripts/v3/verify-a2-step70-body-clearance-v3.mjs'
+      - 'scripts/v3/verify-a2-step71-two-slot-stagger-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -74,6 +75,18 @@ jobs:
         env:
           V3_A2_STEP70_DIR: ${{ runner.temp }}/step70
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step70-body-clearance-v3.mjs
+      - name: 'Step71 full-bicycle 2-slot longitudinal stagger and honest fail-closed field tests'
+        env:
+          V3_A2_STEP71_DIR: ${{ runner.temp }}/step71
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step71-two-slot-stagger-v3.mjs
+      - name: Retain Step71 true 2-slot collision and road failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step71-two-slot-stagger-evidence
+          path: ${{ runner.temp }}/step71/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step70 group-capacity and bicycle-body-roadside physical failures
         if: always()
         uses: actions/upload-artifact@v4
