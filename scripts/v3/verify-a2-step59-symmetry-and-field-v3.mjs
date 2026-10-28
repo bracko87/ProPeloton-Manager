@@ -19,6 +19,7 @@ import {replayEarlyBrakingShadowV3} from './a2EarlyCheckpointBrakeReplayV3.mjs'
 import {auditCoupledBrakeChoicesV3,buildCoupledBrakeOptionsV3,replayCoupledEarlyBrakeV3} from './a2CoupledCheckpointBrakeAuditV3.mjs'
 import {initializeEnergyBalanceResearchV3} from '../../src/race-engine-v3/energyBalanceResearchV3.ts'
 import {mirrorRecordedA44V3,relabelRecordedA44V3,mirrorStrategyV3,replayAllRiderAnticipationProbeV3} from './a2MirrorAndFullFieldProbeV3.mjs'
+import {auditFirstFullFieldContactV3} from './a2FirstContactFeasibilityV3.mjs'
 const r6=x=>Math.round(x*1e6)/1e6
 const policies=['trapezoid_rear_priority','trapezoid_rear_corridor_guard','trapezoid_rear_corridor_leader']
 const quanta=[.5,1,2,2.5,5],counts=[2,8,12,24,32],variations=[0,1]
@@ -166,6 +167,14 @@ const totals=new Map([.5,2,2.5].map(q=>[q,{quantum:q,comparisons:0,
  maxFullFieldLateralMps:0
 }]))
 const cases=[],errors=[],historical=[]
+const a60={scenarios:0,previousFieldClear:0,fixedBrakeClear:0,
+ laneIntentClear:0,laneIntentRegressions:0,laneIntentRescues:0,
+ newLaneIntentWarningPairs:0,laneIntentBrakeDecisions:0,
+ legacyFirstContactTypes:{},laneIntentFirstContactTypes:{},
+ legacyFirstFeasibility:{},laneIntentFirstFeasibility:{},
+ mirrorOutcomeMismatches:0,renameOutcomeMismatches:0,
+ mirrorFirstPairMismatches:0,renameFirstPairMismatches:0,
+ sameInputPhysicalReplayMismatches:0}
 let physicsRuns=0,mirrors=0,renames=0
 const atAlert=(observed,warning,primary,g)=>{
  const p=observed.flatMap(x=>x.previews).find(x=>
@@ -287,6 +296,55 @@ for(const geometry of BATCH40_GEOMETRIES){
         first.firstAcceptedDifferenceSeconds,JSON.parse(JSON.stringify(chosen)),
         {dt:q,intervals:16})
        assert.deepEqual(probe,checkReplay,'A59 all-field JSON replay failed')
+       // A60 compares a SINGLE predetermined brake selection against a new
+       // current-step lane-intent warning. There is NO hindsight choice among
+       // A58 strategies in either of these full-field comparisons.
+       const fixed=atAlert(A.observed,alert,who,g).options.find(x=>x.key==='SINGLE_BRAKE')
+       const fixedMirror=atAlert(mirroredSource,alert,who,g).options.find(x=>x.key==='SINGLE_BRAKE')
+       const fixedRename=atAlert(relabeled.source,alert,newId,g).options.find(x=>x.key==='SINGLE_BRAKE')
+       assert(fixed&&fixedMirror&&fixedRename,'A60 missing prior-state fixed plan')
+       const fixedOptions={dt:q,intervals:16}
+       const legacyFixed=replayAllRiderAnticipationProbeV3(A.observed,g,[-3,0][v],
+        who,alert,first.firstAcceptedDifferenceSeconds,fixed,fixedOptions)
+       const laneFixed=replayAllRiderAnticipationProbeV3(A.observed,g,[-3,0][v],
+        who,alert,first.firstAcceptedDifferenceSeconds,fixed,
+        {...fixedOptions,preStepPolicy:'lane_intent'})
+       const laneMirror=replayAllRiderAnticipationProbeV3(mirroredSource,g,[-3,0][v],
+        who,alert,first.firstAcceptedDifferenceSeconds,fixedMirror,
+        {...fixedOptions,preStepPolicy:'lane_intent'})
+       const laneRename=replayAllRiderAnticipationProbeV3(relabeled.source,g,[-3,0][v],
+        newId,alert,first.firstAcceptedDifferenceSeconds,fixedRename,
+        {...fixedOptions,preStepPolicy:'lane_intent'})
+       const laneJSON=replayAllRiderAnticipationProbeV3(
+        JSON.parse(JSON.stringify(A.observed)),g,[-3,0][v],who,alert,
+        first.firstAcceptedDifferenceSeconds,JSON.parse(JSON.stringify(fixed)),
+        {...fixedOptions,preStepPolicy:'lane_intent'})
+       a60.sameInputPhysicalReplayMismatches+=Number(
+        JSON.stringify(laneFixed)!==JSON.stringify(laneJSON))
+       a60.mirrorOutcomeMismatches+=Number(laneFixed.status!==laneMirror.status||
+        laneFixed.steps!==laneMirror.steps)
+       a60.renameOutcomeMismatches+=Number(laneFixed.status!==laneRename.status||
+        laneFixed.steps!==laneRename.steps)
+       const comparePair=(ref,other,convert)=>JSON.stringify(
+        ref?.pair?.map(convert).sort()??[])===JSON.stringify(other?.pair?.slice().sort()??[])
+       a60.mirrorFirstPairMismatches+=Number(!comparePair(laneFixed.firstBlocker,
+        laneMirror.firstBlocker,x=>x))
+       a60.renameFirstPairMismatches+=Number(!comparePair(laneFixed.firstBlocker,
+        laneRename.firstBlocker,x=>relabeled.map.get(x)))
+       const contactLegacy=auditFirstFullFieldContactV3(A.observed,g,alert,q,probe)
+       const contactLane=auditFirstFullFieldContactV3(A.observed,g,alert,q,laneFixed)
+       const count=(table,key)=>{table[key]=(table[key]??0)+1}
+       count(a60.legacyFirstContactTypes,contactLegacy.firstPairKind??contactLegacy.status)
+       count(a60.laneIntentFirstContactTypes,contactLane.firstPairKind??contactLane.status)
+       count(a60.legacyFirstFeasibility,contactLegacy.feasibility??contactLegacy.status)
+       count(a60.laneIntentFirstFeasibility,contactLane.feasibility??contactLane.status)
+       a60.scenarios++;a60.previousFieldClear+=Number(probe.complete)
+       a60.fixedBrakeClear+=Number(legacyFixed.complete)
+       a60.laneIntentClear+=Number(laneFixed.complete)
+       a60.laneIntentRegressions+=Number(legacyFixed.complete&&!laneFixed.complete)
+       a60.laneIntentRescues+=Number(!legacyFixed.complete&&laneFixed.complete)
+       a60.newLaneIntentWarningPairs+=laneFixed.intentWarningPairs
+       a60.laneIntentBrakeDecisions+=laneFixed.additionalHeadwayBrakingDecisions
        s.fullFieldAttempts++;s.fullFieldSuccess+=Number(probe.complete)
        s.fullFieldCriticalReached+=Number(probe.criticalEventReached)
        s.fullFieldCollisionBlocked+=Number(probe.status==='REJECTED_COLLISION')
@@ -302,7 +360,11 @@ for(const geometry of BATCH40_GEOMETRIES){
         allField:{status:probe.status,complete:probe.complete,
          critical:probe.criticalEventReached,headway:probe.additionalHeadwayBrakingDecisions,
          firstBlocker:probe.firstBlocker,chosenStrategy:name,
-         steps:probe.steps}})
+         steps:probe.steps},
+        a60:{legacyFixed:legacyFixed.status,laneIntent:laneFixed.status,
+         laneIntentWarnings:laneFixed.intentWarningPairs,
+         laneIntentBrakes:laneFixed.additionalHeadwayBrakingDecisions,
+         originalFirstContact:contactLegacy,laneIntentFirstContact:contactLane}})
       }
      }
     }
@@ -319,6 +381,12 @@ assert.equal(physicsRuns,162)
 assert.equal(cases.length,67)
 assert.equal(mirrors,67);assert.equal(renames,67)
 assert.equal(historical.length,4)
+assert.equal(a60.scenarios,67,'A60 missing full-field comparisons')
+assert.equal(a60.mirrorOutcomeMismatches,0,'A60 failed reflected 10s outcomes')
+assert.equal(a60.renameOutcomeMismatches,0,'A60 failed ID-invariant 10s outcomes')
+assert.equal(a60.mirrorFirstPairMismatches,0,'A60 failed reflected contact-pair identities')
+assert.equal(a60.renameFirstPairMismatches,0,'A60 failed renamed contact-pair identities')
+assert.equal(a60.sameInputPhysicalReplayMismatches,0,'A60 failed exact JSON full-field replay')
 const byQuantum=[...totals.values()]
 assert.deepEqual(byQuantum.map(x=>x.componentTrials),[31,1,43])
 assert.deepEqual(byQuantum.map(x=>x.geometryRejected),[0,0,5])
@@ -330,7 +398,7 @@ assert.equal(byQuantum.reduce((a,x)=>a+x.rightSteerRescues,0),15)
 const study={study:'A2_STEP59_FULL_MIRROR_RELABEL_AND_ALL_FIELD_STRESS',
  technicalGate:'PASS',sportingGate:'NO_GO',physicalRuns:physicsRuns,
  sameCheckpointScenarios:67,mirrorReplays:mirrors,relabelReplays:renames,
- originalA58Options:383,byQuantum,
+ originalA58Options:383,byQuantum,step60:a60,
  positiveThreeRiderFullField:{
   complete10s:true,exactJSON:true,mirror:true,rename:true,
   deliberatelyOverlappingInitialStateRejected:true},
@@ -343,5 +411,5 @@ writeFileSync(dir+'/a2-step59-symmetry-and-all-field.json',JSON.stringify(study,
 console.log(JSON.stringify({study:study.study,technicalGate:study.technicalGate,
  sportingGate:study.sportingGate,physicalRuns:study.physicalRuns,
  mirrorReplays:mirrors,relabelReplays:renames,
- byQuantum,positiveThreeRiderFullField:study.positiveThreeRiderFullField,
+ byQuantum,step60:study.step60,positiveThreeRiderFullField:study.positiveThreeRiderFullField,
  officialWrites:0,sportingApproval:'NOT_APPROVED'}))
