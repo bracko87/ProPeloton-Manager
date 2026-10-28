@@ -42,6 +42,10 @@ jobs:
         env:
           V3_A2_STEP77_STAGED_DIR: ${{ runner.temp }}/step77staged
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step77-phase2-staged-success-v3.mjs
+      - name: Protect original A76 full 32 106 168 double narrowing passes and 90 plus 90 replay
+        env:
+          V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/step76pass
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
       - name: Export honest physical outcomes
         if: always()
         uses: actions/upload-artifact@v4
@@ -53,5 +57,17 @@ jobs:
             ${{ runner.temp }}/step77parity/*.json
             ${{ runner.temp }}/step77contact/*.json
             ${{ runner.temp }}/step77staged/*.json
+            ${{ runner.temp }}/step76pass/*.json
           if-no-files-found: warn
           retention-days: 30
+  production-build-unchanged:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
