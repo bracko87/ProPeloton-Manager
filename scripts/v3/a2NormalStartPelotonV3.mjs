@@ -7,6 +7,7 @@ import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
 import {upstreamWarningsV3} from './a2UpstreamPredictionV3.mjs'
 import {capacityPlanV3,twoSlotStaggerPlanV3} from './a2LaneCapacityPlannerV3.mjs'
 import {reserveTwoSlotEntryV3} from './a2TwoSlotReservationsV3.mjs'
+import {auditTwoSlotFeasibilityV3} from './a2TwoSlotFeasibilityV3.mjs'
 import {constrainedLaneTargetV3,roadEnvelopeViolationV3,
  researchRoadEnvelopeV3} from './a2VariableRoadWidthV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
@@ -36,7 +37,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  'platoon_capacity_wave','platoon_two_slot_stagger',
  'platoon_two_slot_wave','platoon_two_slot_extended',
  'platoon_two_slot_hazard_hold','platoon_space_time_reservation',
- 'platoon_no_yield_control','platoon_space_time_admission'].includes(roadMergePolicy),
+ 'platoon_no_yield_control','platoon_space_time_admission','platoon_gate_schedule'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -54,7 +55,18 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
    energy:energetic(),startOrder:i,startX:gridX})
  }
  if(mirror)for(const s of starts){s.y=round(height-s.y);s.targetY=s.y}
+ // A73 one-time timetable, derived from *only the initial field*.
+ // Snapshotting it preserves exact recovery and prevents opportunistic
+ // hindsight replanning after a failed narrowing attempt.
+ const feasibility=roadMergePolicy==='platoon_gate_schedule'?
+  auditTwoSlotFeasibilityV3(starts,roadGeometry,{
+   halfBikeM:bodyHalfWidthM,minSpeedMps:5,
+   slotSpacingSeconds:.5}):null
  return {version:1,road:{...road},dt:DT,at:0,states:starts,
+  roadGateStatus:feasibility?.status??null,
+  roadGateBookings:feasibility?.bookings.map(b=>({
+   id:b.id,slot:b.slot,scheduledSeconds:b.scheduledSeconds,
+   targetY:b.targetY,gateX:b.gateX}))??null,
   controllerPolicy,headwayStandOffM,roadGeometry,roadMergePolicy,bodyHalfWidthM,
   acceptedSteps:0,pairChecks:0,brakeEvents:0,steerEvents:0,
   initiatedLaneChanges:0,completedLaneChanges:0,
@@ -68,6 +80,8 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
   roadTwoSlotStaggerRiderTicks:0,
   roadSlotReservationRiderTicks:0,roadSlotPaceWarningRiderTicks:0,
   roadSlotCrossRowHoldRiderTicks:0,
+  roadGateWindowRiderTicks:0,roadGateLateralHoldRiderTicks:0,
+  roadGateLateWindowRiderTicks:0,
   firstRoadViolation:null,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
@@ -86,7 +100,7 @@ function checkSnapshot(p){
   'platoon_capacity_wave','platoon_two_slot_stagger',
   'platoon_two_slot_wave','platoon_two_slot_extended',
   'platoon_two_slot_hazard_hold','platoon_space_time_reservation',
-  'platoon_no_yield_control','platoon_space_time_admission'].includes(p.roadMergePolicy??'preview_only'),
+  'platoon_no_yield_control','platoon_space_time_admission','platoon_gate_schedule'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -134,10 +148,16 @@ function chooseLane(s,states,{intentMode='actual'}={}){
 export function advanceNormalStartV3(snapshot){
  const p=structuredClone(snapshot);checkSnapshot(p)
  assert(p.reason===null,'A64 cannot restart rejected field')
+ if(p.roadMergePolicy==='platoon_gate_schedule'&&
+  (p.roadGateStatus!=='NECESSARY_WINDOWS_EXIST'||
+   !Array.isArray(p.roadGateBookings)||p.roadGateBookings.length!==p.states.length)){
+  p.reason='GATE_ENTRY_NO_WINDOW'
+  return p
+ }
  const byId=new Map(p.states.map(s=>[s.id,s]))
  let forecastGuardCount=0,capacityHoldCount=0,capacityPaceCount=0,
   twoSlotCount=0,slotAdmissionCount=0,slotWaveCount=0,
-  crossRowHoldCount=0
+  crossRowHoldCount=0,gateCount=0,gateHoldCount=0,gateLateCount=0
  const capacityMode=['platoon_capacity_hold','platoon_capacity_wave']
   .includes(p.roadMergePolicy)&&(p.roadGeometry??'constant')!=='constant'
  const capacityDecisions=capacityMode?new Map(capacityPlanV3(
@@ -171,10 +191,30 @@ export function advanceNormalStartV3(snapshot){
    crossRowPolicy:p.roadMergePolicy==='platoon_space_time_admission'?
     'defer':'pace'}):null
  const reserveById=new Map(reserved?.decisions.map(d=>[d.id,d])??[])
+ const gateBookings=new Map(p.roadGateBookings?.map(b=>[b.id,b])??[])
  const plans=p.states.map(s=>{
   const intentMode=p.controllerPolicy==='coordinated_demand'?'demand':
    p.controllerPolicy==='coordinated_either'?'either':'actual'
   let desired=chooseLane(s,p.states,{intentMode})
+  const gate=gateBookings.get(s.id)
+  if(p.roadMergePolicy==='platoon_gate_schedule'&&gate&&s.x<1020){
+   // Known geometric two-slot corridor, not an accepted movement.
+   // The following central rider must first fall longitudinally behind
+   // both side riders. Deny a discretionary new pass during the funnel.
+   desired=s.y
+   if(gate.slot==='LEFT'||gate.slot==='RIGHT'){
+    const relevant=p.states.filter(t=>t!==s.id&&t.id!==s.id&&
+     Math.abs(t.y-2.2)<.46&&Math.abs(t.x-s.x)<2.35)
+    const center=p.states.find(t=>t.startX===s.startX&&
+     Math.abs(t.y-2.2)<.46)
+    const ownClear=!center||s.x-center.x>=2.35
+    if(ownClear&&!relevant.length)desired=gate.targetY
+    else gateHoldCount++
+   }
+   gateCount++
+   if(p.at>gate.scheduledSeconds+.5&&s.x<gate.gateX)
+    gateLateCount++
+  }
   const slot=reserveById.get(s.id)
   if(slot?.requiredTwoSlots){
    // No speculative new passes in the reserved funnel. For flank riders,
@@ -202,7 +242,7 @@ export function advanceNormalStartV3(snapshot){
    'platoon_two_slot_stagger','platoon_two_slot_wave',
    'platoon_two_slot_extended','platoon_two_slot_hazard_hold',
    'platoon_space_time_reservation','platoon_no_yield_control',
-   'platoon_space_time_admission'].includes(p.roadMergePolicy)
+   'platoon_space_time_admission','platoon_gate_schedule'].includes(p.roadMergePolicy)
   if(laneForecast&&geometry!=='constant'){
    // A69: do not enter an overtaking lane known from current, static
    // road geometry to disappear within 20 seconds at current speed.
@@ -230,16 +270,22 @@ export function advanceNormalStartV3(snapshot){
    s.x,s.v,desired,{previewSeconds:
     ['platoon_two_slot_extended','platoon_two_slot_hazard_hold',
      'platoon_space_time_reservation','platoon_no_yield_control',
-     'platoon_space_time_admission'].includes(p.roadMergePolicy)?8:4,
+     'platoon_space_time_admission','platoon_gate_schedule']
+     .includes(p.roadMergePolicy)?8:4,
     bodyHalfWidthM:p.bodyHalfWidthM??0})
   const target=corridor.targetY
   const y1=round(s.y+clip(target-s.y,-L*DT,L*DT))
   const staggerDecision=twoSlotDecisions.get(s.id)
   if(staggerDecision?.staggerRequested&&
    staggerDecision.speedRequest<s.desired-1e-8)twoSlotCount++
+  const gateRemaining=gate?gate.scheduledSeconds-p.at:null
+  const schedulePace=gate&&p.roadMergePolicy==='platoon_gate_schedule'&&
+   s.x<gate.gateX&&gateRemaining>DT?
+   Math.max(5,Math.min(s.desired,(gate.gateX-s.x)/gateRemaining)):
+   s.desired
   const actualSpeedRequest=Math.min(decision?.speedRequest??s.desired,
    staggerDecision?.speedRequest??s.desired,
-   slot?.requestedPaceMps??s.desired)
+   slot?.requestedPaceMps??s.desired,schedulePace)
   const accel=clip((actualSpeedRequest-s.v)/DT,-B,A)
   return {id:s.id,accel,y1,target,oldTarget:s.targetY,
    roadGuard: corridor.changed}
@@ -523,6 +569,9 @@ export function advanceNormalStartV3(snapshot){
  p.roadSlotReservationRiderTicks+=slotAdmissionCount
  p.roadSlotPaceWarningRiderTicks+=slotWaveCount
  p.roadSlotCrossRowHoldRiderTicks+=crossRowHoldCount
+ p.roadGateWindowRiderTicks+=gateCount
+ p.roadGateLateralHoldRiderTicks+=gateHoldCount
+ p.roadGateLateWindowRiderTicks+=gateLateCount
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
   Math.abs(a.a.target-a.y1)<1e-6).length
@@ -578,6 +627,9 @@ export function finishNormalStartMetricsV3(original,final){
   roadSlotReservationRiderTicks:final.roadSlotReservationRiderTicks??0,
   roadSlotPaceWarningRiderTicks:final.roadSlotPaceWarningRiderTicks??0,
   roadSlotCrossRowHoldRiderTicks:final.roadSlotCrossRowHoldRiderTicks??0,
+  roadGateWindowRiderTicks:final.roadGateWindowRiderTicks??0,
+  roadGateLateralHoldRiderTicks:final.roadGateLateralHoldRiderTicks??0,
+  roadGateLateWindowRiderTicks:final.roadGateLateWindowRiderTicks??0,
   bodyHalfWidthM:final.bodyHalfWidthM??0,
   firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
