@@ -191,6 +191,16 @@ for(const n of [106,168]){
  assert(close(passes.durationSeconds,m.seconds),
   'A72 separate overtake observer clock changed')
  assert(end.physical.states.every(r=>r.energy.remainingWPrimeJoules>=0))
+ // These newly observed mild 120-second successes are REPRODUCIBLE
+ // benchmarks: a regression must fail CI, never silently be documented
+ // as a shorter but "technically passing" field.
+ assert.equal(m.status,'FULL_HORIZON_CLEAR',
+  'A72 lost safe 120s 106/168 mild full-bicycle peloton continuity')
+ assert.equal(m.seconds,120)
+ assert(m.completedLaneChanges>=(n===106?45:70)&&
+  passes.confirmedSustainedPasses>=(n===106?300:500)&&
+  m.nearStopRiderTicks===0,
+  'A72 long mild field lost meaningful physical passing or near-stop safety')
  if(m.status==='FULL_HORIZON_CLEAR'){
   assert(m.nearStopRiderTicks===0&&m.completedLaneChanges>0&&
    passes.confirmedSustainedPasses>0,
