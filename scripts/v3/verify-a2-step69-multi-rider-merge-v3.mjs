@@ -52,9 +52,13 @@ for(const n of [32,106,168]){
    const {initial,end,metrics,item}=evaluate(n,geometry,policy,seconds)
    // All variants must actually confront the same narrowing, not mask it
    // by choosing a separate grid or relaxing the collision checker.
-   assert(metrics.roadMergeYieldRiderTicks>0,'A69 did not exercise zipper')
-   if(policy==='platoon_lane_forecast')assert(metrics.roadLaneForecastGuardTicks>0,
-    'A69 did not exercise the road-aware outside-lane guard')
+   if(policy==='platoon_lane_forecast'){
+    assert(metrics.roadLaneForecastGuardTicks>0,
+     'A69 forecast policy failed to prevent any dead-end outside-lane entry')
+   }else{
+    assert(metrics.roadMergeYieldRiderTicks>0,
+     'A69 zipper policy did not exercise any actual occupied-lane yielding')
+   }
    const mirror=evaluate(n,geometry,policy,seconds,{mirror:true})
    const rename=evaluate(n,geometry,policy,seconds,{renamed:true})
    assert.equal(mirror.end.reason,end.reason,'A69 mirror status mismatch')
