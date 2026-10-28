@@ -6,6 +6,7 @@
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
 import {upstreamWarningsV3} from './a2UpstreamPredictionV3.mjs'
 import {capacityPlanV3,twoSlotStaggerPlanV3} from './a2LaneCapacityPlannerV3.mjs'
+import {reserveTwoSlotEntryV3} from './a2TwoSlotReservationsV3.mjs'
 import {constrainedLaneTargetV3,roadEnvelopeViolationV3,
  researchRoadEnvelopeV3} from './a2VariableRoadWidthV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
@@ -34,7 +35,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  'platoon_velocity_headway','platoon_capacity_hold',
  'platoon_capacity_wave','platoon_two_slot_stagger',
  'platoon_two_slot_wave','platoon_two_slot_extended',
- 'platoon_two_slot_hazard_hold'].includes(roadMergePolicy),
+ 'platoon_two_slot_hazard_hold','platoon_space_time_reservation'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -64,6 +65,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
   roadVelocityHeadwayTicks:0,roadCapacityHoldRiderTicks:0,
   roadCapacityPaceLimitedRiderTicks:0,
   roadTwoSlotStaggerRiderTicks:0,
+  roadSlotReservationRiderTicks:0,roadSlotPaceWarningRiderTicks:0,
   firstRoadViolation:null,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
@@ -81,7 +83,7 @@ function checkSnapshot(p){
   'platoon_velocity_headway','platoon_capacity_hold',
   'platoon_capacity_wave','platoon_two_slot_stagger',
   'platoon_two_slot_wave','platoon_two_slot_extended',
-  'platoon_two_slot_hazard_hold'].includes(p.roadMergePolicy??'preview_only'),
+  'platoon_two_slot_hazard_hold','platoon_space_time_reservation'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -131,7 +133,7 @@ export function advanceNormalStartV3(snapshot){
  assert(p.reason===null,'A64 cannot restart rejected field')
  const byId=new Map(p.states.map(s=>[s.id,s]))
  let forecastGuardCount=0,capacityHoldCount=0,capacityPaceCount=0,
-  twoSlotCount=0
+  twoSlotCount=0,slotAdmissionCount=0,slotWaveCount=0
  const capacityMode=['platoon_capacity_hold','platoon_capacity_wave']
   .includes(p.roadMergePolicy)&&(p.roadGeometry??'constant')!=='constant'
  const capacityDecisions=capacityMode?new Map(capacityPlanV3(
@@ -154,10 +156,28 @@ export function advanceNormalStartV3(snapshot){
    communicationRangeM:['platoon_two_slot_extended','platoon_two_slot_hazard_hold']
     .includes(p.roadMergePolicy)?120:85})
   .map(d=>[d.id,d])):new Map()
+ // A72: current-position/starting-row reservation of the two safe lateral
+ // slots in a 2.2m road. Pure guidance: every accepted x/y is still bounded
+ // and swept. No rider ID, future accepted path or game engine integration.
+ const reservationMode=p.roadMergePolicy==='platoon_space_time_reservation'&&
+  p.roadGeometry==='strong_pinch'&&(p.bodyHalfWidthM??0)>=.3
+ const reserved=reservationMode?reserveTwoSlotEntryV3(
+  p.states,p.roadGeometry,{bodyHalfWidthM:p.bodyHalfWidthM}):null
+ const reserveById=new Map(reserved?.decisions.map(d=>[d.id,d])??[])
  const plans=p.states.map(s=>{
   const intentMode=p.controllerPolicy==='coordinated_demand'?'demand':
    p.controllerPolicy==='coordinated_either'?'either':'actual'
   let desired=chooseLane(s,p.states,{intentMode})
+  const slot=reserveById.get(s.id)
+  if(slot?.requiredTwoSlots){
+   // No speculative new passes in the reserved funnel. For flank riders,
+   // move towards one of the TWO physical slots only after a real 2.6m
+   // longitudinal offset separates this rider from the centre of its row.
+   // Centre rider stays in its physical current lane and adjusts pace.
+   desired=slot.sideMoveAuthorized?slot.lateralTargetY:s.y
+   slotAdmissionCount++
+   if(slot.queueWave)slotWaveCount++
+  }
   const geometry=p.roadGeometry??'constant'
   if(p.roadMergePolicy==='platoon_two_slot_hazard_hold'&&
    geometry==='strong_pinch'&&Math.abs(s.targetY-s.y)<1e-5){
@@ -172,7 +192,8 @@ export function advanceNormalStartV3(snapshot){
    'platoon_lane_forecast_buffer','platoon_velocity_headway',
    'platoon_capacity_hold','platoon_capacity_wave',
    'platoon_two_slot_stagger','platoon_two_slot_wave',
-   'platoon_two_slot_extended','platoon_two_slot_hazard_hold'].includes(p.roadMergePolicy)
+   'platoon_two_slot_extended','platoon_two_slot_hazard_hold',
+   'platoon_space_time_reservation'].includes(p.roadMergePolicy)
   if(laneForecast&&geometry!=='constant'){
    // A69: do not enter an overtaking lane known from current, static
    // road geometry to disappear within 20 seconds at current speed.
@@ -198,8 +219,8 @@ export function advanceNormalStartV3(snapshot){
   if(decision?.paceLimited)capacityPaceCount++
   const corridor=constrainedLaneTargetV3(geometry,
    s.x,s.v,desired,{previewSeconds:
-    ['platoon_two_slot_extended','platoon_two_slot_hazard_hold']
-     .includes(p.roadMergePolicy)?8:4,
+    ['platoon_two_slot_extended','platoon_two_slot_hazard_hold',
+     'platoon_space_time_reservation'].includes(p.roadMergePolicy)?8:4,
     bodyHalfWidthM:p.bodyHalfWidthM??0})
   const target=corridor.targetY
   const y1=round(s.y+clip(target-s.y,-L*DT,L*DT))
@@ -207,7 +228,8 @@ export function advanceNormalStartV3(snapshot){
   if(staggerDecision?.staggerRequested&&
    staggerDecision.speedRequest<s.desired-1e-8)twoSlotCount++
   const actualSpeedRequest=Math.min(decision?.speedRequest??s.desired,
-   staggerDecision?.speedRequest??s.desired)
+   staggerDecision?.speedRequest??s.desired,
+   slot?.requestedPaceMps??s.desired)
   const accel=clip((actualSpeedRequest-s.v)/DT,-B,A)
   return {id:s.id,accel,y1,target,oldTarget:s.targetY,
    roadGuard: corridor.changed}
@@ -488,6 +510,8 @@ export function advanceNormalStartV3(snapshot){
  p.roadCapacityHoldRiderTicks+=capacityHoldCount
  p.roadCapacityPaceLimitedRiderTicks+=capacityPaceCount
  p.roadTwoSlotStaggerRiderTicks+=twoSlotCount
+ p.roadSlotReservationRiderTicks+=slotAdmissionCount
+ p.roadSlotPaceWarningRiderTicks+=slotWaveCount
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
   Math.abs(a.a.target-a.y1)<1e-6).length
@@ -540,6 +564,8 @@ export function finishNormalStartMetricsV3(original,final){
   roadCapacityHoldRiderTicks:final.roadCapacityHoldRiderTicks??0,
   roadCapacityPaceLimitedRiderTicks:final.roadCapacityPaceLimitedRiderTicks??0,
   roadTwoSlotStaggerRiderTicks:final.roadTwoSlotStaggerRiderTicks??0,
+  roadSlotReservationRiderTicks:final.roadSlotReservationRiderTicks??0,
+  roadSlotPaceWarningRiderTicks:final.roadSlotPaceWarningRiderTicks??0,
   bodyHalfWidthM:final.bodyHalfWidthM??0,
   firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
