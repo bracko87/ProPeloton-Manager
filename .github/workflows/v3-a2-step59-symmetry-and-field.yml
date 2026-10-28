@@ -1,4 +1,4 @@
-name: V3 A2 Step59-71 bicycle-wide capacity, passing and stagger research
+name: V3 A2 Step59-72 bicycle-wide physical safety and space-time reservations research
 on:
   push:
     branches: [main]
@@ -19,6 +19,8 @@ on:
       - 'scripts/v3/verify-a2-step70-lane-capacity-v3.mjs'
       - 'scripts/v3/verify-a2-step70-body-clearance-v3.mjs'
       - 'scripts/v3/verify-a2-step71-two-slot-stagger-v3.mjs'
+      - 'scripts/v3/a2TwoSlotReservationsV3.mjs'
+      - 'scripts/v3/verify-a2-step72-space-time-reservations-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -79,6 +81,18 @@ jobs:
         env:
           V3_A2_STEP71_DIR: ${{ runner.temp }}/step71
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step71-two-slot-stagger-v3.mjs
+      - name: 'Step72 physical two-slot entry-window and matched no-yield controls, 32/106/168, long sustained passes'
+        env:
+          V3_A2_STEP72_DIR: ${{ runner.temp }}/step72
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step72-space-time-reservations-v3.mjs
+      - name: Retain Step72 actual reservations and independently observed longer mild-road overtakes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step72-physical-reservation-and-control-evidence
+          path: ${{ runner.temp }}/step72/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step71 true 2-slot collision and road failure evidence
         if: always()
         uses: actions/upload-artifact@v4
