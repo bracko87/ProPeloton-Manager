@@ -18,7 +18,7 @@ function validate(snapshot){
   'A77 invalid saved physical candidate')
 }
 export function createMultiGatePhysicalCandidateV3(n,{
- mode='five_dense',roadGeometry='double_pinch',
+ mode='five_dense',roadGeometry='double_pinch',mirror=false,renamed=false,
  controllerPolicy='coordinated_demand',headwayStandOffM=3.2,
  pacePolicy='timed_safe_corridor'
 }={}){
@@ -29,7 +29,9 @@ export function createMultiGatePhysicalCandidateV3(n,{
   [3.2,3.8,4.5].includes(headwayStandOffM)&&
   ['timed_safe_corridor','timed_slot_only','timed_speed_only'].includes(pacePolicy),
   'A77 unsupported physical candidate fixture')
- const physical=createNormalStartV3(n,{mode,roadGeometry,
+ assert(typeof mirror==='boolean'&&typeof renamed==='boolean',
+  'A77 invalid reflection or identity options')
+ const physical=createNormalStartV3(n,{mode,roadGeometry,mirror,renamed,
   controllerPolicy,headwayStandOffM,bodyHalfWidthM:.3,
   roadMergePolicy:'platoon_no_yield_control'})
  const admission=auditMultiGateAdmissionV3(physical.states,roadGeometry)
