@@ -1,4 +1,4 @@
-name: V3 A2 Step59-75 full 168-rider strong-road physical passing and safe queue research
+name: V3 A2 Step59-76 multiple 2.2m road narrows and dense five-abreast research
 on:
   push:
     branches: [main]
@@ -28,6 +28,8 @@ on:
       - 'scripts/v3/verify-a2-step74-strong-passing-v3.mjs'
       - 'scripts/v3/verify-a2-step75-capacity-distribution-v3.mjs'
       - 'scripts/v3/verify-a2-step75-168-passing-v3.mjs'
+      - 'scripts/v3/verify-a2-step76-route-diversity-v3.mjs'
+      - 'scripts/v3/verify-a2-step76-double-passing-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -110,6 +112,23 @@ jobs:
         run: |
           node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step75-capacity-distribution-v3.mjs
           node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step75-168-passing-v3.mjs
+      - name: 'Step76 32/106/168 true 180s two bottlenecks, independent sustained passes, five-abreast and mixed-width fail-closed'
+        env:
+          V3_A2_STEP76_DIR: ${{ runner.temp }}/step76
+          V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/step76pass
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-route-diversity-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
+      - name: Retain Step76 multiple constrictions, safe full-width overtakes, exact replay and five-lane capacity failure evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step76-double-narrowing-180s-and-five-abreast
+          path: |
+            ${{ runner.temp }}/step76/*.json
+            ${{ runner.temp }}/step76pass/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step75 full 168-rider body-wide physical travel and observed 3s pair passes
         if: always()
         uses: actions/upload-artifact@v4
