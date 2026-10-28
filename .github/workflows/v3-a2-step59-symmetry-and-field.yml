@@ -54,7 +54,7 @@ jobs:
         env:
           V3_A2_STEP67_DIR: ${{ runner.temp }}/step67
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step67-sustained-overtakes-v3.mjs
-      - name: Step68 spatial road narrowing and reopening: 32/106/168 field safety, mirror, replay and controlled rejection
+      - name: 'Step68 spatial road narrowing and reopening: 32/106/168 field safety, mirror, replay and controlled rejection'
         env:
           V3_A2_STEP68_DIR: ${{ runner.temp }}/step68
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step68-variable-road-v3.mjs
