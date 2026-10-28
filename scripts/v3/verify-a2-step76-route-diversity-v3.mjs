@@ -100,6 +100,51 @@ for(const n of [32,106,168]){
   lastRiderX:Math.min(...final.states.map(s=>s.x)),
   firstCollision:m.firstCollision,firstRoadViolation:m.firstRoadViolation})
 }
+// A76 variable width sequence: the first 3.3m segment does not need
+// a 2-slot booking, but the second 2.2m segment does. Existing no-yield
+// policy has no booked gate and is screened honestly; record rejection
+// rather than pretending the later bottleneck was authorized.
+for(const n of [32,106,168]){
+ const opts={...base,roadGeometry:'staged_pinch',
+  roadMergePolicy:'platoon_no_yield_control'}
+ const initial=createNormalStartV3(n,opts)
+ assert.equal(initial.roadGateBookings,null)
+ const seconds=180
+ const final=runNormalStartV3(initial,{seconds})
+ const m=finishNormalStartMetricsV3(initial,final)
+ assert(['FULL_HORIZON_CLEAR','SWEPT_CONTACT',
+  'ROAD_ENVELOPE_VIOLATION','ENERGY_FAILED'].includes(m.status),
+  'A76 staged road returned unknown physical outcome')
+ assert(final.states.every(s=>s.v>=0&&s.energy.remainingWPrimeJoules>=0))
+ const mirror=runNormalStartV3(createNormalStartV3(n,{...opts,mirror:true}),
+  {seconds})
+ const rename=runNormalStartV3(createNormalStartV3(n,{...opts,renamed:true}),
+  {seconds})
+ assert.equal(final.reason,mirror.reason)
+ assert.equal(final.reason,rename.reason)
+ assert.equal(final.acceptedSteps,mirror.acceptedSteps)
+ assert.equal(final.acceptedSteps,rename.acceptedSteps)
+ for(let i=0;i<n;i++){
+  const a=final.states[i],b=mirror.states[i],c=rename.states[i]
+  assert(eq(a.x,b.x)&&eq(a.y,4.4-b.y),
+   'A76 staged-road mirror changed rider track '+n+'/'+i)
+  assert(eq(a.x,c.x)&&eq(a.y,c.y),
+   'A76 staged-road renamed rider changed track '+n+'/'+i)
+ }
+ if(final.reason)assert.throws(()=>advanceNormalStartV3(final))
+ else{
+  const half=runNormalStartV3(initial,{seconds:90})
+  assert.deepEqual(runNormalStartV3(JSON.parse(JSON.stringify(half)),
+   {seconds:90}),final)
+ }
+ examples.push({n,mode:'corridor',geometry:'staged_pinch',
+  physicalGateBookings:0,secondGateBookings:0,
+  targetSeconds:180,status:m.status,acceptedSeconds:m.seconds,
+  completedLaneChanges:m.completedLaneChanges,
+  nearStopTicks:m.nearStopRiderTicks,
+  lastRiderX:Math.min(...final.states.map(s=>s.x)),
+  firstCollision:m.firstCollision,firstRoadViolation:m.firstRoadViolation})
+}
 // A real body-valid FIVE abreast x/y grid (not the historic y=0/4.4
 // zero-body positions) is an adversarial capacity case: a three-track
 // two-slot planner must return an EXPLICIT failure before accepting time.
