@@ -1,4 +1,4 @@
-name: V3 A2 Step59-73 strong-pinched 32-rider passes and full-field feasibility research
+name: V3 A2 Step59-74 strong-road 106-rider real passing and 168-capacity research
 on:
   push:
     branches: [main]
@@ -23,6 +23,9 @@ on:
       - 'scripts/v3/verify-a2-step72-space-time-reservations-v3.mjs'
       - 'scripts/v3/a2TwoSlotFeasibilityV3.mjs'
       - 'scripts/v3/verify-a2-step73-feasibility-v3.mjs'
+      - 'scripts/v3/a2CrossRowFollowingV3.mjs'
+      - 'scripts/v3/verify-a2-step74-selective-crossrow-v3.mjs'
+      - 'scripts/v3/verify-a2-step74-strong-passing-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -91,6 +94,23 @@ jobs:
         env:
           V3_A2_STEP73_DIR: ${{ runner.temp }}/step73
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step73-feasibility-v3.mjs
+      - name: 'Step74 true 106-rider 120s full 2.2m road traversal with 100+ sustained pair passes'
+        env:
+          V3_A2_STEP74_DIR: ${{ runner.temp }}/step74
+          V3_A2_STEP74_PASS_DIR: ${{ runner.temp }}/step74pass
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step74-selective-crossrow-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step74-strong-passing-v3.mjs
+      - name: Retain Step74 spaced scheduling, strong-road physical classification and genuine overtake evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step74-strong-road-106-full-120s-and-168-capacity
+          path: |
+            ${{ runner.temp }}/step74/*.json
+            ${{ runner.temp }}/step74pass/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step73 necessary windows, 32 strong physical passes and rejected large-peloton candidates
         if: always()
         uses: actions/upload-artifact@v4
