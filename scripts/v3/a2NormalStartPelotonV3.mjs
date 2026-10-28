@@ -28,7 +28,8 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  [3.2,3.8,4.5].includes(headwayStandOffM)&&
  ['constant','mild_pinch','strong_pinch'].includes(roadGeometry)&&
  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
- 'platoon_lane_forecast_chain','platoon_lane_forecast_buffer'].includes(roadMergePolicy),
+ 'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
+ 'platoon_velocity_headway'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -55,6 +56,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
   roadBoundaryGuardTicks:0,roadMergeBufferedRiderTicks:0,
   roadMergeYieldRiderTicks:0,roadPlatoonAssistRiderTicks:0,
   roadPlatoonUnresolvedConstraints:0,roadLaneForecastGuardTicks:0,
+  roadVelocityHeadwayTicks:0,
   firstRoadViolation:null,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
@@ -67,7 +69,8 @@ function checkSnapshot(p){
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
   ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant')&&
   ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
-  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer'].includes(p.roadMergePolicy??'preview_only'),
+  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
+  'platoon_velocity_headway'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -123,7 +126,7 @@ export function advanceNormalStartV3(snapshot){
   let desired=chooseLane(s,p.states,{intentMode})
   const geometry=p.roadGeometry??'constant'
   const laneForecast=['platoon_lane_forecast','platoon_lane_forecast_chain',
-   'platoon_lane_forecast_buffer'].includes(p.roadMergePolicy)
+   'platoon_lane_forecast_buffer','platoon_velocity_headway'].includes(p.roadMergePolicy)
   if(laneForecast&&geometry!=='constant'){
    // A69: do not enter an overtaking lane known from current, static
    // road geometry to disappear within 20 seconds at current speed.
@@ -152,7 +155,8 @@ export function advanceNormalStartV3(snapshot){
  // an actual gap to develop before retrying. No ID/array-position priority,
  // velocity reset or instantaneous lateral relocation.
  const chainMode=['platoon_soft_yield','platoon_chain','platoon_lane_forecast',
-  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer'].includes(p.roadMergePolicy)
+  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer',
+  'platoon_velocity_headway'].includes(p.roadMergePolicy)
  const mergeYield=(p.roadMergePolicy==='yield_reservation'||chainMode)&&
   (p.roadGeometry??'constant')!=='constant'
  const forcedYield=new Set()
@@ -190,7 +194,7 @@ export function advanceNormalStartV3(snapshot){
  // states, reserving -0.85 only when the headway requires it.
  const commanded=new Map(plans.map(a=>[a.id,
   forcedYield.has(a.id)&&!chainMode?-B:a.accel]))
- let negotiatedHeadway=0,headwayLimited=0,bufferedHeadway=0
+ let negotiatedHeadway=0,headwayLimited=0,bufferedHeadway=0,velocityHeadway=0
  if(coordinated){
   const intents=new Map(plans.map(a=>[a.id,a]))
   const frontFirst=[...p.states].sort((a,b)=>b.x-a.x)
@@ -223,7 +227,18 @@ export function advanceNormalStartV3(snapshot){
     (chainMode&&s.x<780))?
     2.4*bufferableMissing/1.1:0
    if(buffered>1e-8)bufferedHeadway++
-   const targetGap=(p.headwayStandOffM??4.5)+buffered
+   let targetGap=(p.headwayStandOffM??4.5)+buffered
+   if(p.roadMergePolicy==='platoon_velocity_headway'){
+    // A69: time-headway and differential stopping distance, computed
+    // only from current velocity and bounded CURRENT commands. The
+    // warning scales with relative closing speed, avoiding a fixed
+    // following gap that becomes unrecoverable after lead deceleration.
+    const closing=Math.max(0,s.v-ahead.v,
+     (s.v+commanded.get(s.id)*DT)-(ahead.v+leaderAccel*DT))
+    const stoppingReserve=2.05+2.5*closing+closing*closing/(2*B)
+    targetGap=Math.max(targetGap,stoppingReserve)
+    if(stoppingReserve>(p.headwayStandOffM??4.5)+1e-7)velocityHeadway++
+   }
    const targetV=ahead.v+clip((gap-targetGap)/1.5,-2,2)
    const requested=clip((targetV-s.v)/DT,-B,A)
    // 2.05 m conservative end-of-step clearance; +.25m beyond bike length.
@@ -402,6 +417,7 @@ export function advanceNormalStartV3(snapshot){
  p.roadPlatoonAssistRiderTicks+=platoonAssists
  p.roadPlatoonUnresolvedConstraints+=unresolvedConstraints
  p.roadLaneForecastGuardTicks+=forecastGuardCount
+ p.roadVelocityHeadwayTicks+=velocityHeadway
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
   Math.abs(a.a.target-a.y1)<1e-6).length
@@ -450,6 +466,7 @@ export function finishNormalStartMetricsV3(original,final){
   roadPlatoonAssistRiderTicks:final.roadPlatoonAssistRiderTicks??0,
   roadPlatoonUnresolvedConstraints:final.roadPlatoonUnresolvedConstraints??0,
   roadLaneForecastGuardTicks:final.roadLaneForecastGuardTicks??0,
+  roadVelocityHeadwayTicks:final.roadVelocityHeadwayTicks??0,
   firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
