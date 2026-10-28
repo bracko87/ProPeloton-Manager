@@ -1,4 +1,4 @@
-name: V3 A2 Step59-66 physical safety and durable passing intent research
+name: V3 A2 Step59-67 physical safety and sustained overtaking research
 on:
   push:
     branches: [main]
@@ -10,6 +10,8 @@ on:
       - 'scripts/v3/verify-a2-step64-normal-start-v3.mjs'
       - 'scripts/v3/verify-a2-step65-coordinated-headway-v3.mjs'
       - 'scripts/v3/verify-a2-step66-passing-intent-v3.mjs'
+      - 'scripts/v3/a2SustainedOvertakeObserverV3.mjs'
+      - 'scripts/v3/verify-a2-step67-sustained-overtakes-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -46,6 +48,18 @@ jobs:
         env:
           V3_A2_STEP66_DIR: ${{ runner.temp }}/step66
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step66-passing-intent-v3.mjs
+      - name: Step67 physical sustained overtakes and 106/168 open-corridor screens
+        env:
+          V3_A2_STEP67_DIR: ${{ runner.temp }}/step67
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step67-sustained-overtakes-v3.mjs
+      - name: Retain Step67 crossing, persistent clearance and large-field geometry evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step67-sustained-overtakes-and-corridors
+          path: ${{ runner.temp }}/step67/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step66 passing intent, mirror, identity and safety evidence
         if: always()
         uses: actions/upload-artifact@v4
