@@ -6,6 +6,7 @@
 import {createNormalStartV3,advanceNormalStartV3,
  finishNormalStartMetricsV3} from './a2NormalStartPelotonV3.mjs'
 import {auditMultiGateAdmissionV3} from './a2MultiGateAdmissionV3.mjs'
+import {phase3QueueWaveV3} from './a2Phase3QueueWaveV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
 function assert(x,m){if(!x)throw Error(m)}
@@ -28,7 +29,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
   ['double_pinch','staged_pinch','strong_pinch'].includes(roadGeometry)&&
   ['coordinated_demand','coordinated_headway'].includes(controllerPolicy)&&
   [3.2,3.8,4.5].includes(headwayStandOffM)&&
-  ['timed_safe_corridor','timed_slot_only','timed_speed_only'].includes(pacePolicy)&&
+  ['timed_safe_corridor','timed_slot_only','timed_speed_only',
+   'anticipatory_queue_wave','protect_lead_queue_wave'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -58,6 +60,7 @@ export function createMultiGatePhysicalCandidateV3(n,{
   physical,admission,
   originalDesired:Object.fromEntries(physical.states.map(s=>[s.id,s.desired])),
   commandedRiderTicks:0,lateralRequestTicks:0,headwayWarningTicks:0,
+  queueProtectedLeaderTicks:0,queueEarlyBrakeRiderTicks:0,
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -97,7 +100,8 @@ function commandForRider(snapshot,s,bookingsById){
  // physically scheduled speed requests, NOT by instantaneous reposition.
  let targetY=booking.targetY
  if(snapshot.pacePolicy==='timed_speed_only')targetY=s.targetY
- else if(snapshot.pacePolicy==='timed_safe_corridor'&&
+ else if(['timed_safe_corridor','anticipatory_queue_wave',
+  'protect_lead_queue_wave'].includes(snapshot.pacePolicy)&&
   Math.abs(targetY-s.y)>EPS){
   const delta=targetY-s.y
   const blocked=snapshot.physical.states.some(t=>{
@@ -135,10 +139,23 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  }
  const candidate=structuredClone(out.physical)
  let requests=0,laterals=0,heads=0
- for(const s of candidate.states){
-  const request=commandForRider(out,s,byId)
-  if(request.error){out.reason='GATE_ENTRY_NO_WINDOW';out.status='REJECTED'
-   return out}
+ const originalRequests=candidate.states.map(s=>({
+  id:s.id,...commandForRider(out,s,byId)}))
+ if(originalRequests.some(r=>r.error)){
+  out.reason='GATE_ENTRY_NO_WINDOW';out.status='REJECTED'
+  return out
+ }
+ // P3: communicate CURRENT leader deceleration intent upstream.
+ // This changes only temporary requests, never physical x/y/v/energy.
+ const queue=['anticipatory_queue_wave','protect_lead_queue_wave']
+  .includes(out.pacePolicy)?
+  phase3QueueWaveV3(candidate.states,originalRequests,out.originalDesired,{
+   headwayM:out.physical.headwayStandOffM,
+   mode:out.pacePolicy==='protect_lead_queue_wave'?
+    'protect_lead':'anticipatory'}):null
+ const commands=queue?.requests??originalRequests
+ for(let i=0;i<candidate.states.length;i++){
+  const s=candidate.states[i],request=commands[i]
   s.desired=request.speed
   s.targetY=request.targetY
   if(request.guided)requests++
@@ -161,6 +178,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  out.commandedRiderTicks+=requests
  out.lateralRequestTicks+=laterals
  out.headwayWarningTicks+=heads
+ out.queueProtectedLeaderTicks+=(queue?.protectedLeaders??0)
+ out.queueEarlyBrakeRiderTicks+=(queue?.earlyBrakeRequests??0)
  out.status='IN_PROGRESS'
  return out
 }
