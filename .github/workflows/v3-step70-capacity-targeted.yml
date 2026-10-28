@@ -6,6 +6,8 @@ on:
       - 'scripts/v3/a2NormalStartPelotonV3.mjs'
       - 'scripts/v3/a2LaneCapacityPlannerV3.mjs'
       - 'scripts/v3/verify-a2-step70-lane-capacity-v3.mjs'
+      - 'scripts/v3/a2VariableRoadWidthV3.mjs'
+      - 'scripts/v3/verify-a2-step70-body-clearance-v3.mjs'
       - '.github/workflows/v3-step70-capacity-targeted.yml'
   workflow_dispatch:
 permissions:
@@ -23,6 +25,10 @@ jobs:
         env:
           V3_A2_STEP70_DIR: ${{ runner.temp }}/step70
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step70-lane-capacity-v3.mjs
+      - name: A70 bicycle-body roadside clearance and actual 32/106/168 physical capacity
+        env:
+          V3_A2_STEP70_DIR: ${{ runner.temp }}/step70
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step70-body-clearance-v3.mjs
       - name: Save A70 capacity decisions, first contacts and road exits
         if: always()
         uses: actions/upload-artifact@v4
