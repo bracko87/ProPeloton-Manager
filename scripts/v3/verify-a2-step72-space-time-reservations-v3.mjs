@@ -6,6 +6,8 @@ import assert from 'node:assert/strict'
 import {mkdirSync,writeFileSync} from 'node:fs'
 import {reserveTwoSlotEntryV3} from './a2TwoSlotReservationsV3.mjs'
 import {physicalLateralCapacityV3} from './a2LaneCapacityPlannerV3.mjs'
+import {startSustainedOvertakeObserverV3,advanceSustainedOvertakeObserverV3,
+ overtakeObserverSummaryV3} from './a2SustainedOvertakeObserverV3.mjs'
 import {createNormalStartV3,runNormalStartV3,advanceNormalStartV3,
  finishNormalStartMetricsV3} from './a2NormalStartPelotonV3.mjs'
 const close=(a,b)=>Math.abs(a-b)<1e-5
@@ -162,11 +164,59 @@ assert.equal(reject.reason,'SWEPT_CONTACT')
 assert.equal(reject.at,0)
 assert.equal(reject.acceptedSteps,0)
 assert.deepEqual(reject.states,impossible.states)
+// Sustain the actually safer MILD controller beyond the original
+// 90s screen. Independent physical after-acceptance observer prevents
+// mistaking endpoint rank inversion for a real, persistent bicycle pass.
+const longerMild=[]
+const coupled=(start,seconds,checkpoint=null)=>{
+ let physical=checkpoint?.physical??structuredClone(start)
+ let observer=checkpoint?.observer??startSustainedOvertakeObserverV3(
+  physical.states)
+ const end=physical.at+seconds
+ while(physical.at<end-1e-7&&!physical.reason){
+  const moved=advanceNormalStartV3(physical)
+  if(moved.reason){physical=moved;break}
+  observer=advanceSustainedOvertakeObserverV3(observer,physical.states,
+   moved.states,.5)
+  physical=moved
+ }
+ return {physical,observer}
+}
+for(const n of [106,168]){
+ const start=createNormalStartV3(n,{...options,
+  roadGeometry:'mild_pinch',roadMergePolicy:'platoon_no_yield_control'})
+ const end=coupled(start,120)
+ const m=finishNormalStartMetricsV3(start,end.physical)
+ const passes=overtakeObserverSummaryV3(end.observer)
+ assert(close(passes.durationSeconds,m.seconds),
+  'A72 separate overtake observer clock changed')
+ assert(end.physical.states.every(r=>r.energy.remainingWPrimeJoules>=0))
+ if(m.status==='FULL_HORIZON_CLEAR'){
+  assert(m.nearStopRiderTicks===0&&m.completedLaneChanges>0&&
+   passes.confirmedSustainedPasses>0,
+   'A72 longer physically clear field has no real sustained racing')
+  const first=coupled(start,60)
+  const restored=coupled(start,60,{physical:JSON.parse(
+   JSON.stringify(first.physical)),observer:JSON.parse(
+   JSON.stringify(first.observer))})
+  assert.deepEqual(restored.physical,end.physical,
+   'A72 long mild physical 60+60 exact restart differs')
+  assert.deepEqual(restored.observer,end.observer,
+   'A72 long mild real-overtake 60+60 exact restart differs')
+ }
+ longerMild.push({n,requestedSeconds:120,acceptedSeconds:m.seconds,
+  status:m.status,completedLaneChanges:m.completedLaneChanges,
+  endpointPairOrderReversals:m.uniquePairOrderReversals,
+  confirmedSustainedPairPasses:passes.confirmedSustainedPasses,
+  nearStopRiderTicks:m.nearStopRiderTicks,
+  firstCollision:m.firstCollision,firstRoadViolation:m.firstRoadViolation})
+}
 const study={study:'A2_STEP72_PHYSICAL_TWO_SLOT_RESERVATIONS',
  technicalGate:'PASS',sportingGate:'NO_GO',originalReferenceRetained:true,
  provisionalBicycleHalfWidthM:.3,entryX:780,longitudinalOffsetM:2.6,
  matchedNoYieldControl:true,mildReservationInactive:true,
- independentCrossRowHoldControl:true,
+ independentCrossRowHoldControl:true,passedPairDetectorIndependent:true,
+ longerMild,
  initialThreeAbreastAccepted:false,noUnboundedAcceleration:true,
  deterministicReflectionAndRenaming:true,noOfficialWrites:true,
  cases,fullCrossingSuccesses:cases.filter(x=>
@@ -184,4 +234,4 @@ console.log(JSON.stringify({...study,cases:cases.map(x=>({
  crossRowHolds:x.crossRowHolds,
  nearStops:x.nearStopTicks,
  collision:x.firstCollision?.pair??null,
- roadExit:x.firstRoadViolation?.riderId??null}))}))
+ roadExit:x.firstRoadViolation?.riderId??null})),longerMild}))
