@@ -54,6 +54,34 @@ for(const [n,mode,seconds] of [
  [8,'mixed',90],[32,'mixed',90],[32,'pressure',90],
  [8,'corridor',90],[32,'corridor',90]
 ])run(n,mode,seconds)
+// A64 lane realism gate on a physically open start: exercise actual
+// movement rather than passing without steering in a static pre-cleared grid.
+const corridorStart=createNormalStartV3(32,{mode:'corridor'})
+const corridor=runNormalStartV3(corridorStart,{seconds:90})
+const corridorMetrics=finishNormalStartMetricsV3(corridorStart,corridor)
+assert.equal(corridorMetrics.status,'FULL_HORIZON_CLEAR',
+ 'A64 open-corridor peloton failed swept collision safety')
+assert(corridorMetrics.initiatedLaneChanges>0&&corridorMetrics.completedLaneChanges>0,
+ 'A64 no completed physically bounded lane transitions')
+assert(corridorMetrics.uniquePairOrderReversals>0,
+ 'A64 no persistent endpoint position changes in an open corridor')
+const corridorCheckpoint=runNormalStartV3(corridorStart,{seconds:45})
+assert.deepEqual(
+ runNormalStartV3(JSON.parse(JSON.stringify(corridorCheckpoint)),{seconds:45}),
+ corridor,'A64 32-rider crossing peloton failed exact 45s restart')
+// Changing IDs or reflecting the road must not change the physical
+// outcomes in the corridor layout. This is not merely an inert zero-steer check.
+const mirroredCorridor=runNormalStartV3(createNormalStartV3(32,{mode:'corridor',mirror:true}),{seconds:90})
+const renamedCorridor=runNormalStartV3(createNormalStartV3(32,{mode:'corridor',renamed:true}),{seconds:90})
+assert.equal(mirroredCorridor.reason,corridor.reason,'A64 reflected corridor contact changed')
+assert.equal(renamedCorridor.reason,corridor.reason,'A64 relabeled corridor contact changed')
+for(let i=0;i<32;i++){
+ const a=corridor.states[i],b=mirroredCorridor.states[i],c=renamedCorridor.states[i]
+ assert(Math.abs(a.y+b.y-4.4)<1e-5,'A64 corridor steering is mirror biased')
+ assert(Math.abs(a.x-b.x)<1e-5,'A64 corridor passing is mirror biased')
+ assert(Math.abs(a.x-c.x)<1e-5,'A64 corridor passing is ID biased')
+ assert(Math.abs(a.energy.remainingWPrimeJoules-b.energy.remainingWPrimeJoules)<1e-5)
+}
 // A deliberately overlapping physical starting pair MUST fail closed.
 const bad=createNormalStartV3(8)
 bad.states[1].x=bad.states[0].x
@@ -73,6 +101,7 @@ const study={
  onlyCurrentStateDecisions:true,acceptedCollisionRepairs:0,
  physicalQuantumSeconds:.5,checkpointSeconds:60,
  exactSerializedRestart:true,mirrorProgressParity:true,riderIdProgressParity:true,
+ corridorExactSerializedRestart:true,corridorMirrorParity:true,corridorIdentityParity:true,
  forcedOverlappingStartRejected:true,scenarios,
  officialWrites:0,sportingApproval:'NOT_APPROVED'
 }
