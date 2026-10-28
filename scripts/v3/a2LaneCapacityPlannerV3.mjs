@@ -86,3 +86,61 @@ export function physicalLateralCapacityV3(kind,x,{
    Math.max(1,Math.floor((usableWidthM+1e-9)/lateralSeparationM)+1),
   isCalibrated:false}
 }
+
+/** A71 research-only two-slot longitudinal staggering. A 2.2m pinch
+ * has 1.6m usable bicycle-center width (half-body .3m), so three
+ * starting riders abreast cannot use it simultaneously with >.8m
+ * lateral separation. Create a rear offset for the CENTER position
+ * while both outside riders approach the narrowing inside their full
+ * body envelope. Physical integration still decides the actual move.
+ * No rider-ID, future accepted track, teleport or forced instant speed.
+ */
+export function twoSlotStaggerPlanV3(states,kind,{
+ bodyHalfWidthM=.3,lookaheadSeconds=20,
+ longitudinalClearanceM=2.35}={}){
+ assert(Array.isArray(states)&&states.length>=2&&
+  Number.isFinite(bodyHalfWidthM)&&bodyHalfWidthM>=0&&bodyHalfWidthM<=.5&&
+  Number.isFinite(lookaheadSeconds)&&lookaheadSeconds>=8&&lookaheadSeconds<=30&&
+  Number.isFinite(longitudinalClearanceM)&&
+  longitudinalClearanceM>=2.05&&longitudinalClearanceM<=5,
+  'A71 invalid two-slot physics inputs')
+ const seen=new Set(),out=[]
+ for(const s of states){
+  assert(typeof s.id==='string'&&!seen.has(s.id)&&
+   [s.x,s.y,s.v,s.desired].every(Number.isFinite)&&
+   s.v>=0&&s.v<=50,'A71 invalid rider or duplicate identity')
+  seen.add(s.id)
+  const envelopes=[0,.25,.5,.75,1].map(k=>
+   researchRoadEnvelopeV3(kind,s.x+s.v*lookaheadSeconds*k))
+  const narrowest=Math.min(...envelopes.map(e=>e.widthM))
+  const needStagger=narrowest-2*bodyHalfWidthM<1.62 &&
+   Math.abs(s.y-2.2)<.46
+  let speedRequest=s.desired,referenceGapM=null,
+   flankingRiderCount=0
+  if(needStagger){
+   const flank=states.filter(t=>t!==s&&
+    Math.abs(t.y-s.y)>=.80&&Math.abs(t.y-s.y)<1.7&&
+    t.x>=s.x-.50&&t.x<=s.x+12)
+   flankingRiderCount=flank.length
+   if(flank.length){
+    const closest=Math.min(...flank.map(t=>t.x-s.x))
+    referenceGapM=closest
+    const slowerSide=Math.min(...flank.map(t=>t.v))
+    if(closest<longitudinalClearanceM){
+     // Early 0.85m/s² bounded slowdown accumulates actual gap over
+     // several accepted half-second ticks. The solver clips acceleration.
+     speedRequest=Math.min(speedRequest,s.v-2)
+    }else{
+     // Once staggered, keep separation rather than rapidly re-closing.
+     speedRequest=Math.min(speedRequest,
+      slowerSide+clamp((closest-longitudinalClearanceM)/2.5,0,1.5))
+    }
+   }
+  }
+  out.push({id:s.id,staggerRequested:needStagger&&flankingRiderCount>0,
+   narrowestWidthM:narrowest,flankingRiderCount,referenceGapM,
+   speedRequest:Math.max(0,speedRequest),
+   nominalSlots:narrowest-2*bodyHalfWidthM<1.62?2:null})
+ }
+ return out
+}
