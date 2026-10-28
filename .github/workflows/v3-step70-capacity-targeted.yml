@@ -1,0 +1,33 @@
+name: V3 Step70 targeted full-field lane capacity trial
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2NormalStartPelotonV3.mjs'
+      - 'scripts/v3/a2LaneCapacityPlannerV3.mjs'
+      - 'scripts/v3/verify-a2-step70-lane-capacity-v3.mjs'
+      - '.github/workflows/v3-step70-capacity-targeted.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  capacity-physics-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: A70 32/106/168 physical lane capacity and speed-wave, symmetry and deterministic checkpoint
+        env:
+          V3_A2_STEP70_DIR: ${{ runner.temp }}/step70
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step70-lane-capacity-v3.mjs
+      - name: Save A70 capacity decisions, first contacts and road exits
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step70-physical-lane-capacity
+          path: ${{ runner.temp }}/step70/*.json
+          retention-days: 30
+          if-no-files-found: warn
