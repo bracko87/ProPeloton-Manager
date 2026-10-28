@@ -5,6 +5,7 @@
  */
 import {continuousBicycleCollisionV3} from './continuousLateralResearchV3.mjs'
 import {resolveEventTimeYieldV3} from './a2EventTimeYieldResearchV3.mjs'
+import {resolveContactPriorityV3} from './a2CollisionPriorityResearchV3.mjs'
 import {evaluateObservedPiecewisePairV3} from './a2NonlinearSweepAuditV3.mjs'
 import {validateRoadScenarioV3} from './roadWidthLookaheadV3.mjs'
 import {roadWattsRequiredV3} from '../../src/race-engine-v3/pelotonPowerBalanceV3.ts'
@@ -18,7 +19,7 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
  const g=validateRoadScenarioV3(geometry)
  check(Array.isArray(riders)&&riders.length>=2&&riders.length<=32,'Invalid A34 roster count')
  check([2,4,5,10,20].includes(substeps)&&tickSeconds===10&&tickSeconds/substeps<=10,'Invalid A34 research step')
- check(['symmetric_halving','symmetric_trapezoid_motion','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(conflictPolicy)&&typeof diagnosticTrace==='boolean','Invalid A38 trace option')
+ check(['symmetric_halving','symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_lane_priority','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(conflictPolicy)&&typeof diagnosticTrace==='boolean','Invalid A38 trace option')
  check(road&&Number.isFinite(road.gradePercent)&&Math.abs(road.gradePercent)<=15,'Invalid A34 road grade')
  const ids=new Set(),maxY=(g.laneCount-1)*g.centerStepM
  const ready=riders.map(r=>{
@@ -38,7 +39,8 @@ export function initializeSubstepPhysicalResearchV3({riders,geometry,road={grade
   riders:ready,metrics:{ticks:0,riderSubsteps:0,conflictPairChecks:0,collisionProposals:0,
     collisionAttenuationRounds:0,attenuatedRiderSubsteps:0,mechanicalJoules:0,observedPairs:0,
     endpointChordMisses:0,remainingPiecewiseOverlaps:0,yieldSelections:0,symmetricFallbacks:0,hardFallbacks:0,contactBoundaryFallbacks:0,
-    contactSamples:0,contactFractionSum:0,physicalTieGroups:0,physicalTieParticipants:0},lastTickTracks:[],lastTickConflictTrace:[]}
+    contactSamples:0,contactFractionSum:0,physicalTieGroups:0,physicalTieParticipants:0,
+    priorityRearYields:0,priorityEnteringYields:0,prioritySymmetricYields:0,priorityHardFallbacks:0},lastTickTracks:[],lastTickConflictTrace:[]}
 }
 /** Freeze all currently submitted rider choices for this one research tick.
  * The next substep uses ONLY the state that was actually achieved before it.
@@ -50,7 +52,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
  check(checkpoint?.version===1&&checkpoint.gate==='A34_OFFLINE_SUBSTEP_ONLY'&&
   checkpoint.officialWrites===0&&checkpoint.sportingApproval==='NOT_APPROVED'&&
   Number.isInteger(checkpoint.tick)&&checkpoint.tick>=0&&
-  ['symmetric_halving','symmetric_trapezoid_motion','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(checkpoint.conflictPolicy),'Invalid A34 replay checkpoint')
+  ['symmetric_halving','symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_lane_priority','event_time_yield','event_time_fair','event_time_fair_normalized'].includes(checkpoint.conflictPolicy),'Invalid A34 replay checkpoint')
  const state=structuredClone(checkpoint),g=validateRoadScenarioV3(state.geometry)
  check(Array.isArray(intents)&&intents.length===state.riders.length,'Missing A34 rider commands')
  const command=new Map(intents.map(c=>[c?.riderId,c]))
@@ -75,7 +77,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    const power=v=>roadWattsRequiredV3(v,83,.36,state.road)+(turning?(c.steeringWatts??35):0)
    const permitted=boundRequestedSpeedByEnergyV3(r.energy,seconds,desire,power)
    const speed=Math.max(0,Math.floor(Math.max(0,permitted-1e-7)*1e6)/1e6)
-   const trapezoid=state.conflictPolicy==='symmetric_trapezoid_motion'
+   const trapezoid=['symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_lane_priority'].includes(state.conflictPolicy)
    // A43 opt-in: integrate the start/end velocity linearly across the physical
    // substep instead of applying the terminal velocity for its full duration.
    // Keep terminal speed separate from achieved average travel speed.
@@ -108,8 +110,12 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    resolveEventTimeYieldV3(proposals,g,{diagnostics:state.diagnosticTrace===true,
     tiePolicy:state.conflictPolicy==='event_time_fair_normalized'?'physical_group_normalized':
      state.conflictPolicy==='event_time_fair'?'physical_group':'id_first'}):null
-  const scales=event?.scales??new Map(proposals.map(p=>[p.riderId,1]))
-  let resolved=event?.paths??null
+  const priority=state.conflictPolicy==='trapezoid_rear_priority'?
+   resolveContactPriorityV3(proposals,g,{policy:'rear_priority'}):
+   state.conflictPolicy==='trapezoid_lane_priority'?
+   resolveContactPriorityV3(proposals,g,{policy:'lane_entry_priority'}):null
+  const scales=event?.scales??priority?.scales??new Map(proposals.map(p=>[p.riderId,1]))
+  let resolved=event?.paths??priority?.paths??null
   if(event){
    if(event.diagnosticEvents)for(const x of event.diagnosticEvents)tickTrace.push({substep:step,...x})
    state.metrics.conflictPairChecks+=event.pairChecks
@@ -123,6 +129,14 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    state.metrics.contactFractionSum+=event.contactFractionSum
    state.metrics.physicalTieGroups+=event.physicalTieGroups
    state.metrics.physicalTieParticipants+=event.physicalTieParticipants
+  }else if(priority){
+   state.metrics.conflictPairChecks+=priority.pairChecks
+   state.metrics.collisionProposals+=priority.collisionProposals
+   state.metrics.collisionAttenuationRounds+=priority.rounds
+   state.metrics.priorityRearYields+=priority.rearYields
+   state.metrics.priorityEnteringYields+=priority.enteringYields
+   state.metrics.prioritySymmetricYields+=priority.symmetricYields
+   state.metrics.priorityHardFallbacks+=priority.hardFallbacks
   }else{
    for(let iteration=0;iteration<65;iteration++){
     const paths=proposals.map(p=>{
@@ -167,7 +181,7 @@ export function advanceSubstepPhysicalResearchV3(checkpoint,intents){
    state.metrics.riderSubsteps++
    state.metrics.attenuatedRiderSubsteps+=Number(scales.get(old.riderId)<1)
    tracks.get(old.riderId).push({t:step/state.substeps,x:p.x1,y:p.y1})
-   const clearMotion=state.conflictPolicy==='symmetric_trapezoid_motion'&&
+   const clearMotion=['symmetric_trapezoid_motion','trapezoid_rear_priority','trapezoid_lane_priority'].includes(state.conflictPolicy)&&
     scales.get(old.riderId)>=1-1e-10
    const endSpeed=clearMotion?proposalById.get(old.riderId).terminalSpeedMps:achievedSpeed
    return {...old,meters:p.x1,y:p.y1,speedMps:r6(endSpeed),energy}
