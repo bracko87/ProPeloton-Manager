@@ -43,7 +43,13 @@ for(const n of [32,106,168]){
   const final=runNormalStartV3(original,{seconds})
   const metrics=finishNormalStartMetricsV3(original,final)
   assert(['FULL_HORIZON_CLEAR','SWEPT_CONTACT','ROAD_ENVELOPE_VIOLATION',
-   'ENERGY_FAILED'].includes(metrics.status),'A74 unknown physical status')
+   'ENERGY_FAILED','GATE_ENTRY_NO_WINDOW'].includes(metrics.status),
+   'A74 unknown physical status '+n+'/'+policy+'/'+metrics.status)
+  if(metrics.status==='GATE_ENTRY_NO_WINDOW'){
+   assert.equal(final.at,0)
+   assert.equal(final.acceptedSteps,0)
+   assert.deepEqual(final.states,original.states)
+  }
   assert(final.at<=seconds&&final.states.every(s=>s.v>=0&&
    s.energy.remainingWPrimeJoules>=0&&near(s.energy.seconds,final.at)),
    'A74 invalid bounded speed/energy/clock')
