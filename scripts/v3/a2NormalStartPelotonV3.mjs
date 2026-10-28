@@ -27,7 +27,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
  [3.2,3.8,4.5].includes(headwayStandOffM)&&
  ['constant','mild_pinch','strong_pinch'].includes(roadGeometry)&&
- ['preview_only','buffered_headway','yield_reservation'].includes(roadMergePolicy),
+ ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -52,7 +52,8 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
   nearStops:0,lowestSpeed:Infinity,maxSpeed:0,
   negotiatedHeadwayPairTicks:0,headwayLimitedRiderTicks:0,
   roadBoundaryGuardTicks:0,roadMergeBufferedRiderTicks:0,
-  roadMergeYieldRiderTicks:0,
+  roadMergeYieldRiderTicks:0,roadPlatoonAssistRiderTicks:0,
+  roadPlatoonUnresolvedConstraints:0,
   firstRoadViolation:null,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
@@ -64,7 +65,7 @@ function checkSnapshot(p){
  assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
   ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant')&&
-  ['preview_only','buffered_headway','yield_reservation'].includes(p.roadMergePolicy??'preview_only'),
+  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -130,7 +131,8 @@ export function advanceNormalStartV3(snapshot){
  // insufficient. A trailing requester yields bounded acceleration, allowing
  // an actual gap to develop before retrying. No ID/array-position priority,
  // velocity reset or instantaneous lateral relocation.
- const mergeYield=p.roadMergePolicy==='yield_reservation'&&
+ const chainMode=['platoon_soft_yield','platoon_chain'].includes(p.roadMergePolicy)
+ const mergeYield=(p.roadMergePolicy==='yield_reservation'||chainMode)&&
   (p.roadGeometry??'constant')!=='constant'
  const forcedYield=new Set()
  let mergeYieldCount=0
@@ -161,8 +163,12 @@ export function advanceNormalStartV3(snapshot){
  // from ahead to rear, so a follower knows the leader's already-limited
  // acceleration. No hard-coded rider IDs, future accepted paths or repair.
  const coordinated=['coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy)
+ // Previously: a blocked outside cyclist always braked at the physical
+ // limit. Such discontinuous commands compressed an entire following chain.
+ // New opt-in platoon candidates instead negotiate speed from actual leader
+ // states, reserving -0.85 only when the headway requires it.
  const commanded=new Map(plans.map(a=>[a.id,
-  forcedYield.has(a.id)?-B:a.accel]))
+  forcedYield.has(a.id)&&!chainMode?-B:a.accel]))
  let negotiatedHeadway=0,headwayLimited=0,bufferedHeadway=0
  if(coordinated){
   const intents=new Map(plans.map(a=>[a.id,a]))
@@ -187,7 +193,8 @@ export function advanceNormalStartV3(snapshot){
    const projectedWidth=researchRoadEnvelopeV3(
     p.roadGeometry??'constant',previewX).widthM
    const missingWidth=Math.max(0,4.4-projectedWidth)
-   const buffered=p.roadMergePolicy==='buffered_headway'?
+   const buffered=(p.roadMergePolicy==='buffered_headway'||
+    (chainMode&&s.x<780))?
     2.4*missingWidth/1.1:0
    if(buffered>1e-8)bufferedHeadway++
    const targetGap=(p.headwayStandOffM??4.5)+buffered
@@ -198,9 +205,73 @@ export function advanceNormalStartV3(snapshot){
    // fixed-leader A61 rear-only alarm. It cannot override brake limits.
    const maxSafe=leaderAccel+2*(gap-2.05+(ahead.v-s.v)*DT)/(DT*DT)
    const limited=Math.max(-B,Math.min(commanded.get(s.id),requested,maxSafe))
-   if(limited<a.accel-1e-9){commanded.set(s.id,limited);headwayLimited++}
+   if(limited<commanded.get(s.id)-1e-9){
+    commanded.set(s.id,limited);headwayLimited++
+   }
    negotiatedHeadway++
   }
+ }
+ // A69 experimental multi-rider coupling, still research-only:
+ // all constraints depend solely on CURRENT x/y/v and this step's proposed
+ // lateral corridors. A leader may increase acceleration (at most +.45)
+ // to make room for a rear rider already braking, provided that leader's
+ // own ahead clearance remains physically possible. Repeat downstream
+ // brake and upstream assist until constraints settle, never teleport.
+ let platoonAssists=0,unresolvedConstraints=0
+ if(p.roadMergePolicy==='platoon_chain'&&mergeYield){
+  const intentById=new Map(plans.map(a=>[a.id,a]))
+  const sorted=[...p.states].sort((a,b)=>b.x-a.x)
+  const pairs=[]
+  for(let i=0;i<sorted.length;i++)for(let j=i+1;j<sorted.length;j++){
+   const lead=sorted[i],rear=sorted[j]
+   if(lead.x-rear.x>12)break
+   const a=intentById.get(lead.id),b=intentById.get(rear.id)
+   if(!a||!b)continue
+   const overlap=Math.abs(lead.y-rear.y)<road.lateralCollisionM+.4||
+    Math.abs(a.y1-b.y1)<road.lateralCollisionM+.4||
+    Math.abs(a.target-b.target)<road.lateralCollisionM+.4
+   if(overlap)pairs.push({lead,rear})
+  }
+  // Work with the entire physical chain, not a rider-specific exception.
+  // In each pass prioritize applying needed leader acceleration to avoid
+  // a follower that has exhausted braking authority. Then re-limit any
+  // rear rider following a newly accelerated (or constrained) leader.
+  for(let iteration=0;iteration<4;iteration++){
+   let changed=false
+   for(const {lead,rear} of [...pairs].reverse()){
+    const gap=lead.x-rear.x
+    const safe=2.05
+    const closing=rear.v-lead.v
+    const aRear=commanded.get(rear.id)
+    const aLead=commanded.get(lead.id)
+    const requiredLead=aRear+2*(safe-gap+closing*DT)/(DT*DT)
+    if(requiredLead>aLead+1e-8){
+     const proposed=clip(requiredLead,-B,A)
+     if(proposed>aLead+1e-8){
+      commanded.set(lead.id,proposed)
+      platoonAssists++;changed=true
+     }
+    }
+   }
+   for(const {lead,rear} of pairs){
+    const gap=lead.x-rear.x
+    const maxRear=commanded.get(lead.id)+
+     2*(gap-2.05+(lead.v-rear.v)*DT)/(DT*DT)
+    const current=commanded.get(rear.id)
+    if(current>maxRear+1e-8){
+     const proposed=Math.max(-B,maxRear)
+     if(proposed<current-1e-8){
+      commanded.set(rear.id,proposed);changed=true
+     }
+    }
+   }
+   if(!changed)break
+  }
+  unresolvedConstraints=pairs.filter(({lead,rear})=>{
+   const separation=lead.x-rear.x+(lead.v-rear.v)*DT+
+    .5*(commanded.get(lead.id)-commanded.get(rear.id))*DT*DT
+   return separation<2.05-1e-7
+  }).length
  }
  const warnings=coordinated?null:
   upstreamWarningsV3(p.states,plans,p.road,DT,{lookaheadSeconds:3})
@@ -302,6 +373,8 @@ export function advanceNormalStartV3(snapshot){
  p.roadBoundaryGuardTicks+=plans.filter(a=>a.roadGuard).length
  p.roadMergeBufferedRiderTicks+=bufferedHeadway
  p.roadMergeYieldRiderTicks+=mergeYieldCount
+ p.roadPlatoonAssistRiderTicks+=platoonAssists
+ p.roadPlatoonUnresolvedConstraints+=unresolvedConstraints
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
   Math.abs(a.a.target-a.y1)<1e-6).length
@@ -347,6 +420,8 @@ export function finishNormalStartMetricsV3(original,final){
   roadBoundaryGuardRiderTicks:final.roadBoundaryGuardTicks??0,
   roadMergeBufferedRiderTicks:final.roadMergeBufferedRiderTicks??0,
   roadMergeYieldRiderTicks:final.roadMergeYieldRiderTicks??0,
+  roadPlatoonAssistRiderTicks:final.roadPlatoonAssistRiderTicks??0,
+  roadPlatoonUnresolvedConstraints:final.roadPlatoonUnresolvedConstraints??0,
   firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
