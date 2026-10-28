@@ -89,7 +89,8 @@ for(const n of [32,106,168]){
  for(const geometry of ['mild_pinch','strong_pinch']){
   const seconds=n===32?120:90
   for(const policy of ['platoon_two_slot_hazard_hold',
-   'platoon_no_yield_control','platoon_space_time_reservation']){
+   'platoon_no_yield_control','platoon_space_time_reservation',
+   'platoon_space_time_admission']){
    const base=run(n,geometry,policy,seconds)
    const mirror=run(n,geometry,policy,seconds,{mirror:true})
    const rename=run(n,geometry,policy,seconds,{renamed:true})
@@ -112,6 +113,7 @@ for(const n of [32,106,168]){
     lateralCompletions:base.metrics.completedLaneChanges,
     reservationRiderTicks:base.metrics.roadSlotReservationRiderTicks,
     upstreamWarnings:base.metrics.roadSlotPaceWarningRiderTicks,
+    crossRowHolds:base.metrics.roadSlotCrossRowHoldRiderTicks,
     nearStopTicks:base.metrics.nearStopRiderTicks,
     firstCollision:base.metrics.firstCollision,
     firstRoadViolation:base.metrics.firstRoadViolation})
@@ -132,6 +134,21 @@ for(const n of [32,106,168]){
   b.reservationRiderTicks===0&&b.upstreamWarnings===0,
   'A72 falsely attributed mild road physics to inactive two-slot scheduling')
 }
+for(const n of [32,106,168]){
+ const control=cases.find(x=>x.n===n&&x.geometry==='mild_pinch'&&
+  x.policy==='platoon_no_yield_control')
+ const admission=cases.find(x=>x.n===n&&x.geometry==='mild_pinch'&&
+  x.policy==='platoon_space_time_admission')
+ assert(admission&&control&&admission.status===control.status&&
+  admission.acceptedSeconds===control.acceptedSeconds&&
+  admission.lateralCompletions===control.lateralCompletions&&
+  admission.reservationRiderTicks===0,
+  'A72 deferred admission improperly affected mild-width controls')
+}
+const strongAdmission=cases.filter(x=>x.geometry==='strong_pinch'&&
+ x.policy==='platoon_space_time_admission')
+assert(strongAdmission.length===3&&strongAdmission.every(x=>
+ x.crossRowHolds>0),'A72 never exercised cross-row lateral exclusion')
 // Existing three-abreast physical overlap at the worst pinch is NEVER
 // granted a reservation that instantly resolves x/y or commits W-prime.
 const impossible=createNormalStartV3(8,{...options,
@@ -149,11 +166,12 @@ const study={study:'A2_STEP72_PHYSICAL_TWO_SLOT_RESERVATIONS',
  technicalGate:'PASS',sportingGate:'NO_GO',originalReferenceRetained:true,
  provisionalBicycleHalfWidthM:.3,entryX:780,longitudinalOffsetM:2.6,
  matchedNoYieldControl:true,mildReservationInactive:true,
+ independentCrossRowHoldControl:true,
  initialThreeAbreastAccepted:false,noUnboundedAcceleration:true,
  deterministicReflectionAndRenaming:true,noOfficialWrites:true,
  cases,fullCrossingSuccesses:cases.filter(x=>
-  x.policy==='platoon_space_time_reservation'&&
-  x.status==='FULL_HORIZON_CLEAR').length,
+  ['platoon_space_time_reservation','platoon_space_time_admission']
+   .includes(x.policy)&&x.status==='FULL_HORIZON_CLEAR').length,
  officialWrites:0,sportingApproval:'NOT_APPROVED'}
 const dir=process.env.V3_A2_STEP72_DIR??'/tmp/a2-step72'
 mkdirSync(dir,{recursive:true})
@@ -163,6 +181,7 @@ console.log(JSON.stringify({...study,cases:cases.map(x=>({
  n:x.n,road:x.geometry,policy:x.policy,status:x.status,
  acceptedSeconds:x.acceptedSeconds,lateral:x.lateralCompletions,
  reservationTicks:x.reservationRiderTicks,upstream:x.upstreamWarnings,
+ crossRowHolds:x.crossRowHolds,
  nearStops:x.nearStopTicks,
  collision:x.firstCollision?.pair??null,
  roadExit:x.firstRoadViolation?.riderId??null}))}))
