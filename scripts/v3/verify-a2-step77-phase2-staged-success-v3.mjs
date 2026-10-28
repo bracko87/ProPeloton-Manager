@@ -100,7 +100,7 @@ const report={study:'A2_STEP77_PHASE2_32_STAGED_FIVE_ABREAST_PHYSICAL_PASSING',
  physicalLaneChanges:metrics.laneChanges,
  rearX:metrics.rearX,nearStopTicks:metrics.nearStops,
  independentlyConfirmed3sPasses:passes.confirmedSustainedPasses,
- 90Plus90ExactPhysicsAndObserverRecovery:true,
+ replay90Plus90ExactPhysicsAndObserverRecovery:true,
  mirrorAndRenamePhysicalParity:true,
  stress,officialWrites:0,unmodifiedOlderV3Solver:true}
 const dir=process.env.V3_A2_STEP77_STAGED_DIR??'/tmp/a2-step77staged'
