@@ -1,0 +1,38 @@
+name: V3 A77 phase3 large five-abreast physical queue research
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
+      - 'scripts/v3/probe-a2-step77-phase3-launch-spacing-v3.mjs'
+      - '.github/workflows/v3-step77-phase3-large-peloton-physical.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  large-five-abreast-physical-research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: A77 Phase3 106 and 168 five-abreast 5.2 6.5 8 10m initial physical grid matrices
+        env:
+          V3_A2_STEP77_PHASE3_DIR: ${{ runner.temp }}/step77phase3
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-phase3-launch-spacing-v3.mjs
+      - name: Preserve baseline 32r five-abreast 180s pass 80+ sustained overtakes replay and ID mirror
+        env:
+          V3_A2_STEP77_STAGED_DIR: ${{ runner.temp }}/step77staged
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step77-phase2-staged-success-v3.mjs
+      - name: Export honest physical outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a77-phase3-physical-106-and-168-spacing-trials
+          path: |
+            ${{ runner.temp }}/step77phase3/*.json
+            ${{ runner.temp }}/step77staged/*.json
+          if-no-files-found: warn
+          retention-days: 30
