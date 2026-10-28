@@ -153,11 +153,27 @@ export function advanceNormalStartV3(snapshot){
  const p=structuredClone(snapshot);checkSnapshot(p)
  assert(p.reason===null,'A64 cannot restart rejected field')
  if(['platoon_gate_schedule','platoon_gate_crossrow']
-  .includes(p.roadMergePolicy)&&
-  (p.roadGateStatus!=='NECESSARY_WINDOWS_EXIST'||
-   !Array.isArray(p.roadGateBookings)||p.roadGateBookings.length!==p.states.length)){
-  p.reason='GATE_ENTRY_NO_WINDOW'
-  return p
+  .includes(p.roadMergePolicy)){
+  const booked=p.roadGateBookings
+  const ids=new Set(p.states.map(s=>s.id))
+  const seen=new Set()
+  const invalid=p.roadGateStatus!=='NECESSARY_WINDOWS_EXIST'||
+   !Array.isArray(booked)||booked.length!==p.states.length||
+   booked.some(b=>{
+    if(!b||typeof b.id!=='string'||!ids.has(b.id)||
+     seen.has(b.id)||!Number.isFinite(b.scheduledSeconds)||
+     b.scheduledSeconds<0||b.scheduledSeconds>120||
+     !Number.isFinite(b.targetY)||b.targetY<0||b.targetY>height||
+     b.gateX!==780||
+     !['LEFT','RIGHT','CENTER_AFTER_FLANKS'].includes(b.slot))
+     return true
+    seen.add(b.id)
+    return false
+   })
+  if(invalid){
+   p.reason='GATE_ENTRY_NO_WINDOW'
+   return p
+  }
  }
  const byId=new Map(p.states.map(s=>[s.id,s]))
  let forecastGuardCount=0,capacityHoldCount=0,capacityPaceCount=0,
