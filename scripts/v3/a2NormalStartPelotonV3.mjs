@@ -27,7 +27,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
  [3.2,3.8,4.5].includes(headwayStandOffM)&&
  ['constant','mild_pinch','strong_pinch'].includes(roadGeometry)&&
- ['preview_only','buffered_headway'].includes(roadMergePolicy),
+ ['preview_only','buffered_headway','yield_reservation'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -52,6 +52,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
   nearStops:0,lowestSpeed:Infinity,maxSpeed:0,
   negotiatedHeadwayPairTicks:0,headwayLimitedRiderTicks:0,
   roadBoundaryGuardTicks:0,roadMergeBufferedRiderTicks:0,
+  roadMergeYieldRiderTicks:0,
   firstRoadViolation:null,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
@@ -63,7 +64,7 @@ function checkSnapshot(p){
  assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
   ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant')&&
-  ['preview_only','buffered_headway'].includes(p.roadMergePolicy??'preview_only'),
+  ['preview_only','buffered_headway','yield_reservation'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -124,12 +125,44 @@ export function advanceNormalStartV3(snapshot){
   return {id:s.id,accel,y1,target,oldTarget:s.targetY,
    roadGuard: corridor.changed}
  })
+ // A68: nonclairvoyant zipper admission. A lateral move toward another
+ // rider's occupied corridor may be blocked when their current x gap is
+ // insufficient. A trailing requester yields bounded acceleration, allowing
+ // an actual gap to develop before retrying. No ID/array-position priority,
+ // velocity reset or instantaneous lateral relocation.
+ const mergeYield=p.roadMergePolicy==='yield_reservation'&&
+  (p.roadGeometry??'constant')!=='constant'
+ const forcedYield=new Set()
+ let mergeYieldCount=0
+ if(mergeYield){
+  for(const a of plans){
+   const s=byId.get(a.id)
+   if(Math.abs(a.y1-s.y)<=1e-9)continue
+   for(const t of p.states){
+    if(t.id===s.id)continue
+    const present=Math.abs(s.y-t.y)
+    const proposed=Math.abs(a.y1-t.y)
+    if(present<=road.lateralCollisionM+1e-7||
+       proposed>=present-1e-8||
+       proposed>road.lateralCollisionM+L*DT+.10||
+       Math.abs(t.x-s.x)>=7.0)continue
+    // Hold the *current* physical lateral coordinate, rather than
+    // stealing space from a rider whose presence is already known.
+    a.y1=s.y
+    a.target=s.targetY
+    mergeYieldCount++
+    if(s.x<t.x-1e-7)forcedYield.add(s.id)
+    break
+   }
+  }
+ }
  // A65 experimental dense-field following: compute a simultaneous plan
  // using only the CURRENT state and this step's lateral intentions. Process
  // from ahead to rear, so a follower knows the leader's already-limited
  // acceleration. No hard-coded rider IDs, future accepted paths or repair.
  const coordinated=['coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy)
- const commanded=new Map(plans.map(a=>[a.id,a.accel]))
+ const commanded=new Map(plans.map(a=>[a.id,
+  forcedYield.has(a.id)?-B:a.accel]))
  let negotiatedHeadway=0,headwayLimited=0,bufferedHeadway=0
  if(coordinated){
   const intents=new Map(plans.map(a=>[a.id,a]))
@@ -164,7 +197,7 @@ export function advanceNormalStartV3(snapshot){
    // The formula includes actual bounded lead acceleration, unlike the
    // fixed-leader A61 rear-only alarm. It cannot override brake limits.
    const maxSafe=leaderAccel+2*(gap-2.05+(ahead.v-s.v)*DT)/(DT*DT)
-   const limited=Math.max(-B,Math.min(a.accel,requested,maxSafe))
+   const limited=Math.max(-B,Math.min(commanded.get(s.id),requested,maxSafe))
    if(limited<a.accel-1e-9){commanded.set(s.id,limited);headwayLimited++}
    negotiatedHeadway++
   }
@@ -268,6 +301,7 @@ export function advanceNormalStartV3(snapshot){
  p.steerEvents+=paths.filter(a=>Math.abs(a.y1-a.s.y)>1e-7).length
  p.roadBoundaryGuardTicks+=plans.filter(a=>a.roadGuard).length
  p.roadMergeBufferedRiderTicks+=bufferedHeadway
+ p.roadMergeYieldRiderTicks+=mergeYieldCount
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
   Math.abs(a.a.target-a.y1)<1e-6).length
@@ -312,6 +346,7 @@ export function finishNormalStartMetricsV3(original,final){
   completedLaneChanges:final.completedLaneChanges,
   roadBoundaryGuardRiderTicks:final.roadBoundaryGuardTicks??0,
   roadMergeBufferedRiderTicks:final.roadMergeBufferedRiderTicks??0,
+  roadMergeYieldRiderTicks:final.roadMergeYieldRiderTicks??0,
   firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
