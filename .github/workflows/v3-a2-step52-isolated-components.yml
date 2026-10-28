@@ -1,0 +1,58 @@
+name: V3 A2 Step52 isolated connected contact components (offline)
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2IsolatedContactComponentAuditV3.mjs'
+      - 'scripts/v3/audit-a2-step52-isolated-components-v3.mjs'
+      - '.github/workflows/v3-a2-step52-isolated-components.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-components:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate 162 full physics runs, frozen substep components and cross-pair safety
+        env:
+          V3_A2_STEP52_DIR: ${{ runner.temp }}/step52
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step52-isolated-components-v3.mjs
+      - name: Preserve first-round decisions, safe and blocked hybrids and historical cases
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step52-isolated-component-evidence
+          path: ${{ runner.temp }}/step52/*.json
+          retention-days: 30
+          if-no-files-found: warn
+  prior-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve A51 to A39 plus complete-stage regression gates
+        run: |
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step51-contact-propagation-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step50-contact-time-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step49-common-reference-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step48-first-pair-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step47-selective-corridor-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step46-corridor-guard-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/audit-a2-step45-fallback-fixtures-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step44-priority-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step43-trapezoid-trial-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step42-fixed-quantum-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step41-canonical-mirror-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step40-normalized-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step39-fairness-v3.mjs
+          node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-batch43-complete-stage-v3.mjs
+      - name: Production application build
+        run: npm ci --no-audit --no-fund && npm run build
