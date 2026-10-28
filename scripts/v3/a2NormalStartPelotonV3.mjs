@@ -44,7 +44,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
   acceptedSteps:0,pairChecks:0,brakeEvents:0,steerEvents:0,
   initiatedLaneChanges:0,completedLaneChanges:0,
   nearStops:0,lowestSpeed:Infinity,maxSpeed:0,
-  negotiatedHeadwayPairTicks:0,
+  negotiatedHeadwayPairTicks:0,headwayLimitedRiderTicks:0,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
 }
@@ -184,7 +184,9 @@ export function advanceNormalStartV3(snapshot){
    targetY:round(a.a.target),energy})
  }
  p.states=updates;p.at=round(p.at+DT);p.acceptedSteps++
- p.pairChecks+=checked;p.brakeEvents+=coordinated?headwayLimited:brakes.size
+ p.pairChecks+=checked
+ p.brakeEvents+=coordinated?paths.filter(a=>a.accel<-.05).length:brakes.size
+ p.headwayLimitedRiderTicks=(p.headwayLimitedRiderTicks??0)+headwayLimited
  p.negotiatedHeadwayPairTicks=(p.negotiatedHeadwayPairTicks??0)+negotiatedHeadway
  p.steerEvents+=paths.filter(a=>Math.abs(a.y1-a.s.y)>1e-7).length
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
@@ -225,6 +227,7 @@ export function finishNormalStartMetricsV3(original,final){
   minimumSpeedMps:final.lowestSpeed,maximumSpeedMps:final.maxSpeed,
   nearStopRiderTicks:final.nearStops,brakeRiderTicks:final.brakeEvents,
   headwayPairDecisionTicks:final.negotiatedHeadwayPairTicks??0,
+  headwayLimitedRiderTicks:final.headwayLimitedRiderTicks??0,
   laneSteeringRiderTicks:final.steerEvents,
   initiatedLaneChanges:final.initiatedLaneChanges,
   completedLaneChanges:final.completedLaneChanges,
