@@ -199,7 +199,8 @@ function frozenHybridPaths(preview,g,ids){
 function analyzeHistory(trace,g,grade,eventTime,preview,ids,q){
  const hypothetical=frozenHybridPaths(preview,g,ids)
  const env=inspectConstantAccelerationEnvelopeV3(preview,hypothetical,q)
- const changed=new Set(ids)
+ const selectedChanged=new Set(inspectFrozenComponentInterventionsV3(preview,g).changedByFullCounterfactual)
+ const changed=new Set(ids.filter(id=>selectedChanged.has(id)))
  const riders=env.riders.filter(x=>changed.has(x.riderId)&&
   x.reason==='BRAKING_EXCEEDS_0_85_MPS2'&&
   x.forwardShortfallFromLegalMinimumM>0)
