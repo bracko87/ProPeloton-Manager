@@ -21,6 +21,23 @@ function byIdentity(states){
  }
  return out
 }
+// The coupled solver uses constant acceleration within each accepted 0.5s
+// interval. A measured before/after velocity allows exact relative-x
+// interpolation and the true intra-step minimum, rather than trusting only
+// endpoint gaps. When synthetic unit inputs omit speed, use linear motion.
+function relativeLongitudinalV3(rear0,front0,rear1,front1,dt){
+ const d0=rear0.x-front0.x,d1=rear1.x-front1.x
+ if(!Number.isFinite(rear0.v)||!Number.isFinite(front0.v))
+  return {at:t=>d0+(d1-d0)*t/dt,minimum:Math.min(d0,d1)}
+ const dv=rear0.v-front0.v
+ // Derive acceleration from x0/x1 and v0, exactly respecting the
+ // authoritative accepted endpoint, including six-decimal rounding.
+ const da=2*(d1-d0-dv*dt)/(dt*dt)
+ const at=t=>d0+dv*t+.5*da*t*t
+ const vertex=Math.abs(da)>1e-10?-dv/da:null
+ return {at,minimum:Math.min(d0,d1,
+  vertex!==null&&vertex>0&&vertex<dt?at(vertex):Infinity)}
+}
 export function startSustainedOvertakeObserverV3(states){
  byIdentity(states)
  const pairs=[]
@@ -56,10 +73,16 @@ export function advanceSustainedOvertakeObserverV3(observer,before,after,dt){
   const back1=next.get(pair.rearId),front1=next.get(pair.leadId)
   ensure(back0&&front0&&back1&&front1,'A67 missing rider in accepted step')
   const dx0=back0.x-front0.x,dx1=back1.x-front1.x
+  const relative=relativeLongitudinalV3(back0,front0,back1,front1,dt)
   if(pair.phase==='confirmed'||pair.phase==='invalid')continue
   if(pair.phase==='approaching'){
    if(dx0<=0&&dx1>0){
-    const alpha=Math.max(0,Math.min(1,-dx0/(dx1-dx0)))
+    let lo=0,hi=dt
+    for(let j=0;j<44;j++){
+     const mid=(lo+hi)/2
+     if(relative.at(mid)>0)hi=mid;else lo=mid
+    }
+    const alpha=Math.max(0,Math.min(1,((lo+hi)/2)/dt))
     const yRear=back0.y+(back1.y-back0.y)*alpha
     const yLead=front0.y+(front1.y-front0.y)*alpha
     const lateral=Math.abs(yRear-yLead)
@@ -88,7 +111,14 @@ export function advanceSustainedOvertakeObserverV3(observer,before,after,dt){
      pair.holdSeconds=0
      out.establishedClearance++
     }else{
-     pair.holdSeconds=r6(pair.holdSeconds+dt)
+     // Three seconds means continuous physical clearance, not merely
+     // three seconds of above-threshold sampled checkpoints.
+     if(relative.minimum<MIN_FORWARD_M-1e-7){
+      pair.holdSeconds=0
+      pair.establishedSeconds=r6(out.at+dt)
+     }else{
+      pair.holdSeconds=r6(pair.holdSeconds+dt)
+     }
     }
     if(pair.holdSeconds>=PERSIST_SECONDS-1e-9){
      pair.phase='confirmed'
