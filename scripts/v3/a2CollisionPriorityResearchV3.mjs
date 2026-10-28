@@ -10,7 +10,7 @@ const motion=(p,scale)=>({riderId:p.riderId,x0:p.original.meters,
  y1:r6(p.original.y+(p.y-p.original.y)*scale)})
 export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',maxRounds=64,diagnostics=false}={}){
  ensure(Array.isArray(proposals)&&proposals.length>=2&&proposals.length<=32&&
-  ['rear_priority','lane_entry_priority'].includes(policy)&&
+  ['rear_priority','rear_corridor_guard','lane_entry_priority'].includes(policy)&&
   Number.isInteger(maxRounds)&&maxRounds===64&&typeof diagnostics==='boolean'&&
   Number.isFinite(g?.lateralCollisionM),'Invalid A44 research contact inputs')
  const riders=[...proposals].sort((a,b)=>a.riderId.localeCompare(b.riderId))
@@ -18,7 +18,8 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
  const limits={longitudinal:1.8,lateral:g.lateralCollisionM}
  const scales=new Map(riders.map(r=>[r.riderId,1]))
  let accepted=null,pairChecks=0,collisionProposals=0,rounds=0,
-  rearYields=0,enteringYields=0,symmetricYields=0,hardFallbacks=0
+  rearYields=0,enteringYields=0,symmetricYields=0,hardFallbacks=0,
+  corridorGuardYields=0,stalledGuardYields=0
  const diagnosticEvents=diagnostics?[]:null
  let firstCollidingPairs=null,lastCollidingPairs=null
  for(let round=0;round<=maxRounds;round++){
@@ -44,9 +45,21 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
     reduce.add(steerA?a.riderId:b.riderId)
     enteringYields++
    }else if(Math.abs(gap)>=1e-7&&
-       (!steerA&&!steerB||policy==='rear_priority')){
-    reduce.add(gap<0?a.riderId:b.riderId)
-    rearYields++
+       (!steerA&&!steerB||policy==='rear_priority'||policy==='rear_corridor_guard')){
+    const follower=gap<0?a:b,leader=gap<0?b:a
+    if(policy==='rear_corridor_guard'){
+     // A46: when stopping the follower does not clear the physical
+     // leader's current swept trajectory, one-sided yielding cannot work.
+     // Reduce both paths in bounded rounds; original swept fallback remains.
+     const leaderPath=paths[gap<0?j:i]
+     const stalled=continuousBicycleCollisionV3(motion(follower,0),leaderPath,limits)
+     const minuscule=scales.get(follower.riderId)<1/65536
+     if(stalled||minuscule){
+      reduce.add(follower.riderId);reduce.add(leader.riderId)
+      corridorGuardYields++
+      if(minuscule)stalledGuardYields++
+     }else{reduce.add(follower.riderId);rearYields++}
+    }else{reduce.add(follower.riderId);rearYields++}
    }else{
     reduce.add(a.riderId);reduce.add(b.riderId)
     symmetricYields++
@@ -94,6 +107,7 @@ export function resolveContactPriorityV3(proposals,g,{policy='rear_priority',max
   ensure(!continuousBicycleCollisionV3(accepted[i],accepted[j],limits),
    'A44 accepted continuous collision')
  return {paths:accepted,scales,pairChecks,collisionProposals,rounds,
-  rearYields,enteringYields,symmetricYields,hardFallbacks,diagnosticEvents,
+  rearYields,enteringYields,symmetricYields,hardFallbacks,
+  corridorGuardYields,stalledGuardYields,diagnosticEvents,
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
 }
