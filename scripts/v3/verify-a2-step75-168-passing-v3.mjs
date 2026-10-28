@@ -43,8 +43,8 @@ for(const policy of ['platoon_gate_tail_surge','platoon_gate_tail_focus']){
   'A75 168 field lacks 150 real bounded lane moves or near-stop safety')
  assert.equal(observer.durationSeconds,120,
   'A75 independent observer did not see exactly 120s accepted physics')
- assert(observer.confirmedSustainedPasses>0,
-  'A75 168 clear peloton produced no genuine 3s forward overtake')
+ assert(observer.confirmedSustainedPasses>=125,
+  'A75 168 full peloton lost 125 independently genuine sustained 3s passes')
  const first=run(original,60)
  assert.equal(first.physical.at,60)
  const resumed=run(original,60,{
