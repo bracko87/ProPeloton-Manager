@@ -114,7 +114,7 @@ const necessary=requiredOptimisticLeadV3(7,.5,4)
 assert(necessary.reachable&&necessary.leadSeconds>.5&&necessary.leadSeconds<10)
 const p={proposals:[
  {riderId:'rear',x0:100,y0:0,oldSpeedMps:8,proposedMeters:4,proposedY:0},
- {riderId:'front',x0:106,y0:0,oldSpeedMps:6,proposedMeters:3,proposedY:0}
+ {riderId:'front',x0:105,y0:0,oldSpeedMps:6,proposedMeters:3,proposedY:0}
  ],previewConflictPairs:[['rear','front']]}
 const warn=classifyRetrospectiveWarningV3(p,'rear',road,.5)
 assert(warn.warning&&warn.rawCollisionPartners.includes('front'))
