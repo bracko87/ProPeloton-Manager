@@ -108,7 +108,8 @@ assert(blocked.unresolved.some(r=>r.reason==='BLOCKED_BY_EARLIER_ROW'))
 // by jumping a rider into an assigned space-time slot.
 const physicallyScheduled=[]
 for(const n of [32,106,168]){
- const opts={...base,roadMergePolicy:'platoon_gate_schedule'}
+ for(const policy of ['platoon_gate_schedule','platoon_gate_crossrow']){
+ const opts={...base,roadMergePolicy:policy}
  const initial=createNormalStartV3(n,opts)
  assert.equal(initial.roadGateStatus,'NECESSARY_WINDOWS_EXIST')
  assert.equal(initial.roadGateBookings.length,n)
@@ -136,7 +137,7 @@ for(const n of [32,106,168]){
   assert(close(a.energy.remainingWPrimeJoules,b.energy.remainingWPrimeJoules))
   assert(close(a.energy.remainingWPrimeJoules,c.energy.remainingWPrimeJoules))
  }
- if(n===32){
+ if(n===32&&policy==='platoon_gate_schedule'){
   assert.equal(metrics.status,'FULL_HORIZON_CLEAR',
    'A73 regressed first 32-rider full-bicycle 2.2m 120s clear stage')
   assert.equal(metrics.seconds,120)
@@ -146,7 +147,7 @@ for(const n of [32,106,168]){
   assert(actual.states.every(s=>s.x>=1020),
    'A73 32-rider report did not physically leave widening road')
  }
- if(n>32){
+ if(n>32&&policy==='platoon_gate_schedule'){
   assert(metrics.seconds>=40,
    'A73 106/168 physical narrowing progress regressed below 40 seconds')
   assert(metrics.nearStopRiderTicks===0,
@@ -161,13 +162,15 @@ for(const n of [32,106,168]){
   assert.throws(()=>advanceNormalStartV3(actual))
   assert(actual.at<seconds)
  }
- physicallyScheduled.push({n,targetSeconds:seconds,acceptedSeconds:metrics.seconds,
+ physicallyScheduled.push({n,policy,targetSeconds:seconds,acceptedSeconds:metrics.seconds,
   status:metrics.status,completedLaneChanges:metrics.completedLaneChanges,
   nearStopRiderTicks:metrics.nearStopRiderTicks,
   timetableSteeringRiderTicks:metrics.roadGateWindowRiderTicks,
   timetableHeldRiderTicks:metrics.roadGateLateralHoldRiderTicks,
   timetableLateRiderTicks:metrics.roadGateLateWindowRiderTicks,
+  earlyCrossRowWarningTicks:metrics.roadGateCrossRowWarningRiderTicks,
   firstCollision:metrics.firstCollision,firstRoadViolation:metrics.firstRoadViolation})
+ }
 }
 // A separately maintained read-only observer certifies REAL sustained
 // strong-pinch passing and exact combined race+observer restart, not just
@@ -235,10 +238,11 @@ console.log(JSON.stringify({study:report.study,
  actualPhysicalStatus:x.actualPhysicalStatus,
  actualAcceptedSeconds:x.actualAcceptedSeconds})),
  strong32VerifiedSustainedPairPasses:passSummary.confirmedSustainedPasses,
- physicallyScheduled:physicallyScheduled.map(x=>({n:x.n,status:x.status,
+ physicallyScheduled:physicallyScheduled.map(x=>({n:x.n,policy:x.policy,
+ status:x.status,
  acceptedSeconds:x.acceptedSeconds,laneChanges:x.completedLaneChanges,
  nearStops:x.nearStopRiderTicks,held:x.timetableHeldRiderTicks,
- late:x.timetableLateRiderTicks,
+ late:x.timetableLateRiderTicks,warnings:x.earlyCrossRowWarningTicks,
  firstContact:x.firstCollision?.pair??null,
  roadExit:x.firstRoadViolation?.riderId??null})),
  impossibleLateArrival:report.confirmedKinematicallyInfeasibleLateArrival,
