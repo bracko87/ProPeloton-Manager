@@ -8,6 +8,7 @@ on:
       - 'scripts/v3/verify-a2-step77-physical-pilot-v3.mjs'
       - 'scripts/v3/probe-a2-step77-physical-policies-v3.mjs'
       - 'scripts/v3/verify-a2-step77-phase2-staged-success-v3.mjs'
+      - 'scripts/v3/probe-a2-step77-neutral-rolling-start-v3.mjs'
       - '.github/workflows/v3-step77-phase2-physical-pilot.yml'
   workflow_dispatch:
 permissions:
@@ -37,6 +38,10 @@ jobs:
         env:
           V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/step76pass
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
+      - name: Test physical 32 106 168 equal-speed rolling starts on two narrowing profiles
+        env:
+          V3_A2_STEP77_NEUTRAL_DIR: ${{ runner.temp }}/step77neutral
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-neutral-rolling-start-v3.mjs
       - name: Preserve first-contact and passage evidence even if physical candidate fails
         if: always()
         uses: actions/upload-artifact@v4
@@ -46,6 +51,7 @@ jobs:
             ${{ runner.temp }}/step77physics/*.json
             ${{ runner.temp }}/step77probe/*.json
             ${{ runner.temp }}/step77staged/*.json
+            ${{ runner.temp }}/step77neutral/*.json
             ${{ runner.temp }}/step76pass/*.json
           if-no-files-found: warn
           retention-days: 30
