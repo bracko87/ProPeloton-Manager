@@ -112,6 +112,31 @@ export function reserveTwoSlotEntryV3(states,kind,{
    }
   }
  }
+ // Cross-row capacity: a following outer-slot rider is itself converging
+ // laterally on the centre rider from the previous row. Propagate THAT
+ // centre's present reserved pace before the faster flank reaches the
+ // overlap window, rather than waiting for the 0.8m lateral contact gate.
+ // All sides are treated equally, mirroring preserves this choice.
+ for(const entry of planned.values()){
+  if(!entry.requiredTwoSlots||!['LEFT','RIGHT'].includes(entry.slot))continue
+  const rider=stateById.get(entry.id)
+  const leadingCenters=centers.filter(other=>{
+   const ahead=stateById.get(other.id)
+   const longitudinalGap=ahead.x-rider.x
+   return longitudinalGap>0&&longitudinalGap<=30
+  }).sort((a,b)=>stateById.get(a.id).x-stateById.get(b.id).x)
+  if(!leadingCenters.length)continue
+  const lead=leadingCenters[0],front=stateById.get(lead.id)
+  const gap=front.x-rider.x
+  const anticipated=Math.min(front.v,lead.requestedPaceMps)+
+   clamp((gap-2.6)/8,0,.20)
+  const result=Math.max(0,Math.min(entry.requestedPaceMps,anticipated))
+  if(result<entry.requestedPaceMps-1e-7){
+   entry.requestedPaceMps=result
+   entry.queueWave=true
+   entry.followingCenterGapM=gap
+  }
+ }
  // No hard-coded left-first priority, no reserve-after-the-fact event.
  return {version:1,kind,entryX,offsetM,bodyHalfWidthM,
   minimumSlotSpacingM:1.5,roadWidthsSynthetic:true,
