@@ -69,7 +69,10 @@ for(const n of [32,106,168]){
    for(let i=0;i<n;i++){
     const a=end.states[i],b=mirror.end.states[i],c=rename.end.states[i]
     assert(same(a.x,b.x)&&same(a.y,4.4-b.y),
-     'A71 mirrored physical trajectory mismatch')
+     'A71 mirrored physical trajectory mismatch '+n+'/'+roadGeometry+'/'+
+      roadMergePolicy+'/r'+i+': x='+a.x+'/'+b.x+' y='+a.y+'/'+b.y+
+      ' statuses='+end.reason+'/'+mirror.end.reason+
+      ' accepted='+end.at+'/'+mirror.end.at)
     assert(same(a.x,c.x)&&same(a.y,c.y),
      'A71 renaming changed rider physical trajectory')
     assert(same(a.energy.remainingWPrimeJoules,b.energy.remainingWPrimeJoules))
