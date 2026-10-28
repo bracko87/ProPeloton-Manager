@@ -27,7 +27,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
  [3.2,3.8,4.5].includes(headwayStandOffM)&&
  ['constant','mild_pinch','strong_pinch'].includes(roadGeometry)&&
- ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain'].includes(roadMergePolicy),
+ ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -53,7 +53,7 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
   negotiatedHeadwayPairTicks:0,headwayLimitedRiderTicks:0,
   roadBoundaryGuardTicks:0,roadMergeBufferedRiderTicks:0,
   roadMergeYieldRiderTicks:0,roadPlatoonAssistRiderTicks:0,
-  roadPlatoonUnresolvedConstraints:0,
+  roadPlatoonUnresolvedConstraints:0,roadLaneForecastGuardTicks:0,
   firstRoadViolation:null,
   cumulativeAdvancement:0,firstCollision:null,reason:null,
   source:'PHYSICAL_NORMAL_GRID_NO_RETROSPECTIVE_WARNING'}
@@ -65,7 +65,7 @@ function checkSnapshot(p){
  assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
   ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant')&&
-  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain'].includes(p.roadMergePolicy??'preview_only'),
+  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -114,11 +114,27 @@ export function advanceNormalStartV3(snapshot){
  const p=structuredClone(snapshot);checkSnapshot(p)
  assert(p.reason===null,'A64 cannot restart rejected field')
  const byId=new Map(p.states.map(s=>[s.id,s]))
+ let forecastGuardCount=0
  const plans=p.states.map(s=>{
   const intentMode=p.controllerPolicy==='coordinated_demand'?'demand':
    p.controllerPolicy==='coordinated_either'?'either':'actual'
-  const desired=chooseLane(s,p.states,{intentMode})
-  const corridor=constrainedLaneTargetV3(p.roadGeometry??'constant',
+  let desired=chooseLane(s,p.states,{intentMode})
+  const geometry=p.roadGeometry??'constant'
+  if(p.roadMergePolicy==='platoon_lane_forecast'&&geometry!=='constant'){
+   // A69: do not enter an overtaking lane known from current, static
+   // road geometry to disappear within 20 seconds at current speed.
+   // This is geographic foresight, NEVER a future accepted rider path.
+   // It is symmetrical and id-free. Only the desired target is changed.
+   const samples=[0,5,10,15,20].map(t=>
+    researchRoadEnvelopeV3(geometry,s.x+s.v*t))
+   const lo=Math.max(...samples.map(e=>e.minY))
+   const hi=Math.min(...samples.map(e=>e.maxY))
+   if(desired<lo-1e-7||desired>hi+1e-7){
+    desired=clip(s.y,lo,hi)
+    forecastGuardCount++
+   }
+  }
+  const corridor=constrainedLaneTargetV3(geometry,
    s.x,s.v,desired,{previewSeconds:4})
   const target=corridor.targetY
   const y1=round(s.y+clip(target-s.y,-L*DT,L*DT))
@@ -131,7 +147,7 @@ export function advanceNormalStartV3(snapshot){
  // insufficient. A trailing requester yields bounded acceleration, allowing
  // an actual gap to develop before retrying. No ID/array-position priority,
  // velocity reset or instantaneous lateral relocation.
- const chainMode=['platoon_soft_yield','platoon_chain'].includes(p.roadMergePolicy)
+ const chainMode=['platoon_soft_yield','platoon_chain','platoon_lane_forecast'].includes(p.roadMergePolicy)
  const mergeYield=(p.roadMergePolicy==='yield_reservation'||chainMode)&&
   (p.roadGeometry??'constant')!=='constant'
  const forcedYield=new Set()
@@ -375,6 +391,7 @@ export function advanceNormalStartV3(snapshot){
  p.roadMergeYieldRiderTicks+=mergeYieldCount
  p.roadPlatoonAssistRiderTicks+=platoonAssists
  p.roadPlatoonUnresolvedConstraints+=unresolvedConstraints
+ p.roadLaneForecastGuardTicks+=forecastGuardCount
  p.initiatedLaneChanges+=plans.filter(a=>Math.abs(a.target-a.oldTarget)>1e-7).length
  p.completedLaneChanges+=paths.filter(a=>Math.abs(a.s.targetY-a.s.y)>1e-5&&
   Math.abs(a.a.target-a.y1)<1e-6).length
@@ -422,6 +439,7 @@ export function finishNormalStartMetricsV3(original,final){
   roadMergeYieldRiderTicks:final.roadMergeYieldRiderTicks??0,
   roadPlatoonAssistRiderTicks:final.roadPlatoonAssistRiderTicks??0,
   roadPlatoonUnresolvedConstraints:final.roadPlatoonUnresolvedConstraints??0,
+  roadLaneForecastGuardTicks:final.roadLaneForecastGuardTicks??0,
   firstRoadViolation:final.firstRoadViolation??null,
   meanRemainingWPrimeJoules:round(ws.reduce((a,b)=>a+b,0)/ws.length),
   officialWrites:0,sportingApproval:'NOT_APPROVED'}
