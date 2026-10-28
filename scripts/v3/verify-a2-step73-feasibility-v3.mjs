@@ -172,6 +172,24 @@ for(const n of [32,106,168]){
   firstCollision:metrics.firstCollision,firstRoadViolation:metrics.firstRoadViolation})
  }
 }
+// A73 hostile checkpoint-data controls: never accept a missing rider,
+ // duplicate slot, impossible booking time or nonfinite timetable number.
+ for(const tamper of [
+  p=>p.roadGateBookings.pop(),
+  p=>{p.roadGateBookings[1].id=p.roadGateBookings[0].id},
+  p=>{p.roadGateBookings[0].scheduledSeconds=NaN},
+  p=>{p.roadGateBookings[0].targetY=-2}
+ ]){
+  const checkpoint=createNormalStartV3(32,{...base,
+   roadMergePolicy:'platoon_gate_schedule'})
+  tamper(checkpoint)
+  const rejected=advanceNormalStartV3(checkpoint)
+  assert.equal(rejected.reason,'GATE_ENTRY_NO_WINDOW')
+  assert.equal(rejected.at,0)
+  assert.equal(rejected.acceptedSteps,0)
+  assert.deepEqual(rejected.states,checkpoint.states,
+   'A73 invalid slot checkpoint advanced physical rider state')
+ }
 // A separately maintained read-only observer certifies REAL sustained
 // strong-pinch passing and exact combined race+observer restart, not just
 // endpoint inversions or lane moves. It sees only accepted movements.
