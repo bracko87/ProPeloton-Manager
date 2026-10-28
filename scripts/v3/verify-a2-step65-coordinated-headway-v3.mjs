@@ -91,6 +91,43 @@ for(const mode of ['mixed','pressure','corridor'])
   }
   standOffSweep.push({mode,standOffMetres:metres,...score})
  }
+// A65c startup remains fully nonclairvoyant over longer durations; extend
+// the same global (not per-rider) 3.2m policy and keep any new blockers.
+const endurance=[]
+for(const mode of ['mixed','pressure','corridor']){
+ const cfg={mode,controllerPolicy:'coordinated_headway',headwayStandOffM:3.2}
+ const start=createNormalStartV3(32,cfg)
+ const result=assertValid(start,180)
+ const score=finishNormalStartMetricsV3(start,result)
+ const reflected=assertValid(createNormalStartV3(32,{...cfg,mirror:true}),180)
+ const renamed=assertValid(createNormalStartV3(32,{...cfg,renamed:true}),180)
+ assert.equal(reflected.reason,result.reason,'A65 180-second mirrored status differs')
+ assert.equal(renamed.reason,result.reason,'A65 180-second renamed status differs')
+ assert.equal(reflected.acceptedSteps,result.acceptedSteps)
+ assert.equal(renamed.acceptedSteps,result.acceptedSteps)
+ for(let i=0;i<32;i++){
+  const a=result.states[i],b=reflected.states[i],c=renamed.states[i]
+  assert(close(a.x,b.x)&&close(a.y+b.y,4.4),'A65 long mirror deviation')
+  assert(close(a.x,c.x)&&close(a.y,c.y),'A65 long ID deviation')
+ }
+ if(!result.reason){
+  const midpoint=runNormalStartV3(start,{seconds:90})
+  assert.deepEqual(runNormalStartV3(JSON.parse(JSON.stringify(midpoint)),{seconds:90}),
+   result,'A65 90+90s serialized restart does not match 180s')
+ }
+ endurance.push({n:32,mode,targetSeconds:180,...score})
+}
+// The older 106/168 reference was a non-interactive steady-speed smoke test.
+// Two NEW mixed-speed, normal-start screens are diagnostic only. No claims
+// of calibrated peloton sport, full stage, terrain or fatigue are permitted.
+const interactiveLarge=[]
+for(const n of [106,168]){
+ const start=createNormalStartV3(n,{
+  mode:'mixed',controllerPolicy:'coordinated_headway',headwayStandOffM:3.2})
+ const result=assertValid(start,15)
+ interactiveLarge.push({n,mode:'mixed',targetSeconds:15,
+  ...finishNormalStartMetricsV3(start,result)})
+}
 // Explicit impossibility control: no choice of bounded command can unwind
 // a physically pre-overlapping start without violation. Must reject.
 const invalid=createNormalStartV3(8,{controllerPolicy:'coordinated_headway'})
@@ -110,6 +147,7 @@ const study={study:'A2_STEP65_COOPERATIVE_HEADWAY_SUSTAINED_TEST',
  pressure32:comparisons.find(x=>x.n===32&&x.mode==='pressure'),
  corridor32:comparisons.find(x=>x.n===32&&x.mode==='corridor'),
  allMirroredAndRelabeled:true,forcedOverlappingRejected:true,standOffSweep,
+ endurance,interactiveLarge,
  policyUsesOnlyCurrentState:true,physicalQuantumSeconds:.5,
  officialWrites:0,sportingApproval:'NOT_APPROVED',comparisons}
 const dir=process.env.V3_A2_STEP65_DIR??'/tmp/a2-step65'
@@ -128,7 +166,12 @@ console.log(JSON.stringify({study:study.study,technicalGate:study.technicalGate,
   candidateNearStopRiderTicks:x.candidate.nearStopRiderTicks,
   candidateBrakeRiderTicks:x.candidate.brakeRiderTicks,
   candidateFirstCollision:x.candidate.firstCollision
- })),standOffSweep:standOffSweep.map(x=>({mode:x.mode,standOffMetres:x.standOffMetres,
+ })),endurance:endurance.map(x=>({n:x.n,mode:x.mode,status:x.status,
+  seconds:x.seconds,orderReversals:x.uniquePairOrderReversals,
+  completedLaneChanges:x.completedLaneChanges,firstCollision:x.firstCollision})),
+ interactiveLarge:interactiveLarge.map(x=>({n:x.n,status:x.status,seconds:x.seconds,
+  orderReversals:x.uniquePairOrderReversals,firstCollision:x.firstCollision})),
+ standOffSweep:standOffSweep.map(x=>({mode:x.mode,standOffMetres:x.standOffMetres,
   status:x.status,seconds:x.seconds,orderReversals:x.uniquePairOrderReversals,
   completedLaneChanges:x.completedLaneChanges,brakeRiderTicks:x.brakeRiderTicks,
   firstCollision:x.firstCollision})),officialWrites:0,sportingApproval:'NOT_APPROVED'}))
