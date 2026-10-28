@@ -120,5 +120,6 @@ console.log(JSON.stringify({study:summary.study,technicalGate:summary.technicalG
   target:t.targetSeconds,firstAcceptedTick:t.firstAcceptedTick,
   laneChanges:t.laneChanges,rearX:t.rearX,
   firstContact:t.firstCollision?.pair??null,
+  contactDetails:t.n===32||t.n===8?t.firstCollision?.preCollisionField??null:null,
   firstRoadExit:t.firstRoadViolation?.riderId??null})),
  officialWrites:0,sportingGate:'NO_GO'}))
