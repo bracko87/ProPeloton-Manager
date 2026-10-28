@@ -49,6 +49,25 @@ for(const [n,policy,seconds] of [
    observed.confirmedSustainedPasses>0,
    'A74 apparent clearance without non-stalling sustained passes')
  }
+ if(n===106&&seconds===120){
+  assert.equal(metrics.status,'FULL_HORIZON_CLEAR',
+   'A74 106 full-width multi-minute 2.2m traversal regressed')
+  assert(Math.min(...entire.physical.states.map(s=>s.x))>1020,
+   'A74 106 full-peloton claim without physically passing road reopening')
+  assert(metrics.completedLaneChanges>=100&&
+   observed.confirmedSustainedPasses>=100&&metrics.nearStopRiderTicks===0,
+   'A74 106 strong-road non-stalling sustained physical passing regressed')
+ }
+ if(n===32){
+  assert(entire.physical.states.every(s=>s.x>1020)&&
+   observed.confirmedSustainedPasses>=35,
+   'A74 32 proof needs all riders beyond road and verified passing')
+ }
+ if(n===168){
+  assert(metrics.status==='SWEPT_CONTACT'&&metrics.seconds>=65&&
+   metrics.nearStopRiderTicks===0,
+   'A74 retained 168-rider 69s failure/capacity evidence regressed')
+ }
  const first=runCoupled(start,seconds/2)
  assert.equal(first.physical.reason,null,
   'A74 cannot checkpoint midway through already failed field')
