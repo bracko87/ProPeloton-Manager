@@ -6,6 +6,7 @@ on:
       - 'scripts/v3/a2MultiGateAdmissionV3.mjs'
       - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
       - 'scripts/v3/verify-a2-step77-physical-pilot-v3.mjs'
+      - 'scripts/v3/probe-a2-step77-physical-policies-v3.mjs'
       - '.github/workflows/v3-step77-phase2-physical-pilot.yml'
   workflow_dispatch:
 permissions:
@@ -23,11 +24,17 @@ jobs:
         env:
           V3_A2_STEP77_PHYSICAL_DIR: ${{ runner.temp }}/step77physics
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step77-physical-pilot-v3.mjs
+      - name: Compare 32r candidate braking and corridor policy permutations without weakening sweeps
+        env:
+          V3_A2_STEP77_PROBE_DIR: ${{ runner.temp }}/step77probe
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-physical-policies-v3.mjs
       - name: Preserve first-contact and passage evidence even if physical candidate fails
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: a77-phase2-actual-physical-body-sweeps
-          path: ${{ runner.temp }}/step77physics/*.json
+          path: |
+            ${{ runner.temp }}/step77physics/*.json
+            ${{ runner.temp }}/step77probe/*.json
           if-no-files-found: warn
           retention-days: 30
