@@ -42,8 +42,8 @@ for(const n of [32,106,168]){
   metrics.nearStopRiderTicks===0,
   'A76 double-road passing suppressed or physical field stalled')
  assert.equal(passes.durationSeconds,180)
- assert(passes.confirmedSustainedPasses>0,
-  'A76 double road has zero independently confirmed actual 3s passes')
+ assert(passes.confirmedSustainedPasses>=({32:55,106:145,168:190})[n],
+  'A76 double road regressed 55/145/190 genuine 3s sustained pair passes')
  const first=coupled(initial,90)
  assert.equal(first.physical.reason,null)
  const restored=coupled(initial,90,{
