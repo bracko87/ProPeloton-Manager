@@ -1,4 +1,4 @@
-name: V3 A2 Step59-68 physical safety, passing and variable-width research
+name: V3 A2 Step59-69 physical safety, variable width and merge-chain research
 on:
   push:
     branches: [main]
@@ -14,6 +14,7 @@ on:
       - 'scripts/v3/verify-a2-step67-sustained-overtakes-v3.mjs'
       - 'scripts/v3/a2VariableRoadWidthV3.mjs'
       - 'scripts/v3/verify-a2-step68-variable-road-v3.mjs'
+      - 'scripts/v3/verify-a2-step69-multi-rider-merge-v3.mjs'
       - 'scripts/v3/verify-a2-step61-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step60-unit-v3.mjs'
       - 'scripts/v3/verify-a2-step59-symmetry-and-field-v3.mjs'
@@ -58,6 +59,18 @@ jobs:
         env:
           V3_A2_STEP68_DIR: ${{ runner.temp }}/step68
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step68-variable-road-v3.mjs
+      - name: 'Step69 multi-rider merge admission: 32/106/168 parity, swept safety and chain recovery'
+        env:
+          V3_A2_STEP69_DIR: ${{ runner.temp }}/step69
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step69-multi-rider-merge-v3.mjs
+      - name: Retain Step69 multi-rider zipper and chain first-blocker evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a2-step69-multi-rider-merge-chain
+          path: ${{ runner.temp }}/step69/*.json
+          retention-days: 30
+          if-no-files-found: warn
       - name: Retain Step68 physical width transitions and honest road/collision failure evidence
         if: always()
         uses: actions/upload-artifact@v4
