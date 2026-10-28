@@ -27,7 +27,8 @@ export function createNormalStartV3(n,{mode='tempered',mirror=false,renamed=fals
  ['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(controllerPolicy)&&
  [3.2,3.8,4.5].includes(headwayStandOffM)&&
  ['constant','mild_pinch','strong_pinch'].includes(roadGeometry)&&
- ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast'].includes(roadMergePolicy),
+ ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
+ 'platoon_lane_forecast_chain','platoon_lane_forecast_buffer'].includes(roadMergePolicy),
  'A68 unknown normal-start scenario, policy or road geometry')
  const starts=[]
  for(let i=0;i<n;i++){
@@ -65,7 +66,8 @@ function checkSnapshot(p){
  assert(['legacy','coordinated_headway','coordinated_demand','coordinated_either'].includes(p.controllerPolicy??'legacy')&&
   [3.2,3.8,4.5].includes(p.headwayStandOffM??4.5)&&
   ['constant','mild_pinch','strong_pinch'].includes(p.roadGeometry??'constant')&&
-  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast'].includes(p.roadMergePolicy??'preview_only'),
+  ['preview_only','buffered_headway','yield_reservation','platoon_soft_yield','platoon_chain','platoon_lane_forecast',
+  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer'].includes(p.roadMergePolicy??'preview_only'),
   'A65 invalid controller policy')
  const ids=new Set()
  for(const s of p.states){
@@ -120,7 +122,9 @@ export function advanceNormalStartV3(snapshot){
    p.controllerPolicy==='coordinated_either'?'either':'actual'
   let desired=chooseLane(s,p.states,{intentMode})
   const geometry=p.roadGeometry??'constant'
-  if(p.roadMergePolicy==='platoon_lane_forecast'&&geometry!=='constant'){
+  const laneForecast=['platoon_lane_forecast','platoon_lane_forecast_chain',
+   'platoon_lane_forecast_buffer'].includes(p.roadMergePolicy)
+  if(laneForecast&&geometry!=='constant'){
    // A69: do not enter an overtaking lane known from current, static
    // road geometry to disappear within 20 seconds at current speed.
    // This is geographic foresight, NEVER a future accepted rider path.
@@ -147,7 +151,8 @@ export function advanceNormalStartV3(snapshot){
  // insufficient. A trailing requester yields bounded acceleration, allowing
  // an actual gap to develop before retrying. No ID/array-position priority,
  // velocity reset or instantaneous lateral relocation.
- const chainMode=['platoon_soft_yield','platoon_chain','platoon_lane_forecast'].includes(p.roadMergePolicy)
+ const chainMode=['platoon_soft_yield','platoon_chain','platoon_lane_forecast',
+  'platoon_lane_forecast_chain','platoon_lane_forecast_buffer'].includes(p.roadMergePolicy)
  const mergeYield=(p.roadMergePolicy==='yield_reservation'||chainMode)&&
   (p.roadGeometry??'constant')!=='constant'
  const forcedYield=new Set()
@@ -209,9 +214,14 @@ export function advanceNormalStartV3(snapshot){
    const projectedWidth=researchRoadEnvelopeV3(
     p.roadGeometry??'constant',previewX).widthM
    const missingWidth=Math.max(0,4.4-projectedWidth)
+   const farBuffer=p.roadMergePolicy==='platoon_lane_forecast_buffer'
+   const predictedWidth=farBuffer?Math.min(...[0,5,10,15,20].map(t=>
+    researchRoadEnvelopeV3(p.roadGeometry??'constant',s.x+s.v*t).widthM)):
+    projectedWidth
+   const bufferableMissing=Math.max(0,4.4-predictedWidth)
    const buffered=(p.roadMergePolicy==='buffered_headway'||
     (chainMode&&s.x<780))?
-    2.4*missingWidth/1.1:0
+    2.4*bufferableMissing/1.1:0
    if(buffered>1e-8)bufferedHeadway++
    const targetGap=(p.headwayStandOffM??4.5)+buffered
    const targetV=ahead.v+clip((gap-targetGap)/1.5,-2,2)
@@ -234,7 +244,7 @@ export function advanceNormalStartV3(snapshot){
  // own ahead clearance remains physically possible. Repeat downstream
  // brake and upstream assist until constraints settle, never teleport.
  let platoonAssists=0,unresolvedConstraints=0
- if(p.roadMergePolicy==='platoon_chain'&&mergeYield){
+ if(['platoon_chain','platoon_lane_forecast_chain'].includes(p.roadMergePolicy)&&mergeYield){
   const intentById=new Map(plans.map(a=>[a.id,a]))
   const sorted=[...p.states].sort((a,b)=>b.x-a.x)
   const pairs=[]
