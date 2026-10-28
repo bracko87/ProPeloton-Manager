@@ -16,7 +16,7 @@ function initial(n,g,v,{mirror=false,names=null}={}){
  return Array.from({length:n},(_,i)=>({
   riderId:names?.get(i)??'r'+String(i).padStart(3,'0'),
   meters:100+i*6.4+v*2,
-  y:mirror?r6(maxY-r6((i%g.laneCount)*g.centerStepM)):(i%g.laneCount)*g.centerStepM,
+  y:mirror?Math.max(0,Math.min((g.laneCount-1)*g.centerStepM,r6(maxY-r6((i%g.laneCount)*g.centerStepM)))):(i%g.laneCount)*g.centerStepM,
   speedMps:4+i%4,cpWatts:210+(i%7)*18,wPrimeJoules:18000
  }))
 }
