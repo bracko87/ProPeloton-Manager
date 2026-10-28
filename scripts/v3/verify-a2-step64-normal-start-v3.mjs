@@ -51,7 +51,8 @@ for(let i=0;i<32;i++){
 // never mutates the accepted state to rescue a rider artificially.
 for(const [n,mode,seconds] of [
  [8,'tempered',90],[106,'tempered',30],[168,'tempered',30],
- [8,'mixed',90],[32,'mixed',90],[32,'pressure',90]
+ [8,'mixed',90],[32,'mixed',90],[32,'pressure',90],
+ [8,'corridor',90],[32,'corridor',90]
 ])run(n,mode,seconds)
 // A deliberately overlapping physical starting pair MUST fail closed.
 const bad=createNormalStartV3(8)
