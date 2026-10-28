@@ -64,6 +64,33 @@ for(const trial of plans){
   exactMirror:true,exactRename:true}
  comparisons.push(record)
 }
+// A65b matched policy parameter sweep. Keep all outcomes, including
+// rejected cases, and never select per rider using retrospective contact data.
+const standOffSweep=[]
+for(const mode of ['mixed','pressure','corridor'])
+ for(const metres of [3.2,3.8,4.5]){
+  const cfg={mode,controllerPolicy:'coordinated_headway',headwayStandOffM:metres}
+  const start=createNormalStartV3(32,cfg)
+  const result=assertValid(start,90)
+  const score=finishNormalStartMetricsV3(start,result)
+  const mirrored=assertValid(createNormalStartV3(32,{...cfg,mirror:true}),90)
+  const renamed=assertValid(createNormalStartV3(32,{...cfg,renamed:true}),90)
+  assert.equal(result.reason,mirrored.reason,'A65 standoff mirror result '+mode+metres)
+  assert.equal(result.reason,renamed.reason,'A65 standoff rename result '+mode+metres)
+  assert.equal(result.acceptedSteps,mirrored.acceptedSteps)
+  assert.equal(result.acceptedSteps,renamed.acceptedSteps)
+  for(let i=0;i<32;i++){
+   const a=result.states[i],b=mirrored.states[i],c=renamed.states[i]
+   assert(close(a.x,b.x)&&close(a.y+b.y,4.4),'A65 standoff reflection parity')
+   assert(close(a.x,c.x)&&close(a.y,c.y),'A65 standoff rider rename parity')
+  }
+  if(!result.reason){
+   const middle=runNormalStartV3(start,{seconds:45})
+   assert.deepEqual(runNormalStartV3(JSON.parse(JSON.stringify(middle)),{seconds:45}),
+    result,'A65 standoff 45-second restart '+mode+metres)
+  }
+  standOffSweep.push({mode,standOffMetres:metres,...score})
+ }
 // Explicit impossibility control: no choice of bounded command can unwind
 // a physically pre-overlapping start without violation. Must reject.
 const invalid=createNormalStartV3(8,{controllerPolicy:'coordinated_headway'})
@@ -82,7 +109,7 @@ const study={study:'A2_STEP65_COOPERATIVE_HEADWAY_SUSTAINED_TEST',
  mixed32:comparisons.find(x=>x.n===32&&x.mode==='mixed'),
  pressure32:comparisons.find(x=>x.n===32&&x.mode==='pressure'),
  corridor32:comparisons.find(x=>x.n===32&&x.mode==='corridor'),
- allMirroredAndRelabeled:true,forcedOverlappingRejected:true,
+ allMirroredAndRelabeled:true,forcedOverlappingRejected:true,standOffSweep,
  policyUsesOnlyCurrentState:true,physicalQuantumSeconds:.5,
  officialWrites:0,sportingApproval:'NOT_APPROVED',comparisons}
 const dir=process.env.V3_A2_STEP65_DIR??'/tmp/a2-step65'
@@ -101,4 +128,7 @@ console.log(JSON.stringify({study:study.study,technicalGate:study.technicalGate,
   candidateNearStopRiderTicks:x.candidate.nearStopRiderTicks,
   candidateBrakeRiderTicks:x.candidate.brakeRiderTicks,
   candidateFirstCollision:x.candidate.firstCollision
- })),officialWrites:0,sportingApproval:'NOT_APPROVED'}))
+ })),standOffSweep:standOffSweep.map(x=>({mode:x.mode,standOffMetres:x.standOffMetres,
+  status:x.status,seconds:x.seconds,orderReversals:x.uniquePairOrderReversals,
+  completedLaneChanges:x.completedLaneChanges,brakeRiderTicks:x.brakeRiderTicks,
+  firstCollision:x.firstCollision})),officialWrites:0,sportingApproval:'NOT_APPROVED'}))
