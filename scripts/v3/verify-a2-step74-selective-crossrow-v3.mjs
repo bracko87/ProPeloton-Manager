@@ -31,7 +31,8 @@ assert.throws(()=>adjacentLaneStoppingReserveV3({...rear,v:-1},nearLead))
 const base={mode:'corridor',controllerPolicy:'coordinated_demand',
  headwayStandOffM:3.2,bodyHalfWidthM:.3,roadGeometry:'strong_pinch'}
 const policies=['platoon_gate_schedule','platoon_gate_pairwise',
- 'platoon_gate_pairwise_gentle']
+ 'platoon_gate_pairwise_gentle','platoon_gate_interval55',
+ 'platoon_gate_interval60']
 const cases=[]
 for(const n of [32,106,168]){
  const seconds=n===32?120:90
@@ -93,7 +94,7 @@ const compared=cases.filter(c=>c.policy!=='platoon_gate_schedule').map(c=>{
 })
 const exercised=compared.filter(c=>c.selectiveGapWarningTicks>0).length
 const unexercised=compared.filter(c=>c.selectiveGapWarningTicks===0).length
-const report={study:'A2_STEP74_SELECTIVE_CROSS_ROW_FOLLOWING',
+const report={study:'A2_STEP74_CROSS_ROW_AND_ENTRY_INTERVAL_COMPARISON',
  technicalGate:'PASS',sportingGate:'NO_GO',
  hypothesis:'Scale 32 fully traversed strong road to 106/168 without broad braking',
  boundedAccelerationUnchanged:true,bicycleRoadEdgesUnchanged:true,
