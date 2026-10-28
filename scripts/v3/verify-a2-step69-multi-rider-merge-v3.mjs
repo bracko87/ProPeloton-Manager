@@ -8,7 +8,7 @@ import {createNormalStartV3,advanceNormalStartV3,runNormalStartV3,
  finishNormalStartMetricsV3} from './a2NormalStartPelotonV3.mjs'
 const policies=['yield_reservation','platoon_soft_yield','platoon_chain',
  'platoon_lane_forecast','platoon_lane_forecast_chain',
- 'platoon_lane_forecast_buffer']
+ 'platoon_lane_forecast_buffer','platoon_velocity_headway']
 const geometries=['mild_pinch','strong_pinch']
 const equal=(x,y)=>Math.abs(x-y)<=1e-5
 const cases=[]
@@ -42,6 +42,7 @@ function evaluate(n,geometry,policy,seconds,{mirror=false,renamed=false}={}){
   leaderAssistTicks:metrics.roadPlatoonAssistRiderTicks,
   unresolvedPairConstraints:metrics.roadPlatoonUnresolvedConstraints,
   deadEndLaneGuards:metrics.roadLaneForecastGuardTicks,
+  velocityHeadwayWarnings:metrics.roadVelocityHeadwayTicks,
   lastGapM:metrics.frontToLastGapM}
  if(!mirror&&!renamed)cases.push(item)
  return {initial,end,metrics,item}
@@ -53,13 +54,16 @@ for(const n of [32,106,168]){
    const {initial,end,metrics,item}=evaluate(n,geometry,policy,seconds)
    // All variants must actually confront the same narrowing, not mask it
    // by choosing a separate grid or relaxing the collision checker.
-   if(policy.startsWith('platoon_lane_forecast')){
+   if(policy.startsWith('platoon_lane_forecast')||
+    policy==='platoon_velocity_headway'){
     assert(metrics.roadLaneForecastGuardTicks>0,
      'A69 forecast policy failed to prevent any dead-end outside-lane entry')
    }else{
     assert(metrics.roadMergeYieldRiderTicks>0,
      'A69 zipper policy did not exercise any actual occupied-lane yielding')
    }
+   if(policy==='platoon_velocity_headway')assert(metrics.roadVelocityHeadwayTicks>0,
+    'A69 closing-speed reserve never applied to actual following field')
    if(n===32&&policy==='platoon_lane_forecast'){
     assert.equal(metrics.status,'FULL_HORIZON_CLEAR',
      'A69 known 32-rider width-transition forecast success regressed')
@@ -146,6 +150,7 @@ console.log(JSON.stringify({
   nearStopRiderTicks:c.nearStopRiderTicks,completedLaneChanges:c.completedLaneChanges,
   yieldTicks:c.yieldTicks,leaderAssistTicks:c.leaderAssistTicks,
   deadEndLaneGuards:c.deadEndLaneGuards,
+  closingSpeedWarnings:c.velocityHeadwayWarnings,
   unresolvedPairConstraints:c.unresolvedPairConstraints})),
  officialWrites:0,sportingApproval:'NOT_APPROVED'
 }))
