@@ -20,22 +20,31 @@ function validate(snapshot){
 export function createMultiGatePhysicalCandidateV3(n,{
  mode='five_dense',roadGeometry='double_pinch',mirror=false,renamed=false,
  controllerPolicy='coordinated_demand',headwayStandOffM=3.2,
- pacePolicy='timed_safe_corridor'
+ pacePolicy='timed_safe_corridor',rollingStartSpeedMps=null
 }={}){
  assert([8,32,106,168].includes(n)&&
   ['five_dense','corridor'].includes(mode)&&
   ['double_pinch','staged_pinch','strong_pinch'].includes(roadGeometry)&&
   ['coordinated_demand','coordinated_headway'].includes(controllerPolicy)&&
   [3.2,3.8,4.5].includes(headwayStandOffM)&&
-  ['timed_safe_corridor','timed_slot_only','timed_speed_only'].includes(pacePolicy),
+  ['timed_safe_corridor','timed_slot_only','timed_speed_only'].includes(pacePolicy)&&
+  (rollingStartSpeedMps===null||
+   Number.isFinite(rollingStartSpeedMps)&&rollingStartSpeedMps>=5&&
+   rollingStartSpeedMps<=12),
   'A77 unsupported physical candidate fixture')
  assert(typeof mirror==='boolean'&&typeof renamed==='boolean',
   'A77 invalid reflection or identity options')
  const physical=createNormalStartV3(n,{mode,roadGeometry,mirror,renamed,
   controllerPolicy,headwayStandOffM,bodyHalfWidthM:.3,
   roadMergePolicy:'preview_only'})
+ // Optional neutral rolling-start fixture: ALL riders are initialized
+ // at the same physically valid speed before the first accepted tick.
+ // This is not a post-start speed change, position repair or free braking.
+ if(rollingStartSpeedMps!==null)
+  for(const s of physical.states)s.v=rollingStartSpeedMps
  const admission=auditMultiGateAdmissionV3(physical.states,roadGeometry)
- return {version:1,researchOnly:true,pacePolicy,physical,admission,
+ return {version:1,researchOnly:true,pacePolicy,rollingStartSpeedMps,
+  physical,admission,
   originalDesired:Object.fromEntries(physical.states.map(s=>[s.id,s.desired])),
   commandedRiderTicks:0,lateralRequestTicks:0,headwayWarningTicks:0,
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
