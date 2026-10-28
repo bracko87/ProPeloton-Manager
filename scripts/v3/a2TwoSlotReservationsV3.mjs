@@ -12,7 +12,8 @@ const MIRROR_CENTER=2.2
 /** Group by physical start-row x, not rider ID or array/solver iteration. */
 export function reserveTwoSlotEntryV3(states,kind,{
  bodyHalfWidthM=.3,entryX=780,offsetM=2.6,
- earlyPreviewSeconds=65,upstreamPaceRangeM=85
+ earlyPreviewSeconds=65,upstreamPaceRangeM=85,
+ crossRowPolicy='pace'
 }={}){
  valid(Array.isArray(states)&&states.length>=2&&
   ['constant','mild_pinch','strong_pinch'].includes(kind)&&
@@ -21,7 +22,8 @@ export function reserveTwoSlotEntryV3(states,kind,{
   Number.isFinite(offsetM)&&offsetM>=2.05&&offsetM<=3.1&&
   Number.isFinite(earlyPreviewSeconds)&&earlyPreviewSeconds>=20&&
   earlyPreviewSeconds<=90&&Number.isFinite(upstreamPaceRangeM)&&
-  upstreamPaceRangeM>=30&&upstreamPaceRangeM<=250,
+  upstreamPaceRangeM>=30&&upstreamPaceRangeM<=250&&
+  ['pace','defer'].includes(crossRowPolicy),
   'A72 invalid reservation parameters')
  const seen=new Set(),groups=new Map()
  for(const s of states){
@@ -128,6 +130,27 @@ export function reserveTwoSlotEntryV3(states,kind,{
   if(!leadingCenters.length)continue
   const lead=leadingCenters[0],front=stateById.get(lead.id)
   const gap=front.x-rider.x
+  if(crossRowPolicy==='defer'){
+   // The outer rider may stay in its EXISTING lane until its current-
+   // state relative-x corridor will not intersect a centre rider in the
+   // next eight seconds. The mandatory road-edge sweep remains strict,
+   // so waiting too long causes a real rejection, not a free relocation.
+   const near=centers.some(other=>{
+    const center=stateById.get(other.id)
+    const before=center.x-rider.x
+    if(Math.abs(before)>18)return false
+    const after=before+
+     (Math.min(center.v,other.requestedPaceMps)-rider.v)*8
+    const minimum=(before*after<=0)?0:Math.min(
+     Math.abs(before),Math.abs(after))
+    return minimum<2.6
+   })
+   if(near){
+    entry.sideMoveAuthorized=false
+    entry.crossRowHold=true
+   }
+   continue
+  }
   const anticipated=Math.min(front.v,lead.requestedPaceMps)+
    clamp((gap-2.6)/8,0,.20)
   const result=Math.max(0,Math.min(entry.requestedPaceMps,anticipated))
@@ -145,5 +168,6 @@ export function reserveTwoSlotEntryV3(states,kind,{
   waitingCenters:centers.length,
   sideAdmissions:[...planned.values()].filter(x=>x.sideMoveAuthorized).length,
   upstreamPaceWarnings:[...planned.values()].filter(x=>x.queueWave).length,
+  crossRowAdmissionHolds:[...planned.values()].filter(x=>x.crossRowHold).length,
   noOfficialWrites:true}
 }
