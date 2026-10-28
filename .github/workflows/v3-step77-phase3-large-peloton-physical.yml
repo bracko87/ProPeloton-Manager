@@ -8,6 +8,7 @@ on:
       - 'scripts/v3/a2Phase3QueueWaveV3.mjs'
       - 'scripts/v3/probe-a2-step77-phase3-anticipatory-wave-v3.mjs'
       - 'scripts/v3/verify-a2-step77-phase3-mirror-and-checkpoint-v3.mjs'
+      - 'scripts/v3/probe-a2-step77-phase3-first-contact-authority-v3.mjs'
       - '.github/workflows/v3-step77-phase3-large-peloton-physical.yml'
   workflow_dispatch:
 permissions:
@@ -33,6 +34,10 @@ jobs:
         env:
           V3_A2_STEP77_PARITY_DIR: ${{ runner.temp }}/step77parity
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step77-phase3-mirror-and-checkpoint-v3.mjs
+      - name: Diagnose first rejected swept contacts against actual bounded brake and steering authority
+        env:
+          V3_A2_STEP77_CONTACT_DIR: ${{ runner.temp }}/step77contact
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/probe-a2-step77-phase3-first-contact-authority-v3.mjs
       - name: Preserve baseline 32r five-abreast 180s pass 80+ sustained overtakes replay and ID mirror
         env:
           V3_A2_STEP77_STAGED_DIR: ${{ runner.temp }}/step77staged
@@ -46,6 +51,7 @@ jobs:
             ${{ runner.temp }}/step77phase3/*.json
             ${{ runner.temp }}/step77wave/*.json
             ${{ runner.temp }}/step77parity/*.json
+            ${{ runner.temp }}/step77contact/*.json
             ${{ runner.temp }}/step77staged/*.json
           if-no-files-found: warn
           retention-days: 30
