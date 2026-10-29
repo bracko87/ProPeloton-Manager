@@ -10,7 +10,8 @@ import {step104OriginalA64PassageV3}
 const cases=[],modes=['chain_soft','chain_strict',
   'global_reserve','stepped_release','early_ordered_merge',
   'zipper_uniform','zipper_soft','zipper_pace',
-  'zipper_slower','zipper_window'];
+  'zipper_slower','zipper_window',
+  'zipper_brake','zipper_brake_strict','zipper_brake_fast','global_brake'];
 for(const n of [106,168])for(const roadGeometry of
  ['staged_pinch','double_pinch']){
  const f=step97BuildGlobalTimetableProbeV3(n,{

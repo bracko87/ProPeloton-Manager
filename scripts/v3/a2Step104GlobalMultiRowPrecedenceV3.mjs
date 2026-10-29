@@ -26,7 +26,11 @@ const MODES={
  zipper_soft:{outer:8.65,step:0,boost:.72,center:7.45,headway:3,clear:2.4,manual:false},
  zipper_pace:{outer:9.35,step:0,boost:.62,center:8.6,headway:2.4,clear:2.45,manual:false},
  zipper_slower:{outer:7.8,step:0,boost:.62,center:7.35,headway:2.5,clear:2.4,manual:false},
- zipper_window:{outer:8.65,step:0,boost:.52,center:8.0,headway:3.2,clear:2.45,manual:false}
+ zipper_window:{outer:8.65,step:0,boost:.52,center:8.0,headway:3.2,clear:2.45,manual:false},
+ zipper_brake:{outer:8.85,step:0,boost:.62,center:8.1,headway:3.4,clear:2.55,manual:false,predictive:true},
+ zipper_brake_strict:{outer:8.65,step:0,boost:.72,center:7.35,headway:4,clear:2.55,manual:false,predictive:true},
+ zipper_brake_fast:{outer:9.15,step:0,boost:.6,center:8.25,headway:3,clear:2.65,manual:false,predictive:true},
+ global_brake:{outer:9.5,step:.20,boost:1.6,center:7.7,headway:3.8,clear:3,manual:false,predictive:true}
 };
 function check(field,original){
  if(!field||!original||field.reason!==null||field.dt!==.5||
@@ -115,8 +119,16 @@ export function step104GlobalPrecedenceCommandsV3(field,original,bookings,{
     if(lm.row===m.row)continue;
     const dx=lead.x-s.x,leaderSpeed=requested.get(lead.id)??lead.v;
     const aheadEffective=Math.min(lead.v,leaderSpeed);
+    // A follower must start slowing before the *predicted* swept
+    // collision. Actual A64 still bounds deceleration to 0.85m/s².
+    // The prospective closing distance is a conservative headway
+    // request, not a claimed achieved clearance.
+    const closure=Math.max(0,s.v-aheadEffective);
+    const required=p.predictive?
+      p.clear+closure*2.0+closure*closure/(2*.85):
+      p.clear;
     const safe=clamp(aheadEffective+
-      (dx-p.clear)/p.headway,7.3,12.5);
+      (dx-required)/p.headway,7.3,12.5);
     cap=Math.min(cap,safe);
     upstreamCrossRowConstraints++;
   }

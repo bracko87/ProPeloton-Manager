@@ -5,7 +5,8 @@ import {step104GlobalPrecedenceCommandsV3,step104OriginalA64PassageV3}
 const modes=['chain_soft','chain_strict','global_reserve',
   'stepped_release','early_ordered_merge',
   'zipper_uniform','zipper_soft','zipper_pace',
-  'zipper_slower','zipper_window'];
+  'zipper_slower','zipper_window',
+  'zipper_brake','zipper_brake_strict','zipper_brake_fast','global_brake'];
 function make(n,road='staged_pinch',mirror=false,renamed=false){
  const x=step97BuildGlobalTimetableProbeV3(n,{
   roadGeometry:road,pacePolicy:'persistent_global_strict_v1',
