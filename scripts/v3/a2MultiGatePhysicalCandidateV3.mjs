@@ -385,7 +385,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   step86GapCandidatesV3(canonical.states,canonicalRequests,
    canonicalBookings,{atSeconds:canonical.at,lookAheadM:55,
     movingFloorMps:7.5}):null
- const orderPilot=isStep87?
+ const orderPilot=(isStep87||isStep88)?
   step87CorridorCandidatesV3(canonical.states,canonicalRequests,
    canonicalBookings,{atSeconds:canonical.at,minMovingSpeedMps:7.3}):null
  const rowPilot=isStep88?
@@ -406,12 +406,12 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    {policy:'baseline',requests:canonicalRequests},
    {policy:'joint',requests:canonicalJoint},
    {policy:'proven_gap_wave',requests:gapPilot.candidates[2].requests},
+   {policy:'proven_order_pace',requests:orderPilot.candidates[2].requests},
    {policy:'whole_row_hold',requests:rowPilot.candidates[0].requests},
-   {policy:'whole_row_yield',requests:rowPilot.candidates[1].requests},
    {policy:out.pacePolicy==='whole_row_strict_v1'?
-    'whole_row_assist':'whole_row_balanced',
+    'whole_row_yield':'whole_row_balanced',
     requests:rowPilot.candidates[
-     out.pacePolicy==='whole_row_strict_v1'?2:3].requests}
+     out.pacePolicy==='whole_row_strict_v1'?1:3].requests}
   ]:isStep87?[
    {policy:'baseline',requests:canonicalRequests},
    {policy:'joint',requests:canonicalJoint},
@@ -515,9 +515,11 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   if(isStep88){
    const local=step88RowFlowCandidatesV3(field.states,requests,
     canonicalBookings,{atSeconds:field.at})
+   const prior=step87CorridorCandidatesV3(field.states,requests,
+    canonicalBookings,{atSeconds:field.at,minMovingSpeedMps:7.3})
    return [
+    {policy:'future_order_pace',requests:prior.candidates[2].requests},
     {policy:'future_row_hold',requests:local.candidates[0].requests},
-    {policy:'future_row_yield',requests:local.candidates[1].requests},
     {policy:'future_row_balanced',requests:local.candidates[3].requests}
    ]
   }
