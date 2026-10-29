@@ -138,8 +138,10 @@ export function advanceDiscretePelotonV3(state){
    let want=desired(next,r,draft);
    if(lead){
     const gap=lead.x-r.x,closing=Math.max(0,r.v-lead.v);
-    const safe=GAP+(next.scenario==='breakaway'?3:.3)+
-      (next.scenario==='breakaway'?4:1.2)*closing+
+    const safe=GAP+(next.scenario==='breakaway'?3:
+      next.performanceMode==='profiles_v1'?1.25:.3)+
+      (next.scenario==='breakaway'?4:
+      next.performanceMode==='profiles_v1'?3.2:1.2)*closing+
       closing*closing/(2*B);
     if(gap<safe+1)want=Math.min(want,lead.v+(gap-safe)/1.4);
    }
