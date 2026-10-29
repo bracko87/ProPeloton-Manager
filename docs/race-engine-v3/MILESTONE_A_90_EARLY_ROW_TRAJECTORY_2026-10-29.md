@@ -1,0 +1,16 @@
+# Race Engine V3 — Step 90: coupled early row-trajectory clearance
+
+**29 October 2026. SYNTHETIC RESEARCH ONLY.** A64 original all-pair swept bicycle collision, narrowing-road boundary and W-prime/energy physics remain unchanged; no active simulation policy or Supabase/official player data changed.
+
+## Step89 handoff, verified
+Step89's completed GitHub CI was technically successful, with 16/16 mirror and renamed physical fields and exact replay of full 8/32 races that reached 180 seconds. But all eight 106/168 five-abreast attempts still first rejected a genuine swept-body collision within 7–11.5 seconds. Step89 32r staged rejected at 8.5s. Its 32r double strict completed 180s with zero near-stops but only 44 independent 3-second pair passes and 1,120 physical lane changes; balanced completed 180s but had 16 near-stop ticks, 40 passes, 1,252 lane changes. Never misinterpret a green fail-closed physical CI as full-race sporting clearance.
+
+## New Step90 hypothesis
+Step89 early arrival slots were only diagnostic and the A85 three-tick chooser still could select an isolated whole-field request that did not reserve space for a valid *actual* later merge. The new [row trajectory controller](../../scripts/v3/a2Step90RowTrajectoryV3.mjs) constructs a coupled current-geometry conflict graph across rows while the gate is up to 230m ahead. Conflicting occupied lateral swept envelopes must have a real longitudinal clearance before the rear rider is allowed to request steering. A fully symmetric same-x ambiguity holds both moves; otherwise current x and the physically shorter remaining steering path—not rider ID, input array or left/right geography—determine provisional priority. Across each conflicting graph edge, small bounded requested pace offsets encourage long-range actual gap creation; leader assistance is suppressed when its forward crossing corridor is already occupied. No planner ever manufactures achieved x/y/v, accepted steering, speed, energy, or a fictitious checkpoint.
+
+This policy is opt-in as \`trajectory_strict_v1\` and \`trajectory_balanced_v1\`. The original A85 full-body guarded 3-tick selector compares baseline, Step78 joint, proven Step86 gap wave, Step87 pace, and three new trajectory requests; the selected actual half-second is re-swept independently by A64. Existing Step78/86/87/88/89 behavior is left unchanged.
+
+## Required original physics audit
+[Step90 CI](../../.github/workflows/v3-step90-row-trajectory.yml) verifies pure name/mirror/array neutrality, true current-state equal-x ambiguity, immutable inputs, all 106/168 × two real narrowing layouts × strict/balanced requested for 180 seconds, independent 8/32 racing and 3s passes and exact 90+90 replay for accepted races, plus protected Step85/86/87/89 and React. Read actual JSON/log outputs; technical green means collision was correctly rejected if a failure happens.
+
+**Decision pending actual completed CI:** Milestone A 106/168 five-wide 180s sporting approval remains NO-GO. Milestone B gameplay and Milestone C production release remain unauthorized. Historical Step78 staged (87 passes /356 changes), Step86 staged (80 /411), Step86 double (70 /678) 32r sporting quality remains the acceptance reference.
