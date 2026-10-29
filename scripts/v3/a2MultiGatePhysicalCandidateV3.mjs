@@ -21,6 +21,7 @@ import {step84ConsensusCandidatesV3} from './a2Step84CrossingConsensusV3.mjs'
 import {chooseThroughputGuardedTickV3} from './a2Step85ThroughputGuardV3.mjs'
 import {step86GapCandidatesV3} from './a2Step86MultiRowGapV3.mjs'
 import {step87CorridorCandidatesV3} from './a2Step87CorridorOrderV3.mjs'
+import {step88RowFlowCandidatesV3} from './a2Step88CoupledRowFlowV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
 const round6=v=>Math.round(v*1e6)/1e6
@@ -56,7 +57,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
    'consensus_hold_v1','consensus_wave_v1',
    'throughput_strict_v1','throughput_balanced_v1',
    'multirow_gap_strict_v1','multirow_gap_wave_v1',
-   'corridor_order_v1','corridor_release_v1'].includes(pacePolicy)&&
+   'corridor_order_v1','corridor_release_v1',
+   'whole_row_strict_v1','whole_row_balanced_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -114,7 +116,10 @@ export function createMultiGatePhysicalCandidateV3(n,{
   step86NoGoTicks:0,step86BlockedNoStopTrials:0,
   step87OrderEdges:0,step87WindowWarnings:0,
   step87SelectedTicks:0,step87SelectedPolicies:{},
-  step87NoGoTicks:0,step87BlockedStopCandidates:0, 
+  step87NoGoTicks:0,step87BlockedStopCandidates:0,
+  step88RowEdges:0,step88OccupiedPairTicks:0,
+  step88HeldRiderTicks:0,step88SelectedTicks:0,
+  step88SelectedPolicies:{},step88BlockedStops:0,step88NoGoTicks:0, 
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -229,7 +234,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   'consensus_hold_v1','consensus_wave_v1',
   'throughput_strict_v1','throughput_balanced_v1',
   'multirow_gap_strict_v1','multirow_gap_wave_v1',
-  'corridor_order_v1','corridor_release_v1']
+  'corridor_order_v1','corridor_release_v1',
+   'whole_row_strict_v1','whole_row_balanced_v1']
   .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
@@ -275,7 +281,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   'consensus_hold_v1','consensus_wave_v1',
   'throughput_strict_v1','throughput_balanced_v1',
   'multirow_gap_strict_v1','multirow_gap_wave_v1',
-  'corridor_order_v1','corridor_release_v1']
+  'corridor_order_v1','corridor_release_v1',
+   'whole_row_strict_v1','whole_row_balanced_v1']
   .includes(out.pacePolicy)
  // Canonical *planning-only* input: mirrored worlds are evaluated in
  // the same symmetric road coordinates. Accepted physical motion is
@@ -350,6 +357,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   'multirow_gap_wave_v1'].includes(out.pacePolicy)
  const isStep87=['corridor_order_v1',
   'corridor_release_v1'].includes(out.pacePolicy)
+ const isStep88=['whole_row_strict_v1',
+  'whole_row_balanced_v1'].includes(out.pacePolicy)
  const isHorizon=['horizon2_guarded_v1','horizon3_guarded_v1',
   'multisecond_reserve_v1','multisecond_zipper_v1',
   'feasible_window_v1','feasible_conservative_v1',
@@ -357,7 +366,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   'consensus_hold_v1','consensus_wave_v1',
   'throughput_strict_v1','throughput_balanced_v1',
   'multirow_gap_strict_v1','multirow_gap_wave_v1',
-  'corridor_order_v1','corridor_release_v1']
+  'corridor_order_v1','corridor_release_v1',
+   'whole_row_strict_v1','whole_row_balanced_v1']
   .includes(out.pacePolicy)
  const futureById=out.mirror===true?
   new Map([...byId].map(([id,items])=>[id,items.map(b=>({
@@ -368,16 +378,19 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const canonicalBookings=out.mirror===true?
   bookings.map(b=>({...b,targetY:round6(4.4-b.targetY)})):
   bookings
- const consensusPilot=(isStep84||isStep85||isStep86||isStep87)?
+ const consensusPilot=(isStep84||isStep85||isStep86||isStep87||isStep88)?
   step84ConsensusCandidatesV3(canonical.states,canonicalRequests,{
    horizonSeconds:6,urgentSeconds:3.5}):null
- const gapPilot=(isStep86||isStep87)?
+ const gapPilot=(isStep86||isStep87||isStep88)?
   step86GapCandidatesV3(canonical.states,canonicalRequests,
    canonicalBookings,{atSeconds:canonical.at,lookAheadM:55,
     movingFloorMps:7.5}):null
  const orderPilot=isStep87?
   step87CorridorCandidatesV3(canonical.states,canonicalRequests,
    canonicalBookings,{atSeconds:canonical.at,minMovingSpeedMps:7.3}):null
+ const rowPilot=isStep88?
+  step88RowFlowCandidatesV3(canonical.states,canonicalRequests,
+   canonicalBookings,{atSeconds:canonical.at}):null
  const tubePilot=isStep83?
   step83JointTubeCandidatesV3(canonical.states,canonicalRequests,{
    horizonSeconds:6}):null
@@ -389,7 +402,17 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   multiSecondReservationCandidatesV3(canonical.states,
    canonicalRequests,canonicalBookings,{
     horizonSeconds:8,nowSeconds:canonical.at,paceFloor:6.4}):null
- const horizonProposals=isStep87?[
+ const horizonProposals=isStep88?[
+   {policy:'baseline',requests:canonicalRequests},
+   {policy:'joint',requests:canonicalJoint},
+   {policy:'proven_gap_wave',requests:gapPilot.candidates[2].requests},
+   {policy:'whole_row_hold',requests:rowPilot.candidates[0].requests},
+   {policy:'whole_row_yield',requests:rowPilot.candidates[1].requests},
+   {policy:out.pacePolicy==='whole_row_strict_v1'?
+    'whole_row_assist':'whole_row_balanced',
+    requests:rowPilot.candidates[
+     out.pacePolicy==='whole_row_strict_v1'?2:3].requests}
+  ]:isStep87?[
    {policy:'baseline',requests:canonicalRequests},
    {policy:'joint',requests:canonicalJoint},
    {policy:'proven_gap_wave',requests:gapPilot.candidates[2].requests},
@@ -489,6 +512,15 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   if(requests.some(r=>r.error))return []
   const plans=distributedAdmissionCandidatesV3(field.states,requests,
    out.originalDesired,{firstExitX:1020,maxLocalRiders:8,rangeM:25})
+  if(isStep88){
+   const local=step88RowFlowCandidatesV3(field.states,requests,
+    canonicalBookings,{atSeconds:field.at})
+   return [
+    {policy:'future_row_hold',requests:local.candidates[0].requests},
+    {policy:'future_row_yield',requests:local.candidates[1].requests},
+    {policy:'future_row_balanced',requests:local.candidates[3].requests}
+   ]
+  }
   if(isStep87){
    const local=step87CorridorCandidatesV3(field.states,requests,
     canonicalBookings,{atSeconds:field.at,minMovingSpeedMps:7.3})
@@ -574,17 +606,19 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    {policy:'follow_zipper',requests:plans.candidates[2].requests}
   ]
  }
- const horizon=(isStep85||isStep86||isStep87)?
+ const horizon=(isStep85||isStep86||isStep87||isStep88)?
   chooseThroughputGuardedTickV3(canonical,horizonProposals,
    makeFuture,advanceNormalStartV3,{
-    depth:3,maxFirst:isStep86||isStep87?6:5,maxFuture:3,
-    clearanceFirst:isStep86||isStep87,
+    depth:3,maxFirst:isStep86||isStep87||isStep88?6:5,maxFuture:3,
+    clearanceFirst:isStep86||isStep87||isStep88,
     strictNoNearStops:out.pacePolicy==='throughput_strict_v1'||
      out.pacePolicy==='multirow_gap_strict_v1'||
-     out.pacePolicy==='corridor_order_v1',
+     out.pacePolicy==='corridor_order_v1'||
+     out.pacePolicy==='whole_row_strict_v1',
     minimumMovingSpeedMps:out.pacePolicy==='throughput_strict_v1'||
      out.pacePolicy==='multirow_gap_strict_v1'||
-     out.pacePolicy==='corridor_order_v1'?7:6.5
+     out.pacePolicy==='corridor_order_v1'||
+     out.pacePolicy==='whole_row_strict_v1'?7:6.5
    }):
   isHorizon?
   chooseRecedingHorizonTickV3(canonical,horizonProposals,
@@ -613,6 +647,17 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   prospective?
   (prospective.physical??prospective.firstRejected):
   advanceNormalStartV3(candidate)
+ if(isStep88){
+  out.step88RowEdges+=rowPilot.plan.edges.length
+  out.step88OccupiedPairTicks+=rowPilot.plan.occupiedPairs
+  out.step88HeldRiderTicks+=rowPilot.plan.heldRiders
+  out.step88BlockedStops+=horizon?.blockedNearStops??0
+  if(horizon?.selectedPolicy){
+   out.step88SelectedTicks++
+   out.step88SelectedPolicies[horizon.selectedPolicy]=
+    (out.step88SelectedPolicies[horizon.selectedPolicy]??0)+1
+  }else out.step88NoGoTicks++
+ }
  if(isStep87){
   out.step87OrderEdges+=orderPilot.order.edges.length
   out.step87WindowWarnings+=orderPilot.order.warnings.length
@@ -681,7 +726,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  }
  if(horizon){
   out.horizonRejectedPredictions+=horizon.evidence.filter(x=>
-   (isStep85||isStep86||isStep87)?(!x.physicallyAccepted||!x.fullHorizon||
+   (isStep85||isStep86||isStep87||isStep88)?(!x.physicallyAccepted||!x.fullHorizon||
     x.rejectedBySportingBudget):(!x.accepted||!x.futureComplete)).length
   if(horizon.selectedPolicy){
    out.horizonSelectedTicks++
@@ -718,7 +763,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  // Real x/y/v/energy and steering target are accepted only by the unchanged
  // physics solver. An unsuccessful tick retains EXACT previous rider state.
  if(!next||next.reason){
-  out.reason=next?.reason??((isStep85||isStep86||isStep87)?
+  out.reason=next?.reason??((isStep85||isStep86||isStep87||isStep88)?
     horizon?.status??'NO_ACCEPTABLE_PROPOSAL':
     'NO_ACCEPTABLE_PROPOSAL');out.status='REJECTED'
   out.firstCollision=next?.firstCollision??null
