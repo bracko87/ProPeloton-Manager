@@ -27,6 +27,23 @@
 
 The first Step86 prototype over-accelerated INNER tracks continuously, failing 8r at 28.5–30s on genuine W-prime/energy and 32r at 5.5–7s on real swept contact. A second iteration stopped boosts after achieved same-row clearance and included previously proven joint and consensus candidate fallbacks; a third iteration suppressed physically dangerous acceleration into the leading row. Tests were **not relaxed** to hide these failures.
 
+## Latest actual 8/32 pilot matrix (not a full-race claim)
+
+The [final strict 16-case original swept-body and protected physical audit](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40867458374) **passed its new physical assertions** and completed its protected A85/A84/A78/A76 regressions and React build successfully. The Step86 portion itself recorded:
+
+| Five-abreast field and geometry | Strict accepted time | Wave accepted time | Actual near-stop ticks | Meaning |
+| --- | ---: | ---: | ---: | --- |
+| 8 staged | 45s | 45s | 0 | Short study horizon only |
+| 8 double | 45s | 45s | 0 | Short study horizon only |
+| 32 staged | 12.5s, swept contact | **50s** | 0 | Wave clears initial 50s but not proven 180s |
+| 32 double | **50s** | **50s** | 0 | Both clear initial 50s but not proven 180s |
+| 106 staged | 11.5s | 11.5s | 0 | Swept contact rejected |
+| 106 double | 12s | 10.5s | 0 | Swept contact rejected |
+| 168 staged | 12s | 11.5s | 0 | Swept contact rejected |
+| 168 double | 11s | 11s | 0 | Swept contact rejected |
+
+Here the correct comparison is not a single short positive result: a **50s/zero-near-stop** 32r test is only evidence of early physical safety. The 180s independent observer suite must determine whether any of those policies actually finishes with reasonable overtaking and exact serialized checkpoint recovery.
+
 ## Required independent verification
 
 - [Step86 pure geometry + 16-case original swept-body matrix](../../scripts/v3/verify-a2-step86-gap-physical-v3.mjs): symmetric mirror/ID/array-order tests, hard check that an INNER bicycle cannot be accelerated into its preceding row, and strict no committed near-stop requirement. The first CI version caught late upstream preparation. A later CI version correctly caught the original unit assertion that incorrectly treated *more* boosts as necessarily good; it was replaced with a stronger explicit forward-gap safety assertion.
