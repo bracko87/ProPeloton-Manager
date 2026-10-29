@@ -70,12 +70,13 @@ const denied=chooseDistributedPhysicalTickV3(physical,opts,
 assert.equal(denied.status,'NO_SAFE_PROPOSAL')
 assert.equal(denied.physical,null)
 const trials=[]
+for(const policy of ['distributed_multiwave_v1','distributed_risk_v1'])
 for(const n of [8,32,106,168])
  for(const geometry of ['staged_pinch','double_pinch'])
   for(const speed of (n>=106?[null,9]:[null])){
    const config={mode:'five_dense',roadGeometry:geometry,
     controllerPolicy:'coordinated_demand',headwayStandOffM:4.5,
-    coreMergePolicy:'preview_only',pacePolicy:'distributed_multiwave_v1',
+    coreMergePolicy:'preview_only',pacePolicy:policy,
     rollingStartSpeedMps:speed}
    const initial=createMultiGatePhysicalCandidateV3(n,config)
    assert.equal(initial.admission.status,'NECESSARY_WINDOWS_EXIST')
@@ -95,7 +96,7 @@ for(const n of [8,32,106,168])
     assert.throws(()=>advanceMultiGatePhysicalCandidateV3(final))
    }else assert.equal(final.physical.at,180)
    const m=multiGatePhysicalMetricsV3(initial,final)
-   trials.push({n,geometry,speed,
+   trials.push({n,geometry,speed,policy,
     acceptedSeconds:final.physical.at,
     status:final.reason??'FULL_HORIZON_ACCEPTED',
     noNearStopFullPhysicalFinish:!final.reason&&
@@ -108,7 +109,7 @@ for(const n of [8,32,106,168])
     rejectedUncommittedCandidates:final.distributedRejectedTrialCount,
     overlappingGroupRiderTicks:final.distributedOverlappingRiderTicks})
   }
-const outcomes={study:'A79_DISTRIBUTED_MULTI_NEIGHBORHOOD_5_COLUMN_PHYSICS',
+const outcomes={study:'A79_DISTRIBUTED_MULTI_NEIGHBORHOOD_RISK_5_COLUMN_PHYSICS',
  technicalGate:'PASS_IF_ALL_STRICT_AUDITS_HOLD',
  noOriginalPhysicsChanges:true,noProductionAuthorization:true,
  syntheticNotVerifiedRealRoads:true,
