@@ -29,4 +29,15 @@ Required Step101 tests: 120 simultaneously started riders P, 10-rider breakaway 
 
 Dedicated CI: [V3 Step101 eight-second groups workflow](../../.github/workflows/v3-step101-eight-second-groups.yml). Record actual pass/fail job conclusions and any changes to deterministic replay; never treat green CI as a 106/168 sporting victory.
 
-Status at creation: **await GitHub CI**. Milestone A sporting NO-GO; 106/168 original-A64 full180 still 0/8 from Step99. Project readiness ~35%.
+## Verified results — 29 October 2026
+
+[Step101 dedicated GitHub Actions run 40939189656](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40939189656):
+
+- The eight-second grouping, actual original A64 accepted 0.5s observer, existing group lineage, route/catch and de-identified 106-rider replay job **PASSED**.
+- Exact threshold 8.000s belongs to the same group; >8.000s splits. A 120-rider start generates ONE P; 10 attackers + 1 dropped rider form P/B1/G1, then recombine into ONE P with correct catch and merge lineage. Ten different rider coordinates spaced ~6 seconds apart produce ONE group, not ten artificial solos.
+- The physically local draft example saved **38.57868 watts** at an unchanged 9m/s for an actually sheltered bicycle behind another. The solo and exposed leader save zero; large crosswind or steep climbing eliminates this draft in the provisional model. **No free acceleration or A64 energy edit** was granted.
+- Existing full 106-rider live-format research replay group lineage passed **194 samples**, with unique rider assignment; 106-rider Dordrecht exact checkpoint/replay passed **192 frames / 59 batches**, and 168-rider Guangxi passed **263 frames / 81 batches**. Both independently emitted deterministic final output.
+- Production React build and pre-existing Batch22/23/24 research workflows also passed.
+- Protected Step86 original A64 original full-race check: **running at the time this section was written**; do not infer its conclusion from earlier green jobs.
+
+**Sporting limitation remains:** these tests prove group membership semantics and physically based potential shelter, NOT a working full peloton x/y/v collision-free solver. No full 106/168-rider A64 180-second race was completed by a new controller. The two-gate continuous occupancy deadlock from Steps99–100 remains unresolved. Milestone A sporting NO-GO, B/C not started, readiness ~35%.
