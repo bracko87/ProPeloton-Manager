@@ -23,7 +23,12 @@ assert.equal(plan.plan.fiveAbreastRows,2)
 assert(plan.plan.holdRequests>=4,
  'A86 did not delay any same-row nonfeasible lateral merge')
 assert(plan.plan.unsatisfiedMergeGaps>=4)
-assert(plan.plan.assistRequests>=4)
+// Front row may open its gap; the same-side inner rider in the next
+// row must NOT accelerate while it would consume the leading row's gap.
+for(const i of [1,3])assert(Number.isFinite(
+ plan.plan.leadBoosts[i]),'A86 did not assist a clear front-row inner rider')
+for(const i of [6,8])assert(!Number.isFinite(
+ plan.plan.leadBoosts[i]),'A86 accelerated into the preceding row')
 assert.equal(plan.plan.futureMotionNotGuaranteed,true)
 assert.equal(plan.officialWrites,0)
 assert(plan.candidates[1].assisted>0)
