@@ -13,6 +13,7 @@ import {chooseLocalNegotiatedPhysicalTickV3} from './a2Step78LocalNegotiationV3.
 import {researchRoadEnvelopeV3} from './a2VariableRoadWidthV3.mjs'
 import {distributedAdmissionCandidatesV3} from './a2Step79DistributedAdmissionV3.mjs'
 import {chooseDistributedPhysicalTickV3} from './a2Step79PhysicalChoiceV3.mjs'
+import {chooseRecedingHorizonTickV3} from './a2Step80RecedingHorizonV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
 const round6=v=>Math.round(v*1e6)/1e6
@@ -40,7 +41,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
    'anticipatory_queue_wave','protect_lead_queue_wave',
    'joint_viability_v1','joint_prospective_v1',
    'joint_local_negotiation_v1','joint_local_preemptive_v1',
-   'distributed_multiwave_v1','distributed_risk_v1'].includes(pacePolicy)&&
+   'distributed_multiwave_v1','distributed_risk_v1',
+   'horizon2_guarded_v1','horizon3_guarded_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -79,7 +81,9 @@ export function createMultiGatePhysicalCandidateV3(n,{
   localNeighborhoodRiderTicks:0,
   distributedSelectedTicks:0,distributedRejectedTrialCount:0,
   distributedRiskEdgeTicks:0,distributedOverlappingRiderTicks:0,
-  distributedPolicyTicks:{}, 
+  distributedPolicyTicks:{},
+  horizonSelectedTicks:0,horizonFullLookaheadTicks:0,
+  horizonRejectedPredictions:0,horizonSelectedPolicies:{}, 
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -123,7 +127,8 @@ function commandForRider(snapshot,s,bookingsById){
   'protect_lead_queue_wave','joint_viability_v1',
   'joint_prospective_v1','joint_local_negotiation_v1',
   'joint_local_preemptive_v1','distributed_multiwave_v1',
-  'distributed_risk_v1']
+  'distributed_risk_v1','horizon2_guarded_v1',
+  'horizon3_guarded_v1']
    .includes(snapshot.pacePolicy)&&
   Math.abs(targetY-s.y)>EPS){
   const delta=targetY-s.y
@@ -178,7 +183,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
     'protect_lead':'anticipatory'}):null
  const joint=['joint_viability_v1','joint_prospective_v1',
   'joint_local_negotiation_v1','joint_local_preemptive_v1',
-  'distributed_multiwave_v1','distributed_risk_v1']
+  'distributed_multiwave_v1','distributed_risk_v1',
+  'horizon2_guarded_v1','horizon3_guarded_v1']
   .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
@@ -216,7 +222,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  // A79: coordinate many overlapping spatial neighborhoods *before*
  // accepting the synchronized movement. ALL proposals must pass the
  // untouched authoritative swept-body, road-edge and energy solver.
- const useDistributed=['distributed_multiwave_v1','distributed_risk_v1']
+ const useDistributed=['distributed_multiwave_v1','distributed_risk_v1',
+  'horizon2_guarded_v1','horizon3_guarded_v1']
   .includes(out.pacePolicy)
  // Canonical *planning-only* input: mirrored worlds are evaluated in
  // the same symmetric road coordinates. Accepted physical motion is
@@ -248,7 +255,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    ...distributed.candidates.map(c=>({policy:c.variant,
     requests:c.requests}))
   ]:null
- const distributedChoice=distributed?
+ const distributedChoice=distributed&&['distributed_multiwave_v1',
+  'distributed_risk_v1'].includes(out.pacePolicy)?
   chooseDistributedPhysicalTickV3(canonical,distributedProposals,
    advanceNormalStartV3,{qualityMode:
    out.pacePolicy==='distributed_risk_v1'?'spatial_risk':'balanced'}):null
@@ -271,13 +279,70 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    distributedChoice.policy=null
   }else distributedChoice.physical=rechecked
  }
- const next=distributedChoice?
+ // Step80 receding horizon: each *hypothetical* future movement is
+ // accepted only by the unchanged original swept solver. Recalculate
+ // bookings from that hypothetical CURRENT state, then discard all
+ // projected states. Return only the selected first request for a real
+ // physical re-sweep; never commit an imaginary future trajectory.
+ const isHorizon=['horizon2_guarded_v1','horizon3_guarded_v1']
+  .includes(out.pacePolicy)
+ const futureById=out.mirror===true?
+  new Map([...byId].map(([id,items])=>[id,items.map(b=>({
+   ...b,targetY:round6(4.4-b.targetY)}))])):byId
+ const horizonProposals=distributedProposals?.filter(p=>
+  ['baseline','joint','cruise','distributed_hold','zipper'].includes(p.policy))
+ const makeFuture=field=>{
+  const pseudo={...out,physical:field}
+  const requests=field.states.map(r=>({
+   id:r.id,...commandForRider(pseudo,r,futureById)}))
+  if(requests.some(r=>r.error))return []
+  const plans=distributedAdmissionCandidatesV3(field.states,requests,
+   out.originalDesired,{firstExitX:1020,maxLocalRiders:8,rangeM:25})
+  return [
+   {policy:'follow_baseline',requests},
+   {policy:'follow_hold',requests:plans.candidates[1].requests},
+   {policy:'follow_zipper',requests:plans.candidates[2].requests}
+  ]
+ }
+ const horizon=isHorizon?
+  chooseRecedingHorizonTickV3(canonical,horizonProposals,
+   makeFuture,advanceNormalStartV3,{
+    depth:out.pacePolicy==='horizon3_guarded_v1'?3:2,
+    maxFirst:5,maxFuture:3}):null
+ let horizonActual=null
+ if(horizon?.selectedPolicy){
+  const selected=horizonProposals.find(p=>
+   p.policy===horizon.selectedPolicy)
+  const strictReal=structuredClone(out.physical)
+  for(let i=0;i<strictReal.states.length;i++){
+   strictReal.states[i].desired=selected.requests[i].speed
+   strictReal.states[i].targetY=out.mirror===true?
+    round6(4.4-selected.requests[i].targetY):
+    selected.requests[i].targetY
+  }
+  horizonActual=advanceNormalStartV3(strictReal)
+ }
+ const next=isHorizon?
+  (horizonActual??horizon?.firstRejected):
+  distributedChoice?
   (distributedChoice.physical??distributedChoice.firstRejected):
   localProspective?
   (localProspective.physical??localProspective.firstRejected):
   prospective?
   (prospective.physical??prospective.firstRejected):
   advanceNormalStartV3(candidate)
+ if(horizon){
+  out.horizonRejectedPredictions+=horizon.evidence.filter(x=>
+   !x.accepted||!x.futureComplete).length
+  if(horizon.selectedPolicy){
+   out.horizonSelectedTicks++
+   out.horizonSelectedPolicies[horizon.selectedPolicy]=
+    (out.horizonSelectedPolicies[horizon.selectedPolicy]??0)+1
+   if(horizon.physicallySafeLookaheadTicks===
+    (out.pacePolicy==='horizon3_guarded_v1'?3:2))
+    out.horizonFullLookaheadTicks++
+  }
+ }
  if(distributedChoice){
   out.distributedRejectedTrialCount+=distributedChoice.rejectedUncommitted
   out.distributedRiskEdgeTicks+=distributed.graph.edgeCount
