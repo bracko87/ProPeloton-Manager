@@ -7,6 +7,8 @@ import {createNormalStartV3,advanceNormalStartV3,
  finishNormalStartMetricsV3} from './a2NormalStartPelotonV3.mjs'
 import {auditMultiGateAdmissionV3} from './a2MultiGateAdmissionV3.mjs'
 import {phase3QueueWaveV3} from './a2Phase3QueueWaveV3.mjs'
+import {jointViabilityCommandsV3} from './a2Step78JointViabilityV3.mjs'
+import {researchRoadEnvelopeV3} from './a2VariableRoadWidthV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
 function assert(x,m){if(!x)throw Error(m)}
@@ -30,7 +32,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
   ['coordinated_demand','coordinated_headway'].includes(controllerPolicy)&&
   [3.2,3.8,4.5].includes(headwayStandOffM)&&
   ['timed_safe_corridor','timed_slot_only','timed_speed_only',
-   'anticipatory_queue_wave','protect_lead_queue_wave'].includes(pacePolicy)&&
+   'anticipatory_queue_wave','protect_lead_queue_wave',
+   'joint_viability_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -61,6 +64,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
   originalDesired:Object.fromEntries(physical.states.map(s=>[s.id,s.desired])),
   commandedRiderTicks:0,lateralRequestTicks:0,headwayWarningTicks:0,
   queueProtectedLeaderTicks:0,queueEarlyBrakeRiderTicks:0,
+  jointBlockedLaneChangeTicks:0,jointLeadProtectionTicks:0,
+  jointEarlyBrakeRiderTicks:0,jointUnresolvedWarningTicks:0,
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -101,7 +106,7 @@ function commandForRider(snapshot,s,bookingsById){
  let targetY=booking.targetY
  if(snapshot.pacePolicy==='timed_speed_only')targetY=s.targetY
  else if(['timed_safe_corridor','anticipatory_queue_wave',
-  'protect_lead_queue_wave'].includes(snapshot.pacePolicy)&&
+  'protect_lead_queue_wave','joint_viability_v1'].includes(snapshot.pacePolicy)&&
   Math.abs(targetY-s.y)>EPS){
   const delta=targetY-s.y
   const blocked=snapshot.physical.states.some(t=>{
@@ -153,7 +158,14 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    headwayM:out.physical.headwayStandOffM,
    mode:out.pacePolicy==='protect_lead_queue_wave'?
     'protect_lead':'anticipatory'}):null
- const commands=queue?.requests??originalRequests
+ const joint=out.pacePolicy==='joint_viability_v1'?
+  jointViabilityCommandsV3(candidate.states,originalRequests,{
+   headwayM:out.physical.headwayStandOffM,
+   horizonSeconds:3,maxIterations:4,
+   roadEnvelope:x=>researchRoadEnvelopeV3(
+    out.physical.roadGeometry,x),widthHalfM:out.physical.bodyHalfWidthM,
+   scanSeconds:5}):null
+ const commands=joint?.requests??queue?.requests??originalRequests
  for(let i=0;i<candidate.states.length;i++){
   const s=candidate.states[i],request=commands[i]
   s.desired=request.speed
@@ -180,6 +192,10 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  out.headwayWarningTicks+=heads
  out.queueProtectedLeaderTicks+=(queue?.protectedLeaders??0)
  out.queueEarlyBrakeRiderTicks+=(queue?.earlyBrakeRequests??0)
+ out.jointBlockedLaneChangeTicks+=(joint?.blockedLaneChanges??0)
+ out.jointLeadProtectionTicks+=(joint?.leadProtection??0)
+ out.jointEarlyBrakeRiderTicks+=(joint?.earlyBrakeCommands??0)
+ out.jointUnresolvedWarningTicks+=(joint?.unresolvedOneSecondPairs??0)
  out.status='IN_PROGRESS'
  return out
 }
