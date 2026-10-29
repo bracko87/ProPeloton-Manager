@@ -28,3 +28,31 @@ To address that concrete causal defect without weakening physics, Step108B now r
 [Step108B workflow](../../.github/workflows/v3-step108-joint-moving-floor.yml) adds **48 real A64+Step95 180-second requested experiments** (six fixed strategies × two 106/168 rider fields × two original layouts × both mirror-image center branches). Every test outputs first physical collision versus achieved-moving-speed rejection, actual accepted seconds and original rider grouping. **No 180s or first-gate sporting claim is authorized without the physical evidence.**
 
 **Step108B measured results:** pending actual GitHub log verification. Milestone A remains NO-GO.
+
+
+## Verified Step108B stable-lane outcomes — October 29, 2026
+
+[Step108B GitHub Actions run 40951912374](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40951912374): the new 48-case locked-lane original-A64 physical job passed its test assertions. The separate 8-case adaptive A64 physical diagnostic, 8/32 rider microtests with exact checkpoint 1+1 replay, and React production build also passed. The protected Step86 full-180 original A64 benchmark was still running when the result was first inspected. These green diagnostic jobs do **not** mean large fields completed a race.
+
+### Actual 106/168 accepted A64 continuous movement
+
+All measurements below hold for both field sizes and both mirrored center-assignment branches.
+
+| Fixed Step108B controller | Staged narrowing | Double narrowing | Failure |
+| --- | ---: | ---: | --- |
+| base (unchanged Step107 slots_balanced) | **17.0s** | 12.0s | Staged swept contact; double achieved-moving veto |
+| floor (+0.9 m/s requested margin) | 16.5s | 12.0s | Staged swept contact; double swept contact |
+| wave (global assist and headway) | 6.0s | 5.0s | Swept contact r000/r001 |
+| fast (throughput base and assist) | 6.0s | 5.0s | Swept contact r000/r001 |
+| compact (compact slots and assist) | 6.0s | 5.0s | Swept contact r000/r001 |
+| stagger (stagger slots and assist) | 6.0s | 5.0s | Swept contact r000/r001 |
+
+**48/48 experimental full-field policies failed original A64 collision or Step95 achieved-moving safety before the first narrowing; 0/48 reached 180 seconds; 0/48 passed gate one or gate two.** The best stabilized Step108B result **equals Step107's 17.0s staged best** and does not exceed Step107's **13.0s** double-layout record (from the different Step107 slots_compact controller). The Step108B base comparison independently verified **deep exact equality of original-A64 final state, including actual rider positions, velocities and W-prime**, with Step107 slots_balanced for both sizes and mirrored lane branches. Both real-field sizes remained one peloton under the exact consecutive time-gap <=8s rule during accepted physical movement.
+
+The floor-only intervention shifts the double-pinch reason from *moving-speed veto* to *swept-contact veto*, without creating additional safe duration. Stronger upstream leader acceleration causes a **front-row r000/r001 collision by 5–6s** even with fixed lane order. A command to create space is not a proof of a physically feasible same-row/lateral merge, and may destroy clearance elsewhere.
+
+### Decision / next architecture
+
+**Step108 research complete, sporting NO-GO.** Its contributions are safe fail-closed achieved-speed selection, a documented negative result for half-second controller-policy switching, locked full-field lane-order comparison, and original Step107 exact control parity. It does **not** solve the 106/168 road constrictions. The next solver should jointly allocate **actual signed longitudinal separation and mandatory continuous lateral swept corridors in time**, constrain acceleration *and* minimum-speed feasibility before assigning a merge order, and validate entire multi-rider trajectories with original A64. Do not retry arbitrary speed boosts, relax A64 collision thresholds, accept slow/stopped riders, or convert racing groups into combined physical objects.
+
+Production race-engine V3 remains disabled; no official race clock, results, payouts or Supabase data have been changed. Overall V3 readiness remains an approximate 35% estimate rather than a measured project completion KPI.
