@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/v3/a2Step82FeasibleZipperWindowsV3.mjs'
       - 'scripts/v3/verify-a2-step82-feasible-windows-v3.mjs'
+      - 'scripts/v3/verify-a2-step82-parity-full-races-v3.mjs'
       - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
       - '.github/workflows/v3-step82-feasible-windows.yml'
   workflow_dispatch:
@@ -23,6 +24,10 @@ jobs:
         env:
           V3_A2_STEP82_DIR: ${{ runner.temp }}/a82
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step82-feasible-windows-v3.mjs
+      - name: A82 mirrored road and renamed physical parity plus actual 8 and 32 rider full 180s overtake observer replay
+        env:
+          V3_A2_STEP82_LONG_DIR: ${{ runner.temp }}/a82long
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step82-parity-full-races-v3.mjs
       - name: Protect Step81 actual 32r staged 180s, 64 independent overtakes and exact 90+90
         env:
           V3_A2_STEP81_FULL32_DIR: ${{ runner.temp }}/a81
@@ -42,6 +47,7 @@ jobs:
           name: a82-necessary-zipper-window-contact-evidence
           path: |
             ${{ runner.temp }}/a82/*.json
+            ${{ runner.temp }}/a82long/*.json
             ${{ runner.temp }}/a81/*.json
             ${{ runner.temp }}/a78/*.json
             ${{ runner.temp }}/a76/*.json
