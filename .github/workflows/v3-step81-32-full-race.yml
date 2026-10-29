@@ -1,0 +1,37 @@
+name: V3 Step81 full 32-rider five-abreast 180s sporting audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/verify-a2-step81-32-full-races-v3.mjs'
+      - '.github/workflows/v3-step81-32-full-race.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  actual-32-rider-sporting-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Step81 true full 180s 32-rider five-abreast physical and independent overtake validation
+        env:
+          V3_A2_STEP81_FULL32_DIR: ${{ runner.temp }}/full32
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step81-32-full-races-v3.mjs
+      - name: Preserve original successful 32 rider staged 180s and 87 independently sustained 3s passes
+        env:
+          V3_A2_STEP78_LOCAL_REPLAY_DIR: ${{ runner.temp }}/step78
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-phase2-local-replay-v3.mjs
+      - name: Upload real Step81 32r and protected Step78 outcomes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a81-full-32-real-physics-sporting-evidence
+          path: |
+            ${{ runner.temp }}/full32/*.json
+            ${{ runner.temp }}/step78/*.json
+          if-no-files-found: warn
+          retention-days: 30
