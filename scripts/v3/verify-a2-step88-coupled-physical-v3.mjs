@@ -33,6 +33,19 @@ assert(plan.order.nextGateKinematicChains===10)
 assert.equal(plan.officialWrites,0)
 assert.equal(plan.futureSlotIsNotSafePhysicalPassage,true)
 assert.equal(JSON.stringify({states,requests,bookings}),before)
+// The rear LEFT lane is actually closing on its leading lane while the
+// rear RIGHT lane is slower than its own leader. No cross-side mass cap.
+const asymmetric=states.map((st,i)=>({...st,v:
+ i<5?(st.y<2.2?8:st.y>2.2?11:9):
+ (st.y<2.2?11:st.y>2.2?8:9)}))
+const isolated=step88CoupledRowFlowV3(asymmetric,requests,bookings)
+assert(isolated.rowPlans[1].paceCeilings.some(c=>c.side===-1),
+ 'A88 missed real left-side closing row demand')
+assert(!isolated.rowPlans[1].paceCeilings.some(c=>c.side===1),
+ 'A88 wrongly reduced safe opposite-side row corridor')
+assert(!Number.isFinite(isolated.caps[8])&&
+ !Number.isFinite(isolated.caps[9]),
+ 'A88 invented braking on safe right track')
 for(const r of plan.reservations){
  for(const side of [-1,1]){
   const booked=r.occupancy.filter(e=>e.side===side).sort((a,b)=>a.time-b.time)
