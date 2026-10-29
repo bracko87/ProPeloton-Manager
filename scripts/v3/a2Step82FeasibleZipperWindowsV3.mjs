@@ -6,7 +6,6 @@
  * state, overwrites a booking, or commits movement. Original A64 swept
  * all-bicycle/road/energy integrator is always the final authority.
  */
-import {forecastMultiSecondOccupancyV3} from './a2Step81SpaceTimeReservationsV3.mjs'
 const A=.45,B=.85,L=.38,EPS=1e-7;
 const q=x=>Math.round(x*1e6)/1e6;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -159,7 +158,8 @@ export function step82WindowContractV3(states,requests,bookings,{
   modeledRows:items.length,laneGroups:lanes.size,
   timeSeparationSeconds:q(sepSeconds),
   sufficientForJointPassage:false,
-  doesNotAuthorizeCollisionOrEnergy:false,
+  doesNotAuthorizeCollisionOrEnergy:true,
+  atSeconds,
   researchOnly:true,officialWrites:0};
 }
 function variant(states,baseline,contract,mode,{paceFloor=6.7}={}){
@@ -177,15 +177,12 @@ function variant(states,baseline,contract,mode,{paceFloor=6.7}={}){
    }
    continue;
   }
-  const remaining=c.assigned-(c.earliest-
-   step82ArrivalIntervalV3(s,c.gateX).earliest);
   // Use current request to move toward a feasible necessary time window.
   // The physical solver independently limits actual acceleration and
   // rejects any invalid full 2D swept movement.
   const dx=c.gateX-s.x;
   if(dx<=EPS||c.assigned<=EPS)continue;
-  const t=Math.max(.5,c.assigned-(c.earliest-
-   step82ArrivalIntervalV3(s,c.gateX).earliest));
+  const t=Math.max(.5,c.assigned-contract.atSeconds);
   const target=clamp(dx/t,paceFloor,12.5);
   if((mode==='window_pace'||mode==='combined')&&c.adjusted&&
     target<r.speed-EPS){r.speed=target;slowed++}
