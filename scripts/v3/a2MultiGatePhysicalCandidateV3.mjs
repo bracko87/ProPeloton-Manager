@@ -406,7 +406,10 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    {policy:'baseline',requests:canonicalRequests},
    {policy:'joint',requests:canonicalJoint},
    {policy:'proven_gap_wave',requests:gapPilot.candidates[2].requests},
+   {policy:'proven_order_hold',requests:orderPilot.candidates[0].requests},
    {policy:'proven_order_pace',requests:orderPilot.candidates[2].requests},
+   {policy:'proven_consensus_hold',
+    requests:consensusPilot.candidates[0].requests},
    {policy:'whole_row_hold',requests:rowPilot.candidates[0].requests},
    {policy:out.pacePolicy==='whole_row_strict_v1'?
     'whole_row_yield':'whole_row_balanced',
@@ -611,7 +614,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const horizon=(isStep85||isStep86||isStep87||isStep88)?
   chooseThroughputGuardedTickV3(canonical,horizonProposals,
    makeFuture,advanceNormalStartV3,{
-    depth:3,maxFirst:isStep86||isStep87||isStep88?6:5,maxFuture:3,
+    depth:3,maxFirst:isStep88?8:isStep86||isStep87?6:5,maxFuture:3,
     clearanceFirst:isStep86||isStep87||isStep88,
     strictNoNearStops:out.pacePolicy==='throughput_strict_v1'||
      out.pacePolicy==='multirow_gap_strict_v1'||
