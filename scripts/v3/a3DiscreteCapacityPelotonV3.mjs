@@ -3,6 +3,9 @@
  * swept side-to-side bicycle path. No database or production integration.
  */
 import {createHash} from 'node:crypto';
+import {a3RiderProfileV3,a3GradientV3,a3DraftFractionV3,
+ a3AttackStateV3,a3PerformanceIntentV3,a3EnergyStepV3}
+ from './a3RiderPerformanceV3.mjs';
 const DT=.1,GATE=680,GAP=1.85,FLOOR=6.5,A=.45,B=.85;
 const q=x=>Math.round(x*1e6)/1e6;
 const clip=(x,lo,hi)=>Math.max(lo,Math.min(hi,x));
@@ -52,11 +55,16 @@ function occupancy(riders){
  }
  return {ok:true,minGap:min===Infinity?null:q(min)};
 }
-export function createDiscretePelotonV3(n,{layout='staged',scenario='standard',roadWidthMode='baseline'}={}){
+export function createDiscretePelotonV3(n,{layout='staged',scenario='standard',
+ roadWidthMode='baseline',performanceMode='baseline',
+ attackScenario='none'}={}){
  if(![24,32,106,168].includes(n)||
    !['staged','double'].includes(layout)||
    !['standard','breakaway'].includes(scenario)||
    !['baseline','two_distinct_gates'].includes(roadWidthMode)||
+   !['baseline','profiles_v1'].includes(performanceMode)||
+   !['none','leader_surge'].includes(attackScenario)||
+   (attackScenario!=='none'&&performanceMode!=='profiles_v1')||
    (scenario==='breakaway'&&n!==24))
   throw Error('unsupported research fixture');
  const racers=[];
@@ -70,7 +78,9 @@ export function createDiscretePelotonV3(n,{layout='staged',scenario='standard',r
    lane,initialLane:lane,channel:c,phase:two?'two_lane':'wide',
    v:9,preGateCruise:9,entryTick:two?0:null,
    energyJ:23000,passedFirst:two,passedSecond:false,
-   expandedMiddle:false,secondMergeCompleted:false});
+   expandedMiddle:false,secondMergeCompleted:false,
+   ...(performanceMode==='profiles_v1'?
+      {performance:a3RiderProfileV3(i)}:{})});
  }
  if(scenario==='standard')for(const c of [0,1]){
   const list=racers.filter(r=>r.channel===c).sort((a,b)=>
@@ -90,12 +100,15 @@ export function createDiscretePelotonV3(n,{layout='staged',scenario='standard',r
   }
  }
  return {model:'DISCRETE_RESEARCH_NO_A64',dt:DT,layout,scenario,
-  roadWidthMode,firstGateX:680,middleOpensX:1020,
+  roadWidthMode,performanceMode,attackScenario,
+  firstGateX:680,middleOpensX:1020,
   secondGateX:1130,secondEndX:1470,
   tick:0,time:0,racers,reason:null,records:[],officialWrites:0};
 }
-function desired(s,r){
+function desired(s,r,draft=0){
  if(r.phase==='wide')return r.preGateCruise;
+ if(s.performanceMode==='profiles_v1')
+   return a3PerformanceIntentV3(s,r,draft).target;
  if(s.scenario==='breakaway'){
   const lead=r.ordinal<4;
   if(s.time>=20&&s.time<55)return lead?13.8:9.1;
@@ -115,11 +128,14 @@ export function advanceDiscretePelotonV3(state){
   if(!laneMap.has(key))laneMap.set(key,[]);
   laneMap.get(key).push(r);
  }
- const speeds=new Map();
+ const speeds=new Map(),draftById=new Map();
  for(const arr of laneMap.values()){
   arr.sort(order);let lead=null;
   for(const r of arr){
-   let want=desired(next,r);
+   const draft=next.performanceMode==='profiles_v1'?
+     a3DraftFractionV3(r,lead):0;
+   draftById.set(r.id,draft);
+   let want=desired(next,r,draft);
    if(lead){
     const gap=lead.x-r.x,closing=Math.max(0,r.v-lead.v);
     const safe=GAP+(next.scenario==='breakaway'?3:.3)+
@@ -148,7 +164,7 @@ export function advanceDiscretePelotonV3(state){
      const closing=Math.max(0,r.v-front.v);
      const safe=GAP+.5+2*closing+closing*closing/(2*B);
      if(gap<safe+1.4){
-      const want=Math.min(desired(next,r),
+      const want=Math.min(desired(next,r,draftById.get(r.id)??0),
         speeds.get(front.id)+(gap-safe)/1.1);
       const guarded=ramp(r.v,clip(want,FLOOR,14));
       speeds.set(r.id,Math.min(speeds.get(r.id),guarded));
@@ -160,8 +176,15 @@ export function advanceDiscretePelotonV3(state){
  }
  for(const r of next.racers){
   r.v=speeds.get(r.id);r.x=q(r.x+r.v*DT);
-  r.energyJ=q(clip(r.energyJ-Math.max(0,r.v-10)*30*DT+
+  if(next.performanceMode==='profiles_v1'){
+   const grade=a3GradientV3(next.layout,r.x);
+   const draft=draftById.get(r.id)??0;
+   const attack=a3AttackStateV3(next,r);
+   r.energyJ=a3EnergyStepV3(r,{speed:r.v,grade,draft,attack},DT);
+  }else{
+   r.energyJ=q(clip(r.energyJ-Math.max(0,r.v-10)*30*DT+
      Math.max(0,9-r.v)*8*DT,0,23000));
+  }
   if(r.phase==='wide'){
    if(ticks>=r.entryTick){
     // Earliest admission, not a forced x=680 placement: a rider that
@@ -204,6 +227,15 @@ export function advanceDiscretePelotonV3(state){
      .map(r=>r.lane)).size,
   secondMergeRiders:next.racers.filter(r=>r.secondMergeCompleted).length,
   minSpeed:q(Math.min(...next.racers.map(r=>r.v))),
+  ...(next.performanceMode==='profiles_v1'?{
+   activeAttackers:next.racers.filter(r=>
+     a3AttackStateV3(next,r)==='attacking').length,
+   draftingRiders:[...draftById.values()].filter(v=>v>0).length,
+   climbingRiders:next.racers.filter(r=>
+     a3GradientV3(next.layout,r.x)>0).length,
+   meanEnergyJ:q(next.racers.reduce((a,r)=>a+r.energyJ,0)/
+     next.racers.length)
+  }:{}),
   minLaneGap:check.minGap,
   stateHash:hash(next.racers.map(r=>[r.id,r.x,r.lane,r.v,r.energyJ]))});
  return next;
@@ -238,6 +270,24 @@ export function runDiscretePelotonV3(initial,{seconds=180,checkpoint=null}={}){
  return {physical:now,evidence:{
   riders:now.racers.length,layout:now.layout,scenario:now.scenario,
   roadWidthMode:now.roadWidthMode,
+  performanceMode:now.performanceMode??'baseline',
+  attackScenario:now.attackScenario??'none',
+  activeAttackTicks:now.records.filter(r=>r.activeAttackers>0).length,
+  peakDraftingRiders:Math.max(0,...now.records.map(r=>
+    r.draftingRiders??0)),
+  peakClimbingRiders:Math.max(0,...now.records.map(r=>
+    r.climbingRiders??0)),
+  initialEnergyJ:23000,
+  finalMeanEnergyJ:q(now.racers.reduce((sum,r)=>sum+r.energyJ,0)/
+    now.racers.length),
+  finalMeanClimberEnergyJ:now.performanceMode==='profiles_v1'?
+    q(now.racers.filter(r=>r.performance.type==='climber')
+     .reduce((sum,r)=>sum+r.energyJ,0)/
+     now.racers.filter(r=>r.performance.type==='climber').length):null,
+  finalMeanSprinterEnergyJ:now.performanceMode==='profiles_v1'?
+    q(now.racers.filter(r=>r.performance.type==='sprinter')
+     .reduce((sum,r)=>sum+r.energyJ,0)/
+     now.racers.filter(r=>r.performance.type==='sprinter').length):null,
   expandedMiddleCount:now.racers.filter(r=>r.expandedMiddle).length,
   completedSecondMergeCount:now.racers.filter(r=>r.secondMergeCompleted).length,
   peakMiddleLaneOccupancy:Math.max(0,...now.records.map(r=>r.midWidthRiders??0)),

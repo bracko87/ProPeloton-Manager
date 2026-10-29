@@ -1,0 +1,56 @@
+name: V3 alternate rider abilities climb drafting fatigue attack
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a3DiscreteCapacityPelotonV3.mjs'
+      - 'scripts/v3/a3RiderPerformanceV3.mjs'
+      - 'scripts/v3/verify-a3-rider-performance-v3.mjs'
+      - '.github/workflows/v3-alternative-rider-performance.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  original-abilities-gradient-draft-fatigue-attack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: All-rider 106/168 uphill drafting fatigue attacks physical discrete lanes
+        run: node scripts/v3/verify-a3-rider-performance-v3.mjs
+  original-discrete-capacity-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/v3/verify-a3-discrete-capacity-v3.mjs
+      - run: node scripts/v3/verify-a3-distinct-road-profiles-v3.mjs
+  protect-original-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: User eight-second dynamic peloton rules
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step101-eight-second-groups-v3.mjs
+      - name: Original A64 protected 32-rider 180-second benchmark
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step86-gap-physical-v3.mjs
+  react-production-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
