@@ -18,7 +18,7 @@
     "membership": "Premium Mitgliedschaft",
     "advancedTools": "Premium Command Center mit erweiterter Planung, Simulationen, Analysen und Management-Tools.",
     "marketTools": "Transfer Command mit gespeicherten Suchen, Marktalarmen und unbegrenzten coinfreien Shortlist-Zugängen.",
-    "capacity": "Die Jugendakademie / U16 ist Premium-exklusiv; Aktivierung und saisonale Verlängerung kosten jeweils 50 Coins. Das Entwicklungsteam / U23 steht Free- und Premium-Managern für jeweils 100 Coins zur Verfügung.",
+    "capacity": "U23-Entwicklungsteam und optionale U16-Akademie erfordern bezahltes Premium. Aktivierung und Verlängerung kosten jeweils 50 Münzen.",
     "receive": "Empfangen",
     "monthlyCoinsSuffix": "Coins nach jeder erfolgreichen monatlichen Zahlung.",
     "cancelAnytime": "Abbrechen jederzeit; normales Gameplay bleibt frei.",
@@ -70,7 +70,13 @@
     "monthlyTitle": "1 Monat",
     "monthlySummary": "pro Monat · {{coins}} Coins",
     "yearlyTitle": "12 Monate · 15 % sparen",
-    "yearlySummary": "{{monthlyPrice}}/Monat · {{coins}} Coins"
+    "yearlySummary": "{{monthlyPrice}}/Monat · {{coins}} Coins",
+    "coinDeliveryTitle": "Wann erhalten Sie Ihre Premium-Münzen?",
+    "coinDeliveryHelp": "Bei drei- und zwölfmonatigem Premium wählen Sie 30 Münzen pro Monat oder alle Münzen sofort. Die Gesamtzahl ist gleich.",
+    "coinDeliveryMonthly": "30 Münzen sofort, danach monatlich weitere 30",
+    "coinDeliveryUpfront": "Alle 90 Quartals- oder 360 Jahresmünzen sofort",
+    "coinDeliveryMonthlyPlan": "Monatliches Premium vergibt nach jeder erfolgreichen Zahlung 30 Münzen.",
+    "a8": "U23-Entwicklungsteam nur mit bezahltem Premium: 50 Münzen Aktivierung und 50 pro Saison nach 60 Spieltagen."
   },
   "advantages": {
     "a1": "30 Coins nach jeder erfolgreichen monatlichen Premium-Zahlung.",

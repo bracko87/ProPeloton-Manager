@@ -18,7 +18,7 @@
     "membership": "Membership Premium",
     "advancedTools": "Premium Command Center with advanced planning, simulations, analytics and management tools.",
     "marketTools": "Transfer Command with saved searches, market alerts and unlimited coin-free shortlist additions.",
-    "capacity": "L'accademia giovanile / U16 richiede Premium, più 50 Coins per attivazione e 50 Coins per rinnovo stagionale. La squadra di sviluppo / U23 è disponibile per utenti Free e Premium con 100 Coins per attivazione e rinnovo.",
+    "capacity": "La squadra U23 e l'Accademia U16 facoltativa richiedono Premium a pagamento. Attivazione e rinnovo costano 50 monete.",
     "receive": "Ricevi",
     "monthlyCoinsSuffix": "Coins dopo ogni pagamento mensile riuscito.",
     "cancelAnytime": "Annulla in qualsiasi momento; il normale gameplay rimane libero.",
@@ -70,7 +70,13 @@
     "monthlyTitle": "1 mese",
     "monthlySummary": "al mese · {{coins}} Coins",
     "yearlyTitle": "12 mesi · Risparmia il 15%",
-    "yearlySummary": "{{monthlyPrice}} al mese · {{coins}} Coins"
+    "yearlySummary": "{{monthlyPrice}} al mese · {{coins}} Coins",
+    "coinDeliveryTitle": "Quando vuoi ricevere le monete Premium?",
+    "coinDeliveryHelp": "Per Premium trimestrale o annuale scegli 30 monete al mese oppure tutte subito. Il totale non cambia.",
+    "coinDeliveryMonthly": "30 monete ora, poi altre 30 ogni mese",
+    "coinDeliveryUpfront": "Tutte le 90 trimestrali o 360 annuali subito",
+    "coinDeliveryMonthlyPlan": "Premium mensile assegna 30 monete per ogni pagamento riuscito.",
+    "a8": "Squadra U23 solo con Premium a pagamento: 50 monete di attivazione e 50 a stagione dopo 60 giorni di gioco."
   },
   "advantages": {
     "a1": "30 coins after every successful monthly Premium payment.",

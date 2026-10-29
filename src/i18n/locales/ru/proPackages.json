@@ -18,7 +18,7 @@
     "membership": "Premium Членство",
     "advancedTools": "Premium Command Center with advanced planning, simulations, analytics and management tools.",
     "marketTools": "Transfer Command with saved searches, market alerts and unlimited coin-free shortlist additions.",
-    "capacity": "Молодёжная академия / U16 доступна только с Premium: активация 50 Coins и продление 50 Coins за сезон. Команда развития / U23 доступна менеджерам Free и Premium: активация 100 Coins и продление 100 Coins.",
+    "capacity": "Команда U23 и необязательная Академия U16 требуют платного Premium; активация и продление стоят по 50 монет.",
     "receive": "Получать",
     "monthlyCoinsSuffix": "Coins после каждого успешного ежемесячного платежа.",
     "cancelAnytime": "Отмена в любое время; нормальная игра остается свободной.",
@@ -70,7 +70,13 @@
     "monthlyTitle": "1 месяц",
     "monthlySummary": "в месяц · {{coins}} Coins",
     "yearlyTitle": "12 месяцев · Экономия 15%",
-    "yearlySummary": "{{monthlyPrice}}/мес. · {{coins}} Coins"
+    "yearlySummary": "{{monthlyPrice}}/мес. · {{coins}} Coins",
+    "coinDeliveryTitle": "Когда получать монеты Premium?",
+    "coinDeliveryHelp": "Для квартального или годового Premium выберите по 30 монет каждый месяц либо все сразу. Всего монет одинаково.",
+    "coinDeliveryMonthly": "30 монет сейчас и по 30 каждый месяц",
+    "coinDeliveryUpfront": "Все 90 квартальных или 360 годовых монет сразу",
+    "coinDeliveryMonthlyPlan": "Месячный Premium выдаёт 30 монет после каждого успешного платежа.",
+    "a8": "Команда U23 только с платным Premium: активация за 50 монет и продление за 50 за сезон после 60 игровых дней."
   },
   "advantages": {
     "a1": "30 coins after every successful monthly Premium payment.",

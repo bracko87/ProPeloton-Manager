@@ -18,7 +18,7 @@
     "membership": "Premium članstvo",
     "advancedTools": "Premium Command Center sa naprednim planiranjem, simulacijama, analizom i alatima za upravljanje.",
     "marketTools": "Transfer Command sa sačuvanim pretragama, tržišnim upozorenjima i neograničenim dodavanjem na listu bez coin-a.",
-    "capacity": "Omladinska akademija / U16 zahteva Premium i 50 Coins za aktivaciju, uz 50 Coins po sezoni za obnovu. Razvojni tim / U23 dostupan je svim menadžerima za 100 Coins za aktivaciju i 100 Coins za obnovu.",
+    "capacity": "Razvojni U23 tim i opciona U16 akademija zahtevaju plaćeni Premium; svaki košta 50 novčića za aktivaciju i obnovu.",
     "receive": "Dobijte",
     "monthlyCoinsSuffix": "novčića nakon svake uspešne mesečne uplate.",
     "cancelAnytime": "Otkažite u bilo kom trenutku; osnovno igranje ostaje besplatno.",
@@ -70,7 +70,13 @@
     "monthlyTitle": "1 mesec",
     "monthlySummary": "mesečno · {{coins}} Coins",
     "yearlyTitle": "12 meseci · Uštedi 15%",
-    "yearlySummary": "{{monthlyPrice}} mesečno · {{coins}} Coins"
+    "yearlySummary": "{{monthlyPrice}} mesečno · {{coins}} Coins",
+    "coinDeliveryTitle": "Kada stižu Premium novčići?",
+    "coinDeliveryHelp": "Za tromesečni ili godišnji Premium izaberite 30 novčića mesečno ili sav iznos odmah. Ukupno je isto.",
+    "coinDeliveryMonthly": "30 novčića odmah, pa po 30 svakog meseca",
+    "coinDeliveryUpfront": "Svih 90 tromesečnih ili 360 godišnjih novčića odmah",
+    "coinDeliveryMonthlyPlan": "Mesečni Premium donosi 30 novčića po uspešnoj uplati.",
+    "a8": "Razvojni U23 tim: plaćeni Premium, 50 novčića aktivacija i 50 po sezoni nakon 60 dana igre."
   },
   "advantages": {
     "a1": "30 coin-a posle svake uspešne mesečne Premium uplate.",
