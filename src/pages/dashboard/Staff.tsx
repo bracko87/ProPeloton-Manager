@@ -5222,10 +5222,19 @@ export default function StaffPage() {
 
   // Locked and future roles must remain visible and selectable.
   const visibleRoleTabs = ROLE_TABS
+  const roleHiringMap = useMemo(() => {
+    const status = new Map<StaffRole, StaffHireStatus>()
+    ROLE_TABS.forEach(item => status.set(item.role, getStaffHireStatus(
+      item.role, roleLimitMap.get(item.role), infrastructure,
+      hasPaidPremium, developingTeamActive, academyAccess, t,
+    )))
+    return status
+  }, [roleLimitMap, infrastructure, hasPaidPremium, developingTeamActive, academyAccess, t])
 
   const selectedRoleMeta = getRoleMeta(selectedRole)
   const selectedRoleMembers = membersByRole[selectedRole]
   const selectedRoleLimit = getRoleLimit(selectedRole, roleLimitMap)
+  const selectedHiringAccess = roleHiringMap.get(selectedRole)!
   const selectedRoleWarning = getRoleInfrastructureWarning(selectedRole, infrastructure)
 
   const selectedImpactMembers = getImpactMembers(selectedRole, membersByRole)
@@ -5636,7 +5645,8 @@ export default function StaffPage() {
             title={t('rolesSection.title')}
             subtitle={t('rolesSection.subtitle')}
           />
-          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 xl:grid-cols-5">
+          <p className="mb-3 text-xs text-gray-600">{t('hireAccess.intro')}</p>
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {visibleRoleTabs.map((roleMeta) => (
               <RoleTabButton
                 key={roleMeta.role}
@@ -5644,6 +5654,7 @@ export default function StaffPage() {
                 selected={selectedRole === roleMeta.role}
                 currentCount={membersByRole[roleMeta.role].length}
                 limit={getRoleLimit(roleMeta.role, roleLimitMap)}
+                access={roleHiringMap.get(roleMeta.role)!}
                 onClick={() => setSelectedRole(roleMeta.role)}
               />
             ))}
