@@ -38,7 +38,7 @@ function grouping(racers){
 function occupancy(riders){
  const by=new Map();let min=Infinity;
  for(const r of riders){
-  const key=r.phase==='wide'?'W'+r.lane:'N'+r.channel;
+  const key=r.phase==='wide'?'W'+r.lane:r.phase==='middle'?'M'+r.lane:'N'+r.channel;
   if(!by.has(key))by.set(key,[]);
   by.get(key).push(r);
  }
@@ -52,10 +52,11 @@ function occupancy(riders){
  }
  return {ok:true,minGap:min===Infinity?null:q(min)};
 }
-export function createDiscretePelotonV3(n,{layout='staged',scenario='standard'}={}){
+export function createDiscretePelotonV3(n,{layout='staged',scenario='standard',roadWidthMode='baseline'}={}){
  if(![24,32,106,168].includes(n)||
    !['staged','double'].includes(layout)||
    !['standard','breakaway'].includes(scenario)||
+   !['baseline','two_distinct_gates'].includes(roadWidthMode)||
    (scenario==='breakaway'&&n!==24))
   throw Error('unsupported research fixture');
  const racers=[];
@@ -68,7 +69,8 @@ export function createDiscretePelotonV3(n,{layout='staged',scenario='standard'}=
    x:q(two?1040-row*4.5:600-row*5.2),
    lane,initialLane:lane,channel:c,phase:two?'two_lane':'wide',
    v:9,preGateCruise:9,entryTick:two?0:null,
-   energyJ:23000,passedFirst:two,passedSecond:false});
+   energyJ:23000,passedFirst:two,passedSecond:false,
+   expandedMiddle:false,secondMergeCompleted:false});
  }
  if(scenario==='standard')for(const c of [0,1]){
   const list=racers.filter(r=>r.channel===c).sort((a,b)=>
@@ -88,6 +90,8 @@ export function createDiscretePelotonV3(n,{layout='staged',scenario='standard'}=
   }
  }
  return {model:'DISCRETE_RESEARCH_NO_A64',dt:DT,layout,scenario,
+  roadWidthMode,firstGateX:680,middleOpensX:1020,
+  secondGateX:1130,secondEndX:1470,
   tick:0,time:0,racers,reason:null,records:[],officialWrites:0};
 }
 function desired(s,r){
@@ -107,7 +111,7 @@ export function advanceDiscretePelotonV3(state){
  if(!old.ok)throw Error('invalid starting lane occupancy');
  const laneMap=new Map(),ticks=next.tick+1;
  for(const r of next.racers){
-  const key=r.phase==='wide'?'W'+r.lane:'N'+r.channel;
+  const key=r.phase==='wide'?'W'+r.lane:r.phase==='middle'?'M'+r.lane:'N'+r.channel;
   if(!laneMap.has(key))laneMap.set(key,[]);
   laneMap.get(key).push(r);
  }
@@ -144,8 +148,19 @@ export function advanceDiscretePelotonV3(state){
     next.rejection={id:r.id,actualX:r.x};break;
    }
   }
-  if(r.phase==='two_lane'&&r.x>1020)r.passedFirst=true;
-  if(r.phase==='two_lane'&&r.x>1470)r.passedSecond=true;
+  if(r.x>1020&&r.phase!=='wide')r.passedFirst=true;
+  if(next.roadWidthMode==='two_distinct_gates'&&
+     next.scenario==='standard'){
+   if(r.phase==='two_lane'&&next.layout==='staged'&&r.x>=1020){
+    r.phase='middle';r.lane=r.initialLane;r.expandedMiddle=true;
+   }
+   if(r.x>=1130&&r.phase!=='wide'&&
+      r.phase!=='two_lane2'){
+    r.phase='two_lane2';r.lane=steer(r.channel);
+    r.secondMergeCompleted=true;
+   }
+  }
+  if(r.x>1470&&r.phase!=='wide')r.passedSecond=true;
  }
  if(next.reason)return next;
  const check=occupancy(next.racers);
@@ -156,7 +171,11 @@ export function advanceDiscretePelotonV3(state){
  next.tick=ticks;next.time=q(ticks*DT);
  const groups=grouping(next.racers);
  next.records.push({time:next.time,groups:groups.length,
-  gateEntries:next.racers.filter(r=>r.phase==='two_lane').length,
+  gateEntries:next.racers.filter(r=>r.phase!=='wide').length,
+  midWidthRiders:next.racers.filter(r=>r.phase==='middle').length,
+  midWidthLanes:new Set(next.racers.filter(r=>r.phase==='middle')
+     .map(r=>r.lane)).size,
+  secondMergeRiders:next.racers.filter(r=>r.secondMergeCompleted).length,
   minSpeed:q(Math.min(...next.racers.map(r=>r.v))),
   minLaneGap:check.minGap,
   stateHash:hash(next.racers.map(r=>[r.id,r.x,r.lane,r.v,r.energyJ]))});
@@ -191,6 +210,11 @@ export function runDiscretePelotonV3(initial,{seconds=180,checkpoint=null}={}){
  const g=grouping(now.racers);
  return {physical:now,evidence:{
   riders:now.racers.length,layout:now.layout,scenario:now.scenario,
+  roadWidthMode:now.roadWidthMode,
+  expandedMiddleCount:now.racers.filter(r=>r.expandedMiddle).length,
+  completedSecondMergeCount:now.racers.filter(r=>r.secondMergeCompleted).length,
+  peakMiddleLaneOccupancy:Math.max(0,...now.records.map(r=>r.midWidthRiders??0)),
+  peakDistinctMiddleLanes:Math.max(0,...now.records.map(r=>r.midWidthLanes??0)),
   acceptedSeconds:q((now.tick-start)*DT),rejection:now.reason,
   rejectionDetail:now.rejection??null,
   all180Accepted:seconds===180&&now.tick-start===1800&&!now.reason,

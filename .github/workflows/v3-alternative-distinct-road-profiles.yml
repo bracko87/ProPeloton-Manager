@@ -1,0 +1,55 @@
+name: V3 alternative distinct road capacity second narrowing
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a3DiscreteCapacityPelotonV3.mjs'
+      - 'scripts/v3/verify-a3-distinct-road-profiles-v3.mjs'
+      - '.github/workflows/v3-alternative-distinct-road-profiles.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  two-separate-road-profiles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: 106 and 168 riders both independent road profiles, two gates, replay
+        run: node scripts/v3/verify-a3-distinct-road-profiles-v3.mjs
+  preserve-alternative-baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original prototype 106/168, breakaway, deterministic 90+90
+        run: node scripts/v3/verify-a3-discrete-capacity-v3.mjs
+  protect-original:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact eight-second groups
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step101-eight-second-groups-v3.mjs
+      - name: Protected A64 Step86 32-rider 180-second
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step86-gap-physical-v3.mjs
+  react-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
