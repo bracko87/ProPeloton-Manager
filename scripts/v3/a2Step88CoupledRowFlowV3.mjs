@@ -83,7 +83,7 @@ export function step88CoupledRowFlowV3(states,requests,bookings,{
  const reservations=[],edges=[],held=new Array(states.length).fill(false);
  const caps=new Array(states.length).fill(Infinity);
  const offers=new Array(states.length).fill(-Infinity);
- const rowVelocityCeilings=new Array(rows.length).fill(Infinity);
+ const rowVelocityCeilings=rows.map(()=>new Map());
  let ambiguousRows=0,unreachableRows=0,occupiedPairs=0;
  // First, derive one joint entry interval for every actual five-wide
  // starting row; two mirrored side tracks each have only one occupancy
@@ -155,12 +155,21 @@ export function step88CoupledRowFlowV3(states,requests,bookings,{
   const gap=frontX-backX;
   edges.push({ahead:front.row,behind:rear.row,
    presentGapM:q(gap),necessaryGapM:q(needed)});
-  if(gap<needed+1){
-   // Select one synchronized row pace request only; do not loop over
-   // pairwise neighbors and repeatedly cut every bicycle's target.
-   rowVelocityCeilings[rear.row]=Math.min(
-    rowVelocityCeilings[rear.row],
-    Math.max(lowestMovingSpeedMps,leadV+.15));
+  if(gap<needed+1&&rearV>leadV+.12){
+   // The two narrow-side corridors are independent unless a steering
+   // path actually crosses them. A threatened left flow must not
+   // automatically brake the right flow of the SAME five-wide row.
+   // Aggregate one side-specific minimum ceiling from all preceding
+   // rows; apply it ONCE to the side's actual affected cyclists.
+   for(const side of [-1,0,1]){
+    const occupied=rear.occupancy.some(o=>o.side===side&&
+     front.occupancy.some(f=>f.side===side&&
+      Math.abs(f.booked-o.booked)<EPS));
+    if(!occupied)continue;
+    const previous=rowVelocityCeilings[rear.row].get(side)??Infinity;
+    rowVelocityCeilings[rear.row].set(side,Math.min(previous,
+     Math.max(lowestMovingSpeedMps,leadV+.15)));
+   }
   }
  }
  // Shared occupied 2D corridors: if a close neighbor is in (or
@@ -206,13 +215,17 @@ export function step88CoupledRowFlowV3(states,requests,bookings,{
   // where there is no physically occupied corridor. Only apply a JOINT
   // row ceiling when a real preceding-row constraint was discovered.
   // Preserve otherwise safe original cruise and legal W-prime dynamics.
-  let pace=rowVelocityCeilings[z];
-  if(finite(pace)){
+  for(const side of [-1,0,1]){
+   let pace=rowVelocityCeilings[z].get(side);
+   if(!finite(pace))continue;
    pace=Math.min(pace,maxMovingSpeedMps);
    if(pace<minV-.5)
     pace=Math.max(lowestMovingSpeedMps,minV-.5);
-   for(const i of ids)if(pace<requests[i].speed-EPS)
-    caps[i]=Math.min(caps[i],pace);
+   for(const i of ids){
+    const slot=entryByIndex.get(i);
+    if(!slot||Math.sign(slot.targetY-CENTER)!==side)continue;
+    if(pace<requests[i].speed-EPS)caps[i]=Math.min(caps[i],pace);
+   }
   }
   // A front row only gets bounded assistance if no *present* neighbor
   // occupies its lane ahead; all movement still A64-capped at +.45 m/s².
@@ -220,8 +233,8 @@ export function step88CoupledRowFlowV3(states,requests,bookings,{
    for(const i of ids)if(states[i].v<9.8&&
     !finite(caps[i]))offers[i]=Math.max(offers[i],states[i].v+.225);
   rowPlans.push({row:z,riders:ids.length,held:ids.filter(i=>held[i]).length,
-   paceCeiling:finite(rowVelocityCeilings[z])?
-    q(rowVelocityCeilings[z]):null});
+   paceCeilings:[...rowVelocityCeilings[z]].map(
+    ([side,limit])=>({side,limit:q(limit)}))});
  }
  return {order,rows:rows.length,reservations,edges,rowPlans,
   held,caps,offers,
