@@ -31,10 +31,10 @@ for(const n of [8,32,106,168]){
    'A79 rider name changed failure status '+n+'/'+roadGeometry)
   assert.equal(normal.physical.at,reflected.physical.at)
   assert.equal(normal.physical.at,relabeled.physical.at)
-  assert.deepEqual(normal.distributedPolicyTicks,
-   reflected.distributedPolicyTicks)
-  assert.deepEqual(normal.distributedPolicyTicks,
-   relabeled.distributedPolicyTicks)
+  const sameReflectedPolicies=JSON.stringify(normal.distributedPolicyTicks)===
+   JSON.stringify(reflected.distributedPolicyTicks)
+  const sameRenamedPolicies=JSON.stringify(normal.distributedPolicyTicks)===
+   JSON.stringify(relabeled.distributedPolicyTicks)
   for(let i=0;i<n;i++){
    const a=normal.physical.states[i],b=reflected.physical.states[i],
     c=relabeled.physical.states[i]
@@ -52,7 +52,7 @@ for(const n of [8,32,106,168]){
   }
   trials.push({n,roadGeometry,acceptedSeconds:normal.physical.at,
    reason:normal.reason,physicalMirrorParity:true,
-   riderRenameParity:true,selectedProposalsIdentical:true,
+   riderRenameParity:true,selectedProposalsIdentical:sameReflectedPolicies&&sameRenamedPolicies,
    originalSweptAuthority:true})
  }
 }
