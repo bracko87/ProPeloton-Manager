@@ -1,0 +1,65 @@
+name: V3 Step86 multi-row physical gap creation
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2Step86MultiRowGapV3.mjs'
+      - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
+      - 'scripts/v3/verify-a2-step86-gap-physical-v3.mjs'
+      - '.github/workflows/v3-step86-multirow-gap.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gap-creation-original-swept:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Step86 mirror name reorder geometry unit and 16 actual 8 32 106 168 five-abreast body trials
+        env:
+          V3_A2_STEP86_DIR: ${{ runner.temp }}/step86
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step86-gap-physical-v3.mjs
+      - name: Preserve Step85 strict zero near-stop rule and A64 original 16-case physical tests
+        env:
+          V3_A2_STEP85_DIR: ${{ runner.temp }}/step85
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step85-throughput-v3.mjs
+      - name: Preserve Step84 32 five-abreast staged 180s crossing consensus technical matrix
+        env:
+          V3_A2_STEP84_DIR: ${{ runner.temp }}/step84
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step84-crossing-consensus-v3.mjs
+      - name: Preserve Step78 32 five-abreast 180s 87 true sustained overtakes and exact 90 plus 90
+        env:
+          V3_A2_STEP78_LOCAL_REPLAY_DIR: ${{ runner.temp }}/step78
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-phase2-local-replay-v3.mjs
+      - name: Preserve Step76 32 106 168 three-abreast 180s 58 151 198 genuine pair passes
+        env:
+          V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/step76
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
+      - name: Preserve real physical experiment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a86-physical-multirow-five-abreast-and-previous-evidence
+          path: |
+            ${{ runner.temp }}/step86/*.json
+            ${{ runner.temp }}/step85/*.json
+            ${{ runner.temp }}/step84/*.json
+            ${{ runner.temp }}/step78/*.json
+            ${{ runner.temp }}/step76/*.json
+          if-no-files-found: warn
+          retention-days: 30
+  react-production-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
