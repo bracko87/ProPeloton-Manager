@@ -20,6 +20,8 @@ jobs:
           node-version: '22'
       - name: Real A64 synchronized 8/32 rider path and exact 4+4 replay
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step102-continuous-a64-v3.mjs
+      - name: Independently verify forced taper steering without reserved neighbor gap
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step102-forced-taper-v3.mjs
   original-106-168-physical-first-30s:
     runs-on: ubuntu-latest
     timeout-minutes: 35
