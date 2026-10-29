@@ -69,7 +69,9 @@ export function distributedNeighborhoodsV3(states,requests,{
    })).filter(t=>t.k!==i&&t.k!==j&&t.metric<=12)
     .sort((a,b)=>a.metric-b.metric||
      states[b.k].x-states[a.k].x||
-     states[a.k].y-states[b.k].y);
+     states[b.k].v-states[a.k].v||
+     Math.abs(states[a.k].y-2.2)-Math.abs(states[b.k].y-2.2)||
+     a.k-b.k);
   const indices=[i,j,...ranked.slice(0,maxLocalRiders-2).map(z=>z.k)];
   // Keep distinct overlapping regions but do not duplicate the same
   // set of physical riders for multiple links.
@@ -139,8 +141,11 @@ function distributedVariant(states,baseline,original,graph,variant,road){
  // A single field request is the consensus of ALL affected regions;
  // front-to-rear ordering prevents rear acceleration requests from
  // overriding the leading bicycle's bounded physical opportunities.
+ // At equal x, order by mirror-invariant present physical speed,
+ // not left versus right. Exact physical ties retain stable input order.
  const front=[...states.keys()].sort((a,b)=>states[b].x-states[a].x||
-  states[a].y-states[b].y);
+  states[b].v-states[a].v||
+  Math.abs(states[a].y-2.2)-Math.abs(states[b].y-2.2)||a-b);
  const active=new Set(graph.groups.flatMap(g=>g.indices));
  for(const i of front){
   if(!active.has(i))continue;
