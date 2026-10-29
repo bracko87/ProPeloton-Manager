@@ -16,7 +16,10 @@ const states=[
  {id:'bb',x:595,y:1.25,v:9.6,startX:595},
  {id:'cc',x:600,y:2.2,v:8.8,startX:600},
  {id:'dd',x:595,y:2.2,v:9.2,startX:595},
- {id:'ee',x:590,y:1.25,v:8.8,startX:590}
+ {id:'ee',x:590,y:1.25,v:8.8,startX:590},
+ {id:'ff',x:585,y:2.2,v:9.1,startX:585},
+ {id:'gg',x:580,y:1.25,v:8.7,startX:580},
+ {id:'hh',x:575,y:2.2,v:9.4,startX:575}
 ]
 const req=states.map(s=>({id:s.id,speed:8.8,targetY:2.2}))
 const desired=Object.fromEntries(states.map(s=>[s.id,9.1]))
