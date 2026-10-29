@@ -26,6 +26,21 @@ assert.equal(trial.candidates.length,4)
 assert(graph.entries.length===10)
 assert(graph.edges.length>=4,'A87 no multi-row corridor precedence')
 assert(graph.edges.some(e=>e.type==='SHARED_NARROW_CORRIDOR'))
+assert.equal(graph.nextGateKinematicChains,10,
+ 'A87 next physical gate is not chained after the first')
+assert.equal(graph.gatesScheduled,2)
+for(const c of graph.nextGateEntries){
+ if(!c.provisionalChain)continue;
+ assert(c.assigned+1e-5>=
+  c.previousGateAssigned+c.necessaryTravelAndSteerSeconds,
+  'A87 scheduled second gate before physical first-to-second travel')
+ for(const edge of graph.nextGateEdges.filter(e=>e.behind===c.i)){
+  const lead=graph.nextGateEntries.find(e=>e.i===edge.ahead)
+  if(lead?.assigned!==null)assert(
+   c.assigned+1e-5>=lead.assigned+edge.requiredGapSeconds,
+   'A87 scheduled second gate overlapping previous row')
+ }
+}
 for(const edge of graph.edges){
  const ahead=states[edge.ahead],rear=states[edge.behind]
  assert(ahead.x>=rear.x-1e-7,
@@ -59,6 +74,10 @@ for(let t=0;t<transforms.length;t++){
  const transformed=step87CorridorCandidatesV3(a,b,c)
  assert.equal(graph.edges.length,transformed.order.edges.length)
  assert.equal(graph.deferredRiders,transformed.order.deferredRiders)
+ assert.equal(graph.nextGateKinematicChains,
+  transformed.order.nextGateKinematicChains)
+ assert.equal(graph.nextGateEdges.length,
+  transformed.order.nextGateEdges.length)
  for(let policy=0;policy<4;policy++)
  for(let i=0;i<states.length;i++){
   const original=trial.candidates[policy].requests[i]
