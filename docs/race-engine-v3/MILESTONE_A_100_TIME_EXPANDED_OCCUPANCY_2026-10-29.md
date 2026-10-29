@@ -26,4 +26,21 @@ The [Step100 dedicated workflow](../../.github/workflows/v3-step100-time-expande
 
 Local synthetic precommit evidence: 20 riders, **40/40 two-gate time-cell appointments**, exact 0.05s / 7-tick same-lane separation, mirrored/renamed/permuted scheduling, invalid inputs rejected, 10-second impossible-reach fixture reported only as *discrete scheduling unresolved*, immutable inputs. Separate simplified 106 and 168 five-wide, two-lane fixtures also produced 212/212 and 336/336 **necessary appointments** respectively. These numbers say NOTHING about a complete physical race.
 
-GitHub CI and original fixture results: **pending until completed logs are inspected**. Status must never be inferred from a green workflow alone.
+## Verified Step100 initial and final CI results — 29 October 2026
+
+The [first research run 40936654451](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40936654451) completed **3/3 jobs SUCCESS**: 20-rider pure lattice geometry/symmetry checks, actual original A64 initial 106/168 road-start geometry necessary scheduling, Step99 and protected Step86 regression, and production React build.
+
+The initial planner then had a subtle symmetry weakness: a geometrically centered rider with two equally open slots could silently pick the left lane based only on array order. This was corrected by conservatively reserving BOTH possible gate cells without committing a left/right trajectory, preserving the unresolved physical choice and mirror neutrality. The [corrected final workflow 40937107806](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40937107806) also completed **3/3 jobs SUCCESS**. Its logs independently confirm:
+
+| Real original-A64 initial field | Staged / double | Necessary two-gate slot assignments | Mirror-neutral both-lane placeholders | Latest gate 1 / gate 2 booking |
+| --- | --- | ---: | ---: | --- |
+| 106 riders | staged | 212/212 | 42 | 29.35s / 58.65s |
+| 106 riders | double | 212/212 | 42 | 36.70s / 58.65s |
+| 168 riders | staged | 336/336 | 68 | 38.10s / 71.95s |
+| 168 riders | double | 336/336 | 68 | 50.00s / 71.95s |
+
+The model recorded **19,983 potential paired reachable-tube overlaps** for 106 riders and **33,022** for 168 riders across its first eight seconds, NOT committed A64 bicycle contacts. Successful scheduling is a useful result: under the relaxed time-cell constraints, **pure gate throughput is not an immediately demonstrated mathematical obstruction**. The physical feasibility of every intermediate movement is still unknown.
+
+The full 106/168 A64 sporting acceptance remains **0/8 from Step99**, because Step100 supplies **no continuous trajectory or new 180-second A64 movement controller**. No near-stop, swept-body, signed road-envelope, W-prime, passing or checkpoint success is inferred from these timetable results. The untouched original A64 and Step86 regressions still pass. Milestone A and production activation remain **NO-GO**; project readiness estimate remains about 35%.
+
+Next research task: from the bounded time-expanded tubes and symmetric gate constraints, construct a *joint continuous physically achievable x/y/v trajectory* over multiple rider rows, not just a cell reservation, and independently verify it in original A64, including the initial first-eight-second conflict network, before attempting 180s sporting proof.
