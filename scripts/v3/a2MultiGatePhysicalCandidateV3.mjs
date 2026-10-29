@@ -39,7 +39,7 @@ export function createMultiGatePhysicalCandidateV3(n,{
    'anticipatory_queue_wave','protect_lead_queue_wave',
    'joint_viability_v1','joint_prospective_v1',
    'joint_local_negotiation_v1','joint_local_preemptive_v1',
-   'distributed_multiwave_v1'].includes(pacePolicy)&&
+   'distributed_multiwave_v1','distributed_risk_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -121,7 +121,8 @@ function commandForRider(snapshot,s,bookingsById){
  else if(['timed_safe_corridor','anticipatory_queue_wave',
   'protect_lead_queue_wave','joint_viability_v1',
   'joint_prospective_v1','joint_local_negotiation_v1',
-  'joint_local_preemptive_v1','distributed_multiwave_v1']
+  'joint_local_preemptive_v1','distributed_multiwave_v1',
+  'distributed_risk_v1']
    .includes(snapshot.pacePolicy)&&
   Math.abs(targetY-s.y)>EPS){
   const delta=targetY-s.y
@@ -176,7 +177,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
     'protect_lead':'anticipatory'}):null
  const joint=['joint_viability_v1','joint_prospective_v1',
   'joint_local_negotiation_v1','joint_local_preemptive_v1',
-  'distributed_multiwave_v1']
+  'distributed_multiwave_v1','distributed_risk_v1']
   .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
@@ -214,7 +215,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  // A79: coordinate many overlapping spatial neighborhoods *before*
  // accepting the synchronized movement. ALL proposals must pass the
  // untouched authoritative swept-body, road-edge and energy solver.
- const distributed=out.pacePolicy==='distributed_multiwave_v1'?
+ const distributed=['distributed_multiwave_v1',
+  'distributed_risk_v1'].includes(out.pacePolicy)?
   distributedAdmissionCandidatesV3(candidate.states,originalRequests,
    out.originalDesired,{firstExitX:1020,maxLocalRiders:8,rangeM:25}):null
  const distributedChoice=distributed?
@@ -223,7 +225,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    {policy:'joint',requests:joint.requests},
    ...distributed.candidates.map(c=>({policy:c.variant,
     requests:c.requests}))
-  ],advanceNormalStartV3,{qualityMode:'balanced'}):null
+  ],advanceNormalStartV3,{qualityMode:
+   out.pacePolicy==='distributed_risk_v1'?'spatial_risk':'balanced'}):null
  const next=distributedChoice?
   (distributedChoice.physical??distributedChoice.firstRejected):
   localProspective?
