@@ -3,13 +3,44 @@
  * swept-body/road-edge/energy acceptance. No rejected tick is committed.
  */
 const EPS=1e-8;
+function spatialStoppingRisk(states){
+ // Current achieved positions/velocities AFTER a *hypothetical* swept
+ // accepted tick. This is a causal risk heuristic, not official motion.
+ let total=0,critical=0;
+ for(let i=0;i<states.length;i++)for(let j=i+1;j<states.length;j++){
+  const a=states[i],b=states[j],dx=Math.abs(a.x-b.x);
+  if(dx>23)continue;
+  const dy=Math.abs(a.y-b.y);
+  const ta=Number.isFinite(a.targetY)?a.targetY:a.y;
+  const tb=Number.isFinite(b.targetY)?b.targetY:b.y;
+  const targetDy=Math.abs(ta-tb);
+  const cross=(a.y-b.y)*(ta-tb)<-EPS;
+  if(dy>1.12&&targetDy>1.12&&!cross)continue;
+  const leader=a.x>b.x+EPS?a:b.x>a.x+EPS?b:null;
+  const rear=leader===a?b:leader===b?a:null;
+  // At equal x, only a shared intended track is precarious;
+  // five-abreast adjacent riders separated by .95m are physically valid.
+  if(!leader){
+   if(targetDy<.85&&dy>.85)total+=.2;
+   continue;
+  }
+  const closing=Math.max(0,rear.v-leader.v);
+  const needed=2.35+2.8*closing+closing*closing/(2*.85);
+  const overlap=dy<.85?1:targetDy<.85||cross?.5:0;
+  if(!overlap)continue;
+  const shortage=Math.max(0,needed+4-dx);
+  total+=overlap*shortage*shortage;
+  if(dx<needed&&dy<.85)critical++;
+ }
+ return total+critical*25;
+}
 export function chooseDistributedPhysicalTickV3(snapshot,candidates,step,{
  qualityMode='balanced'
 }={}){
  if(!snapshot||!Array.isArray(snapshot.states)||!Number.isInteger(
   snapshot.acceptedSteps)||!Number.isFinite(snapshot.at)||
   !Array.isArray(candidates)||candidates.length<2||candidates.length>8||
-  typeof step!=='function'||!['balanced','baseline_first','no_stops']
+  typeof step!=='function'||!['balanced','baseline_first','no_stops','spatial_risk']
    .includes(qualityMode))throw Error('A79 invalid choice inputs');
  let winner=null,firstRejected=null;
  const outcomes=[],seen=new Set();
@@ -37,16 +68,22 @@ export function chooseDistributedPhysicalTickV3(snapshot,candidates,step,{
   const nearStops=accepted?physical.nearStops-snapshot.nearStops:null;
   const advancement=accepted?physical.cumulativeAdvancement-
     snapshot.cumulativeAdvancement:null;
+  const risk=accepted?spatialStoppingRisk(physical.states):null;
   if(!accepted&&!firstRejected)firstRejected=physical;
   outcomes.push({policy:proposal.policy,accepted,nearStops,
-   advancement,rejection:accepted?null:
+   advancement,spatialRisk:risk,rejection:accepted?null:
     physical?.reason??'NO_PHYSICAL_MOVEMENT'});
   if(!accepted)continue;
-  const thisBest={policy:proposal.policy,physical,nearStops,advancement};
+  const thisBest={policy:proposal.policy,physical,nearStops,
+   advancement,risk};
   if(!winner){winner=thisBest;continue}
   // NEVER select more near-stops to gain artificial progress.
   if(nearStops<winner.nearStops){winner=thisBest;continue}
   if(nearStops>winner.nearStops)continue;
+  if(qualityMode==='spatial_risk'){
+   if(risk<winner.risk-1e-5){winner=thisBest;continue}
+   if(risk>winner.risk+1e-5)continue
+  }
   if(qualityMode==='baseline_first'&&winner.policy==='baseline')continue;
   if(qualityMode==='baseline_first'&&thisBest.policy==='baseline'){
    winner=thisBest;continue;
@@ -57,7 +94,7 @@ export function chooseDistributedPhysicalTickV3(snapshot,candidates,step,{
  }
  return {status:winner?'PHYSICALLY_ACCEPTED':'NO_SAFE_PROPOSAL',
   policy:winner?.policy??null,physical:winner?.physical??null,
-  firstRejected,outcomes,
+  firstRejected,outcomes,selectedSpatialRisk:winner?.risk??null,
   rejectedUncommitted:outcomes.filter(p=>!p.accepted).length,
   noMotionRepair:true,noSportingApproval:true,officialWrites:0};
 }
