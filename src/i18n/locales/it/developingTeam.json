@@ -10,7 +10,8 @@
     "competitionUnavailable": "Concorrenza non disponibile",
     "noRiders": "Non sono ancora stati trovati ciclisti per il Team Sviluppo.",
     "unlockInPreferences": "Sblocca il team di sviluppo nelle preferenze.",
-    "expiredSeasonWarning": "Premium è scaduto. La squadra U23 è di sola lettura, ma i trasferimenti sono consentiti nelle finestre regolari fino a fine stagione. Senza rinnovo la squadra chiude e i corridori rimasti diventano svincolati."
+    "expiredSeasonWarning": "Premium è scaduto. La squadra U23 è di sola lettura, ma i trasferimenti sono consentiti nelle finestre regolari fino a fine stagione. Senza rinnovo la squadra chiude e i corridori rimasti diventano svincolati.",
+    "backToDevelopingTeam": "Torna alla squadra di sviluppo"
   },
   "movement": {
     "firstSquadUnavailable": "La Prima Squadra non è disponibile.",

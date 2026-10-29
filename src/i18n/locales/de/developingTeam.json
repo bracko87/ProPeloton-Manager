@@ -10,7 +10,8 @@
     "competitionUnavailable": "Wettbewerb nicht verfügbar",
     "noRiders": "Für das Entwicklungsteam wurden noch keine Fahrer gefunden.",
     "unlockInPreferences": "Aktivieren Sie zuerst das Entwicklungsteam in den Einstellungen.",
-    "expiredSeasonWarning": "Premium ist abgelaufen. Das U23-Team ist schreibgeschützt, aber Fahrerwechsel bleiben in den regulären Wechselphasen bis zum Saisonende erlaubt. Ohne Verlängerung schließt das Team und verbleibende Fahrer werden freie Fahrer."
+    "expiredSeasonWarning": "Premium ist abgelaufen. Das U23-Team ist schreibgeschützt, aber Fahrerwechsel bleiben in den regulären Wechselphasen bis zum Saisonende erlaubt. Ohne Verlängerung schließt das Team und verbleibende Fahrer werden freie Fahrer.",
+    "backToDevelopingTeam": "Zurück zum Entwicklungsteam"
   },
   "movement": {
     "firstSquadUnavailable": "Die erste Mannschaft ist nicht verfügbar.",

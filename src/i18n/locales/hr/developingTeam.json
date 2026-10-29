@@ -10,7 +10,8 @@
     "competitionUnavailable": "Natjecanje nije dostupno",
     "noRiders": "Još nema pronađenih vozača u Razvojnom timu.",
     "unlockInPreferences": "Najprije omogućite razvojni tim u Postavkama.",
-    "expiredSeasonWarning": "Premium je istekao. U23 tim je samo za čitanje, ali su prijelazi vozača dopušteni u redovitim rokovima do kraja sezone. Bez obnove tim se zatvara, a preostali vozači postaju slobodni igrači."
+    "expiredSeasonWarning": "Premium je istekao. U23 tim je samo za čitanje, ali su prijelazi vozača dopušteni u redovitim rokovima do kraja sezone. Bez obnove tim se zatvara, a preostali vozači postaju slobodni igrači.",
+    "backToDevelopingTeam": "Natrag na razvojni tim"
   },
   "movement": {
     "firstSquadUnavailable": "Prvi tim nije dostupan.",

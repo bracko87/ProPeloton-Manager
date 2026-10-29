@@ -10,7 +10,8 @@
     "competitionUnavailable": "Competencia no disponible",
     "noRiders": "No se encontraron ciclista para el equipo de desarrollo todavía.",
     "unlockInPreferences": "Desbloquear el equipo de desarrollo en preferencias primero.",
-    "expiredSeasonWarning": "Premium ha caducado. El equipo U23 es de solo lectura, pero se permiten movimientos de corredores en las ventanas habituales hasta el final de la temporada. Sin renovación, el equipo cerrará y los corredores restantes serán agentes libres."
+    "expiredSeasonWarning": "Premium ha caducado. El equipo U23 es de solo lectura, pero se permiten movimientos de corredores en las ventanas habituales hasta el final de la temporada. Sin renovación, el equipo cerrará y los corredores restantes serán agentes libres.",
+    "backToDevelopingTeam": "Volver al equipo de desarrollo"
   },
   "movement": {
     "firstSquadUnavailable": "El primer escuadrón no está disponible.",

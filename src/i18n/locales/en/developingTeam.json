@@ -10,7 +10,8 @@
     "competitionUnavailable": "Competition unavailable",
     "noRiders": "No riders found for the Developing Team yet.",
     "unlockInPreferences": "Unlock Developing Team in Preferences first.",
-    "expiredSeasonWarning": "Premium has expired or Developing Team service is not active. Management is read-only, but riders may still move between U23 and the senior team during normal movement windows until the paid season ends. At season-end, unrenewed Developing Teams close and their remaining riders become Free Agents."
+    "expiredSeasonWarning": "Premium has expired or Developing Team service is not active. Management is read-only, but riders may still move between U23 and the senior team during normal movement windows until the paid season ends. At season-end, unrenewed Developing Teams close and their remaining riders become Free Agents.",
+    "backToDevelopingTeam": "Back to Developing Team"
   },
   "movement": {
     "firstSquadUnavailable": "First Squad is unavailable.",
