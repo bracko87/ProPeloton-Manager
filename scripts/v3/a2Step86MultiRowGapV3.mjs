@@ -125,7 +125,23 @@ export function step86MultiRowGapPlanV3(states,baseline,bookings,{
      const required=step86RequiredGapV3(s,t,{
       responseSeconds:Math.max(1.8,Math.abs(
        baseline[outer].targetY-t.y)/LATERAL)})+longitudinalMarginM;
-     if(gap<required&&s.v<t.v+.75){
+     // A physical row can NOT accelerate into its preceding row.
+     // Include forward reachable closing speed over the next 2.5s,
+     // not only the current nominal x gap. This is the essential
+     // difference between independent row roles and multi-row flow.
+     const sameCorridorAhead=states.map((lead,j)=>({lead,j}))
+      .filter(({lead,j})=>j!==i&&lead.x>s.x+EPS&&
+       lead.x-s.x<20&&sameBookedCorridor(active[i],active[j]))
+      .sort((a,b)=>a.lead.x-b.lead.x)[0]?.lead;
+     const leadingGap=sameCorridorAhead?.x-s.x??Infinity;
+     const projectedClosing=sameCorridorAhead?Math.max(0,
+      s.v+ACCEL*2.5-sameCorridorAhead.v):0;
+     const forwardClear=sameCorridorAhead?
+      step86RequiredGapV3(sameCorridorAhead,s,{
+       responseSeconds:2.5})+longitudinalMarginM+
+       projectedClosing*2.5:0;
+     if(gap<required&&s.v<t.v+.75&&
+       leadingGap>forwardClear+EPS){
       leadBoosts[i]=Math.max(leadBoosts[i],
        Math.min(10.1,s.v+
         clamp(.30+distance/Math.max(1,s.v)/urgencySeconds,
@@ -180,7 +196,13 @@ export function step86MultiRowGapPlanV3(states,baseline,bookings,{
   const frontIndex=a.x>b.x?i:j,rearIndex=frontIndex===i?j:i;
   const front=states[frontIndex],rear=states[rearIndex];
   const gap=front.x-rear.x;
-  const need=step86RequiredGapV3(front,rear)+longitudinalMarginM;
+  const steeringSeconds=Math.max(1.8,Math.abs(
+   baseline[rearIndex].targetY-rear.y)/LATERAL);
+  const reachableClosing=Math.max(0,
+   rear.v+ACCEL*2.5-front.v);
+  const need=step86RequiredGapV3(front,rear,{
+    responseSeconds:steeringSeconds})+
+    longitudinalMarginM+reachableClosing*2.0;
   if(gap>need+6)continue;
   sharedCorridorWarnings++;
   involved[frontIndex]=true;involved[rearIndex]=true;
@@ -191,13 +213,17 @@ export function step86MultiRowGapPlanV3(states,baseline,bookings,{
   }
   // Ask front to accelerate, not for a physically impossible x jump.
   // Solver still limits actual +.45 m/s², -0.85 m/s² and W-prime.
-  if(front.v>=movingFloorMps-1&&rear.v>front.v-.05)
+  if(!holds[frontIndex]&&rowRoles[frontIndex]!=='OUTER'&&
+   front.v>=movingFloorMps-1&&rear.v>front.v-.05)
    leadBoosts[frontIndex]=Math.max(leadBoosts[frontIndex],
-    Math.min(10.1,front.v+.55));
-  // Only a mild yielding request if rear is truly closing.
-  if(rear.v>front.v+.12){
+    Math.min(10.1,front.v+.45));
+  // Anticipate *reachable* closing at a row ahead: cap only
+  // this follower's requested speed, never physically brake the
+  // entire field or reset achieved velocity.
+  if(gap<need||rear.v>front.v+.12){
    rearCaps[rearIndex]=Math.min(rearCaps[rearIndex],
-    Math.max(movingFloorMps,front.v+.2));
+    Math.max(movingFloorMps,
+     Math.min(front.v-.1,rear.v-.15)));
   }
  }
  return {holds,leadBoosts,rearCaps,rowRoles,
