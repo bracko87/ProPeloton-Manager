@@ -1,0 +1,35 @@
+name: V3 Step93 first swept contact forensics
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/verify-a2-step93-contact-forensics-v3.mjs'
+      - '.github/workflows/v3-step93-contact-forensics.yml'
+  workflow_dispatch:
+jobs:
+  contact-dossiers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/v3/verify-a2-step93-contact-forensics-v3.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a93-original-swept-contact-dossiers
+          path: /tmp/a93forensics
+          if-no-files-found: error
+  protected-geometry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/v3/verify-a2-step92-cohort-geometry-v3.mjs
+      - run: node scripts/v3/verify-a2-step91-leases-v3.mjs
+      - run: node scripts/v3/verify-a2-step90-row-trajectory-v3.mjs
