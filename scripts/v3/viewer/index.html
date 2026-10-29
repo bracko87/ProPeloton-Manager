@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>ProPeloton · V3 Research Race Viewer</title>
+  <link rel="stylesheet" href="/viewer.css">
+  <script src="/viewer.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <header class="masthead">
+      <div class="identity">
+        <span class="logo">P<span>³</span></span>
+        <div><p class="eyebrow">PROPELOTON / RESEARCH LAB</p>
+          <h1>Race Engine <span>V3</span> <small>Live sandbox</small></h1></div>
+      </div>
+      <div class="mast-actions"><span class="research-pill"><i></i> LOCAL • SYNTHETIC</span>
+        <span class="version">ALTERNATE A3 — NOT A64</span></div>
+    </header>
+    <main>
+      <section class="intro">
+        <div>
+          <p class="eyebrow accent">VISUAL RACING EXPERIMENT</p>
+          <h2>See the peloton come alive.</h2>
+          <p>180 seconds of deterministic racing. Inspect individual riders, road capacity, climbing and attacks. Nothing here can alter an official race.</p>
+        </div>
+        <div class="intro-stat"><strong id="loaded-hash">–</strong><small>Replay checksum (SHA-256 prefix)</small></div>
+      </section>
+      <section class="config surface">
+        <label>Rider field
+          <select id="field"><option value="32">32 riders — small field</option>
+            <option value="106">106 riders — full field</option>
+            <option value="168">168 riders — grand peloton</option></select>
+        </label>
+        <label>Road geometry
+          <select id="layout"><option value="staged">Staged · 2 → 5 → 2 lanes</option>
+            <option value="double">Double pinch · two lanes</option></select>
+        </label>
+        <label>Racing scenario
+          <select id="scenario"><option value="standard">Natural racing</option>
+            <option value="attack">Two-rider breakaway attack</option></select>
+        </label>
+        <button id="generate" type="button" class="button button-primary">Generate race <span>↗</span></button>
+      </section>
+      <div class="notice" role="status" aria-live="polite" id="notice">
+        Choose a scenario and generate your first local race. No Supabase or live game services are contacted.
+      </div>
+      <section class="metrics" aria-label="Simulation telemetry">
+        <article class="metric surface"><p>Race elapsed</p><strong id="elapsed">0:00</strong><span>of 3:00 simulation</span></article>
+        <article class="metric surface"><p>Riders racing</p><strong id="metric-riders">—</strong><span>Individual positioning</span></article>
+        <article class="metric surface"><p>Racing groups</p><strong id="metric-groups">—</strong><span>Adjacent gap ≤ 8 seconds</span></article>
+        <article class="metric surface"><p>First / second gate</p><strong id="metric-gates">—</strong><span>Riders through each</span></article>
+        <article class="metric surface"><p>Active attackers</p><strong id="metric-attacks">—</strong><span>Independent rider tactics</span></article>
+      </section>
+      <section class="panel-grid">
+        <div class="primary-column">
+          <article class="surface visual-panel">
+            <div class="section-head">
+              <div><p class="eyebrow">RACE VIEW</p><h3>Peloton position</h3></div>
+              <div class="legend"><span><i class="dot sel"></i> Selected</span><span><i class="dot group"></i> Group 1</span><span><i class="dot attack"></i> Attacking</span></div>
+            </div>
+            <div class="road-container"><svg id="road" viewBox="0 0 1200 320" role="img" aria-label="Overhead cycling route with individual riders"></svg></div>
+            <p class="under-road">Camera follows <b id="camera">the selected rider</b> · visual lateral lane handoffs are abstract, not centimeter-level physics.</p>
+          </article>
+          <article class="surface profile-panel">
+            <div class="section-head">
+              <div><p class="eyebrow">TERRAIN ANALYSIS</p><h3>Synthetic stage profile</h3></div>
+              <span class="chip">0.5–2.6 km view</span>
+            </div>
+            <svg id="elevation" viewBox="0 0 1200 176" role="img" aria-label="Synthetic elevation and race progress"></svg>
+            <div class="gate-key"><span><i class="key first"></i> First narrowing 680–1020 m</span><span><i class="key second"></i> Second narrowing 1130–1470 m</span><span><i class="key hill"></i> Synthetic gradients</span></div>
+          </article>
+          <article class="surface playback">
+            <div class="controls">
+              <button id="reset" class="button button-light" type="button" aria-label="Back to start">↺</button>
+              <button id="back" class="button button-light" type="button" aria-label="Back five seconds">−5s</button>
+              <button id="play" class="button button-primary play" type="button">▶ Play</button>
+              <button id="forward" class="button button-light" type="button" aria-label="Forward five seconds">+5s</button>
+              <label class="speed-control">Playback
+                <select id="speed"><option value="1">1×</option><option value="2" selected>2×</option><option value="4">4×</option><option value="8">8×</option></select>
+              </label>
+            </div>
+            <input id="seek" type="range" min="0" max="180" step="1" value="0" aria-label="Race second timeline">
+            <div class="seek-label"><span>START · 0:00</span><strong id="current-seek">0:00</strong><span>FINISH · 3:00</span></div>
+          </article>
+        </div>
+        <div class="sidebar">
+          <article class="surface rider-card">
+            <p class="eyebrow">RIDER INSPECTOR</p>
+            <div class="rider-name"><div class="jersey" id="jersey">01</div><div><h3 id="rider-name">Select a rider</h3><p id="rider-type">Profile and race data</p></div></div>
+            <div class="rider-kpis">
+              <div><span>Speed</span><b id="rider-speed">—</b></div>
+              <div><span>Position</span><b id="rider-pos">—</b></div>
+              <div><span>Group</span><b id="rider-group">—</b></div>
+              <div><span>Gap to leader</span><b id="rider-gap">—</b></div>
+            </div>
+            <div class="energy"><div class="energy-label"><span>Energy reserve</span><strong id="energy-value">—</strong></div><div class="energy-track"><div id="energy-fill"></div></div></div>
+            <div class="rider-status" id="rider-status">Waiting for race replay</div>
+          </article>
+          <article class="surface leaderboard">
+            <div class="section-head"><div><p class="eyebrow">LIVE CLASSIFICATION</p><h3>On the road</h3></div><span class="chip">TOP 12</span></div>
+            <div id="leaderboard" class="leaderboard-rows"><p class="placeholder">Generate a replay to see riders.</p></div>
+          </article>
+        </div>
+      </section>
+      <footer><span>V3 LOCAL RESEARCH VIEWER · SYNTHETIC ONLY</span><span>Read-only · 10 Hz model / 1 Hz replay · no official results</span></footer>
+    </main>
+  </div>
+</body>
+</html>
