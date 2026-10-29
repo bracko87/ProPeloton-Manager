@@ -886,6 +886,9 @@
     "nextSlot": "Sledeće mesto: {{requirement}}",
     "unverified": "Uslovi zapošljavanja za ovu ulogu nisu potvrđeni.",
     "otherRestriction": "Zapošljavanje nije dozvoljeno prema trenutnim klupskim pravilima.",
-    "viewPremium": "Pogledaj Premium pakete"
+    "viewPremium": "Pogledaj Premium pakete",
+    "showDetails": "Prikaži detalje",
+    "hideDetails": "Sakrij detalje",
+    "slotCount": "Popunjeno {{assigned}} od {{limit}} pozicija"
   }
 }
