@@ -133,7 +133,7 @@ function distributedVariant(states,baseline,original,graph,variant,road){
    // The exact motion remains bounded by the original core integrator.
    const near9=8.9+clamp((desired[s.id]-9)*.25,-.2,.2);
    if(variant==='cruise')r.speed=Math.max(r.speed,near9);
-   else if(info?.rank===1||info?.rank===3)
+   else if(info?.count===5&&(info.rank===1||info.rank===3))
     r.speed=Math.max(r.speed,near9);
   }
  }
