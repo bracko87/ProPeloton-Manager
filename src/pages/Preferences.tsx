@@ -32,6 +32,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import RestartTeamModal from '@/components/team/RestartTeamModal'
 import { supabase } from '@/lib/supabase'
 import { getMyClubContext } from '@/lib/clubContext'
@@ -905,9 +906,9 @@ export default function PreferencesPage(): JSX.Element {
                   <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
                     <div className="font-semibold text-gray-800">{t('developingTeam.premiumOnlyTitle', { ns: 'preferences' })}</div>
                     <p className="mt-2">{t('developingTeam.premiumOnlyDescription', { ns: 'preferences', activation: activationCoinCost, renewal: renewalCoinCost })}</p>
-                    <a href="#/dashboard/pro" className="mt-4 inline-block rounded-md border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-900 hover:bg-gray-100">
+                    <Link to="/dashboard/pro" className="mt-4 inline-block rounded-md border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-900 hover:bg-gray-100">
                       {t('developingTeam.unlockPremium', { ns: 'preferences' })}
-                    </a>
+                    </Link>
                   </div>
                 ) : !developingTeamIsEligible ? (
                   <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
