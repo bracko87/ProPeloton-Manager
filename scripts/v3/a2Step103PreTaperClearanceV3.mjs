@@ -110,7 +110,8 @@ export function step103RunA64ClearanceV3(initial,bookings,{
   book.get(b.id).push(b);
  }
  const rowHistory=[],startAt=current.at;
- let failure=null,rejectedAt=null,acceptedSteering=0,forcedCounts=0;
+ let failure=null,rejectedAt=null,firstRejectDetail=null,
+  acceptedSteering=0,forcedCounts=0;
  let observed=step101ObserveA64GroupsV3(current);
  for(let tick=0;tick<seconds*2;tick++){
   const plans=step103ClearanceRequestsV3(current,initial,{
@@ -123,11 +124,31 @@ export function step103RunA64ClearanceV3(initial,bookings,{
   }
   const actual=advanceNormalStartV3(preview);
   if(actual.reason){
-   failure=actual.reason;rejectedAt=current.at;break;
+   failure=actual.reason;rejectedAt=current.at;
+   const contact=actual.firstCollision??null;
+   const rowRole=roles(initial);
+   const pair=contact?.pair??[];
+   firstRejectDetail={
+     kind:actual.reason,atSeconds:current.at,
+     contactTimeSeconds:contact?.time??null,
+     pair:pair.map(id=>({id,...rowRole.get(id)})),
+     sweptDeltaX:contact?.preCollisionField?.deltaAtContactX??null,
+     sweptDeltaY:contact?.preCollisionField?.deltaAtContactY??null,
+     firstRider:contact?.preCollisionField?.riders?.[0]??null,
+     secondRider:contact?.preCollisionField?.riders?.[1]??null,
+     underlyingRoadViolation:actual.firstRoadViolation??null,
+     roadLookaheadForcedRiders:plans.enforcedLookaheadTargets.filter(x=>
+       pair.includes(x.riderId))
+   };
+   break;
   }
   const sport=step95AchievedMovingGateV3(actual);
   if(!sport.admitted){
-   failure='A103_MOVING_FLOOR_VETO';rejectedAt=current.at;break;
+   failure='A103_MOVING_FLOOR_VETO';rejectedAt=current.at;
+   firstRejectDetail={kind:failure,atSeconds:current.at,
+      upstreamSlow:sport.upstreamSlow,downstreamSlow:sport.downstreamSlow,
+      nearStop:sport.nearStop};
+   break;
   }
   if(actual.acceptedSteps!==current.acceptedSteps+1)throw Error('A103 step discontinuity');
   acceptedSteering+=actual.states.filter((s,i)=>Math.abs(s.y-current.states[i].y)>EPS).length;
@@ -148,6 +169,7 @@ export function step103RunA64ClearanceV3(initial,bookings,{
    acceptedSeconds:q(current.at-startAt),startAtSeconds:startAt,
    acceptedSteps:rowHistory.length,requestedSeconds:seconds,
    firstRejectReason:failure,firstRejectAt:rejectedAt,
+   firstRejectDetail,
    collisionFreeAcceptedPrefix:true,
    minAcceptedMps:rowHistory.length?
      Math.min(...rowHistory.map(x=>x.minSpeed)):null,

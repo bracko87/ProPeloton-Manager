@@ -31,6 +31,7 @@ for(const n of [106,168]){
      acceptedSeconds:e.acceptedSeconds,
      failure:e.firstRejectReason,
      firstRejectAt:e.firstRejectAt,
+     collisionOrSpeedGuard:e.firstRejectDetail,
      allFirstGatePassed:e.allFirstGatePassed,
      allSecondGatePassed:e.allSecondGatePassed,
      groups:e.physicalGroupCount,pelotonRiders:e.pelotonRiders,
