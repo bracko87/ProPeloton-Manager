@@ -25,3 +25,48 @@ Each candidate is merely a desired speed/steering command. Unchanged original A6
 [Dedicated Step93 rolling CI](../../.github/workflows/v3-step93-rolling-start.yml) checks symmetric geometry, immutable requests, no ID or array ordering, protected Step78/85/86/87/89/90/91/92, all eight 106/168 five-wide 180s actual physical runs, independent 8/32 racing and 16 mirror/name physics parity cases, exact 90+90 checkpoint + overtake observer replay and React build. The full-field test also counts **accepted rider ticks below 6.5m/s while the road is still fully wide upstream of x680**, preventing slow-moving but not fully stopped traffic from being mislabeled sporting success. Physical collision/road/energy failure always rejects the actual tick; no collision is repaired, hidden or rescheduled.
 
 Protected sporting benchmark remains Step86 staged 32r 80 independent >=3s passes/411 physical lane changes, and double 70 passes/678 changes. Full 106/168 180s both gates and no crawl, high-quality overtaking and replay remains required before sporting GO. Milestones B/C are not authorized.
+
+
+## Verified original A64 Step93 rolling audit — 29 October 2026
+
+The [rolling launch physical workflow](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40893022717) audited eight genuine 106/168 five-abreast full-180-second attempts, independent 8/32 sporting and exact physical/observer replay, 16 original swept-physics mirror/name comparisons, and the React production build. The technical status is not the sporting status: all large cases remained NO-GO. The protected regression run has its own final GitHub job result and is not inferred from the physical research job.
+
+### Eight original 106/168 full-180 requests — zero complete
+
+All eight cases stopped at a genuine A64 SWEPT_CONTACT, before the second gate. Every rejected half-second was left uncommitted. No trial completed 180 seconds or had all riders past the second gate.
+
+| Riders | Route | Policy | Actual accepted | First collision | Early slow rider-ticks (x < 680m, v < 6.5m/s) | Lowest upstream v |
+| --- | --- | --- | ---: | --- | ---: | ---: |
+| 106 | staged | strict | 9s | r003/r007 | **0** | 7.399m/s |
+| 106 | staged | balanced | 9s | r003/r007 | **0** | 7.399m/s |
+| 106 | double | strict | 11s | r013/r017 | 416 | 3.701m/s |
+| 106 | double | balanced | 9s | r006/r012 | 100 | 5.482m/s |
+| 168 | staged | strict | 8s | r101/r112 | **0** | 7.183m/s |
+| 168 | staged | balanced | 9s | r011/r022 | **0** | 6.825m/s |
+| 168 | double | strict | 11s | r013/r017 | 410 | 3.276m/s |
+| 168 | double | balanced | 9s | r006/r012 | 158 | 5.106m/s |
+
+These new early slow rider-ticks catch crawling riders that the original 'near stops' indicator misses (it counts only speed < 1m/s). This distinction is crucial: the Step93 strict staged 106/168 launches actually preserved speed over accepted upstream ticks, but the faster following center riders caught inner riders in a preceding start row before an overlapping steering path had physically cleared. The double narrowing policies still generated widespread slow movement even before rejection.
+
+### 8/32 racing quality and independent checkpoint
+
+16/16 physical reflected/renamed comparisons were exact. Both eight-rider strict routes completed the original A64 180s, all riders beyond the second gate, no near-stops, and exactly matched physical-plus-independent-overtaking-observer 90+90 checkpoint restoration. None of the 32-rider rolling policies completed 180s.
+
+| Riders | Route | Policy | Physical accepted | ≥3s independent overtakes | Actual lane changes | Real result |
+| --- | --- | --- | ---: | ---: | ---: | --- |
+| 8 | staged | strict | 180s | 8 | 62 | Exact replay, full second gate |
+| 8 | double | strict | 180s | 7 | 116 | Exact replay, full second gate |
+| 32 | staged | strict | 11.5s | 4 | 15 | SWEPT_CONTACT r021/r027 |
+| 32 | staged | balanced | 11.5s | 4 | 15 | SWEPT_CONTACT r021/r027 |
+| 32 | double | strict | 11s | 0 | 7 | SWEPT_CONTACT r017/r022 |
+| 32 | double | balanced | 9s | 0 | 3 | SWEPT_CONTACT r011/r012 |
+
+Reference protected Step86: 32 staged 180s with **80** sustained ≥3s overtakes / **411** physical lane changes; double 180s with **70** overtakes / **678** lane changes. Step93 rolling control is not a replacement even at 32 riders. Full-field 106/168 remains **0/8 sporting passes**.
+
+## Engineering decision and next target
+
+**Step93 is a successfully instrumented synthetic research trial, but is sporting NO-GO for the required realistic full peloton.** The original A64 full-body contact rejection remains effective. Upstream rolling speed alone does not solve safely shared corridors. A simple center > inner > outer speed hierarchy was insufficient: a following-row fast center line can close on a slower preceding-row inner line during a later necessary steering merge. Strict 'near-stop-free' status alone is not an adequate sporting acceptance proxy.
+
+Step94 must constrain *requested future closing rates* across adjacent start rows and all overlapping **actual lateral transition paths**, not just the current relative velocity. Enforce a physically achievable longitudinal gap throughout steering, account for earlier front-row actions and preserve speed above the no-crawl threshold. Recheck the actual A64 0.5-second swept motion, real W-prime and road edges, and keep strict mirror/name/array parity plus independent sporting checkpoints. Do not use arbitrary rider IDs or right/left biases; never manufacture x/y/v, teleport, widen the road or permit accepted contact.
+
+**No Milestone A large-field sporting approval, no Milestone B gameplay integration, no Milestone C production release, and no live Supabase user/race data modifications.**
