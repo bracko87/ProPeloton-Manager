@@ -105,7 +105,7 @@ const report={study:'A84_TRUE_FULL_FIELD_MIRROR_AND_LONG_8_32_SPORTING',
  parityChecks:parity.length,parity,long,
  sportingApproval:'NO_GO_FOR_106_168_UNTIL_FULL_180',
  physicalSolverUnchanged:true,officialWrites:0}
-const dir=process.env.V3_A2_STEP83_PARITY_DIR??'/tmp/a84parity'
+const dir=process.env.V3_A2_STEP84_PARITY_DIR??'/tmp/a84parity'
 mkdirSync(dir,{recursive:true})
 writeFileSync(dir+'/a84-physical-mirror-8-32-full-and-observer.json',
  JSON.stringify(report,null,2)+'\n')
