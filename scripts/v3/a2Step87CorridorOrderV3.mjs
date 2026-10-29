@@ -187,27 +187,41 @@ export function step87CorridorCandidatesV3(states,requests,bookings,{
  const candidates=['order_hold','order_release','order_pace','order_balanced']
  .map(variant=>{
   const out=requests.map(r=>({...r}));
-  let held=0,released=0,paced=0,leadersAssisted=0;
+  let held=0,released=0,paced=0,leadersAssisted=0,
+   locallyProtected=0;
   for(let i=0;i<states.length;i++){
    const s=states[i],r=out[i],e=byIndex.get(i);
    if(!e||!e.reachable)continue;
    const predecessors=order.edges.filter(edge=>edge.behind===i);
-   let clear=true,frontWithRoom=false;
+   let clear=true,frontWithRoom=false,physicalPaceCap=Infinity;
    for(const edge of predecessors){
     const lead=states[edge.ahead],gap=lead.x-s.x;
     const steering=Math.abs(e.targetY-s.y)/L;
-    const need=leadClearance(lead,s,steering);
-    if(gap<need+1)clear=false;
+    const closing=Math.max(0,s.v-lead.v);
+    const need=leadClearance(lead,s,steering)+closing*1.1;
+    if(gap<need+1.4){
+     clear=false;
+     // Protect achieved forward headway without creating a stop wave.
+     // A64 still limits the actual braking and swept body motion.
+     const margin=clip((gap-need)/3,-.75,.4);
+     physicalPaceCap=Math.min(physicalPaceCap,
+      Math.max(minMovingSpeedMps,lead.v+margin));
+    }
     if(gap<need+9&&lead.v<s.v+.3)frontWithRoom=true;
    }
-   const wait=e.blocked||e.deferred&&!clear;
+   const wait=e.blocked||!clear;
    if(wait&&Math.abs(r.targetY-s.y)>EPS){
     r.targetY=s.y;held++;
    }
    if(!wait&&clear&&variant==='order_release'&&
      Math.abs(e.targetY-s.y)>EPS&&
-     Math.abs(r.targetY-s.y)>EPS){
+     Math.abs(r.targetY-s.y)<EPS){
     r.targetY=e.targetY;released++;
+   }
+   if((variant==='order_pace'||variant==='order_balanced')&&
+    physicalPaceCap<r.speed-EPS){
+    const speed=Math.max(minMovingSpeedMps,physicalPaceCap);
+    if(speed<r.speed-EPS){r.speed=q(speed);locallyProtected++}
    }
    if((variant==='order_pace'||variant==='order_balanced')&&
     e.assigned!==null&&e.assigned>e.earliest+.9){
@@ -228,7 +242,7 @@ export function step87CorridorCandidatesV3(states,requests,bookings,{
    }
   }
   return {policy:'order_'+variant,requests:out,held,released,
-   paced,leadersAssisted,officialWrites:0};
+   paced,leadersAssisted,locallyProtected,officialWrites:0};
  });
  return {order,candidates,
   physicalClearanceNotCertified:true,
