@@ -70,6 +70,8 @@ type ClubInfrastructureRow = {
 
 type DevelopingTeamStatusRow = {
   is_purchased: boolean
+  team_exists?: boolean
+  is_active?: boolean
   developing_club_id?: string | null
   main_club_id?: string | null
 }
@@ -4725,6 +4727,9 @@ export default function StaffPage() {
   const [currentGameDate, setCurrentGameDate] = useState<string | null>(null)
   const [isPremium, setIsPremium] = useState(false)
   const [isPremiumLoading, setIsPremiumLoading] = useState(true)
+  const [hasPaidPremium, setHasPaidPremium] = useState(false)
+  const [developingTeamActive, setDevelopingTeamActive] = useState(false)
+  const [academyAccess, setAcademyAccess] = useState<{ activated?: boolean; academy_closed?: boolean; season_access_active?: boolean; renewal_required?: boolean } | null>(null)
 
   const [staffRows, setStaffRows] = useState<ClubStaffRow[]>([])
   const [activeCourseRows, setActiveCourseRows] = useState<ActiveStaffCourseRow[]>([])
@@ -4900,8 +4905,12 @@ export default function StaffPage() {
 
         if (!mounted) return
 
-        const { data: premiumStatusData, error: premiumStatusError } =
-          await supabase.rpc('get_my_premium_status')
+        const [premiumResponse, paidResponse, academyResponse] = await Promise.all([
+          supabase.rpc('get_my_premium_status'),
+          supabase.rpc('my_paid_premium_access_v1'),
+          supabase.rpc('get_my_youth_academy_v1'),
+        ])
+        const { data: premiumStatusData, error: premiumStatusError } = premiumResponse
 
         if (!mounted) return
 
@@ -4914,6 +4923,10 @@ export default function StaffPage() {
         }
 
         setIsPremium(hasPremiumAccess)
+        setHasPaidPremium(!paidResponse.error && paidResponse.data === true)
+        setAcademyAccess(academyResponse.error ? null : academyResponse.data as typeof academyAccess)
+        if (paidResponse.error) console.warn('Paid Premium staff eligibility unavailable:', paidResponse.error)
+        if (academyResponse.error) console.warn('Academy staff eligibility unavailable:', academyResponse.error)
         setIsPremiumLoading(false)
         setClubName(resolvedClub.name || null)
         setClubId(resolvedClub.id)
@@ -4921,15 +4934,16 @@ export default function StaffPage() {
         if (developingStatusError) {
           console.error('get_developing_team_status failed:', developingStatusError)
           setHasDevelopingTeam(false)
+          setDevelopingTeamActive(false)
           setDevelopingTeamStatusResolved(true)
         } else {
           const normalizedDevStatus = Array.isArray(developingStatusData)
             ? developingStatusData[0]
             : developingStatusData
 
-          setHasDevelopingTeam(
-            ((normalizedDevStatus ?? null) as DevelopingTeamStatusRow | null)?.is_purchased === true
-          )
+          const devStatus = normalizedDevStatus as DevelopingTeamStatusRow | null
+          setHasDevelopingTeam(devStatus?.team_exists === true || devStatus?.is_purchased === true)
+          setDevelopingTeamActive(devStatus?.is_active === true)
           setDevelopingTeamStatusResolved(true)
         }
 
@@ -5077,33 +5091,8 @@ export default function StaffPage() {
     return grouped
   }, [staffMembers])
 
-  const visibleRoleTabs = useMemo(
-    () => isPremium
-      ? ROLE_TABS
-      : ROLE_TABS.filter(
-          (roleMeta) =>
-            roleMeta.role !== 'u23_head_coach' &&
-            roleMeta.role !== 'youth_academy_director' &&
-            roleMeta.role !== 'u16_head_coach' &&
-            roleMeta.role !== 'youth_scout'
-        ),
-    [isPremium]
-  )
-
-  useEffect(() => {
-    if (
-      !isPremiumLoading &&
-      !isPremium &&
-      (
-        selectedRole === 'u23_head_coach' ||
-        selectedRole === 'youth_academy_director' ||
-        selectedRole === 'u16_head_coach' ||
-        selectedRole === 'youth_scout'
-      )
-    ) {
-      setSelectedRole('head_coach')
-    }
-  }, [isPremium, isPremiumLoading, selectedRole])
+  // Locked and future roles must remain visible and selectable.
+  const visibleRoleTabs = ROLE_TABS
 
   const selectedRoleMeta = getRoleMeta(selectedRole)
   const selectedRoleMembers = membersByRole[selectedRole]
@@ -5136,10 +5125,10 @@ export default function StaffPage() {
 
   const totalStaffLimit = useMemo(
     () => visibleRoleTabs.reduce((sum, roleMeta) => sum + getRoleLimit(roleMeta.role, roleLimitMap), 0),
-    [roleLimitMap, visibleRoleTabs]
+    [roleLimitMap]
   )
 
-  const openStaffSlots = Math.max(totalStaffLimit - staffMembers.length, 0)
+  const openStaffSlots = roleLimits.reduce((sum, row) => sum + (row.can_hire ? row.open_slots : 0), 0)
   const warningsCount = staffMembers.filter((member) => Boolean(member.facilityWarning)).length
   const activeCoursesCount = staffMembers.filter((member) => member.activeCourse !== null).length
 
