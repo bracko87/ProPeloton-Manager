@@ -3,20 +3,23 @@
  * swept-body/road-edge/energy acceptance. No rejected tick is committed.
  */
 const EPS=1e-8;
+// Synthetic A64 field is stored at 1e-6m precision. Quantize all
+// symmetry-sensitive risk/tie comparisons to fixed physical precision.
+const q=x=>Math.round(x*1e5)/1e5;
 function spatialStoppingRisk(states){
  // Current achieved positions/velocities AFTER a *hypothetical* swept
  // accepted tick. This is a causal risk heuristic, not official motion.
  let total=0,critical=0;
  for(let i=0;i<states.length;i++)for(let j=i+1;j<states.length;j++){
-  const a=states[i],b=states[j],dx=Math.abs(a.x-b.x);
+  const a=states[i],b=states[j],dx=q(Math.abs(a.x-b.x));
   if(dx>23)continue;
-  const dy=Math.abs(a.y-b.y);
+  const dy=q(Math.abs(a.y-b.y));
   const ta=Number.isFinite(a.targetY)?a.targetY:a.y;
   const tb=Number.isFinite(b.targetY)?b.targetY:b.y;
-  const targetDy=Math.abs(ta-tb);
-  const cross=(a.y-b.y)*(ta-tb)<-EPS;
+  const targetDy=q(Math.abs(ta-tb));
+  const cross=q(a.y-b.y)*q(ta-tb)<-EPS;
   if(dy>1.12&&targetDy>1.12&&!cross)continue;
-  const leader=a.x>b.x+EPS?a:b.x>a.x+EPS?b:null;
+  const leader=q(a.x-b.x)>EPS?a:q(b.x-a.x)>EPS?b:null;
   const rear=leader===a?b:leader===b?a:null;
   // At equal x, only a shared intended track is precarious;
   // five-abreast adjacent riders separated by .95m are physically valid.
@@ -24,7 +27,7 @@ function spatialStoppingRisk(states){
    if(targetDy<.85&&dy>.85)total+=.2;
    continue;
   }
-  const closing=Math.max(0,rear.v-leader.v);
+  const closing=q(Math.max(0,rear.v-leader.v));
   const needed=2.35+2.8*closing+closing*closing/(2*.85);
   const overlap=dy<.85?1:targetDy<.85||cross?.5:0;
   if(!overlap)continue;
@@ -68,7 +71,7 @@ export function chooseDistributedPhysicalTickV3(snapshot,candidates,step,{
   const nearStops=accepted?physical.nearStops-snapshot.nearStops:null;
   const advancement=accepted?physical.cumulativeAdvancement-
     snapshot.cumulativeAdvancement:null;
-  const risk=accepted?spatialStoppingRisk(physical.states):null;
+  const risk=accepted?q(spatialStoppingRisk(physical.states)):null;
   if(!accepted&&!firstRejected)firstRejected=physical;
   outcomes.push({policy:proposal.policy,accepted,nearStops,
    advancement,spatialRisk:risk,rejection:accepted?null:
@@ -81,8 +84,8 @@ export function chooseDistributedPhysicalTickV3(snapshot,candidates,step,{
   if(nearStops<winner.nearStops){winner=thisBest;continue}
   if(nearStops>winner.nearStops)continue;
   if(qualityMode==='spatial_risk'){
-   if(risk<winner.risk-1e-5){winner=thisBest;continue}
-   if(risk>winner.risk+1e-5)continue
+   if(risk<winner.risk-1e-4){winner=thisBest;continue}
+   if(risk>winner.risk+1e-4)continue
   }
   if(qualityMode==='baseline_first'&&winner.policy==='baseline')continue;
   if(qualityMode==='baseline_first'&&thisBest.policy==='baseline'){
@@ -90,7 +93,7 @@ export function chooseDistributedPhysicalTickV3(snapshot,candidates,step,{
   }
   // In balanced mode, equal safe near-stop outcomes may choose the
   // greatest actually accepted movement, not a fictitious projection.
-  if(advancement>winner.advancement+EPS)winner=thisBest;
+  if(q(advancement)>q(winner.advancement)+1e-4)winner=thisBest;
  }
  return {status:winner?'PHYSICALLY_ACCEPTED':'NO_SAFE_PROPOSAL',
   policy:winner?.policy??null,physical:winner?.physical??null,
