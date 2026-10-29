@@ -1,0 +1,60 @@
+name: V3 Step81 provisional multi-second corridor physical admission
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2Step81SpaceTimeReservationsV3.mjs'
+      - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
+      - 'scripts/v3/verify-a2-step81-multisecond-physical-v3.mjs'
+      - '.github/workflows/v3-step81-multisecond-reservations.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  multi-second-body-authority:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Step81 multi-second forecasts and true A64 swept physics on 8 32 106 168
+        env:
+          V3_A2_STEP81_DIR: ${{ runner.temp }}/a81
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step81-multisecond-physical-v3.mjs
+      - name: Preserve Step80 2 and 3 tick swept physics baseline
+        env:
+          V3_A2_STEP80_DIR: ${{ runner.temp }}/a80
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step80-horizon-physical-v3.mjs
+      - name: Preserve original Step78 32 rider five-abreast 180s and exact 87 sustained passes
+        env:
+          V3_A2_STEP78_LOCAL_REPLAY_DIR: ${{ runner.temp }}/a78
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-phase2-local-replay-v3.mjs
+      - name: Preserve original Step76 32 106 168 three-abreast 180s and 58 151 198 real 3s passes
+        env:
+          V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/a76
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
+      - name: Save truthful A81 first-contacts and protected evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a81-provisional-corridor-contact-audit
+          path: |
+            ${{ runner.temp }}/a81/*.json
+            ${{ runner.temp }}/a80/*.json
+            ${{ runner.temp }}/a78/*.json
+            ${{ runner.temp }}/a76/*.json
+          if-no-files-found: warn
+          retention-days: 30
+  react-production-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
