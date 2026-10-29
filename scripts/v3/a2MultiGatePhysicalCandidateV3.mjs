@@ -15,6 +15,7 @@ import {distributedAdmissionCandidatesV3} from './a2Step79DistributedAdmissionV3
 import {chooseDistributedPhysicalTickV3} from './a2Step79PhysicalChoiceV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
+const round6=v=>Math.round(v*1e6)/1e6
 function assert(x,m){if(!x)throw Error(m)}
 function validate(snapshot){
  assert(snapshot?.version===1&&snapshot?.researchOnly===true&&
@@ -65,7 +66,7 @@ export function createMultiGatePhysicalCandidateV3(n,{
   for(const s of physical.states)s.v=rollingStartSpeedMps
  const admission=auditMultiGateAdmissionV3(physical.states,roadGeometry)
  return {version:1,researchOnly:true,pacePolicy,coreMergePolicy,
-  rollingStartSpeedMps,startRowSpacingM,
+  rollingStartSpeedMps,startRowSpacingM,mirror,
   physical,admission,
   originalDesired:Object.fromEntries(physical.states.map(s=>[s.id,s.desired])),
   commandedRiderTicks:0,lateralRequestTicks:0,headwayWarningTicks:0,
@@ -215,18 +216,61 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  // A79: coordinate many overlapping spatial neighborhoods *before*
  // accepting the synchronized movement. ALL proposals must pass the
  // untouched authoritative swept-body, road-edge and energy solver.
- const distributed=['distributed_multiwave_v1',
-  'distributed_risk_v1'].includes(out.pacePolicy)?
-  distributedAdmissionCandidatesV3(candidate.states,originalRequests,
+ const useDistributed=['distributed_multiwave_v1','distributed_risk_v1']
+  .includes(out.pacePolicy)
+ // Canonical *planning-only* input: mirrored worlds are evaluated in
+ // the same symmetric road coordinates. Accepted physical motion is
+ // ALWAYS re-swept in the original (possibly reflected) real field.
+ const canonical=useDistributed&&out.mirror===true?
+  structuredClone(out.physical):out.physical
+ if(useDistributed&&out.mirror===true)
+  for(const s of canonical.states){
+   s.y=round6(4.4-s.y)
+   s.targetY=round6(4.4-s.targetY)
+  }
+ const canonicalRequests=useDistributed&&out.mirror===true?
+  originalRequests.map(r=>({...r,targetY:round6(4.4-r.targetY)})):
+  originalRequests
+ const canonicalJoint=useDistributed&&out.mirror===true?
+  jointViabilityCommandsV3(canonical.states,canonicalRequests,{
+   headwayM:canonical.headwayStandOffM,
+   horizonSeconds:3,maxIterations:4,
+   roadEnvelope:x=>researchRoadEnvelopeV3(
+    canonical.roadGeometry,x),
+   widthHalfM:canonical.bodyHalfWidthM,scanSeconds:5}).requests:
+  joint?.requests
+ const distributed=useDistributed?
+  distributedAdmissionCandidatesV3(canonical.states,canonicalRequests,
    out.originalDesired,{firstExitX:1020,maxLocalRiders:8,rangeM:25}):null
- const distributedChoice=distributed?
-  chooseDistributedPhysicalTickV3(out.physical,[
-   {policy:'baseline',requests:originalRequests},
-   {policy:'joint',requests:joint.requests},
+ const distributedProposals=distributed?[
+   {policy:'baseline',requests:canonicalRequests},
+   {policy:'joint',requests:canonicalJoint},
    ...distributed.candidates.map(c=>({policy:c.variant,
     requests:c.requests}))
-  ],advanceNormalStartV3,{qualityMode:
+  ]:null
+ const distributedChoice=distributed?
+  chooseDistributedPhysicalTickV3(canonical,distributedProposals,
+   advanceNormalStartV3,{qualityMode:
    out.pacePolicy==='distributed_risk_v1'?'spatial_risk':'balanced'}):null
+ // When planning used a canonical reflected view, do NOT accept that
+ // preview's x/y/v/energy state. Apply the selected request to the
+ // unchanged mirrored authoritative physics and reject if it fails.
+ if(distributedChoice&&out.mirror===true&&distributedChoice.policy){
+  const chosen=distributedProposals.find(p=>
+   p.policy===distributedChoice.policy)
+  const real=structuredClone(out.physical)
+  for(let i=0;i<real.states.length;i++){
+   real.states[i].desired=chosen.requests[i].speed
+   real.states[i].targetY=round6(4.4-chosen.requests[i].targetY)
+  }
+  const rechecked=advanceNormalStartV3(real)
+  if(rechecked.reason){
+   distributedChoice.physical=null
+   distributedChoice.firstRejected=rechecked
+   distributedChoice.status='NO_SAFE_PROPOSAL'
+   distributedChoice.policy=null
+  }else distributedChoice.physical=rechecked
+ }
  const next=distributedChoice?
   (distributedChoice.physical??distributedChoice.firstRejected):
   localProspective?
