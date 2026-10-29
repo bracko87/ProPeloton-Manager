@@ -69,4 +69,4 @@ console.log(JSON.stringify({study:'A102_ORIGINAL_A64_SIMULTANEOUS_PATH_WITNESS',
  one32RiderStartingPeloton:true,
  eightSecondGroupsRetained:true,
  onlyAcceptedPhysicsPersisted:true,
- 106168FullSportingProven:false,officialWrites:0}));
+ largeFieldFullSportingProven:false,officialWrites:0}));
