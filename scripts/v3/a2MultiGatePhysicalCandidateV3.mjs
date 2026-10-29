@@ -11,6 +11,8 @@ import {jointViabilityCommandsV3} from './a2Step78JointViabilityV3.mjs'
 import {chooseProspectivePhysicalTickV3} from './a2Step78ProspectiveChoiceV3.mjs'
 import {chooseLocalNegotiatedPhysicalTickV3} from './a2Step78LocalNegotiationV3.mjs'
 import {researchRoadEnvelopeV3} from './a2VariableRoadWidthV3.mjs'
+import {distributedAdmissionCandidatesV3} from './a2Step79DistributedAdmissionV3.mjs'
+import {chooseDistributedPhysicalTickV3} from './a2Step79PhysicalChoiceV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
 function assert(x,m){if(!x)throw Error(m)}
@@ -36,7 +38,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
   ['timed_safe_corridor','timed_slot_only','timed_speed_only',
    'anticipatory_queue_wave','protect_lead_queue_wave',
    'joint_viability_v1','joint_prospective_v1',
-   'joint_local_negotiation_v1','joint_local_preemptive_v1'].includes(pacePolicy)&&
+   'joint_local_negotiation_v1','joint_local_preemptive_v1',
+   'distributed_multiwave_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -73,6 +76,9 @@ export function createMultiGatePhysicalCandidateV3(n,{
   prospectiveRejectedProposals:0,
   localNegotiatedTicks:0,localRejectedTrialTicks:0,
   localNeighborhoodRiderTicks:0,
+  distributedSelectedTicks:0,distributedRejectedTrialCount:0,
+  distributedRiskEdgeTicks:0,distributedOverlappingRiderTicks:0,
+  distributedPolicyTicks:{}, 
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -115,7 +121,8 @@ function commandForRider(snapshot,s,bookingsById){
  else if(['timed_safe_corridor','anticipatory_queue_wave',
   'protect_lead_queue_wave','joint_viability_v1',
   'joint_prospective_v1','joint_local_negotiation_v1',
-  'joint_local_preemptive_v1'].includes(snapshot.pacePolicy)&&
+  'joint_local_preemptive_v1','distributed_multiwave_v1']
+   .includes(snapshot.pacePolicy)&&
   Math.abs(targetY-s.y)>EPS){
   const delta=targetY-s.y
   const blocked=snapshot.physical.states.some(t=>{
@@ -168,7 +175,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    mode:out.pacePolicy==='protect_lead_queue_wave'?
     'protect_lead':'anticipatory'}):null
  const joint=['joint_viability_v1','joint_prospective_v1',
-  'joint_local_negotiation_v1','joint_local_preemptive_v1']
+  'joint_local_negotiation_v1','joint_local_preemptive_v1',
+  'distributed_multiwave_v1']
   .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
@@ -203,11 +211,36 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    joint.requests,advanceNormalStartV3,{
     maxRiders:8,maxEvaluations:7,
     enablePreemptive:out.pacePolicy==='joint_local_preemptive_v1'}):null
- const next=localProspective?
+ // A79: coordinate many overlapping spatial neighborhoods *before*
+ // accepting the synchronized movement. ALL proposals must pass the
+ // untouched authoritative swept-body, road-edge and energy solver.
+ const distributed=out.pacePolicy==='distributed_multiwave_v1'?
+  distributedAdmissionCandidatesV3(candidate.states,originalRequests,
+   out.originalDesired,{firstExitX:1020,maxLocalRiders:8,rangeM:25}):null
+ const distributedChoice=distributed?
+  chooseDistributedPhysicalTickV3(out.physical,[
+   {policy:'baseline',requests:originalRequests},
+   {policy:'joint',requests:joint.requests},
+   ...distributed.candidates.map(c=>({policy:c.variant,
+    requests:c.requests}))
+  ],advanceNormalStartV3,{qualityMode:'balanced'}):null
+ const next=distributedChoice?
+  (distributedChoice.physical??distributedChoice.firstRejected):
+  localProspective?
   (localProspective.physical??localProspective.firstRejected):
   prospective?
   (prospective.physical??prospective.firstRejected):
   advanceNormalStartV3(candidate)
+ if(distributedChoice){
+  out.distributedRejectedTrialCount+=distributedChoice.rejectedUncommitted
+  out.distributedRiskEdgeTicks+=distributed.graph.edgeCount
+  out.distributedOverlappingRiderTicks+=distributed.graph.overlappingRiders
+  const selected=distributedChoice.policy
+  if(selected){
+   out.distributedSelectedTicks++
+   out.distributedPolicyTicks[selected]=(out.distributedPolicyTicks[selected]??0)+1
+  }
+ }
  if(localProspective){
   out.localNegotiatedTicks+=localProspective.policy?.startsWith('local_')||
    localProspective.policy?.startsWith('joint_')?1:0
