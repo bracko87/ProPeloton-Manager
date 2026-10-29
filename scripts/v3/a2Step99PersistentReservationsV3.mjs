@@ -78,7 +78,7 @@ export function step99PersistentReservationsV3(states,requests,bookings,{
   lookAheadM<90||lookAheadM>260)
  throw Error('A99 invalid globally coupled reservation bounds')
  const books=states.map(s=>active(s,byId))
- const kept=[],released=[],added=[]
+ const kept=[],released=[],added=[],pending=[]
  // Replayable claims persist across ticks ONLY if the achieved physical
  // leader/follower order and actual headway remain safe.
  for(const c of existingClaims){
@@ -94,6 +94,12 @@ export function step99PersistentReservationsV3(states,requests,bookings,{
  }
  const claimKey=c=>c.leaderId+'|'+c.followerId+'|'+c.gateId
  const activeKeys=new Set(kept.map(claimKey))
+ const occupied=new Set()
+ for(const claim of kept){
+  if(occupied.has(claim.leaderId)||occupied.has(claim.followerId))
+   throw Error('A99 conflicting persisted reservations')
+  occupied.add(claim.leaderId);occupied.add(claim.followerId)
+ }
  const revokedKeys=new Set(released.map(claimKey))
  // All cross-row pairs are assessed globally, not per starting quintet.
  // Equal-x and equal-road-center precedence does NOT depend on rider ID,
@@ -122,15 +128,45 @@ export function step99PersistentReservationsV3(states,requests,bookings,{
    startAt:q(atSeconds),releaseAt:q(atSeconds+lifetime),
    slotStart:q(atSeconds),slotEnd:q(atSeconds+Math.min(
     lifetime,steering+1))}
-  added.push(c);activeKeys.add(key)
+  pending.push({claim:c,score:[
+   q(leader.x-follower.x-necessary(leader,follower,steering)),
+   q(Math.abs(leader.y-2.2)),q(Math.abs(follower.y-2.2)),
+   q(-leader.x),q(book.gateX)]})
+ }
+ // Globally match conflicts; no rider may hold incompatible roles.
+ // If two candidates with the same geometry score compete, accept
+ // neither: never use IDs, array indices or mirrored road sides.
+ const compare=(a,b)=>{
+  for(let i=0;i<a.score.length;i++)
+   if(Math.abs(a.score[i]-b.score[i])>1e-6)
+    return a.score[i]-b.score[i]
+  return 0
+ }
+ const shares=(a,b)=>a.claim.leaderId===b.claim.leaderId||
+  a.claim.leaderId===b.claim.followerId||
+  a.claim.followerId===b.claim.leaderId||
+  a.claim.followerId===b.claim.followerId
+ pending.sort(compare)
+ let deniedByOverlap=0,deniedByTie=0
+ for(const p of pending){
+  const c=p.claim
+  if(occupied.has(c.leaderId)||occupied.has(c.followerId)){
+   deniedByOverlap++;continue
+  }
+  if(pending.some(o=>o!==p&&compare(o,p)===0&&shares(o,p))){
+   deniedByTie++;continue
+  }
+  added.push(c);activeKeys.add(claimKey(c))
+  occupied.add(c.leaderId);occupied.add(c.followerId)
  }
  const claims=[...kept,...added]
+ if(claims.length>Math.floor(states.length/2))
+  throw Error('A99 oversubscribed global reservation matching')
  const hold=states.map(()=>false),cap=states.map(()=>Infinity),
   leaderAssist=states.map(()=>-Infinity)
  let protectedPairTicks=0
- // The global ledger may have several followers for one leader and
- // several leaders for one follower. Solve all cap and assist requests
- // together, never sequentially award conflicting x/y motion.
+ // This global matching allows at most ONE leading/trailing role per
+ // rider, and original A64 still independently checks all other bodies.
  for(const c of claims){
   const fi=ids.get(c.leaderId),ri=ids.get(c.followerId)
   const f=states[fi],r=states[ri]
@@ -159,6 +195,7 @@ export function step99PersistentReservationsV3(states,requests,bookings,{
  return {claims,held:hold,caps:cap,assists:leaderAssist,
   kept:kept.length,added:added.length,released:released.length,
   releasedReasons:released,considered,ambiguous,candidatePairs,
+  deniedByOverlap,deniedByTie,onePhysicalRolePerRider:true,
   protectedPairTicks,activeClaims:claims.length,
   physicalRevalidationOnly:true,claimsAreNotCollisionPermission:true,
   noAcceptedStatesModified:true,officialWrites:0}

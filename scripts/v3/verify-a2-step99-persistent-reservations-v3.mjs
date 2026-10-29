@@ -71,6 +71,32 @@ assert.equal(rev.added,plan.added)
 assert.deepEqual(rev.held,[...plan.held].reverse())
 assert.throws(()=>step99PersistentReservationsV3(s,req,bookings,{
  existingClaims:[{...plan.claims[0],releaseAt:100}]}))
+// An oversubscribed leader must NOT acquire one incompatible claim per
+// physically nearby follower. Global matching is part of the contract.
+const crowded=[
+ {id:'lead',x:620,y:.3,targetY:2.2,v:9},
+ {id:'followingA',x:614,y:1.25,targetY:2.2,v:9},
+ {id:'followingB',x:612,y:2.2,targetY:2.2,v:9},
+ {id:'followingC',x:610,y:3.15,targetY:2.2,v:9}
+]
+const crowdRequests=crowded.map(v=>({id:v.id,speed:9,targetY:v.targetY}))
+const crowdBookings=crowded.map(v=>({id:v.id,gateId:'gate-1',
+ gateX:780,targetY:v.targetY,scheduledSeconds:23}))
+const matched=step99PersistentReservationsV3(crowded,
+ crowdRequests,crowdBookings)
+const seenClaimRiders=new Set()
+for(const c of matched.claims){
+ assert(!seenClaimRiders.has(c.leaderId))
+ assert(!seenClaimRiders.has(c.followerId))
+ seenClaimRiders.add(c.leaderId);seenClaimRiders.add(c.followerId)
+}
+assert(matched.claims.length<=Math.floor(crowded.length/2))
+assert.equal(matched.onePhysicalRolePerRider,true)
+const flippedCrowded=step99PersistentReservationsV3(
+ crowded.map(v=>({...v,y:4.4-v.y,targetY:4.4-v.targetY})),
+ crowdRequests.map(v=>({...v,targetY:4.4-v.targetY})),
+ crowdBookings.map(v=>({...v,targetY:4.4-v.targetY})))
+assert.equal(matched.claims.length,flippedCrowded.claims.length)
 console.log(JSON.stringify({study:'A99_PERSISTENT_GLOBAL_BOOKING_REPLAY',
  status:'PASS',globalCandidates:plan.candidatePairs,
  acquired:plan.added,renewed:renewed.kept,
