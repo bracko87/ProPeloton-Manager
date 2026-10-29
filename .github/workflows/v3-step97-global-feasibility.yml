@@ -45,7 +45,7 @@ jobs:
           name: step97-global-timing-A64-full-field
           path: /tmp/a97large
           if-no-files-found: warn
-  8-32-mirror-sport-and-replay:
+  mirror-8-32-sport-and-replay:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
