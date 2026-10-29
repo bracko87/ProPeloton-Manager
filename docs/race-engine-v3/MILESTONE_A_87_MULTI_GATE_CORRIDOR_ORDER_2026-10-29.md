@@ -47,11 +47,37 @@ The [Step87 final A64 matrix and protected regression workflow](https://github.c
 
 The new necessary second-gate schedule is never treated as a guarantee that each bicycle can pass both gates. The first rejected physical state is **not** committed. All 16 actual initial checks passed their correctly strict assertions.
 
+## Independent actual 8/32 full 180s sporting races and replay
+
+The [Step87 full actual original A64 racing, 16 full-field physical parity checks and protected Step86 complete-race CI](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873583125) **completed SUCCESS**, including independent ≥3-second sustained overtaking observation and uploaded JSON physical/observer evidence. All **16/16** initial 8/32/106/168 × staged/double × strict/release actual reflected and rider-renamed full-body physical and W-prime state comparisons passed. This is a technical fairness claim for the evaluated segments, **not 106/168 full-180s completion**.
+
+| Five-abreast route and policy | Actual accepted seconds | Near-stop rider ticks | True physical lane changes | Independent ≥3s pair overtakes | Full physical sporting status |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 8 staged, strict | **180** | **0** | 89 | **8** | Full finish, exact 90+90 physics + observer replay |
+| 8 double, strict | **180** | **0** | 154 | **7** | Full finish, exact 90+90 physics + observer replay |
+| 32 staged, strict | **12.5** | 0 | 9 | 0 before rejection | SWEPT_CONTACT r013/r019; FAIL |
+| 32 staged, release | **12.5** | 0 | 8 | 1 before rejection | SWEPT_CONTACT r013/r019; FAIL |
+| **32 double, strict** | **180** | **0** | **1,212** | **50** | Full physical finish and replay, **sporting weaving-quality regression** |
+| 32 double, release | **12** | 0 | 9 | 1 before rejection | SWEPT_CONTACT r027/r031; FAIL |
+
+All three 180s completed races have every rider past the second reopening, zero road exits, swept contacts, near-stop rider ticks or committed W-prime energy failures and **exact serialized 90+90 actual bicycle physics + independent observer state**. The three 32-rider early rejections correctly have **no** claimed checkpoint replay.
+
+**Step87 double strict is inferior to protected Step86 double wave**:
+
+| 32r double route | Step86 wave | Step87 strict |
+| --- | ---: | ---: |
+| Full physical duration | 180s | 180s |
+| Near-stop rider ticks | 0 | 0 |
+| Independent ≥3s pair overtakes | **70** | 50 |
+| Physical lane changes | **678** | 1,212 |
+
+**Do NOT promote Step87 as the default race controller:** its 32r double route finishes safely but weaves ~79% more than Step86 and supports fewer sustained passes; the 32r staged route fails far before 180s, and all eight 106/168 routes fail original body contact. The useful new capability is the *explainable, mirror-neutral multi-gate necessary corridor-order diagnostic*, not a superior finished sporting simulation.
+
 ## Strict technical and sporting tests
 
 - [Step87 16 original swept-body cases, mirror/name/array-order and two-gate necessary-window assertions](../../scripts/v3/verify-a2-step87-corridor-physical-v3.mjs) exercises 8, 32, 106, 168 riders from physical five-abreast rolling starts on both profiles. The hard strict-mode test ensures it never commits even one near-stop rider tick, and checks all accepted energy values and preserved previous state on a rejected contact. Its new unit cases include a true equal-x crossing conflict with **no arbitrary winner**, an already occupied corridor whose rear rider must yield instead of merging, and second-gate chaining after first-gate travel/steer bounds.
 - [Step87 independent full-field fairness and 8/32 full sporting verification](../../scripts/v3/verify-a2-step87-physical-parity-replay-v3.mjs) checks 16 actually swept 8/32/106/168 × staged/double × policy reflected/renamed trajectories, then attempts full 180-second 8/32 physical racing with an **independent sustained ≥3-second passing observer** and exact serialized 90+90 physical plus observer recovery for every real completed 180s configuration.
-- [Step87 16-case technical CI with protected Step86, Step85, Step78, Step76 and React](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873629590) completed **SUCCESS**. [Step87 full parity/observer CI with protected Step86](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873583125) must be judged by its separate actual completion and racing metrics. A technically successful CI suite proves honest physical/rejection behavior and regression integrity, **not** that a new 32/106/168 configuration has achieved sporting realism.
+- [Step87 16-case technical CI with protected Step86, Step85, Step78, Step76 and React](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873629590) completed **SUCCESS**. [Step87 full parity/observer CI with protected Step86](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873583125) **completed SUCCESS**, including 16/16 real physical mirror/rename tests and the full 8/32 180s original bicycle / independent overtaking observer results stated above. A technically successful CI suite proves honest physical/rejection behavior and regression integrity, **not** that a new 32/106/168 configuration has achieved sporting realism.
 
 ### Historical protected benchmarks
 
