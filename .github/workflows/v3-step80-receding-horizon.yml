@@ -5,6 +5,7 @@ on:
     paths:
       - 'scripts/v3/a2Step80RecedingHorizonV3.mjs'
       - 'scripts/v3/verify-a2-step80-horizon-physical-v3.mjs'
+      - 'scripts/v3/verify-a2-step80-mirror-replay-and-180-v3.mjs'
       - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
       - '.github/workflows/v3-step80-receding-horizon.yml'
   workflow_dispatch:
@@ -23,6 +24,10 @@ jobs:
         env:
           V3_A2_STEP80_DIR: ${{ runner.temp }}/a80
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step80-horizon-physical-v3.mjs
+      - name: A80 full 32 rider 180s spotlights 8r 90 plus 90 independent passing and 8 to 168 mirror parity
+        env:
+          V3_A2_STEP80_LONG_DIR: ${{ runner.temp }}/a80long
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step80-mirror-replay-and-180-v3.mjs
       - name: Protected A78 local 32 rider 180s 87 sustained passing exact observer recovery
         env:
           V3_A2_STEP78_LOCAL_REPLAY_DIR: ${{ runner.temp }}/a78
@@ -42,6 +47,7 @@ jobs:
           name: v3-step80-true-swept-receding-horizon
           path: |
             ${{ runner.temp }}/a80/*.json
+            ${{ runner.temp }}/a80long/*.json
             ${{ runner.temp }}/a78/*.json
             ${{ runner.temp }}/a77/*.json
             ${{ runner.temp }}/a76/*.json
