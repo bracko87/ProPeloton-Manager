@@ -5,6 +5,15 @@ on:
     branches: [main]
     paths:
       - 'src/pages/dashboard/YouthAcademy.tsx'
+      - 'src/pages/dashboard/DevelopingTeam.tsx'
+      - 'src/pages/dashboard/Squad.tsx'
+      - 'src/pages/Preferences.tsx'
+      - 'src/pages/ProPackages.tsx'
+      - 'src/features/squad/types.ts'
+      - 'src/features/squad/components/DevelopingSquadTab.tsx'
+      - 'supabase/functions/create-premium-checkout/index.ts'
+      - 'supabase/migrations/*development*.sql'
+      - 'supabase/migrations/*premium_coin*.sql'
       - 'src/pages/dashboard/YouthRaceDetailPage.tsx'
       - 'src/pages/dashboard/riders/YouthRiderProfilePage.tsx'
       - 'src/pages/dashboard/YouthAcademyTeamProfilePage.tsx'
@@ -23,6 +32,15 @@ on:
     branches: [main]
     paths:
       - 'src/pages/dashboard/YouthAcademy.tsx'
+      - 'src/pages/dashboard/DevelopingTeam.tsx'
+      - 'src/pages/dashboard/Squad.tsx'
+      - 'src/pages/Preferences.tsx'
+      - 'src/pages/ProPackages.tsx'
+      - 'src/features/squad/types.ts'
+      - 'src/features/squad/components/DevelopingSquadTab.tsx'
+      - 'supabase/functions/create-premium-checkout/index.ts'
+      - 'supabase/migrations/*development*.sql'
+      - 'supabase/migrations/*premium_coin*.sql'
       - 'src/pages/dashboard/YouthRaceDetailPage.tsx'
       - 'src/pages/dashboard/riders/YouthRiderProfilePage.tsx'
       - 'src/pages/dashboard/YouthAcademyTeamProfilePage.tsx'
