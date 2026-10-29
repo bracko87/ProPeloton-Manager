@@ -97,7 +97,7 @@ export function chooseThroughputGuardedTickV3(previous,firstPlans,
  validate(previous);
  if(!Array.isArray(firstPlans)||!firstPlans.length||
  firstPlans.length>8||![2,3].includes(depth)||
- !Number.isInteger(maxFirst)||maxFirst<1||maxFirst>6||
+ !Number.isInteger(maxFirst)||maxFirst<1||maxFirst>8||
  !Number.isInteger(maxFuture)||maxFuture<1||maxFuture>3||
  typeof makeFuture!=='function'||typeof advancePhysical!=='function'||
  !finite(minimumMovingSpeedMps)||minimumMovingSpeedMps<3||
