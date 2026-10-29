@@ -118,7 +118,7 @@ export function advanceDiscretePelotonV3(state){
    let want=desired(next,r);
    if(lead){
     const gap=lead.x-r.x,closing=Math.max(0,r.v-lead.v);
-    const safe=GAP+1.2*closing+closing*closing/(2*B);
+    const safe=GAP+.3+1.2*closing+closing*closing/(2*B);
     if(gap<safe+1)want=Math.min(want,lead.v+(gap-safe)/1.4);
    }
    speeds.set(r.id,ramp(r.v,clip(want,FLOOR,14)));
