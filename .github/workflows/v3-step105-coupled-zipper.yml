@@ -1,0 +1,63 @@
+name: V3 Step105 physically swept coupled multi-row zipper
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2Step105CoupledZipperV3.mjs'
+      - 'scripts/v3/verify-a2-step105-*.mjs'
+      - '.github/workflows/v3-step105-coupled-zipper.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-micro-and-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Physical two-tick preview, exact resweep, 1+1 resume, mirroring and 8-second groups
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step105-micro-v3.mjs
+  real-106-168-a64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Twelve original A64 106/168 five-wide 180-second attempts
+        env:
+          V3_A2_STEP105_DIR: ${{ runner.temp }}/step105
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step105-large-v3.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: step105-coupled-zipper-original-a64-physical-witness
+          path: ${{ runner.temp }}/step105/*.json
+          if-no-files-found: error
+  protect-eight-second-and-step86:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Dynamic eight-second peloton/breakaway/rejoin regression
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step101-eight-second-groups-v3.mjs
+      - name: Original A64 Step86 protected 32 rider 180-second sporting benchmark
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step86-gap-physical-v3.mjs
+  react-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
