@@ -865,5 +865,27 @@
     "workloadManagement": "Gestion de la charge",
     "youthEvaluation": "Évaluation des jeunes",
     "youthTraining": "Entraînement des jeunes"
+  },
+  "hireAccess": {
+    "intro": "Les 12 postes sont visibles, y compris ceux à débloquer plus tard. Sélectionnez un poste pour connaître ses conditions.",
+    "states": {
+      "eligible": "Recrutement possible",
+      "locked": "Encore verrouillé",
+      "full": "Places occupées",
+      "unknown": "Disponibilité non vérifiée"
+    },
+    "candidatesNote": "Une place est libre, mais il faut aussi un candidat adapté sur le marché du personnel.",
+    "paidPremium": "Premium payant est requis. L'essai gratuit Premium ne suffit pas.",
+    "developingTeam": "Activez et renouvelez l'équipe U23 (après 60 jours de jeu, 50 pièces par saison).",
+    "youthAcademy": "Activez et renouvelez l'Académie U16 (après 90 jours de jeu, 50 pièces par saison).",
+    "youthRenewal": "Renouvelez l'Académie pour la saison actuelle (50 pièces).",
+    "clubHouse": "Siège du club",
+    "youthInfrastructure": "Infrastructure de l'Académie",
+    "facilityRequired": "{{facility}} niveau {{level}} requis.",
+    "fullCapacity": "Toutes les places actuelles sont occupées ({{assigned}}/{{limit}}).",
+    "nextSlot": "Prochaine place : {{requirement}}",
+    "unverified": "Impossible de vérifier les conditions de recrutement de ce poste.",
+    "otherRestriction": "Le recrutement est bloqué par les règles actuelles du club.",
+    "viewPremium": "Voir les offres Premium"
   }
 }
