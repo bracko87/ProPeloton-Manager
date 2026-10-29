@@ -865,5 +865,27 @@
     "workloadManagement": "Belastungssteuerung",
     "youthEvaluation": "Nachwuchsbewertung",
     "youthTraining": "Nachwuchstraining"
+  },
+  "hireAccess": {
+    "intro": "Alle 12 Personalrollen sind sichtbar, auch wenn sie erst später freigeschaltet werden. Wählen Sie eine Rolle, um die Voraussetzungen zu sehen.",
+    "states": {
+      "eligible": "Einstellung möglich",
+      "locked": "Noch gesperrt",
+      "full": "Aktuelle Plätze belegt",
+      "unknown": "Verfügbarkeit ungeprüft"
+    },
+    "candidatesNote": "Ein Personalplatz ist frei. Zusätzlich muss ein passender Kandidat auf dem Personalmarkt verfügbar sein.",
+    "paidPremium": "Bezahltes Premium erforderlich. Die kostenlose Premium-Testphase reicht nicht aus.",
+    "developingTeam": "U23-Entwicklungsteam aktivieren und verlängern (nach 60 Spieltagen, 50 Münzen pro Saison).",
+    "youthAcademy": "U16-Jugendakademie aktivieren und verlängern (nach 90 Spieltagen, 50 Münzen pro Saison).",
+    "youthRenewal": "Jugendakademie für die aktuelle Spielsaison verlängern (50 Münzen).",
+    "clubHouse": "Clubhaus",
+    "youthInfrastructure": "Jugendakademie-Infrastruktur",
+    "facilityRequired": "{{facility}} Stufe {{level}} erforderlich.",
+    "fullCapacity": "Alle derzeitigen Personalplätze sind belegt ({{assigned}}/{{limit}}).",
+    "nextSlot": "Nächster Platz bei: {{requirement}}",
+    "unverified": "Die Einstellungsvoraussetzungen für diese Rolle konnten nicht geprüft werden.",
+    "otherRestriction": "Die Einstellung ist durch die aktuellen Vereinsregeln gesperrt.",
+    "viewPremium": "Premium-Angebote ansehen"
   }
 }
