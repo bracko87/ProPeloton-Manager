@@ -1,0 +1,37 @@
+name: V3 Step83 full-field mirrored fairness and true 8/32 180s
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/verify-a2-step83-physical-parity-replay-v3.mjs'
+      - '.github/workflows/v3-step83-full-field-fairness.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  mirror-identity-full-physical-overtakes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Step83 all 16 real reflected renamed five-abreast fields plus full 8 and 32 rider physics observer
+        env:
+          V3_A2_STEP83_PARITY_DIR: ${{ runner.temp }}/a83parity
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step83-physical-parity-replay-v3.mjs
+      - name: Protected original Step78 32 five-abreast 180s 87 independently sustained 3s passes
+        env:
+          V3_A2_STEP78_LOCAL_REPLAY_DIR: ${{ runner.temp }}/a78
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-phase2-local-replay-v3.mjs
+      - name: Save full Step83 and protected Step78 truthful sporting evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a83-full-field-mirror-and-full-long-physics
+          path: |
+            ${{ runner.temp }}/a83parity/*.json
+            ${{ runner.temp }}/a78/*.json
+          if-no-files-found: warn
+          retention-days: 30
