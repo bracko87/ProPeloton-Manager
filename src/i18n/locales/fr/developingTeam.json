@@ -9,7 +9,8 @@
     "loadingCompetition": "Chargement de la compétition...",
     "competitionUnavailable": "Concours non disponible",
     "noRiders": "Aucun coureur trouvé pour l'équipe en développement.",
-    "unlockInPreferences": "Débloquer l'équipe de développement dans Préférences d'abord."
+    "unlockInPreferences": "Débloquer l'équipe de développement dans Préférences d'abord.",
+    "expiredSeasonWarning": "Premium a expiré. L'équipe U23 est en lecture seule, mais les mouvements de coureurs sont autorisés lors des fenêtres normales jusqu'à la fin de saison. Sans renouvellement l'équipe ferme et les coureurs restants deviennent agents libres."
   },
   "movement": {
     "firstSquadUnavailable": "La première escouade n'est pas disponible.",
