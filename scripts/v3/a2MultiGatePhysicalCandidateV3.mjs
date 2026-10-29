@@ -8,6 +8,7 @@ import {createNormalStartV3,advanceNormalStartV3,
 import {auditMultiGateAdmissionV3} from './a2MultiGateAdmissionV3.mjs'
 import {phase3QueueWaveV3} from './a2Phase3QueueWaveV3.mjs'
 import {jointViabilityCommandsV3} from './a2Step78JointViabilityV3.mjs'
+import {chooseProspectivePhysicalTickV3} from './a2Step78ProspectiveChoiceV3.mjs'
 import {researchRoadEnvelopeV3} from './a2VariableRoadWidthV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
@@ -33,7 +34,7 @@ export function createMultiGatePhysicalCandidateV3(n,{
   [3.2,3.8,4.5].includes(headwayStandOffM)&&
   ['timed_safe_corridor','timed_slot_only','timed_speed_only',
    'anticipatory_queue_wave','protect_lead_queue_wave',
-   'joint_viability_v1'].includes(pacePolicy)&&
+   'joint_viability_v1','joint_prospective_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -66,6 +67,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
   queueProtectedLeaderTicks:0,queueEarlyBrakeRiderTicks:0,
   jointBlockedLaneChangeTicks:0,jointLeadProtectionTicks:0,
   jointEarlyBrakeRiderTicks:0,jointUnresolvedWarningTicks:0,
+  prospectiveBaselineTicks:0,prospectiveJointTicks:0,
+  prospectiveRejectedProposals:0,
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -106,7 +109,8 @@ function commandForRider(snapshot,s,bookingsById){
  let targetY=booking.targetY
  if(snapshot.pacePolicy==='timed_speed_only')targetY=s.targetY
  else if(['timed_safe_corridor','anticipatory_queue_wave',
-  'protect_lead_queue_wave','joint_viability_v1'].includes(snapshot.pacePolicy)&&
+  'protect_lead_queue_wave','joint_viability_v1',
+  'joint_prospective_v1'].includes(snapshot.pacePolicy)&&
   Math.abs(targetY-s.y)>EPS){
   const delta=targetY-s.y
   const blocked=snapshot.physical.states.some(t=>{
@@ -158,7 +162,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    headwayM:out.physical.headwayStandOffM,
    mode:out.pacePolicy==='protect_lead_queue_wave'?
     'protect_lead':'anticipatory'}):null
- const joint=out.pacePolicy==='joint_viability_v1'?
+ const joint=['joint_viability_v1','joint_prospective_v1']
+  .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
    horizonSeconds:3,maxIterations:4,
@@ -174,15 +179,32 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   if(Math.abs(s.y-request.targetY)>EPS)laterals++
   if(request.headway)heads++
  }
- const next=advanceNormalStartV3(candidate)
+ // Step78 research: generate complete synchronized proposed fields BEFORE
+ // accepting any rider movement. A64's full swept physical solver evaluates
+ // each opt-in proposal on an isolated copy. A rejected proposal is never
+ // committed or interpreted as an accepted rider path.
+ const prospective=out.pacePolicy==='joint_prospective_v1'?
+  chooseProspectivePhysicalTickV3(out.physical,[
+   {policy:'baseline',requests:originalRequests},
+   {policy:'joint',requests:joint.requests}
+  ],advanceNormalStartV3):null
+ const next=prospective?
+  (prospective.physical??prospective.firstRejected):
+  advanceNormalStartV3(candidate)
+ if(prospective){
+  out.prospectiveRejectedProposals+=prospective.probes.filter(
+   x=>!x.accepted).length
+  if(prospective.policy==='baseline')out.prospectiveBaselineTicks++
+  else if(prospective.policy==='joint')out.prospectiveJointTicks++
+ }
  // Never expose temporary speed intentions as permanent achieved motion.
  // Real x/y/v/energy and steering target are accepted only by the unchanged
  // physics solver. An unsuccessful tick retains EXACT previous rider state.
- if(next.reason){
-  out.reason=next.reason;out.status='REJECTED'
-  out.firstCollision=next.firstCollision??null
-  out.firstRoadViolation=next.firstRoadViolation??null
-  out.energyFailure=next.energyFailure??null
+ if(!next||next.reason){
+  out.reason=next?.reason??'NO_ACCEPTABLE_PROPOSAL';out.status='REJECTED'
+  out.firstCollision=next?.firstCollision??null
+  out.firstRoadViolation=next?.firstRoadViolation??null
+  out.energyFailure=next?.energyFailure??null
   return out
  }
  for(const s of next.states)s.desired=out.originalDesired[s.id]
