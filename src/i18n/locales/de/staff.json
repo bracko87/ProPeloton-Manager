@@ -886,6 +886,9 @@
     "nextSlot": "Nächster Platz bei: {{requirement}}",
     "unverified": "Die Einstellungsvoraussetzungen für diese Rolle konnten nicht geprüft werden.",
     "otherRestriction": "Die Einstellung ist durch die aktuellen Vereinsregeln gesperrt.",
-    "viewPremium": "Premium-Angebote ansehen"
+    "viewPremium": "Premium-Angebote ansehen",
+    "showDetails": "Details anzeigen",
+    "hideDetails": "Details ausblenden",
+    "slotCount": "{{assigned}} von {{limit}} Personalstellen besetzt"
   }
 }
