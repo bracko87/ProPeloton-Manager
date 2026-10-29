@@ -6,6 +6,7 @@ on:
       - 'scripts/v3/a2Step78JointViabilityV3.mjs'
       - 'scripts/v3/a2Step78LocalNegotiationV3.mjs'
       - 'scripts/v3/verify-a2-step78-phase2-local-negotiation-v3.mjs'
+      - 'scripts/v3/verify-a2-step78-phase2-local-replay-v3.mjs'
       - 'scripts/v3/a2Step78ProspectiveChoiceV3.mjs'
       - 'scripts/v3/verify-a2-step78-prospective-coupled-v3.mjs'
       - 'scripts/v3/verify-a2-step78-32-sporting-replay-v3.mjs'
@@ -36,6 +37,10 @@ jobs:
         env:
           V3_A2_STEP78_PHASE2_DIR: ${{ runner.temp }}/a78phase2
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-phase2-local-negotiation-v3.mjs
+      - name: A78 Phase2 protect local-mode 32r 180s sustained passes and strict mirror, renamed, JSON replay
+        env:
+          V3_A2_STEP78_LOCAL_REPLAY_DIR: ${{ runner.temp }}/a78localreplay
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-phase2-local-replay-v3.mjs
       - name: Certify Step78 real 32-rider sustained 3-second passes, full 180s mirror and exact 90 plus 90 replay
         env:
           V3_A2_STEP78_32_DIR: ${{ runner.temp }}/a78-32
@@ -57,6 +62,7 @@ jobs:
             ${{ runner.temp }}/a78/*.json
             ${{ runner.temp }}/a78prospective/*.json
             ${{ runner.temp }}/a78phase2/*.json
+            ${{ runner.temp }}/a78localreplay/*.json
             ${{ runner.temp }}/a78-32/*.json
             ${{ runner.temp }}/a77/*.json
             ${{ runner.temp }}/a76/*.json
