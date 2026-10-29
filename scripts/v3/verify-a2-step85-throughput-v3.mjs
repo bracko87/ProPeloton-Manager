@@ -70,6 +70,9 @@ for(const roadGeometry of ['staged_pinch','double_pinch']){
   s.energy.remainingWPrimeJoules>=0&&
   eq(s.energy.seconds,out.physical.at)))
  const m=multiGatePhysicalMetricsV3(initial,out)
+ if(pacePolicy==='throughput_strict_v1')
+  assert.equal(m.nearStops,0,
+   'A85 strict mode committed a near-stop despite first-tick veto')
  if(out.reason){
   assert.equal(out.physical.reason,null,
    'A85 illegally accepted A64 collision/road/power reject')
