@@ -9,6 +9,7 @@ import {auditMultiGateAdmissionV3} from './a2MultiGateAdmissionV3.mjs'
 import {phase3QueueWaveV3} from './a2Phase3QueueWaveV3.mjs'
 import {jointViabilityCommandsV3} from './a2Step78JointViabilityV3.mjs'
 import {chooseProspectivePhysicalTickV3} from './a2Step78ProspectiveChoiceV3.mjs'
+import {chooseLocalNegotiatedPhysicalTickV3} from './a2Step78LocalNegotiationV3.mjs'
 import {researchRoadEnvelopeV3} from './a2VariableRoadWidthV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
@@ -34,7 +35,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
   [3.2,3.8,4.5].includes(headwayStandOffM)&&
   ['timed_safe_corridor','timed_slot_only','timed_speed_only',
    'anticipatory_queue_wave','protect_lead_queue_wave',
-   'joint_viability_v1','joint_prospective_v1'].includes(pacePolicy)&&
+   'joint_viability_v1','joint_prospective_v1',
+   'joint_local_negotiation_v1','joint_local_preemptive_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -69,6 +71,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
   jointEarlyBrakeRiderTicks:0,jointUnresolvedWarningTicks:0,
   prospectiveBaselineTicks:0,prospectiveJointTicks:0,
   prospectiveRejectedProposals:0,
+  localNegotiatedTicks:0,localRejectedTrialTicks:0,
+  localNeighborhoodRiderTicks:0,
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -110,7 +114,8 @@ function commandForRider(snapshot,s,bookingsById){
  if(snapshot.pacePolicy==='timed_speed_only')targetY=s.targetY
  else if(['timed_safe_corridor','anticipatory_queue_wave',
   'protect_lead_queue_wave','joint_viability_v1',
-  'joint_prospective_v1'].includes(snapshot.pacePolicy)&&
+  'joint_prospective_v1','joint_local_negotiation_v1',
+  'joint_local_preemptive_v1'].includes(snapshot.pacePolicy)&&
   Math.abs(targetY-s.y)>EPS){
   const delta=targetY-s.y
   const blocked=snapshot.physical.states.some(t=>{
@@ -162,7 +167,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    headwayM:out.physical.headwayStandOffM,
    mode:out.pacePolicy==='protect_lead_queue_wave'?
     'protect_lead':'anticipatory'}):null
- const joint=['joint_viability_v1','joint_prospective_v1']
+ const joint=['joint_viability_v1','joint_prospective_v1',
+  'joint_local_negotiation_v1','joint_local_preemptive_v1']
   .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
@@ -188,9 +194,26 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    {policy:'baseline',requests:originalRequests},
    {policy:'joint',requests:joint.requests}
   ],advanceNormalStartV3):null
- const next=prospective?
+ // A78 P2 local negotiation: 3–8 nearby riders jointly choose legal
+ // steering/pace requests, tested as whole-field pre-commit proposals.
+ // No candidate can bypass the original swept physical solver.
+ const localProspective=['joint_local_negotiation_v1',
+  'joint_local_preemptive_v1'].includes(out.pacePolicy)?
+  chooseLocalNegotiatedPhysicalTickV3(out.physical,originalRequests,
+   joint.requests,advanceNormalStartV3,{
+    maxRiders:8,maxEvaluations:7,
+    enablePreemptive:out.pacePolicy==='joint_local_preemptive_v1'}):null
+ const next=localProspective?
+  (localProspective.physical??localProspective.firstRejected):
+  prospective?
   (prospective.physical??prospective.firstRejected):
   advanceNormalStartV3(candidate)
+ if(localProspective){
+  out.localNegotiatedTicks+=localProspective.policy?.startsWith('local_')||
+   localProspective.policy?.startsWith('joint_')?1:0
+  out.localRejectedTrialTicks+=localProspective.rejectedUncommitted
+  out.localNeighborhoodRiderTicks+=localProspective.neighborhoodSize
+ }
  if(prospective){
   out.prospectiveRejectedProposals+=prospective.probes.filter(
    x=>!x.accepted).length
