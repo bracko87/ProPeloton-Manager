@@ -5667,6 +5667,28 @@ export default function StaffPage() {
             subtitle={t('rolesSection.assigned', { count: selectedRoleMembers.length, limit: selectedRoleLimit })}
           />
 
+          <div className={`mb-4 rounded-xl border p-4 text-sm ${selectedHiringAccess.canHire
+            ? 'border-green-200 bg-green-50 text-green-900'
+            : 'border-gray-200 bg-gray-50 text-gray-800'}`}>
+            <div className="font-semibold">{t(`hireAccess.states.${selectedHiringAccess.state}`)}</div>
+            {selectedHiringAccess.reasons.length > 0 ? (
+              <ul className="mt-2 space-y-1">
+                {selectedHiringAccess.reasons.map((reason, i) => <li key={i}>• {reason}</li>)}
+              </ul>
+            ) : <p className="mt-1">{t('hireAccess.candidatesNote')}</p>}
+            {selectedHiringAccess.canHire ? (
+              <a href="#/dashboard/transfers?tab=staff"
+                className="mt-3 inline-flex rounded-lg bg-yellow-400 px-4 py-2 font-medium text-black hover:bg-yellow-300">
+                {t('rolesSection.findStaff')}
+              </a>
+            ) : !hasPaidPremium && (selectedRole === 'u23_head_coach' || ACADEMY_STAFF_ROLES.includes(selectedRole)) ? (
+              <a href="#/dashboard/pro"
+                className="mt-3 inline-flex rounded-lg border border-gray-300 bg-white px-4 py-2 font-medium text-gray-800 hover:bg-gray-100">
+                {t('hireAccess.viewPremium')}
+              </a>
+            ) : null}
+          </div>
+
           {selectedRoleWarning ? (
             <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
               {translateStaffEffect(selectedRoleWarning, t)}
@@ -5690,14 +5712,16 @@ export default function StaffPage() {
                   limit: selectedRoleLimit,
                 })}
               </div>
-              <div className="mt-4">
-                <a
-                  href="#/dashboard/transfers?tab=staff"
-                  className="inline-flex rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
-                >
-                  {t('rolesSection.findStaff')}
-                </a>
-              </div>
+              {selectedHiringAccess.canHire ? (
+                <div className="mt-4">
+                  <a
+                    href="#/dashboard/transfers?tab=staff"
+                    className="inline-flex rounded-lg bg-yellow-400 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-300"
+                  >
+                    {t('rolesSection.findStaff')}
+                  </a>
+                </div>
+              ) : null}
             </div>
           )}
         </div>
