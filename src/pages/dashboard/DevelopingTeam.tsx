@@ -1550,6 +1550,34 @@ export default function DevelopingTeamPage() {
     return null
   }
 
+  if (selectedRiderId && developingTeamStatus?.is_read_only) {
+    const rider = riders.find(item => item.id === selectedRiderId)
+    return (
+      <div className="w-full space-y-4">
+        <TopNav isDevelopingTeamUnlocked={hasDevelopingTeam}
+          isDevelopingTeamStatusResolved={developingTeamStatusResolved} />
+        <button type="button" onClick={closeProfile}
+          className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-800">
+          {t('page.backToDevelopingTeam')}
+        </button>
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          {t('page.expiredSeasonWarning')}
+        </div>
+        <div className="rounded-xl border border-slate-200 bg-white p-5">
+          <h2 className="text-xl font-semibold text-slate-900">{rider?.name ?? t('page.riders')}</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+            <div><span className="text-slate-500">{t('page.riders')}</span><div className="font-semibold">{rider?.role ?? '—'}</div></div>
+            <div><span className="text-slate-500">OVR</span><div className="font-semibold">{rider?.overall ?? '—'}</div></div>
+            <div><span className="text-slate-500">Age</span><div className="font-semibold">{rider?.age ?? '—'}</div></div>
+            <div><span className="text-slate-500">Sprint</span><div className="font-semibold">{rider?.sprint ?? '—'}</div></div>
+            <div><span className="text-slate-500">Climbing</span><div className="font-semibold">{rider?.climbing ?? '—'}</div></div>
+            <div><span className="text-slate-500">Time Trial</span><div className="font-semibold">{rider?.timeTrial ?? '—'}</div></div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (selectedRiderId) {
     return (
       <div className="w-full">
