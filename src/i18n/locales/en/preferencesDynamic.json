@@ -30,14 +30,14 @@
     "premiumRequired": "Premium membership is required for Developing Team access."
   },
   "service": {
-    "summary": "Available to all managers. First activation costs {{activation}} coins. Each later season renewal or reactivation costs {{renewal}} coins.",
-    "eligibilityCosts": "Requirements: 30 real-life days or 60 in-game days. First activation: {{activation}} coins. Renewal or reactivation: {{renewal}} coins per season.",
+    "summary": "Requires paid Premium and 60 in-game days. Initial activation: {{activation}} Coins; each season renewal: {{renewal}} Coins.",
+    "eligibilityCosts": "Requirements: paid Premium and 60 in-game days. Activation: {{activation}} Coins; season renewal: {{renewal}} Coins.",
     "accessUntilSeason": "Access remains available until the end of Season {{season}}.",
     "season": "Season {{season}}",
     "endSeason": "End of Season {{season}}",
     "startSeason": "Start of Season {{season}}",
     "coins": "{{count}} coins",
-    "autoRenewHelp": "When enabled, {{cost}} coins will be deducted at the beginning of the next season. If your balance is too low, Developing Team access becomes unavailable until reactivated.",
+    "autoRenewHelp": "If paid Premium is active and {{cost}} Coins are available, the Developing Team renews for the next season. Otherwise it closes at rollover and remaining U23 riders join Free Agents.",
     "activateSeason": "Activate for Season {{season}}",
     "existingTeam": "Your existing Developing Team will be activated for this season.",
     "newTeam": "A Developing Team will be created and activated for this season.",
@@ -52,6 +52,6 @@
     "autoRenewModal": "Automatic renewal will be enabled by default. You can switch it off at any time in Preferences or Premium & Billing.",
     "actionActivate": "Activate for {{cost}} Coins",
     "actionReactivate": "Reactivate for {{cost}} Coins",
-    "premiumRequired": "Developing Team does not require Premium. Once eligible, first activation costs {{activation}} coins and later renewal or reactivation costs {{renewal}} coins per season."
+    "premiumRequired": "Paid Premium is required for Developing Team and its {{activation}}-Coin activation / {{renewal}}-Coin renewal."
   }
 }
