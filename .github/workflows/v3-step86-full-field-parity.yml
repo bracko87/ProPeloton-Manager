@@ -3,6 +3,9 @@ on:
   push:
     branches: [main]
     paths:
+      - 'scripts/v3/a2Step86MultiRowGapV3.mjs'
+      - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
+      - 'scripts/v3/a2Step85ThroughputGuardV3.mjs'
       - 'scripts/v3/verify-a2-step86-physical-parity-replay-v3.mjs'
       - '.github/workflows/v3-step86-full-field-parity.yml'
   workflow_dispatch:
