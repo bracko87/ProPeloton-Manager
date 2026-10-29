@@ -100,15 +100,21 @@ export function step86MultiRowGapPlanV3(states,baseline,bookings,{
    const s=states[i],b=active[i];
    if(!b)continue;
    const distance=b.gateX-s.x;
-   if(distance<-EPS||distance>lookAheadM+
-       Math.max(0,s.v*urgencySeconds))continue;
+   // Upstream grid separation must begin BEFORE the bicycle is within
+   // a short 6-8 second tube-warning horizon. Waiting that long misses
+   // the only acceleration runway for the first five-to-two funnel.
+   // The next physical gate (not a hard-coded coordinate) owns this
+   // early preparation until the rider has actually crossed it.
+   if(distance<-EPS)continue;
    const d=Math.abs(s.y-2.2);
    const role=d>1.55?'OUTER':d<.43?'CENTER':'INNER';
    rowRoles[i]=role;involved[i]=true;
    // Initial five-abreast physical roles; symmetric about center.
    // OUTER must wait for the nearer INNER track to physically open.
    if(role==='INNER'){
-    leadBoosts[i]=Math.max(leadBoosts[i],s.v+.95);
+    leadBoosts[i]=Math.max(leadBoosts[i],s.v+
+     clamp(.55+distance/Math.max(1,s.v)/urgencySeconds,
+      .55,1.15));
    }else if(role==='OUTER'){
     const inner=row.filter(j=>Math.abs(states[j].y-2.2)<d-.1&&
       Math.sign(states[j].y-2.2)===Math.sign(s.y-2.2))
