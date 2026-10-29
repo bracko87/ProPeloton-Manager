@@ -865,5 +865,27 @@
     "workloadManagement": "Upravljanje opterećenjem",
     "youthEvaluation": "Procjena mladih talenata",
     "youthTraining": "Trening mladih"
+  },
+  "hireAccess": {
+    "intro": "Prikazano je svih 12 uloga, uključujući one koje ćete otključati kasnije. Odaberite ulogu za uvjete zapošljavanja.",
+    "states": {
+      "eligible": "Zapošljavanje moguće",
+      "locked": "Trenutačno zaključano",
+      "full": "Sva mjesta popunjena",
+      "unknown": "Status nije potvrđen"
+    },
+    "candidatesNote": "Postoji slobodno mjesto, ali odgovarajući kandidat mora biti dostupan na tržištu osoblja.",
+    "paidPremium": "Potreban je plaćeni Premium. Besplatno probno razdoblje nije dovoljno.",
+    "developingTeam": "Aktivirajte i obnovite U23 razvojni tim (nakon 60 dana u igri, 50 novčića po sezoni).",
+    "youthAcademy": "Aktivirajte i obnovite U16 akademiju (nakon 90 dana u igri, 50 novčića po sezoni).",
+    "youthRenewal": "Obnovite akademiju za trenutačnu sezonu (50 novčića).",
+    "clubHouse": "Klupske prostorije",
+    "youthInfrastructure": "Infrastruktura akademije",
+    "facilityRequired": "Potreban je {{facility}} razine {{level}}.",
+    "fullCapacity": "Sva trenutačna mjesta su popunjena ({{assigned}}/{{limit}}).",
+    "nextSlot": "Sljedeće mjesto: {{requirement}}",
+    "unverified": "Uvjeti zapošljavanja za ovu ulogu nisu potvrđeni.",
+    "otherRestriction": "Zapošljavanje nije dopušteno prema trenutačnim klupskim pravilima.",
+    "viewPremium": "Pogledaj Premium pakete"
   }
 }
