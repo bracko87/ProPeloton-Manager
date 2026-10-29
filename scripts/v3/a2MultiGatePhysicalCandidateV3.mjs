@@ -357,7 +357,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const canonicalBookings=out.mirror===true?
   bookings.map(b=>({...b,targetY:round6(4.4-b.targetY)})):
   bookings
- const consensusPilot=(isStep84||isStep85)?
+ const consensusPilot=(isStep84||isStep85||isStep86)?
   step84ConsensusCandidatesV3(canonical.states,canonicalRequests,{
    horizonSeconds:6,urgentSeconds:3.5}):null
  const gapPilot=isStep86?
@@ -377,10 +377,12 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
     horizonSeconds:8,nowSeconds:canonical.at,paceFloor:6.4}):null
  const horizonProposals=isStep86?[
    {policy:'baseline',requests:canonicalRequests},
+   {policy:'joint',requests:canonicalJoint},
+   {policy:'proven_consensus_hold',
+    requests:consensusPilot.candidates[0].requests},
    {policy:'gap_frontload',requests:gapPilot.candidates[1].requests},
    {policy:'gap_hold',requests:gapPilot.candidates[0].requests},
-   {policy:'gap_wave',requests:gapPilot.candidates[2].requests},
-   {policy:'gap_cruise',requests:gapPilot.candidates[3].requests}
+   {policy:'gap_wave',requests:gapPilot.candidates[2].requests}
   ]:isStep85?[
    {policy:'baseline',requests:canonicalRequests},
    {policy:'joint',requests:canonicalJoint},
@@ -464,10 +466,13 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    const local=step86GapCandidatesV3(field.states,requests,
     canonicalBookings,{atSeconds:field.at,lookAheadM:55,
      movingFloorMps:7.5})
+   const consensus=step84ConsensusCandidatesV3(field.states,requests,{
+    horizonSeconds:6,urgentSeconds:3.5})
    return [
+    {policy:'future_consensus_hold',
+     requests:consensus.candidates[0].requests},
     {policy:'future_gap_frontload',requests:local.candidates[1].requests},
-    {policy:'future_gap_hold',requests:local.candidates[0].requests},
-    {policy:'future_gap_coast',requests:local.candidates[2].requests}
+    {policy:'future_gap_hold',requests:local.candidates[0].requests}
    ]
   }
   if(isStep85){
@@ -533,7 +538,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const horizon=(isStep85||isStep86)?
   chooseThroughputGuardedTickV3(canonical,horizonProposals,
    makeFuture,advanceNormalStartV3,{
-    depth:3,maxFirst:5,maxFuture:3,
+    depth:3,maxFirst:isStep86?6:5,maxFuture:3,
+    clearanceFirst:isStep86,
     strictNoNearStops:out.pacePolicy==='throughput_strict_v1'||
      out.pacePolicy==='multirow_gap_strict_v1',
     minimumMovingSpeedMps:out.pacePolicy==='throughput_strict_v1'||
