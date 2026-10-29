@@ -30,14 +30,14 @@
     "premiumRequired": "Se requiere una membresía Premium para acceder al Developing Team."
   },
   "service": {
-    "summary": "Disponible para todos. La primera activación cuesta {{activation}} Coins. Cada renovación o reactivación posterior cuesta {{renewal}} Coins.",
-    "eligibilityCosts": "Requisitos: 30 días reales o 60 días de juego. Primera activación: {{activation}} Coins. Renovación o reactivación: {{renewal}} Coins por temporada.",
+    "summary": "Se requiere Premium de pago y 60 días de juego. Activación: {{activation}} monedas; renovación: {{renewal}} por temporada.",
+    "eligibilityCosts": "Requisitos: Premium de pago y 60 días de juego. Activación: {{activation}}; renovación: {{renewal}} monedas.",
     "accessUntilSeason": "El acceso sigue disponible hasta el final de la temporada {{season}}.",
     "season": "Temporada {{season}}",
     "endSeason": "Fin de temporada {{season}}",
     "startSeason": "Inicio de la temporada {{season}}",
     "coins": "Coins {{count}}",
-    "autoRenewHelp": "Si está activada, se descontarán {{cost}} Coins al inicio de la próxima temporada. Si no hay saldo suficiente, el acceso se pausa hasta reactivarlo.",
+    "autoRenewHelp": "Con Premium de pago activo y {{cost}} monedas el equipo se renueva. Si no, cerrará y los corredores restantes pasarán a agentes libres.",
     "activateSeason": "Activar para la temporada {{season}}",
     "existingTeam": "Su equipo de desarrollo existente será activado para esta temporada.",
     "newTeam": "Se creará y activará un equipo de desarrollo para esta temporada.",
@@ -52,6 +52,6 @@
     "autoRenewModal": "La renovación automática se activará por defecto y puede desactivarse en cualquier momento en Preferencias o Premium y Facturación.",
     "actionActivate": "Activar para {{cost}} Coins",
     "actionReactivate": "Reactivar para {{cost}} Coins",
-    "premiumRequired": "El Equipo de Desarrollo no requiere Premium. Al cumplir los requisitos, la primera activación cuesta {{activation}} Coins y las posteriores renovaciones o reactivaciones {{renewal}} Coins por temporada."
+    "premiumRequired": "U23 requiere Premium de pago: activación de {{activation}} y renovación de {{renewal}} monedas."
   }
 }

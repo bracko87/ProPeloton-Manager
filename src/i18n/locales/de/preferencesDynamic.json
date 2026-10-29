@@ -30,14 +30,14 @@
     "premiumRequired": "Für den Zugriff auf das Developing Team ist eine Premium-Mitgliedschaft erforderlich."
   },
   "service": {
-    "summary": "Für alle Manager verfügbar. Die erste Aktivierung kostet {{activation}} Coins. Jede spätere Saisonverlängerung oder Reaktivierung kostet {{renewal}} Coins.",
-    "eligibilityCosts": "Voraussetzungen: 30 reale Tage oder 60 Spieltage. Erste Aktivierung: {{activation}} Coins. Verlängerung oder Reaktivierung: {{renewal}} Coins pro Saison.",
+    "summary": "Erfordert bezahltes Premium und 60 Spieltage. Aktivierung: {{activation}} Münzen; Saisonverlängerung: {{renewal}} Münzen.",
+    "eligibilityCosts": "Voraussetzungen: bezahltes Premium und 60 Spieltage. Aktivierung: {{activation}} Münzen; Verlängerung: {{renewal}} Münzen.",
     "accessUntilSeason": "Zugang bleibt bis zum Ende der Saison verfügbar {{season}}.",
     "season": "Jahreszeit {{season}}",
     "endSeason": "Ende der Saison {{season}}",
     "startSeason": "Beginn der Saison {{season}}",
     "coins": "{{count}} Coins",
-    "autoRenewHelp": "Wenn aktiviert, werden zu Beginn der nächsten Saison {{cost}} Coins abgezogen. Reicht das Guthaben nicht, bleibt der Zugriff pausiert, bis reaktiviert wird.",
+    "autoRenewHelp": "Bei gültigem bezahltem Premium und {{cost}} Münzen verlängert sich das Team automatisch. Sonst schließt es bei Saisonwechsel; verbleibende Fahrer werden frei.",
     "activateSeason": "Für Saison aktivieren {{season}}",
     "existingTeam": "Ihr bestehendes Entwicklungsteam wird für diese Saison aktiviert.",
     "newTeam": "Für diese Saison wird ein Entwicklungsteam erstellt und aktiviert.",
@@ -52,6 +52,6 @@
     "autoRenewModal": "Die automatische Verlängerung wird standardmäßig aktiviert und kann jederzeit in Einstellungen oder Premium & Abrechnung ausgeschaltet werden.",
     "actionActivate": "Aktivieren für {{cost}} Coins",
     "actionReactivate": "Reaktivieren für {{cost}} Coins",
-    "premiumRequired": "Das Entwicklungsteam benötigt kein Premium. Nach Freischaltung kostet die erste Aktivierung {{activation}} Coins und spätere Verlängerung oder Reaktivierung {{renewal}} Coins pro Saison."
+    "premiumRequired": "Das U23-Team erfordert bezahltes Premium: {{activation}} Münzen Aktivierung und {{renewal}} Münzen Verlängerung."
   }
 }

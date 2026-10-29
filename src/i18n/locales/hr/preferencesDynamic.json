@@ -30,14 +30,14 @@
     "premiumRequired": "Za pristup Razvojnoj momčadi potrebno je Premium članstvo."
   },
   "service": {
-    "summary": "Dostupno svima. Prva aktivacija košta {{activation}} coina. Svaka kasnija obnova ili reaktivacija košta {{renewal}} coina.",
-    "eligibilityCosts": "Uvjeti: 30 stvarnih dana ili 60 dana u igri. Prva aktivacija: {{activation}} coina. Obnova ili reaktivacija: {{renewal}} coina po sezoni.",
+    "summary": "Potreban je plaćeni Premium i 60 dana igre. Aktivacija: {{activation}} novčića, obnova: {{renewal}} po sezoni.",
+    "eligibilityCosts": "Uvjeti: plaćeni Premium i 60 dana igre. Aktivacija: {{activation}}; obnova: {{renewal}} novčića.",
     "accessUntilSeason": "Pristup ostaje dostupan do kraja sezone {{season}}.",
     "season": "Sezona {{season}}",
     "endSeason": "Kraj sezone {{season}}",
     "startSeason": "Početak sezone {{season}}",
     "coins": "{{count}} Coins",
-    "autoRenewHelp": "Kad je uključeno, {{cost}} coina bit će skinuto na početku sljedeće sezone. Ako nema dovoljno coina, pristup se pauzira do reaktivacije.",
+    "autoRenewHelp": "Uz aktivni plaćeni Premium i {{cost}} novčića tim se obnavlja. Inače se zatvara, a vozači postaju slobodni igrači.",
     "activateSeason": "Aktiviraj za sezonu {{season}}",
     "existingTeam": "Vaš postojeći Razvojni tim bit će aktiviran za ovu sezonu.",
     "newTeam": "Biće kreiran i aktiviran Razvojni tim za ovu sezonu.",
@@ -52,6 +52,6 @@
     "autoRenewModal": "Automatska obnova bit će uključena prema zadanim postavkama i može se isključiti u Preferences ili Premium & Billing.",
     "actionActivate": "Aktiviraj za {{cost}} Coins",
     "actionReactivate": "Ponovno aktiviraj za {{cost}} Coins",
-    "premiumRequired": "Razvojni tim ne zahtijeva Premium. Nakon ispunjenja uvjeta prva aktivacija košta {{activation}} coina, a kasnije obnove ili reaktivacije {{renewal}} coina po sezoni."
+    "premiumRequired": "U23 razvojni tim traži plaćeni Premium: aktivacija {{activation}}, obnova {{renewal}} novčića."
   }
 }

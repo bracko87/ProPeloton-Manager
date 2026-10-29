@@ -30,14 +30,14 @@
     "premiumRequired": "Un abonnement Premium est requis pour accéder à la Developing Team."
   },
   "service": {
-    "summary": "Disponible pour tous. La première activation coûte {{activation}} coins. Chaque renouvellement ou réactivation ultérieur coûte {{renewal}} coins.",
-    "eligibilityCosts": "Conditions : 30 jours réels ou 60 jours de jeu. Première activation : {{activation}} coins. Renouvellement ou réactivation : {{renewal}} coins par saison.",
+    "summary": "Nécessite Premium payant et 60 jours de jeu. Activation : {{activation}} pièces ; renouvellement : {{renewal}} par saison.",
+    "eligibilityCosts": "Conditions : Premium payant et 60 jours de jeu. Activation : {{activation}} ; renouvellement : {{renewal}} pièces.",
     "accessUntilSeason": "L'accès reste disponible jusqu'à la fin de la saison {{season}}.",
     "season": "Saison {{season}}",
     "endSeason": "Fin de saison {{season}}",
     "startSeason": "Début de la saison {{season}}",
     "coins": "Coins de monnaie {{count}}",
-    "autoRenewHelp": "Si activé, {{cost}} coins seront débités au début de la saison suivante. Si le solde est insuffisant, l'accès sera suspendu jusqu'à réactivation.",
+    "autoRenewHelp": "Avec Premium payant actif et {{cost}} pièces, l'équipe se renouvelle. Sinon elle ferme et les coureurs restants deviennent agents libres.",
     "activateSeason": "Activer pour la saison {{season}}",
     "existingTeam": "Votre équipe de développement existante sera activée pour cette saison.",
     "newTeam": "Une équipe en développement sera créée et activée pour cette saison.",
@@ -52,6 +52,6 @@
     "autoRenewModal": "Le renouvellement automatique sera activé par défaut et peut être désactivé à tout moment dans Préférences ou Premium & Facturation.",
     "actionActivate": "Activer pour {{cost}} Coins",
     "actionReactivate": "Réactiver pour {{cost}} Coins",
-    "premiumRequired": "L'Équipe de Développement ne nécessite pas Premium. Une fois éligible, la première activation coûte {{activation}} coins et les renouvellements ou réactivations suivants {{renewal}} coins par saison."
+    "premiumRequired": "U23 nécessite Premium payant : activation à {{activation}} et renouvellement à {{renewal}} pièces."
   }
 }

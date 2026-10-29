@@ -30,14 +30,14 @@
     "premiumRequired": "Premium članstvo je obavezno za pristup Razvojnom timu."
   },
   "service": {
-    "summary": "Dostupno svima. Prva aktivacija košta {{activation}} coin-a. Svaka kasnija obnova ili reaktivacija košta {{renewal}} coin-a.",
-    "eligibilityCosts": "Uslovi: 30 realnih dana ili 60 dana u igri. Prva aktivacija: {{activation}} coin-a. Obnova ili reaktivacija: {{renewal}} coin-a po sezoni.",
+    "summary": "Potreban je plaćeni Premium i 60 dana u igri. Aktivacija: {{activation}} novčića, obnova po sezoni: {{renewal}}.",
+    "eligibilityCosts": "Uslovi: plaćeni Premium i 60 dana u igri. Aktivacija: {{activation}} novčića; obnova: {{renewal}}.",
     "accessUntilSeason": "Pristup ostaje dostupan do kraja sezone {{season}}.",
     "season": "Sezona {{season}}",
     "endSeason": "Kraj sezone {{season}}",
     "startSeason": "Početak sezone {{season}}",
     "coins": "{{count}} Coins",
-    "autoRenewHelp": "Kada je uključeno, {{cost}} coin-a se skida na početku sledeće sezone. Ako nema dovoljno coin-a, pristup se pauzira do reaktivacije.",
+    "autoRenewHelp": "Uz plaćeni Premium i {{cost}} novčića tim se obnavlja u sledećoj sezoni. Inače se zatvara, a preostali vozači postaju slobodni agenti.",
     "activateSeason": "Aktiviraj za sezonu {{season}}",
     "existingTeam": "Vaš postojeći Razvojni tim biće aktiviran za ovu sezonu.",
     "newTeam": "Biće kreiran i aktiviran Razvojni tim za ovu sezonu.",
@@ -52,6 +52,6 @@
     "autoRenewModal": "Automatska obnova biće podrazumevano uključena i može se isključiti u Preferences ili Premium & Billing.",
     "actionActivate": "Aktiviraj za {{cost}} Coins",
     "actionReactivate": "Ponovo aktiviraj za {{cost}} Coins",
-    "premiumRequired": "Razvojni tim ne zahteva Premium. Kada ispuniš uslove, prva aktivacija košta {{activation}} coin-a, a kasnije obnove ili reaktivacije {{renewal}} coin-a po sezoni."
+    "premiumRequired": "Za U23 razvojni tim potreban je plaćeni Premium: aktivacija {{activation}}, obnova {{renewal}} novčića."
   }
 }
