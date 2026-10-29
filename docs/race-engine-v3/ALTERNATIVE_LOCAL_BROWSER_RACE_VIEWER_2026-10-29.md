@@ -27,6 +27,23 @@ The viewer uses the same original [A3 discrete 10Hz engine](../../scripts/v3/a3D
 
 The dedicated [race viewer CI workflow](../../.github/workflows/v3-alternative-local-race-viewer.yml) tests Node server syntax, HTML/CSS/JS HTTP, invalid API responses, 180-second full engine replay for 32/106/168 rider fields, attack scenario, both logical road gates, deterministic SHA-256 replay hash and full frames, real synthetic elevations, and no server/database mutation. It also preserves all existing alternate original 106/168/individual-ability tests, protected Step86 original A64 32-rider 180s, eight-second grouping and existing React production build.
 
-**Test status:** pending GitHub Actions measurement. A successful build alone does not prove browser interaction; the local server HTTP and deterministic replay payload must be tested independently. No screenshot/browser-interaction automation is claimed.
+### Verified CI — 29 October 2026
+
+[GitHub Actions run 40961478142](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40961478142) verifies the actual local HTTP service and full original A3 10Hz field simulations. **The new viewer job passed** with all unit assertions, valid localhost GET-only HTTP responses, correct content types and CSP, invalid selections returning HTTP 400, other routes 404, unsupported methods 405, and full 181-frame original-engine data.
+
+| Approved user scenario | Duration (simulated) | Replay snapshots (1Hz) | Riders passing both gate checkpoints | SHA-256 replay prefix |
+| --- | ---: | ---: | ---: | --- |
+| 32 staged, natural | 180s | 181 | 32/32 | ba1778de1c70 |
+| 106 double, natural | 180s | 181 | 106/106 | 76d947cc3ac7 |
+| 168 staged, natural | 180s | 181 | 168/168 | a49fba25bd41 |
+| 32 staged, two-rider attack | 180s | 181 | 32/32 | 830fc6b82f6 |
+
+Each of the four includes the original individual research solver's position, energy, speed, grouping and lane assignments. Full fresh deterministic resimulation produced an identical replay hash and data for the reference field. The smaller race payload is approximately 1.18MB and the 168-rider field approximately 5.94MB; generation and transfer are LOCAL-only. Client playback does not calculate new fake x-positions: it switches among validated one-second snapshots.
+
+**CI status at initial verification:** the viewer HTTP/replay test, all original alternate large-field/road-width/athlete tests, and existing React production build passed. The legacy protected A64 Step86 180-second benchmark remained in progress at initial inspection, with the eight-second group test completed. An updated job status can be read directly from the linked Actions run.
+
+A successful HTTP payload test and standalone JS syntax check still do **not** prove a human visual quality review: no remote browser screenshot / click automation is claimed. All production game code, game routes, database, race payouts and official results remain unchanged.
+
+**Test milestone: read-only local browser viewer and replay backend complete. Human UI review remains next.**
 
 **Next milestone after local viewer:** human visual review of group movement and road width realism, then iteratively build a user-directed race tactics inspector (still entirely local/synthetic).
