@@ -888,7 +888,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const horizon=isStep98?
     chooseStep98LongHorizonPhysicalTickV3(canonical,horizonProposals,
      makeFuture,advanceNormalStartV3,{
-      horizonSeconds:6,maxFirst:5,maxFuture:2,beamWidth:2,
+      horizonSeconds:6,maxFirst:7,maxFuture:2,beamWidth:2,
       clearanceFirst:out.pacePolicy==='global_graph_strict_v1'
      }):isStep95?
    chooseStep95MovingPhysicalTickV3(canonical,horizonProposals,
@@ -1170,7 +1170,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  // Real x/y/v/energy and steering target are accepted only by the unchanged
  // physics solver. An unsuccessful tick retains EXACT previous rider state.
  if(!next||next.reason){
-  out.reason=next?.reason??((isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96)?
+  out.reason=next?.reason??((isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96||isStep98)?
     horizon?.status??'NO_ACCEPTABLE_PROPOSAL':
     'NO_ACCEPTABLE_PROPOSAL');out.status='REJECTED'
   out.firstCollision=next?.firstCollision??null
