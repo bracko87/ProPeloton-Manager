@@ -119,8 +119,8 @@ type ActiveClubPayload = {
 }
 
 // Display fallbacks only. get_developing_team_status() is the authoritative source.
-const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 100
-const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 100
+const DEFAULT_DEVELOPING_TEAM_ACTIVATION_COIN_COST = 50
+const DEFAULT_DEVELOPING_TEAM_RENEWAL_COIN_COST = 50
 
 function normalizeCoinCost(value: unknown, fallback: number): number {
   const parsed = Number(value)
@@ -163,6 +163,7 @@ export default function PreferencesPage(): JSX.Element {
     useState<string | null>(null)
 
   const [developingTeamStatus, setDevelopingTeamStatus] = useState<DevelopingTeamStatus | null>(null)
+  const [hasPaidPremium, setHasPaidPremium] = useState(false)
   const [isLoadingDevelopingTeamStatus, setIsLoadingDevelopingTeamStatus] = useState(true)
   const [developingTeamError, setDevelopingTeamError] = useState<string | null>(null)
   const [isActivatingDevelopingTeam, setIsActivatingDevelopingTeam] = useState(false)
@@ -187,7 +188,11 @@ export default function PreferencesPage(): JSX.Element {
     setDevelopingTeamError(null)
 
     try {
-      const statusResult = await supabase.rpc('get_developing_team_status')
+      const [statusResult, paidPremiumResult] = await Promise.all([
+        supabase.rpc('get_developing_team_status'),
+        supabase.rpc('my_paid_premium_access_v1'),
+      ])
+      setHasPaidPremium(!paidPremiumResult.error && paidPremiumResult.data === true)
 
       if (statusResult.error) {
         throw statusResult.error
@@ -603,10 +608,6 @@ export default function PreferencesPage(): JSX.Element {
     }
   }
 
-  const realDaysProgressLabel = developingTeamStatus
-    ? `${developingTeamStatus.real_days_played} / 30`
-    : '—'
-
   const gameDaysProgressLabel = developingTeamStatus
     ? `${developingTeamStatus.game_days_played} / 60`
     : '—'
@@ -768,14 +769,8 @@ export default function PreferencesPage(): JSX.Element {
               <div className="mt-4 text-sm text-gray-500">{t('developingTeam.loading', { ns: 'preferences' })}</div>
             ) : (
               <>
-                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-3">
-                  <div className="rounded-md border border-gray-200 p-3">
-                    <div className="text-xs text-gray-500">{t('developingTeam.realLifeProgress', { ns: 'preferences' })}</div>
-                    <div className="mt-1 text-lg font-semibold text-gray-900">
-                      {realDaysProgressLabel}
-                    </div>
-                    <div className="mt-1 text-xs text-gray-500">{t('developingTeam.realLifeMinimum', { ns: 'preferences' })}</div>
-                  </div>
+                <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+
 
                   <div className="rounded-md border border-gray-200 p-3">
                     <div className="text-xs text-gray-500">{t('developingTeam.gameProgress', { ns: 'preferences' })}</div>
@@ -905,6 +900,14 @@ export default function PreferencesPage(): JSX.Element {
                         </a>
                       ) : null}
                     </div>
+                  </div>
+                ) : !hasPaidPremium ? (
+                  <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600">
+                    <div className="font-semibold text-gray-800">{t('developingTeam.premiumOnlyTitle', { ns: 'preferences' })}</div>
+                    <p className="mt-2">{t('developingTeam.premiumOnlyDescription', { ns: 'preferences', activation: activationCoinCost, renewal: renewalCoinCost })}</p>
+                    <a href="#/dashboard/pro" className="mt-4 inline-block rounded-md border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-900 hover:bg-gray-100">
+                      {t('developingTeam.unlockPremium', { ns: 'preferences' })}
+                    </a>
                   </div>
                 ) : !developingTeamIsEligible ? (
                   <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
