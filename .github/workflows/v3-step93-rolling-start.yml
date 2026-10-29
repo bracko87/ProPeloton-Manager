@@ -1,0 +1,71 @@
+name: V3 Step93 forensic-guided rolling full-field physical audit
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2Step93RollingStartV3.mjs'
+      - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
+      - 'scripts/v3/verify-a2-step93-rolling-start-v3.mjs'
+      - 'scripts/v3/verify-a2-step93-large-full-v3.mjs'
+      - 'scripts/v3/verify-a2-step93-physical-parity-replay-v3.mjs'
+      - '.github/workflows/v3-step93-rolling-start.yml'
+  workflow_dispatch:
+jobs:
+  geometry-and-protected:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/v3/verify-a2-step93-rolling-start-v3.mjs
+      - run: node scripts/v3/verify-a2-step92-cohort-geometry-v3.mjs
+      - run: node scripts/v3/verify-a2-step91-leases-v3.mjs
+      - run: node scripts/v3/verify-a2-step90-row-trajectory-v3.mjs
+      - run: node scripts/v3/verify-a2-step89-premerge-v3.mjs
+      - run: node scripts/v3/verify-a2-step87-corridor-physical-v3.mjs
+      - run: node scripts/v3/verify-a2-step86-gap-physical-v3.mjs
+      - run: node scripts/v3/verify-a2-step85-throughput-v3.mjs
+      - run: node scripts/v3/verify-a2-step78-joint-viability-v3.mjs
+  full-field-106-168:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/v3/verify-a2-step93-large-full-v3.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a93-large-original-A64-no-crawl
+          path: /tmp/a93large
+          if-no-files-found: warn
+  parity-sporting-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node scripts/v3/verify-a2-step93-physical-parity-replay-v3.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: a93-true-A64-passing-replay
+          path: /tmp/a93parity
+          if-no-files-found: warn
+  production-react-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
