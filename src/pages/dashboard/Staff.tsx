@@ -1110,6 +1110,120 @@ function getRoleInfrastructureWarning(
   return null
 }
 
+
+type StaffHireStatus = {
+  state: 'eligible' | 'locked' | 'full' | 'unknown'
+  canHire: boolean
+  reasons: string[]
+}
+
+const ACADEMY_STAFF_ROLES: StaffRole[] = [
+  'youth_academy_director', 'u16_head_coach', 'youth_scout',
+]
+
+function nextStaffRoleFacility(
+  role: StaffRole,
+  currentCapacity: number,
+  infra: ClubInfrastructureRow | null,
+  t: TFunction,
+): string | null {
+  if (!infra) return null
+  // Mirrors public.get_staff_role_capacity_overview_for_club, used by the hire RPC.
+  const tiers: Partial<Record<StaffRole, {
+    facility: string
+    currentLevel: number
+    unlocks: Array<[number, number]>
+  }>> = {
+    head_coach: {
+      facility: t('hireAccess.clubHouse'), currentLevel: infra.hq_level, unlocks: [[1, 1]],
+    },
+    trainer: infra.hq_level < 1
+      ? { facility: t('hireAccess.clubHouse'), currentLevel: infra.hq_level, unlocks: [[1, 1]] }
+      : { facility: t('facilityNames.trainingCenter'), currentLevel: infra.training_center_level, unlocks: [[3, 2]] },
+    team_doctor: {
+      facility: t('facilityNames.medicalCenter'), currentLevel: infra.medical_center_level, unlocks: [[3, 2]],
+    },
+    physio: {
+      facility: t('facilityNames.medicalCenter'), currentLevel: infra.medical_center_level,
+      unlocks: [[1, 2], [3, 3], [4, 4], [5, 5]],
+    },
+    nutritionist: {
+      facility: t('facilityNames.medicalCenter'), currentLevel: infra.medical_center_level, unlocks: [[2, 1]],
+    },
+    mechanic: {
+      facility: t('facilityNames.mechanicsWorkshop'), currentLevel: infra.mechanics_workshop_level,
+      unlocks: [[1, 2], [2, 3], [3, 4], [4, 5]],
+    },
+    sport_director: {
+      facility: t('hireAccess.clubHouse'), currentLevel: infra.hq_level, unlocks: [[2, 1], [4, 2]],
+    },
+    scout_analyst: {
+      facility: t('facilityNames.scoutingOffice'), currentLevel: infra.scouting_level,
+      unlocks: [[1, 2], [2, 3], [3, 4], [4, 5]],
+    },
+    u23_head_coach: {
+      facility: t('hireAccess.youthInfrastructure'), currentLevel: infra.youth_academy_level, unlocks: [[1, 1]],
+    },
+  }
+  const tier = tiers[role]
+  const next = tier?.unlocks.find(([level, cap]) => level > tier.currentLevel && cap > currentCapacity)
+  return tier && next
+    ? t('hireAccess.facilityRequired', { facility: tier.facility, level: next[0] })
+    : null
+}
+
+function getStaffHireStatus(
+  role: StaffRole,
+  capacity: StaffRoleLimitRow | undefined,
+  infra: ClubInfrastructureRow | null,
+  paidPremium: boolean,
+  developingTeamActive: boolean,
+  academy: { activated?: boolean; academy_closed?: boolean; season_access_active?: boolean; renewal_required?: boolean } | null,
+  t: TFunction,
+): StaffHireStatus {
+  if (!capacity) return {
+    state: 'unknown', canHire: false, reasons: [t('hireAccess.unverified')],
+  }
+
+  const reasons: string[] = []
+  if ((role === 'u23_head_coach' || ACADEMY_STAFF_ROLES.includes(role)) && !paidPremium) {
+    reasons.push(t('hireAccess.paidPremium'))
+  }
+  if (role === 'u23_head_coach' && !developingTeamActive) {
+    reasons.push(t('hireAccess.developingTeam'))
+  }
+  if (ACADEMY_STAFF_ROLES.includes(role) && academy) {
+    if (!academy.activated || academy.academy_closed) {
+      reasons.push(t('hireAccess.youthAcademy'))
+    } else if (academy.season_access_active === false || academy.renewal_required) {
+      reasons.push(t('hireAccess.youthRenewal'))
+    }
+  }
+
+  const nextFacility = nextStaffRoleFacility(role, capacity.limit_count, infra, t)
+  if (capacity.limit_count === 0 && nextFacility) reasons.push(nextFacility)
+
+  // Backend role capacity is the source of truth; a visible role is not
+  // automatically hireable just because it is selectable.
+  if (capacity.can_hire && reasons.length === 0) {
+    return { state: 'eligible', canHire: true, reasons: [] }
+  }
+  if (reasons.length) return { state: 'locked', canHire: false, reasons }
+
+  if (capacity.open_slots <= 0) {
+    const fullMessage = t('hireAccess.fullCapacity', {
+      assigned: capacity.active_count, limit: capacity.limit_count,
+    })
+    return {
+      state: 'full', canHire: false,
+      reasons: nextFacility
+        ? [fullMessage, t('hireAccess.nextSlot', { requirement: nextFacility })]
+        : [fullMessage],
+    }
+  }
+  return { state: 'locked', canHire: false, reasons: [t('hireAccess.otherRestriction')] }
+}
+
 function getRoleLimit(
   role: StaffRole,
   roleLimitMap: Map<StaffRole, StaffRoleLimitRow>
