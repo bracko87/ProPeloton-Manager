@@ -71,7 +71,7 @@ assert.equal(many.evidence.groupCount,1);
 assert.equal(many.evidence.pelotonCount,32);
 assert.equal(many.evidence.originalA64Unmodified,true);
 assert.throws(()=>step106ChooseTubeV3(f.physical,f.physical,f.bookings,{
- horizonTicks:17}));
+ horizonTicks:29}));
 assert.throws(()=>step106ConflictFeedbackV3(f.physical,
  f.physical,base,{pair:['x','y']},{effort:4}));
 assert.equal(JSON.stringify(f),original);

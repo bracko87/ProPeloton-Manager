@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Eight 106/168 actual A64 4-6s conflict-directed tube witnesses
+      - name: Eight 106/168 actual A64 6-12s conflict-directed tube witnesses
         env:
           V3_A2_STEP106_DIR: ${{ runner.temp }}/step106
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step106-large-v3.mjs

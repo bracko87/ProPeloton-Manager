@@ -16,7 +16,7 @@ for(const n of [106,168])for(const roadGeometry of
   roadGeometry,pacePolicy:'persistent_global_strict_v1',
   rollingStartSpeedMps:9,spacingSeconds:.35}).initial;
  const frozen=JSON.stringify(a);
- for(const horizonTicks of [8,12]){
+ for(const horizonTicks of [12,24]){
   const p=step106RunPhysicalSpaceTimeV3(a.physical,
    a.admission.bookings,{seconds:30,horizonTicks,
     baseModes:['zipper_brake_strict','zipper_window'],

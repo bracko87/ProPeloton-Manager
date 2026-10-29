@@ -219,7 +219,7 @@ export function step106ChooseTubeV3(field,initial,bookings,{
 }={}){
  validate(field,initial,bookings);
  if(!Number.isInteger(horizonTicks)||horizonTicks<2||
-    horizonTicks>16||!Array.isArray(baseModes)||baseModes.length<1||
+    horizonTicks>28||!Array.isArray(baseModes)||baseModes.length<1||
     baseModes.length>4||!Array.isArray(efforts)||
     efforts.length<1||efforts.length>3||
     efforts.some(e=>!Number.isFinite(e)||e<0||e>3))
