@@ -70,3 +70,6 @@ Reference protected Step86: 32 staged 180s with **80** sustained ≥3s overtakes
 Step94 must constrain *requested future closing rates* across adjacent start rows and all overlapping **actual lateral transition paths**, not just the current relative velocity. Enforce a physically achievable longitudinal gap throughout steering, account for earlier front-row actions and preserve speed above the no-crawl threshold. Recheck the actual A64 0.5-second swept motion, real W-prime and road edges, and keep strict mirror/name/array parity plus independent sporting checkpoints. Do not use arbitrary rider IDs or right/left biases; never manufacture x/y/v, teleport, widen the road or permit accepted contact.
 
 **No Milestone A large-field sporting approval, no Milestone B gameplay integration, no Milestone C production release, and no live Supabase user/race data modifications.**
+
+
+**Final CI verification:** All four Step93 rolling workflow jobs completed SUCCESS (original 106/168 original-body attempts, original 8/32 and mirror/replay, protected Step78/85/86/87/89/90/91/92 geometry/physics checks, and React build). This is technical evidence only; the 0/8 106/168 sporting NO-GO above is unchanged.
