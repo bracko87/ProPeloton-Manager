@@ -886,6 +886,9 @@
     "nextSlot": "Próxima plaza: {{requirement}}",
     "unverified": "No se pudo verificar si se permite contratar para este puesto.",
     "otherRestriction": "La contratación está restringida por las reglas actuales del club.",
-    "viewPremium": "Ver planes Premium"
+    "viewPremium": "Ver planes Premium",
+    "showDetails": "Mostrar detalles",
+    "hideDetails": "Ocultar detalles",
+    "slotCount": "{{assigned}} de {{limit}} puestos ocupados"
   }
 }
