@@ -6,6 +6,7 @@ on:
       - 'scripts/v3/a2Step79DistributedAdmissionV3.mjs'
       - 'scripts/v3/a2Step79PhysicalChoiceV3.mjs'
       - 'scripts/v3/verify-a2-step79-distributed-v3.mjs'
+      - 'scripts/v3/verify-a2-step79-risk-parity-replay-v3.mjs'
       - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
       - '.github/workflows/v3-step79-distributed-admission.yml'
   workflow_dispatch:
@@ -24,6 +25,10 @@ jobs:
         env:
           V3_A2_STEP79_DIR: ${{ runner.temp }}/a79
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step79-distributed-v3.mjs
+      - name: Step79 distributed risk mirrored/renamed identity and 8-rider exact 90 plus 90 checkpoint
+        env:
+          V3_A2_STEP79_PARITY_DIR: ${{ runner.temp }}/a79parity
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step79-risk-parity-replay-v3.mjs
       - name: A78 local physical 24-case audit
         env:
           V3_A2_STEP78_PHASE2_DIR: ${{ runner.temp }}/a78phase2
@@ -47,6 +52,7 @@ jobs:
           name: a79-distributed-real-contact-evidence
           path: |
             ${{ runner.temp }}/a79/*.json
+            ${{ runner.temp }}/a79parity/*.json
             ${{ runner.temp }}/a78phase2/*.json
             ${{ runner.temp }}/a78local/*.json
             ${{ runner.temp }}/a77/*.json
