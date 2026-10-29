@@ -83,6 +83,26 @@ assert.equal(ties.order.geometryTies,2)
 assert(ties.order.entries.every(e=>e.blocked))
 assert(ties.candidates.every(c=>c.requests.every(
  (r,i)=>eq(r.targetY,tied[i].y))))
+// A close rear cyclist with an immediate lateral merge MUST yield
+// until achieved leading-row x separation exists; no ID priority.
+const closeStates=[
+ {id:'front',x:600,y:1.25,v:8},
+ {id:'rear',x:597,y:2.2,v:10}
+]
+const closeReq=[
+ {id:'front',speed:8,targetY:1.25},
+ {id:'rear',speed:10,targetY:1.25}
+]
+const closeBook=closeStates.map(s=>({id:s.id,gateId:'gate-one',
+ gateX:780,targetY:1.25,scheduledSeconds:24}))
+const close=step87CorridorCandidatesV3(
+ closeStates,closeReq,closeBook)
+assert(close.order.edges.some(e=>e.ahead===0&&e.behind===1))
+assert.equal(close.candidates[0].requests[1].targetY,2.2)
+assert(close.candidates[2].requests[1].speed<10,
+ 'A87 pace variant did not respond to physical closing headway')
+assert(close.candidates[3].requests[1].speed<10,
+ 'A87 balanced variant did not respond to physical closing headway')
 assert.throws(()=>step87CorridorOrderV3(states,
  [req[0],req[0],...req.slice(2)],bookings))
 const matrix=[]
