@@ -317,11 +317,27 @@ serve(async req => {
       )
     }
 
+    const coinDistribution = planCode === "premium_monthly"
+      ? "monthly"
+      : String(body.coin_distribution ?? "monthly")
+    if (!["monthly", "upfront"].includes(coinDistribution)) {
+      return json({ error: "Invalid Premium coin delivery choice" }, 400, origin)
+    }
+    const { error: coinPreferenceError } = await supabaseUser.rpc(
+      "set_my_premium_coin_distribution_v1",
+      { p_mode: coinDistribution },
+    )
+    if (coinPreferenceError) {
+      console.error("Premium coin preference error:", coinPreferenceError)
+      return json({ error: "Could not save Premium coin delivery choice" }, 500, origin)
+    }
+
     const metadata: Record<string, string> = {
       purchase_kind:
         "premium_subscription",
       user_id: user.id,
       plan_code: plan.code,
+      coin_distribution: coinDistribution,
     }
 
     const params:
@@ -386,6 +402,7 @@ serve(async req => {
             `premium_checkout_` +
             `${user.id}_` +
             `${plan.code}_` +
+            `${coinDistribution}_` +
             `${fiveMinuteBucket}`,
         },
       )
