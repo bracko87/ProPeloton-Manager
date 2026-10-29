@@ -15,6 +15,7 @@ import {distributedAdmissionCandidatesV3} from './a2Step79DistributedAdmissionV3
 import {chooseDistributedPhysicalTickV3} from './a2Step79PhysicalChoiceV3.mjs'
 import {chooseRecedingHorizonTickV3} from './a2Step80RecedingHorizonV3.mjs'
 import {multiSecondReservationCandidatesV3} from './a2Step81SpaceTimeReservationsV3.mjs'
+import {step82ContractCandidatesV3} from './a2Step82FeasibleZipperWindowsV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
 const round6=v=>Math.round(v*1e6)/1e6
@@ -44,7 +45,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
    'joint_local_negotiation_v1','joint_local_preemptive_v1',
    'distributed_multiwave_v1','distributed_risk_v1',
    'horizon2_guarded_v1','horizon3_guarded_v1',
-   'multisecond_reserve_v1','multisecond_zipper_v1'].includes(pacePolicy)&&
+   'multisecond_reserve_v1','multisecond_zipper_v1',
+   'feasible_window_v1','feasible_conservative_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -87,7 +89,10 @@ export function createMultiGatePhysicalCandidateV3(n,{
   horizonSelectedTicks:0,horizonFullLookaheadTicks:0,
   horizonRejectedPredictions:0,horizonSelectedPolicies:{},
   multisecondForecastEdgeTicks:0,multisecondSelectedTicks:0,
-  multisecondPolicyTicks:{}, 
+  multisecondPolicyTicks:{},
+  step82ConsistencyTicks:0,step82ConflictTicks:0,
+  step82AdjustedTimeTicks:0,step82SelectedTicks:0,
+  step82SelectedPolicies:{}, 
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -133,7 +138,8 @@ function commandForRider(snapshot,s,bookingsById){
   'joint_local_preemptive_v1','distributed_multiwave_v1',
   'distributed_risk_v1','horizon2_guarded_v1',
   'horizon3_guarded_v1','multisecond_reserve_v1',
-  'multisecond_zipper_v1']
+  'multisecond_zipper_v1','feasible_window_v1',
+  'feasible_conservative_v1']
    .includes(snapshot.pacePolicy)&&
   Math.abs(targetY-s.y)>EPS){
   const delta=targetY-s.y
@@ -190,7 +196,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   'joint_local_negotiation_v1','joint_local_preemptive_v1',
   'distributed_multiwave_v1','distributed_risk_v1',
   'horizon2_guarded_v1','horizon3_guarded_v1',
-  'multisecond_reserve_v1','multisecond_zipper_v1']
+  'multisecond_reserve_v1','multisecond_zipper_v1',
+  'feasible_window_v1','feasible_conservative_v1']
   .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
@@ -230,7 +237,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  // untouched authoritative swept-body, road-edge and energy solver.
  const useDistributed=['distributed_multiwave_v1','distributed_risk_v1',
   'horizon2_guarded_v1','horizon3_guarded_v1',
-  'multisecond_reserve_v1','multisecond_zipper_v1']
+  'multisecond_reserve_v1','multisecond_zipper_v1',
+  'feasible_window_v1','feasible_conservative_v1']
   .includes(out.pacePolicy)
  // Canonical *planning-only* input: mirrored worlds are evaluated in
  // the same symmetric road coordinates. Accepted physical motion is
@@ -293,6 +301,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  // physical re-sweep; never commit an imaginary future trajectory.
  const isMultisecond=['multisecond_reserve_v1',
   'multisecond_zipper_v1'].includes(out.pacePolicy)
+ const isContract=['feasible_window_v1',
+  'feasible_conservative_v1'].includes(out.pacePolicy)
  const isHorizon=['horizon2_guarded_v1','horizon3_guarded_v1',
   'multisecond_reserve_v1','multisecond_zipper_v1']
   .includes(out.pacePolicy)
@@ -305,11 +315,26 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const canonicalBookings=out.mirror===true?
   bookings.map(b=>({...b,targetY:round6(4.4-b.targetY)})):
   bookings
+ const contract=isContract?
+  step82ContractCandidatesV3(canonical.states,canonicalRequests,
+   canonicalBookings,{atSeconds:canonical.at,searchSeconds:50,
+    paceFloor:out.pacePolicy==='feasible_conservative_v1'?7.3:6.7}):null
  const firstReservations=isMultisecond?
   multiSecondReservationCandidatesV3(canonical.states,
    canonicalRequests,canonicalBookings,{
     horizonSeconds:8,nowSeconds:canonical.at,paceFloor:6.4}):null
- const horizonProposals=isMultisecond?
+ const horizonProposals=isContract?[
+   {policy:'baseline',requests:canonicalRequests},
+   {policy:'joint',requests:canonicalJoint},
+   {policy:'contract_window_pace',
+    requests:contract.candidates[0].requests},
+   {policy:'contract_hold_unavailable',
+    requests:contract.candidates[1].requests},
+   {policy:out.pacePolicy==='feasible_conservative_v1'?
+    'contract_leader_protect':'contract_combined',
+    requests:out.pacePolicy==='feasible_conservative_v1'?
+     contract.candidates[2].requests:contract.candidates[3].requests}
+  ]:isMultisecond?
   [
    {policy:'baseline',requests:canonicalRequests},
    {policy:'joint',requests:canonicalJoint},
@@ -334,6 +359,16 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   if(requests.some(r=>r.error))return []
   const plans=distributedAdmissionCandidatesV3(field.states,requests,
    out.originalDesired,{firstExitX:1020,maxLocalRiders:8,rangeM:25})
+  if(isContract){
+   const local=step82ContractCandidatesV3(field.states,requests,
+    canonicalBookings,{atSeconds:field.at,searchSeconds:50,
+     paceFloor:out.pacePolicy==='feasible_conservative_v1'?7.3:6.7})
+   return [
+    {policy:'follow_contract_pace',requests:local.candidates[0].requests},
+    {policy:'follow_contract_hold',requests:local.candidates[1].requests},
+    {policy:'follow_contract_assist',requests:local.candidates[2].requests}
+   ]
+  }
   if(isMultisecond){
    const planned=multiSecondReservationCandidatesV3(field.states,requests,
     canonicalBookings,{horizonSeconds:8,nowSeconds:field.at,paceFloor:6.4})
@@ -379,6 +414,17 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   prospective?
   (prospective.physical??prospective.firstRejected):
   advanceNormalStartV3(candidate)
+ if(contract){
+  out.step82AdjustedTimeTicks+=contract.contract.adjusted
+  if(contract.contract.status==='REQUEST_CONTRACT_NECESSARY_CONSISTENT')
+   out.step82ConsistencyTicks++
+  else out.step82ConflictTicks+=contract.contract.contradictions.length
+  if(horizon?.selectedPolicy){
+   out.step82SelectedTicks++
+   out.step82SelectedPolicies[horizon.selectedPolicy]=
+    (out.step82SelectedPolicies[horizon.selectedPolicy]??0)+1
+  }
+ }
  if(firstReservations){
   out.multisecondForecastEdgeTicks+=firstReservations.forecast.edges.length
   if(horizon?.selectedPolicy){
