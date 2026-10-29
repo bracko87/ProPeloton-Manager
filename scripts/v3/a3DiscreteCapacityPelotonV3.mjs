@@ -174,6 +174,34 @@ export function advanceDiscretePelotonV3(state){
    }
   }
  }
+ // Athlete-specific pace differences require a separate prospective
+ // reservation for the FIVE possible middle lanes, before a cyclist is
+ // atomically admitted at x=1020. This is independent of the two-channel
+ // receiving reservation needed for the next narrowing at x=1130.
+ if(next.performanceMode==='profiles_v1'&&
+    next.roadWidthMode==='two_distinct_gates'&&
+    next.layout==='staged'&&next.scenario==='standard'){
+  for(let middleLane=0;middleLane<5;middleLane++){
+   const racers=next.racers.filter(r=>r.phase!=='wide'&&
+     r.initialLane===middleLane&&r.x>840&&r.x<1220).sort(order);
+   let ahead=null;
+   for(const r of racers){
+    if(ahead){
+     const gap=ahead.x-r.x;
+     const closure=Math.max(0,r.v-ahead.v);
+     const required=GAP+1.65+4*closure+
+       closure*closure/(2*B);
+     if(gap<required+1.8){
+      const command=Math.min(desired(next,r,draftById.get(r.id)??0),
+         speeds.get(ahead.id)+(gap-required)/1.1);
+      speeds.set(r.id,Math.min(speeds.get(r.id),
+       ramp(r.v,clip(command,FLOOR,14))));
+     }
+    }
+    ahead=r;
+   }
+  }
+ }
  for(const r of next.racers){
   r.v=speeds.get(r.id);r.x=q(r.x+r.v*DT);
   if(next.performanceMode==='profiles_v1'){
