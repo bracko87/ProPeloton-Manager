@@ -886,6 +886,9 @@
     "nextSlot": "Prochaine place : {{requirement}}",
     "unverified": "Impossible de vérifier les conditions de recrutement de ce poste.",
     "otherRestriction": "Le recrutement est bloqué par les règles actuelles du club.",
-    "viewPremium": "Voir les offres Premium"
+    "viewPremium": "Voir les offres Premium",
+    "showDetails": "Afficher les détails",
+    "hideDetails": "Masquer les détails",
+    "slotCount": "{{assigned}} postes occupés sur {{limit}}"
   }
 }
