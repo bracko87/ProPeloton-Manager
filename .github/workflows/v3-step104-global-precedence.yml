@@ -1,0 +1,63 @@
+name: V3 Step104 original A64 cross-row global precedence
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2Step104GlobalMultiRowPrecedenceV3.mjs'
+      - 'scripts/v3/verify-a2-step104-*.mjs'
+      - '.github/workflows/v3-step104-global-precedence.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  independent-physical-micro:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Five physically swept A64 policies, exact replay, mirror and rename
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step104-micro-v3.mjs
+  real-106-168-crossrow:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Twenty original A64 real-physical tests through staged and double pinch
+        env:
+          V3_A2_STEP104_DIR: ${{ runner.temp }}/step104
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step104-real-a64-v3.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: step104-global-crossrow-a64-evidence
+          path: ${{ runner.temp }}/step104/*.json
+          if-no-files-found: error
+  protected-a64-and-groups:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Eight-second group rule remains exactly as user defined
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step101-eight-second-groups-v3.mjs
+      - name: Step86 original A64 protected 180 second physical races
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step86-gap-physical-v3.mjs
+  production-react-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
