@@ -581,7 +581,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  }
  if(horizon){
   out.horizonRejectedPredictions+=horizon.evidence.filter(x=>
-   !x.accepted||!x.futureComplete).length
+   isStep85?(!x.physicallyAccepted||!x.fullHorizon||
+    x.rejectedBySportingBudget):(!x.accepted||!x.futureComplete)).length
   if(horizon.selectedPolicy){
    out.horizonSelectedTicks++
    out.horizonSelectedPolicies[horizon.selectedPolicy]=
@@ -617,7 +618,9 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  // Real x/y/v/energy and steering target are accepted only by the unchanged
  // physics solver. An unsuccessful tick retains EXACT previous rider state.
  if(!next||next.reason){
-  out.reason=next?.reason??'NO_ACCEPTABLE_PROPOSAL';out.status='REJECTED'
+  out.reason=next?.reason??(isStep85?
+    horizon?.status??'NO_ACCEPTABLE_PROPOSAL':
+    'NO_ACCEPTABLE_PROPOSAL');out.status='REJECTED'
   out.firstCollision=next?.firstCollision??null
   out.firstRoadViolation=next?.firstRoadViolation??null
   out.energyFailure=next?.energyFailure??null
