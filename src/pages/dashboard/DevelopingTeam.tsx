@@ -78,7 +78,7 @@ type DevelopingTeamPageStatus = DevelopingTeamStatus & {
 }
 
 function hasDevelopingTeamAccess(status: DevelopingTeamPageStatus | null): boolean {
-  return status?.is_purchased === true && status?.is_active === true
+  return status?.team_exists === true && Boolean(status?.developing_club_id)
 }
 
 type DevelopingCompetitionSummary = {
@@ -1086,8 +1086,8 @@ export default function DevelopingTeamPage() {
         developing_club_name: developingClub.name,
         team_exists: true,
         is_purchased: true,
-        is_active: true,
-        is_read_only: false,
+        is_active: false,
+        is_read_only: true,
         movement_window_open: false,
         current_window_label: null,
         next_window_label: null,
@@ -1465,7 +1465,9 @@ export default function DevelopingTeamPage() {
       return
     }
 
-    if (!developingTeamStatus.movement_window_open) {
+    if (!developingTeamStatus.movement_window_open ||
+      developingTeamStatus.active_season !== developingTeamStatus.current_season ||
+      Number(developingTeamStatus.expires_after_season ?? 0) < Number(developingTeamStatus.current_season ?? 0)) {
       const window = developingTeamStatus.next_window_label ?? t('movement.unknown')
       setMoveActionMessage(t('movement.windowClosedNext', { window }))
       return
@@ -1510,7 +1512,12 @@ export default function DevelopingTeamPage() {
     developingTeamStatus !== null || statusError !== null || (!loading && !error)
 
   const hasDevelopingTeam = hasDevelopingTeamAccess(developingTeamStatus)
-  const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
+  const hasSeasonalMovementGrace = Boolean(
+    developingTeamStatus?.team_exists &&
+    developingTeamStatus.active_season === developingTeamStatus.current_season &&
+    Number(developingTeamStatus.expires_after_season ?? 0) >= Number(developingTeamStatus.current_season ?? 0)
+  )
+  const movementWindowOpen = Boolean(developingTeamStatus?.movement_window_open && hasSeasonalMovementGrace)
 
   const movementWindowSummary = developingTeamStatus
     ? developingTeamStatus.movement_window_open
@@ -1587,6 +1594,11 @@ export default function DevelopingTeamPage() {
 
       {!loading && !error && hasDevelopingTeam && (
         <>
+          {developingTeamStatus?.is_read_only ? (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {t('page.expiredSeasonWarning')}
+            </div>
+          ) : null}
           {movementWindowSummary ? (
             <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800">
               {movementWindowSummary}
