@@ -304,7 +304,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const isContract=['feasible_window_v1',
   'feasible_conservative_v1'].includes(out.pacePolicy)
  const isHorizon=['horizon2_guarded_v1','horizon3_guarded_v1',
-  'multisecond_reserve_v1','multisecond_zipper_v1']
+  'multisecond_reserve_v1','multisecond_zipper_v1',
+  'feasible_window_v1','feasible_conservative_v1']
   .includes(out.pacePolicy)
  const futureById=out.mirror===true?
   new Map([...byId].map(([id,items])=>[id,items.map(b=>({
