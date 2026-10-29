@@ -20,4 +20,30 @@ The Step106 dedicated [CI workflow](../../.github/workflows/v3-step106-space-tim
 
 Sporting milestone A GO still requires a complete **180-second** original A64 physically accepted continuous path for 106 and 168 riders past **both** narrowings, zero body contact, no W-prime manipulation or crawl, real overtakes and deterministic independent replay. A locally longer original-A64 prefix is useful evidence, but not a gate passage. Any physical collision or insufficient moving speed is a real NO-GO. Neither A64 nor live race engine is changed.
 
-**Results**: Pending GitHub Actions measurement; Step104's 14s remains the actual certified best before new tests, not the Step105 13s. Overall V3 readiness remains a rough ~35%, milestone A sporting NO-GO.
+## Verified results and negative finding — October 29, 2026
+
+First Step106 [original A64 test run 40948166110](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40948166110) completed **all four jobs successfully**, including protected original Step86 32-rider 180-second benchmark and user-approved 8-second group behavior. Eight 106/168 full five-wide initial fields were tested (staged and double, 4- and 6-second forecasts). **Zero passed even the first 30-second test horizon and zero crossed the first narrowing.** Best achieved accepted movement remained 14 seconds, exactly Step104's prior best.
+
+To test whether initial anticipation was too late, the bounded original-A64 forecast was extended to **12 seconds** without changing A64 geometry, bodies, finite energy, braking/steering or group rules. Follow-up [Step106 extended workflow 40948458701](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40948458701) ran another eight five-wide 106/168 experiments (6- and 12-second actual original A64-swept previews). Micro-tests and React build passed, and the protected original Step86 run was in progress when this report was first updated.
+
+### Achieved original A64 physical duration in both Step106 experiments
+
+| Field size | Road narrowing | 4-second future | 6-second future | 12-second future |
+| --- | --- | ---: | ---: | ---: |
+| 106 | staged | 14.0s | 14.0s | 14.0s |
+| 106 | double | 9.0s | 9.0s | 9.0s |
+| 168 | staged | 14.0s | 14.0s | 14.0s |
+| 168 | double | 9.0s | 9.0s | 9.0s |
+
+**16/16 actual large-field A64 trajectory attempts ended in physical SWEPT_CONTACT rejections.** At the last accepted instant no controller offered a collision-free next half-second, despite bounded conflict-directed forecasts. The staged failure's first rejected pair is **r016/r020** (inner from one row, outer from the next); the double-pinch first rejected pair is **r005/r006** (same-row outer/inner). They recur at both field sizes, and 12-second foresight does **not** move the collision frontier.
+
+The research has established a specific *negative result*: simply extending the forecast horizon or separately changing speed requests for the future collision pair does not yield a physically feasible **whole-peloton lane-and-gap reservation**. It does NOT establish a mathematical proof that the original road geometry is impossible. A further algorithm must jointly solve *lateral swept occupancy and longitudinal gap reservations for all interacting bicycles*, with cause/effect consistency under A64 steering and acceleration, rather than picking another lookahead distance.
+
+### Invariants and next engineering milestone
+
+- Original A64 authoritative 16-substep collision/road and achieved-energy checks are untouched. Rejected previews never become accepted results; each selected first tick is independently re-swept.
+- All accepted 106/168 riders stayed **one peloton** with individually evolving positions and speeds. The approved rule remains **adjacent time gaps <=8 seconds link riders into one race group**, greater gaps split, and catches rejoin. Group assignment must never be mistaken for a single shared bicycle body.
+- Eight-rider and 32-rider physical replay, symmetry and immutable test inputs passed. All source modifications are under research-only scripts, tests, docs and workflows; no Supabase race, payout, record or live engine modification was made.
+- Milestone A requires 106 and 168 physically finish the entire 180-second controlled test through BOTH narrowing gates with no collisions, no near-stops, meaningful sustained overtakes and exact independent replay. **GO is still NO.** Overall V3 readiness estimate remains approximately 35%.
+
+**Architectural next step:** coupled continuous lateral/longitudinal space-time clearance *allocation* with explicit same-row and cross-row precedence for every upcoming taper, including third-party conflicts. This demands a globally compatible reservation certificate checked by actual original A64, not simply an x-coordinate time appointment or 2-rider speed adjustment.
