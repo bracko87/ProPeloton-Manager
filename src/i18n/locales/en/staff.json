@@ -865,5 +865,27 @@
     "workloadManagement": "Workload Management",
     "youthEvaluation": "Youth Evaluation",
     "youthTraining": "Youth Training"
+  },
+  "hireAccess": {
+    "intro": "All 12 staff roles are visible, including roles you can unlock later. Select any role to see its requirements.",
+    "states": {
+      "eligible": "Eligible to hire",
+      "locked": "Locked for now",
+      "full": "Current slots full",
+      "unknown": "Availability unverified"
+    },
+    "candidatesNote": "An open staff slot is available. Hiring also requires a matching candidate in the Staff Market.",
+    "paidPremium": "Paid Premium is required. A free Premium trial does not unlock this role.",
+    "developingTeam": "Activate and renew the U23 Developing Team (after 60 game days, 50 Coins per season).",
+    "youthAcademy": "Activate and renew the U16 Youth Academy (after 90 game days, 50 Coins per season).",
+    "youthRenewal": "Renew the Youth Academy for the current game season (50 Coins).",
+    "clubHouse": "Club House",
+    "youthInfrastructure": "Youth Academy infrastructure",
+    "facilityRequired": "{{facility}} Lv {{level}} required.",
+    "fullCapacity": "All current staff slots are filled ({{assigned}}/{{limit}}).",
+    "nextSlot": "Next slot unlock: {{requirement}}",
+    "unverified": "Hiring eligibility could not be verified for this role.",
+    "otherRestriction": "Hiring is restricted under the current club rules.",
+    "viewPremium": "View Premium plans"
   }
 }
