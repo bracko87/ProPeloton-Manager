@@ -30,6 +30,8 @@ import {step93RollingStartCandidatesV3} from './a2Step93RollingStartV3.mjs'
 import {step94ClosureCandidatesV3} from './a2Step94RelativeClosureV3.mjs'
 import {chooseStep95MovingPhysicalTickV3} from './a2Step95MovingPhysicalGateV3.mjs'
 import {step96LocalGapCandidatesV3} from './a2Step96LocalGapOpenerV3.mjs'
+import {step98GlobalTrajectoryCandidatesV3} from './a2Step98GlobalTrajectoryGraphV3.mjs'
+import {chooseStep98LongHorizonPhysicalTickV3} from './a2Step98LongHorizonPhysicalChoiceV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
 const round6=v=>Math.round(v*1e6)/1e6
@@ -76,7 +78,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
    'rolling_strict_v1','rolling_balanced_v1',
    'closure_strict_v1','closure_balanced_v1',
    'moving_strict_v1','moving_balanced_v1',
-   'local_gap_strict_v1','local_gap_balanced_v1'].includes(pacePolicy)&&
+   'local_gap_strict_v1','local_gap_balanced_v1',
+    'global_graph_strict_v1','global_graph_balanced_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -162,7 +165,11 @@ export function createMultiGatePhysicalCandidateV3(n,{
   step96GapGroups:0,step96GapEdges:0,
   step96CrossRowEdges:0,step96GapBoosts:0,
   step96GapCaps:0,step96SteeringHolds:0,
-  step96SelectedTicks:0,step96SelectedPolicies:{},step96NoGoTicks:0, 
+  step96SelectedTicks:0,step96SelectedPolicies:{},step96NoGoTicks:0,
+  step98GlobalConflicts:0,step98CrossRowConflicts:0,
+  step98EqualXConflicts:0,step98UnresolvedForecasts:0,
+  step98PhysicalPreviewSweeps:0,step98FullSixSecondPreviewTicks:0,
+  step98SelectedTicks:0,step98SelectedPolicies:{},step98NoGoTicks:0, 
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -286,7 +293,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    'rolling_strict_v1','rolling_balanced_v1',
    'closure_strict_v1','closure_balanced_v1',
    'moving_strict_v1','moving_balanced_v1',
-   'local_gap_strict_v1','local_gap_balanced_v1']
+   'local_gap_strict_v1','local_gap_balanced_v1',
+    'global_graph_strict_v1','global_graph_balanced_v1']
   .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
@@ -341,7 +349,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    'rolling_strict_v1','rolling_balanced_v1',
    'closure_strict_v1','closure_balanced_v1',
    'moving_strict_v1','moving_balanced_v1',
-   'local_gap_strict_v1','local_gap_balanced_v1']
+   'local_gap_strict_v1','local_gap_balanced_v1',
+    'global_graph_strict_v1','global_graph_balanced_v1']
   .includes(out.pacePolicy)
  // Canonical *planning-only* input: mirrored worlds are evaluated in
  // the same symmetric road coordinates. Accepted physical motion is
@@ -432,9 +441,12 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   'closure_balanced_v1','moving_strict_v1',
   'moving_balanced_v1'].includes(out.pacePolicy)
  const isStep95=['moving_strict_v1','moving_balanced_v1',
-  'local_gap_strict_v1','local_gap_balanced_v1'].includes(out.pacePolicy)
+  'local_gap_strict_v1','local_gap_balanced_v1',
+    'global_graph_strict_v1','global_graph_balanced_v1'].includes(out.pacePolicy)
  const isStep96=['local_gap_strict_v1',
   'local_gap_balanced_v1'].includes(out.pacePolicy)
+ const isStep98=['global_graph_strict_v1',
+  'global_graph_balanced_v1'].includes(out.pacePolicy)
  const isHorizon=['horizon2_guarded_v1','horizon3_guarded_v1',
   'multisecond_reserve_v1','multisecond_zipper_v1',
   'feasible_window_v1','feasible_conservative_v1',
@@ -451,7 +463,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    'rolling_strict_v1','rolling_balanced_v1',
    'closure_strict_v1','closure_balanced_v1',
    'moving_strict_v1','moving_balanced_v1',
-   'local_gap_strict_v1','local_gap_balanced_v1']
+   'local_gap_strict_v1','local_gap_balanced_v1',
+    'global_graph_strict_v1','global_graph_balanced_v1']
   .includes(out.pacePolicy)
  const futureById=out.mirror===true?
   new Map([...byId].map(([id,items])=>[id,items.map(b=>({
@@ -462,14 +475,14 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const canonicalBookings=out.mirror===true?
   bookings.map(b=>({...b,targetY:round6(4.4-b.targetY)})):
   bookings
- const consensusPilot=(isStep84||isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96)?
+ const consensusPilot=(isStep84||isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96||isStep98)?
   step84ConsensusCandidatesV3(canonical.states,canonicalRequests,{
    horizonSeconds:6,urgentSeconds:3.5}):null
- const gapPilot=(isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96)?
+ const gapPilot=(isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96||isStep98)?
   step86GapCandidatesV3(canonical.states,canonicalRequests,
    canonicalBookings,{atSeconds:canonical.at,lookAheadM:55,
     movingFloorMps:7.5}):null
- const orderPilot=(isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96)?
+ const orderPilot=(isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96||isStep98)?
   step87CorridorCandidatesV3(canonical.states,canonicalRequests,
    canonicalBookings,{atSeconds:canonical.at,minMovingSpeedMps:7.3}):null
  const rowPilot=isStep88?
@@ -491,6 +504,9 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const rollingPilot=isStep93?
   step93RollingStartCandidatesV3(canonical.states,canonicalRequests,
    canonicalBookings,{atSeconds:canonical.at}):null
+ const globalGraphPilot=isStep98?
+  step98GlobalTrajectoryCandidatesV3(canonical.states,canonicalRequests,
+   canonicalBookings,{horizonSeconds:8}):null
  const localGapPilot=isStep96?
   step96LocalGapCandidatesV3(canonical.states,canonicalRequests,
    canonicalBookings,{atSeconds:canonical.at}):null
@@ -511,7 +527,15 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   multiSecondReservationCandidatesV3(canonical.states,
    canonicalRequests,canonicalBookings,{
     horizonSeconds:8,nowSeconds:canonical.at,paceFloor:6.4}):null
- const horizonProposals=isStep96?[
+ const horizonProposals=isStep98?[
+     {policy:'global_shield',requests:globalGraphPilot.candidates[0].requests},
+     {policy:'global_coupled',requests:globalGraphPilot.candidates[1].requests},
+     {policy:'global_surge',requests:globalGraphPilot.candidates[2].requests},
+     {policy:'proven_gap_wave',requests:gapPilot.candidates[2].requests},
+     {policy:'proven_order_pace',requests:orderPilot.candidates[2].requests},
+     {policy:'baseline',requests:canonicalRequests},
+     {policy:'joint',requests:canonicalJoint}
+    ]:isStep96?[
      {policy:'local_lane_shield',requests:localGapPilot.candidates[0].requests},
      {policy:'local_group_pulse',requests:localGapPilot.candidates[1].requests},
      {policy:'local_gap_wave',requests:localGapPilot.candidates[2].requests},
@@ -683,6 +707,15 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   if(requests.some(r=>r.error))return []
   const plans=distributedAdmissionCandidatesV3(field.states,requests,
    out.originalDesired,{firstExitX:1020,maxLocalRiders:8,rangeM:25})
+  if(isStep98){
+   const current=step98GlobalTrajectoryCandidatesV3(field.states,
+    requests,canonicalBookings,{horizonSeconds:8})
+   return [
+    {policy:'future_global_coupled',requests:current.candidates[1].requests},
+    {policy:'future_global_shield',requests:current.candidates[0].requests},
+    {policy:'future_global_surge',requests:current.candidates[2].requests}
+   ]
+  }
   if(isStep96){
    const current=step96LocalGapCandidatesV3(field.states,requests,
     canonicalBookings,{atSeconds:field.at})
@@ -852,7 +885,12 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    {policy:'follow_zipper',requests:plans.candidates[2].requests}
   ]
  }
- const horizon=isStep95?
+ const horizon=isStep98?
+    chooseStep98LongHorizonPhysicalTickV3(canonical,horizonProposals,
+     makeFuture,advanceNormalStartV3,{
+      horizonSeconds:6,maxFirst:5,maxFuture:2,beamWidth:2,
+      clearanceFirst:out.pacePolicy==='global_graph_strict_v1'
+     }):isStep95?
    chooseStep95MovingPhysicalTickV3(canonical,horizonProposals,
     makeFuture,advanceNormalStartV3,{
      depth:3,maxFirst:7,maxFuture:3,
@@ -862,7 +900,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
      clearanceFirst:out.pacePolicy==='moving_strict_v1'||
       out.pacePolicy==='local_gap_strict_v1'
     }):
-   (isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96)?
+   (isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96||isStep98)?
   chooseThroughputGuardedTickV3(canonical,horizonProposals,
    makeFuture,advanceNormalStartV3,{
     depth:3,maxFirst:isStep94?7:isStep93?7:isStep92?8:isStep91?7:isStep90?7:isStep89?7:isStep88?8:isStep86||isStep87?6:5,maxFuture:3,
@@ -915,6 +953,20 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   prospective?
   (prospective.physical??prospective.firstRejected):
   advanceNormalStartV3(candidate)
+ if(isStep98){
+  out.step98GlobalConflicts+=globalGraphPilot.plan.conflictingPairs
+  out.step98CrossRowConflicts+=globalGraphPilot.plan.crossRowPairs
+  out.step98EqualXConflicts+=globalGraphPilot.plan.equalXConflicts
+  out.step98UnresolvedForecasts+=globalGraphPilot.plan.unresolved
+  out.step98PhysicalPreviewSweeps+=horizon?.previewLedger?.originalSolverCalls??0
+  if((horizon?.physicallySafeLookaheadTicks??0)>=12)
+   out.step98FullSixSecondPreviewTicks++
+  if(horizon?.selectedPolicy){
+   out.step98SelectedTicks++
+   out.step98SelectedPolicies[horizon.selectedPolicy]=
+    (out.step98SelectedPolicies[horizon.selectedPolicy]??0)+1
+  }else out.step98NoGoTicks++
+ }
  if(isStep96){
   out.step96GapGroups+=localGapPilot.plan.started
   out.step96GapEdges+=localGapPilot.plan.relativeEdges
@@ -1080,7 +1132,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  }
  if(horizon){
   out.horizonRejectedPredictions+=horizon.evidence.filter(x=>
-   (isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96)?(!x.physicallyAccepted||!x.fullHorizon||
+   isStep98?(!x.acceptedFirst||x.actualHorizonSteps<12):
+    (isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94||isStep96)?(!x.physicallyAccepted||!x.fullHorizon||
     x.rejectedBySportingBudget):(!x.accepted||!x.futureComplete)).length
   if(horizon.selectedPolicy){
    out.horizonSelectedTicks++
