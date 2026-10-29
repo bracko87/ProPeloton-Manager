@@ -616,6 +616,9 @@ type AcademyPayload = {
   premium: boolean
   activated: boolean
   read_only?: boolean
+  academy_closed?: boolean
+  auto_renew?: boolean
+  can_graduate_in_grace?: boolean
   club_id: string
   club_name: string
   country_code: string
@@ -868,6 +871,7 @@ export default function YouthAcademyPage(): JSX.Element {
   const [data, setData] = useState<AcademyPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingAutoRenew, setSavingAutoRenew] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [tab, setTab] = useState<TabKey>('overview')
   const youthTabScrollRef = React.useRef<HTMLDivElement>(null)
@@ -1575,7 +1579,7 @@ export default function YouthAcademyPage(): JSX.Element {
     graduation: YouthGraduation,
     decision: 'pathway' | 'developing_team' | 'release'
   ): Promise<void> => {
-    if (data?.read_only || graduationAction) return
+    if ((data?.read_only && !data?.can_graduate_in_grace) || graduationAction) return
     setGraduationAction(graduation.id)
     setError(null)
     try {
@@ -1720,6 +1724,24 @@ export default function YouthAcademyPage(): JSX.Element {
       setError(renewError?.message ?? t('errors.renew'))
     } finally {
       setSaving(false)
+    }
+  }
+
+  const changeAutoRenew = async (checked: boolean): Promise<void> => {
+    if (!data?.activated || savingAutoRenew || data.read_only) return
+    setSavingAutoRenew(true)
+    setError(null)
+    try {
+      const { error: renewalError } = await supabase.rpc(
+        'set_my_youth_academy_auto_renew_v1',
+        { p_enabled: checked },
+      )
+      if (renewalError) throw renewalError
+      setData(current => current ? { ...current, auto_renew: checked } : current)
+    } catch (e: any) {
+      setError(e?.message ?? t('errors.renew'))
+    } finally {
+      setSavingAutoRenew(false)
     }
   }
 
@@ -2245,6 +2267,24 @@ export default function YouthAcademyPage(): JSX.Element {
           </div>
         ) : null}
       </div>
+
+      <div className="rounded-xl border border-slate-200 bg-white p-4">
+        <label className="flex items-start justify-between gap-4 text-sm text-slate-800">
+          <div>
+            <div className="font-semibold">{t('renewal.autoRenewLabel')}</div>
+            <p className="mt-1 text-xs text-slate-600">{t('renewal.autoRenewHelp', { cost: data.renewal_coin_cost ?? 50 })}</p>
+          </div>
+          <input type="checkbox" checked={data.auto_renew !== false}
+            disabled={Boolean(data.read_only || savingAutoRenew)}
+            onChange={event => void changeAutoRenew(event.target.checked)}
+            className="h-4 w-4 shrink-0 rounded border-slate-300" />
+        </label>
+      </div>
+      {data.read_only ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          {t('renewal.graceWarning')}
+        </div>
+      ) : null}
 
       {data.renewal_required ? (
         <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
@@ -2963,7 +3003,7 @@ export default function YouthAcademyPage(): JSX.Element {
                       <div className="mt-4 flex flex-wrap gap-2">
                         <button
                           type="button"
-                          disabled={data.read_only || busy}
+                          disabled={(data.read_only && !data.can_graduate_in_grace) || busy}
                           onClick={() => void decideGraduation(item, 'pathway')}
                           className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-medium disabled:opacity-50"
                         >
@@ -2972,7 +3012,7 @@ export default function YouthAcademyPage(): JSX.Element {
                         <button
                           type="button"
                           disabled={
-                            data.read_only ||
+                            (data.read_only && !data.can_graduate_in_grace) ||
                             busy ||
                             !item.has_developing_team ||
                             item.developing_team_free_slots <= 0
