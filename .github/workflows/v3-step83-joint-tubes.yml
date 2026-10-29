@@ -1,0 +1,60 @@
+name: V3 Step83 joint 2D tubes true swept bicycle research
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2Step83JointTubesV3.mjs'
+      - 'scripts/v3/verify-a2-step83-joint-tubes-v3.mjs'
+      - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
+      - '.github/workflows/v3-step83-joint-tubes.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  joint-2d-tube-original-physical:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: A83 mirror-symmetric crossing warnings and 16 actual swept full-body 8 32 106 168 samples
+        env:
+          V3_A2_STEP83_DIR: ${{ runner.temp }}/a83
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step83-joint-tubes-v3.mjs
+      - name: Protected A82 32 rider full 180s staged 85 verified three-second sustained passes and exact replay
+        env:
+          V3_A2_STEP82_LONG_DIR: ${{ runner.temp }}/a82
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step82-parity-full-races-v3.mjs
+      - name: Protected A78 32 rider five-abreast 180s staged 87 verified passes
+        env:
+          V3_A2_STEP78_LOCAL_REPLAY_DIR: ${{ runner.temp }}/a78
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-phase2-local-replay-v3.mjs
+      - name: Protected A76 32 106 168 180s three-abreast 58 151 198 independent passes
+        env:
+          V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/a76
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
+      - name: Upload actual collisions and protected baseline results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a83-joint-2d-physical-original-swept-evidence
+          path: |
+            ${{ runner.temp }}/a83/*.json
+            ${{ runner.temp }}/a82/*.json
+            ${{ runner.temp }}/a78/*.json
+            ${{ runner.temp }}/a76/*.json
+          if-no-files-found: warn
+          retention-days: 30
+  react-production-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
