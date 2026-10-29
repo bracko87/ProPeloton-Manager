@@ -53,3 +53,25 @@ The first five-first-plan Step98 run independently verified **16/16 original phy
 The new eight-second global pair graph genuinely coordinates simultaneous x/y/v request *predictions* and the six-second chooser genuinely sweeps hypothetical full-field A64 motion. But *neither* makes a permanently feasible multigroup crossing reservation. A length-six forecast is repeatedly rebuilt from current commands without persistent multirow allocation / cross-gate conflict-free commitments; a selected first step can lead to physical deadlock a few seconds later. Projected conflicts are sampled at 0.5s, not a sufficient swept envelope guarantee, although original A64 independently rejects actual substep contacts. Finite beam search failure must never be called mathematical impossibility.
 
 **Milestone A sporting NO-GO.** The next research gate should test genuine global x/y/time lane-crossing constraints with persistent priority/order and reserved longitudinal windows (with original accelerations, swept contact, moving floors, exact replay) rather than simply extending the same short-horizon graph. Preserve Step86 protected 32 full180 stage passes and all established tests. No Milestone B/C production integration, race/game clock, Supabase write, user record or payout change.
+
+
+## Final corrected Step98 parity, protected and CI
+
+**[Corrected Step98 GitHub Actions run 40917539347](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40917539347) concluded SUCCESS: 4/4 jobs successful**. Independently executed new A98 pure/physical selector unit plus protected A97, A96, A95, A94, A93, A92, A91, A90, A89, A87, A86, A85, A78 regressions, full eight-case 106/168 original-A64 race requests, original 16-case mirror/renamed physical comparison, true 8/32 overtake and checkpoint and React build. This is strictly **technical CI PASS, sporting NO-GO**.
+
+The *final* seven-first-plan original A64 symmetry/replay audit (NOT the superseded initial five-plan code) verified **16/16** actual mirrored and renamed physical fields, identical actual x/y/v and W-prime, same selected policy, no ID or side advantage. Its real independent 180s sporting checks:
+
+| Riders | Road | Policy | Accepted | Genuine independent ≥3s passes | Actual physical lane changes | Both gates cleared | Exact 90+90 physics + observer replay |
+| --- | --- | --- | ---: | ---: | ---: | --- | --- |
+| 8 | staged | strict | 180s | 4 | 15 | Yes | Yes |
+| 8 | double | strict | 180s | 4 | 67 | Yes | Yes |
+| 32 | staged | strict | 4.0s | 0 | 2 | No | Not reached |
+| 32 | staged | balanced | 3.5s | 0 | 2 | No | Not reached |
+| 32 | double | strict | 8.5s | 0 | 3 | No | Not reached |
+| 32 | double | balanced | 9.0s | 0 | 3 | No | Not reached |
+
+All actual accepted moves remained above Step95 speed floors and produced **zero near-stops**; rejected physical attempts could not mutate accepted state. The 8-rider staged final exact observer+physical recovery passed with 106,818 original-A64 hypothetical physical sweeps across its full180; double with 106,662. Such heavy search overhead is another reason it cannot be promoted to production without major efficiency improvement even if its large-field sporting viability were achieved.
+
+The protected Step86 original sporting reference continues to complete 32-rider staged and double races in full180 with respectively **80 sustained passes / 411 actual lane changes** and **70 passes / 678 changes**; the new Step98 strict/balanced 32r scenarios fail in 3.5–9s. The full corrected 106/168 sport gate remains **0/8** completed and no rider field passes the second narrowing. **Phase A remains incomplete; B/C not started; live production V3 not switched on.**
+
+**Final Step98 conclusion:** A98 whole-field graph (8-second request trajectory) + A64-verified 6-second beam horizon is implemented, repeatable and physically fail-closed, but not an acceptable peloton controller. Increasing model scope and horizon alone does not solve continuously safe large-field zippering. Next research must establish globally feasible *persistent* space-time lane reservations (or a genuine proof of physical infeasibility under current bounds), rather than more short-term heuristics. No changes to official race engine, source A64, Supabase, race history, payouts, classification, game clock or users.
