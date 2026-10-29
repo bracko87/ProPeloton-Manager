@@ -1,0 +1,45 @@
+name: V3 alternative discrete capacity 106 168 proof of concept
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a3DiscreteCapacityPelotonV3.mjs'
+      - 'scripts/v3/verify-a3-discrete-capacity-v3.mjs'
+      - '.github/workflows/v3-alternative-discrete-capacity-poc.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deterministic-racing-simulation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original 5-wide 106/168 abstract-lane 180s 2 gates, overtakes, groups, replay
+        run: node scripts/v3/verify-a3-discrete-capacity-v3.mjs
+  protect-original-engine:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Original 8-second peloton grouping
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step101-eight-second-groups-v3.mjs
+      - name: Original A64 32 rider 180s protected test
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step86-gap-physical-v3.mjs
+  production-react-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
