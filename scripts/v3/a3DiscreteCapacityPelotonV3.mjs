@@ -131,11 +131,12 @@ export function advanceDiscretePelotonV3(state){
      Math.max(0,9-r.v)*8*DT,0,23000));
   if(r.phase==='wide'){
    if(ticks>=r.entryTick){
-    if(Math.abs(r.x-GATE)>3e-4){
-     next.reason='GATE_SCHEDULE_NOT_REACHED';
-     next.rejection={id:r.id,actualX:r.x,entryTick:r.entryTick};break;
+    // Earliest admission, not a forced x=680 placement: a rider that
+    // arrives late continues moving in the approach lane. The actual
+    // gate crossing still requires one real forward-motion increment.
+    if(r.x>=GATE-1e-5){
+     r.phase='two_lane';r.lane=steer(r.channel);
     }
-    r.phase='two_lane';r.lane=steer(r.channel);
    }else if(r.x>=GATE-1e-5){
     next.reason='EARLY_GATE_ENTRY';
     next.rejection={id:r.id,actualX:r.x};break;
