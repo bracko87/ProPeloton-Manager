@@ -886,6 +886,9 @@
     "nextSlot": "Следующее место: {{requirement}}",
     "unverified": "Не удалось проверить требования к найму на эту должность.",
     "otherRestriction": "Найм ограничен текущими правилами клуба.",
-    "viewPremium": "Посмотреть тарифы Premium"
+    "viewPremium": "Посмотреть тарифы Premium",
+    "showDetails": "Показать детали",
+    "hideDetails": "Скрыть детали",
+    "slotCount": "Занято мест: {{assigned}} из {{limit}}"
   }
 }
