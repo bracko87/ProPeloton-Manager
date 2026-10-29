@@ -3568,13 +3568,18 @@ function RoleTabButton({
   onClick: () => void
 }) {
   const { t } = useTranslation('staff')
+  const [detailsExpanded, setDetailsExpanded] = useState(false)
+  const detailsId = React.useId()
   const roleKeys = ROLE_TRANSLATION_KEYS[role]
 
+  // These are counts, not prices. Use separate numeric nodes so no
+  // currency formatting is applied to the slot indicator.
+  const assignedLabel = String(Math.max(0, Math.trunc(Number(currentCount) || 0)))
+  const limitLabel = String(Math.max(0, Math.trunc(Number(limit) || 0)))
+
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex h-full w-full flex-col rounded-xl border p-4 text-left transition ${
+    <div
+      className={`flex h-full min-w-0 flex-col rounded-xl border p-4 transition ${
         selected
           ? 'border-yellow-300 bg-yellow-50 shadow-sm'
           : access.canHire
@@ -3582,33 +3587,60 @@ function RoleTabButton({
             : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:shadow-sm'
       }`}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <div className="text-sm font-semibold text-gray-900">{t(roleKeys.label)}</div>
-          <div className="mt-1 text-xs text-gray-500">{t(roleKeys.subtitle)}</div>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={selected}
+        className="w-full min-w-0 flex-1 text-left focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-500"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-gray-900">{t(roleKeys.label)}</div>
+            <div className="mt-1 text-xs text-gray-500">{t(roleKeys.subtitle)}</div>
+          </div>
+          <span
+            aria-label={t('hireAccess.slotCount', { assigned: assignedLabel, limit: limitLabel })}
+            data-staff-slot-count="true"
+            className={`inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium tabular-nums ${
+              selected ? 'bg-yellow-400 text-black' : 'bg-gray-100 text-gray-600'
+            }`}
+          >
+            <span>{assignedLabel}</span>
+            <span aria-hidden="true">/</span>
+            <span>{limitLabel}</span>
+          </span>
         </div>
+      </button>
 
-        <span
-          className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-            selected ? 'bg-yellow-400 text-black' : 'bg-gray-100 text-gray-600'
-          }`}
-        >
-          {currentCount}/{limit}
-        </span>
-      </div>
-      <div className="mt-3 w-full border-t border-gray-200 pt-2 text-xs">
-        <div className={`font-semibold ${access.canHire ? 'text-green-700' : 'text-gray-700'}`}>
+      <button
+        type="button"
+        aria-expanded={detailsExpanded}
+        aria-controls={detailsId}
+        onClick={() => setDetailsExpanded(expanded => !expanded)}
+        className="mt-3 flex w-full items-center justify-between gap-3 border-t border-gray-200 pt-2 text-left text-xs focus-visible:rounded focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-500"
+      >
+        <span className={`font-semibold ${access.canHire ? 'text-green-700' : 'text-gray-700'}`}>
           {t(`hireAccess.states.${access.state}`)}
-        </div>
-        {access.reasons.length > 0 ? (
-          <ul className="mt-1 space-y-1 text-gray-600">
-            {access.reasons.map((reason, i) => <li key={i}>• {reason}</li>)}
-          </ul>
-        ) : (
-          <p className="mt-1 text-gray-500">{t('hireAccess.candidatesNote')}</p>
-        )}
+        </span>
+        <span className="shrink-0 font-medium text-gray-600">
+          {t(detailsExpanded ? 'hireAccess.hideDetails' : 'hireAccess.showDetails')}
+          <span aria-hidden="true" className="ml-1">{detailsExpanded ? '▴' : '▾'}</span>
+        </span>
+      </button>
+      <div id={detailsId} hidden={!detailsExpanded}>
+        {detailsExpanded ? (
+          <div className="mt-2 text-xs text-gray-600">
+            {access.reasons.length > 0 ? (
+              <ul className="space-y-1">
+                {access.reasons.map((reason, index) => <li key={index}>• {reason}</li>)}
+              </ul>
+            ) : (
+              <p>{t('hireAccess.candidatesNote')}</p>
+            )}
+          </div>
+        ) : null}
       </div>
-    </button>
+    </div>
   )
 }
 
