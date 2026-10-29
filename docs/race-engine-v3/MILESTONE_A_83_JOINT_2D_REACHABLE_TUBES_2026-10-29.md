@@ -41,7 +41,22 @@ The matrix passes **technical assertions** because each rejection is recorded fa
 
 The [Step83 first GitHub Actions workflow](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40857136722) passed the new honest 16-case A83 matrix, the protected A82 32r full 180s/85 independently sustained 3s overtakes, protected A78 32r 180s/87 independent passes, and original A76 32/106/168 **three-abreast** full 180s with **58/151/198** independent ≥3s passes. React production build passed. These older successful fixtures are **not** Step83 full-field sporting successes.
 
-A separate [Step83 full-field fairness and 8/32 sporting replay workflow](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40857347024) contains the mirrored/renamed actual-physics and independent overtaking-observer full-horizon tests; report their exact final outcomes rather than assuming technical success implies full racing viability.
+The independent [Step83 full-field fairness and full 8/32 sporting replay workflow](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40857347024) also **PASSED all technical assertions**, including **16 mirrored-road/renamed-rider A64 actual-physical full-field short tests** (8/32/106/168 × staged/double × both research policies). Their selected synchronized proposals, accepted x/y/v, W-prime energy and rejection outcomes were symmetric and identity-neutral.
+
+The same verifier continued six 8/32-rider five-abreast research configurations to the full 180-second intended limit, coupling **only actually accepted physical ticks** to the independent ≥3-second sustained overtaking observer:
+
+| Test and Step83 policy | Full physical accepted duration | Near-stop ticks | Real lane changes | Independent sustained ≥3s overtakes | Actual result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 8r staged, hold | **180s** | 0 | 118 | **10** | Full physical pass, exact serialized 90+90 physics + observer recovery |
+| 8r double, hold | **180s** | 0 | 210 | **8** | Full physical pass, exact serialized 90+90 physics + observer recovery |
+| 32r staged, hold | **73.5s** | 0 | 215 | 60 before rejection | **SWEPT_CONTACT r011/r020**; full 180s FAIL |
+| 32r staged, release | **73.5s** | 0 | 227 | 60 before rejection | **SWEPT_CONTACT r011/r020**; full 180s FAIL |
+| 32r double, hold | **26.5s** | 1 | 84 | 8 before rejection | **SWEPT_CONTACT r018/r024**; full 180s FAIL |
+| 32r double, release | **15.5s** | 1 | 31 | 2 before rejection | **SWEPT_CONTACT r010/r011**; full 180s FAIL |
+
+Both completed 8r races reached well beyond second gate reopening (rear x2173.1625m staged, x2138.843632m double), zero contact/road exit/near-stops and exact independent serialized replay. **None of the four 32r Step83 policies finished 180 seconds.** The 32r staged 73.5s cases cannot be described as checkpoint-complete, since they rejected a real swept collision before 90s; the verifier records exact 90+90 recovery as **not applicable**, not as a pass.
+
+The previously proven Step78 32r staged full 180s/87 passes/356 lanes and Step82 32r staged full 180s/85 passes/460 lanes are preserved by independent strict regression and are **far better sporting controllers**. Step83's new projected 2D warning machinery must remain a separate diagnostic, not a replacement race policy.
 
 ## Next research gate
 
