@@ -6,6 +6,7 @@ on:
       - 'scripts/v3/a2Step78JointViabilityV3.mjs'
       - 'scripts/v3/a2Step78ProspectiveChoiceV3.mjs'
       - 'scripts/v3/verify-a2-step78-prospective-coupled-v3.mjs'
+      - 'scripts/v3/verify-a2-step78-32-sporting-replay-v3.mjs'
       - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
       - 'scripts/v3/verify-a2-step78-joint-viability-v3.mjs'
       - '.github/workflows/v3-step78-joint-viability.yml'
@@ -29,6 +30,10 @@ jobs:
         env:
           V3_A2_STEP78_PROSPECTIVE_DIR: ${{ runner.temp }}/a78prospective
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-prospective-coupled-v3.mjs
+      - name: Certify Step78 real 32-rider sustained 3-second passes, full 180s mirror and exact 90 plus 90 replay
+        env:
+          V3_A2_STEP78_32_DIR: ${{ runner.temp }}/a78-32
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-32-sporting-replay-v3.mjs
       - name: Preserve A77 32-rider five-abreast staged 180s and 80+ real sustained passes
         env:
           V3_A2_STEP77_STAGED_DIR: ${{ runner.temp }}/a77
@@ -45,6 +50,7 @@ jobs:
           path: |
             ${{ runner.temp }}/a78/*.json
             ${{ runner.temp }}/a78prospective/*.json
+            ${{ runner.temp }}/a78-32/*.json
             ${{ runner.temp }}/a77/*.json
             ${{ runner.temp }}/a76/*.json
           if-no-files-found: warn
