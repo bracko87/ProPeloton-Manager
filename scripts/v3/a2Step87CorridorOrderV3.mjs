@@ -157,6 +157,71 @@ export function step87CorridorOrderV3(states,requests,bookings,{
   const e=byIndex.get(i);
   if(e){e.blocked=true;e.deferred=true}
  }
+ // At the SECOND physical gate, a rider's first-gate slot constrains
+ // their next reachable arrival. This is a *necessary* kinematic chain:
+ // neither arrival times nor x/y are fabricated/accepted as real motion.
+ const subsequent=[];
+ for(const first of entries){
+  const second=(byId.get(first.s.id)||[])
+   .filter(b=>b.gateX>first.book.gateX+EPS)
+   .sort((a,b)=>a.gateX-b.gateX)[0];
+  if(!second)continue;
+  const w=step82ArrivalIntervalV3(first.s,second.gateX,{
+   maxSeconds:searchSeconds,minMovingSpeed:minMovingSpeedMps,
+   maxMovingSpeed:maxMovingSpeedMps});
+  const distance=second.gateX-first.book.gateX;
+  const lateral=Math.abs(second.targetY-first.book.targetY);
+  const chainSeconds=Math.max(distance/maxMovingSpeedMps,lateral/L);
+  const chained=first.assigned===null?null:
+   q(first.assigned+chainSeconds);
+  const individual=w.earliest===null?null:q(atSeconds+w.earliest);
+  const earliest=chained===null||individual===null?null:
+   q(Math.max(chained,individual));
+  const latest=w.latest===null?null:q(atSeconds+w.latest);
+  subsequent.push({i:first.i,s:first.s,book:second,
+   assigned:earliest,earliest,latest,
+   firstAssigned:first.assigned,travelAndSteerSeconds:q(chainSeconds),
+   chainValid:earliest!==null,predecessors:[],blocked:false});
+ }
+ const secondarySorted=subsequent.slice().sort(compare);
+ const secondaryEdges=[],secondaryWarnings=[];
+ for(let k=0;k<secondarySorted.length;k++){
+  const rear=secondarySorted[k];
+  for(let h=0;h<k;h++){
+   const front=secondarySorted[h];
+   if(!crossingConflict(front,rear)||
+    Math.abs(front.s.x-rear.s.x)>maxNeighborDistM)continue;
+   const c=compare(front,rear);
+   if(c===0){
+    rear.blocked=true;front.blocked=true;
+    secondaryWarnings.push({type:'SECOND_GATE_GEOMETRY_TIE',
+     a:front.i,b:rear.i});
+    continue;
+   }
+   const ahead=c<0?front:rear,behind=c<0?rear:front;
+   const sec=Math.max(.5,minCorridorSeparationM/
+    Math.max(minMovingSpeedMps,
+     Math.min(ahead.s.v,behind.s.v)));
+   secondaryEdges.push({ahead:ahead.i,behind:behind.i,
+    requiredGapSeconds:q(sec)});
+   behind.predecessors.push({i:ahead.i,sec});
+  }
+ }
+ const subsequentByIndex=new Map(subsequent.map(e=>[e.i,e]));
+ for(const row of secondarySorted){
+  if(row.assigned===null)continue;
+  for(const p of row.predecessors){
+   const predecessor=subsequentByIndex.get(p.i);
+   if(predecessor?.assigned!==null&&predecessor?.assigned!==undefined)
+    row.assigned=q(Math.max(row.assigned,
+     predecessor.assigned+p.sec));
+  }
+  if(row.latest!==null&&row.assigned>row.latest+EPS){
+   row.blocked=true;
+   secondaryWarnings.push({type:'SECOND_GATE_NECESSARY_WINDOW_PRESSURE',
+    i:row.i,assigned:row.assigned,latest:row.latest});
+  }
+ }
  return {
   status:warnings.some(w=>w.type==='REQUESTED_WINDOW_TOO_LATE')?
    'NECESSARY_REQUEST_WINDOW_PRESSURE':
@@ -170,6 +235,19 @@ export function step87CorridorOrderV3(states,requests,bookings,{
    preceding:e.predecessors.length,reachable:e.reachable
   })),edges,warnings,
   linkedRiders:entries.filter(e=>e.predecessors.length>0).length,
+  nextGateEntries:subsequent.map(e=>({
+   i:e.i,id:e.s.id,gateId:e.book.gateId,gateX:e.book.gateX,
+   targetY:e.book.targetY,
+   earliest:e.earliest,latest:e.latest,assigned:e.assigned,
+   previousGateAssigned:e.firstAssigned,
+   necessaryTravelAndSteerSeconds:e.travelAndSteerSeconds,
+   provisionalChain:e.chainValid,blocked:e.blocked,
+   preceding:e.predecessors.length
+  })),
+  nextGateEdges:secondaryEdges,
+  nextGateWarnings:secondaryWarnings,
+  nextGateKinematicChains:subsequent.length,
+  gatesScheduled:subsequent.length?2:1,
   geometryTies:ambiguous.size,
   deferredRiders:entries.filter(e=>e.deferred).length,
   pressuredRiders:entries.filter(e=>e.blocked).length,
