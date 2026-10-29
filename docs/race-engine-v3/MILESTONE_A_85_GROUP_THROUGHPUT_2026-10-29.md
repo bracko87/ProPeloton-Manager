@@ -59,7 +59,7 @@ The 8r strict result supports small-field feasibility; it does not generalize to
 - [Step85 first full suite: no-stop unit proof, 16 physical cases, protected A84, A78, A76, React build](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40863236642) — completed SUCCESS.
 - [Step85 long true mirror/renamed and 8/32 180s independent passing/replay](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40863409348) — completed SUCCESS, including protected A78.
 - [Step85 corrected fail-closed classification and protected CI](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40863552404) — completed SUCCESS.
-- [Step85 strict **no committed near-stop tick** additional hard assertion and regressions](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40863814467) — separate run; verify final completion independently before asserting green.
+- [Step85 strict **zero committed near-stop ticks** hard assertion, all 16 physical fixtures, previous A84/A78/A76 real passing regressions, React build and artifact upload](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40863814467) — **completed SUCCESS** (verified every protected job and evidence upload).
 
 All changes are limited to opt-in synthetic offline scripts, tests, CI and documentation; no active physical controller, live race stage, classification, historic result, Supabase database, payout, game clock or player team data was modified. `main` is the owner-requested destination for scoped code changes, but GitHub CI passing does **not** certify Netlify production deployment.
 
