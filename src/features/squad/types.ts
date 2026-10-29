@@ -146,6 +146,13 @@ export type DevelopingTeamStatus = {
   developing_club_id: string | null
   developing_club_name: string | null
   is_purchased: boolean
+  team_exists?: boolean
+  access_status?: string
+  is_active?: boolean
+  is_read_only?: boolean
+  current_season?: number
+  active_season?: number | null
+  expires_after_season?: number | null
   real_days_played: number
   game_days_played: number
   time_requirement_met: boolean
