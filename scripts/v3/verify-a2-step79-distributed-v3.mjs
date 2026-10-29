@@ -45,7 +45,9 @@ for(let c=0;c<4;c++)for(let i=0;i<states.length;i++){
  const a=analysis.candidates[c].requests[i],
   b=mirror.candidates[c].requests[i],
   d=renamed.candidates[c].requests[i]
- assert(eq(a.speed,b.speed)&&eq(a.targetY+b.targetY,4.4))
+ assert(eq(a.speed,b.speed)&&eq(a.targetY+b.targetY,4.4),
+  'A79 reflect c'+c+' i'+i+' base='+JSON.stringify(a)+
+  ' mirror='+JSON.stringify(b))
  assert(eq(a.speed,d.speed)&&eq(a.targetY,d.targetY))
 }
 assert.throws(()=>distributedAdmissionCandidatesV3(states,
