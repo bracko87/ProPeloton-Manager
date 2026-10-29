@@ -112,9 +112,26 @@ export function step86MultiRowGapPlanV3(states,baseline,bookings,{
    // Initial five-abreast physical roles; symmetric about center.
    // OUTER must wait for the nearer INNER track to physically open.
    if(role==='INNER'){
-    leadBoosts[i]=Math.max(leadBoosts[i],s.v+
-     clamp(.55+distance/Math.max(1,s.v)/urgencySeconds,
-      .55,1.15));
+    // Assist only until ACTUAL physical separation from its same-side
+    // OUTER has opened. Do not continuously increase the leader's
+    // speed for the whole run to the gate: that drains W-prime.
+    const outer=row.filter(j=>
+      Math.abs(states[j].y-2.2)>1.55&&
+      Math.sign(states[j].y-2.2)===Math.sign(s.y-2.2))
+     .sort((a,b)=>Math.abs(states[b].y-2.2)-
+      Math.abs(states[a].y-2.2))[0];
+    if(outer!==undefined){
+     const t=states[outer],gap=s.x-t.x;
+     const required=step86RequiredGapV3(s,t,{
+      responseSeconds:Math.max(1.8,Math.abs(
+       baseline[outer].targetY-t.y)/LATERAL)})+longitudinalMarginM;
+     if(gap<required&&s.v<t.v+.75){
+      leadBoosts[i]=Math.max(leadBoosts[i],
+       Math.min(10.1,s.v+
+        clamp(.30+distance/Math.max(1,s.v)/urgencySeconds,
+         .35,.7)));
+     }
+    }
    }else if(role==='OUTER'){
     const inner=row.filter(j=>Math.abs(states[j].y-2.2)<d-.1&&
       Math.sign(states[j].y-2.2)===Math.sign(s.y-2.2))
@@ -122,7 +139,9 @@ export function step86MultiRowGapPlanV3(states,baseline,bookings,{
        Math.abs(Math.abs(states[a].y-2.2)-1.1))[0];
     if(inner!==undefined){
      const leader=states[inner],gap=leader.x-s.x;
-     const needed=step86RequiredGapV3(leader,s)+longitudinalMarginM;
+     const needed=step86RequiredGapV3(leader,s,{
+     responseSeconds:Math.max(1.8,Math.abs(
+      baseline[i].targetY-s.y)/LATERAL)})+longitudinalMarginM;
      if(gap<needed){
       holds[i]=true;unsatisfiedMergeGaps++;
       // No standstill workaround: ask outer to coast near current
@@ -172,9 +191,9 @@ export function step86MultiRowGapPlanV3(states,baseline,bookings,{
   }
   // Ask front to accelerate, not for a physically impossible x jump.
   // Solver still limits actual +.45 m/s², -0.85 m/s² and W-prime.
-  if(front.v>=movingFloorMps-1)
+  if(front.v>=movingFloorMps-1&&rear.v>front.v-.05)
    leadBoosts[frontIndex]=Math.max(leadBoosts[frontIndex],
-    front.v+.75);
+    Math.min(10.1,front.v+.55));
   // Only a mild yielding request if rear is truly closing.
   if(rear.v>front.v+.12){
    rearCaps[rearIndex]=Math.min(rearCaps[rearIndex],
