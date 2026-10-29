@@ -138,11 +138,16 @@ export function advanceDiscretePelotonV3(state){
    let want=desired(next,r,draft);
    if(lead){
     const gap=lead.x-r.x,closing=Math.max(0,r.v-lead.v);
-    const safe=GAP+(next.scenario==='breakaway'?3:
-      next.performanceMode==='profiles_v1'?1.25:.3)+
-      (next.scenario==='breakaway'?4:
-      next.performanceMode==='profiles_v1'?3.2:1.2)*closing+
-      closing*closing/(2*B);
+    // The validated five-wide entrance depends on its original
+    // guaranteed arrival order. Once all of that start is moving through
+    // the first channel, smoothly increase reserve for differing athlete
+    // grades/speeds. Never apply a discontinuous headway jump at entry.
+    const athleteRamp=next.performanceMode==='profiles_v1'?
+      clip((next.time-34)/22,0,1):0;
+    const safe=GAP+(next.scenario==='breakaway'?3:.3+
+      athleteRamp*.9)+
+      (next.scenario==='breakaway'?4:1.2+
+      athleteRamp*2.0)*closing+closing*closing/(2*B);
     if(gap<safe+1)want=Math.min(want,lead.v+(gap-safe)/1.4);
    }
    speeds.set(r.id,ramp(r.v,clip(want,FLOOR,14)));
