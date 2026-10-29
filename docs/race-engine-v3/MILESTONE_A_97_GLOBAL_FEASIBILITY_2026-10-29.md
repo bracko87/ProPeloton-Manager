@@ -27,3 +27,50 @@ The long-horizon test requests 180 seconds of actual A64 racing (or honestly end
 The [dedicated Step97 workflow](../../.github/workflows/v3-step97-global-feasibility.yml) also reruns protected Step78/85/86/87/89/90/91/92/93/94/95/96 units and production React build. **Technically green fail-closed rejections do not constitute sporting success**. Milestone A GO still requires full 180s for both 106 and 168 five-wide fields through the second gate, zero contact/road/energy violations and zero committed crawling, substantial sustained overtaking, nonpathological lane changes, original physical and mirror/replay parity.
 
 No Milestone B gameplay integration or Milestone C production release is authorized. Preserve the protected Step86 32-rider full180 benchmark (staged 80 real sustained passes/411 lane changes, double 70/678).
+
+
+## Step97 actual original A64 evidence
+
+[Dedicated Step97 Actions run](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40912578574) executed the new global necessary-timing certificate, protected early physical regressions, full-field alternative prestart global bookings, mirrored/renamed original physics and independent overtaking/checkpoint tests. The research tests do not edit the A64 solver, steering limit, bicycle body, allowed acceleration/brake, W-prime, accepted positions, road width or any live user/race state.
+
+### Original appointment contradiction independently reproduced
+
+For 168 riders, double narrowing, original fixed global **0.50s-wave** booking, actual initial nine m/s speed and 5.2m start-row spacing, there are **34 first-gate fixed appointments** later than the maximum time permitted by physical braking −0.85m/s² and the ACTUAL piecewise Step95 lower speed floors (6.5m/s while x<680 and 4.5m/s afterward). Largest provable *conditional fixed-appointment* deficit is **5.299588 seconds**. No such piecewise-floor contradiction was found for the corresponding 106-double timetable or either staged route. The original scheduler's independent 5.0m/s minimum is not consistent with the stricter current accepted-motion rules in these 34 cases.
+
+With a newly calculated 0.35s wave interval and minimum booking speed 6.5m/s, all eight 8/32/106/168 × staged/double 2-gate *necessary* booking screens have complete assignments and zero arrival/lateral/body-boundary contradictions. For the 168-double first gate, the last scheduled appointment moves from **65.141016s** to **49.991016s**. For 106-double it moves **46.141016s → 36.691016s**. All this means only that individually reachable time windows can be assigned. **No slot-time plan alone proves no swept bicycle collision**; with a permitted 4.5m/s downstream speed a 0.35s interwave nominal difference could in fact be too small for 2.05m longitudinal clearance if the riders used the same physical lane.
+
+The unit test also runs the actual original A64 solver for 4 seconds with all riders initially 5-abreast, riding straight ahead at 9m/s on the untouched x=600 / 5.2m row grid; both 106/168 sizes on both synthetic profiles remain legal, moving and wholly upstream of the narrowing. This rules out an *immediate* physically overlapped start in this control, but does not prove a possible future merge, let alone 180 seconds.
+
+### Re-timed 180-second original A64 race attempts
+
+All attempts are full requests to 180 seconds; a rejected first physical/Step95 moving tick ends the case and is explicitly a sporting **NO-GO**, never credited as a finish. All 11 actual A64 replays had zero *accepted* near-stops, zero accepted speeds <6.5m/s upstream or <4.5m/s downstream. No race passed the second gate.
+
+| Riders | Route | Controller | New global slot | Actually accepted | First reason |
+| --- | --- | --- | ---: | ---: | --- |
+| 106 | staged | strict | 0.35s | 10.5s | NO_SAFE_PHYSICAL_REQUEST |
+| 106 | staged | strict | 0.40s | 11s | NO_SAFE_PHYSICAL_REQUEST |
+| 106 | staged | balanced | 0.35s | 8.5s | NO_SAFE_PHYSICAL_REQUEST |
+| 106 | double | strict | 0.35s | 9s | A95_NO_MOVING_PHYSICAL_REQUEST |
+| 106 | double | strict | 0.40s | 10s | NO_SAFE_PHYSICAL_REQUEST |
+| 106 | double | balanced | 0.35s | 8s | NO_SAFE_PHYSICAL_REQUEST |
+| 168 | staged | strict | 0.35s | 11.5s | A95_NO_MOVING_PHYSICAL_REQUEST |
+| 168 | staged | strict | 0.40s | 11.5s | A95_NO_MOVING_PHYSICAL_REQUEST |
+| 168 | staged | balanced | 0.35s | 11s | NO_SAFE_PHYSICAL_REQUEST |
+| 168 | double | strict | 0.35s | 10s | NO_SAFE_PHYSICAL_REQUEST |
+| 168 | double | balanced | 0.35s | 8s | NO_SAFE_PHYSICAL_REQUEST |
+
+The original Step96 106-double strict accepted only 2.5s under the old fixed timetable, versus 9–10s after global re-timing; the new global schedule is therefore a **measurable improvement on this single early-failing fixture** but not a sporting success. Conversely, 106 staged strict was previously 13s and fell to 10.5–11s. Global timetable changes are not a sufficient physical-control solution. **0/11 106/168 original-solver 180s finishes.**
+
+### Independent physical symmetry, racing quality and exact replay
+
+All **16 original-A64 mirrored/renamed physical comparisons** passed (including accepted x/y/v, real energy and chosen policy). Both 8-rider strict original-body 0.35s-timed races finished 180 seconds with no near-stops and all riders through gate two; staged had **8** independent sustained ≥3s overtakes and **115** actual lane changes, double had **6** and **135**, respectively. Both passed exact **90+90 serialized original physical plus independently tracked overtaking observer checkpoint restoration**.
+
+All 32-rider re-timed trials remain **NO-GO**: staged strict 10s, balanced 8s; double strict 7.5s, balanced 7s, none reached second gate or even their 90s checkpoint. Protected Step86 retained full 180s staged 80 sustained overtakes / 411 lane changes and double 70 overtakes / 678 changes; it is superior to the new test controller.
+
+### Engineering conclusion and Step98 direction
+
+Step97 establishes an actual **fixed-booking reachability inconsistency** for the 168-double old timetable, but also establishes that removing all identifiable individual arrival-window contradictions is **not enough** to make the full peloton move safely. The original A64 solver's clear 4s 5-abreast approach establishes that initial geometry is not inherently invalid. The unresolved question is sustained multirow, multilane *coupled* feasibility while every rider keeps >=6.5m/s upstream and >=4.5m/s downstream.
+
+Step98 should not impose a new arbitrary short-range priority rule or equate a green feasibility screen with a trajectory. Build a physically swept **longer-horizon globally coupled** x/y/v plan across upstream acceleration and corridor releases, with real signed longitudinal separation and temporal ordering at lane crossings; test *whether* any such plan is attainable under current A64 dynamics, and if none is found distinguish finite-search failure from mathematical impossibility. Keep Step86 as protected 32r sporting control, preserve true passing/replay and never relax bicycle collision or allowed energy.
+
+**Milestone A remains sporting NO-GO. No Milestone B game integration, no Milestone C production release or changes to live Supabase data, results, payout, classifications or game clock.**
