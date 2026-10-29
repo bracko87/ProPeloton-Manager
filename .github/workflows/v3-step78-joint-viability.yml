@@ -1,0 +1,55 @@
+name: V3 A78 joint 2D physical request viability research
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/a2Step78JointViabilityV3.mjs'
+      - 'scripts/v3/a2MultiGatePhysicalCandidateV3.mjs'
+      - 'scripts/v3/verify-a2-step78-joint-viability-v3.mjs'
+      - '.github/workflows/v3-step78-joint-viability.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  swept-physical-viability-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: A78 joint preview 8 32 106 168 mirror ID parity and unmodified swept physics
+        env:
+          V3_A2_STEP78_DIR: ${{ runner.temp }}/a78
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-joint-viability-v3.mjs
+      - name: Preserve A77 32-rider five-abreast staged 180s and 80+ real sustained passes
+        env:
+          V3_A2_STEP77_STAGED_DIR: ${{ runner.temp }}/a77
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step77-phase2-staged-success-v3.mjs
+      - name: Preserve A76 32 106 168 independent 3-second overtaking and exact replay
+        env:
+          V3_A2_STEP76_PASS_DIR: ${{ runner.temp }}/a76
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step76-double-passing-v3.mjs
+      - name: Upload truthful physical evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a78-joint-viability-necessary-not-sufficient
+          path: |
+            ${{ runner.temp }}/a78/*.json
+            ${{ runner.temp }}/a77/*.json
+            ${{ runner.temp }}/a76/*.json
+          if-no-files-found: warn
+          retention-days: 30
+  react-production-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run build
