@@ -28,6 +28,7 @@ import {step91LeaseCandidatesV3,step91AcceptedLeaseUpdateV3} from './a2Step91Per
 import {step92CohortCandidatesV3} from './a2Step92CohortSpaceTimeV3.mjs'
 import {step93RollingStartCandidatesV3} from './a2Step93RollingStartV3.mjs'
 import {step94ClosureCandidatesV3} from './a2Step94RelativeClosureV3.mjs'
+import {chooseStep95MovingPhysicalTickV3} from './a2Step95MovingPhysicalGateV3.mjs'
 const DT=.5,MAX_BRAKE=.85,EPS=1e-7
 const clip=(v,a,b)=>Math.max(a,Math.min(b,v))
 const round6=v=>Math.round(v*1e6)/1e6
@@ -72,7 +73,8 @@ export function createMultiGatePhysicalCandidateV3(n,{
    'lease_strict_v1','lease_balanced_v1',
    'cohort_strict_v1','cohort_balanced_v1',
    'rolling_strict_v1','rolling_balanced_v1',
-   'closure_strict_v1','closure_balanced_v1'].includes(pacePolicy)&&
+   'closure_strict_v1','closure_balanced_v1',
+   'moving_strict_v1','moving_balanced_v1'].includes(pacePolicy)&&
   ['preview_only','platoon_chain','platoon_soft_yield'].includes(coreMergePolicy)&&
   [5.2,6.5,8,10].includes(startRowSpacingM)&&
   (rollingStartSpeedMps===null||
@@ -150,7 +152,11 @@ export function createMultiGatePhysicalCandidateV3(n,{
   step93SelectedTicks:0,step93SelectedPolicies:{},step93NoGoTicks:0,
   step94Threatened:0,step94CrossRow:0,step94RateClosures:0,
   step94FloorShortfalls:0,step94EarlyHolds:0,
-  step94SelectedTicks:0,step94SelectedPolicies:{},step94NoGoTicks:0, 
+  step94SelectedTicks:0,step94SelectedPolicies:{},step94NoGoTicks:0,
+  step95PreviewBlocked:0,step95UpstreamBlocked:0,
+  step95DownstreamBlocked:0,step95NoMovingTicks:0,
+  step95SelectedTicks:0,step95SelectedPolicies:{},
+  step95LastMovingViolation:null, 
   status:admission.status==='NECESSARY_WINDOWS_EXIST'?'READY':
    'GATE_ENTRY_NO_WINDOW',reason:null,officialWrites:0}
 }
@@ -272,7 +278,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    'lease_strict_v1','lease_balanced_v1',
    'cohort_strict_v1','cohort_balanced_v1',
    'rolling_strict_v1','rolling_balanced_v1',
-   'closure_strict_v1','closure_balanced_v1']
+   'closure_strict_v1','closure_balanced_v1',
+   'moving_strict_v1','moving_balanced_v1']
   .includes(out.pacePolicy)?
   jointViabilityCommandsV3(candidate.states,originalRequests,{
    headwayM:out.physical.headwayStandOffM,
@@ -325,7 +332,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    'lease_strict_v1','lease_balanced_v1',
    'cohort_strict_v1','cohort_balanced_v1',
    'rolling_strict_v1','rolling_balanced_v1',
-   'closure_strict_v1','closure_balanced_v1']
+   'closure_strict_v1','closure_balanced_v1',
+   'moving_strict_v1','moving_balanced_v1']
   .includes(out.pacePolicy)
  // Canonical *planning-only* input: mirrored worlds are evaluated in
  // the same symmetric road coordinates. Accepted physical motion is
@@ -413,7 +421,10 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
  const isStep93=['rolling_strict_v1',
   'rolling_balanced_v1'].includes(out.pacePolicy)
  const isStep94=['closure_strict_v1',
-  'closure_balanced_v1'].includes(out.pacePolicy)
+  'closure_balanced_v1','moving_strict_v1',
+  'moving_balanced_v1'].includes(out.pacePolicy)
+ const isStep95=['moving_strict_v1',
+  'moving_balanced_v1'].includes(out.pacePolicy)
  const isHorizon=['horizon2_guarded_v1','horizon3_guarded_v1',
   'multisecond_reserve_v1','multisecond_zipper_v1',
   'feasible_window_v1','feasible_conservative_v1',
@@ -428,7 +439,8 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    'lease_strict_v1','lease_balanced_v1',
    'cohort_strict_v1','cohort_balanced_v1',
    'rolling_strict_v1','rolling_balanced_v1',
-   'closure_strict_v1','closure_balanced_v1']
+   'closure_strict_v1','closure_balanced_v1',
+   'moving_strict_v1','moving_balanced_v1']
   .includes(out.pacePolicy)
  const futureById=out.mirror===true?
   new Map([...byId].map(([id,items])=>[id,items.map(b=>({
@@ -809,7 +821,16 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
    {policy:'follow_zipper',requests:plans.candidates[2].requests}
   ]
  }
- const horizon=(isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94)?
+ const horizon=isStep95?
+   chooseStep95MovingPhysicalTickV3(canonical,horizonProposals,
+    makeFuture,advanceNormalStartV3,{
+     depth:3,maxFirst:7,maxFuture:3,
+     upstreamEndX:680,upstreamFloorMps:6.5,
+     downstreamFloorMps:4.5,minimumMovingSpeedMps:6.5,
+     strictNoNearStops:true,
+     clearanceFirst:out.pacePolicy==='moving_strict_v1'
+    }):
+   (isStep85||isStep86||isStep87||isStep88||isStep89||isStep90||isStep91||isStep92||isStep93||isStep94)?
   chooseThroughputGuardedTickV3(canonical,horizonProposals,
    makeFuture,advanceNormalStartV3,{
     depth:3,maxFirst:isStep94?7:isStep93?7:isStep92?8:isStep91?7:isStep90?7:isStep89?7:isStep88?8:isStep86||isStep87?6:5,maxFuture:3,
@@ -854,7 +875,7 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   horizonActual=advanceNormalStartV3(strictReal)
  }
  const next=isHorizon?
-  (horizonActual??horizon?.firstRejected):
+  (horizonActual??(isStep95?null:horizon?.firstRejected)):
   distributedChoice?
   (distributedChoice.physical??distributedChoice.firstRejected):
   localProspective?
@@ -862,6 +883,17 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
   prospective?
   (prospective.physical??prospective.firstRejected):
   advanceNormalStartV3(candidate)
+ if(isStep95){
+  out.step95PreviewBlocked+=horizon?.previewLedger?.blockedMoving??0
+  out.step95UpstreamBlocked+=horizon?.previewLedger?.blockedUpstream??0
+  out.step95DownstreamBlocked+=horizon?.previewLedger?.blockedDownstream??0
+  out.step95LastMovingViolation=horizon?.firstMovingViolation??null
+  if(horizon?.selectedPolicy){
+   out.step95SelectedTicks++
+   out.step95SelectedPolicies[horizon.selectedPolicy]=
+    (out.step95SelectedPolicies[horizon.selectedPolicy]??0)+1
+  }else out.step95NoMovingTicks++
+ }
  if(isStep94){
   out.step94Threatened+=closurePilot.plan.threatenedPairs
   out.step94CrossRow+=closurePilot.plan.crossRowPairs
