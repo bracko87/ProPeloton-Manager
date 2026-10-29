@@ -886,6 +886,9 @@
     "nextSlot": "Next slot unlock: {{requirement}}",
     "unverified": "Hiring eligibility could not be verified for this role.",
     "otherRestriction": "Hiring is restricted under the current club rules.",
-    "viewPremium": "View Premium plans"
+    "viewPremium": "View Premium plans",
+    "showDetails": "Show details",
+    "hideDetails": "Hide details",
+    "slotCount": "{{assigned}} of {{limit}} staff positions filled"
   }
 }
