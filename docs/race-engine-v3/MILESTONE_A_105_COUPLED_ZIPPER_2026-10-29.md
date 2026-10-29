@@ -27,4 +27,24 @@ The opt-in [Step105 joint zipper research](../../scripts/v3/a2Step105CoupledZipp
 
 Dedicated [Step105 workflow](../../.github/workflows/v3-step105-coupled-zipper.yml): 8/32-rider short A64 physics with mirror and rider rename geometry, one plus one second exact resume and re-sweep, **12 original-A64 180-second requested large-field experiments** (three policies × 106/168 × two exact road layouts), eight-second group breakaway/rejoin tests, protected Step86 full 180s and React production build.
 
-**Physical results / CI:** Pending independent GitHub log inspection. The best evidence before Step105 is Step104's 14s accepted physical prefix and 0/56 successful passage through gate one. No sporting GO, no production activation; overall Race Engine V3 readiness estimate remains ~35%.
+## Verified Step105 original A64 results — 29 October 2026
+
+[Step105 GitHub workflow run 40946361083](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40946361083): the small-field physical test PASSED three candidate mode sweeps, original-A64 independent resweeping of each selected first tick, exact serialized 1+1 second checkpoint replay, mirrored and renamed rider invariance, 32 riders grouped in one peloton, and immutable inputs. The actual 106/168 rider research job PASSED truthful collision diagnosis, and the React production build PASSED. The protected Step86 full-180 original A64 race regression was still running when these results were initially written. A passing diagnostic job does NOT mean the peloton completed a race.
+
+**Measured: 12 real original-A64 swept physical attempts out of 12; 0/12 full 180s; 0/12 first-gate passages; 0/12 second-gate passages.** All three candidate policies converged on the same measured accepted durations in each fixture:
+
+| Original five-wide field | Staged narrowing | Double narrowing |
+| --- | ---: | ---: |
+| 106 riders | 12.0 seconds | 10.5 seconds |
+| 168 riders | 13.0 seconds | 10.5 seconds |
+
+Each attempt terminated on SWEPT_CONTACT in original A64. The first rejected pair was consistently **r015 OUTER and r016 INNER from the same fourth starting row**, while the Step104 best former physical prefix reached 14.0 seconds. Step105 is therefore a **performance regression versus Step104**, not a breakthrough. No hypothetical second-tick movement was accepted without a fresh original-A64 sweep. All actual moving fields remained a **single racing peloton** under the owner-approved consecutive gap <=8-second rule.
+
+### Engineering interpretation
+
+1. Pairwise projected acceleration constraints alone do not produce a physically safe continuous joint zipper path, even when coordinated across every row. The solver still discovers the same local collision bottleneck and has no certificate that its projected x/y/v objectives are simultaneously attainable by every rider through the forced road taper.
+2. The selection of a physically legal next half-second and a legal two-tick lookahead **does not establish a causal multi-second occupancy reservation**; the result is myopic. All three choices led to the same first physical contact in a middle row.
+3. **Next architectural task:** build a genuinely joint continuous space-time occupancy solver or a formal infeasibility witness for the original dense five-abreast starting geometry under the A64 .45m/s² acceleration, .85m/s² braking, .38m/s lateral steering, mandatory four-second road forecast and 6.5m/s moving-floor constraints. Do not just add another fixed rider-speed profile or pretend one gate appointment per rider constitutes a trajectory. Consider a bounded time-dependent conflict graph and enforce valid transitions/clearance simultaneously; only a *complete exact A64 physical path* is a sporting success.
+4. Preserve all protected original A64 and Step86 benchmarks, eight-second group semantics, mirror/renamed identity fairness, replay, energy W-prime, collision checks, stage records and payouts. **No production engine integration or live data write was performed as part of this isolated research.**
+
+The verified maximum remains **Step104's 14 seconds**, not 13; Milestone A sporting remains **NO-GO**, estimated overall V3 completion remains ~35%.
