@@ -38,6 +38,24 @@ jobs:
           name: step108-a64-joint-moving-lane-audit
           path: ${{ runner.temp }}/step108/*.json
           if-no-files-found: error
+  locked-full-field-a64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Forty-eight fully allocated locked-policy 180-second A64 attempts
+        env:
+          V3_A2_STEP108_DIR: ${{ runner.temp }}/step108
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step108-locked-v3.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: step108b-locked-policy-A64-physical
+          path: ${{ runner.temp }}/step108/*.json
+          if-no-files-found: error
   protect-original-and-groups:
     runs-on: ubuntu-latest
     timeout-minutes: 35

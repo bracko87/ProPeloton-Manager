@@ -190,3 +190,65 @@ export function step108RunOriginalA64V3(initial,bookings,{
    sportingGO:false,traceHash:hash(records),
    trace:trace?records:undefined}};
 }
+
+
+/** Step108B: fixed global reservation strategy per full accepted trajectory.
+ * Receding-horizon selection above can change lane/spacing objectives every
+ * half-second and was empirically unsafe. A locked strategy avoids policy
+ * chattering; it is STILL subject to every independent A64/Step95 check.
+ * The exact Step107 slots_balanced command is the 'base' control.
+ */
+export function step108RunLockedOriginalA64V3(initial,bookings,{
+ mode='base',centerTie='left',seconds=180,checkpoint=null,trace=false
+}={}){
+ verify(initial,initial,bookings);
+ if(!Object.hasOwn(variants,mode)||!['left','right'].includes(centerTie)||
+   !Number.isFinite(seconds)||seconds<.5||seconds>180||
+   Math.round(seconds*2)!==seconds*2)
+  throw Error('A108 invalid fixed full-field policy');
+ let now=structuredClone(checkpoint??initial);
+ verify(now,initial,bookings);
+ const source=JSON.stringify([initial,bookings]),started=now.at;
+ let rejected=null,group=step101ObserveA64GroupsV3(now);
+ const steps=[],requests={floors:0,assists:0,clearanceCaps:0};
+ for(let i=0;i<seconds*2;i++){
+  const choice=step108JointCommandsV3(now,initial,bookings,{mode,centerTie});
+  requests.floors+=choice.floors;requests.assists+=choice.assists;
+  requests.clearanceCaps+=choice.clearanceCaps;
+  const attempt=swept(now,choice.requests);
+  if(!attempt.ok){
+   rejected={atSeconds:now.at,reason:attempt.reason,
+     collisionPair:attempt.physical?.firstCollision?.pair??null,
+     collisionContactTime:attempt.physical?.firstCollision?.time??null,
+     originalRoadViolation:attempt.physical?.firstRoadViolation??null,
+     movingGate:attempt.scan??null};
+   break;
+  }
+  now=attempt.physical;
+  group=step101ObserveA64GroupsV3(now);
+  steps.push({at:now.at,
+    minPhysicalMps:q(Math.min(...now.states.map(s=>s.v))),
+    groups:group.groups.length,
+    checksum:hash(now.states.map(s=>[s.id,s.x,s.y,s.v,
+      s.energy?.remainingWPrimeJoules]))});
+ }
+ if(JSON.stringify([initial,bookings])!==source)
+  throw Error('A108 fixed policy mutated source A64 fixture');
+ return {physical:now,evidence:{
+   mode,centerTie,n:now.states.length,requestedSeconds:seconds,
+   acceptedSeconds:q(now.at-started),physicalSteps:steps.length,
+   rejected,requests,
+   firstGatePassed:now.states.every(s=>s.x>1020),
+   secondGatePassed:now.states.every(s=>s.x>1470),
+   minPhysicalSpeed:steps.length?
+      Math.min(...steps.map(s=>s.minPhysicalMps)):null,
+   groupCount:group.groups.length,
+   pelotonCount:group.groups.find(g=>g.code==='P')?.riderIds.length??0,
+   exactEightSecondRule:group.groupingThresholdSeconds===8,
+   fixedOriginalLaneOrder:true,noMidRacePolicySwitch:true,
+   originalA64SweptEveryTick:true,step95CheckedEveryTick:true,
+   originalA64Unchanged:true,officialWrites:0,
+   completed180:seconds===180&&steps.length===360,
+   traceHash:hash(steps),trace:trace?steps:undefined,
+   sportingGO:false,noProductionActivation:true}};
+}
