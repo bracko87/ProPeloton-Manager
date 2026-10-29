@@ -44,12 +44,40 @@ The [final strict 16-case original swept-body and protected physical audit](http
 
 Here the correct comparison is not a single short positive result: a **50s/zero-near-stop** 32r test is only evidence of early physical safety. The 180s independent observer suite must determine whether any of those policies actually finishes with reasonable overtaking and exact serialized checkpoint recovery.
 
+## Real 180s complete 8/32-rider racing with independent overtake and checkpoint verification
+
+The separate [Step86 full-race and mirror/ID fairness CI](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40867404736) finished **SUCCESS**, after coupling only *accepted* A64 physical movements to the independent sustained ≥3-second overtaking observer. **All 16** actual 8/32/106/168 × staged/double × both research policies short-run mirrored/renamed full-body x/y/v, W-prime energy, policy-selection and rejected-status comparisons passed.
+
+| Actual five-abreast race | Accepted physical duration | Near-stop rider ticks | Actual physical lane changes | Independent sustained ≥3s rider-pair overtakes | Result |
+| --- | ---: | ---: | ---: | ---: | --- |
+| 8 staged, strict | **180s** | 0 | 34 | **7** | Full physical pass and exact 90+90 serialized replay |
+| 8 double, strict | **180s** | 0 | 178 | **8** | Full physical pass and exact 90+90 serialized replay |
+| 32 staged, strict | **12.5s** | 0 | 14 | 5 before rejection | Original SWEPT_CONTACT r021/r025; 180s sporting FAIL |
+| **32 staged, wave** | **180s** | **0** | **411** | **80** | **Full sporting physical pilot PASS; exact 90+90 replay** |
+| **32 double, strict** | **180s** | **0** | **709** | **61** | **Full sporting physical pilot PASS; exact 90+90 replay** |
+| **32 double, wave** | **180s** | **0** | **678** | **70** | **Full sporting physical pilot PASS; exact 90+90 replay** |
+
+Every rider in the five fully completed 180s races passed the second gate reopening x1470m (rear x2048.248312m for staged 32r wave; rear x2047.606302m for double 32r strict; rear x2054.651199m for double 32r wave). There were no committed swept collisions, road exits, near-stop ticks or W-prime energy failures in those full passages. For each full 180s race the verifier independently confirmed **exact 90+90s JSON-restored bicycle physical state and true passing-observer equivalence**. A 12.5s rejected case was correctly **NOT** described as a passing checkpoint.
+
+Comparison with protected benchmarks:
+
+| Five-abreast 32r result | Sustained ≥3s pair overtakes | Real lane changes | Near-stop ticks |
+| --- | ---: | ---: | ---: |
+| Step78 staged, full 180s | **87** | **356** | 0 |
+| Step84 staged, full 180s | 83 | 370 | 0 |
+| Step86 **staged wave**, full 180s | **80** | **411** | **0** |
+| Step85 double, full 180s | 66 | 752 | 0 |
+| Step86 **double wave**, full 180s | **70** | **678** | **0** |
+| Step86 double strict, full 180s | 61 | 709 | 0 |
+
+This is a **real sporting-quality gain on the 32r double-narrowing profile** relative to Step85, but does **not** beat historical Step78/84 on the staged route. Do not replace successful staged policies solely because the new double profile works. Most importantly, **none of these 32r achievements resolves the 106/168 five-abreast 180s goal**.
+
 ## Required independent verification
 
 - [Step86 pure geometry + 16-case original swept-body matrix](../../scripts/v3/verify-a2-step86-gap-physical-v3.mjs): symmetric mirror/ID/array-order tests, hard check that an INNER bicycle cannot be accelerated into its preceding row, and strict no committed near-stop requirement. The first CI version caught late upstream preparation. A later CI version correctly caught the original unit assertion that incorrectly treated *more* boosts as necessarily good; it was replaced with a stronger explicit forward-gap safety assertion.
 - [Step86 true full-field parity and complete 8/32 180s independent passing-observer attempts](../../scripts/v3/verify-a2-step86-physical-parity-replay-v3.mjs): real actual x/y/v/W-prime symmetry for 8/32/106/168 × both road profiles × both policies, full 180s 8/32 attempts, independently sustained ≥3s overtakes and full 90+90 JSON physics and observer replay for any field that reaches that checkpoint. A correctly rejected field before 90s is NOT described as a replay pass.
 - [Step86 authoritative 106/168 180s CI](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40867404704): SUCCESS technical audit; all eight original contacts retained and **sporting NO-GO**.
-- [Step86 first-matrix CI](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40867458374) and [Step86 full-field fairness CI](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40867404736): preserve actual completion/failure status independently and do not infer sporting success merely from a green technical workflow.
+- [Step86 first-matrix and protected A85/A84/A78/A76 CI](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40867458374) and [Step86 all 16 mirror/renamed fields, 8/32 actual full-race and protected Step85 double CI](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40867404736): both completed **SUCCESS**, including retained physical rejection evidence, full 90+90 independent observer recovery, React production build and uploaded JSON artifacts. Green technical status alone does not imply 106/168 sporting readiness.
 
 The unchanged historical Step76 **three-abreast** 32/106/168 full 180s, Step78 **five-abreast 32 staged** 180s 87 real sustained passes/356 lane changes, Step84 32 staged 180s 83 real sustained passes/370 lanes and Step85 **five-abreast 32 double** 180s 66 real passes/752 lanes with zero near-stops remain protected comparison benchmarks. None should be silently replaced by the new research policies.
 
