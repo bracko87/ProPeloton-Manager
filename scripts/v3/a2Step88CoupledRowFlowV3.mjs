@@ -145,30 +145,29 @@ export function step88CoupledRowFlowV3(states,requests,bookings,{
   const backX=Math.max(...rear.members.map(i=>states[i].x));
   if(frontX<backX-EPS)continue; // geometry tie is conservatively held
   if(frontX-backX>38)continue;
-  const common=front.occupancy.some(f=>rear.occupancy.some(r=>
-   Math.abs(f.booked-r.booked)<EPS&&f.side===r.side));
-  if(!common)continue;
-  const leadV=Math.min(...front.members.map(i=>states[i].v));
-  const rearV=Math.max(...rear.members.map(i=>states[i].v));
-  const needed=2.85+Math.max(0,rearV-leadV)*
-   localHorizonSeconds;
-  const gap=frontX-backX;
-  edges.push({ahead:front.row,behind:rear.row,
-   presentGapM:q(gap),necessaryGapM:q(needed)});
-  if(gap<needed+1&&rearV>leadV+.12){
-   // The two narrow-side corridors are independent unless a steering
-   // path actually crosses them. A threatened left flow must not
-   // automatically brake the right flow of the SAME five-wide row.
-   // Aggregate one side-specific minimum ceiling from all preceding
-   // rows; apply it ONCE to the side's actual affected cyclists.
-   for(const side of [-1,0,1]){
-    const occupied=rear.occupancy.some(o=>o.side===side&&
-     front.occupancy.some(f=>f.side===side&&
-      Math.abs(f.booked-o.booked)<EPS));
-    if(!occupied)continue;
+  // Each of the two physical narrowing slots has its OWN actual
+  // front/rear velocity and headway. Taking max(rear) and min(front)
+  // over five bicycles invents a closure in the unrelated side track.
+  // Cross-track steering conflicts are handled independently below.
+  for(const side of [-1,0,1]){
+   const f=front.occupancy.filter(o=>o.side===side);
+   const back=rear.occupancy.filter(o=>o.side===side);
+   const compatible=f.some(a=>back.some(b=>
+    Math.abs(a.booked-b.booked)<EPS));
+   if(!compatible)continue;
+   const leadingV=Math.min(...f.map(x=>states[x.i].v));
+   const followingV=Math.max(...back.map(x=>states[x.i].v));
+   const leadingX=Math.max(...f.map(x=>states[x.i].x));
+   const followingX=Math.max(...back.map(x=>states[x.i].x));
+   const sideGap=leadingX-followingX;
+   const required=2.85+Math.max(0,followingV-leadingV)*
+    localHorizonSeconds;
+   edges.push({ahead:front.row,behind:rear.row,side,
+    presentGapM:q(sideGap),necessaryGapM:q(required)});
+   if(sideGap<required+1&&followingV>leadingV+.12){
     const previous=rowVelocityCeilings[rear.row].get(side)??Infinity;
     rowVelocityCeilings[rear.row].set(side,Math.min(previous,
-     Math.max(lowestMovingSpeedMps,leadV+.15)));
+     Math.max(lowestMovingSpeedMps,leadingV+.15)));
    }
   }
  }
