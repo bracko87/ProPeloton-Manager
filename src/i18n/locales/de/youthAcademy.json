@@ -789,7 +789,10 @@
     "action": "Für {{cost}} Coins verlängern",
     "renewing": "Wird verlängert…",
     "getCoins": "Coins kaufen",
-    "readOnly": "Der Jugendakademie-Zugang muss für die aktuelle Saison verlängert werden, bevor Verwaltungsaktionen möglich sind."
+    "readOnly": "Der Jugendakademie-Zugang muss für die aktuelle Saison verlängert werden, bevor Verwaltungsaktionen möglich sind.",
+    "autoRenewLabel": "U16-Jugendakademie jede Saison automatisch verlängern",
+    "autoRenewHelp": "Mit gültigem bezahltem Premium und {{cost}} Münzen wird die Akademie verlängert. Sonst schließt sie und ihre U16-Fahrer werden freigegeben.",
+    "graceWarning": "Premium ist abgelaufen. Die Akademie ist schreibgeschützt. Zulässige Fahrerwechsel bleiben in den regulären Wechselphasen der bezahlten Saison möglich. Ohne Verlängerung schließt die Akademie zum Saisonende."
   },
   "raceDetail": {
     "overview": "Übersicht",

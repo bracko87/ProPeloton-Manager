@@ -789,7 +789,10 @@
     "action": "Renouveler pour {{cost}} coins",
     "renewing": "Renouvellement…",
     "getCoins": "Acheter des coins",
-    "readOnly": "L'Académie Jeunes doit être renouvelée pour la saison actuelle avant toute action de gestion."
+    "readOnly": "L'Académie Jeunes doit être renouvelée pour la saison actuelle avant toute action de gestion.",
+    "autoRenewLabel": "Renouveler automatiquement l'Académie U16 chaque saison",
+    "autoRenewHelp": "Avec Premium payant actif et {{cost}} pièces, l'Académie se renouvelle. Sinon elle ferme et les coureurs U16 sont libérés.",
+    "graceWarning": "Premium a expiré. L'Académie est en lecture seule. Les mouvements autorisés restent possibles pendant les fenêtres habituelles de la saison payée. Sans renouvellement elle fermera en fin de saison."
   },
   "raceDetail": {
     "overview": "Aperçu",

@@ -789,7 +789,10 @@
     "action": "Renovar por {{cost}} Coins",
     "renewing": "Renovando…",
     "getCoins": "Comprar Coins",
-    "readOnly": "Debes renovar la Academia Juvenil para la temporada actual antes de poder gestionarla."
+    "readOnly": "Debes renovar la Academia Juvenil para la temporada actual antes de poder gestionarla.",
+    "autoRenewLabel": "Renovar automáticamente la Academia U16 cada temporada",
+    "autoRenewHelp": "Con Premium de pago activo y {{cost}} monedas, la Academia se renovará. Si no, se cerrará y los corredores U16 serán liberados.",
+    "graceWarning": "Premium ha caducado. La Academia es de solo lectura. Los movimientos permitidos siguen disponibles en las ventanas habituales durante la temporada pagada. Sin renovación, cerrará al final de la temporada."
   },
   "raceDetail": {
     "overview": "Resumen",

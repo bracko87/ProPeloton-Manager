@@ -789,7 +789,10 @@
     "action": "Obnovi za {{cost}} coina",
     "renewing": "Obnavljanje…",
     "getCoins": "Kupi coine",
-    "readOnly": "Akademiju mladih treba obnoviti za trenutnu sezonu prije upravljanja."
+    "readOnly": "Akademiju mladih treba obnoviti za trenutnu sezonu prije upravljanja.",
+    "autoRenewLabel": "Automatski obnovi U16 akademiju svake sezone",
+    "autoRenewHelp": "Ako Premium vrijedi i imate {{cost}} novčića, akademija se obnavlja. Inače se zatvara i vozači U16 se oslobađaju.",
+    "graceWarning": "Premium je istekao. Akademija je samo za čitanje, ali dopuštene odluke o prijelazu vozača ostaju dostupne u redovitim rokovima plaćene sezone. Bez obnove akademija se zatvara na kraju sezone."
   },
   "raceDetail": {
     "overview": "Pregled",
