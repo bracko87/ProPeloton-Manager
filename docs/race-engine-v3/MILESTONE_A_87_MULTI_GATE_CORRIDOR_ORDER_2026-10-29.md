@@ -30,11 +30,28 @@
 
 The first Step87 version (before immediate headway adjustment) achieved **13s** on 106 staged; the correction reaches **15.5s**. The second-gate schedule is diagnostic and does not grant any physical clearance, so adding the second-gate chain does not rewrite the previously accepted trajectories.
 
+## Final 16-case original-swept physical matrix
+
+The [Step87 final A64 matrix and protected regression workflow](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873629590) completed **SUCCESS**, including the exact geometry/identity/mirrored two-gate planning tests, genuine 8/32/106/168 × both layouts × two policies original swept physical runs, protected A86/A85/A78/A76 tests, uploaded original-solver JSON evidence and React production build. **Technical green explicitly includes honest first-contact rejection.**
+
+| Size / synthetic narrowing | Strict corridor order accepted | Corridor release accepted | Near-stop ticks | Meaning |
+| --- | ---: | ---: | ---: | --- |
+| 8 staged | 40s test horizon | 40s test horizon | 0 | Short initial physical check |
+| 8 double | 40s test horizon | 40s test horizon | 0 | Short initial physical check |
+| 32 staged | 12.5s, swept collision | 12.5s, swept collision | 0 | Both fail true sporting duration |
+| 32 double | **50s test horizon** | 12s, swept collision | 0 | Strict avoids early collision; full 180s still separately required |
+| 106 staged | **15.5s**, swept collision | 11.5s, swept collision | 0 | Original collision prevented further motion |
+| 106 double | 10s, swept collision | 10s, swept collision | 0 | Original collision prevented further motion |
+| 168 staged | 11.5s, swept collision | **12s**, swept collision | 0 | Original collision prevented further motion |
+| 168 double | 10s, swept collision | 10s, swept collision | 0 | Original collision prevented further motion |
+
+The new necessary second-gate schedule is never treated as a guarantee that each bicycle can pass both gates. The first rejected physical state is **not** committed. All 16 actual initial checks passed their correctly strict assertions.
+
 ## Strict technical and sporting tests
 
 - [Step87 16 original swept-body cases, mirror/name/array-order and two-gate necessary-window assertions](../../scripts/v3/verify-a2-step87-corridor-physical-v3.mjs) exercises 8, 32, 106, 168 riders from physical five-abreast rolling starts on both profiles. The hard strict-mode test ensures it never commits even one near-stop rider tick, and checks all accepted energy values and preserved previous state on a rejected contact. Its new unit cases include a true equal-x crossing conflict with **no arbitrary winner**, an already occupied corridor whose rear rider must yield instead of merging, and second-gate chaining after first-gate travel/steer bounds.
 - [Step87 independent full-field fairness and 8/32 full sporting verification](../../scripts/v3/verify-a2-step87-physical-parity-replay-v3.mjs) checks 16 actually swept 8/32/106/168 × staged/double × policy reflected/renamed trajectories, then attempts full 180-second 8/32 physical racing with an **independent sustained ≥3-second passing observer** and exact serialized 90+90 physical plus observer recovery for every real completed 180s configuration.
-- [Step87 16-case technical CI with protected Step86, Step85, Step78, Step76 and React](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873629590) and [Step87 full parity/observer CI with protected Step86](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873583125). Any technically successful CI run proves honest physical/rejection behavior and regression integrity, **not** that a new 32/106/168 configuration has achieved sporting realism.
+- [Step87 16-case technical CI with protected Step86, Step85, Step78, Step76 and React](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873629590) completed **SUCCESS**. [Step87 full parity/observer CI with protected Step86](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40873583125) must be judged by its separate actual completion and racing metrics. A technically successful CI suite proves honest physical/rejection behavior and regression integrity, **not** that a new 32/106/168 configuration has achieved sporting realism.
 
 ### Historical protected benchmarks
 
