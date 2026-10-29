@@ -64,7 +64,16 @@ export function step85ThroughputMetricsV3(previous,actual,{
   allRidersMoving:vs.every(v=>v>=movingFloorMps),
   netProgressM:q(actual.cumulativeAdvancement-previous.cumulativeAdvancement)};
 }
-function rank(record,strict){
+function rank(record,clearanceFirst=false){
+ if(clearanceFirst)return [
+   record.fullHorizon?1:0,
+   -record.nearStops,
+   -record.highRiskSlowCount,
+   -record.clearanceRisk,
+   record.minimumDecile,
+   -record.brakingShock,
+   record.advance
+ ];
  return [
    record.fullHorizon?1:0,
    -record.nearStops,
@@ -83,7 +92,7 @@ export function chooseThroughputGuardedTickV3(previous,firstPlans,
  makeFuture,advancePhysical,{
  depth=3,maxFirst=5,maxFuture=3,
  minimumMovingSpeedMps=6.5,
- strictNoNearStops=true
+ strictNoNearStops=true,clearanceFirst=false
 }={}){
  validate(previous);
  if(!Array.isArray(firstPlans)||!firstPlans.length||
@@ -92,7 +101,8 @@ export function chooseThroughputGuardedTickV3(previous,firstPlans,
  !Number.isInteger(maxFuture)||maxFuture<1||maxFuture>3||
  typeof makeFuture!=='function'||typeof advancePhysical!=='function'||
  !finite(minimumMovingSpeedMps)||minimumMovingSpeedMps<3||
- minimumMovingSpeedMps>12||typeof strictNoNearStops!=='boolean')
+ minimumMovingSpeedMps>12||typeof strictNoNearStops!=='boolean'||
+ typeof clearanceFirst!=='boolean')
  throw Error('A85 invalid search budget');
  let best=null,firstRejected=null,blockedNearStops=0;
  const evidence=[];
@@ -167,10 +177,10 @@ export function chooseThroughputGuardedTickV3(previous,firstPlans,
    firstMovingFloorViolations:metric.belowMovingFloor
   };
   evidence.push(rec);
-  const a=rank(rec,strictNoNearStops);
+  const a=rank(rec,clearanceFirst);
   let wins=!best;
   if(best){
-   const b=rank(best.record,strictNoNearStops);
+   const b=rank(best.record,clearanceFirst);
    for(let i=0;i<a.length;i++){
     if(Math.abs(a[i]-b[i])<1e-4)continue;
     wins=a[i]>b[i];break;
