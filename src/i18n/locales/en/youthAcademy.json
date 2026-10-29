@@ -789,7 +789,10 @@
     "action": "Renew for {{cost}} Coins",
     "renewing": "Renewing…",
     "getCoins": "Get coins",
-    "readOnly": "Youth Academy access must be renewed for the current season before management actions are available."
+    "readOnly": "Youth Academy access must be renewed for the current season before management actions are available.",
+    "autoRenewLabel": "Automatically renew Youth Academy each game season",
+    "autoRenewHelp": "If paid Premium is still active and you have {{cost}} Coins, the Academy renews at season rollover. Otherwise it closes; existing U16 riders are released and historical records remain.",
+    "graceWarning": "Premium or the current season has expired. Academy management is read-only. Existing eligible graduation decisions remain possible in normal movement windows during the purchased season. Without renewal, the Academy closes at the end of this season."
   },
   "raceDetail": {
     "overview": "Overview",
