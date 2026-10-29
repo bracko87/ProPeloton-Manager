@@ -8,7 +8,7 @@ export function chooseProspectivePhysicalTickV3(previous,candidates,step){
     typeof step!=='function'||!Number.isFinite(previous.at)||
     !Number.isInteger(previous.acceptedSteps))
   throw Error('A78 invalid pre-commit comparison')
- let best=null
+ let best=null,firstRejected=null
  const probes=[]
  for(const candidate of candidates){
   if(!candidate||typeof candidate.policy!=='string'||
@@ -31,6 +31,7 @@ export function chooseProspectivePhysicalTickV3(previous,candidates,step){
   const nearStops=accepted?check.nearStops-previous.nearStops:null
   const advancement=accepted?check.cumulativeAdvancement-
    previous.cumulativeAdvancement:null
+  if(!accepted&&!firstRejected)firstRejected=check
   probes.push({policy:candidate.policy,accepted,
    rejection:accepted?null:check?.reason??'NO_PHYSICAL_STEP',
    nearStopRiderTicks:nearStops,advancement})
@@ -41,6 +42,7 @@ export function chooseProspectivePhysicalTickV3(previous,candidates,step){
    best={policy:candidate.policy,result:check,nearStops,advancement}
  }
  return {status:best?'ACCEPTED':'NO_ACCEPTABLE_PROPOSAL',
-  policy:best?.policy??null,physical:best?.result??null,probes,
+  policy:best?.policy??null,physical:best?.result??null,
+  firstRejected,probes,
   officialWrites:0,onlineProductionAuthorization:false}
 }
