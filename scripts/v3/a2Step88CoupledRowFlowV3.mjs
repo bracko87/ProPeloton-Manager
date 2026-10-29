@@ -202,12 +202,18 @@ export function step88CoupledRowFlowV3(states,requests,bookings,{
   if(!members.length)continue;
   const minV=Math.min(...members.map(x=>x.v));
   const haveHold=ids.some(i=>held[i]);
-  let pace=Math.min(rowVelocityCeilings[z],maxMovingSpeedMps);
-  // Request limits are advisory and local: not an artificial mass stop.
-  if(finite(pace)&&pace<minV-.5)
-   pace=Math.max(lowestMovingSpeedMps,minV-.5);
-  for(const i of ids)if(finite(pace)&&pace<requests[i].speed-EPS)
-   caps[i]=Math.min(caps[i],pace);
+  // A fixed global speed ceiling on every row causes a brake wave even
+  // where there is no physically occupied corridor. Only apply a JOINT
+  // row ceiling when a real preceding-row constraint was discovered.
+  // Preserve otherwise safe original cruise and legal W-prime dynamics.
+  let pace=rowVelocityCeilings[z];
+  if(finite(pace)){
+   pace=Math.min(pace,maxMovingSpeedMps);
+   if(pace<minV-.5)
+    pace=Math.max(lowestMovingSpeedMps,minV-.5);
+   for(const i of ids)if(pace<requests[i].speed-EPS)
+    caps[i]=Math.min(caps[i],pace);
+  }
   // A front row only gets bounded assistance if no *present* neighbor
   // occupies its lane ahead; all movement still A64-capped at +.45 m/s².
   if(!haveHold&&z===0&&minV<9.8)
