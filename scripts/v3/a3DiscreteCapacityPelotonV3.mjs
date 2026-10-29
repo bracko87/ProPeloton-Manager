@@ -131,6 +131,33 @@ export function advanceDiscretePelotonV3(state){
    lead=r;
   }
  }
+ // In the staged open-width zone, the FUTURE two-lane arrival order
+ // remains a live reservation. Independently occupying five lanes must
+ // not allow two cyclists who share a destination channel to converge
+ // before the second x=1130 gate. Use achievable braking and never move
+ // an accepted position backward or suppress a rejected occupancy tick.
+ if(next.roadWidthMode==='two_distinct_gates'&&
+    next.layout==='staged'&&next.scenario==='standard'){
+  for(const c of [0,1]){
+   const receiving=next.racers.filter(r=>r.phase!=='wide'&&
+     r.channel===c).sort(order);
+   let front=null;
+   for(const r of receiving){
+    if(front){
+     const gap=front.x-r.x;
+     const closing=Math.max(0,r.v-front.v);
+     const safe=GAP+.5+2*closing+closing*closing/(2*B);
+     if(gap<safe+1.4){
+      const want=Math.min(desired(next,r),
+        speeds.get(front.id)+(gap-safe)/1.1);
+      const guarded=ramp(r.v,clip(want,FLOOR,14));
+      speeds.set(r.id,Math.min(speeds.get(r.id),guarded));
+     }
+    }
+    front=r;
+   }
+  }
+ }
  for(const r of next.racers){
   r.v=speeds.get(r.id);r.x=q(r.x+r.v*DT);
   r.energyJ=q(clip(r.energyJ-Math.max(0,r.v-10)*30*DT+
