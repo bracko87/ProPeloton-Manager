@@ -17,7 +17,15 @@ const a=step107InitialLaneReservationsV3(f.physical,{
  spacingMeters:2.45});
 assert.equal(a.originalRiders,8);
 assert.equal(a.channels.length,2);
-assert.equal(a.coveredCount+a.unassignedCenterRiders.length,8);
+assert.equal(a.coveredCount,8);
+assert.equal(a.unassignedCenterRiders.length,0);
+const opposite=step107InitialLaneReservationsV3(f.physical,{
+ spacingMeters:2.45,centerTie:'right'});
+assert.equal(opposite.coveredCount,8);
+const neutral=step107InitialLaneReservationsV3(f.physical,{
+ spacingMeters:2.45,centerTie:'neutral'});
+assert(neutral.unassignedCenterRiders.length>0,
+ 'symmetric all-9m/s center tie must not be silently assigned without a branch');
 assert.equal(a.positionsNotMoved,true);
 assert(a.channels.every(ch=>ch.orderedRiderIds.length===ch.count));
 assert.equal(new Set(a.allocations.map(x=>x.riderId)).size,a.coveredCount);
@@ -56,12 +64,15 @@ assert.deepEqual(partB.physical,one.physical,
 const mirror=fixture(8,'staged_pinch',true,false),renamed=
  fixture(8,'staged_pinch',false,true);
 for(const x of [mirror,renamed]){
- const alt=step107InitialLaneReservationsV3(x.physical,{spacingMeters:2.45});
+ const mirrorBranch=x===mirror?'right':'left';
+ const alt=step107InitialLaneReservationsV3(x.physical,{
+  spacingMeters:2.45,centerTie:mirrorBranch});
  assert.equal(alt.coveredCount,a.coveredCount);
+ assert.equal(alt.unassignedCenterRiders.length,0);
  assert.deepEqual(alt.channels.map(c=>c.count).sort((b,c)=>b-c),
   a.channels.map(c=>c.count).sort((b,c)=>b-c));
  const cmds=step107GlobalSlotCommandsV3(x.physical,
-  x.physical,x.bookings,{mode:'slots_balanced'});
+  x.physical,x.bookings,{mode:'slots_balanced',centerTie:mirrorBranch});
  assert.deepEqual(cmds.requests.map(z=>z.speed),good.requests.map(z=>z.speed));
 }
 const thirtyTwo=fixture(32,'double_pinch');
@@ -74,10 +85,13 @@ assert.throws(()=>step107GlobalSlotCommandsV3(f.physical,
  f.physical,f.bookings,{mode:'wrong'}));
 assert.throws(()=>step107InitialLaneReservationsV3(f.physical,{
  spacingMeters:5}));
+assert.throws(()=>step107RunOriginalA64ReservationsV3(f.physical,
+ f.bookings,{mode:'slots_compact',seconds:1,centerTie:'neutral'}));
 assert.equal(JSON.stringify(f),before);
 console.log(JSON.stringify({study:'A107_GLOBAL_LANE_AND_GAP_ALLOCATOR_MICRO',
  status:'PASS',modes:names,exact1Plus1A64Replay:true,
  mirrorAndRenamedReservationParity:true,
+ bothMirrorBranchesFullyAllocated:true,
  noUnapprovedLanePriority:true,initial32Peloton:true,
  originalA64SafetyAuthoritative:true,
  unchangedEightSecondGrouping:true,officialWrites:0}));

@@ -14,17 +14,20 @@ for(const n of [106,168])for(const roadGeometry of
   roadGeometry,rollingStartSpeedMps:9,
   pacePolicy:'persistent_global_strict_v1',spacingSeconds:.35}).initial;
  const before=JSON.stringify(f);
- for(const mode of modes){
+ for(const mode of modes)for(const centerTie of ['left','right']){
   const p=step107RunOriginalA64ReservationsV3(
-   f.physical,f.admission.bookings,{mode,seconds:180});
+   f.physical,f.admission.bookings,{mode,centerTie,seconds:180});
   const e=p.evidence;
   assert.equal(JSON.stringify(f),before);
   assert.equal(p.physical.reason,null);
   assert.equal(e.officialWrites,0);
+  assert.equal(e.physicallyAssignedAllRiders,true);
+  assert.equal(e.unassignedCenters,0);
   assert.equal(e.sameEightSecondRaceGroupRule,true);
   assert.equal(e.acceptedSeconds*2,e.acceptedSamples);
   assert(e.acceptedSeconds>=0&&e.acceptedSeconds<=180);
-  cases.push({n,roadGeometry,mode,acceptedSeconds:e.acceptedSeconds,
+  cases.push({n,roadGeometry,mode,centerTie,
+   acceptedSeconds:e.acceptedSeconds,
    reached180Seconds:e.fullRequestedHorizonAccepted,
    passedFirstNarrowing:e.actualFirstGatePassed,
    passedSecondNarrowing:e.actualSecondGatePassed,
@@ -49,6 +52,8 @@ const report={study:'A107_GLOBAL_TWO_LANE_RESERVATION_A64_ACTUAL',
  bestAcceptedSeconds:Math.max(...cases.map(c=>c.acceptedSeconds)),
  previousCertifiedBestSeconds:14,
  groupRuleEightSecondsUntouched:true,
+ bothMirrorBranchesPhysicallyTested:true,
+ everyRiderReserved:true,
  originalA64Unchanged:true,officialWrites:0,
  milestoneA:'NO_GO_UNTIL_PHYSICALLY_CHECKED_180S_BOTH_GATES',cases};
 const dir=process.env.V3_A2_STEP107_DIR??'/tmp/a107';

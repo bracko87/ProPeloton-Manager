@@ -46,11 +46,12 @@ function geometryToken(s){return [q(s.startX),q(s.y),role(s)].join(':');}
  * rather than assigning geographic/ID priority.
  */
 export function step107InitialLaneReservationsV3(original,{
- spacingMeters=2.45
+ spacingMeters=2.45,centerTie='left'
 }={}){
  if(!original||!Array.isArray(original.states)||
    original.states.length<2||original.states.length>168||
-   !finite(spacingMeters)||spacingMeters<2.1||spacingMeters>3.2)
+   !finite(spacingMeters)||spacingMeters<2.1||spacingMeters>3.2||
+   !['left','right','neutral'].includes(centerTie))
   throw Error('A107 invalid initial lane allocation');
  const all=original.states,ids=new Set(all.map(s=>s.id));
  if(ids.size!==all.length||all.some(s=>!finite(s.startX)||!finite(s.y)||
@@ -78,7 +79,9 @@ export function step107InitialLaneReservationsV3(original,{
     const leftInner=flanks.L.find(s=>role(s)==='INNER');
     const rightInner=flanks.R.find(s=>role(s)==='INNER');
     const difference=(leftInner?.v??0)-(rightInner?.v??0);
-    lane=Math.abs(difference)<=EPS?null:difference>0?'L':'R';
+    lane=Math.abs(difference)<=EPS?
+      centerTie==='neutral'?null:centerTie==='left'?'L':'R':
+      difference>0?'L':'R';
    }
    if(lane){laneMap.set(c.id,lane);
      assignedCenters.push({rowX:x,riderId:c.id,lane});
@@ -117,6 +120,9 @@ export function step107InitialLaneReservationsV3(original,{
    allocations:[...allocations].map(([riderId,data])=>({riderId,...data})),
    coveredCount:allocations.size,
    originalRiders:all.length,
+   centerSymmetryBranch:centerTie,
+   mirrorSymmetricAlternatives:centerTie==='left'?'right':
+     centerTie==='right'?'left':'neutral',
    globalTwoLaneOrder:true,
    exactEightSecondRaceGroupingIndependent:true,
    positionsNotMoved:true,officialWrites:0};
@@ -164,11 +170,11 @@ export function step107ClearanceAuditV3(field,allocation,{
  * unrelated speed independent of upstream occupancy.
  */
 export function step107GlobalSlotCommandsV3(field,original,bookings,{
- mode='slots_balanced'}={}){
+ mode='slots_balanced',centerTie='left'}={}){
  check(field,original,bookings);
  const cfg=MODES[mode];if(!cfg)throw Error('A107 unknown reservation policy');
  const allocation=step107InitialLaneReservationsV3(original,{
-   spacingMeters:cfg.spacing});
+   spacingMeters:cfg.spacing,centerTie});
  const index=new Map(field.states.map((s,i)=>[s.id,i]));
  const wanted=new Map(),blocked=[],steered=[],limited=[];
  for(const lane of allocation.channels){
@@ -250,21 +256,26 @@ function sweep(field,reqs){
  return {accepted:true,physical:r};
 }
 export function step107RunOriginalA64ReservationsV3(initial,bookings,{
- mode='slots_balanced',seconds=30,checkpoint=null,
+ mode='slots_balanced',centerTie='left',seconds=30,checkpoint=null,
  trace=false}={}){
  check(initial,initial,bookings);
  if(!MODES[mode]||!finite(seconds)||seconds<.5||seconds>180||
     Math.round(seconds*2)!==seconds*2)
   throw Error('A107 invalid physical research request');
+ if(!['left','right'].includes(centerTie))
+   throw Error('A107 physical experiment requires resolved mirror-image center branch');
  let current=structuredClone(checkpoint??initial);
  check(current,initial,bookings);
  const before=JSON.stringify([initial,bookings]),start=current.at,samples=[];
  const firstAllocation=step107InitialLaneReservationsV3(initial,{
-   spacingMeters:MODES[mode].spacing});
+   spacingMeters:MODES[mode].spacing,centerTie});
+ if(firstAllocation.coveredCount!==initial.states.length)
+   throw Error('A107 unresolved full-roster lane reservation');
  let firstRejected=null,earlySteers=0,blockedSteers=0,limitedPairs=0;
  let group=step101ObserveA64GroupsV3(current);
  for(let k=0;k<seconds*2;k++){
-  const plan=step107GlobalSlotCommandsV3(current,initial,bookings,{mode});
+  const plan=step107GlobalSlotCommandsV3(current,initial,bookings,{
+   mode,centerTie});
   earlySteers+=plan.steered.length;blockedSteers+=plan.blockedEarlySteer.length;
   limitedPairs+=plan.limitedPairs.length;
   const attempt=sweep(current,plan.requests);
@@ -288,7 +299,7 @@ export function step107RunOriginalA64ReservationsV3(initial,bookings,{
  if(JSON.stringify([initial,bookings])!==before)
   throw Error('A107 initial fixture or bookings modified');
  const e={
-  n:current.states.length,mode,requestedSeconds:seconds,
+  n:current.states.length,mode,centerTie,requestedSeconds:seconds,
   acceptedSeconds:q(current.at-start),
   acceptedSamples:samples.length,
   firstRejected,
@@ -305,6 +316,8 @@ export function step107RunOriginalA64ReservationsV3(initial,bookings,{
   geometryAllocation:firstAllocation.channels.map(ch=>({
     lane:ch.lane,count:ch.count,spacing:ch.slotSeparationM})),
   unassignedCenters:firstAllocation.unassignedCenterRiders.length,
+  physicallyAssignedAllRiders:firstAllocation.coveredCount===initial.states.length,
+  mirrorBranchOpposite:centerTie==='left'?'right':'left',
   earlySteeringRiderTicks:earlySteers,blockedEarlySteeringTicks:blockedSteers,
   speedLimitedRiderTicks:limitedPairs,
   checkpointTraceHash:hash(samples),

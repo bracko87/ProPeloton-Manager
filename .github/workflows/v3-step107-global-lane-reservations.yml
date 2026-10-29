@@ -28,7 +28,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Twenty-four actual A64 106/168 rider up-to-180s physical attempts
+      - name: Forty-eight full-roster A64 106/168 left/right-center alternatives
         env:
           V3_A2_STEP107_DIR: ${{ runner.temp }}/step107
         run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step107-large-v3.mjs
