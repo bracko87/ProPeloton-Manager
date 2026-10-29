@@ -8,7 +8,9 @@ import {step97BuildGlobalTimetableProbeV3}
 import {step104OriginalA64PassageV3}
  from './a2Step104GlobalMultiRowPrecedenceV3.mjs';
 const cases=[],modes=['chain_soft','chain_strict',
-  'global_reserve','stepped_release','early_ordered_merge'];
+  'global_reserve','stepped_release','early_ordered_merge',
+  'zipper_uniform','zipper_soft','zipper_pace',
+  'zipper_slower','zipper_window'];
 for(const n of [106,168])for(const roadGeometry of
  ['staged_pinch','double_pinch']){
  const f=step97BuildGlobalTimetableProbeV3(n,{

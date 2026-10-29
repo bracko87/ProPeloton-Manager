@@ -17,7 +17,16 @@ const MODES={
  chain_strict:{outer:9.7,step:.31,boost:2.0,center:7.45,headway:5,clear:4.1,manual:false},
  global_reserve:{outer:10,step:.26,boost:1.9,center:7.5,headway:6,clear:4.5,manual:false},
  stepped_release:{outer:9.8,step:.18,boost:1.8,center:7.55,headway:4.5,clear:3.65,manual:false},
- early_ordered_merge:{outer:9.55,step:.23,boost:1.75,center:7.4,headway:5,clear:3.8,manual:true}
+ early_ordered_merge:{outer:9.55,step:.23,boost:1.75,center:7.4,headway:5,clear:3.8,manual:true},
+ // A zipper must preserve *both* adjacent longitudinal gaps:
+ //  inner(row k) > outer(row k) > inner(row k+1).
+ // Strong row speed gradients left later rows unable to open their
+ // same-row separation at the time A64's road lookahead forces merging.
+ zipper_uniform:{outer:8.85,step:0,boost:.58,center:8.1,headway:2.8,clear:2.35,manual:false},
+ zipper_soft:{outer:8.65,step:0,boost:.72,center:7.45,headway:3,clear:2.4,manual:false},
+ zipper_pace:{outer:9.35,step:0,boost:.62,center:8.6,headway:2.4,clear:2.45,manual:false},
+ zipper_slower:{outer:7.8,step:0,boost:.62,center:7.35,headway:2.5,clear:2.4,manual:false},
+ zipper_window:{outer:8.65,step:0,boost:.52,center:8.0,headway:3.2,clear:2.45,manual:false}
 };
 function check(field,original){
  if(!field||!original||field.reason!==null||field.dt!==.5||

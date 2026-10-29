@@ -3,7 +3,9 @@ import {step97BuildGlobalTimetableProbeV3} from './a2Step97TimetableProbeV3.mjs'
 import {step104GlobalPrecedenceCommandsV3,step104OriginalA64PassageV3}
  from './a2Step104GlobalMultiRowPrecedenceV3.mjs';
 const modes=['chain_soft','chain_strict','global_reserve',
-  'stepped_release','early_ordered_merge'];
+  'stepped_release','early_ordered_merge',
+  'zipper_uniform','zipper_soft','zipper_pace',
+  'zipper_slower','zipper_window'];
 function make(n,road='staged_pinch',mirror=false,renamed=false){
  const x=step97BuildGlobalTimetableProbeV3(n,{
   roadGeometry:road,pacePolicy:'persistent_global_strict_v1',
