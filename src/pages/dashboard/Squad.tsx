@@ -993,7 +993,9 @@ export default function SquadPage() {
   async function handleMoveToDevelopingTeam(riderId: string) {
     if (movingRiderId) return
 
-    if (!developingTeamStatus?.is_purchased || !developingTeamStatus?.is_active || !developingTeamStatus.developing_club_id) {
+    if (!developingTeamStatus?.team_exists || !developingTeamStatus?.developing_club_id ||
+      developingTeamStatus.active_season !== developingTeamStatus.current_season ||
+      Number(developingTeamStatus.expires_after_season ?? 0) < Number(developingTeamStatus.current_season ?? 0)) {
       setMoveActionMessage(t('nav.unlockDeveloping'))
       return
     }
@@ -1040,12 +1042,13 @@ export default function SquadPage() {
   const developingTeamStatusResolved =
     developingTeamStatus !== null || developingTeamStatusError !== null
 
-  const hasDevelopingTeam =
-    developingTeamStatus?.is_purchased === true &&
-    developingTeamStatus?.is_active === true
+  const hasDevelopingTeam = developingTeamStatus?.team_exists === true &&
+    Boolean(developingTeamStatus.developing_club_id) &&
+    developingTeamStatus.active_season === developingTeamStatus.current_season &&
+    Number(developingTeamStatus.expires_after_season ?? 0) >= Number(developingTeamStatus.current_season ?? 0)
   const showDevelopingTeamLockedState =
     developingTeamStatusResolved && !hasDevelopingTeam
-  const movementWindowOpen = developingTeamStatus?.movement_window_open ?? false
+  const movementWindowOpen = Boolean(developingTeamStatus?.movement_window_open && hasDevelopingTeam)
 
   const movementWindowSummary = developingTeamStatus
     ? developingTeamStatus.movement_window_open
