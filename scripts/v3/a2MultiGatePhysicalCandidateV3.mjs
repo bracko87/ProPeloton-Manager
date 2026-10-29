@@ -520,10 +520,13 @@ export function advanceMultiGatePhysicalCandidateV3(snapshot){
     canonicalBookings,{atSeconds:field.at})
    const prior=step87CorridorCandidatesV3(field.states,requests,
     canonicalBookings,{atSeconds:field.at,minMovingSpeedMps:7.3})
+   const priorGap=step86GapCandidatesV3(field.states,requests,
+    canonicalBookings,{atSeconds:field.at,lookAheadM:55,
+     movingFloorMps:7.5})
    return [
-    {policy:'future_order_pace',requests:prior.candidates[2].requests},
-    {policy:'future_row_hold',requests:local.candidates[0].requests},
-    {policy:'future_row_balanced',requests:local.candidates[3].requests}
+    {policy:'future_order_hold',requests:prior.candidates[0].requests},
+    {policy:'future_gap_wave',requests:priorGap.candidates[2].requests},
+    {policy:'future_row_hold',requests:local.candidates[0].requests}
    ]
   }
   if(isStep87){
