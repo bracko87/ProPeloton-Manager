@@ -20,7 +20,7 @@ The leader-surge variant chooses two synthetic initial leaders on different road
 
 ## Verified technical results — 29 October 2026
 
-[GitHub Actions athlete performance run 40958874421](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40958874421) completed the new original athlete simulation test successfully. The original simplified-engine 106/168 baseline and distinct two-road-profile scenario regressions and React build also passed. The protected original A64 Step86 32-rider full 180-second benchmark was still running when these performance measurements were first confirmed.
+[GitHub Actions athlete performance run 40958874421](https://github.com/bracko87/ProPeloton-Manager/actions/runs/40958874421) completed the new original athlete simulation test successfully. The original simplified-engine 106/168 baseline and distinct two-road-profile scenario regressions and React build also passed. The protected original A64 Step86 32-rider full 180-second benchmark **also passed**, as did the original user-defined eight-second peloton group regression. **All four jobs in run 40958874421 completed successfully.**
 
 | Original simulated athlete field | Distinct road layout | Discrete 10 Hz accepted duration | Both bottlenecks | Minimum accepted achieved speed | Minimum accepted lane gap | Distinct cross-channel order inversions | Mean remaining rider energy |
 | --- | --- | ---: | --- | ---: | ---: | ---: | ---: |
