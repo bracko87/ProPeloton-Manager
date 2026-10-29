@@ -581,6 +581,7 @@ export default function ProPackagesPage(): JSX.Element {
   const [loadingPremium, setLoadingPremium] = useState(true)
   const [startingPremiumCheckout, setStartingPremiumCheckout] =
     useState(false)
+  const [premiumCoinTiming, setPremiumCoinTiming] = useState<'monthly' | 'upfront'>('monthly')
   const [openingPremiumPortal, setOpeningPremiumPortal] =
     useState(false)
   const [openingPremiumCancelPortal, setOpeningPremiumCancelPortal] =
@@ -1357,7 +1358,7 @@ export default function ProPackagesPage(): JSX.Element {
     try {
       const response = await callAuthenticatedEdgeFunction(
         'create-premium-checkout',
-        { plan_code: planCode },
+        { plan_code: planCode, coin_distribution: planCode === 'premium_monthly' ? 'monthly' : premiumCoinTiming },
       )
 
       if (!response.url) {
@@ -1729,6 +1730,24 @@ export default function ProPackagesPage(): JSX.Element {
                       ? t('premium.alreadyExists')
                       : t('premium.become')}
               </button>
+            )}
+
+            {!premiumCheckoutBlocked && (
+              <fieldset className="mt-4 rounded-xl border border-yellow-300 bg-yellow-50 p-4">
+                <legend className="px-2 text-sm font-bold text-gray-900">{t('premium.coinDeliveryTitle')}</legend>
+                <p className="mb-3 text-xs text-gray-700">{t('premium.coinDeliveryHelp')}</p>
+                <label className="flex items-center gap-2 text-sm text-gray-900">
+                  <input type="radio" name="premium-coin-delivery" value="monthly" checked={premiumCoinTiming === 'monthly'}
+                    onChange={() => setPremiumCoinTiming('monthly')} />
+                  {t('premium.coinDeliveryMonthly')}
+                </label>
+                <label className="mt-3 flex items-center gap-2 text-sm text-gray-900">
+                  <input type="radio" name="premium-coin-delivery" value="upfront" checked={premiumCoinTiming === 'upfront'}
+                    onChange={() => setPremiumCoinTiming('upfront')} />
+                  {t('premium.coinDeliveryUpfront')}
+                </label>
+                <p className="mt-3 text-xs text-gray-600">{t('premium.coinDeliveryMonthlyPlan')}</p>
+              </fieldset>
             )}
 
             {!premiumCheckoutBlocked && (
