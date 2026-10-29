@@ -1,0 +1,37 @@
+name: V3 Step85 mirrored field throughput and complete 8/32 sporting audits
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/v3/verify-a2-step85-physical-parity-replay-v3.mjs'
+      - '.github/workflows/v3-step85-full-field-parity.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  full-field-physics-overtake-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: A85 16 mirrored and renamed full bicycle fields and eight plus 32 rider full 180s original energy and observer replay
+        env:
+          V3_A2_STEP85_PARITY_DIR: ${{ runner.temp }}/a85parity
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step85-physical-parity-replay-v3.mjs
+      - name: Preserve original A78 32 five-abreast full 180s 87 confirmed 3-second passes
+        env:
+          V3_A2_STEP78_LOCAL_REPLAY_DIR: ${{ runner.temp }}/a78
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step78-phase2-local-replay-v3.mjs
+      - name: Save original swept physical and independent overtaking evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: a85-actual-mirrored-physics-no-stop-and-overtakes
+          path: |
+            ${{ runner.temp }}/a85parity/*.json
+            ${{ runner.temp }}/a78/*.json
+          if-no-files-found: warn
+          retention-days: 30
