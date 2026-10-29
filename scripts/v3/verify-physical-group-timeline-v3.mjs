@@ -6,8 +6,8 @@ import {initializePhysicalRaceV3,advancePhysicalRaceV3} from '../../src/race-eng
 // may vanish without an actual position-based physical catch/merge.
 const frames=[
  {elapsedSeconds:0,riders:[{riderId:'A',meters:0},{riderId:'B',meters:0},{riderId:'C',meters:0},{riderId:'D',meters:0}]},
- {elapsedSeconds:40,riders:[{riderId:'A',meters:500},{riderId:'B',meters:420},{riderId:'C',meters:415},{riderId:'D',meters:417}]},
- {elapsedSeconds:80,riders:[{riderId:'A',meters:900},{riderId:'B',meters:820},{riderId:'C',meters:815},{riderId:'D',meters:817}]},
+ {elapsedSeconds:40,riders:[{riderId:'A',meters:600},{riderId:'B',meters:420},{riderId:'C',meters:415},{riderId:'D',meters:417}]},
+ {elapsedSeconds:80,riders:[{riderId:'A',meters:1000},{riderId:'B',meters:820},{riderId:'C',meters:815},{riderId:'D',meters:817}]},
  {elapsedSeconds:120,riders:[{riderId:'A',meters:1260},{riderId:'B',meters:1250},{riderId:'C',meters:1245},{riderId:'D',meters:1248}]},
 ]
 const timeline=derivePhysicalGroupTimelineV3(frames,2000)

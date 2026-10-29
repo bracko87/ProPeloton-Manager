@@ -1,0 +1,59 @@
+name: V3 Step101 eight-second dynamic race groups
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/race-engine-v3/physicalGroupsV3.ts'
+      - 'scripts/v3/a2Step101EightSecondGroupsV3.mjs'
+      - 'scripts/v3/verify-a2-step101-eight-second-groups-v3.mjs'
+      - 'scripts/v3/verify-physical-group-timeline-v3.mjs'
+      - '.github/workflows/v3-step101-eight-second-groups.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  eight-second-group-rule-and-a64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Actual A64 group observer, 120 peloton, split, catch, exact 8s, drafting
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step101-eight-second-groups-v3.mjs
+      - name: Existing complete 106-rider physical group replay and lineage
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-physical-group-timeline-v3.mjs
+      - name: Existing route and group split/catch regressions
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-route-and-groups-v3.mjs
+  durable-physical-checkpoints:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exact resumable original 106/168 rider research race and group timeline
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-authoritative-group-checkpoints-v3.mjs
+  protected-original-a64:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Keep Step86 original A64 physical sporting reference passing
+        run: node --disable-warning=ExperimentalWarning --experimental-strip-types scripts/v3/verify-a2-step86-gap-physical-v3.mjs
+  production-react-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build

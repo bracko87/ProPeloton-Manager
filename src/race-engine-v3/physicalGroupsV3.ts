@@ -17,8 +17,13 @@ export function derivePhysicalGroupsV3(now:PhysicalGroupSampleV3,previous:Physic
  const groups:{riders:PhysicalGroupRiderV3[];front:number;rear:number}[]=[]
  for(const r of pos){
   const last=groups.at(-1),followingSpeed=last?Math.max(2,Math.min(25,speedOf(r))):11
-  const threshold=Math.max(18,Math.min(55,followingSpeed*2.75))
-  if(!last||last.rear-r.meters>threshold)groups.push({riders:[r],front:r.meters,rear:r.meters})
+  // Eight-second RACE GROUP rule: compare each follower with the rear of
+  // the group ahead. Consecutive <=8s links stay in the SAME bunch, even
+  // though each rider has distinct physical position/speed/energy.
+  // A gap >8s splits; reconnecting at <=8s automatically merges.
+  // No 55m cap: at 10m/s an eight-second gap is physically ~80m.
+  const gapSeconds=last?(last.rear-r.meters)/followingSpeed:0
+  if(!last||gapSeconds>8+1e-8)groups.push({riders:[r],front:r.meters,rear:r.meters})
   else{last.riders.push(r);last.rear=r.meters}
  }
  const peloton=groups.reduce((best,g)=>g.riders.length>best.riders.length?g:best,groups[0])
