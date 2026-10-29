@@ -3557,26 +3557,29 @@ function RoleTabButton({
   selected,
   currentCount,
   limit,
+  access,
   onClick,
 }: {
   role: StaffRole
   selected: boolean
   currentCount: number
   limit: number
+  access: StaffHireStatus
   onClick: () => void
 }) {
   const { t } = useTranslation('staff')
-  const meta = getRoleMeta(role)
   const roleKeys = ROLE_TRANSLATION_KEYS[role]
 
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-xl border p-4 text-left transition ${
+      className={`flex h-full w-full flex-col rounded-xl border p-4 text-left transition ${
         selected
           ? 'border-yellow-300 bg-yellow-50 shadow-sm'
-          : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
+          : access.canHire
+            ? 'border-gray-200 bg-white hover:border-yellow-300 hover:shadow-sm'
+            : 'border-gray-200 bg-gray-50 hover:border-gray-300 hover:shadow-sm'
       }`}
     >
       <div className="flex items-start justify-between gap-3">
@@ -3592,6 +3595,18 @@ function RoleTabButton({
         >
           {currentCount}/{limit}
         </span>
+      </div>
+      <div className="mt-3 w-full border-t border-gray-200 pt-2 text-xs">
+        <div className={`font-semibold ${access.canHire ? 'text-green-700' : 'text-gray-700'}`}>
+          {t(`hireAccess.states.${access.state}`)}
+        </div>
+        {access.reasons.length > 0 ? (
+          <ul className="mt-1 space-y-1 text-gray-600">
+            {access.reasons.map((reason, i) => <li key={i}>• {reason}</li>)}
+          </ul>
+        ) : (
+          <p className="mt-1 text-gray-500">{t('hireAccess.candidatesNote')}</p>
+        )}
       </div>
     </button>
   )
