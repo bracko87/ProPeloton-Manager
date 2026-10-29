@@ -28,6 +28,7 @@ for(const roadGeometry of ['staged_pinch','double_pinch']){
     firstFailure:result.unresolved[0]??null,
     pairTimeConstraintWarnings:result.metrics.potentialSweptPairTimeConstraints,
     globallyInteractingPairs:result.metrics.potentiallyInteractingPairs,
+    mirrorNeutralDualLaneReservations:result.metrics.symmetricUnresolvedGateChoices,
     timeExpandedRiderCells:result.metrics.timeExpandedRiderCells,
     gates:result.gateSummary,
     a64VerifiedAcceptedSeconds:null,

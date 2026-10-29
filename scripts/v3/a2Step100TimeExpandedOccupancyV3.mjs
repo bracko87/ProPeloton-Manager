@@ -109,7 +109,8 @@ export function step100TimeExpandedOccupancyV3(states,gates,bookings,opts={}){
     occupiedGateLaneCells:0,closeInitialRiderPairs:0,
     sameRowSlotTies:0,sameLanePrecedenceEdges:0,
     crossGateTransitEdges:0,potentialSweptPairTimeConstraints:0,
-    potentiallyInteractingPairs:0,unreachableBySpeed:0,
+    potentiallyInteractingPairs:0,symmetricUnresolvedGateChoices:0,
+    unreachableBySpeed:0,
     unreachableByLateralMotion:0,slotCapacityConflicts:0};
   // Each vertex (rider,t) contains an *interval* of kinematically reachable X.
   // These are optimistic envelopes, not fully reachable joint 2-D states.
@@ -216,25 +217,33 @@ export function step100TimeExpandedOccupancyV3(states,gates,bookings,opts={}){
       }
       let chosen=null;
       for(let tick=earliest;tick<=latest&&!chosen;tick++){
+        const open=[];
         for(const lane of r.possibleLanes){
           totals.checkedGateLaneCells++;
           const lkey=g.id+'|'+lane;
           const prior=prevInLane.get(lkey);
           if(prior!==undefined&&tick<prior+longitudinalClearanceTicks){
-            totals.sameLanePrecedenceEdges++;
-            continue;
+            totals.sameLanePrecedenceEdges++;continue;
           }
           if(cells.has(key(g.id,lane,tick))){
-            totals.slotCapacityConflicts++;
-            continue;
+            totals.slotCapacityConflicts++;continue;
           }
-          chosen={id:r.s.id,gateId:g.id,lane,tick,
-            atSeconds:round(tick*p.dt),targetY:lanes[lane],
-            earliestSeconds:round(earliest*p.dt),
-            latestSeconds:round(latest*p.dt),
-            originalBookedAt:r.b.scheduledSeconds??null};
-          break;
+          open.push(lane);
         }
+        if(!open.length)continue;
+        // Mirror-neutral centre-line case: reserve BOTH possible cells
+        // conservatively until a real physical trajectory breaks symmetry.
+        // Never select 'left' only because its array index sorts first.
+        const ambiguous=r.tied&&open.length===r.possibleLanes.length;
+        const lane=ambiguous?null:open[0];
+        chosen={id:r.s.id,gateId:g.id,lane,
+          possibleLanes:ambiguous?[...open]:[lane],
+          symmetryUnresolved:ambiguous,tick,
+          atSeconds:round(tick*p.dt),
+          targetY:ambiguous?r.b.targetY:lanes[lane],
+          earliestSeconds:round(earliest*p.dt),
+          latestSeconds:round(latest*p.dt),
+          originalBookedAt:r.b.scheduledSeconds??null};
       }
       if(!chosen){
         unresolved.push({gateId:g.id,riderId:r.s.id,
@@ -243,11 +252,14 @@ export function step100TimeExpandedOccupancyV3(states,gates,bookings,opts={}){
           latestSeconds:round(latest*p.dt)});
         continue;
       }
-      cells.add(key(g.id,chosen.lane,chosen.tick));
-      prevInLane.set(g.id+'|'+chosen.lane,chosen.tick);
+      for(const lane of chosen.possibleLanes){
+        cells.add(key(g.id,lane,chosen.tick));
+        prevInLane.set(g.id+'|'+lane,chosen.tick);
+        totals.occupiedGateLaneCells++;
+      }
+      if(chosen.symmetryUnresolved)totals.symmetricUnresolvedGateChoices++;
       times.set(r.s.id,chosen.tick);
       assignments.push(chosen);allocations.push(chosen);
-      totals.occupiedGateLaneCells++;
     }
     finalGateData.push({gateId:g.id,gateX:g.gateX,
       capacity:g.capacity,laneCenters:lanes,

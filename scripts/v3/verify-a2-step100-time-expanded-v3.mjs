@@ -41,6 +41,19 @@ const impossible=step100TimeExpandedOccupancyV3(states,far,farBookings,
 assert(impossible.unresolved.length>0);
 assert.equal(impossible.noA64PhysicalWitness,true);
 assert.equal(impossible.status,'DISCRETE_GATE_APPOINTMENTS_UNRESOLVED');
+const centered=bookings.map(b=>({...b,
+  targetY:Math.abs(states.find(s=>s.id===b.id).y-2.2)<1e-5?2.2:b.targetY}));
+const center=step100TimeExpandedOccupancyV3(states,gates,centered);
+const centerMirrored=step100TimeExpandedOccupancyV3(
+  states.map(s=>({...s,y:4.4-s.y})),
+  gates.map(g=>({...g,minY:4.4-g.maxY,maxY:4.4-g.minY})),
+  centered.map(b=>({...b,targetY:4.4-b.targetY})));
+assert(center.metrics.symmetricUnresolvedGateChoices>0,
+  'geometric middle rider must not gain arbitrary left-side priority');
+assert.deepEqual(center.appointments.map(a=>[a.id,a.atSeconds,a.symmetryUnresolved]).sort(),
+  centerMirrored.appointments.map(a=>[a.id,a.atSeconds,a.symmetryUnresolved]).sort());
+assert(center.appointments.some(a=>a.symmetryUnresolved&&a.lane===null&&
+  a.possibleLanes.length===2));
 const bad=structuredClone(bookings);bad[0].targetY=-1;
 assert.throws(()=>step100TimeExpandedOccupancyV3(states,gates,bad));
 console.log(JSON.stringify({study:'A100_TIME_EXPANDED_TWO_GATE_OCCUPANCY',
