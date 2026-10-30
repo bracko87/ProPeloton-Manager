@@ -74,6 +74,13 @@ try{
   }
   const diagnostic=JSON.parse(line.slice('V4_SEVEN_SECOND_MULTI_SEED_REPORT '.length))
   console.log(line)
+  const chaseLine=lines.find(x=>x.startsWith('V4_EXPLICIT_CHASE_AB_REPORT '))
+  if(!chaseLine)throw Error('V4 chase sensitivity report missing from corrected research bundle')
+  const chase=JSON.parse(chaseLine.slice('V4_EXPLICIT_CHASE_AB_REPORT '.length))
+  console.log('V4_CORRECTED_CHASE_AB_REPORT '+JSON.stringify({
+   ...chase,solver:'v4_research_bridge_handoff_corrected',
+   replayValidatorStillStrict:true,productionWrites:0
+  }))
   const valid=diagnostic.syntheticSeeds===36 &&
    diagnostic.v4Complete===36 && diagnostic.v4ReplayExceptions===0 &&
    diagnostic.v4WithEscape===18
