@@ -73,7 +73,7 @@ const mountainForensicNeedle="  if (!replayPublicationPolicy.publishable) {"
 const mountainForensicSnippet=[
  "  if(!replayPublicationPolicy.publishable && input.engine.deterministicSeed.startsWith('v4-stress-mountain-')){",
  "    const cps=replayTimeline.checkpoints",
- "    const carried=cps.map((c,i)=>({c,i})).filter(x=>x.c.checkpointId.includes('bridge-carried-'))",
+ "    const carried=cps.map((c,i)=>({c,i})).filter(x=>x.c.checkpointId.includes('bridge-carried-') || x.c.checkpointId.includes('bridge-caught-') || x.c.checkpointId.includes('late-chase-step-12'))",
  "    const around=carried.flatMap(({i})=>cps.slice(Math.max(0,i-2),i+3))",
  "    const selected=[...new Map(around.map(c=>[c.checkpointId,c])).values()]",
  "    console.log('V4_MOUNTAIN_BRIDGE_FORENSIC '+JSON.stringify({",
