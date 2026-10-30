@@ -32,6 +32,9 @@ type HistoricRecord={
 export type V4HistoricalComparison={
  readonly researchOnly:true
  readonly officialWrites:0
+ readonly comparisonKind:'V4_AI_PLANNING_ON_PRESERVED_V2_PHYSICS'
+ readonly calibratedV4PhysicsApplied:false
+ readonly physicalRealismApproval:'NOT_EVALUATED'
  readonly historicLockCutoffActuallyVerified:false
  readonly riskWarning:'historical_lock_time_reconstructed_not_proven'
  readonly stageHash:string
@@ -173,6 +176,8 @@ export function compareHistoricalStageV4(raw:HistoricRecord):V4HistoricalCompari
  const changed=rankAgreement(v2Rows,v4Rows)
  return {
   researchOnly:true,officialWrites:0,
+  comparisonKind:'V4_AI_PLANNING_ON_PRESERVED_V2_PHYSICS',
+  calibratedV4PhysicsApplied:false,physicalRealismApproval:'NOT_EVALUATED',
   historicLockCutoffActuallyVerified:false,
   riskWarning:'historical_lock_time_reconstructed_not_proven',
   stageHash:sha(input.stage.stageId).slice(0,16),
