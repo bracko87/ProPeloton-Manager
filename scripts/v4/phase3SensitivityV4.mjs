@@ -65,11 +65,14 @@ const cooperationReplacement="        : 1 + (phase3DynamicCooperationMultiplier 
 // V4-only seed 33 replay snapshot before the original strict throw.
 const forensicNeedle="  if (!replayPublicationPolicy.publishable) {"
 const forensicReplacement=forensicNeedle+"\n"+"    if(input.engine.deterministicSeed==='v4-seven-second-regression-033'){\n      console.log('V4_SEED33_FINISH_FORENSIC '+JSON.stringify({\n        seed:input.engine.deterministicSeed,\n        blockingIssues:replayPublicationPolicy.blockingIssues,\n        phase4:{\n          startGapSeconds:roadRaceResolution?.phase4Finish?.startGapSeconds,\n          endGapSeconds:roadRaceResolution?.phase4Finish?.endGapSeconds,\n          breakawayCaught:roadRaceResolution?.phase4Finish?.breakawayCaught,\n          breakawaySurvived:roadRaceResolution?.phase4Finish?.breakawaySurvived,\n          bridgeGroups:roadRaceResolution?.phase4Finish?.bridgeGroups?.map(g=>({\n            displayCode:g.displayCode,riderIds:g.riderIds,catchKm:g.catchKm,\n            mergeKm:g.mergeKm,mergedIntoOpeningBreakaway:g.mergedIntoOpeningBreakaway\n          })),\n          finalChaseSteps:roadRaceResolution?.phase4Finish?.chaseSteps?.slice(-4)\n            .map(g=>({kmStart:g.kmStart,kmEnd:g.kmEnd,\n              startGapSeconds:g.startGapSeconds,endGapSeconds:g.endGapSeconds}))\n        },\n        catches:replayTimeline.checkpoints.filter(cp=>\n          cp.commentary.some(c=>c.eventType==='catch')).map(cp=>({\n            id:cp.checkpointId,km:cp.raceProgress.kmFromStart,\n            groups:cp.groups.map(g=>({code:g.displayCode,riders:g.riderIds}))\n          })).slice(-20),\n        checkpoints:replayTimeline.checkpoints.slice(-8).map(cp=>({\n          id:cp.checkpointId,km:cp.raceProgress.kmFromStart,\n          finalResultsVisible:cp.finalResultsVisible,\n          groups:cp.groups.map(g=>({code:g.displayCode,riders:g.riderIds,\n            lineageId:g.physicalLineageId,position:g.physicalPosition})),\n          gaps:cp.gaps.map(g=>({code:g.displayCode,seconds:g.gapSeconds})),\n          events:cp.commentary.map(c=>({type:c.eventType,riders:c.riderIds}))\n        }))\n      }))\n    }"
+const energyNeedle="    const phaseEnergyCost = phaseEnergyCostByRiderId.get(row.riderId) ?? 0"
+const energyReplacement="    const v4OriginalPhaseEnergyCost = phaseEnergyCostByRiderId.get(row.riderId) ?? 0\n    const v4PaceEnergySurcharge = calculateV4Phase3PaceEnergySurcharge({\n      riderId:row.riderId,\n      escapeRiderIds:physicalEscapeRiderIdsAtLaunch,\n      chasingRiderIds:phase3ChaseWorkerRows.map(({row})=>row.riderId),\n      baseEnergyCost:v4OriginalPhaseEnergyCost,\n      phaseStartKm:phaseBoundary.startKm,\n      samples:physicalGapTrajectory.map(sample=>({\n        kmFromStart:sample.kmFromStart,\n        referencePaceKmh:calculateRoadReferencePaceKmh(input.stage,sample.kmFromStart),\n        pelotonPaceKmh:sample.v4ResearchPace?.pelotonPaceKmh??null,\n        escapePaceKmh:sample.v4ResearchPace?.escapePaceKmh??null\n      }))\n    })\n    const phaseEnergyCost = deterministicRound(v4OriginalPhaseEnergyCost+v4PaceEnergySurcharge,6)"
 const configs=[
- {key:'baseline',peloton:false,cooperation:false},
- {key:'peloton_response',peloton:true,cooperation:false},
- {key:'breakaway_cooperation',peloton:false,cooperation:true},
- {key:'combined',peloton:true,cooperation:true}
+ {key:'baseline',peloton:false,cooperation:false,energy:false},
+ {key:'peloton_response',peloton:true,cooperation:false,energy:false},
+ {key:'breakaway_cooperation',peloton:false,cooperation:true,energy:false},
+ {key:'combined',peloton:true,cooperation:true,energy:false},
+ {key:'combined_energy',peloton:true,cooperation:true,energy:true}
 ]
 const exact=(source,from,to)=>{
  if(source.split(from).length!==2)throw Error('V2 research anchor changed or ambiguous: '+from.slice(0,110))
@@ -104,9 +107,11 @@ try{
       throw Error('Phase-3 physical source changed; refuse fuzzy calibration')
      if(config.peloton)source=exact(source,pelotonNeedle,pelotonReplacement)
      if(config.cooperation)source=exact(source,cooperationNeedle,cooperationReplacement)
+     if(source.split(energyNeedle).length!==2)throw Error('Phase-3 energy source drift')
+     if(config.energy)source=exact(source,energyNeedle,energyReplacement)
      transformed++
      return {
-      contents:"import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\n"+patchV4FinishTransitionSource(source),
+      contents:"import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\nimport {calculateV4Phase3PaceEnergySurcharge} from '../race-engine-v4/phase3PaceEnergyV4.ts'\n"+patchV4FinishTransitionSource(source),
       loader:'ts'
      }
     })
@@ -207,6 +212,26 @@ try{
   smallFieldPassed:r.diag.v4Complete===36&&r.diag.v4ReplayExceptions===0,
   largerFieldReplayFailures:r.cases.filter(x=>!x.completed).length
  }))
+ const noEnergy=results.find(r=>r.key==='combined')
+ const withEnergy=results.find(r=>r.key==='combined_energy')
+ if(!noEnergy||!withEnergy)throw Error('Missing paired energy variants')
+ const energyEffect={
+  matchedCases:common.length,
+  medianFrontEnergyBaseline:field(common.map(seed=>noEnergy.cases[seed]),'phase3FrontEnergySpent'),
+  medianFrontEnergyAdjusted:field(common.map(seed=>withEnergy.cases[seed]),'phase3FrontEnergySpent'),
+  medianPairedAdditionalFrontEnergy:median(common.map(seed=>
+   withEnergy.cases[seed].phase3FrontEnergySpent-
+   noEnergy.cases[seed].phase3FrontEnergySpent)),
+  casesFrontEnergyIncreased:common.filter(seed=>
+   withEnergy.cases[seed].phase3FrontEnergySpent>
+   noEnergy.cases[seed].phase3FrontEnergySpent+0.000001).length,
+  casesFrontEnergyDecreased:common.filter(seed=>
+   withEnergy.cases[seed].phase3FrontEnergySpent<
+   noEnergy.cases[seed].phase3FrontEnergySpent-0.000001).length,
+  casesMaxGapChanged:common.filter(seed=>
+   Math.abs(withEnergy.cases[seed].maximumGapSeconds-
+    noEnergy.cases[seed].maximumGapSeconds)>0.000001).length
+ }
  const seed33Forensics=results.map(r=>({candidate:r.key,forensic:r.forensic}))
  const report={
   status:'DIAGNOSTIC_ONLY_NO_REALISM_APPROVAL',
@@ -214,9 +239,10 @@ try{
   scenarios:configs.map(x=>x.key),
   measured:comparable,pairedVsBaseline:paired,
   strictReplay:strictCandidates,
-  replayFailureSamples,energyInvariance,seed33Forensics,
+  replayFailureSamples,energyInvariance,energyEffect,seed33Forensics,
   pelotonCandidate:'Phase-3 organized pursuit minimum response 1.015',
   cooperationCandidate:'Phase-3 dynamic cooperation contribution reduced by 50% only on full-cooperation branch',
+  energyCandidate:'Bounded physical speed-relative cost, only recorded Phase-3 front and chase workers; post-phase effect only',
   changedPhysicsInMemory:true,originalV2SourceModified:false,
   officialRaceWrites:0,syntheticOnly:true,strictValidatorStillEnabled:true
  }
@@ -230,6 +256,8 @@ try{
  }))
   throw Error('V4 seed-33 physical finish grouping replay must remain strictly valid')
 
+ if(energyEffect.casesFrontEnergyIncreased===0||energyEffect.casesFrontEnergyDecreased!==0)
+  throw Error('V4 energy candidate did not produce physically directional fatigue')
  if(replayFailureSamples.some(x=>x.failures.some(f=>!f.reason)))
   throw Error('A replay failure was not classified')
 }finally{
