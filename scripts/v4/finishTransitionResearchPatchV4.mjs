@@ -11,6 +11,9 @@ const replaceExact=(source,from,to)=>{
 }
 export function patchV4FinishTransitionSource(original){
  let source=original
+ const physicalFrontNeedle="  const actualContenderIds =\n    contenderRiderIds.length > 0\n      ? contenderRiderIds\n      : provisionalRiderStates\n          .filter((state) => phase3.finishEligibleRiderIds.includes(state.riderId))"
+ const physicalFrontReplacement="  const v4PhysicalFrontFinishFallback = selectV4PhysicalFrontFinishFallback({\n    physicalFrontRiderIds: winningGroup.riderIds,\n    finishEligibleRiderIds: phase3.finishEligibleRiderIds,\n    riderFinishStates: provisionalRiderStates,\n    groupingToleranceSeconds: PHASE5_GROUP_MERGE_TOLERANCE_SECONDS,\n  })\n  const actualContenderIds =\n    contenderRiderIds.length > 0\n      ? contenderRiderIds\n      : v4PhysicalFrontFinishFallback.length > 0\n        ? v4PhysicalFrontFinishFallback\n        : provisionalRiderStates\n          .filter((state) => phase3.finishEligibleRiderIds.includes(state.riderId))"
+ source=replaceExact(source,physicalFrontNeedle,physicalFrontReplacement)
  const begin="    if (finalTransitionRiderIds.length > 0) {\n      eventDefinitions.push({"
  const decision=[
   "    const v4FinishTransition = reconcileV4FinishTransition({",
@@ -52,5 +55,5 @@ export function patchV4FinishTransitionSource(original){
  source=replaceExact(source,
   "      return laterFrontExists ? terminalIndex : candidateIndex",
   "      return (survivingFrontAtCatch || laterFrontExists) ? terminalIndex : candidateIndex")
- return "import { reconcileV4FinishTransition } from '../race-engine-v4/finishTransitionV4.ts'\n"+source
+ return "import { reconcileV4FinishTransition, selectV4PhysicalFrontFinishFallback } from '../race-engine-v4/finishTransitionV4.ts'\n"+source
 }
