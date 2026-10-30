@@ -22,7 +22,7 @@ function connect(url,key,factory){
 }
 export async function runPrivateHistoricalPilotV4({
  url,key,clientFactory=createClient,exportStage=exportPrivateHistoricalStage,
- physicalRunner=runPrivateHistoricalPhysicsV4,targets=TERRAIN_TARGETS,
+ metadataReader=null,physicalRunner=runPrivateHistoricalPhysicsV4,targets=TERRAIN_TARGETS,
  metadataLimit=250,maxProbesPerTerrain=18
 }={}){
  if(!Number.isSafeInteger(metadataLimit)||metadataLimit<1||metadataLimit>350||
@@ -30,12 +30,13 @@ export async function runPrivateHistoricalPilotV4({
  !targets||Object.keys(targets).some(t=>!terrains.includes(t))||
  terrains.some(t=>!Number.isSafeInteger(targets[t])||targets[t]<0||targets[t]>12))
   throw Error('Unsafe private pilot limits')
- const db=connect(url,key,clientFactory)
- const {data,error}=await db.from('race_stage_simulation_runs')
+ const db=metadataReader===null?connect(url,key,clientFactory):null
+ const response=metadataReader===null?await db.from('race_stage_simulation_runs')
   .select('stage_id,completed_at,terrain:input_snapshot_json->stage->>terrainType,stage_format:input_snapshot_json->stage->>stageFormat')
-  .eq('status','completed').order('completed_at',{ascending:false}).limit(metadataLimit)
- if(error||!Array.isArray(data))throw Error('Metadata SELECT denied')
- const selection=selectV4HistoricalPilotCandidates(data,{maxPerTerrain:maxProbesPerTerrain})
+  .eq('status','completed').order('completed_at',{ascending:false}).limit(metadataLimit):
+  {data:await metadataReader(metadataLimit),error:null}
+ if(response.error||!Array.isArray(response.data))throw Error('Metadata SELECT denied')
+ const selection=selectV4HistoricalPilotCandidates(response.data,{maxPerTerrain:maxProbesPerTerrain})
  const folder=mkdtempSync(join(tmpdir(),'ppm-v4-historical-pilot-'))
  const created=[],files=[]
  const attempted=Object.fromEntries(terrains.map(t=>[t,0]))

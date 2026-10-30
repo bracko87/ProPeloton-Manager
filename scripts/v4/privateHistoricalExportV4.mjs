@@ -66,6 +66,17 @@ export function preparePrivateHistoricalEnvelope(run,entries,stageId){
   team_control:controls}
 }
 
+/** Store a prevalidated snapshot in a private local OS temporary file. */
+export function storePrivateHistoricalEnvelopeV4(run,entries,stageId){
+ const envelope=preparePrivateHistoricalEnvelope(run,entries,stageId)
+ const folder=mkdtempSync(join(tmpdir(),'ppm-v4-private-history-'))
+ const path=join(folder,'historical-'+hash(stageId)+'.json')
+ writeFileSync(path,JSON.stringify(envelope),{encoding:'utf8',flag:'wx',mode:0o600})
+ return {privatePath:path,stageToken:hash(stageId),
+  riders:run.input_snapshot_json.riders.length,teams:envelope.team_control.length,
+  aiTeams:envelope.team_control.filter(t=>t.kind==='ai').length,
+  humanTeams:envelope.team_control.filter(t=>t.kind==='human').length}
+}
 /** Requires an operator-provided SELECT-authorized credential; no writes. */
 export async function exportPrivateHistoricalStage({stageId,url,key,clientFactory=createClient}){
  if(!UUID.test(String(stageId??'')))throw Error('Stage ID must be a valid UUID')
@@ -92,14 +103,7 @@ export async function exportPrivateHistoricalStage({stageId,url,key,clientFactor
   .select('race_team_entry_id,race_id,participating_club_id,club_id,entry_source,is_ai_filler')
   .eq('race_id',runs[0].race_id).in('race_team_entry_id',ids)
  if(entriesError)throw Error('Authoritative team entry read denied: '+(entriesError.code??'DB_READ'))
- const envelope=preparePrivateHistoricalEnvelope(runs[0],entries??[],stageId)
- const folder=mkdtempSync(join(tmpdir(),'ppm-v4-private-history-'))
- const path=join(folder,'historical-'+hash(stageId)+'.json')
- writeFileSync(path,JSON.stringify(envelope),{encoding:'utf8',flag:'wx',mode:0o600})
- return {privatePath:path,stageToken:hash(stageId),riders:input.riders.length,
-  teams:envelope.team_control.length,
-  aiTeams:envelope.team_control.filter(t=>t.kind==='ai').length,
-  humanTeams:envelope.team_control.filter(t=>t.kind==='human').length}
+ return storePrivateHistoricalEnvelopeV4(runs[0],entries??[],stageId)
 }
 
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){

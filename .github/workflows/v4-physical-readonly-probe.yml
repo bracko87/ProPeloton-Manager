@@ -37,6 +37,8 @@ jobs:
         run: node scripts/v4/privateHistoricalPhysicsV4.test.mjs
       - name: Test automated PRIVATE historical pilot metadata selection and cleanup using mocks only
         run: node scripts/v4/privateHistoricalPilotV4.test.mjs
+      - name: Test restricted PG historical access with mocks, no database
+        run: node scripts/v4/privateHistoricalPgV4.test.mjs
       - name: Trace five synthetic physical group-transition failures with original validator still strict
         run: node scripts/v4/traceReplayTransitionsV4.mjs
       - name: Validate V4 physical bridge-target normalization (research module only)
