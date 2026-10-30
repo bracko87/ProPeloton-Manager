@@ -9,12 +9,13 @@ assert.equal(cfg.ssl.rejectUnauthorized,true)
 assert.throws(()=>privatePgConfig({...env,PPM_V4_RESEARCH_DB_HOST:'evil.example'}))
 assert.throws(()=>privatePgConfig({...env,PPM_V4_RESEARCH_DB_PASSWORD:'short'}))
 const u=n=>'12345678-1234-4234-8234-'+String(n).padStart(12,'0')
-const stage=u(1),race=u(2),entry=u(3)
+const stage=u(1),race=u(2),entry=u(3),entry2=u(4)
 const run={stage_id:stage,race_id:race,status:'completed',
  input_snapshot_json:{stage:{stageId:stage,stageFormat:'road_race',terrainType:'flat'},
  race:{raceId:race},riders:[{},{}],
- teams:[{teamId:'team-1',raceTeamEntryId:entry}],
- stagePlans:[{teamId:'team-1',locked:true,status:'locked'}]},
+ teams:[{teamId:'team-1',raceTeamEntryId:entry},{teamId:'team-2',raceTeamEntryId:entry2}],
+ stagePlans:[{teamId:'team-1',locked:true,status:'locked'},
+ {teamId:'team-2',locked:true,status:'locked'}]},
  result_summary_json:{stage_start_game_at:'2000-01-01T00:00:00Z',
  output_snapshot:{universalResult:{stageId:stage}}}}
 let opened=0,closed=0,physics=0
@@ -30,9 +31,10 @@ class FakeClient{
     completed_at:'2026-10-25T00:00:00Z'}]}
   if(sql.includes('WHERE stage_id=$1')){assert.deepEqual(args,[stage]);return{rows:[run]}}
   if(sql.includes('race_team_entry_id=ANY')){
-   assert.deepEqual(args,[race,[entry]])
+   assert.deepEqual(args,[race,[entry,entry2]])
    return{rows:[{race_team_entry_id:entry,race_id:race,
-    is_ai_filler:true,entry_source:'ai'}]}
+    is_ai_filler:true,entry_source:'ai'},
+   {race_team_entry_id:entry2,race_id:race,is_ai_filler:true,entry_source:'ai'}]}
   }
   throw Error('Forbidden SQL')
  }
