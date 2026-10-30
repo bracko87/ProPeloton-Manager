@@ -121,7 +121,7 @@ try{
   const run=spawnSync(process.execPath,[out],{
    cwd:root,encoding:'utf8',
    env:{...process.env,V4_PHASE3_SENSITIVITY:'1',
-    V4_FIELD_TERRAIN_STRESS:['baseline','combined_energy'].includes(config.key)?'1':'0'},
+    V4_FIELD_TERRAIN_STRESS:['baseline','combined','combined_energy'].includes(config.key)?'1':'0'},
    timeout:240000,maxBuffer:20*1024*1024
   })
   if(run.error)throw run.error
@@ -134,7 +134,7 @@ try{
   const diag=get('V4_SEVEN_SECOND_MULTI_SEED_REPORT')
   const seeds=get('V4_PHASE3_SENSITIVITY_SEEDS')
   if(run.status!==0||!diag||!seeds||seeds.cases.length!==36||
-    (['baseline','combined_energy'].includes(config.key)&&stress?.attempted!==12)){
+    (['baseline','combined','combined_energy'].includes(config.key)&&stress?.attempted!==12)){
    console.error(String(run.stderr??'').slice(-1800))
    throw Error(config.key+': strict replay suite, diagnostic extraction or seed count failed')
   }
@@ -236,37 +236,59 @@ try{
     noEnergy.cases[seed].maximumGapSeconds)>0.000001).length
  }
  const baselineStress=results.find(r=>r.key==='baseline')?.stress
+ const combinedStress=results.find(r=>r.key==='combined')?.stress
  const energyStress=results.find(r=>r.key==='combined_energy')?.stress
- if(!baselineStress||!energyStress)throw Error('Field and terrain stress samples missing')
+ if(!baselineStress||!combinedStress||!energyStress)
+  throw Error('Baseline/combined/energy terrain stress results are required')
  const stressComparison=baselineStress.cases.map((row,index)=>{
+  const normal=combinedStress.cases[index]
   const variant=energyStress.cases[index]
-  if(!variant||row.terrain!==variant.terrain||row.riders!==variant.riders||
-   row.seedNumber!==variant.seedNumber)
-   throw Error('Stress fields must be matched and ordered')
-  if(row.completed&&variant.completed&&row.sourceSnapshotHash!==variant.sourceSnapshotHash)
+  if(!normal||!variant||
+   [normal,variant].some(x=>row.terrain!==x.terrain||
+    row.riders!==x.riders||row.seedNumber!==x.seedNumber))
+   throw Error('Stress fixtures must be matched and ordered')
+  const valid=[row,normal,variant].filter(x=>x.completed)
+  if(valid.length>1&&new Set(valid.map(x=>x.sourceSnapshotHash)).size!==1)
    throw Error('Stress input snapshots not identical')
   return {
    terrain:row.terrain,riders:row.riders,seedNumber:row.seedNumber,
-   baselineCompleted:row.completed,energyCompleted:variant.completed,
-   baselineError:row.replayError,energyError:variant.replayError,
-   baselineGapSeconds:row.maxGapSeconds,energyGapSeconds:variant.maxGapSeconds,
+   baselineCompleted:row.completed,combinedCompleted:normal.completed,
+   energyCompleted:variant.completed,
+   baselineError:row.replayError,combinedError:normal.replayError,
+   energyError:variant.replayError,
+   baselineGapSeconds:row.maxGapSeconds,
+   combinedGapSeconds:normal.maxGapSeconds,
+   energyGapSeconds:variant.maxGapSeconds,
    baselineFrontEnergy:row.phase3FrontEnergySpent,
+   combinedFrontEnergy:normal.phase3FrontEnergySpent,
    energyFrontEnergy:variant.phase3FrontEnergySpent,
-   sourceSnapshotMatch:row.completed&&variant.completed?
-    row.sourceSnapshotHash===variant.sourceSnapshotHash:null
+   snapshotsConsistent:valid.length>1?
+    new Set(valid.map(x=>x.sourceSnapshotHash)).size===1:null
   }
  })
+ const eligibleEnergyPairs=stressComparison.filter(x=>x.combinedCompleted&&x.energyCompleted)
  const stressSummary={
   attemptedPerVariant:baselineStress.attempted,
   comparisons:stressComparison,
-  completedBoth:stressComparison.filter(x=>x.baselineCompleted&&x.energyCompleted).length,
+  completedAllThree:stressComparison.filter(x=>x.baselineCompleted&&x.combinedCompleted&&x.energyCompleted).length,
   replayFailuresBaseline:stressComparison.filter(x=>!x.baselineCompleted).length,
+  replayFailuresCombined:stressComparison.filter(x=>!x.combinedCompleted).length,
   replayFailuresEnergy:stressComparison.filter(x=>!x.energyCompleted).length,
-  casesFrontEnergyIncreased:stressComparison.filter(x=>
-    x.baselineFrontEnergy!==null&&x.energyFrontEnergy!==null&&
-    x.energyFrontEnergy>x.baselineFrontEnergy+0.000001).length,
+  newReplayFailuresFromEnergy:stressComparison.filter(x=>x.combinedCompleted&&!x.energyCompleted).length,
+  recoveredReplayFailuresWithEnergy:stressComparison.filter(x=>!x.combinedCompleted&&x.energyCompleted).length,
+  validEnergyOnlyPairs:eligibleEnergyPairs.length,
+  casesEnergyOnlyFrontFatigueIncreased:eligibleEnergyPairs.filter(x=>
+   x.combinedFrontEnergy!==null&&x.energyFrontEnergy!==null&&
+   x.energyFrontEnergy>x.combinedFrontEnergy+0.000001).length,
+  casesEnergyOnlyFrontFatigueDecreased:eligibleEnergyPairs.filter(x=>
+   x.combinedFrontEnergy!==null&&x.energyFrontEnergy!==null&&
+   x.energyFrontEnergy<x.combinedFrontEnergy-0.000001).length,
+  casesEnergyOnlyMaximumGapChanged:eligibleEnergyPairs.filter(x=>
+   x.combinedGapSeconds!==null&&x.energyGapSeconds!==null&&
+   Math.abs(x.energyGapSeconds-x.combinedGapSeconds)>0.000001).length,
   terrains:['flat','mountain'],riderCounts:[96,168],
-  strictReplayStillActive:true,officialWrites:0
+  strictReplayStillActive:true,officialWrites:0,
+  realismApproval:'BLOCKED_PENDING_MOUNTAIN_REPLAY_RECONCILIATION'
  }
  const seed33Forensics=results.map(r=>({candidate:r.key,forensic:r.forensic}))
  const report={
