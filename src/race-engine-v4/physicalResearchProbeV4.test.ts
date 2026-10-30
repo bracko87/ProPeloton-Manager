@@ -662,4 +662,45 @@ if(process.env.V4_PHASE3_SENSITIVITY==='1'){
  }))
 }
 
+
+if(process.env.V4_FIELD_TERRAIN_STRESS==='1'){
+ const fieldCases=[]
+ for(const fieldTeams of [16,28]){
+  for(const terrain of ['flat','mountain']){
+   for(let seedNumber=0;seedNumber<3;seedNumber++){
+    const seed='v4-stress-'+terrain+'-'+fieldTeams+'-'+String(seedNumber).padStart(2,'0')
+    const fixture=makeField(fieldTeams,Math.floor(fieldTeams/2),{
+     neutral:false,terrain,seed,humanPursuitTeam:true,
+     phase2Chase:true,phase3Chase:true,phase4Chase:true
+    })
+    const errors=validateRunInput(fixture.input)
+    assert.deepEqual(errors,[],'V4 synthetic terrain field input must be valid')
+    const before=JSON.stringify(fixture.input)
+    let result=null,error=null
+    try{result=probeV4PhysicalRace(fixture.input,fixture.options)}
+    catch(e){error=classifyError(e)}
+    assert.equal(JSON.stringify(fixture.input),before)
+    if(result){
+     assert.equal(result.officialWrites,0)
+     assert.equal(result.replaySynchronized,true)
+     assert.equal(result.officialFinishClassificationCount,fieldTeams*6)
+    }
+    fieldCases.push({
+     terrain,riders:fieldTeams*6,seedNumber,completed:result!==null,
+     acceptedBreakaway:result?.acceptedBreakLaunches??0,
+     maxGapSeconds:result?.maximumBreakawayGapSeconds??null,
+     phase3FrontEnergySpent:result?.earlyGapEvolution.phase3?.meanFrontEnergySpent??null,
+     replayError:error,
+     sourceSnapshotHash:result?.sourceSnapshotHash??null,
+     officialWrites:result?.officialWrites??null
+    })
+   }
+  }
+ }
+ console.log('V4_FIELD_TERRAIN_STRESS_REPORT '+JSON.stringify({
+  status:'RESEARCH_ONLY_NOT_REALISM_APPROVAL',
+  attempted:fieldCases.length,cases:fieldCases,syntheticOnly:true,officialWrites:0
+ }))
+}
+
 }

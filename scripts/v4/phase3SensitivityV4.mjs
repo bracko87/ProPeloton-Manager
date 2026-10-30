@@ -120,7 +120,8 @@ try{
   if(transformed!==1)throw Error(config.key+': in-memory V2 source transform not applied once')
   const run=spawnSync(process.execPath,[out],{
    cwd:root,encoding:'utf8',
-   env:{...process.env,V4_PHASE3_SENSITIVITY:'1'},
+   env:{...process.env,V4_PHASE3_SENSITIVITY:'1',
+    V4_FIELD_TERRAIN_STRESS:['baseline','combined_energy'].includes(config.key)?'1':'0'},
    timeout:240000,maxBuffer:20*1024*1024
   })
   if(run.error)throw run.error
@@ -129,9 +130,11 @@ try{
    const found=lines.find(x=>x.startsWith(prefix+' '))
    return found?JSON.parse(found.slice(prefix.length+1)):null
   }
+  const stress=get('V4_FIELD_TERRAIN_STRESS_REPORT')
   const diag=get('V4_SEVEN_SECOND_MULTI_SEED_REPORT')
   const seeds=get('V4_PHASE3_SENSITIVITY_SEEDS')
-  if(run.status!==0||!diag||!seeds||seeds.cases.length!==36){
+  if(run.status!==0||!diag||!seeds||seeds.cases.length!==36||
+    (['baseline','combined_energy'].includes(config.key)&&stress?.attempted!==12)){
    console.error(String(run.stderr??'').slice(-1800))
    throw Error(config.key+': strict replay suite, diagnostic extraction or seed count failed')
   }
@@ -141,7 +144,7 @@ try{
   const cases=seeds.cases
   if(cases.some(x=>x.completed&&x.officialWrites!==0))
    throw Error('Official race writes were reported')
-  results.push({key:config.key,config,diag,cases,forensic})
+  results.push({key:config.key,config,diag,cases,forensic,stress})
   console.log('V4_PHASE3_CANDIDATE_RUN '+JSON.stringify({
    candidate:config.key,
    smallFieldCompleted:diag.v4Complete,
@@ -232,6 +235,39 @@ try{
    Math.abs(withEnergy.cases[seed].maximumGapSeconds-
     noEnergy.cases[seed].maximumGapSeconds)>0.000001).length
  }
+ const baselineStress=results.find(r=>r.key==='baseline')?.stress
+ const energyStress=results.find(r=>r.key==='combined_energy')?.stress
+ if(!baselineStress||!energyStress)throw Error('Field and terrain stress samples missing')
+ const stressComparison=baselineStress.cases.map((row,index)=>{
+  const variant=energyStress.cases[index]
+  if(!variant||row.terrain!==variant.terrain||row.riders!==variant.riders||
+   row.seedNumber!==variant.seedNumber)
+   throw Error('Stress fields must be matched and ordered')
+  if(row.completed&&variant.completed&&row.sourceSnapshotHash!==variant.sourceSnapshotHash)
+   throw Error('Stress input snapshots not identical')
+  return {
+   terrain:row.terrain,riders:row.riders,seedNumber:row.seedNumber,
+   baselineCompleted:row.completed,energyCompleted:variant.completed,
+   baselineError:row.replayError,energyError:variant.replayError,
+   baselineGapSeconds:row.maxGapSeconds,energyGapSeconds:variant.maxGapSeconds,
+   baselineFrontEnergy:row.phase3FrontEnergySpent,
+   energyFrontEnergy:variant.phase3FrontEnergySpent,
+   sourceSnapshotMatch:row.completed&&variant.completed?
+    row.sourceSnapshotHash===variant.sourceSnapshotHash:null
+  }
+ })
+ const stressSummary={
+  attemptedPerVariant:baselineStress.attempted,
+  comparisons:stressComparison,
+  completedBoth:stressComparison.filter(x=>x.baselineCompleted&&x.energyCompleted).length,
+  replayFailuresBaseline:stressComparison.filter(x=>!x.baselineCompleted).length,
+  replayFailuresEnergy:stressComparison.filter(x=>!x.energyCompleted).length,
+  casesFrontEnergyIncreased:stressComparison.filter(x=>
+    x.baselineFrontEnergy!==null&&x.energyFrontEnergy!==null&&
+    x.energyFrontEnergy>x.baselineFrontEnergy+0.000001).length,
+  terrains:['flat','mountain'],riderCounts:[96,168],
+  strictReplayStillActive:true,officialWrites:0
+ }
  const seed33Forensics=results.map(r=>({candidate:r.key,forensic:r.forensic}))
  const report={
   status:'DIAGNOSTIC_ONLY_NO_REALISM_APPROVAL',
@@ -239,7 +275,7 @@ try{
   scenarios:configs.map(x=>x.key),
   measured:comparable,pairedVsBaseline:paired,
   strictReplay:strictCandidates,
-  replayFailureSamples,energyInvariance,energyEffect,seed33Forensics,
+  replayFailureSamples,energyInvariance,energyEffect,stressSummary,seed33Forensics,
   pelotonCandidate:'Phase-3 organized pursuit minimum response 1.015',
   cooperationCandidate:'Phase-3 dynamic cooperation contribution reduced by 50% only on full-cooperation branch',
   energyCandidate:'Bounded physical speed-relative cost, only recorded Phase-3 front and chase workers; post-phase effect only',
