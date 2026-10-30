@@ -575,4 +575,68 @@ console.log('V4_EXPLICIT_PHASE3_CHASE_REPORT '+JSON.stringify({
  strictReplay:true,syntheticOnly:true,officialWrites:0
 }))
 
+const measured3=escaped3.filter(x=>x.base.phase3SpeedAudit!==null&&x.variant.phase3SpeedAudit!==null)
+const speedMed=(variant,key)=>median(measured3.map(x=>
+ x[variant].phase3SpeedAudit?.[key]??null).filter(x=>typeof x==='number'))
+console.log('V4_PHASE3_SPEED_COMPARISON_REPORT '+JSON.stringify({
+ status:'MEASURED_PACE_DIAGNOSTIC_ONLY',
+ matchedBreakawayCases:escaped3.length,
+ matchedInstrumentedBreakaways:measured3.length,
+ observedPhysicalStepsBaseline:measured3.reduce((sum,x)=>sum+(x.base.phase3SpeedAudit?.sampleSteps??0),0),
+ observedPhysicalStepsExplicit:measured3.reduce((sum,x)=>sum+(x.variant.phase3SpeedAudit?.sampleSteps??0),0),
+ medianPelotonKmh:{automatic:speedMed('base','medianPelotonPaceKmh'),
+  explicit:speedMed('variant','medianPelotonPaceKmh')},
+ medianEscapeKmh:{automatic:speedMed('base','medianEscapePaceKmh'),
+  explicit:speedMed('variant','medianEscapePaceKmh')},
+ medianEscapeSpeedAdvantageKmh:{
+  automatic:speedMed('base','medianSpeedAdvantageToEscapeKmh'),
+  explicit:speedMed('variant','medianSpeedAdvantageToEscapeKmh')
+ },
+ medianSelectedResponseMultiplier:{
+  automatic:speedMed('base','medianSelectedResponseMultiplier'),
+  explicit:speedMed('variant','medianSelectedResponseMultiplier')
+ },
+ medianAvailableChaseAssets:{
+  automatic:speedMed('base','medianChaseAssets'),
+  explicit:speedMed('variant','medianChaseAssets')
+ },
+ medianChasingTeams:{
+  automatic:speedMed('base','medianChasingTeamCount'),
+  explicit:speedMed('variant','medianChasingTeamCount')
+ },
+ medianExplicitChasingTeams:{
+  automatic:speedMed('base','medianExplicitChasingTeams'),
+  explicit:speedMed('variant','medianExplicitChasingTeams')
+ },
+ medianAutomaticChasingTeams:{
+  automatic:speedMed('base','medianAutomaticChasingTeams'),
+  explicit:speedMed('variant','medianAutomaticChasingTeams')
+ },
+ medianGcThreatChasingTeams:{
+  automatic:speedMed('base','medianGcThreatChasingTeams'),
+  explicit:speedMed('variant','medianGcThreatChasingTeams')
+ },
+ medianCooperationMultiplier:{
+  automatic:speedMed('base','medianCooperationMultiplier'),
+  explicit:speedMed('variant','medianCooperationMultiplier')
+ },
+ medianChaseInterestScore:{
+  automatic:speedMed('base','medianChaseInterestScore'),
+  explicit:speedMed('variant','medianChaseInterestScore')
+ },
+ medianChaseCapacityScore:{
+  automatic:speedMed('base','medianChaseCapacityScore'),
+  explicit:speedMed('variant','medianChaseCapacityScore')
+ },
+ medianMeasuredKm:{
+  automatic:speedMed('base','measuredKm'),
+  explicit:speedMed('variant','measuredKm')
+ },
+ medianGapGrowthKm:{
+  automatic:speedMed('base','gapGrowingKm'),
+  explicit:speedMed('variant','gapGrowingKm')
+ },
+ physicalSource:'temporary_v4_only_in_memory_bundle',originalV2FileModified:false,officialWrites:0
+}))
+
 }

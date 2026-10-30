@@ -22,6 +22,33 @@ if(buildProbe ? process.argv.length!==4 : process.argv.length!==2)
 const output=buildProbe?resolve(process.argv[3]):file
 if(buildProbe && (output===root||output.startsWith(root+sep)))
  throw Error('V4 research bundle must be outside the tracked repository')
+// One exact Phase-3 pace sample in the temporary V4 research bundle.
+// This attaches evidence to the measured gap sample without altering gap or speed.
+const paceNeedle=[
+ "    physicalGapTrajectory.push({",
+ "      kmFromStart: deterministicRound(stepEndKm, 6),",
+ "      gapSeconds: deterministicRound(physicalCurrentGapSeconds, 6),",
+ "    })"
+].join('\n')
+const paceReplacement=[
+ "    physicalGapTrajectory.push({",
+ "      kmFromStart: deterministicRound(stepEndKm, 6),",
+ "      gapSeconds: deterministicRound(physicalCurrentGapSeconds, 6),",
+ "      v4ResearchPace: {",
+ "        pelotonPaceKmh, escapePaceKmh,",
+ "        selectedResponseMultiplier:response.selectedResponseMultiplier,",
+ "        chaseAssets:phase3FiniteChaseAssets,",
+ "        chasingTeamCount:physicalChasingTeamIds.length,",
+ "        explicitChasingTeamCount:explicitPhase3ChasingTeamIds.length,",
+ "        automaticChasingTeamCount:phase3AutomaticFinishInterestTeamIds.length,",
+ "        gcThreatChasingTeamCount:phase3GcThreatTeamIds.length,",
+ "        cooperationMultiplier:phase3DynamicCooperationMultiplier,",
+ "        chaseInterestScore:response.chaseInterestScore,",
+ "        chaseCapacityScore:response.chaseCapacityScore,",
+ "        responseMode:response.responseMode",
+ "      }",
+ "    })"
+].join('\n')
 const needle="  const authoritativeBridgeGroups = phase4.bridgeGroups\n    .slice()\n    .sort("
 const replacement=[
  "  const authoritativeBridgeGroups = reconcileV4ReplayBridgeMergeTargets(",
@@ -47,10 +74,12 @@ try{
     const source=readFileSync(args.path,'utf8')
     if(source.split(needle).length!==2)
      throw Error('V2 replay source changed. Refuse fuzzy test patch.')
+    if(source.split(paceNeedle).length!==2)
+     throw Error('V2 Phase-3 source changed. Refuse fuzzy pace instrumentation.')
     patched++
     return {contents:
       "import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\n"+
-      source.replace(needle,replacement),loader:'ts'}
+      source.replace(needle,replacement).replace(paceNeedle,paceReplacement),loader:'ts'}
    })
   }}]
  })
@@ -58,7 +87,8 @@ try{
  if(buildProbe){
   console.log('V4_RESEARCH_PROBE_BUILD '+JSON.stringify({
    status:'BUILT',output,ordinaryV4ProbeEntry:true,
-   bridgeHandoffCorrectionBundled:true,originalV2SourceModified:false,
+   bridgeHandoffCorrectionBundled:true,phase3PaceSamplesInstrumented:true,
+   originalV2SourceModified:false,
    officialRaceWrites:0,researchOnly:true
   }))
  }else{
@@ -80,6 +110,16 @@ try{
   console.log('V4_CORRECTED_CHASE_AB_REPORT '+JSON.stringify({
    ...chase,solver:'v4_research_bridge_handoff_corrected',
    replayValidatorStillStrict:true,productionWrites:0
+  }))
+  const speedLine=lines.find(x=>x.startsWith('V4_PHASE3_SPEED_COMPARISON_REPORT '))
+  if(!speedLine)throw Error('V4 Phase-3 physical pace comparison missing')
+  const speed=JSON.parse(speedLine.slice('V4_PHASE3_SPEED_COMPARISON_REPORT '.length))
+  if(speed.matchedInstrumentedBreakaways<=0)
+   throw Error('V4 Phase-3 physical pace instrumentation did not produce samples')
+  console.log('V4_CORRECTED_PHASE3_SPEED_REPORT '+JSON.stringify({
+   ...speed,solver:'v4_research_in_memory_instrumented',
+   originalV2SourceModified:false,strictValidatorStillEnabled:true,
+   officialRaceWrites:0
   }))
   const valid=diagnostic.syntheticSeeds===36 &&
    diagnostic.v4Complete===36 && diagnostic.v4ReplayExceptions===0 &&
