@@ -37,6 +37,8 @@ jobs:
           node /tmp/v4-bridge-target-unit.mjs
       - name: Compare isolated V4 stale B1 to active front-group handoff candidate under strict replay checks
         run: node scripts/v4/probeBridgeAliasV4.mjs
+      - name: Measure Phase-3 peloton response and breakaway cooperation independently in V4-only bundles
+        run: node scripts/v4/phase3SensitivityV4.mjs
       - name: Build corrected ordinary V4 physical probe as a research-only executable
         run: |
           node scripts/v4/probeBridgeAliasV4.mjs --build-probe /tmp/v4-corrected-ordinary-probe.mjs

@@ -639,4 +639,25 @@ console.log('V4_PHASE3_SPEED_COMPARISON_REPORT '+JSON.stringify({
  physicalSource:'temporary_v4_only_in_memory_bundle',originalV2FileModified:false,officialWrites:0
 }))
 
+
+if(process.env.V4_PHASE3_SENSITIVITY==='1'){
+ const cases=phase3Pairs.map((pair,seed)=>({
+  seed,
+  completed:pair.variant!==null,
+  acceptedBreakaway:pair.variant?.acceptedBreakLaunches??0,
+  replaySynchronized:pair.variant?.replaySynchronized??false,
+  replayError:pair.error,
+  sourceSnapshotHash:pair.variant?.sourceSnapshotHash??null,
+  officialWrites:pair.variant?.officialWrites??null,
+  phase3GrowthSeconds:pair.variant?.earlyGapEvolution.phase3?.netGapChangeSeconds??null,
+  phase3Chasers:pair.variant?.earlyGapEvolution.phase3?.chaseTeamCount??null,
+  maximumGapSeconds:pair.variant?.maximumBreakawayGapSeconds??null,
+  phase3FrontEnergySpent:pair.variant?.earlyGapEvolution.phase3?.meanFrontEnergySpent??null,
+  pace:pair.variant?.phase3SpeedAudit??null
+ }))
+ console.log('V4_PHASE3_SENSITIVITY_SEEDS '+JSON.stringify({
+  researchOnly:true,cases,officialRaceWrites:0
+ }))
+}
+
 }
