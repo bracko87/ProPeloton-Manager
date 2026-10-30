@@ -138,6 +138,8 @@ for(const s of scenarios){
   acceptedHumanBreakLaunches:result.acceptedHumanBreakLaunches,
   acceptedAiBreakLaunches:result.acceptedAiBreakLaunches,
   mixedReplayGroups:result.observedSharedGroupCheckpoints,
+  actualMixedAcceptedBreakawayGroup:result.observedMixedAcceptedBreakawayGroup,
+  mixedAcceptedBreakawayCheckpoints:result.observedMixedAcceptedBreakawayCheckpoints,
   openingBreakawaySize:result.openingBreakawayRiderIds.length,
   maximumBreakawayGapSeconds:result.maximumBreakawayGapSeconds,
   replaySynchronized:result.replaySynchronized,
@@ -155,7 +157,7 @@ console.log('V4_PHYSICAL_READONLY_REPORT '+JSON.stringify({
  classificationAndReplayActuallyCalculated:true,
  humanAiActualEscapeMergeVerified:report.some(x=>
   x.acceptedHumanBreakLaunches>0&&x.acceptedAiBreakLaunches>0&&
-  x.mixedReplayGroups>0),
+  x.actualMixedAcceptedBreakawayGroup),
  legacySevenSecondsIssueResolved:false,
  details:report
 }))
