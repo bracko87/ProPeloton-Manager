@@ -61,6 +61,9 @@ const pelotonReplacement=needle([
 ])
 const cooperationNeedle="        : phase3DynamicCooperationMultiplier)"
 const cooperationReplacement="        : 1 + (phase3DynamicCooperationMultiplier - 1) * 0.5)"
+// V4-only seed 33 replay snapshot before the original strict throw.
+const forensicNeedle="  if (!replayPublicationPolicy.publishable) {"
+const forensicReplacement=forensicNeedle+"\n"+"    if(input.engine.deterministicSeed==='v4-seven-second-regression-033'){\n      console.log('V4_SEED33_FINISH_FORENSIC '+JSON.stringify({\n        seed:input.engine.deterministicSeed,\n        blockingIssues:replayPublicationPolicy.blockingIssues,\n        phase4:{\n          startGapSeconds:roadRaceResolution?.phase4Finish?.startGapSeconds,\n          endGapSeconds:roadRaceResolution?.phase4Finish?.endGapSeconds,\n          breakawayCaught:roadRaceResolution?.phase4Finish?.breakawayCaught,\n          breakawaySurvived:roadRaceResolution?.phase4Finish?.breakawaySurvived,\n          bridgeGroups:roadRaceResolution?.phase4Finish?.bridgeGroups?.map(g=>({\n            displayCode:g.displayCode,riderIds:g.riderIds,catchKm:g.catchKm,\n            mergeKm:g.mergeKm,mergedIntoOpeningBreakaway:g.mergedIntoOpeningBreakaway\n          })),\n          finalChaseSteps:roadRaceResolution?.phase4Finish?.chaseSteps?.slice(-4)\n            .map(g=>({kmStart:g.kmStart,kmEnd:g.kmEnd,\n              startGapSeconds:g.startGapSeconds,endGapSeconds:g.endGapSeconds}))\n        },\n        catches:replayTimeline.checkpoints.filter(cp=>\n          cp.commentary.some(c=>c.eventType==='catch')).map(cp=>({\n            id:cp.checkpointId,km:cp.raceProgress.kmFromStart,\n            groups:cp.groups.map(g=>({code:g.displayCode,riders:g.riderIds}))\n          })).slice(-20),\n        checkpoints:replayTimeline.checkpoints.slice(-8).map(cp=>({\n          id:cp.checkpointId,km:cp.raceProgress.kmFromStart,\n          finalResultsVisible:cp.finalResultsVisible,\n          groups:cp.groups.map(g=>({code:g.displayCode,riders:g.riderIds,\n            lineageId:g.physicalLineageId,position:g.physicalPosition})),\n          gaps:cp.gaps.map(g=>({code:g.displayCode,seconds:g.gapSeconds})),\n          events:cp.commentary.map(c=>({type:c.eventType,riders:c.riderIds}))\n        }))\n      }))\n    }"
 const configs=[
  {key:'baseline',peloton:false,cooperation:false},
  {key:'peloton_response',peloton:true,cooperation:false},
@@ -93,6 +96,7 @@ try{
      let source=readFileSync(args.path,'utf8')
      source=exact(source,bridgeNeedle,bridgeReplacement)
      source=exact(source,paceNeedle,paceReplacement)
+     source=exact(source,forensicNeedle,forensicReplacement)
      // Before applying either candidate, verify both knobs remain unique.
      if(source.split(pelotonNeedle).length!==2||
         source.split(cooperationNeedle).length!==2)
@@ -127,10 +131,11 @@ try{
   }
   if(!seeds.researchOnly||seeds.officialRaceWrites!==0)
    throw Error('V4 experiment lost its read-only invariant')
+  const forensic=get('V4_SEED33_FINISH_FORENSIC')
   const cases=seeds.cases
   if(cases.some(x=>x.completed&&x.officialWrites!==0))
    throw Error('Official race writes were reported')
-  results.push({key:config.key,config,diag,cases})
+  results.push({key:config.key,config,diag,cases,forensic})
   console.log('V4_PHASE3_CANDIDATE_RUN '+JSON.stringify({
    candidate:config.key,
    smallFieldCompleted:diag.v4Complete,
@@ -201,13 +206,14 @@ try{
   smallFieldPassed:r.diag.v4Complete===36&&r.diag.v4ReplayExceptions===0,
   largerFieldReplayFailures:r.cases.filter(x=>!x.completed).length
  }))
+ const seed33Forensics=results.map(r=>({candidate:r.key,forensic:r.forensic}))
  const report={
   status:'DIAGNOSTIC_ONLY_NO_REALISM_APPROVAL',
   seeds:36,matchedValidAcceptedEscapes:common.length,
   scenarios:configs.map(x=>x.key),
   measured:comparable,pairedVsBaseline:paired,
   strictReplay:strictCandidates,
-  replayFailureSamples,energyInvariance,
+  replayFailureSamples,energyInvariance,seed33Forensics,
   pelotonCandidate:'Phase-3 organized pursuit minimum response 1.015',
   cooperationCandidate:'Phase-3 dynamic cooperation contribution reduced by 50% only on full-cooperation branch',
   changedPhysicsInMemory:true,originalV2SourceModified:false,
