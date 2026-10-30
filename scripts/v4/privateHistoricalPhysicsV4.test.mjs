@@ -90,9 +90,15 @@ try{
  assert.equal(noValid.historicalV4RealismApproved,false)
  assert.equal(JSON.stringify(noValid).includes('invalid-history.json'),false)
  writeFileSync(manifest,JSON.stringify({privateEnvelopePaths:[privateStage]}))
- // The trust boundary rejects world-readable snapshots before any solver runs.
- chmodSync(privateStage,0o644)
+ // The trust boundary must reject repository-local files on every OS.
+ // On Unix it additionally rejects world-readable private snapshots.
+ writeFileSync(manifest,JSON.stringify({privateEnvelopePaths:[join(root,'package.json')]}))
  await assert.rejects(()=>runPrivateHistoricalPhysicsV4(manifest),/PRIVATE_PATH_REJECTED/)
+ if(process.platform!=='win32'){
+  writeFileSync(manifest,JSON.stringify({privateEnvelopePaths:[privateStage]}))
+  chmodSync(privateStage,0o644)
+  await assert.rejects(()=>runPrivateHistoricalPhysicsV4(manifest),/PRIVATE_PATH_REJECTED/)
+ }
  console.log('V4_PRIVATE_PHYSICAL_HISTORY_UNIT '+JSON.stringify({
   status:'PASS',cases:25,syntheticOnly:true,
   preservedV2Runs:1,calibratedV4Runs:2,officialWrites:0}))
