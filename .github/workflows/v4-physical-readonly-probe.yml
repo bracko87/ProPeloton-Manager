@@ -1,0 +1,41 @@
+name: V4 isolated read-only physical solver proof
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/race-engine-v4/**'
+      - 'docs/race-engine-v4/**'
+      - '.github/workflows/v4-physical-readonly-probe.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  physical-v4-and-preserved-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Bundle exact preserved V2 physics with isolated V4 wrapper
+        run: npx esbuild src/race-engine-v4/physicalResearchProbeV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-physical-probe.mjs
+      - name: Execute untouched V2 physics on locked V4 synthetic fields
+        run: node /tmp/v4-physical-probe.mjs
+      - name: Preserve template-first unit tests
+        run: |
+          npx esbuild src/race-engine-v4/templateFirstPlannerV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-template-first-tests.mjs
+          node /tmp/v4-template-first-tests.mjs
+  existing-react-build-unchanged:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
