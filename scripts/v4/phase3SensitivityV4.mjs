@@ -9,67 +9,13 @@ import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
-import {patchV4FinishTransitionSource} from './finishTransitionResearchPatchV4.mjs'
-import {patchV4MountainCarriedBridgeSource} from './mountainBridgeCarryResearchPatchV4.mjs'
-import {patchV4MountainBridgeCatchSource} from './mountainBridgeCatchResearchPatchV4.mjs'
+import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
 const folder=mkdtempSync(join(tmpdir(),'ppm-v4-phase3-sensitivity-'))
-const needle=(lines)=>lines.join('\n')
-const bridgeNeedle="  const authoritativeBridgeGroups = phase4.bridgeGroups\n    .slice()\n    .sort("
-const bridgeReplacement=needle([
- "  const authoritativeBridgeGroups = reconcileV4ReplayBridgeMergeTargets(",
- "    phase4.bridgeGroups,",
- "    { openingBreakawayCarriesIntoPhase4,",
- "      activeFrontDisplayCode:openingFrontDisplayCode,",
- "      mergeToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS }",
- "  )",
- "    .slice()",
- "    .sort("
-])
-const paceNeedle=needle([
- "    physicalGapTrajectory.push({",
- "      kmFromStart: deterministicRound(stepEndKm, 6),",
- "      gapSeconds: deterministicRound(physicalCurrentGapSeconds, 6),",
- "    })"
-])
-const paceReplacement=needle([
- "    physicalGapTrajectory.push({",
- "      kmFromStart: deterministicRound(stepEndKm, 6),",
- "      gapSeconds: deterministicRound(physicalCurrentGapSeconds, 6),",
- "      v4ResearchPace: {",
- "        pelotonPaceKmh, escapePaceKmh,",
- "        selectedResponseMultiplier:response.selectedResponseMultiplier,",
- "        chaseAssets:phase3FiniteChaseAssets,",
- "        chasingTeamCount:physicalChasingTeamIds.length,",
- "        explicitChasingTeamCount:explicitPhase3ChasingTeamIds.length,",
- "        automaticChasingTeamCount:phase3AutomaticFinishInterestTeamIds.length,",
- "        gcThreatChasingTeamCount:phase3GcThreatTeamIds.length,",
- "        cooperationMultiplier:phase3DynamicCooperationMultiplier,",
- "        chaseInterestScore:response.chaseInterestScore,",
- "        chaseCapacityScore:response.chaseCapacityScore,",
- "        responseMode:response.responseMode",
- "      }",
- "    })"
-])
-const pelotonNeedle=needle([
- "        response.selectedResponseMultiplier *",
- "        // No organized chase: ordinary peloton tempo is not an active pursuit."
-])
-const pelotonReplacement=needle([
- "        (physicalChasingTeamIds.length>0",
- "          ? Math.max(response.selectedResponseMultiplier,1.015)",
- "          : response.selectedResponseMultiplier) *",
- "        // No organized chase: ordinary peloton tempo is not an active pursuit."
-])
-const cooperationNeedle="        : phase3DynamicCooperationMultiplier)"
-const cooperationReplacement="        : 1 + (phase3DynamicCooperationMultiplier - 1) * 0.5)"
 // V4-only seed 33 replay snapshot before the original strict throw.
 const forensicNeedle="  if (!replayPublicationPolicy.publishable) {"
 const forensicReplacement=forensicNeedle+"\n"+"    if(input.engine.deterministicSeed==='v4-seven-second-regression-033'){\n      console.log('V4_SEED33_FINISH_FORENSIC '+JSON.stringify({\n        seed:input.engine.deterministicSeed,\n        blockingIssues:replayPublicationPolicy.blockingIssues,\n        phase4:{\n          startGapSeconds:roadRaceResolution?.phase4Finish?.startGapSeconds,\n          endGapSeconds:roadRaceResolution?.phase4Finish?.endGapSeconds,\n          breakawayCaught:roadRaceResolution?.phase4Finish?.breakawayCaught,\n          breakawaySurvived:roadRaceResolution?.phase4Finish?.breakawaySurvived,\n          bridgeGroups:roadRaceResolution?.phase4Finish?.bridgeGroups?.map(g=>({\n            displayCode:g.displayCode,riderIds:g.riderIds,catchKm:g.catchKm,\n            mergeKm:g.mergeKm,mergedIntoOpeningBreakaway:g.mergedIntoOpeningBreakaway\n          })),\n          finalChaseSteps:roadRaceResolution?.phase4Finish?.chaseSteps?.slice(-4)\n            .map(g=>({kmStart:g.kmStart,kmEnd:g.kmEnd,\n              startGapSeconds:g.startGapSeconds,endGapSeconds:g.endGapSeconds}))\n        },\n        catches:replayTimeline.checkpoints.filter(cp=>\n          cp.commentary.some(c=>c.eventType==='catch')).map(cp=>({\n            id:cp.checkpointId,km:cp.raceProgress.kmFromStart,\n            groups:cp.groups.map(g=>({code:g.displayCode,riders:g.riderIds}))\n          })).slice(-20),\n        checkpoints:replayTimeline.checkpoints.slice(-8).map(cp=>({\n          id:cp.checkpointId,km:cp.raceProgress.kmFromStart,\n          finalResultsVisible:cp.finalResultsVisible,\n          groups:cp.groups.map(g=>({code:g.displayCode,riders:g.riderIds,\n            lineageId:g.physicalLineageId,position:g.physicalPosition})),\n          gaps:cp.gaps.map(g=>({code:g.displayCode,seconds:g.gapSeconds})),\n          events:cp.commentary.map(c=>({type:c.eventType,riders:c.riderIds}))\n        }))\n      }))\n    }"
-const energyNeedle="    const phaseEnergyCost = phaseEnergyCostByRiderId.get(row.riderId) ?? 0"
-const energyReplacement="    const v4OriginalPhaseEnergyCost = phaseEnergyCostByRiderId.get(row.riderId) ?? 0\n    const v4PaceEnergySurcharge = calculateV4Phase3PaceEnergySurcharge({\n      riderId:row.riderId,\n      escapeRiderIds:physicalEscapeRiderIdsAtLaunch,\n      chasingRiderIds:phase3ChaseWorkerRows.map(({row})=>row.riderId),\n      baseEnergyCost:v4OriginalPhaseEnergyCost,\n      phaseStartKm:phaseBoundary.startKm,\n      samples:physicalGapTrajectory.map(sample=>({\n        kmFromStart:sample.kmFromStart,\n        referencePaceKmh:calculateRoadReferencePaceKmh(input.stage,sample.kmFromStart),\n        pelotonPaceKmh:sample.v4ResearchPace?.pelotonPaceKmh??null,\n        escapePaceKmh:sample.v4ResearchPace?.escapePaceKmh??null\n      }))\n    })\n    const phaseEnergyCost = deterministicRound(v4OriginalPhaseEnergyCost+v4PaceEnergySurcharge,6)"
-
 const mountainForensicNeedle="  if (!replayPublicationPolicy.publishable) {"
 const mountainForensicSnippet=[
  "  if(!replayPublicationPolicy.publishable && input.engine.deterministicSeed.startsWith('v4-stress-mountain-')){",
@@ -148,20 +94,10 @@ try{
    plugins:[{name:'v4-only-phase3-physical-sensitivity',setup(ctx){
     ctx.onLoad({filter:/[\\/]runRaceEngine\.ts$/},args=>{
      let source=readFileSync(args.path,'utf8')
-     source=exact(source,bridgeNeedle,bridgeReplacement)
-     source=exact(source,paceNeedle,paceReplacement)
      source=exact(source,mountainForensicNeedle,mountainForensicSnippet+'\n'+forensicReplacement)
-     // Before applying either candidate, verify both knobs remain unique.
-     if(source.split(pelotonNeedle).length!==2||
-        source.split(cooperationNeedle).length!==2)
-      throw Error('Phase-3 physical source changed; refuse fuzzy calibration')
-     if(config.peloton)source=exact(source,pelotonNeedle,pelotonReplacement)
-     if(config.cooperation)source=exact(source,cooperationNeedle,cooperationReplacement)
-     if(source.split(energyNeedle).length!==2)throw Error('Phase-3 energy source drift')
-     if(config.energy)source=exact(source,energyNeedle,energyReplacement)
      transformed++
      return {
-      contents:"import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\nimport {calculateV4Phase3PaceEnergySurcharge} from '../race-engine-v4/phase3PaceEnergyV4.ts'\n"+patchV4MountainBridgeCatchSource(patchV4MountainCarriedBridgeSource(patchV4FinishTransitionSource(source))),
+      contents:patchV4CalibratedPhysicalSource(source,config),
       loader:'ts'
      }
     })
