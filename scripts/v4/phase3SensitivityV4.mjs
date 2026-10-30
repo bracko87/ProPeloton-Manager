@@ -91,7 +91,7 @@ const mountainForensicSnippet=[
  "        startGapSeconds:roadRaceResolution?.phase4Finish?.startGapSeconds,",
  "        breakawaySurvived:roadRaceResolution?.phase4Finish?.breakawaySurvived,",
  "        breakawayCaught:roadRaceResolution?.phase4Finish?.breakawayCaught},",
- "      finishCheckpoints:cps.filter(c=>c.raceProgress.kmFromStart>=stageDistanceKm-.1).slice(-9).map(c=>({",
+ "      finishCheckpoints:cps.filter(c=>c.raceProgress.kmFromStart>=input.stage.distanceKm-.1).slice(-9).map(c=>({",
  "        id:c.checkpointId,km:c.raceProgress.kmFromStart,final:c.finalResultsVisible,",
  "        groups:c.groups.filter(g=>g.displayCode.startsWith('B')||g.displayCode.startsWith('F')||g.displayCode==='P'||g.riderIds.includes('rider-050')||g.riderIds.includes('rider-071')).map(g=>({code:g.displayCode,lin:g.physicalLineageId,riders:g.riderIds,gap:g.gapSeconds})),",
  "        events:c.commentary.map(e=>({type:e.eventType,riders:e.riderIds}))",
