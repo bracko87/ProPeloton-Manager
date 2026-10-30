@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {reconcileV4FinishTransition,selectV4PhysicalFrontFinishFallback} from './finishTransitionV4.ts'
+import {reconcileV4FinishTransition,preserveV4FinishGroupGap} from './finishTransitionV4.ts'
 const context={
  allTransitionsAreFrontCaughtByPeloton:true,
  changedRiderIds:['rider-024'],
@@ -29,36 +29,14 @@ assert.equal(reconcileV4FinishTransition({...context,bridgeGroups:[]}).usePhysic
 assert.equal(reconcileV4FinishTransition({...context,officialFinishGroupingToleranceSeconds:2}).usePhysicalPelotonGapAtTransition,false)
 assert.equal(reconcileV4FinishTransition({...context,bridgeGroups:[{riderIds:['rider-024'],caughtByPeloton:false,catchKm:null,gapSamples:[{gapToPelotonSeconds:6}]}]}).usePhysicalPelotonGapAtTransition,false)
 
-const roadOrderBase={
- physicalFrontRiderIds:['rider-050'],
- finishEligibleRiderIds:['rider-061'],
- riderFinishStates:[
-  {riderId:'rider-050',finalGapSeconds:0},
-  {riderId:'rider-061',finalGapSeconds:5.18724}
- ],
- groupingToleranceSeconds:5
-}
-assert.deepEqual(selectV4PhysicalFrontFinishFallback(roadOrderBase),['rider-050'])
-assert.deepEqual(selectV4PhysicalFrontFinishFallback({...roadOrderBase,
- riderFinishStates:[{riderId:'rider-050',finalGapSeconds:0},
- {riderId:'rider-061',finalGapSeconds:5.468}]}),['rider-050'])
-assert.deepEqual(selectV4PhysicalFrontFinishFallback({...roadOrderBase,
- riderFinishStates:[{riderId:'rider-050',finalGapSeconds:0},
- {riderId:'rider-061',finalGapSeconds:5}]}),[])
-assert.deepEqual(selectV4PhysicalFrontFinishFallback({...roadOrderBase,
- riderFinishStates:[{riderId:'rider-050',finalGapSeconds:0},
- {riderId:'rider-061',finalGapSeconds:4.999}]}),[])
-assert.deepEqual(selectV4PhysicalFrontFinishFallback({...roadOrderBase,
- finishEligibleRiderIds:['rider-050','rider-061']}),[])
-assert.deepEqual(selectV4PhysicalFrontFinishFallback({...roadOrderBase,
- physicalFrontRiderIds:['rider-051','rider-050'],
- riderFinishStates:[{riderId:'rider-050',finalGapSeconds:0},
- {riderId:'rider-051',finalGapSeconds:0},
- {riderId:'rider-061',finalGapSeconds:8}]}),['rider-050','rider-051'])
-assert.deepEqual(selectV4PhysicalFrontFinishFallback({...roadOrderBase,
- physicalFrontRiderIds:['rider-unknown']}),[])
-assert.deepEqual(selectV4PhysicalFrontFinishFallback({...roadOrderBase,
- groupingToleranceSeconds:Number.NaN}),[])
+assert.equal(preserveV4FinishGroupGap(5.18724,false),5.18724)
+assert.equal(preserveV4FinishGroupGap(5.468381,false),5.468381)
+assert.equal(preserveV4FinishGroupGap(5,false),5)
+assert.equal(preserveV4FinishGroupGap(5.468381,true),5)
+assert.equal(preserveV4FinishGroupGap(-1,false),0)
+assert.equal(preserveV4FinishGroupGap(5.18724,false)-preserveV4FinishGroupGap(0,false)>5,true)
+assert.equal(preserveV4FinishGroupGap(5.468381,false)-preserveV4FinishGroupGap(0,false)>5,true)
+assert.equal(preserveV4FinishGroupGap(5,false)-preserveV4FinishGroupGap(0,false)>5,false)
 
 console.log('V4_FINISH_GROUPING_UNIT_REPORT '+JSON.stringify({status:'PASS',cases:18,
- strictPhysicalCatchEvidenceRequired:true,unchangedClassification:true,officialWrites:0}))
+ strictPhysicalCatchEvidenceRequired:true,v2ClassificationUnchanged:true,officialWrites:0}))

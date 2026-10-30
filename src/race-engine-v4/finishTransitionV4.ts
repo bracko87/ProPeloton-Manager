@@ -60,42 +60,16 @@ export function reconcileV4FinishTransition(context:V4FinishTransitionContext):V
  }
 }
 
+
 /**
- * The finish winner must be physically ahead, even if the lone leader has
- * exhausted Phase-3 sprint eligibility. This does not turn an F-to-P move
- * into a catch: it limits the fallback sprint contest to observed leaders.
- * Only overrides the legacy fallback when the nearest eligible rider is
- * separated by strictly more than the existing physical grouping tolerance.
+ * Preserve fractional road seconds when deciding actual finishing group
+ * membership. Pre-finish transitive grouping retains legacy rounded gaps.
+ * The five-second physical tolerance remains unchanged.
  */
-export interface V4PhysicalFrontFinishState {
- readonly riderId:string
- readonly finalGapSeconds:number
-}
-export interface V4PhysicalFrontFinishFallbackContext {
- readonly physicalFrontRiderIds:readonly string[]
- readonly finishEligibleRiderIds:readonly string[]
- readonly riderFinishStates:readonly V4PhysicalFrontFinishState[]
- readonly groupingToleranceSeconds:number
-}
-export function selectV4PhysicalFrontFinishFallback(
- context:V4PhysicalFrontFinishFallbackContext
-):string[]{
- const tolerance=context.groupingToleranceSeconds
- if(!Number.isFinite(tolerance)||tolerance<0||context.physicalFrontRiderIds.length===0)return []
- const states=new Map(context.riderFinishStates.map(state=>[state.riderId,state]))
- const frontIds=[...new Set(context.physicalFrontRiderIds)]
- if(frontIds.some(id=>!states.has(id)))return [] // no invented finish positions
- const front=frontIds.map(id=>states.get(id)!)
- if(front.some(state=>!Number.isFinite(state.finalGapSeconds)||state.finalGapSeconds<0))return []
- const eligible=new Set(context.finishEligibleRiderIds)
- if(front.some(state=>eligible.has(state.riderId)))return [] // normal sprint scoring wins
- const nearestEligibleGap=context.riderFinishStates
-  .filter(state=>eligible.has(state.riderId))
-  .map(state=>state.finalGapSeconds)
-  .filter(gap=>Number.isFinite(gap)&&gap>=0)
-  .sort((a,b)=>a-b)[0]
- const frontGap=Math.min(...front.map(state=>state.finalGapSeconds))
- if(nearestEligibleGap!==undefined&&nearestEligibleGap-frontGap<=tolerance+0.000001)return []
- return front.sort((a,b)=>a.finalGapSeconds-b.finalGapSeconds||
-  a.riderId.localeCompare(b.riderId)).map(state=>state.riderId)
+export function preserveV4FinishGroupGap(
+ gapSeconds:number,
+ allowTransitiveMerging:boolean
+):number{
+ if(!Number.isFinite(gapSeconds))throw Error('Invalid physical finish gap')
+ return Math.max(0,allowTransitiveMerging?Math.round(gapSeconds):gapSeconds)
 }
