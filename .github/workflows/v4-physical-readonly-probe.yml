@@ -37,6 +37,10 @@ jobs:
           node /tmp/v4-bridge-target-unit.mjs
       - name: Compare isolated V4 stale B1 to active front-group handoff candidate under strict replay checks
         run: node scripts/v4/probeBridgeAliasV4.mjs
+      - name: Build corrected ordinary V4 physical probe as a research-only executable
+        run: |
+          node scripts/v4/probeBridgeAliasV4.mjs --build-probe /tmp/v4-corrected-ordinary-probe.mjs
+          node --input-type=module -e "const m = await import('/tmp/v4-corrected-ordinary-probe.mjs'); if (typeof m.probeV4PhysicalRace !== 'function') throw Error('V4 physical research export missing')"
       - name: Preserve template-first unit tests
         run: |
           npx esbuild src/race-engine-v4/templateFirstPlannerV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-template-first-tests.mjs
