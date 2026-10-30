@@ -8,6 +8,7 @@ import {readFileSync,realpathSync,statSync,mkdtempSync,rmSync} from 'node:fs'
 import {tmpdir} from 'node:os'
 import {join,resolve,relative,sep,isAbsolute} from 'node:path'
 import {spawnSync} from 'node:child_process'
+import {fileURLToPath} from 'node:url'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
@@ -130,7 +131,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
   return agg
  }finally{rmSync(folder,{recursive:true,force:true})}
 }
-if(process.argv[1]&&import.meta.url==='file://'+resolve(process.argv[1])){
+if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
  try{
   const report=await runPrivateHistoricalPhysicsV4(process.argv[2])
   console.log('V4_PRIVATE_HISTORICAL_PHYSICS_REPORT '+JSON.stringify(report))
