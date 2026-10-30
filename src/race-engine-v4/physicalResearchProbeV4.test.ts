@@ -11,7 +11,7 @@ import {compareHistoricalStageV4} from './historicalComparisonV4.ts'
 import {runSelectedRaceEngineV1} from '../universal-race-engine/runSelectedRaceEngineV1.ts'
 
 function makeField(teamCount:number,aiTeams:number,
-  {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01',humanChase=false,humanPursuitTeam=false,phase2Chase=humanChase,phase4Chase=humanChase}={}) {
+  {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01',humanChase=false,humanPursuitTeam=false,phase2Chase=humanChase,phase3Chase=false,phase4Chase=humanChase}={}) {
  const teams=[],riders=[],stagePlans=[],teamControl=[]
  const stageId='v4-synthetic-stage-01',raceId='v4-synthetic-race-01'
  for(let t=0;t<teamCount;t++){
@@ -40,7 +40,7 @@ function makeField(teamCount:number,aiTeams:number,
          i===0?'team_leader_gc':i===1?'sprinter':'helper_domestique',
        commands:{phase1:!neutral&&kind==='human'&&!designatedHumanPursuitTeam&&i===4?'join_breakaway':'follow_team_plan',
          phase2:phase2Chase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan',
-         phase3:'follow_team_plan',
+         phase3:phase3Chase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan',
          phase4:phase4Chase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan'},
        equipmentSelection:null,supplySelection:null
       })
@@ -510,6 +510,69 @@ console.log('V4_CHASE_PHASE_TIMING_REPORT '+JSON.stringify({
   phase4Only:phaseTiming.filter(x=>x.error4).length,both:phaseTiming.filter(x=>x.errorB).length
  },
  syntheticOnly:true,identicalRiderAndAiPlans:true,officialWrites:0
+}))
+
+
+// Explicit Phase-3 pursuit sensitivity. Keep Phase-2 and Phase-4 chase orders,
+// all AI plans and the original deterministic fields unchanged.
+const phase3Pairs=[]
+for(const pair of chasePairs){
+ const seed='v4-seven-second-regression-'+String(pair.seed).padStart(3,'0')
+ const mk=(phase3Chase)=>makeField(5,2,{seed,neutral:false,terrain:'flat',
+  humanPursuitTeam:true,phase2Chase:true,phase3Chase,phase4Chase:true})
+ const normal=mk(false),experimental=mk(true)
+ assert.deepEqual(normal.input.riders,experimental.input.riders)
+ assert.deepEqual(normal.input.weather,experimental.input.weather)
+ assert.deepEqual(normal.input.stage,experimental.input.stage)
+ assert.deepEqual(normal.input.engine,experimental.input.engine)
+ const initial=JSON.stringify(experimental.input)
+ const owners=new Set(normal.options.teamControl.filter(x=>x.kind==='ai').map(x=>x.teamId))
+ const plans=x=>prepareV4ShadowRace(x.input,x.options).combinedInput.stagePlans
+ assert.deepEqual(plans(normal).filter(x=>owners.has(x.teamId)),
+  plans(experimental).filter(x=>owners.has(x.teamId)),
+  'Explicit Phase 3 pursuit must not modify AI tactics')
+ const human0=plans(normal).filter(x=>!owners.has(x.teamId))
+ const human1=plans(experimental).filter(x=>!owners.has(x.teamId))
+ assert(human1.some((team,i)=>team.riders.some((r,j)=>
+  r.commands.phase3!==human0[i].riders[j].commands.phase3)),
+  'Phase 3 chase order must be recognized')
+ let variant=null,error=null
+ try{variant=probeV4PhysicalRace(experimental.input,experimental.options)}
+ catch(err){error=classifyError(err)}
+ assert.equal(JSON.stringify(experimental.input),initial)
+ if(variant)assert.equal(variant.officialWrites,0)
+ phase3Pairs.push({base:pair.withChase,variant,error})
+}
+const valid3=phase3Pairs.filter(x=>x.base!==null&&x.variant!==null)
+const escaped3=valid3.filter(x=>x.base.acceptedBreakLaunches>0&&x.variant.acceptedBreakLaunches>0)
+assert(escaped3.length>0,'Phase 3 comparison needs accepted escape cases')
+const med=(key,phase,metric)=>median(escaped3.map(x=>
+ x[key].earlyGapEvolution[phase]?.[metric]??null).filter(x=>typeof x==='number'))
+const max3=key=>median(escaped3.map(x=>x[key].maximumBreakawayGapSeconds))
+const delta3=escaped3.map(x=>x.base.maximumBreakawayGapSeconds-x.variant.maximumBreakawayGapSeconds)
+console.log('V4_EXPLICIT_PHASE3_CHASE_REPORT '+JSON.stringify({
+ status:'RESEARCH_ONLY_NO_PHYSICS_CHANGE',
+ seeds:phase3Pairs.length,baselineComplete:phase3Pairs.filter(x=>x.base).length,
+ explicitComplete:phase3Pairs.filter(x=>x.variant).length,
+ matchedValid:valid3.length,matchedBreakaway:escaped3.length,
+ phase3GapGrowthMedianSeconds:{automatic:med('base','phase3','netGapChangeSeconds'),
+  explicit:med('variant','phase3','netGapChangeSeconds')},
+ phase3GrowingKmMedian:{automatic:med('base','phase3','distanceGrowingKm'),
+  explicit:med('variant','phase3','distanceGrowingKm')},
+ phase3ChasingTeamCountMedian:{automatic:med('base','phase3','chaseTeamCount'),
+  explicit:med('variant','phase3','chaseTeamCount')},
+ phase3FrontEnergySpentMedian:{automatic:med('base','phase3','meanFrontEnergySpent'),
+  explicit:med('variant','phase3','meanFrontEnergySpent')},
+ phase2EndGapMedianSeconds:{automatic:med('base','phase2','endGapSeconds'),
+  explicit:med('variant','phase2','endGapSeconds')},
+ maxGapMedianSeconds:{automatic:max3('base'),explicit:max3('variant')},
+ medianPairedMaxGapReductionSeconds:median(delta3),
+ gapsReduced:delta3.filter(x=>x>0.000001).length,
+ gapsIncreased:delta3.filter(x=>x< -0.000001).length,
+ replayFailures:{automatic:phase3Pairs.filter(x=>x.base===null).length,
+  explicit:phase3Pairs.filter(x=>x.error!==null).length},
+ aiPlansUnchanged:true,sameInputsExceptPhase3Orders:true,
+ strictReplay:true,syntheticOnly:true,officialWrites:0
 }))
 
 }
