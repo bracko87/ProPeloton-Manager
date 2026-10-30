@@ -41,6 +41,10 @@ jobs:
         run: |
           node scripts/v4/probeBridgeAliasV4.mjs --build-probe /tmp/v4-corrected-ordinary-probe.mjs
           node --input-type=module -e "const m = await import('/tmp/v4-corrected-ordinary-probe.mjs'); if (typeof m.probeV4PhysicalRace !== 'function') throw Error('V4 physical research export missing')"
+      - name: Check research-only V4 trajectory maxima and chase context
+        run: |
+          npx esbuild src/race-engine-v4/breakawayGapDiagnosticsV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-gap-audit-unit.mjs
+          node /tmp/v4-gap-audit-unit.mjs
       - name: Preserve template-first unit tests
         run: |
           npx esbuild src/race-engine-v4/templateFirstPlannerV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-template-first-tests.mjs

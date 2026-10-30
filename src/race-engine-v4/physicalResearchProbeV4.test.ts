@@ -273,6 +273,7 @@ for(let i=0;i<36;i++){
    ?.filter(a=>a.acceptedEscapeLaunch).length??null
  const altAccepted=alt?.acceptedBreakLaunches??null
  seeded.push({seed:i,baseGap,altGap,baseAccepted,altAccepted,
+  altGapAudit:alt?.gapAudit??null,
   baseSync:base?.replaySynchronization.synchronized??null,
   altSync:alt?.replaySynchronized??null,baseError,altError})
 }
@@ -306,3 +307,32 @@ const gapAudit={
 }
 assert.equal(seeded.length,36)
 console.log('V4_SEVEN_SECOND_MULTI_SEED_REPORT '+JSON.stringify(gapAudit))
+
+const diagnosed=seeded.filter(x=>x.altGapAudit!==null)
+const escapedDiagnosed=diagnosed.filter(x=>x.altAccepted>0)
+const peakOf=x=>x.altGapAudit?.observedSampleMaxGapSeconds??null
+const validValues=values=>values.filter((x)=>typeof x==='number')
+console.log('V4_GAP_TRAJECTORY_AUDIT_REPORT '+JSON.stringify({
+ status:'RESEARCH_ONLY_NOT_REALISM_APPROVAL',syntheticSeeds:seeded.length,
+ completedV4:diagnosed.length,acceptedBreakawayCases:escapedDiagnosed.length,
+ medianReportedMaxGapSeconds:median(validValues(escapedDiagnosed.map(x=>x.altGap))),
+ medianObservedSamplePeakSeconds:median(validValues(escapedDiagnosed.map(peakOf))),
+ medianPhase1PeakSeconds:median(validValues(escapedDiagnosed.map(x=>x.altGapAudit?.phase1?.seconds??null))),
+ medianPhase2PeakSeconds:median(validValues(escapedDiagnosed.map(x=>x.altGapAudit?.phase2?.seconds??null))),
+ medianPhase4PeakSeconds:median(validValues(escapedDiagnosed.map(x=>x.altGapAudit?.phase4?.seconds??null))),
+ reportedMaximumBelowObservedSampleCount:escapedDiagnosed.filter(x=>
+  (x.altGapAudit?.unreportedSamplePeakSeconds??0)>0.000001).length,
+ largestObservedPeakPhaseCounts:{
+  phase1:escapedDiagnosed.filter(x=>x.altGapAudit?.observedPeakPhase==='phase1').length,
+  phase2:escapedDiagnosed.filter(x=>x.altGapAudit?.observedPeakPhase==='phase2').length,
+  phase4:escapedDiagnosed.filter(x=>x.altGapAudit?.observedPeakPhase==='phase4').length
+ },
+ noExplicitPhase2Chasers:escapedDiagnosed.filter(x=>
+  x.altGapAudit?.phase2?.explicitChasingTeamCount===0).length,
+ phase1Caught:escapedDiagnosed.filter(x=>
+  x.altGapAudit?.phase1?.catchKm!==null).length,
+ phase2Caught:escapedDiagnosed.filter(x=>
+  x.altGapAudit?.phase2?.catchKm!==null).length,
+ sampleOnly:true,originalV2SolverUnmodified:true,officialWrites:0
+}))
+
