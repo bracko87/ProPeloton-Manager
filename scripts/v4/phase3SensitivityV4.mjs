@@ -11,6 +11,7 @@ import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4FinishTransitionSource} from './finishTransitionResearchPatchV4.mjs'
 import {patchV4MountainCarriedBridgeSource} from './mountainBridgeCarryResearchPatchV4.mjs'
+import {patchV4MountainBridgeCatchSource} from './mountainBridgeCatchResearchPatchV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
 const folder=mkdtempSync(join(tmpdir(),'ppm-v4-phase3-sensitivity-'))
@@ -138,7 +139,7 @@ try{
      if(config.energy)source=exact(source,energyNeedle,energyReplacement)
      transformed++
      return {
-      contents:"import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\nimport {calculateV4Phase3PaceEnergySurcharge} from '../race-engine-v4/phase3PaceEnergyV4.ts'\n"+patchV4MountainCarriedBridgeSource(patchV4FinishTransitionSource(source)),
+      contents:"import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\nimport {calculateV4Phase3PaceEnergySurcharge} from '../race-engine-v4/phase3PaceEnergyV4.ts'\n"+patchV4MountainBridgeCatchSource(patchV4MountainCarriedBridgeSource(patchV4FinishTransitionSource(source))),
       loader:'ts'
      }
     })

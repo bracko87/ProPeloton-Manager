@@ -14,6 +14,7 @@ import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4FinishTransitionSource} from './finishTransitionResearchPatchV4.mjs'
 import {patchV4MountainCarriedBridgeSource} from './mountainBridgeCarryResearchPatchV4.mjs'
+import {patchV4MountainBridgeCatchSource} from './mountainBridgeCatchResearchPatchV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
 const folder=mkdtempSync(join(tmpdir(),'ppm-v4-bridge-alias-'))
@@ -81,7 +82,7 @@ try{
     patched++
     return {contents:
       "import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\n"+
-      patchV4MountainCarriedBridgeSource(patchV4FinishTransitionSource(source.replace(needle,replacement).replace(paceNeedle,paceReplacement))),loader:'ts'}
+      patchV4MountainBridgeCatchSource(patchV4MountainCarriedBridgeSource(patchV4FinishTransitionSource(source.replace(needle,replacement).replace(paceNeedle,paceReplacement)))),loader:'ts'}
    })
   }}]
  })

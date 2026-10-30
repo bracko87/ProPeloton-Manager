@@ -71,6 +71,10 @@ jobs:
         run: |
           npx esbuild src/race-engine-v4/mountainBridgeCarryV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-mountain-carried-bridge-test.mjs
           node /tmp/v4-mountain-carried-bridge-test.mjs
+      - name: Validate catch evidence against actual low-energy C detachment
+        run: |
+          npx esbuild src/race-engine-v4/mountainBridgeCatchV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-mountain-bridge-catch.mjs
+          node /tmp/v4-mountain-bridge-catch.mjs
       - name: Preserve template-first unit tests
         run: |
           npx esbuild src/race-engine-v4/templateFirstPlannerV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-template-first-tests.mjs
