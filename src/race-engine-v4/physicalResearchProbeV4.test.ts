@@ -255,6 +255,8 @@ const seeded=[]
 const classifyError=error=>{
  const message=error instanceof Error?error.message:String(error)
  if(!message.startsWith('Universal replay synchronization failed:'))throw error
+ // Preserve the complete physical replay failure only in the isolated calibration log.
+ if(process.env.V4_PHASE3_SENSITIVITY==='1')return message.slice(0,3000)
  return message.split(':')[1]?.trim()?.split(':')[0]??'replay_sync_error'
 }
 for(let i=0;i<36;i++){

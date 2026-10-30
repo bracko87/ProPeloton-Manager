@@ -183,6 +183,19 @@ try{
   medianPairedMaxGapReductionSeconds:median(common.map(seed=>
    baseline.cases[seed].maximumGapSeconds-r.cases[seed].maximumGapSeconds))
  }))
+ const replayFailureSamples=results.map(r=>({
+  candidate:r.key,
+  failures:r.cases.filter(x=>!x.completed).map(x=>({seed:x.seed,reason:x.replayError})).slice(0,12)
+ }))
+ const energyInvariance=results.slice(1).map(r=>({
+  candidate:r.key,
+  differentFrontEnergyCases:common.filter(seed=>
+   Math.abs((baseline.cases[seed].phase3FrontEnergySpent??0)-
+    (r.cases[seed].phase3FrontEnergySpent??0))>0.000001).length,
+  medianPairedFrontEnergyDelta:median(common.map(seed=>
+   (r.cases[seed].phase3FrontEnergySpent??0)-
+   (baseline.cases[seed].phase3FrontEnergySpent??0)))
+ }))
  const strictCandidates=results.map(r=>({
   candidate:r.key,
   smallFieldPassed:r.diag.v4Complete===36&&r.diag.v4ReplayExceptions===0,
@@ -194,13 +207,17 @@ try{
   scenarios:configs.map(x=>x.key),
   measured:comparable,pairedVsBaseline:paired,
   strictReplay:strictCandidates,
+  replayFailureSamples,energyInvariance,
   pelotonCandidate:'Phase-3 organized pursuit minimum response 1.015',
   cooperationCandidate:'Phase-3 dynamic cooperation contribution reduced by 50% only on full-cooperation branch',
   changedPhysicsInMemory:true,originalV2SourceModified:false,
   officialRaceWrites:0,syntheticOnly:true,strictValidatorStillEnabled:true
  }
  console.log('V4_PHASE3_CALIBRATION_MATRIX '+JSON.stringify(report))
- if(!strictCandidates[0].smallFieldPassed)throw Error('Corrected baseline strict replay unexpectedly regressed')
+ if(strictCandidates.some(x=>!x.smallFieldPassed))
+  throw Error('A Phase-3 calibration candidate regressed corrected strict replay')
+ if(replayFailureSamples.some(x=>x.failures.some(f=>!f.reason)))
+  throw Error('A replay failure was not classified')
 }finally{
  rmSync(folder,{recursive:true,force:true})
 }
