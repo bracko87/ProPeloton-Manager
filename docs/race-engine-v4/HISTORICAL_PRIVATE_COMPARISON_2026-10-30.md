@@ -14,6 +14,8 @@ Date: 2026-10-30. SELECT-only production audit; V2 remains the official engine.
 
 All observations above came from SELECT only against the ProPeloton Manager production Supabase project. No DB changes or race recalculations were performed.
 
+An additional *read-only reference consistency audit* of the 20 most recently completed intact road stages compared the stored universal finish classification to the persisted official race_stage_results. All 2,411 rider rows were present and matched published ranks (with null-safe comparisons). Their gaps were within one second. This includes 27 saved non-finishers with no finishing rank. This establishes recent persistence consistency; it does NOT establish that the current V2 solver reproduces those old outcomes, or that V4 has already calculated them.
+
 ## Implemented read-only components
 
 1. src/race-engine-v4/historicalComparisonV4.ts — pure in-memory historical saved-result vs current selected V2 vs V4 comparison. Imports existing runSelectedRaceEngineV1, not production workers or database. Rejects incomplete or compacted snapshots and incomplete/conflicting AI/human ownership.

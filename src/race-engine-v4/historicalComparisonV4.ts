@@ -84,9 +84,10 @@ function normalizeClassification(result:UniversalRaceEngineResult){
  const rows=result.finishResolution?.classification
  if(!Array.isArray(rows)||!rows.length)throw Error('Missing historical finish classification')
  return rows.map(row=>({
-  riderId:String(row.riderId),rank:Number(row.rank),
-  gap:Number(row.gapSeconds??0),status:String(row.status),
-  seconds:Number(row.officialTimeSeconds??0),
+  riderId:String(row.riderId),rank:row.rank==null?null:Number(row.rank),
+  gap:row.gapSeconds==null?null:Number(row.gapSeconds),
+  status:String(row.status),
+  seconds:row.officialTimeSeconds==null?null:Number(row.officialTimeSeconds),
  })).sort((a,b)=>a.riderId.localeCompare(b.riderId))
 }
 function maximumGap(result:UniversalRaceEngineResult):number|null{
@@ -97,6 +98,10 @@ function escapeCount(result:UniversalRaceEngineResult):number {
  return result.roadRaceResolution?.phase1Opening?.attackAttempts
   ?.filter(a=>a.acceptedEscapeLaunch).length??0
 }
+function sameOptionalNumber(a:number|null,b:number|null):boolean{
+ if(a===null||b===null)return a===b
+ return Math.abs(a-b)<=.01
+}
 function rankAgreement(base:ReturnType<typeof normalizeClassification>,
  alt:ReturnType<typeof normalizeClassification>){
  if(base.length!==alt.length)throw Error('Historical result rider count changed')
@@ -106,9 +111,9 @@ function rankAgreement(base:ReturnType<typeof normalizeClassification>,
   const b=other.get(row.riderId)
   if(!b)throw Error('Historical rider identity mismatch')
   if(row.rank!==b.rank)rankChanges++
-  if(Math.abs(row.gap-b.gap)>.01)gapChanges++
+  if(!sameOptionalNumber(row.gap,b.gap))gapChanges++
   if(row.rank===b.rank&&row.status===b.status&&
-   Math.abs(row.gap-b.gap)<=.01&&Math.abs(row.seconds-b.seconds)<=.01)same++
+   sameOptionalNumber(row.gap,b.gap)&&sameOptionalNumber(row.seconds,b.seconds))same++
  }
  return {ratio:same/base.length,rankChanges,gapChanges}
 }
