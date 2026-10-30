@@ -110,6 +110,13 @@ for(const s of scenarios){
  }
  const immutable=JSON.stringify(input)
  const result=probeV4PhysicalRace(input,options)
+ if(s.name==='mixed_human_ai_attacks'){
+  const repeat=probeV4PhysicalRace(input,options)
+  assert.equal(repeat.officialResultHash,result.officialResultHash,
+   'same locked commands must reproduce the original finish classification')
+  assert.equal(repeat.replayTimelineHash,result.replayTimelineHash,
+   'same locked commands must reproduce every original replay checkpoint')
+ }
  assert.equal(result.validated,true)
  assert.equal(result.calculatedPhysicalRace,true)
  assert.equal(result.outcomePublished,false)

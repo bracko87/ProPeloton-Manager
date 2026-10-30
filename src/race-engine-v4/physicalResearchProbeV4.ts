@@ -29,6 +29,8 @@ export interface V4PhysicalEvidence {
  readonly openingBreakawayRiderIds:readonly string[]
  readonly observedHumanAiSameReplayGroup:boolean
  readonly observedSharedGroupCheckpoints:number
+ readonly observedMixedAcceptedBreakawayGroup:boolean
+ readonly observedMixedAcceptedBreakawayCheckpoints:number
  readonly observedMixedReplayGroupSample:null|{
    readonly checkpointId:string; readonly groupDisplayCode:string;
    readonly humanRiderIds:readonly string[];readonly aiRiderIds:readonly string[]
@@ -76,10 +78,18 @@ export function probeV4PhysicalRace(
  const checkpoints=output.replayTimeline.checkpoints
  let groupSample:V4PhysicalEvidence['observedMixedReplayGroupSample']=null
  let mixedCount=0
+ let mixedAcceptedBreakawayCount=0
+ const humanAcceptedIds=new Set(acceptedHuman.map(x=>x.riderId))
+ const aiAcceptedIds=new Set(acceptedAI.map(x=>x.riderId))
  for(const cp of checkpoints){
   for(const g of cp.groups){
    const human=g.riderIds.filter(id=>owner.has(id)&&!ai.has(owner.get(id)!))
    const aic=g.riderIds.filter(id=>ai.has(owner.get(id)??''))
+   if(g.displayCode.startsWith('B')&&
+      human.some(id=>humanAcceptedIds.has(id))&&
+      aic.some(id=>aiAcceptedIds.has(id))){
+      mixedAcceptedBreakawayCount++
+   }
    if(human.length&&aic.length){
     mixedCount++
     if(!groupSample)groupSample={
@@ -111,6 +121,8 @@ export function probeV4PhysicalRace(
   openingBreakawayRiderIds:[...(opening?.breakawayRiderIds??[])],
   observedHumanAiSameReplayGroup:mixedCount>0,
   observedSharedGroupCheckpoints:mixedCount,
+  observedMixedAcceptedBreakawayGroup:mixedAcceptedBreakawayCount>0,
+  observedMixedAcceptedBreakawayCheckpoints:mixedAcceptedBreakawayCount,
   observedMixedReplayGroupSample:groupSample,
   maximumBreakawayGapSeconds:safeNumber(
     output.calibrationSummary?.maximumBreakawayGapSeconds),
