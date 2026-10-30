@@ -1,0 +1,30 @@
+name: V4 isolated template-first AI planning research
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/race-engine-v4/**'
+      - 'docs/race-engine-v4/**'
+      - '.github/workflows/v4-template-first-research.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-template-first-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Compile isolated V4 test against existing 80 template catalogs
+        run: npx esbuild src/race-engine-v4/templateFirstPlannerV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-template-first-tests.mjs
+      - name: Validate all human, mixed, all AI, three hour lock, template variety
+        run: node /tmp/v4-template-first-tests.mjs
+      - name: Validate independent V4 module and unchanged production React build
+        run: |
+          npx esbuild src/race-engine-v4/templateFirstPlannerV4.ts --bundle --platform=neutral --format=esm --outfile=/tmp/v4-planner.mjs
+          npm run build
