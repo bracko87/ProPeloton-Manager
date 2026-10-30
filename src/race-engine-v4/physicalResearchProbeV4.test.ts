@@ -397,6 +397,24 @@ console.log('V4_EXPLICIT_CHASE_AB_REPORT '+JSON.stringify({
   x.withChase.gapAudit.phase2?.explicitChasingTeamCount??0)),
  medianPhase4ExplicitChasers:median(matchedBreakawayPairs.map(x=>
   x.withChase.gapAudit.phase4?.explicitChasingTeamCount??0)),
+ medianPhase1PhysicalGainSeconds:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase1?.netGapChangeSeconds??null).filter(x=>typeof x==='number')),
+ medianPhase2PhysicalGainSeconds:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase2?.netGapChangeSeconds??null).filter(x=>typeof x==='number')),
+ medianPhase3PhysicalGainSeconds:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase3?.netGapChangeSeconds??null).filter(x=>typeof x==='number')),
+ medianPhase1FrontEnergySpent:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase1?.meanFrontEnergySpent??null).filter(x=>typeof x==='number')),
+ medianPhase2FrontEnergySpent:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase2?.meanFrontEnergySpent??null).filter(x=>typeof x==='number')),
+ medianPhase3FrontEnergySpent:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase3?.meanFrontEnergySpent??null).filter(x=>typeof x==='number')),
+ medianPhase3ChasingTeams:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase3?.chaseTeamCount??null).filter(x=>typeof x==='number')),
+ medianPhase3GrowingKm:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase3?.distanceGrowingKm??null).filter(x=>typeof x==='number')),
+ medianPhase3ShrinkingKm:median(matchedBreakawayPairs.map(x=>
+  x.withChase.earlyGapEvolution.phase3?.distanceShrinkingKm??null).filter(x=>typeof x==='number')),
  medianChasePelotonSpeedKmh:median(matchedBreakawayPairs.map(x=>x.withChase.chaseTelemetry?.medianPelotonSpeedKmh??null).filter(x=>typeof x==='number')),
  medianChaseBreakawaySpeedKmh:median(matchedBreakawayPairs.map(x=>x.withChase.chaseTelemetry?.medianEscapeSpeedKmh??null).filter(x=>typeof x==='number')),
  medianNoChasePelotonSpeedKmh:median(matchedBreakawayPairs.map(x=>x.without.chaseTelemetry?.medianPelotonSpeedKmh??null).filter(x=>typeof x==='number')),
@@ -460,6 +478,16 @@ console.log('V4_CHASE_PHASE_TIMING_REPORT '+JSON.stringify({
  maximumGapMedianSeconds:{
   none:peak(phaseEscapes,'without'),phase2Only:peak(phaseEscapes,'only2'),
   phase4Only:peak(phaseEscapes,'only4'),both:peak(phaseEscapes,'withChase')
+ },
+ phase3NetGrowthMedianSeconds:{
+  none:median(phaseEscapes.map(x=>x.without.earlyGapEvolution.phase3?.netGapChangeSeconds??null).filter(x=>typeof x==='number')),
+  phase2Only:median(phaseEscapes.map(x=>x.only2.earlyGapEvolution.phase3?.netGapChangeSeconds??null).filter(x=>typeof x==='number')),
+  phase4Only:median(phaseEscapes.map(x=>x.only4.earlyGapEvolution.phase3?.netGapChangeSeconds??null).filter(x=>typeof x==='number')),
+  both:median(phaseEscapes.map(x=>x.withChase.earlyGapEvolution.phase3?.netGapChangeSeconds??null).filter(x=>typeof x==='number'))
+ },
+ phase3ChasingTeamsMedian:{
+  none:median(phaseEscapes.map(x=>x.without.earlyGapEvolution.phase3?.chaseTeamCount??null).filter(x=>typeof x==='number')),
+  both:median(phaseEscapes.map(x=>x.withChase.earlyGapEvolution.phase3?.chaseTeamCount??null).filter(x=>typeof x==='number'))
  },
  phase2EndGapMedianSeconds:{
   none:phase2End(phaseEscapes,'without'),phase2Only:phase2End(phaseEscapes,'only2'),

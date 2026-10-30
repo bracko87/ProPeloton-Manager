@@ -4,6 +4,7 @@
  * The preserved V2 physical solver is invoked purely in memory.
  */
 import {createHash} from 'node:crypto'
+import {auditV4EarlyGapEvolution,type V4EarlyGapEvolution} from './earlyGapEvolutionV4.ts'
 import {readV4ChaseTelemetry,type V4ChaseTelemetry} from './phase4ChaseTelemetryV4.ts'
 import {auditV4GapTrajectories,type V4GapTrajectoryAudit} from './breakawayGapDiagnosticsV4.ts'
 import type {UniversalRaceEngineInput} from '../universal-race-engine/runRaceEngine.ts'
@@ -40,6 +41,7 @@ export interface V4PhysicalEvidence {
  readonly maximumBreakawayGapSeconds:number|null
  readonly gapAudit:V4GapTrajectoryAudit
  readonly chaseTelemetry:V4ChaseTelemetry|null
+ readonly earlyGapEvolution:V4EarlyGapEvolution
  readonly replayCheckpoints:number
  readonly replaySynchronized:boolean
  readonly replayIssues:readonly string[]
@@ -132,6 +134,7 @@ export function probeV4PhysicalRace(
     output.calibrationSummary?.maximumBreakawayGapSeconds),
   gapAudit:auditV4GapTrajectories(output),
   chaseTelemetry:readV4ChaseTelemetry(output),
+  earlyGapEvolution:auditV4EarlyGapEvolution(output),
   replayCheckpoints:checkpoints.length,
   replaySynchronized:output.replaySynchronization.synchronized,
   replayIssues:replayIssues.slice(0,20),
