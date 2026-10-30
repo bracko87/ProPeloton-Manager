@@ -70,3 +70,26 @@ A 36-seed synthetic current-V2 versus V4 input comparison also measures the exac
 ## Completion boundary
 
 This milestone delivers verified historical baseline evidence and a private safe data path, but **no real completed production snapshot has yet been physically rerun through V4** because a private local authenticated export execution environment has not been provided. The research result must not be called a validated historical V4 win until private export+comparison actually executes. Live shadow mode and V2 replacement remain explicitly out of scope.
+
+
+## Verified 36-seed physical diagnostic
+
+[CI execution 41032953726](https://github.com/bracko87/ProPeloton-Manager/actions/runs/41032953726) — physical test, synthetic history comparator, exporter guard tests and unchanged production React build all passed their validation harness. The 36-seed race-physics test has **unresolved physical errors** described below; successful CI execution is NOT physical acceptance.
+
+The tests use 36 synthetic 24-rider flat races (4 teams, 6 riders/team, 2 human and 2 AI) with identical rider fields but two tactical inputs: original V2 with neutral AI, versus V4-generated AI instructions added to the same locked human commands. No historical private data is used.
+
+| Measurement | Current V2 baseline | V4 AI-planned |
+| --- | ---: | ---: |
+| Synthetic seeds | 36 | 36 |
+| Completed race calculations | 36 | 31 |
+| Races with accepted breakaway launches | 0 | 18 |
+| Exact 7-second maximum breakaway gaps | 0 | 0 |
+| Races with maximum gap over 60 seconds | 0 | 18 |
+| Median maximum gap in races with accepted escapes | n/a | 715.559713 seconds |
+| Replay synchronization exceptions | 0 | 5 |
+
+The five V4 errors are each of type front_group_transfer_without_physical_transition and occurred on seed indices 2, 16, 28, 30 and 33. They indicate that V4 AI tactical pressure exposes an existing V2 solver/replay transition weakness. The research harness records and counts these failures independently; no failing case is silently treated as a successful run.
+
+A 13.9% exception rate (5 of 36) and maximum gaps near 12 minutes require further examination. They are NOT proof V4 produces plausible cycling races. The V2 baseline in this synthetic setup had no accepted escape, so the absence of 7-second gaps in this test cannot disprove the historical exactly-seven-second defect. Physically valid V4 races need broader terrain/field/seed coverage, gap growth and catch timing evidence, and zero unexplained replay failures before official shadow promotion.
+
+This is diagnostic research only. No live race was recalculated, no production writer was invoked, and no historical results or Supabase database contents were changed.
