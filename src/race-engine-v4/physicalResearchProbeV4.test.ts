@@ -128,9 +128,17 @@ for(const s of scenarios){
  if(s.ai===0){
   assert.equal(result.aiPhase1BreakawayCommands,0)
   assert.equal(result.humanPhase1BreakawayCommands,0)
+  assert.equal(result.acceptedBreakLaunches,0,
+    'all-human neutral race must not invent tactical breakaways')
+  assert.equal(result.observedMixedAcceptedBreakawayGroup,false)
  }else{
   assert(result.aiPhase1BreakawayCommands>0)
   assert(result.humanPhase1BreakawayCommands>0)
+  assert(result.acceptedHumanBreakLaunches>0)
+  assert(result.acceptedAiBreakLaunches>0)
+  assert.equal(result.observedMixedAcceptedBreakawayGroup,true,
+    'accepted AI and human escape riders must share an actual replay B group')
+  assert(result.observedMixedAcceptedBreakawayCheckpoints>0)
  }
  const entry={scenario:s.name,riders:s.n*6,aiTeams:s.ai,
   humanTeams:s.n-s.ai,template:result.selectedTemplateId,
