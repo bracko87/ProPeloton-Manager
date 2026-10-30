@@ -11,7 +11,7 @@ import {compareHistoricalStageV4} from './historicalComparisonV4.ts'
 import {runSelectedRaceEngineV1} from '../universal-race-engine/runSelectedRaceEngineV1.ts'
 
 function makeField(teamCount:number,aiTeams:number,
-  {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01',humanChase=false,humanPursuitTeam=false}={}) {
+  {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01',humanChase=false,humanPursuitTeam=false,phase2Chase=humanChase,phase4Chase=humanChase}={}) {
  const teams=[],riders=[],stagePlans=[],teamControl=[]
  const stageId='v4-synthetic-stage-01',raceId='v4-synthetic-race-01'
  for(let t=0;t<teamCount;t++){
@@ -39,9 +39,9 @@ function makeField(teamCount:number,aiTeams:number,
        riderId:id,stageRole:i===4?'breakaway_rider':
          i===0?'team_leader_gc':i===1?'sprinter':'helper_domestique',
        commands:{phase1:!neutral&&kind==='human'&&!designatedHumanPursuitTeam&&i===4?'join_breakaway':'follow_team_plan',
-         phase2:humanChase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan',
+         phase2:phase2Chase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan',
          phase3:'follow_team_plan',
-         phase4:humanChase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan'},
+         phase4:phase4Chase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan'},
        equipmentSelection:null,supplySelection:null
       })
    }
@@ -414,4 +414,74 @@ console.log('V4_EXPLICIT_CHASE_AB_REPORT '+JSON.stringify({
  identicalAiPlansVerified:true,strictReplayValidation:true,
  officialRaceWrites:0,source:'synthetic_only'
 }))
+
+// Isolate WHEN pursuing helps: same 36 seeds, same riders, same AI commands.
+// The original two A/B variants above are reused (no chase / both phases).
+const phaseTiming=[]
+for(const pair of chasePairs){
+ const seed='v4-seven-second-regression-'+String(pair.seed).padStart(3,'0')
+ const make=({phase2,phase4})=>makeField(5,2,{
+  neutral:false,terrain:'flat',seed,humanPursuitTeam:true,
+  phase2Chase:phase2,phase4Chase:phase4
+ })
+ const only2=make({phase2:true,phase4:false})
+ const only4=make({phase2:false,phase4:true})
+ const inputHash2=JSON.stringify(only2.input),inputHash4=JSON.stringify(only4.input)
+ const aiTeams=new Set(only2.options.teamControl.filter(x=>x.kind==='ai').map(x=>x.teamId))
+ const ai=x=>prepareV4ShadowRace(x.input,x.options).combinedInput.stagePlans
+  .filter(p=>aiTeams.has(p.teamId))
+ assert.deepEqual(ai(only2),ai(only4),'AI plans must remain identical between chase timing variants')
+ let p2=null,p4=null,e2=null,e4=null
+ try{p2=probeV4PhysicalRace(only2.input,only2.options)}catch(error){e2=classifyError(error)}
+ try{p4=probeV4PhysicalRace(only4.input,only4.options)}catch(error){e4=classifyError(error)}
+ assert.equal(JSON.stringify(only2.input),inputHash2)
+ assert.equal(JSON.stringify(only4.input),inputHash4)
+ if(p2)assert.equal(p2.officialWrites,0)
+ if(p4)assert.equal(p4.officialWrites,0)
+ phaseTiming.push({...pair,only2:p2,only4:p4,error2:e2,error4:e4})
+}
+const phasePaired=phaseTiming.filter(x=>[x.without,x.only2,x.only4,x.withChase].every(Boolean))
+const phaseEscapes=phasePaired.filter(x=>[x.without,x.only2,x.only4,x.withChase].every(y=>y.acceptedBreakLaunches>0))
+assert(phaseEscapes.length>0,'Phase-specific comparison requires physically accepted breakaways')
+const peak=(rows,key)=>median(rows.map(x=>x[key].maximumBreakawayGapSeconds).filter(x=>typeof x==='number'))
+const phase2End=(rows,key)=>median(rows.map(x=>x[key].gapAudit.phase2?.endGapSeconds??null).filter(x=>typeof x==='number'))
+const phase4Start=(rows,key)=>median(rows.map(x=>x[key].gapAudit.phase4?.startGapSeconds??null).filter(x=>typeof x==='number'))
+console.log('V4_CHASE_PHASE_TIMING_REPORT '+JSON.stringify({
+ status:'DIAGNOSTIC_ONLY_NO_PHYSICS_CHANGES',
+ seeds:phaseTiming.length,
+ fullyValidPairs:phasePaired.length,
+ fullyValidBreakawayPairs:phaseEscapes.length,
+ completed:{
+  none:phaseTiming.filter(x=>x.without).length,
+  phase2Only:phaseTiming.filter(x=>x.only2).length,
+  phase4Only:phaseTiming.filter(x=>x.only4).length,
+  both:phaseTiming.filter(x=>x.withChase).length
+ },
+ maximumGapMedianSeconds:{
+  none:peak(phaseEscapes,'without'),phase2Only:peak(phaseEscapes,'only2'),
+  phase4Only:peak(phaseEscapes,'only4'),both:peak(phaseEscapes,'withChase')
+ },
+ phase2EndGapMedianSeconds:{
+  none:phase2End(phaseEscapes,'without'),phase2Only:phase2End(phaseEscapes,'only2'),
+  phase4Only:phase2End(phaseEscapes,'only4'),both:phase2End(phaseEscapes,'withChase')
+ },
+ phase4StartGapMedianSeconds:{
+  none:phase4Start(phaseEscapes,'without'),phase2Only:phase4Start(phaseEscapes,'only2'),
+  phase4Only:phase4Start(phaseEscapes,'only4'),both:phase4Start(phaseEscapes,'withChase')
+ },
+ medPhase2ChasingTeamsOnly2:median(phaseEscapes.map(x=>
+  x.only2.gapAudit.phase2?.explicitChasingTeamCount??0)),
+ medPhase2ChasingTeamsOnly4:median(phaseEscapes.map(x=>
+  x.only4.gapAudit.phase2?.explicitChasingTeamCount??0)),
+ medPhase4ChasingTeamsOnly2:median(phaseEscapes.map(x=>
+  x.only2.gapAudit.phase4?.explicitChasingTeamCount??0)),
+ medPhase4ChasingTeamsOnly4:median(phaseEscapes.map(x=>
+  x.only4.gapAudit.phase4?.explicitChasingTeamCount??0)),
+ replayFailures:{
+  none:phaseTiming.filter(x=>x.errorA).length,phase2Only:phaseTiming.filter(x=>x.error2).length,
+  phase4Only:phaseTiming.filter(x=>x.error4).length,both:phaseTiming.filter(x=>x.errorB).length
+ },
+ syntheticOnly:true,identicalRiderAndAiPlans:true,officialWrites:0
+}))
+
 }
