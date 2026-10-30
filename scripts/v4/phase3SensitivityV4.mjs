@@ -340,7 +340,8 @@ try{
    Math.abs(x.energyGapSeconds-x.combinedGapSeconds)>0.000001).length,
   terrains:['flat','mountain'],riderCounts:[96,168],
   strictReplayStillActive:true,officialWrites:0,
-  realismApproval:'BLOCKED_PENDING_MOUNTAIN_REPLAY_RECONCILIATION'
+  historicalCalibratedV4PhysicalReruns:0,
+  realismApproval:'BLOCKED_PENDING_PRIVATE_HISTORICAL_PHYSICAL_COMPARISON'
  }
  const seed33Forensics=results.map(r=>({candidate:r.key,forensic:r.forensic}))
  const report={
