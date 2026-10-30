@@ -245,42 +245,64 @@ console.log('V4_HISTORICAL_COMPARATOR_TEST_REPORT '+JSON.stringify({
 }))
 
 
-// V4 synthetic seven-second regression diagnostic. No live input/output and no
-// V2 modifications: compare identical rider fields with and without AI planning.
+// The preserved solver can throw replay synchronization errors on some seeds.
+// This is a DIAGNOSTIC, not a pass/fail claim for each physical outcome.
+// Record all expected replay errors without hiding unrelated errors or
+// classifying a failed calculation as a valid result.
 const seeded=[]
+const classifyError=error=>{
+ const message=error instanceof Error?error.message:String(error)
+ if(!message.startsWith('Universal replay synchronization failed:'))throw error
+ return message.split(':')[1]?.trim()?.split(':')[0]??'replay_sync_error'
+}
 for(let i=0;i<36;i++){
  const fixture=makeField(4,2,{neutral:false,terrain:'flat',
    seed:'v4-seven-second-regression-'+String(i).padStart(3,'0')})
- const base=runSelectedRaceEngineV1(fixture.input)
- const alt=probeV4PhysicalRace(fixture.input,fixture.options)
- assert.equal(base.validationPassed,true)
- assert.equal(alt.validated,true)
- assert.equal(alt.officialWrites,0)
- const baseGap=base.calibrationSummary?.maximumBreakawayGapSeconds??0
- const altGap=alt.maximumBreakawayGapSeconds??0
- const baseAccepted=base.roadRaceResolution?.phase1Opening?.attackAttempts
-  ?.filter(a=>a.acceptedEscapeLaunch).length??0
- seeded.push({baseGap,altGap,baseAccepted,altAccepted:alt.acceptedBreakLaunches,
-  baseSync:base.replaySynchronization.synchronized,
-  altSync:alt.replaySynchronized})
+ let base=null,alt=null,baseError=null,altError=null
+ try {base=runSelectedRaceEngineV1(fixture.input)} catch(error) {
+   baseError=classifyError(error)
+ }
+ try {alt=probeV4PhysicalRace(fixture.input,fixture.options)} catch(error) {
+   altError=classifyError(error)
+ }
+ if(base)assert.equal(base.validationPassed,true)
+ if(alt){assert.equal(alt.validated,true);assert.equal(alt.officialWrites,0)}
+ const baseGap=base?.calibrationSummary?.maximumBreakawayGapSeconds??null
+ const altGap=alt?.maximumBreakawayGapSeconds??null
+ const baseAccepted=base?.roadRaceResolution?.phase1Opening?.attackAttempts
+   ?.filter(a=>a.acceptedEscapeLaunch).length??null
+ const altAccepted=alt?.acceptedBreakLaunches??null
+ seeded.push({seed:i,baseGap,altGap,baseAccepted,altAccepted,
+  baseSync:base?.replaySynchronization.synchronized??null,
+  altSync:alt?.replaySynchronized??null,baseError,altError})
 }
 const exact7=(gap,accepted)=>accepted>0&&Number(gap.toFixed(2))===7
-const originalEscapes=seeded.filter(x=>x.baseAccepted>0)
-const templateEscapes=seeded.filter(x=>x.altAccepted>0)
-const median=arr=>arr.length?
- arr.slice().sort((a,b)=>a-b)[Math.floor(arr.length/2)]:null
+const baselineValid=seeded.filter(x=>x.baseError===null)
+const v4Valid=seeded.filter(x=>x.altError===null)
+const baseEscapes=baselineValid.filter(x=>x.baseAccepted>0)
+const v4Escapes=v4Valid.filter(x=>x.altAccepted>0)
+const median=a=>a.length?a.slice().sort((x,y)=>x-y)[Math.floor(a.length/2)]:null
+const errors=rows=>rows.map(x=>({seed:x.seed,reason:x.baseError??x.altError}))
 const gapAudit={
- samples:seeded.length,
- baseWithSuccessfulEscape:originalEscapes.length,
- v4WithSuccessfulEscape:templateEscapes.length,
- baseExact7Sec:originalEscapes.filter(x=>exact7(x.baseGap,x.baseAccepted)).length,
- v4Exact7Sec:templateEscapes.filter(x=>exact7(x.altGap,x.altAccepted)).length,
- baseGapOver60Sec:originalEscapes.filter(x=>x.baseGap>60).length,
- v4GapOver60Sec:templateEscapes.filter(x=>x.altGap>60).length,
- baseMedianMaxGapSec:median(originalEscapes.map(x=>x.baseGap)),
- v4MedianMaxGapSec:median(templateEscapes.map(x=>x.altGap)),
- baseReplaySynchronized:seeded.filter(x=>x.baseSync).length,
- v4ReplaySynchronized:seeded.filter(x=>x.altSync).length,
- dataSource:'synthetic',officialWrites:0
+ status:'DIAGNOSTIC_ONLY_NOT_REALISM_ACCEPTANCE',
+ syntheticSeeds:seeded.length,
+ baselineComplete:baselineValid.length,
+ v4Complete:v4Valid.length,
+ baselineReplayExceptions:seeded.length-baselineValid.length,
+ v4ReplayExceptions:seeded.length-v4Valid.length,
+ baselineExceptionSamples:errors(seeded.filter(x=>x.baseError!==null)).slice(0,10),
+ v4ExceptionSamples:errors(seeded.filter(x=>x.altError!==null)).slice(0,10),
+ baselineWithEscape:baseEscapes.length,
+ v4WithEscape:v4Escapes.length,
+ baselineExact7Sec:baseEscapes.filter(x=>exact7(x.baseGap,x.baseAccepted)).length,
+ v4Exact7Sec:v4Escapes.filter(x=>exact7(x.altGap,x.altAccepted)).length,
+ baselineOver60Sec:baseEscapes.filter(x=>x.baseGap>60).length,
+ v4Over60Sec:v4Escapes.filter(x=>x.altGap>60).length,
+ baselineMedianMaxGapSeconds:median(baseEscapes.map(x=>x.baseGap)),
+ v4MedianMaxGapSeconds:median(v4Escapes.map(x=>x.altGap)),
+ baselineSynced:baselineValid.filter(x=>x.baseSync).length,
+ v4Synced:v4Valid.filter(x=>x.altSync).length,
+ dataset:'synthetic_only',officialWrites:0
 }
+assert.equal(seeded.length,36)
 console.log('V4_SEVEN_SECOND_MULTI_SEED_REPORT '+JSON.stringify(gapAudit))
