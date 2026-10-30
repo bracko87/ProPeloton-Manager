@@ -12,6 +12,7 @@ import {tmpdir} from 'node:os'
 import {join,resolve,sep} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
+import {patchV4FinishTransitionSource} from './finishTransitionResearchPatchV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
 const folder=mkdtempSync(join(tmpdir(),'ppm-v4-bridge-alias-'))
@@ -79,7 +80,7 @@ try{
     patched++
     return {contents:
       "import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\n"+
-      source.replace(needle,replacement).replace(paceNeedle,paceReplacement),loader:'ts'}
+      patchV4FinishTransitionSource(source.replace(needle,replacement).replace(paceNeedle,paceReplacement)),loader:'ts'}
    })
   }}]
  })

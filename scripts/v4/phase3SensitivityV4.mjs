@@ -9,6 +9,7 @@ import {tmpdir} from 'node:os'
 import {join,resolve} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
+import {patchV4FinishTransitionSource} from './finishTransitionResearchPatchV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
 const folder=mkdtempSync(join(tmpdir(),'ppm-v4-phase3-sensitivity-'))
@@ -105,7 +106,7 @@ try{
      if(config.cooperation)source=exact(source,cooperationNeedle,cooperationReplacement)
      transformed++
      return {
-      contents:"import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\n"+source,
+      contents:"import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\n"+patchV4FinishTransitionSource(source),
       loader:'ts'
      }
     })
