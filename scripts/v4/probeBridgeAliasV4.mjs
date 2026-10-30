@@ -14,19 +14,13 @@ const folder=mkdtempSync(join(tmpdir(),'ppm-v4-bridge-alias-'))
 const file=join(folder,'v4-alias.mjs')
 const needle="  const authoritativeBridgeGroups = phase4.bridgeGroups\n    .slice()\n    .sort("
 const replacement=[
- "  const authoritativeBridgeGroups = phase4.bridgeGroups",
- "    .map((bridgeGroup) =>",
- "      !openingBreakawayCarriesIntoPhase4 &&",
- "      openingFrontDisplayCode !== 'B1' &&",
- "      bridgeGroup.mergeTargetDisplayCode === 'B1' &&",
- "      bridgeGroup.mergedIntoOpeningBreakaway &&",
- "      bridgeGroup.mergeKm !== null &&",
- "      bridgeGroup.gapSamples.length > 0 &&",
- "      Math.abs(bridgeGroup.gapSamples[bridgeGroup.gapSamples.length - 1].gapToLeaderSeconds) <= 0.000001 &&",
- "      bridgeGroup.gapSamples[bridgeGroup.gapSamples.length - 1].gapToPelotonSeconds > PHASE5_GROUP_MERGE_TOLERANCE_SECONDS",
- "        ? {...bridgeGroup,mergeTargetDisplayCode:openingFrontDisplayCode}",
- "        : bridgeGroup,",
- "    )",
+ "  const authoritativeBridgeGroups = reconcileV4ReplayBridgeMergeTargets(",
+ "    phase4.bridgeGroups,",
+ "    { openingBreakawayCarriesIntoPhase4,",
+ "      activeFrontDisplayCode:openingFrontDisplayCode,",
+ "      mergeToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS }",
+ "  )",
+ "    .slice()",
  "    .sort("
 ].join('\n')
 try{
@@ -42,7 +36,9 @@ try{
     if(source.split(needle).length!==2)
      throw Error('V2 replay source changed. Refuse fuzzy test patch.')
     patched++
-    return {contents:source.replace(needle,replacement),loader:'ts'}
+    return {contents:
+      "import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\n"+
+      source.replace(needle,replacement),loader:'ts'}
    })
   }}]
  })
