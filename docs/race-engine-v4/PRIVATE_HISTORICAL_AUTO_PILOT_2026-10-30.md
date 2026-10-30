@@ -32,3 +32,21 @@ Output is aggregate-only: shortlisted metadata counts, export attempts, accepted
 - Even a successful representative pilot is diagnostic evidence only. No V2 replacement, production shadow write, official race recalculation or automatic realism approval is permitted.
 
 Related: PRIVATE_HISTORICAL_PHYSICS_COMPARISON_2026-10-30.md and HISTORICAL_COHORT_PRIVATE_RESEARCH_2026-10-30.md.
+
+## Failure diagnostics (added 30 October)
+
+When every candidate fails input validation, the private physics runner now returns a
+diagnostic report instead of stopping with an opaque child-process error. It reports
+only counts across fixed, non-sensitive categories: incomplete history, locked input
+mismatch, unverified team control, unsupported V2 lane, missing saved result,
+invalid replay/physics and missing finish classification. Arbitrary source errors
+are grouped as `other`; private text, rider/team IDs, snapshots and paths are
+never reported. The operator CLI still exits unsuccessfully for **zero valid
+historical comparison triples**. A synthetic test verifies this failed-cohort
+path and the explicit absence of production writes.
+
+Read-only representative inventory also verified three archived road races with
+105 flat, 154 hilly and 168 mountain riders, complete authoritative team
+mapping and synchronized saved V2 replay. Their saved maximum breakaway gaps
+are 44.042713, 7.045696 and 300.225158 seconds respectively. These are
+observations of **historic V2** and are not proof of V4 behavior.

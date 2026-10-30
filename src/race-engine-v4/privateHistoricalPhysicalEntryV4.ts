@@ -119,6 +119,11 @@ function main(){
  const paths=doc.privateEnvelopePaths.map((raw:unknown)=>privatePath(raw,repo,64*1024*1024))
  if(new Set(paths).size!==paths.length)throw Error('DUPLICATE_PRIVATE_PATH')
  const rows=[],rejected={invalid:0,unsupported:0,unsynchronized:0}
+ const safeCodes=['INCOMPLETE_HISTORY','INVALID_LOCKED_HISTORY',
+  'UNVERIFIED_TEAM_CONTROL','UNSUPPORTED_V2_SOLVER_LANE',
+  'MISSING_SAVED_RESULT','PHYSICAL_RESULT_INVALID','NO_FINISH_CLASSIFICATION']
+ const failureClasses=Object.fromEntries(safeCodes.map(k=>[k,0]))
+ failureClasses.other=0
  for(const path of paths){
   try{
    const data=JSON.parse(readFileSync(path,'utf8'))
@@ -127,14 +132,18 @@ function main(){
    const code=e instanceof Error?e.message:'UNKNOWN'
    if(code==='UNSUPPORTED_V2_SOLVER_LANE')rejected.unsupported++
    else rejected.invalid++
+   // Fixed constant keys only. Never print raw error messages or identity data.
+   if(safeCodes.includes(code))failureClasses[code]++
+   else failureClasses.other++
   }
  }
  // Never emit the original stage/rider/team identity or error details.
  process.stdout.write('V4_PRIVATE_PHYSICAL_VARIANT '+JSON.stringify({
   variant,researchOnly:true,officialWrites:0,networkCalls:0,
-  inputPathsReported:false,attempted:paths.length,rejected,rows,
+  inputPathsReported:false,attempted:paths.length,rejected,failureClasses,rows,
  })+'\n')
- if(rows.length===0)process.exitCode=1
+ // Zero usable stages is a valid diagnostic result, not a child-process crash.
+ // The outer operator CLI still returns failure when no comparable triple exists.
 }
 try{if(process.argv.length!==3)throw Error('ARGUMENTS');main()}
 catch{

@@ -59,10 +59,29 @@ try{
  assert.equal(printable.includes('v4-synthetic-stage-01'),false)
  assert.equal(printable.includes('rider-'),false)
  assert.equal(printable.includes(privateStage),false)
+ // An intact private manifest containing an invalid historical record must
+ // produce useful anonymous rejection counts rather than an opaque exception.
+ const malformed=join(folder,'invalid-history.json')
+ writeFileSync(malformed,JSON.stringify({
+  status:'completed',input_snapshot_json:{riders:[],teams:[],stagePlans:[]},
+  result_summary_json:{output_snapshot:{universalResult:{}}}}),
+  {mode:0o600,flag:'wx'})
+ chmodSync(malformed,0o600)
+ writeFileSync(manifest,JSON.stringify({privateEnvelopePaths:[malformed]}))
+ const noValid=await runPrivateHistoricalPhysicsV4(manifest)
+ assert.equal(noValid.consideredCompleteTriples,0)
+ assert.equal(noValid.calibratedV4PhysicalReruns,0)
+ assert.equal(noValid.rejected.baselineInvalid,1)
+ assert.equal(noValid.rejected.failedPhysicsByVariant.preserved_v2.INVALID_LOCKED_HISTORY,1)
+ assert.equal(noValid.rejected.failedPhysicsByVariant.combined.INVALID_LOCKED_HISTORY,1)
+ assert.equal(noValid.rejected.failedPhysicsByVariant.combined_energy.INVALID_LOCKED_HISTORY,1)
+ assert.equal(noValid.historicalV4RealismApproved,false)
+ assert.equal(JSON.stringify(noValid).includes('invalid-history.json'),false)
+ writeFileSync(manifest,JSON.stringify({privateEnvelopePaths:[privateStage]}))
  // The trust boundary rejects world-readable snapshots before any solver runs.
  chmodSync(privateStage,0o644)
  await assert.rejects(()=>runPrivateHistoricalPhysicsV4(manifest),/PRIVATE_PATH_REJECTED/)
  console.log('V4_PRIVATE_PHYSICAL_HISTORY_UNIT '+JSON.stringify({
-  status:'PASS',cases:17,syntheticOnly:true,
+  status:'PASS',cases:25,syntheticOnly:true,
   preservedV2Runs:1,calibratedV4Runs:2,officialWrites:0}))
 }finally{rmSync(folder,{recursive:true,force:true})}

@@ -106,14 +106,20 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
    const report=JSON.parse(printed[0].slice('V4_PRIVATE_PHYSICAL_VARIANT '.length))
    if(report.variant!==cfg.key||report.officialWrites!==0||report.networkCalls!==0||
      report.researchOnly!==true||report.attempted!==paths.length||
-     !Array.isArray(report.rows))throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
+     !Array.isArray(report.rows)||!report.failureClasses||
+     Object.values(report.failureClasses).some(n=>!Number.isSafeInteger(n)||n<0)||
+     report.rows.length+report.rejected.invalid+report.rejected.unsupported!==paths.length)
+    throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
    results.push(report)
   }
   const maps=results.map(result=>new Map(result.rows.map(r=>[r.stageHash,r])))
+  if(maps.some((m,i)=>m.size!==results[i].rows.length))
+   throw Error('DUPLICATE_ANON_STAGE_REJECTED')
   const rejects={baselineInvalid:results[0].rejected.invalid,
    baselineUnsupported:results[0].rejected.unsupported,
    baselineReplayUnsynchronized:0,baselineHistoricMismatch:0,
-   calibratedReplayUnsynchronized:0,calibratedMissing:0}
+   calibratedReplayUnsynchronized:0,calibratedMissing:0,
+   failedPhysicsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.failureClasses]))}
   const triples=[]
   for(const [id,v2] of maps[0]){
    if(!v2.savedV2ClassificationParity){rejects.baselineHistoricMismatch++;continue}
