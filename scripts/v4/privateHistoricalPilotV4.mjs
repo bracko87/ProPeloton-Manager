@@ -22,7 +22,7 @@ function connect(url,key,factory){
 }
 export async function runPrivateHistoricalPilotV4({
  url,key,clientFactory=createClient,exportStage=exportPrivateHistoricalStage,
- metadataReader=null,physicalRunner=runPrivateHistoricalPhysicsV4,targets=TERRAIN_TARGETS,
+ metadataReader=null,physicalRunner=runPrivateHistoricalPhysicsV4,progress=null,targets=TERRAIN_TARGETS,
  metadataLimit=250,maxProbesPerTerrain=18
 }={}){
  if(!Number.isSafeInteger(metadataLimit)||metadataLimit<1||metadataLimit>350||
@@ -37,6 +37,7 @@ export async function runPrivateHistoricalPilotV4({
   {data:await metadataReader(metadataLimit),error:null}
  if(response.error||!Array.isArray(response.data))throw Error('Metadata SELECT denied')
  const selection=selectV4HistoricalPilotCandidates(response.data,{maxPerTerrain:maxProbesPerTerrain})
+ if(progress)progress({phase:'METADATA_READY',metadataRows:selection.metadataRows,potential:selection.potential})
  const folder=mkdtempSync(join(tmpdir(),'ppm-v4-historical-pilot-'))
  const created=[],files=[]
  const attempted=Object.fromEntries(terrains.map(t=>[t,0]))
@@ -62,12 +63,14 @@ export async function runPrivateHistoricalPilotV4({
     files.push(out.privatePath);accepted[terrain]++
    }catch{rejected[terrain]++}
   }
+  if(progress)progress({phase:'EXPORTS_READY',attempted,accepted,rejected})
   if(files.length===0)return {status:'PRIVATE_HISTORICAL_PILOT_NO_ELIGIBLE_EXPORTS',
    metadataRows:selection.metadataRows,potential:selection.potential,
    attempted,accepted,rejected,officialWrites:0,historicalV4RealismApproved:false}
   const manifest=join(folder,'private-manifest.json')
   writeFileSync(manifest,JSON.stringify({privateEnvelopePaths:files}),
    {encoding:'utf8',mode:0o600,flag:'wx'})
+  if(progress)progress({phase:'PHYSICS_START',exports:files.length})
   const report=await physicalRunner(manifest)
   if(!report||report.officialWrites!==0||report.rawStageDataPublished!==false||
     report.privatePathsPublished!==false)throw Error('Unsafe physics report')

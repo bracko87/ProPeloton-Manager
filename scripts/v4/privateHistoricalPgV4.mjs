@@ -29,22 +29,28 @@ export function privatePgConfig(env){
   application_name:'v4-research-readonly'}
 }
 export async function runPrivatePgHistoricalPilotV4({
- env=process.env,ClientConstructor=null,physicalRunner=runPrivateHistoricalPhysicsV4
+ env=process.env,ClientConstructor=null,physicalRunner=runPrivateHistoricalPhysicsV4,
+ progress=null
 }={}){
  const conf=privatePgConfig(env)
  const Client=ClientConstructor??(await import('pg')).default.Client
  const db=new Client(conf)
  let connected=false
+ let phase='CONNECT'
  try{
   await db.connect();connected=true
+  phase='VERIFY_RESEARCH_ROLE'
   const x=(await db.query(queryRights)).rows[0]
   if(x?.db_user!==role||x.scoped_runs!==true||x.scoped_entries!==true||
      x.live_runs!==false||x.live_entries!==false||x.bypass_rls!==false)
    throw Error('RESTRICTED_PG_ROLE_REQUIRED')
-  const metadataReader=async(limit)=>(
-   await db.query(queryMetadata,[limit])).rows.map(r=>({
+  const metadataReader=async(limit)=>{
+   phase='READ_METADATA'
+   return (await db.query(queryMetadata,[limit])).rows.map(r=>({
      ...r,completed_at:new Date(r.completed_at).toISOString()}))
+  }
   const exportStage=async({stageId})=>{
+   phase='READ_AND_VALIDATE_EXPORTS'
    if(!uuid.test(String(stageId??'')))throw Error('INVALID_STAGE_ID')
    const runs=(await db.query(queryRun,[stageId])).rows
    if(runs.length!==1)throw Error('MISSING_OR_AMBIGUOUS_STAGE')
@@ -56,17 +62,40 @@ export async function runPrivatePgHistoricalPilotV4({
    return storePrivateHistoricalEnvelopeV4(run,entries,stageId)
   }
   return await runPrivateHistoricalPilotV4({
-   metadataReader,exportStage,physicalRunner})
+   metadataReader,exportStage,physicalRunner,
+   progress:state=>{
+    phase=state.phase
+    if(progress)progress(state)
+   }})
+ }catch(err){
+  if(err&&typeof err==='object')err.v4ResearchPhase=phase
+  throw err
  }finally{if(connected)await db.end()}
+}
+function safeError(err){
+ const msg=String(err?.message??'')
+ const allowed=['RESTRICTED_PG_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
+  'INVALID_PRIVATE_CA_PATH','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
+  'NO_ARCHIVED_TEAMS','INVALID_ENTRY_MAPPING','PRIVATE_PHYSICAL_ENGINE_FAILED',
+  'UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE','PHYSICAL_HISTORIC_INPUT_MISMATCH',
+  'PRIVATE_PATH_REJECTED','DUPLICATE_PRIVATE_INPUT','INVALID_MANIFEST',
+  'Unsafe physics report','Metadata SELECT denied','Invalid historical pilot selection limits']
+ const code=String(err?.code??'')
+ return {phase:typeof err?.v4ResearchPhase==='string'?err.v4ResearchPhase:'CONFIGURATION',
+  postgresCode:/^[0-9A-Z]{5}$/.test(code)?code:null,
+  systemCode:['ENOENT','EACCES','EPERM','ETIMEDOUT'].includes(code)?code:null,
+  reason:allowed.includes(msg)?msg:code==='SELF_SIGNED_CERT_IN_CHAIN'?'TLS_CHAIN':null,
+  errorType:['Error','TypeError','RangeError'].includes(err?.name)?err.name:'UNKNOWN'}
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
  try{
   if(process.argv.length!==2)throw Error('NO_CLI_ARGS')
-  const report=await runPrivatePgHistoricalPilotV4()
+  const report=await runPrivatePgHistoricalPilotV4({
+   progress:state=>console.log('V4_PRIVATE_PG_PROGRESS '+JSON.stringify(state))})
   console.log('V4_PRIVATE_PG_HISTORICAL_PILOT '+JSON.stringify(report))
   if(!report.consideredCompleteTriples)process.exitCode=1
- }catch{
-  console.error('V4_PRIVATE_PG_HISTORICAL_PILOT_REJECTED: local readonly access or archived evidence invalid')
+ }catch(err){
+  console.error('V4_PRIVATE_PG_HISTORICAL_PILOT_REJECTED '+JSON.stringify(safeError(err)))
   process.exitCode=1
  }
 }

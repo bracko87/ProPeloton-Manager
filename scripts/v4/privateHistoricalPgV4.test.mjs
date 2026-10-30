@@ -51,7 +51,14 @@ const result=await runPrivatePgHistoricalPilotV4({
    privatePathsPublished:false,consideredCompleteTriples:1}
  }})
 assert.equal(result.consideredCompleteTriples,1)
-assert.equal(opened,1);assert.equal(closed,1);assert.equal(physics,1)
+const messages=[]
+await runPrivatePgHistoricalPilotV4({
+ env,ClientConstructor:FakeClient,progress:r=>messages.push(r.phase),
+ physicalRunner:async()=>({
+  officialWrites:0,rawStageDataPublished:false,privatePathsPublished:false,
+  consideredCompleteTriples:1})})
+assert.deepEqual(messages,['METADATA_READY','EXPORTS_READY','PHYSICS_START'])
+assert.equal(opened,2);assert.equal(closed,2);assert.equal(physics,1)
 assert.equal(JSON.stringify(result).includes(env.PPM_V4_RESEARCH_DB_PASSWORD),false)
 class Forbidden extends FakeClient{
  async query(sql,args){
@@ -63,6 +70,6 @@ class Forbidden extends FakeClient{
 }
 await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
  env,ClientConstructor:Forbidden}),/RESTRICTED_PG_ROLE_REQUIRED/)
-assert.equal(closed,2)
+assert.equal(closed,3)
 console.log('V4_PRIVATE_PG_READONLY_RESEARCH_UNIT '+JSON.stringify({
  status:'PASS',syntheticOnly:true,cases:16,officialWrites:0}))
