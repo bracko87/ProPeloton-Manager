@@ -29,6 +29,8 @@ jobs:
         run: npx esbuild src/race-engine-v4/historicalCompareCliV4.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/ppm-v4-history.mjs
       - name: Test private historical export with synthetic data only, no Supabase access
         run: node scripts/v4/privateHistoricalExportV4.test.mjs
+      - name: Trace five synthetic physical group-transition failures with original validator still strict
+        run: node scripts/v4/traceReplayTransitionsV4.mjs
       - name: Preserve template-first unit tests
         run: |
           npx esbuild src/race-engine-v4/templateFirstPlannerV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-template-first-tests.mjs
