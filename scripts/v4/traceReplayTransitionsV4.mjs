@@ -42,7 +42,7 @@ try{
  if(replacedCore!==1||replacedTest!==1)throw Error('Trace hooks were not installed exactly once')
  const run=spawnSync(process.execPath,[outfile],{
   cwd:home,encoding:'utf8',timeout:120000,
-  env:{...process.env,V4_REPLAY_TRACE:'1'},maxBuffer:6*1024*1024
+  env:{...process.env,V4_REPLAY_TRACE:'1',V4_SKIP_EXPLICIT_CHASE_AB:'1'},maxBuffer:6*1024*1024
  })
  if(run.error)throw run.error
  const lines=String(run.stdout??'').split('\n')

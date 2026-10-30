@@ -342,6 +342,7 @@ console.log('V4_GAP_TRAJECTORY_AUDIT_REPORT '+JSON.stringify({
 // Controlled A/B chase sensitivity — SAME stage, roster, weather and AI plans.
 // The ONLY intervention is explicit human-team pursuit in Phases 2 and 4.
 // This is observational research, NOT a guarantee that a catch should occur.
+if(process.env.V4_SKIP_EXPLICIT_CHASE_AB!=='1'){
 const chasePairs=[]
 for(let i=0;i<36;i++){
  const seed='v4-seven-second-regression-'+String(i).padStart(3,'0')
@@ -397,3 +398,4 @@ console.log('V4_EXPLICIT_CHASE_AB_REPORT '+JSON.stringify({
  identicalAiPlansVerified:true,strictReplayValidation:true,
  officialRaceWrites:0,source:'synthetic_only'
 }))
+}
