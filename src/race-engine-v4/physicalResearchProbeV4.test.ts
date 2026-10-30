@@ -243,3 +243,44 @@ console.log('V4_HISTORICAL_COMPARATOR_TEST_REPORT '+JSON.stringify({
  noHistoricalRiderDataPublished:true,actualHistoricalReplaysStillRequired:true,
  noOfficialRaceWrites:true
 }))
+
+
+// V4 synthetic seven-second regression diagnostic. No live input/output and no
+// V2 modifications: compare identical rider fields with and without AI planning.
+const seeded=[]
+for(let i=0;i<36;i++){
+ const fixture=makeField(4,2,{neutral:false,terrain:'flat',
+   seed:'v4-seven-second-regression-'+String(i).padStart(3,'0')})
+ const base=runSelectedRaceEngineV1(fixture.input)
+ const alt=probeV4PhysicalRace(fixture.input,fixture.options)
+ assert.equal(base.validationPassed,true)
+ assert.equal(alt.validated,true)
+ assert.equal(alt.officialWrites,0)
+ const baseGap=base.calibrationSummary?.maximumBreakawayGapSeconds??0
+ const altGap=alt.maximumBreakawayGapSeconds??0
+ const baseAccepted=base.roadRaceResolution?.phase1Opening?.attackAttempts
+  ?.filter(a=>a.acceptedEscapeLaunch).length??0
+ seeded.push({baseGap,altGap,baseAccepted,altAccepted:alt.acceptedBreakLaunches,
+  baseSync:base.replaySynchronization.synchronized,
+  altSync:alt.replaySynchronized})
+}
+const exact7=(gap,accepted)=>accepted>0&&Number(gap.toFixed(2))===7
+const originalEscapes=seeded.filter(x=>x.baseAccepted>0)
+const templateEscapes=seeded.filter(x=>x.altAccepted>0)
+const median=arr=>arr.length?
+ arr.slice().sort((a,b)=>a-b)[Math.floor(arr.length/2)]:null
+const gapAudit={
+ samples:seeded.length,
+ baseWithSuccessfulEscape:originalEscapes.length,
+ v4WithSuccessfulEscape:templateEscapes.length,
+ baseExact7Sec:originalEscapes.filter(x=>exact7(x.baseGap,x.baseAccepted)).length,
+ v4Exact7Sec:templateEscapes.filter(x=>exact7(x.altGap,x.altAccepted)).length,
+ baseGapOver60Sec:originalEscapes.filter(x=>x.baseGap>60).length,
+ v4GapOver60Sec:templateEscapes.filter(x=>x.altGap>60).length,
+ baseMedianMaxGapSec:median(originalEscapes.map(x=>x.baseGap)),
+ v4MedianMaxGapSec:median(templateEscapes.map(x=>x.altGap)),
+ baseReplaySynchronized:seeded.filter(x=>x.baseSync).length,
+ v4ReplaySynchronized:seeded.filter(x=>x.altSync).length,
+ dataSource:'synthetic',officialWrites:0
+}
+console.log('V4_SEVEN_SECOND_MULTI_SEED_REPORT '+JSON.stringify(gapAudit))
