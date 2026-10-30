@@ -11,7 +11,7 @@ import {compareHistoricalStageV4} from './historicalComparisonV4.ts'
 import {runSelectedRaceEngineV1} from '../universal-race-engine/runSelectedRaceEngineV1.ts'
 
 function makeField(teamCount:number,aiTeams:number,
-  {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01'}={}) {
+  {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01',humanChase=false}={}) {
  const teams=[],riders=[],stagePlans=[],teamControl=[]
  const stageId='v4-synthetic-stage-01',raceId='v4-synthetic-race-01'
  for(let t=0;t<teamCount;t++){
@@ -38,8 +38,9 @@ function makeField(teamCount:number,aiTeams:number,
        riderId:id,stageRole:i===4?'breakaway_rider':
          i===0?'team_leader_gc':i===1?'sprinter':'helper_domestique',
        commands:{phase1:!neutral&&kind==='human'&&i===4?'join_breakaway':'follow_team_plan',
-         phase2:'follow_team_plan',phase3:'follow_team_plan',
-         phase4:'follow_team_plan'},
+         phase2:humanChase&&kind==='human'&&[2,3,5].includes(i)?'chase':'follow_team_plan',
+         phase3:'follow_team_plan',
+         phase4:humanChase&&kind==='human'&&[2,3,5].includes(i)?'chase':'follow_team_plan'},
        equipmentSelection:null,supplySelection:null
       })
    }
@@ -336,3 +337,63 @@ console.log('V4_GAP_TRAJECTORY_AUDIT_REPORT '+JSON.stringify({
  sampleOnly:true,originalV2SolverUnmodified:true,officialWrites:0
 }))
 
+
+
+// Controlled A/B chase sensitivity — SAME stage, roster, weather and AI plans.
+// The ONLY intervention is explicit human-team pursuit in Phases 2 and 4.
+// This is observational research, NOT a guarantee that a catch should occur.
+const chasePairs=[]
+for(let i=0;i<36;i++){
+ const seed='v4-seven-second-regression-'+String(i).padStart(3,'0')
+ const without=makeField(4,2,{neutral:false,terrain:'flat',seed,humanChase:false})
+ const withChase=makeField(4,2,{neutral:false,terrain:'flat',seed,humanChase:true})
+ assert.equal(JSON.stringify(without.input.riders),JSON.stringify(withChase.input.riders))
+ assert.equal(JSON.stringify(without.input.stage),JSON.stringify(withChase.input.stage))
+ assert.equal(JSON.stringify(without.input.weather),JSON.stringify(withChase.input.weather))
+ assert.equal(JSON.stringify(without.input.engine),JSON.stringify(withChase.input.engine))
+ const unmodified=JSON.stringify(withChase.input)
+ const aiTeamIds=new Set(without.options.teamControl.filter(x=>x.kind==='ai').map(x=>x.teamId))
+ const aiPlans=x=>prepareV4ShadowRace(x.input,x.options).combinedInput.stagePlans
+  .filter(p=>aiTeamIds.has(p.teamId))
+ assert.deepEqual(aiPlans(without),aiPlans(withChase),
+  'human chase intervention must not rewrite AI tactical intentions')
+ let a=null,b=null,errorA=null,errorB=null
+ try{a=probeV4PhysicalRace(without.input,without.options)}catch(error){
+  errorA=classifyError(error)
+ }
+ try{b=probeV4PhysicalRace(withChase.input,withChase.options)}catch(error){
+  errorB=classifyError(error)
+ }
+ assert.equal(JSON.stringify(withChase.input),unmodified,
+  'V4 chase sensitivity must not mutate locked human commands')
+ if(a)assert.equal(a.officialWrites,0)
+ if(b)assert.equal(b.officialWrites,0)
+ chasePairs.push({seed:i,without:a,withChase:b,errorA,errorB})
+}
+const completedPairs=chasePairs.filter(x=>x.without!==null&&x.withChase!==null)
+const matchedBreakawayPairs=completedPairs.filter(x=>
+ x.without.acceptedBreakLaunches>0&&x.withChase.acceptedBreakLaunches>0)
+const originalGaps=matchedBreakawayPairs.map(x=>x.without.maximumBreakawayGapSeconds)
+const chaseGaps=matchedBreakawayPairs.map(x=>x.withChase.maximumBreakawayGapSeconds)
+const reductions=matchedBreakawayPairs.map(x=>
+ x.without.maximumBreakawayGapSeconds-x.withChase.maximumBreakawayGapSeconds)
+console.log('V4_EXPLICIT_CHASE_AB_REPORT '+JSON.stringify({
+ status:'DIAGNOSTIC_ONLY_NOT_REALISM_ACCEPTANCE',
+ pairedSeeds:chasePairs.length,withoutChaseComplete:chasePairs.filter(x=>x.without!==null).length,
+ withHumanChaseComplete:chasePairs.filter(x=>x.withChase!==null).length,
+ matchedValidPairs:completedPairs.length,matchedBreakawayPairs:matchedBreakawayPairs.length,
+ medianNoChaseMaxGapSeconds:median(originalGaps.filter(x=>typeof x==='number')),
+ medianHumanChaseMaxGapSeconds:median(chaseGaps.filter(x=>typeof x==='number')),
+ medianPairedGapReductionSeconds:median(reductions.filter(Number.isFinite)),
+ casesChaseReducesMaximum:reductions.filter(x=>x>0.000001).length,
+ casesChaseIncreasesMaximum:reductions.filter(x=>x< -0.000001).length,
+ medianPhase2ChasingTeamCount:median(matchedBreakawayPairs.map(x=>
+  x.withChase.gapAudit.phase2?.explicitChasingTeamCount??0)),
+ medianPhase4ExplicitChasers:median(matchedBreakawayPairs.map(x=>
+  x.withChase.gapAudit.phase4?.explicitChasingTeamCount??0)),
+ noChaseReplayErrors:chasePairs.filter(x=>x.errorA!==null).length,
+ withChaseReplayErrors:chasePairs.filter(x=>x.errorB!==null).length,
+ testFieldRiders:24,humanChaserTeams:2,humanPhase2And4ChaseRidersPerTeam:3,
+ identicalAiPlansVerified:true,strictReplayValidation:true,
+ officialRaceWrites:0,source:'synthetic_only'
+}))
