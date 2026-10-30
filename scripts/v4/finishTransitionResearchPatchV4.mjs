@@ -20,7 +20,8 @@ export function patchV4FinishTransitionSource(original){
   "      bridgeGroups:phase4.bridgeGroups,",
   "      breakawaySurvived:phase4.breakawaySurvived,",
   "      breakawayCaught:phase4.breakawayCaught,",
-  "      physicalEndGapSeconds:phase4.endGapSeconds",
+  "      physicalEndGapSeconds:phase4.endGapSeconds,",
+  "      officialFinishGroupingToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS",
   "    })",
   begin
  ].join('\n')
@@ -34,5 +35,22 @@ export function patchV4FinishTransitionSource(original){
  source=replaceExact(source,
   "        title: allTransitionsAreFrontCaughtByPeloton ? 'Front group caught on the line' : 'Final gaps open on the line',",
   "        title: v4FinishTransition.title,")
+ const catchIndexNeedle = [
+  "      const laterFrontExists = replayTimeline.checkpoints",
+  "        .slice(candidateIndex + 1)"
+ ].join('\n')
+ const catchIndexReplacement = [
+  "      // A partial finish-line F-to-P grouping is not a TERMINAL catch",
+  "      // while a B/F front still physically leads at that checkpoint.",
+  "      // Full terminal catches retain the untouched strict post-catch checks.",
+  "      const survivingFrontAtCatch = replayTimeline.checkpoints[candidateIndex].groups",
+  "        .some(group=>group.displayCode.startsWith('B') || group.displayCode.startsWith('F'))",
+  "      const laterFrontExists = replayTimeline.checkpoints",
+  "        .slice(candidateIndex + 1)"
+ ].join('\n')
+ source=replaceExact(source,catchIndexNeedle,catchIndexReplacement)
+ source=replaceExact(source,
+  "      return laterFrontExists ? terminalIndex : candidateIndex",
+  "      return (survivingFrontAtCatch || laterFrontExists) ? terminalIndex : candidateIndex")
  return "import { reconcileV4FinishTransition } from '../race-engine-v4/finishTransitionV4.ts'\n"+source
 }
