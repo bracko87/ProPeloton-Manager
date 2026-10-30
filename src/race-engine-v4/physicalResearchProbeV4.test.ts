@@ -11,13 +11,14 @@ import {compareHistoricalStageV4} from './historicalComparisonV4.ts'
 import {runSelectedRaceEngineV1} from '../universal-race-engine/runSelectedRaceEngineV1.ts'
 
 function makeField(teamCount:number,aiTeams:number,
-  {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01',humanChase=false}={}) {
+  {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01',humanChase=false,humanPursuitTeam=false}={}) {
  const teams=[],riders=[],stagePlans=[],teamControl=[]
  const stageId='v4-synthetic-stage-01',raceId='v4-synthetic-race-01'
  for(let t=0;t<teamCount;t++){
    const teamId='team-'+t,clubId='club-'+t
    const acceptedRiderIds=[],planRiders=[]
    const kind=t>=teamCount-aiTeams?'ai':'human'
+   const designatedHumanPursuitTeam=humanPursuitTeam&&kind==='human'&&t===teamCount-aiTeams-1
    teamControl.push({teamId,kind})
    for(let i=0;i<6;i++){
       const ordinal=t*6+i,id='rider-'+String(ordinal).padStart(3,'0')
@@ -37,10 +38,10 @@ function makeField(teamCount:number,aiTeams:number,
       planRiders.push({
        riderId:id,stageRole:i===4?'breakaway_rider':
          i===0?'team_leader_gc':i===1?'sprinter':'helper_domestique',
-       commands:{phase1:!neutral&&kind==='human'&&i===4?'join_breakaway':'follow_team_plan',
-         phase2:humanChase&&kind==='human'&&[2,3,5].includes(i)?'chase':'follow_team_plan',
+       commands:{phase1:!neutral&&kind==='human'&&!designatedHumanPursuitTeam&&i===4?'join_breakaway':'follow_team_plan',
+         phase2:humanChase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan',
          phase3:'follow_team_plan',
-         phase4:humanChase&&kind==='human'&&[2,3,5].includes(i)?'chase':'follow_team_plan'},
+         phase4:humanChase&&designatedHumanPursuitTeam&&[2,3,5].includes(i)?'chase':'follow_team_plan'},
        equipmentSelection:null,supplySelection:null
       })
    }
@@ -346,8 +347,8 @@ if(process.env.V4_SKIP_EXPLICIT_CHASE_AB!=='1'){
 const chasePairs=[]
 for(let i=0;i<36;i++){
  const seed='v4-seven-second-regression-'+String(i).padStart(3,'0')
- const without=makeField(4,2,{neutral:false,terrain:'flat',seed,humanChase:false})
- const withChase=makeField(4,2,{neutral:false,terrain:'flat',seed,humanChase:true})
+ const without=makeField(5,2,{neutral:false,terrain:'flat',seed,humanChase:false,humanPursuitTeam:true})
+ const withChase=makeField(5,2,{neutral:false,terrain:'flat',seed,humanChase:true,humanPursuitTeam:true})
  assert.equal(JSON.stringify(without.input.riders),JSON.stringify(withChase.input.riders))
  assert.equal(JSON.stringify(without.input.stage),JSON.stringify(withChase.input.stage))
  assert.equal(JSON.stringify(without.input.weather),JSON.stringify(withChase.input.weather))
@@ -374,6 +375,10 @@ for(let i=0;i<36;i++){
 const completedPairs=chasePairs.filter(x=>x.without!==null&&x.withChase!==null)
 const matchedBreakawayPairs=completedPairs.filter(x=>
  x.without.acceptedBreakLaunches>0&&x.withChase.acceptedBreakLaunches>0)
+assert(matchedBreakawayPairs.length>0,'A/B needs actual physical escape cases')
+assert(matchedBreakawayPairs.some(x=>
+ (x.withChase.gapAudit.phase2?.explicitChasingTeamCount??0)>0),
+ 'separate peloton human team must issue a recognized Phase-2 chase')
 const originalGaps=matchedBreakawayPairs.map(x=>x.without.maximumBreakawayGapSeconds)
 const chaseGaps=matchedBreakawayPairs.map(x=>x.withChase.maximumBreakawayGapSeconds)
 const reductions=matchedBreakawayPairs.map(x=>
@@ -394,7 +399,7 @@ console.log('V4_EXPLICIT_CHASE_AB_REPORT '+JSON.stringify({
   x.withChase.gapAudit.phase4?.explicitChasingTeamCount??0)),
  noChaseReplayErrors:chasePairs.filter(x=>x.errorA!==null).length,
  withChaseReplayErrors:chasePairs.filter(x=>x.errorB!==null).length,
- testFieldRiders:24,humanChaserTeams:2,humanPhase2And4ChaseRidersPerTeam:3,
+ testFieldRiders:30,humanChaserTeams:1,humanPhase2And4ChaseRidersPerTeam:3,
  identicalAiPlansVerified:true,strictReplayValidation:true,
  officialRaceWrites:0,source:'synthetic_only'
 }))
