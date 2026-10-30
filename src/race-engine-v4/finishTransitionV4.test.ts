@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {reconcileV4FinishTransition,preserveV4FinishGroupGap} from './finishTransitionV4.ts'
+import {reconcileV4FinishTransition,preserveV4FinishGroupGap,canonicalV4OfficialFinishGap} from './finishTransitionV4.ts'
 const context={
  allTransitionsAreFrontCaughtByPeloton:true,
  changedRiderIds:['rider-024'],
@@ -38,5 +38,18 @@ assert.equal(preserveV4FinishGroupGap(5.18724,false)-preserveV4FinishGroupGap(0,
 assert.equal(preserveV4FinishGroupGap(5.468381,false)-preserveV4FinishGroupGap(0,false)>5,true)
 assert.equal(preserveV4FinishGroupGap(5,false)-preserveV4FinishGroupGap(0,false)>5,false)
 
-console.log('V4_FINISH_GROUPING_UNIT_REPORT '+JSON.stringify({status:'PASS',cases:18,
+const physicalGaps=[0,5,5.18724,5.468381,19.655293,25.123674,214.748364]
+for(const gap of physicalGaps){
+ const canonical=canonicalV4OfficialFinishGap(13000,gap)
+ assert.equal((13000+gap)-13000,canonical)
+ assert.ok(Math.abs(gap-canonical)<0.000001)
+}
+assert.equal(canonicalV4OfficialFinishGap(13000,0),0)
+assert.ok(canonicalV4OfficialFinishGap(13000,5.18724)>5)
+assert.ok(canonicalV4OfficialFinishGap(13000,25.123674)-
+ canonicalV4OfficialFinishGap(13000,19.655293)>5)
+assert.throws(()=>canonicalV4OfficialFinishGap(Number.NaN,5))
+assert.throws(()=>canonicalV4OfficialFinishGap(13000,-1))
+
+console.log('V4_FINISH_GROUPING_UNIT_REPORT '+JSON.stringify({status:'PASS',cases:30,
  strictPhysicalCatchEvidenceRequired:true,v2ClassificationUnchanged:true,officialWrites:0}))

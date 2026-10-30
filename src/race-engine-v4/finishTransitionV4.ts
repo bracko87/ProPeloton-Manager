@@ -73,3 +73,18 @@ export function preserveV4FinishGroupGap(
  if(!Number.isFinite(gapSeconds))throw Error('Invalid physical finish gap')
  return Math.max(0,allowTransitiveMerging?Math.round(gapSeconds):gapSeconds)
 }
+
+/**
+ * V4's fractional physical finish gap and absolute official time must satisfy
+ * the unchanged exact timing invariant. Round-trip through the absolute time
+ * solely to align their IEEE-754 representations; no whole-second rounding.
+ */
+export function canonicalV4OfficialFinishGap(
+ winnerTimeSeconds:number,
+ physicalGapSeconds:number
+):number{
+ if(!Number.isFinite(winnerTimeSeconds)||!Number.isFinite(physicalGapSeconds)||
+    winnerTimeSeconds<0||physicalGapSeconds<0)
+  throw Error('Invalid V4 official finish timing input')
+ return (winnerTimeSeconds+physicalGapSeconds)-winnerTimeSeconds
+}

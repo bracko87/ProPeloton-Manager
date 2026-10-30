@@ -14,6 +14,9 @@ export function patchV4FinishTransitionSource(original){
  const physicalGapNeedle="      gapSeconds: Math.max(0, Math.round(candidate.gapSeconds)),"
  const physicalGapReplacement="      gapSeconds: preserveV4FinishGroupGap(candidate.gapSeconds,allowTransitiveMerging),"
  source=replaceExact(source,physicalGapNeedle,physicalGapReplacement)
+ const officialFinishGapNeedle="        groupOrder: index + 1,\n        gapSeconds: normalizedGap,\n        officialTimeSeconds: phase4WinnerTime + normalizedGap,"
+ const officialFinishGapReplacement="        groupOrder: index + 1,\n        gapSeconds: canonicalV4OfficialFinishGap(phase4WinnerTime, normalizedGap),\n        officialTimeSeconds: phase4WinnerTime + normalizedGap,"
+ source=replaceExact(source,officialFinishGapNeedle,officialFinishGapReplacement)
  const begin="    if (finalTransitionRiderIds.length > 0) {\n      eventDefinitions.push({"
  const decision=[
   "    const v4FinishTransition = reconcileV4FinishTransition({",
@@ -55,5 +58,5 @@ export function patchV4FinishTransitionSource(original){
  source=replaceExact(source,
   "      return laterFrontExists ? terminalIndex : candidateIndex",
   "      return (survivingFrontAtCatch || laterFrontExists) ? terminalIndex : candidateIndex")
- return "import { reconcileV4FinishTransition, preserveV4FinishGroupGap } from '../race-engine-v4/finishTransitionV4.ts'\n"+source
+ return "import { reconcileV4FinishTransition, preserveV4FinishGroupGap, canonicalV4OfficialFinishGap } from '../race-engine-v4/finishTransitionV4.ts'\n"+source
 }
