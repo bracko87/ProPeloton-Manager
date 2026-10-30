@@ -24,6 +24,8 @@ jobs:
         run: npx esbuild src/race-engine-v4/physicalResearchProbeV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-physical-probe.mjs
       - name: Execute untouched V2 physics on locked V4 synthetic fields
         run: node /tmp/v4-physical-probe.mjs
+      - name: Compile offline historical comparison CLI (no database credentials)
+        run: npx esbuild src/race-engine-v4/historicalCompareCliV4.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/ppm-v4-history.mjs
       - name: Preserve template-first unit tests
         run: |
           npx esbuild src/race-engine-v4/templateFirstPlannerV4.test.ts --bundle --platform=node --format=esm --target=node22 --outfile=/tmp/v4-template-first-tests.mjs

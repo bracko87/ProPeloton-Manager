@@ -7,6 +7,8 @@ import {PPM_UNIVERSAL_RACE_ENGINE_KEY,PPM_UNIVERSAL_RACE_ENGINE_VERSION,
  validateRunInput} from '../universal-race-engine/runRaceEngine.ts'
 import {prepareV4ShadowRace} from './templateFirstPlannerV4.ts'
 import {probeV4PhysicalRace} from './physicalResearchProbeV4.ts'
+import {compareHistoricalStageV4} from './historicalComparisonV4.ts'
+import {runSelectedRaceEngineV1} from '../universal-race-engine/runSelectedRaceEngineV1.ts'
 
 function makeField(teamCount:number,aiTeams:number,
   {neutral=false,terrain='flat',seed='v4-mixed-real-solver-01'}={}) {
@@ -168,4 +170,76 @@ console.log('V4_PHYSICAL_READONLY_REPORT '+JSON.stringify({
   x.actualMixedAcceptedBreakawayGroup),
  legacySevenSecondsIssueResolved:false,
  details:report
+}))
+
+
+// Offline historical-shaped comparison contract: synthetic fixture only.
+// Real past race snapshots are never committed to a public repository.
+for(const [name,aiCount] of [['historical_shape_all_human',0],['historical_shape_mixed',2]]){
+ const fixture=makeField(4,aiCount,{neutral:aiCount===0,terrain:'flat'})
+ const originalHash=JSON.stringify(fixture.input)
+ const historicalSaved=runSelectedRaceEngineV1(fixture.input)
+ const envelope={
+  status:'completed',
+  input_snapshot_json:fixture.input,
+  result_summary_json:{
+   stage_start_game_at:'2000-06-01T12:00:00',
+   output_snapshot:{universalResult:historicalSaved}
+  },
+  team_control:fixture.options.teamControl
+ }
+ const comparison=compareHistoricalStageV4(envelope)
+ assert.equal(comparison.researchOnly,true)
+ assert.equal(comparison.officialWrites,0)
+ assert.equal(comparison.historicLockCutoffActuallyVerified,false)
+ assert.equal(comparison.savedResultReproducedByCurrentV2,true)
+ assert.equal(comparison.savedResultRankStatusGapAgreement,1)
+ assert.equal(comparison.riderCount,24)
+ assert.equal(comparison.aiTeams,aiCount)
+ assert.equal(comparison.humanTeams,4-aiCount)
+ assert.equal(comparison.replay.currentV2Synchronized,true)
+ assert.equal(comparison.replay.v4ResearchSynchronized,true)
+ assert(comparison.v4ChangedRankCountComparedToCurrentV2>=0)
+ assert.equal(JSON.stringify(fixture.input),originalHash)
+ if(aiCount===0)assert.equal(comparison.preSimulationTemplate,null)
+ else assert(comparison.preSimulationTemplate?.startsWith('flat_'))
+ const repeat=compareHistoricalStageV4(envelope)
+ assert.deepEqual(repeat,comparison)
+ console.log('V4_HISTORICAL_SHAPE_TEST '+JSON.stringify({
+  name,baselineReproduced:comparison.savedResultReproducedByCurrentV2,
+  v4Template:comparison.preSimulationTemplate,
+  officialWrites:comparison.officialWrites,
+  historicalTimingNotProven:!comparison.historicLockCutoffActuallyVerified
+ }))
+}
+{
+ const fixture=makeField(4,2,{neutral:false,terrain:'flat'})
+ const saved=runSelectedRaceEngineV1(fixture.input)
+ const good={
+  status:'completed',
+  input_snapshot_json:fixture.input,
+  result_summary_json:{stage_start_game_at:'2000-06-01T12:00:00',
+    output_snapshot:{universalResult:saved}},
+  team_control:fixture.options.teamControl
+ }
+ assert.throws(()=>compareHistoricalStageV4({...good,status:'running'}),
+  /completed historical stage/)
+ assert.throws(()=>compareHistoricalStageV4({...good,
+  input_snapshot_json:{archived:true,original_bytes:100000}}),
+  /full input\/output snapshot missing/)
+ assert.throws(()=>compareHistoricalStageV4({...good,team_control:[]}),
+  /controller evidence/)
+ const badMap=good.team_control.map((t,i)=>i===2?{...t,kind:'human'}:t)
+ assert.throws(()=>compareHistoricalStageV4({...good,team_control:badMap,
+    input_snapshot_json:{...good.input_snapshot_json,teams:
+      good.input_snapshot_json.teams.map((t,i)=>i===2?{...t,snapshot:{
+        ...t.snapshot,metadata:{scenarioAiControlled:true}}}:t)}}),
+  /AI ownership conflicts/)
+}
+console.log('V4_HISTORICAL_COMPARATOR_TEST_REPORT '+JSON.stringify({
+ status:'PASS',testCases:2,sourceIsSynthetic:true,
+ savedV2ResultReconstructionVerified:true,offlineOnly:true,
+ failClosedOnMissingOwnership:true,failClosedOnCompactedArchive:true,
+ noHistoricalRiderDataPublished:true,actualHistoricalReplaysStillRequired:true,
+ noOfficialRaceWrites:true
 }))
