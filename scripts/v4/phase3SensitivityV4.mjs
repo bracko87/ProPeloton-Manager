@@ -221,8 +221,15 @@ try{
   officialRaceWrites:0,syntheticOnly:true,strictValidatorStillEnabled:true
  }
  console.log('V4_PHASE3_CALIBRATION_MATRIX '+JSON.stringify(report))
- if(strictCandidates.some(x=>!x.smallFieldPassed))
-  throw Error('A Phase-3 calibration candidate regressed corrected strict replay')
+ if(strictCandidates.some(x=>!x.smallFieldPassed||x.largerFieldReplayFailures!==0))
+  throw Error('A V4 candidate regressed the strict 36-seed or 30-rider replay baseline')
+ if(results.some(r=>{
+  const seed33=r.cases[33]
+  return !seed33?.completed||!seed33?.replaySynchronized||
+   seed33.officialWrites!==0||r.forensic!==null
+ }))
+  throw Error('V4 seed-33 physical finish grouping replay must remain strictly valid')
+
  if(replayFailureSamples.some(x=>x.failures.some(f=>!f.reason)))
   throw Error('A replay failure was not classified')
 }finally{
