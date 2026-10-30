@@ -67,6 +67,32 @@ const forensicNeedle="  if (!replayPublicationPolicy.publishable) {"
 const forensicReplacement=forensicNeedle+"\n"+"    if(input.engine.deterministicSeed==='v4-seven-second-regression-033'){\n      console.log('V4_SEED33_FINISH_FORENSIC '+JSON.stringify({\n        seed:input.engine.deterministicSeed,\n        blockingIssues:replayPublicationPolicy.blockingIssues,\n        phase4:{\n          startGapSeconds:roadRaceResolution?.phase4Finish?.startGapSeconds,\n          endGapSeconds:roadRaceResolution?.phase4Finish?.endGapSeconds,\n          breakawayCaught:roadRaceResolution?.phase4Finish?.breakawayCaught,\n          breakawaySurvived:roadRaceResolution?.phase4Finish?.breakawaySurvived,\n          bridgeGroups:roadRaceResolution?.phase4Finish?.bridgeGroups?.map(g=>({\n            displayCode:g.displayCode,riderIds:g.riderIds,catchKm:g.catchKm,\n            mergeKm:g.mergeKm,mergedIntoOpeningBreakaway:g.mergedIntoOpeningBreakaway\n          })),\n          finalChaseSteps:roadRaceResolution?.phase4Finish?.chaseSteps?.slice(-4)\n            .map(g=>({kmStart:g.kmStart,kmEnd:g.kmEnd,\n              startGapSeconds:g.startGapSeconds,endGapSeconds:g.endGapSeconds}))\n        },\n        catches:replayTimeline.checkpoints.filter(cp=>\n          cp.commentary.some(c=>c.eventType==='catch')).map(cp=>({\n            id:cp.checkpointId,km:cp.raceProgress.kmFromStart,\n            groups:cp.groups.map(g=>({code:g.displayCode,riders:g.riderIds}))\n          })).slice(-20),\n        checkpoints:replayTimeline.checkpoints.slice(-8).map(cp=>({\n          id:cp.checkpointId,km:cp.raceProgress.kmFromStart,\n          finalResultsVisible:cp.finalResultsVisible,\n          groups:cp.groups.map(g=>({code:g.displayCode,riders:g.riderIds,\n            lineageId:g.physicalLineageId,position:g.physicalPosition})),\n          gaps:cp.gaps.map(g=>({code:g.displayCode,seconds:g.gapSeconds})),\n          events:cp.commentary.map(c=>({type:c.eventType,riders:c.riderIds}))\n        }))\n      }))\n    }"
 const energyNeedle="    const phaseEnergyCost = phaseEnergyCostByRiderId.get(row.riderId) ?? 0"
 const energyReplacement="    const v4OriginalPhaseEnergyCost = phaseEnergyCostByRiderId.get(row.riderId) ?? 0\n    const v4PaceEnergySurcharge = calculateV4Phase3PaceEnergySurcharge({\n      riderId:row.riderId,\n      escapeRiderIds:physicalEscapeRiderIdsAtLaunch,\n      chasingRiderIds:phase3ChaseWorkerRows.map(({row})=>row.riderId),\n      baseEnergyCost:v4OriginalPhaseEnergyCost,\n      phaseStartKm:phaseBoundary.startKm,\n      samples:physicalGapTrajectory.map(sample=>({\n        kmFromStart:sample.kmFromStart,\n        referencePaceKmh:calculateRoadReferencePaceKmh(input.stage,sample.kmFromStart),\n        pelotonPaceKmh:sample.v4ResearchPace?.pelotonPaceKmh??null,\n        escapePaceKmh:sample.v4ResearchPace?.escapePaceKmh??null\n      }))\n    })\n    const phaseEnergyCost = deterministicRound(v4OriginalPhaseEnergyCost+v4PaceEnergySurcharge,6)"
+
+const mountainForensicNeedle="  if (!replayPublicationPolicy.publishable) {"
+const mountainForensicSnippet=[
+ "  if(!replayPublicationPolicy.publishable && input.engine.deterministicSeed.startsWith('v4-stress-mountain-')){",
+ "    const cps=replayTimeline.checkpoints",
+ "    const carried=cps.map((c,i)=>({c,i})).filter(x=>x.c.checkpointId.includes('bridge-carried-'))",
+ "    const around=carried.flatMap(({i})=>cps.slice(Math.max(0,i-2),i+3))",
+ "    const selected=[...new Map(around.map(c=>[c.checkpointId,c])).values()]",
+ "    console.log('V4_MOUNTAIN_BRIDGE_FORENSIC '+JSON.stringify({",
+ "      seed:input.engine.deterministicSeed,",
+ "      blockingIssues:replayPublicationPolicy.blockingIssues,",
+ "      bridges:roadRaceResolution?.phase4Finish?.bridgeGroups?.map(b=>({",
+ "        code:b.displayCode,lineageId:b.lineageId,carried:b.carriedFromPreviousPhase,",
+ "        riders:b.riderIds,launchKm:b.launchKm,mergeKm:b.mergeKm,catchKm:b.catchKm,",
+ "        caught:b.caughtByPeloton,mergeTarget:b.mergeTargetDisplayCode,",
+ "        launchGapToLeader:b.launchGapToLeaderSeconds,launchGapToPeloton:b.launchGapToPelotonSeconds,",
+ "        firstGapSamples:b.gapSamples.slice(0,2)",
+ "      })),",
+ "      checkpoints:selected.map(c=>({id:c.checkpointId,km:c.raceProgress.kmFromStart,",
+ "        groups:c.groups.map(g=>({code:g.displayCode,lineageId:g.physicalLineageId,",
+ "          riders:g.riderIds,gap:g.gapSeconds})),",
+ "        events:c.commentary.map(e=>({type:e.eventType,riders:e.riderIds,lineageId:e.physicalLineageId}))",
+ "      }))",
+ "    }))",
+ "  }"
+].join('\n')
 const configs=[
  {key:'baseline',peloton:false,cooperation:false,energy:false},
  {key:'peloton_response',peloton:true,cooperation:false,energy:false},
@@ -100,7 +126,7 @@ try{
      let source=readFileSync(args.path,'utf8')
      source=exact(source,bridgeNeedle,bridgeReplacement)
      source=exact(source,paceNeedle,paceReplacement)
-     source=exact(source,forensicNeedle,forensicReplacement)
+     source=exact(source,mountainForensicNeedle,mountainForensicSnippet+'\n'+forensicReplacement)
      // Before applying either candidate, verify both knobs remain unique.
      if(source.split(pelotonNeedle).length!==2||
         source.split(cooperationNeedle).length!==2)
@@ -141,10 +167,12 @@ try{
   if(!seeds.researchOnly||seeds.officialRaceWrites!==0)
    throw Error('V4 experiment lost its read-only invariant')
   const forensic=get('V4_SEED33_FINISH_FORENSIC')
+  const mountainForensics=lines.filter(x=>x.startsWith('V4_MOUNTAIN_BRIDGE_FORENSIC '))
+   .map(x=>JSON.parse(x.slice('V4_MOUNTAIN_BRIDGE_FORENSIC '.length)))
   const cases=seeds.cases
   if(cases.some(x=>x.completed&&x.officialWrites!==0))
    throw Error('Official race writes were reported')
-  results.push({key:config.key,config,diag,cases,forensic,stress})
+  results.push({key:config.key,config,diag,cases,forensic,stress,mountainForensics})
   console.log('V4_PHASE3_CANDIDATE_RUN '+JSON.stringify({
    candidate:config.key,
    smallFieldCompleted:diag.v4Complete,
@@ -298,6 +326,7 @@ try{
   measured:comparable,pairedVsBaseline:paired,
   strictReplay:strictCandidates,
   replayFailureSamples,energyInvariance,energyEffect,stressSummary,seed33Forensics,
+  mountainForensicEvidence:results.filter(r=>r.mountainForensics.length>0).map(r=>({candidate:r.key,cases:r.mountainForensics})),
   pelotonCandidate:'Phase-3 organized pursuit minimum response 1.015',
   cooperationCandidate:'Phase-3 dynamic cooperation contribution reduced by 50% only on full-cooperation branch',
   energyCandidate:'Bounded physical speed-relative cost, only recorded Phase-3 front and chase workers; post-phase effect only',
