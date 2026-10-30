@@ -66,7 +66,9 @@ export function patchV4CalibratedPhysicalSource(original,config){
    typeof config.peloton!=='boolean'||typeof config.cooperation!=='boolean'||
    typeof config.energy!=='boolean'||(config.energy&&(!config.peloton||!config.cooperation)))
   throw Error('Invalid V4 calibrated physics configuration')
- let source=original
+ // Windows Git checkouts can contain CRLF. Normalize line endings before matching
+ // source anchors; keep the strict single-anchor checks unchanged.
+ let source=original.replace(/\r\n?/g,'\n')
  source=exact(source,bridgeNeedle,bridgeReplacement)
  source=exact(source,paceNeedle,paceReplacement)
  if(source.split(pelotonNeedle).length!==2||
