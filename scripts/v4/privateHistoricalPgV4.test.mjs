@@ -48,9 +48,15 @@ const result=await runPrivatePgHistoricalPilotV4({
   const data=JSON.parse(readFileSync(paths[0],'utf8'))
   assert.equal(data.team_control[0].kind,'ai')
   return{officialWrites:0,rawStageDataPublished:false,
-   privatePathsPublished:false,consideredCompleteTriples:1}
+   privatePathsPublished:false,consideredCompleteTriples:1,
+   rejected:{baselineInvalid:0,baselineHistoricMismatch:7,
+    baselineReplayUnsynchronized:2,calibratedReplayUnsynchronized:1}}
  }})
 assert.equal(result.consideredCompleteTriples,1)
+assert.equal(result.rejected.baselineHistoricMismatch,7)
+assert.equal(result.rejected.baselineReplayUnsynchronized,2)
+assert.equal(result.rejected.calibratedReplayUnsynchronized,1)
+assert.deepEqual(result.exportRejected,{flat:0,hilly:0,mountain:0,cobbled:0})
 const messages=[]
 await runPrivatePgHistoricalPilotV4({
  env,ClientConstructor:FakeClient,progress:r=>messages.push(r.phase),

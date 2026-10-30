@@ -50,7 +50,9 @@ async function runner(manifest){
  for(const p of paths)assert.ok(existsSync(p))
  return{consideredCompleteTriples:3,officialWrites:0,
   rawStageDataPublished:false,privatePathsPublished:false,
-  historicalV4RealismApproved:false}
+  historicalV4RealismApproved:false,
+  rejected:{baselineHistoricMismatch:2,baselineReplayUnsynchronized:1,
+   failedPhysicsByVariant:{preserved_v2:{INVALID_LOCKED_HISTORY:0}}}}
 }
 try{
  const report=await runPrivateHistoricalPilotV4({
@@ -60,7 +62,10 @@ try{
  assert.equal(report.consideredCompleteTriples,3)
  assert.equal(report.status,'PRIVATE_HISTORICAL_PILOT_DIAGNOSTIC_ONLY')
  assert.deepEqual(report.accepted,{flat:2,hilly:1,mountain:0,cobbled:0})
- assert.deepEqual(report.rejected,{flat:1,hilly:0,mountain:0,cobbled:0})
+ assert.deepEqual(report.exportRejected,{flat:1,hilly:0,mountain:0,cobbled:0})
+ assert.equal(report.rejected.baselineHistoricMismatch,2)
+ assert.equal(report.rejected.baselineReplayUnsynchronized,1)
+ assert.equal(report.rejected.failedPhysicsByVariant.preserved_v2.INVALID_LOCKED_HISTORY,0)
  assert.equal(queries,1);assert.equal(exports,4);assert.equal(physics,1)
  assert.equal(report.officialWrites,0)
  assert.equal(report.historicalV4RealismApproved,false)

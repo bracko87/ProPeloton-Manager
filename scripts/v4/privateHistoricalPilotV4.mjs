@@ -74,9 +74,11 @@ export async function runPrivateHistoricalPilotV4({
   const report=await physicalRunner(manifest)
   if(!report||report.officialWrites!==0||report.rawStageDataPublished!==false||
     report.privatePathsPublished!==false)throw Error('Unsafe physics report')
+  // Preserve the worker's strict replay rejection diagnostics; export failures
+  // are a separate category and must never overwrite the physics report.
   return {...report,status:'PRIVATE_HISTORICAL_PILOT_DIAGNOSTIC_ONLY',
    metadataRows:selection.metadataRows,potential:selection.potential,
-   attempted,accepted,rejected,historicalV4RealismApproved:false}
+   attempted,accepted,exportRejected:rejected,historicalV4RealismApproved:false}
  }finally{
   rmSync(folder,{recursive:true,force:true})
   for(const f of created)rmSync(f,{recursive:true,force:true})
