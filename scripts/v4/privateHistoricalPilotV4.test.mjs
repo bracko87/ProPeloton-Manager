@@ -28,11 +28,15 @@ const preflightRows=[
  entry(43,'hilly'),
  {...entry(44,'hilly'),saved_replay_synchronized:true,team_count:16,first_entry_mappable:true},
  {...entry(45,'hilly'),saved_replay_synchronized:true,team_count:18,first_entry_mappable:true},
+ {...entry(46,'hilly'),saved_replay_synchronized:true,team_count:17,
+   first_entry_mappable:true,all_entries_mapped:false},
+ {...entry(47,'hilly'),saved_replay_synchronized:true,team_count:16,
+   first_entry_mappable:true,all_entries_mapped:true},
 ]
 const quality=selectV4HistoricalPilotCandidates(preflightRows,{maxPerTerrain:3})
-assert.deepEqual(quality.groups.hilly,[uuid(44),uuid(45),uuid(43)])
+assert.deepEqual(quality.groups.hilly,[uuid(44),uuid(45),uuid(47)])
 assert.deepEqual(quality.preflight.hilly,{
- passed:2,unknown:1,unsynchronized:1,teamStructure:1,entryMapping:1})
+ passed:3,unknown:1,unsynchronized:1,teamStructure:1,entryMapping:2})
 assert.equal(quality.potential.hilly,3)
 const created=[]
 let queries=0,exports=0,physics=0

@@ -17,8 +17,16 @@ const queryMetadata=[
  "THEN jsonb_array_length(input_snapshot_json->'teams') ELSE NULL END AS team_count,",
  "COALESCE((input_snapshot_json #>> '{teams,0,raceTeamEntryId}') SIMILAR TO",
  "'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',false)",
- "AS first_entry_mappable",
- "FROM v4_historical_research.completed_runs ORDER BY completed_at DESC LIMIT $1",
+ "AS first_entry_mappable,",
+ "COALESCE((SELECT count(*) BETWEEN 2 AND 40",
+ "AND count(*)=count(DISTINCT team.elem->>'raceTeamEntryId')",
+ "AND count(*)=count(entries.race_team_entry_id)",
+ "FROM jsonb_array_elements(CASE WHEN jsonb_typeof(r.input_snapshot_json->'teams')='array'",
+ "THEN r.input_snapshot_json->'teams' ELSE '[]'::jsonb END) AS team(elem)",
+ "LEFT JOIN v4_historical_research.race_entries AS entries",
+ "ON entries.race_id=r.race_id AND entries.race_team_entry_id::text=team.elem->>'raceTeamEntryId'",
+ "),false) AS all_entries_mapped",
+ "FROM v4_historical_research.completed_runs AS r ORDER BY r.completed_at DESC LIMIT $1",
 ].join(' ')
 const queryRun='SELECT stage_id,race_id,status,input_snapshot_json,result_summary_json FROM v4_historical_research.completed_runs WHERE stage_id=$1 LIMIT 2'
 const queryEntries='SELECT race_team_entry_id,race_id,participating_club_id,club_id,entry_source,is_ai_filler FROM v4_historical_research.race_entries WHERE race_id=$1 AND race_team_entry_id=ANY($2::uuid[])'

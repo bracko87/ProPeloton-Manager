@@ -27,10 +27,13 @@ export function selectV4HistoricalPilotCandidates(rows,{maxPerTerrain=18}={}){
     (!Number.isSafeInteger(row.team_count)||row.team_count<2||row.team_count>40)){
    counts.teamStructure++;continue
   }
-  if(row.first_entry_mappable===false){counts.entryMapping++;continue}
+  // All-entry mapping is stronger than checking just the first team. When
+  // unavailable in older metadata clients, retain the original preflight hint.
+  const mapping=row.all_entries_mapped??row.first_entry_mappable
+  if(mapping===false){counts.entryMapping++;continue}
   if(row.saved_replay_synchronized===true&&
     Number.isSafeInteger(row.team_count)&&row.team_count>=2&&row.team_count<=40&&
-    row.first_entry_mappable===true){
+    mapping===true){
    counts.passed++
    prioritized[row.terrain].push(row.stage_id)
   }else{

@@ -26,9 +26,15 @@ class FakeClient{
   if(sql.includes('current_user AS db_user'))return{rows:[{
    db_user:'v4_historical_research_reader',scoped_runs:true,scoped_entries:true,
    live_runs:false,live_entries:false,bypass_rls:false}]}
-  if(sql.includes('ORDER BY completed_at DESC'))
+  if(sql.includes('ORDER BY r.completed_at DESC')){
+   assert.ok(sql.includes('v4_historical_research.race_entries'))
+   assert.ok(sql.includes('AS all_entries_mapped'))
+   assert.ok(!sql.includes('SELECT *'))
    return{rows:[{stage_id:stage,terrain:'flat',stage_format:'road_race',
-    completed_at:'2026-10-25T00:00:00Z'}]}
+    completed_at:'2026-10-25T00:00:00Z',
+    saved_replay_synchronized:true,team_count:2,
+    first_entry_mappable:true,all_entries_mapped:true}]}
+  }
   if(sql.includes('WHERE stage_id=$1')){assert.deepEqual(args,[stage]);return{rows:[run]}}
   if(sql.includes('race_team_entry_id=ANY')){
    assert.deepEqual(args,[race,[entry,entry2]])
@@ -53,6 +59,8 @@ const result=await runPrivatePgHistoricalPilotV4({
     baselineReplayUnsynchronized:2,calibratedReplayUnsynchronized:1}}
  }})
 assert.equal(result.consideredCompleteTriples,1)
+assert.equal(result.preflight.flat.passed,1)
+assert.equal(result.preflight.flat.entryMapping,0)
 assert.equal(result.rejected.baselineHistoricMismatch,7)
 assert.equal(result.rejected.baselineReplayUnsynchronized,2)
 assert.equal(result.rejected.calibratedReplayUnsynchronized,1)
