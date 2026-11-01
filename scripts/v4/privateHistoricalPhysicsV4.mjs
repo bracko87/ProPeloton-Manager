@@ -35,8 +35,21 @@ const variants=[
  {key:'combined_energy',patch:true,peloton:true,cooperation:true,energy:true},
 ]
 function aggregate(comparisons,rejected){
- const group=(subset)=>({
+ const group=(subset)=>{
+ const active=subset.filter(x=>x.preserved_v2.acceptedOpeningAttacks>0&&
+  x.combined.acceptedOpeningAttacks>0)
+ return ({
   eligible:subset.length,
+  matchedOpeningBreakawayCases:active.length,
+  baselineMedianObservedPeakAmongBreakawaysSeconds:by(active.map(x=>x.preserved_v2),'observedPhysicalPeakSeconds'),
+  combinedMedianObservedPeakAmongBreakawaysSeconds:by(active.map(x=>x.combined),'observedPhysicalPeakSeconds'),
+  combinedEnergyMedianObservedPeakAmongBreakawaysSeconds:by(active.map(x=>x.combined_energy),'observedPhysicalPeakSeconds'),
+  baselineBreakawayCaughtAmongBreakaways:active.filter(x=>x.preserved_v2.breakawayCaught).length,
+  combinedBreakawayCaughtAmongBreakaways:active.filter(x=>x.combined.breakawayCaught).length,
+  baselineBreakawaySurvivedAmongBreakaways:active.filter(x=>x.preserved_v2.breakawaySurvived).length,
+  combinedBreakawaySurvivedAmongBreakaways:active.filter(x=>x.combined.breakawaySurvived).length,
+  medianCombinedPhase3GrowthAmongBreakawaysSeconds:by(active.map(x=>x.combined),'phase3GapGrowthSeconds'),
+  medianCombinedEnergyAtFinishAmongBreakaways:by(active.map(x=>x.combined),'meanPhase4EnergyAtFinish'),
   baselineFieldsWithAcceptedOpeningAttacks:subset.filter(x=>x.preserved_v2.acceptedOpeningAttacks>0).length,
   combinedFieldsWithAcceptedOpeningAttacks:subset.filter(x=>x.combined.acceptedOpeningAttacks>0).length,
   baselineMedianAcceptedOpeningAttacks:by(subset.map(x=>x.preserved_v2),'acceptedOpeningAttacks'),
@@ -62,7 +75,7 @@ function aggregate(comparisons,rejected){
   medianCombinedPhase4Energy:by(subset.map(x=>x.combined),'meanPhase4EnergyAtFinish'),
   medianEnergyPhase4Energy:by(subset.map(x=>x.combined_energy),'meanPhase4EnergyAtFinish'),
   anyWinnerChanged:subset.some(x=>x.preserved_v2.winnerHash!==x.combined.winnerHash),
- })
+ })}
  return {
   status:'PRIVATE_HISTORICAL_CALIBRATED_V4_PHYSICS_DIAGNOSTIC',
   source:'private_local_locked_historical_snapshots',

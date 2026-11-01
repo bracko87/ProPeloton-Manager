@@ -37,6 +37,8 @@ jobs:
         run: node scripts/v4/privateHistoricalPhysicsV4.test.mjs
       - name: Compare nine large hilly synthetic race fields with preserved V2 and isolated V4 physics
         run: node scripts/v4/hillyNineLargeFieldV4.test.mjs
+      - name: Compare hilly breakaway response to organized pursuit with paired synthetic races
+        run: node scripts/v4/hillyChaseABV4.test.mjs
       - name: Test automated PRIVATE historical pilot metadata selection and cleanup using mocks only
         run: node scripts/v4/privateHistoricalPilotV4.test.mjs
       - name: Test restricted PG historical access with mocks, no database

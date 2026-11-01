@@ -104,6 +104,8 @@ function evaluate(raw:unknown){
   archivedObservedPhysicalPeakSeconds:archiveGapAudit.observedPeak,
   archivedReportedMaximumGapSeconds:archiveGapAudit.publishedMaximum,
   archivedOmittedPhysicalPeakSeconds:archiveGapAudit.omittedPeakSeconds,
+  breakawayCaught:result.calibrationSummary?.breakawayCaught===true,
+  breakawaySurvived:result.calibrationSummary?.breakawaySurvived===true,
   acceptedOpeningAttacks:result.roadRaceResolution?.phase1Opening?.attackAttempts
     ?.filter((a:any)=>a.acceptedEscapeLaunch).length??0,
   phase3GapGrowthSeconds:phase3Growth,
