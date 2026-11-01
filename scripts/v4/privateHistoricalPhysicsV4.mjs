@@ -142,7 +142,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
    largestArchivedPeakOmissionSeconds:results[0].rows.reduce((max,r)=>
     Math.max(max,r.archivedOmittedPhysicalPeakSeconds??0),0)
   }
-  const byTerrain=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[{
+  const byTerrain=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[t,{
    ...results[0].failureTerrains[t],historicMismatch:0,baselineReplayUnsynchronized:0,
    calibratedReplayUnsynchronized:0,eligible:0}]))
   const historicalMismatchKinds=Object.fromEntries(HISTORICAL_PARITY_REASONS.map(k=>[k,0]))
