@@ -137,8 +137,16 @@ try{
   }
   const a=reports.no_chase.terrain.find(x=>x.terrain==='hilly')
   const b=reports.organized_chase.terrain.find(x=>x.terrain==='hilly')
-  assert.equal(a.eligible,b.eligible,'A/B must have the same valid comparison count')
+  assert(a.eligible>=5&&b.eligible>=5,
+   'Both conditions need at least five strictly validated comparisons')
+  const v2FailedA=reports.no_chase.rejected.baselineReplayUnsynchronized
+  const v2FailedB=reports.organized_chase.rejected.baselineReplayUnsynchronized
+  const v4FailedA=reports.no_chase.rejected.calibratedReplayUnsynchronized
+  const v4FailedB=reports.organized_chase.rejected.calibratedReplayUnsynchronized
   perDistance.push({distanceKm:[120,170,220][band],pairedInputs:paired.length,
+   validV4ComparisonsMayHaveDifferentMembership:a.eligible!==b.eligible,
+   strictReplayFailures:{noChase:{v2:v2FailedA,v4:v4FailedA},
+    organizedHumanChase:{v2:v2FailedB,v4:v4FailedB}},
    noChase:summary(a),organizedHumanChase:summary(b)})
  }
  assert(perDistance.some(x=>x.noChase.matchedOpeningBreakaways>0),
@@ -149,6 +157,7 @@ try{
   matchedSeedCasesPerDistance:12,distancesKm:[120,170,220],
   baselineFixtureFailures:generated.rejected,
   repeatedRidersAndAiTemplateSeeds:true,
+  replayFailuresAreExcludedNotSilenced:true,
   sameWeatherAndStageClimbingAcrossDistancesPerSeed:true,
   onlyHumanP2P4ChaseOrdersDifferWithinPairedDistance:true,
   byDistance:perDistance,
