@@ -41,6 +41,18 @@ function aggregate(comparisons,rejected){
  return ({
   eligible:subset.length,
   matchedOpeningBreakawayCases:active.length,
+  v2OpeningCatchDistanceKmMedian:by(active.map(x=>x.preserved_v2.openingJourney),'kmAhead'),
+  v4OpeningCatchDistanceKmMedian:by(active.map(x=>x.combined.openingJourney),'kmAhead'),
+  v4OpeningDistanceOver60SecondsKmMedian:by(active.map(x=>x.combined.openingJourney),'sampledAbove60Km'),
+  v4OpeningDistanceOver120SecondsKmMedian:by(active.map(x=>x.combined.openingJourney),'sampledAbove120Km'),
+  v4OpeningCatchExactCount:active.filter(x=>['phase1_exact','phase2_exact','phase3_exact'].includes(
+   x.combined.openingJourney?.catchLocation)).length,
+  v4OpeningCatchEstimatedCount:active.filter(x=>
+   x.combined.openingJourney?.phase4Estimated===true).length,
+  v4OpeningSurvivedCount:active.filter(x=>
+   x.combined.openingJourney?.catchLocation==='survived_to_finish').length,
+  v4OpeningUntraceableCount:active.filter(x=>
+   x.combined.openingJourney?.kmAhead===null).length,
   baselineMedianObservedPeakAmongBreakawaysSeconds:by(active.map(x=>x.preserved_v2),'observedPhysicalPeakSeconds'),
   combinedMedianObservedPeakAmongBreakawaysSeconds:by(active.map(x=>x.combined),'observedPhysicalPeakSeconds'),
   combinedEnergyMedianObservedPeakAmongBreakawaysSeconds:by(active.map(x=>x.combined_energy),'observedPhysicalPeakSeconds'),

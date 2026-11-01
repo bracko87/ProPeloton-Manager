@@ -116,6 +116,12 @@ try{
  const summary=x=>({
   completedTriples:x.eligible,
   matchedOpeningBreakaways:x.matchedOpeningBreakawayCases,
+  medianOpeningKmAhead:x.v4OpeningCatchDistanceKmMedian,
+  medianSampledKmWithGapAbove60Seconds:x.v4OpeningDistanceOver60SecondsKmMedian,
+  medianSampledKmWithGapAbove120Seconds:x.v4OpeningDistanceOver120SecondsKmMedian,
+  exactOpeningCatchLocations:x.v4OpeningCatchExactCount,
+  estimatedPhase4CatchLocations:x.v4OpeningCatchEstimatedCount,
+  openingLineageUntraceable:x.v4OpeningUntraceableCount,
   medianObservedPeakAllRacesSeconds:x.combinedMedianObservedPhysicalPeakSeconds,
   medianObservedPeakWithBreakawaySeconds:x.combinedMedianObservedPeakAmongBreakawaysSeconds,
   breakawayCaught:x.combinedBreakawayCaughtAmongBreakaways,

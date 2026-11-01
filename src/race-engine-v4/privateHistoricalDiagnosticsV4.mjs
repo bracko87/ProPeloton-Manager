@@ -70,3 +70,118 @@ export function historicalPhysicalGapAudit(result){
   Number(Math.max(0,observedPeak-publishedMaximum).toFixed(6)):null
  return {publishedMaximum,observedPeak,omittedPeakSeconds}
 }
+
+/**
+ * Observed distance of the ORIGINAL opening-B breakaway, not an arbitrary
+ * later F lineage. Start/end samples and exact catch fields are authoritative;
+ * Phase 4 catch distance is interpolated within recorded 2-km chase steps.
+ * Unknown or untraceable lineages remain unknown, never "caught at 7 seconds".
+ * Metric values only: no stage, rider, team or private-record identifiers.
+ */
+export function historicalOpeningBreakawayJourney(result){
+ const road=result?.roadRaceResolution
+ const p1=road?.phase1Opening,p2=road?.phase2Development
+ const p3=road?.phase3Decisive,p4=road?.phase4Finish
+ const accepted=Array.isArray(p1?.attackAttempts)?
+  p1.attackAttempts.filter(a=>a?.acceptedEscapeLaunch===true&&
+   Number.isFinite(a?.attemptKm)&&a.attemptKm>=0):[]
+ const empty={openingAccepted:false,launchKm:null,catchKm:null,
+  catchLocation:'none',kmAhead:null,peakSeconds:null,
+  sampledAbove60Km:0,sampledAbove120Km:0,samples:0,phase4Estimated:false}
+ if(!accepted.length||!Array.isArray(p1?.breakawayRiderIds)||
+  !p1.breakawayRiderIds.length)return empty
+ const launchKm=Math.min(...accepted.map(a=>a.attemptKm))
+ const ids=new Set(p1.breakawayRiderIds)
+ const belongs=rows=>Array.isArray(rows)&&rows.some(id=>ids.has(id))
+ const points=[]
+ const add=(km,gap)=>{
+  if(Number.isFinite(km)&&Number.isFinite(gap)&&km>=launchKm-0.001&&gap>=0)
+   points.push({km,gap})
+ }
+ const trajectory=p=>{
+  for(const q of Array.isArray(p?.physicalGapTrajectory)?p.physicalGapTrajectory:[])
+   add(q?.kmFromStart,q?.gapSeconds)
+ }
+ const chaseSteps=p=>{
+  for(const s of Array.isArray(p?.chaseSteps)?p.chaseSteps:[]){
+   add(s?.kmStart,s?.startGapSeconds);add(s?.kmEnd,s?.endGapSeconds)
+  }
+ }
+ let catchKm=null,catchLocation='unknown',phase4Estimated=false
+ const caught=(km,label,estimated=false)=>{
+  if(Number.isFinite(km)&&km>=launchKm-0.001){
+   catchKm=km;catchLocation=label;phase4Estimated=estimated
+  }else catchLocation='caught_location_unknown'
+ }
+ trajectory(p1)
+ if(p1?.breakawayCatchKm!=null)caught(p1.breakawayCatchKm,'phase1_exact')
+ else if(!p2||!belongs(p2.breakawayRiderIdsAtStart))
+  catchLocation='lineage_untraceable_after_phase1'
+ else{
+  trajectory(p2)
+  if(p2.breakawayCatchKm!=null)caught(p2.breakawayCatchKm,'phase2_exact')
+  else if(!p3||!belongs(p2.breakawayRiderIdsAtEnd)||
+   !belongs(p3.physicalEscapeRiderIdsAtStart))
+   catchLocation='lineage_untraceable_after_phase2'
+  else{
+   trajectory(p3)
+   if(p3.physicalCatchKm!=null)caught(p3.physicalCatchKm,'phase3_exact')
+   else if(!p4||!belongs(p3.physicalEscapeRiderIdsAtEnd)||
+    !belongs(p4.escapeRiderIdsAtStart))
+    catchLocation='lineage_untraceable_after_phase3'
+   else{
+    chaseSteps(p4)
+    if(p4.breakawayCaught===true){
+     const tolerance=0.75
+     const step=(p4.chaseSteps??[]).find(s=>
+      Number.isFinite(s?.kmStart)&&Number.isFinite(s?.kmEnd)&&
+      Number.isFinite(s?.startGapSeconds)&&Number.isFinite(s?.endGapSeconds)&&
+      s.startGapSeconds>tolerance&&s.endGapSeconds<=tolerance&&
+      s.kmEnd>s.kmStart)
+     if(step){
+      const fraction=Math.max(0,Math.min(1,
+       (step.startGapSeconds-tolerance)/
+       Math.max(0.000001,step.startGapSeconds-step.endGapSeconds)))
+      caught(step.kmStart+(step.kmEnd-step.kmStart)*fraction,
+       'phase4_step_estimate',true)
+     }else catchLocation='phase4_caught_location_unknown'
+    }else if(p4.breakawaySurvived===true&&
+     Number.isFinite(result?.stage?.distanceKm)&&
+     p4.endGapSeconds>tolerance)
+     catchLocation='survived_to_finish'
+    else catchLocation='phase4_outcome_unresolved'
+   }
+  }
+ }
+ const finishKm=result?.stage?.distanceKm
+ const endKm=catchKm??(catchLocation==='survived_to_finish'&&
+  Number.isFinite(finishKm)?finishKm:null)
+ const sorted=points.filter(p=>endKm===null||p.km<=endKm+0.001)
+  .sort((a,b)=>a.km-b.km||b.gap-a.gap)
+ const ordered=[]
+ for(const p of sorted){
+  if(ordered.length&&Math.abs(ordered.at(-1).km-p.km)<0.000001){
+   ordered[ordered.length-1].gap=Math.max(ordered.at(-1).gap,p.gap)
+  }else ordered.push({...p})
+ }
+ const observedAtLeast=threshold=>{
+  let km=0
+  for(let i=1;i<ordered.length;i++){
+   const prior=ordered[i-1],next=ordered[i]
+   const segment=next.km-prior.km
+   // Do not interpolate an unmeasured gap across >5 km of the course.
+   if(segment>0&&segment<=5&&prior.gap>=threshold&&next.gap>=threshold)
+    km+=segment
+  }
+  return Number(km.toFixed(3))
+ }
+ const kmAhead=endKm===null?null:
+  Number(Math.max(0,endKm-launchKm).toFixed(3))
+ return {openingAccepted:true,launchKm:Number(launchKm.toFixed(3)),
+  catchKm:catchKm===null?null:Number(catchKm.toFixed(3)),
+  catchLocation,kmAhead,phase4Estimated,
+  peakSeconds:ordered.length?Number(Math.max(...ordered.map(x=>x.gap)).toFixed(3)):null,
+  sampledAbove60Km:observedAtLeast(60),
+  sampledAbove120Km:observedAtLeast(120),
+  samples:ordered.length}
+}

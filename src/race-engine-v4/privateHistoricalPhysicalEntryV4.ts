@@ -8,7 +8,8 @@ import {readFileSync,realpathSync,statSync} from 'node:fs'
 import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
 import {explainHistoricalClassificationParity,safeHistoricalErrorType,
- safeHistoricalTerrain,historicalPhysicalGapAudit,HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES}
+ safeHistoricalTerrain,historicalPhysicalGapAudit,historicalOpeningBreakawayJourney,
+ HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES}
  from './privateHistoricalDiagnosticsV4.mjs'
 import {runSelectedRaceEngineV1,selectCompleteRaceEngineLaneV1}
  from '../universal-race-engine/runSelectedRaceEngineV1.ts'
@@ -86,6 +87,7 @@ function evaluate(raw:unknown){
  const replaySynchronized=result.replaySynchronization?.synchronized===true
  const gapAudit=historicalPhysicalGapAudit(result)
  const archiveGapAudit=historicalPhysicalGapAudit(saved)
+ const journey=historicalOpeningBreakawayJourney(result)
  return {
   stageHash,sourceHash:srcHash,terrain:input.stage.terrainType,
   riderCount:input.riders.length,teams:input.teams.length,
@@ -106,6 +108,7 @@ function evaluate(raw:unknown){
   archivedOmittedPhysicalPeakSeconds:archiveGapAudit.omittedPeakSeconds,
   breakawayCaught:result.calibrationSummary?.breakawayCaught===true,
   breakawaySurvived:result.calibrationSummary?.breakawaySurvived===true,
+  openingJourney:journey,
   acceptedOpeningAttacks:result.roadRaceResolution?.phase1Opening?.attackAttempts
     ?.filter((a:any)=>a.acceptedEscapeLaunch).length??0,
   phase3GapGrowthSeconds:phase3Growth,

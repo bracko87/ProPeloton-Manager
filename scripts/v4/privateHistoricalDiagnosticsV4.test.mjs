@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType as errorType,
  safeHistoricalTerrain as terrain,historicalPhysicalGapAudit as physicalGap,
+ historicalOpeningBreakawayJourney as openingJourney,
  HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES}
  from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 const row={id:'PRIVATE_RIDER_SHOULD_NEVER_BE_PRINTED',rank:1,status:'finished',gap:0,time:300}
@@ -49,5 +50,49 @@ assert.deepEqual(physicalGap({calibrationSummary:{maximumBreakawayGapSeconds:7},
  roadRaceResolution:{active:true,phase3Decisive:{
  physicalStartGapSeconds:1,physicalEndGapSeconds:2,physicalGapTrajectory:[{gapSeconds:9}]}}}),{
  publishedMaximum:7,observedPeak:9,omittedPeakSeconds:2})
+// Track original opening-B lineage and reject false attribution to a later F.
+const start={attackAttempts:[{attemptKm:12,acceptedEscapeLaunch:true}],
+ breakawayRiderIds:['b1'],physicalGapTrajectory:[
+ {kmFromStart:12,gapSeconds:7},{kmFromStart:14,gapSeconds:75},
+ {kmFromStart:16,gapSeconds:80}]}
+const phase2={breakawayRiderIdsAtStart:['b1'],breakawayRiderIdsAtEnd:['b1'],
+ physicalGapTrajectory:[{kmFromStart:18,gapSeconds:85},
+ {kmFromStart:20,gapSeconds:130},{kmFromStart:22,gapSeconds:110}]}
+const phase3={physicalEscapeRiderIdsAtStart:['b1'],
+ physicalEscapeRiderIdsAtEnd:['b1'],
+ physicalGapTrajectory:[{kmFromStart:24,gapSeconds:90}]}
+const phase4={escapeRiderIdsAtStart:['b1'],breakawayCaught:true,
+ breakawaySurvived:false,chaseSteps:[
+ {kmStart:26,kmEnd:28,startGapSeconds:60,endGapSeconds:35},
+ {kmStart:28,kmEnd:30,startGapSeconds:35,endGapSeconds:0}]}
+const journeyResult={stage:{distanceKm:40},roadRaceResolution:{
+ phase1Opening:start,phase2Development:phase2,phase3Decisive:phase3,
+ phase4Finish:phase4}}
+const journey=openingJourney(journeyResult)
+assert.equal(journey.openingAccepted,true)
+assert.equal(journey.catchLocation,'phase4_step_estimate')
+assert.equal(journey.phase4Estimated,true)
+assert.equal(journey.launchKm,12)
+assert.ok(journey.catchKm>29&&journey.catchKm<30)
+assert.ok(journey.kmAhead>17&&journey.kmAhead<18)
+assert.equal(journey.peakSeconds,130)
+assert.equal(journey.sampledAbove60Km,8)
+assert.equal(journey.sampledAbove120Km,0)
+assert.equal(openingJourney({roadRaceResolution:{phase1Opening:{
+ attackAttempts:[],breakawayRiderIds:[]}}}).openingAccepted,false)
+const p2Caught=openingJourney({stage:{distanceKm:40},
+ roadRaceResolution:{phase1Opening:start,phase2Development:{
+ ...phase2,breakawayCatchKm:19}}})
+assert.equal(p2Caught.catchLocation,'phase2_exact')
+assert.equal(p2Caught.kmAhead,7)
+assert.equal(p2Caught.phase4Estimated,false)
+const noLineage=openingJourney({stage:{distanceKm:40},
+ roadRaceResolution:{phase1Opening:start,phase2Development:{
+ ...phase2,breakawayRiderIdsAtStart:['unrelated'],
+ breakawayCatchKm:null},phase3Decisive:phase3,phase4Finish:phase4}})
+assert.equal(noLineage.kmAhead,null)
+assert.equal(noLineage.catchLocation,'lineage_untraceable_after_phase1')
+assert.equal(noLineage.phase4Estimated,false)
+assert.equal(noLineage.sampledAbove60Km,2)
 console.log('V4_PRIVATE_HISTORY_DIAGNOSTICS_UNIT '+JSON.stringify({status:'PASS',syntheticOnly:true,
- cases:20,rawHistoryPublished:false,officialWrites:0}))
+ cases:29,rawHistoryPublished:false,officialWrites:0}))
