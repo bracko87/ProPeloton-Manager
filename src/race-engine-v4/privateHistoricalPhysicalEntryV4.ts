@@ -7,6 +7,9 @@
 import {readFileSync,realpathSync,statSync} from 'node:fs'
 import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
+import {explainHistoricalClassificationParity,safeHistoricalErrorType,
+ safeHistoricalTerrain,HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES}
+ from './privateHistoricalDiagnosticsV4.mjs'
 import {runSelectedRaceEngineV1,selectCompleteRaceEngineLaneV1}
  from '../universal-race-engine/runSelectedRaceEngineV1.ts'
 import type {UniversalRaceEngineResult} from '../universal-race-engine/runRaceEngine.ts'
@@ -34,14 +37,6 @@ const normalized=(result:UniversalRaceEngineResult)=>{
   time:r.officialTimeSeconds==null?null:Number(r.officialTimeSeconds),
  })).sort((a,b)=>a.id.localeCompare(b.id))
 }
-const same=(a:number|null,b:number|null)=>a===null||b===null?a===b:
- Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=0.01
-const equalHistory=(saved:ReturnType<typeof normalized>,current:ReturnType<typeof normalized>)=>
- saved.length===current.length&&saved.every((a,i)=>{
-  const b=current[i]
-  return a.id===b.id&&a.rank===b.rank&&a.status===b.status&&
-   same(a.gap,b.gap)&&same(a.time,b.time)
- })
 const finite=(x:unknown)=>typeof x==='number'&&Number.isFinite(x)&&x>=0?x:null
 function evaluate(raw:unknown){
  if(!record(raw)||raw.status!=='completed'||!record(raw.input_snapshot_json)||
@@ -79,6 +74,7 @@ function evaluate(raw:unknown){
  if(!result.validationPassed||sha(input)!==srcHash)
   throw Error('PHYSICAL_RESULT_INVALID')
  const rows=normalized(result),historic=normalized(saved)
+ const historicalParity=explainHistoricalClassificationParity(historic,rows)
  const finishers=rows.filter(x=>x.status==='finished')
  const gaps=finishers.map(x=>x.gap).filter((g):g is number=>g!==null&&Number.isFinite(g))
  const rankings=finishers.filter(x=>x.rank!==null).sort((a,b)=>(a.rank??0)-(b.rank??0))
@@ -91,7 +87,8 @@ function evaluate(raw:unknown){
  return {
   stageHash,sourceHash:srcHash,terrain:input.stage.terrainType,
   riderCount:input.riders.length,teams:input.teams.length,
-  savedV2ClassificationParity:equalHistory(historic,rows),
+  savedV2ClassificationParity:historicalParity.equal,
+  savedV2ParityFailureKinds:historicalParity.reasons,
   historicalReplaySynchronized:saved.replaySynchronization?.synchronized===true,
   replaySynchronized,classificationHash:sha(rows),
   winnerHash:rankings.length?sha(rankings[0].id).slice(0,16):null,
@@ -124,23 +121,33 @@ function main(){
   'MISSING_SAVED_RESULT','PHYSICAL_RESULT_INVALID','NO_FINISH_CLASSIFICATION']
  const failureClasses=Object.fromEntries(safeCodes.map(k=>[k,0]))
  failureClasses.other=0
+ const failureTerrains=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[t,{invalid:0,unsupported:0,other:0}]))
+ const otherErrorTypes=Object.fromEntries(HISTORICAL_ERROR_TYPES.map(t=>[t,0]))
  for(const path of paths){
+  let data:unknown=null
   try{
-   const data=JSON.parse(readFileSync(path,'utf8'))
+   data=JSON.parse(readFileSync(path,'utf8'))
    rows.push(evaluate(data))
   }catch(e){
    const code=e instanceof Error?e.message:'UNKNOWN'
-   if(code==='UNSUPPORTED_V2_SOLVER_LANE')rejected.unsupported++
-   else rejected.invalid++
-   // Fixed constant keys only. Never print raw error messages or identity data.
+   const category=code==='UNSUPPORTED_V2_SOLVER_LANE'?'unsupported':'invalid'
+   rejected[category]++
+   const bucket=failureTerrains[safeHistoricalTerrain(data)]
+   bucket[category]++
+   // Fixed constant keys only. Never print raw error messages, stacks or identities.
    if(safeCodes.includes(code))failureClasses[code]++
-   else failureClasses.other++
+   else{
+    failureClasses.other++
+    bucket.other++
+    otherErrorTypes[safeHistoricalErrorType(e)]++
+   }
   }
  }
  // Never emit the original stage/rider/team identity or error details.
  process.stdout.write('V4_PRIVATE_PHYSICAL_VARIANT '+JSON.stringify({
   variant,researchOnly:true,officialWrites:0,networkCalls:0,
-  inputPathsReported:false,attempted:paths.length,rejected,failureClasses,rows,
+  inputPathsReported:false,attempted:paths.length,rejected,failureClasses,
+  failureTerrains,otherErrorTypes,rows,
  })+'\n')
  // Zero usable stages is a valid diagnostic result, not a child-process crash.
  // The outer operator CLI still returns failure when no comparable triple exists.

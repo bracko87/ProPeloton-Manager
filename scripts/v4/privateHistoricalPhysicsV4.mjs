@@ -10,6 +10,8 @@ import {join,resolve,relative,sep,isAbsolute} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES}
+ from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
 const safeFile=(raw,size)=>{
@@ -108,29 +110,60 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
      report.researchOnly!==true||report.attempted!==paths.length||
      !Array.isArray(report.rows)||!report.failureClasses||
      Object.values(report.failureClasses).some(n=>!Number.isSafeInteger(n)||n<0)||
-     report.rows.length+report.rejected.invalid+report.rejected.unsupported!==paths.length)
+     report.rows.length+report.rejected.invalid+report.rejected.unsupported!==paths.length||
+     !report.failureTerrains||!report.otherErrorTypes||
+     Object.keys(report.failureTerrains).length!==HISTORICAL_TERRAINS.length||
+     HISTORICAL_TERRAINS.some(t=>!report.failureTerrains[t]||
+      ['invalid','unsupported','other'].some(k=>!Number.isSafeInteger(report.failureTerrains[t][k])||
+      report.failureTerrains[t][k]<0))||
+     Object.keys(report.otherErrorTypes).length!==HISTORICAL_ERROR_TYPES.length||
+     HISTORICAL_ERROR_TYPES.some(t=>!Number.isSafeInteger(report.otherErrorTypes[t])||
+      report.otherErrorTypes[t]<0))
     throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
    results.push(report)
   }
   const maps=results.map(result=>new Map(result.rows.map(r=>[r.stageHash,r])))
   if(maps.some((m,i)=>m.size!==results[i].rows.length))
    throw Error('DUPLICATE_ANON_STAGE_REJECTED')
+  const byTerrain=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[t,{
+   ...results[0].failureTerrains[t],historicMismatch:0,baselineReplayUnsynchronized:0,
+   calibratedReplayUnsynchronized:0,eligible:0}]))
+  const historicalMismatchKinds=Object.fromEntries(HISTORICAL_PARITY_REASONS.map(k=>[k,0]))
   const rejects={baselineInvalid:results[0].rejected.invalid,
    baselineUnsupported:results[0].rejected.unsupported,
    baselineReplayUnsynchronized:0,baselineHistoricMismatch:0,
    calibratedReplayUnsynchronized:0,calibratedMissing:0,
-   failedPhysicsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.failureClasses]))}
+   failedPhysicsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.failureClasses])),
+   otherErrorTypesByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherErrorTypes])),
+   historicalMismatchKinds,byTerrain}
   const triples=[]
   for(const [id,v2] of maps[0]){
-   if(!v2.savedV2ClassificationParity){rejects.baselineHistoricMismatch++;continue}
-   if(!v2.replaySynchronized){rejects.baselineReplayUnsynchronized++;continue}
+   if(!HISTORICAL_TERRAINS.includes(v2.terrain)||!Array.isArray(v2.savedV2ParityFailureKinds)||
+      v2.savedV2ParityFailureKinds.some(k=>!HISTORICAL_PARITY_REASONS.includes(k)))
+     throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
+   if(!v2.savedV2ClassificationParity){
+    rejects.baselineHistoricMismatch++
+    byTerrain[v2.terrain].historicMismatch++
+    for(const k of new Set(v2.savedV2ParityFailureKinds))historicalMismatchKinds[k]++
+    continue
+   }
+   if(!v2.replaySynchronized){
+    rejects.baselineReplayUnsynchronized++
+    byTerrain[v2.terrain].baselineReplayUnsynchronized++
+    continue
+   }
    const a=maps[1].get(id),b=maps[2].get(id)
    if(!a||!b){rejects.calibratedMissing++;continue}
    if(a.sourceHash!==v2.sourceHash||b.sourceHash!==v2.sourceHash||
       a.riderCount!==v2.riderCount||b.riderCount!==v2.riderCount||
       a.terrain!==v2.terrain||b.terrain!==v2.terrain)
     throw Error('PHYSICAL_HISTORIC_INPUT_MISMATCH')
-   if(!a.replaySynchronized||!b.replaySynchronized){rejects.calibratedReplayUnsynchronized++;continue}
+   if(!a.replaySynchronized||!b.replaySynchronized){
+    rejects.calibratedReplayUnsynchronized++
+    byTerrain[v2.terrain].calibratedReplayUnsynchronized++
+    continue
+   }
+   byTerrain[v2.terrain].eligible++
    triples.push({preserved_v2:v2,combined:a,combined_energy:b})
   }
   const agg=aggregate(triples,rejects)
