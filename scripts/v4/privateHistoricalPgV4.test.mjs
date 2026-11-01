@@ -1,9 +1,15 @@
 import assert from 'node:assert/strict'
-import {runPrivatePgHistoricalPilotV4,privatePgConfig} from './privateHistoricalPgV4.mjs'
+import {runPrivatePgHistoricalPilotV4,privatePgConfig,historicalPgCohortPlan} from './privateHistoricalPgV4.mjs'
 import {readFileSync} from 'node:fs'
 const env={PPM_V4_RESEARCH_DB_HOST:'aws-0-eu-central-1.pooler.supabase.com',
  PPM_V4_RESEARCH_DB_PASSWORD:'only-a-synthetic-test-password-12345'}
 const cfg=privatePgConfig(env)
+assert.deepEqual(historicalPgCohortPlan(env).targets,{flat:4,hilly:4,mountain:4,cobbled:1})
+assert.equal(historicalPgCohortPlan(env).maxProbesPerTerrain,18)
+const focused=historicalPgCohortPlan({...env,PPM_V4_RESEARCH_COHORT:'hilly_latest_nine'})
+assert.deepEqual(focused.targets,{flat:0,hilly:9,mountain:0,cobbled:0})
+assert.equal(focused.maxProbesPerTerrain,24)
+assert.throws(()=>historicalPgCohortPlan({...env,PPM_V4_RESEARCH_COHORT:'all_unlimited'}),/INVALID_HISTORICAL_COHORT/)
 assert.equal(cfg.user,'v4_historical_research_reader.okuravitxocyevkexfgi')
 assert.equal(cfg.ssl.rejectUnauthorized,true)
 assert.throws(()=>privatePgConfig({...env,PPM_V4_RESEARCH_DB_HOST:'evil.example'}))

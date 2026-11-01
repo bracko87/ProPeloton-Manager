@@ -59,3 +59,8 @@ In the latest 18 archives per terrain, read-only SQL found the following **prefl
 The restricted PostgreSQL history query now returns only additional metadata **flags/counts**, not input snapshots: saved replay synchronization, team count and first-entry identifier validity. Research selection excludes explicit unsynchronized or impossible team/entry records, prioritizes candidates passing all three flags, and retains an unknown-metadata fallback for legacy client compatibility. Export still enforces every original full team-entry ownership mapping, and physics still enforces replay synchronization and classification parity.
 
 This optimization changes the **order of attempted historical research comparisons**, not physics or production data. It does not approve V4 realism.
+
+
+## Hilly-focused private replay option — 2026-11-01
+
+The isolated PostgreSQL reader now accepts `PPM_V4_RESEARCH_COHORT=hilly_latest_nine`, selecting up to 9 hilly races only with a bounded pool of 24 candidates. The default balanced cohort is unchanged. This option cannot run official production races or alter results. The 9 later-start hilly records are synchronized and fully team-mapped, but exact source revision and historical V2 replay parity are still unknown. A new private research password is required before any future local database connection; the prior exposed password must not be reused.

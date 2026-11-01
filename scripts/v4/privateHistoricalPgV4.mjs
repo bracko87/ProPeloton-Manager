@@ -1,6 +1,7 @@
 /** Private archived-race V4 pilot via NOWRITE custom Postgres role. */
 import {storePrivateHistoricalEnvelopeV4} from './privateHistoricalExportV4.mjs'
 import {runPrivateHistoricalPilotV4} from './privateHistoricalPilotV4.mjs'
+import {TERRAIN_TARGETS} from './privateHistoricalPilotSelectionV4.mjs'
 import {runPrivateHistoricalPhysicsV4} from './privateHistoricalPhysicsV4.mjs'
 import {readFileSync} from 'node:fs'
 import {resolve} from 'node:path'
@@ -30,6 +31,13 @@ const queryMetadata=[
 ].join(' ')
 const queryRun='SELECT stage_id,race_id,status,input_snapshot_json,result_summary_json FROM v4_historical_research.completed_runs WHERE stage_id=$1 LIMIT 2'
 const queryEntries='SELECT race_team_entry_id,race_id,participating_club_id,club_id,entry_source,is_ai_filler FROM v4_historical_research.race_entries WHERE race_id=$1 AND race_team_entry_id=ANY($2::uuid[])'
+export function historicalPgCohortPlan(env={}){
+ const mode=env.PPM_V4_RESEARCH_COHORT??'balanced'
+ if(mode==='balanced')return {targets:TERRAIN_TARGETS,maxProbesPerTerrain:18}
+ if(mode==='hilly_latest_nine')return {
+  targets:{flat:0,hilly:9,mountain:0,cobbled:0},maxProbesPerTerrain:24}
+ throw Error('INVALID_HISTORICAL_COHORT')
+}
 const queryRights="SELECT current_user AS db_user,has_table_privilege(current_user,'v4_historical_research.completed_runs','SELECT') AS scoped_runs,has_table_privilege(current_user,'v4_historical_research.race_entries','SELECT') AS scoped_entries,has_table_privilege(current_user,'public.race_stage_simulation_runs','SELECT') AS live_runs,has_table_privilege(current_user,'public.race_participant_teams_v1','SELECT') AS live_entries,(SELECT rolbypassrls FROM pg_roles WHERE rolname=current_user) AS bypass_rls"
 export function privatePgConfig(env){
  const host=String(env.PPM_V4_RESEARCH_DB_HOST??'').trim().toLowerCase()
@@ -51,6 +59,7 @@ export async function runPrivatePgHistoricalPilotV4({
  env=process.env,ClientConstructor=null,physicalRunner=runPrivateHistoricalPhysicsV4,
  progress=null
 }={}){
+ const plan=historicalPgCohortPlan(env)
  const conf=privatePgConfig(env)
  const Client=ClientConstructor??(await import('pg')).default.Client
  const db=new Client(conf)
@@ -82,6 +91,7 @@ export async function runPrivatePgHistoricalPilotV4({
   }
   return await runPrivateHistoricalPilotV4({
    metadataReader,exportStage,physicalRunner,
+   targets:plan.targets,maxProbesPerTerrain:plan.maxProbesPerTerrain,
    progress:state=>{
     phase=state.phase
     if(progress)progress(state)
@@ -93,7 +103,7 @@ export async function runPrivatePgHistoricalPilotV4({
 }
 function safeError(err){
  const msg=String(err?.message??'')
- const allowed=['RESTRICTED_PG_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
+ const allowed=['INVALID_HISTORICAL_COHORT','RESTRICTED_PG_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
   'INVALID_PRIVATE_CA_PATH','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
   'NO_ARCHIVED_TEAMS','INVALID_ENTRY_MAPPING','PRIVATE_PHYSICAL_ENGINE_FAILED',
   'UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE','PHYSICAL_HISTORIC_INPUT_MISMATCH',
