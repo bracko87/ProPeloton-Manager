@@ -37,7 +37,7 @@ export async function runPrivateHistoricalPilotV4({
   {data:await metadataReader(metadataLimit),error:null}
  if(response.error||!Array.isArray(response.data))throw Error('Metadata SELECT denied')
  const selection=selectV4HistoricalPilotCandidates(response.data,{maxPerTerrain:maxProbesPerTerrain})
- if(progress)progress({phase:'METADATA_READY',metadataRows:selection.metadataRows,potential:selection.potential})
+ if(progress)progress({phase:'METADATA_READY',metadataRows:selection.metadataRows,potential:selection.potential,preflight:selection.preflight})
  const folder=mkdtempSync(join(tmpdir(),'ppm-v4-historical-pilot-'))
  const created=[],files=[]
  const attempted=Object.fromEntries(terrains.map(t=>[t,0]))
@@ -65,7 +65,7 @@ export async function runPrivateHistoricalPilotV4({
   }
   if(progress)progress({phase:'EXPORTS_READY',attempted,accepted,rejected})
   if(files.length===0)return {status:'PRIVATE_HISTORICAL_PILOT_NO_ELIGIBLE_EXPORTS',
-   metadataRows:selection.metadataRows,potential:selection.potential,
+   metadataRows:selection.metadataRows,potential:selection.potential,preflight:selection.preflight,
    attempted,accepted,rejected,officialWrites:0,historicalV4RealismApproved:false}
   const manifest=join(folder,'private-manifest.json')
   writeFileSync(manifest,JSON.stringify({privateEnvelopePaths:files}),
@@ -77,7 +77,7 @@ export async function runPrivateHistoricalPilotV4({
   // Preserve the worker's strict replay rejection diagnostics; export failures
   // are a separate category and must never overwrite the physics report.
   return {...report,status:'PRIVATE_HISTORICAL_PILOT_DIAGNOSTIC_ONLY',
-   metadataRows:selection.metadataRows,potential:selection.potential,
+   metadataRows:selection.metadataRows,potential:selection.potential,preflight:selection.preflight,
    attempted,accepted,exportRejected:rejected,historicalV4RealismApproved:false}
  }finally{
   rmSync(folder,{recursive:true,force:true})

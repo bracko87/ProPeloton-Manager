@@ -19,6 +19,21 @@ assert.deepEqual(parsed.rejected,{invalid:1,unsupported:1,duplicate:1})
 assert.throws(()=>selectV4HistoricalPilotCandidates(null))
 assert.throws(()=>selectV4HistoricalPilotCandidates(rows,{maxPerTerrain:0}))
 assert.throws(()=>selectV4HistoricalPilotCandidates(Array(351).fill(rows[0])))
+// Quality flags are optional for legacy mocks; when present, priority is strict
+// and no private entry identifier enters the public diagnostic report.
+const preflightRows=[
+ {...entry(40,'hilly'),saved_replay_synchronized:false,team_count:16,first_entry_mappable:true},
+ {...entry(41,'hilly'),saved_replay_synchronized:true,team_count:85,first_entry_mappable:true},
+ {...entry(42,'hilly'),saved_replay_synchronized:true,team_count:16,first_entry_mappable:false},
+ entry(43,'hilly'),
+ {...entry(44,'hilly'),saved_replay_synchronized:true,team_count:16,first_entry_mappable:true},
+ {...entry(45,'hilly'),saved_replay_synchronized:true,team_count:18,first_entry_mappable:true},
+]
+const quality=selectV4HistoricalPilotCandidates(preflightRows,{maxPerTerrain:3})
+assert.deepEqual(quality.groups.hilly,[uuid(44),uuid(45),uuid(43)])
+assert.deepEqual(quality.preflight.hilly,{
+ passed:2,unknown:1,unsynchronized:1,teamStructure:1,entryMapping:1})
+assert.equal(quality.potential.hilly,3)
 const created=[]
 let queries=0,exports=0,physics=0
 function clientFactory(){return{from(table){
@@ -63,6 +78,8 @@ try{
  assert.equal(report.status,'PRIVATE_HISTORICAL_PILOT_DIAGNOSTIC_ONLY')
  assert.deepEqual(report.accepted,{flat:2,hilly:1,mountain:0,cobbled:0})
  assert.deepEqual(report.exportRejected,{flat:1,hilly:0,mountain:0,cobbled:0})
+ assert.equal(report.preflight.flat.unknown,3)
+ assert.equal(report.preflight.hilly.unknown,1)
  assert.equal(report.rejected.baselineHistoricMismatch,2)
  assert.equal(report.rejected.baselineReplayUnsynchronized,1)
  assert.equal(report.rejected.failedPhysicsByVariant.preserved_v2.INVALID_LOCKED_HISTORY,0)

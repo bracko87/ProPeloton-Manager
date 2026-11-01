@@ -51,3 +51,11 @@ Four later flat archives have 85 or 86 team-array elements and no expected first
 6. Require multiple parity-verifiable, strictly synchronized, reproducible races before assessing V4 realism or production adoption.
 
 All findings are aggregate and contain no raw archived race snapshots, rider identities, passwords, or private file paths.
+
+## 2026-11-01 metadata-first candidate triage
+
+In the latest 18 archives per terrain, read-only SQL found the following **preflight candidates** with a synchronized saved replay, 2–40 teams and a present first entry identifier: flat 8/17, hilly 14/18, mountain 9/12. Preflight does **not** attest complete authoritative team mapping, active solver lane, current V2 parity or exact source commit.
+
+The restricted PostgreSQL history query now returns only additional metadata **flags/counts**, not input snapshots: saved replay synchronization, team count and first-entry identifier validity. Research selection excludes explicit unsynchronized or impossible team/entry records, prioritizes candidates passing all three flags, and retains an unknown-metadata fallback for legacy client compatibility. Export still enforces every original full team-entry ownership mapping, and physics still enforces replay synchronization and classification parity.
+
+This optimization changes the **order of attempted historical research comparisons**, not physics or production data. It does not approve V4 realism.
