@@ -6,6 +6,18 @@ export const HISTORICAL_PARITY_REASONS=Object.freeze([
 export const HISTORICAL_ERROR_TYPES=Object.freeze([
  'TYPE_ERROR','RANGE_ERROR','SYNTAX_ERROR','OTHER_ERROR','NON_ERROR_THROW'
 ])
+export const HISTORICAL_FAILURE_REASONS=Object.freeze([
+ 'REPLAY_FRONT_GROUP_TRANSFER','REPLAY_OTHER','OTHER_RUNTIME_ERROR','NON_ERROR_THROW'
+])
+/** Only fixed safe categories; raw error messages can contain private identities. */
+export function safeHistoricalFailureReason(error){
+ if(!(error instanceof Error))return 'NON_ERROR_THROW'
+ if(error.message.startsWith('Universal replay synchronization failed:'))
+  return error.message.startsWith(
+   'Universal replay synchronization failed: front_group_transfer_without_physical_transition:')?
+    'REPLAY_FRONT_GROUP_TRANSFER':'REPLAY_OTHER'
+ return 'OTHER_RUNTIME_ERROR'
+}
 const equalNumber=(a,b)=>a===null||b===null?a===b:
  Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=0.01
 

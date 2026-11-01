@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType as errorType,
+ safeHistoricalFailureReason as failureReason, HISTORICAL_FAILURE_REASONS,
  safeHistoricalTerrain as terrain,historicalPhysicalGapAudit as physicalGap,
  historicalOpeningBreakawayJourney as openingJourney,
  HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES}
@@ -22,6 +23,12 @@ assert.equal(errorType(new RangeError('private details')),'RANGE_ERROR')
 assert.equal(errorType(new SyntaxError('private details')),'SYNTAX_ERROR')
 assert.equal(errorType(new Error('private details')),'OTHER_ERROR')
 assert.equal(errorType('private details'),'NON_ERROR_THROW')
+assert.deepEqual(HISTORICAL_FAILURE_REASONS,
+ ['REPLAY_FRONT_GROUP_TRANSFER','REPLAY_OTHER','OTHER_RUNTIME_ERROR','NON_ERROR_THROW'])
+assert.equal(failureReason(new Error('Universal replay synchronization failed: front_group_transfer_without_physical_transition:rider-secret')),'REPLAY_FRONT_GROUP_TRANSFER')
+assert.equal(failureReason(new Error('Universal replay synchronization failed: private data')),'REPLAY_OTHER')
+assert.equal(failureReason(new Error('private details')),'OTHER_RUNTIME_ERROR')
+assert.equal(failureReason('private details'),'NON_ERROR_THROW')
 assert.equal(terrain({input_snapshot_json:{stage:{terrainType:'mountain',stageId:'secret'}}}),'mountain')
 assert.equal(terrain({input_snapshot_json:{stage:{terrainType:'UNKNOWN'}}}),'unknown')
 assert.equal(terrain(null),'unknown')

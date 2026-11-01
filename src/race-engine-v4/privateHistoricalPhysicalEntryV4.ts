@@ -7,9 +7,9 @@
 import {readFileSync,realpathSync,statSync} from 'node:fs'
 import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
-import {explainHistoricalClassificationParity,safeHistoricalErrorType,
+import {explainHistoricalClassificationParity,safeHistoricalErrorType,safeHistoricalFailureReason,
  safeHistoricalTerrain,historicalPhysicalGapAudit,historicalOpeningBreakawayJourney,
- HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES}
+ HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES,HISTORICAL_FAILURE_REASONS}
  from './privateHistoricalDiagnosticsV4.mjs'
 import {runSelectedRaceEngineV1,selectCompleteRaceEngineLaneV1}
  from '../universal-race-engine/runSelectedRaceEngineV1.ts'
@@ -135,6 +135,7 @@ function main(){
  failureClasses.other=0
  const failureTerrains=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[t,{invalid:0,unsupported:0,other:0}]))
  const otherErrorTypes=Object.fromEntries(HISTORICAL_ERROR_TYPES.map(t=>[t,0]))
+ const otherFailureReasons=Object.fromEntries(HISTORICAL_FAILURE_REASONS.map(t=>[t,0]))
  for(const path of paths){
   let data:unknown=null
   try{
@@ -152,6 +153,7 @@ function main(){
     failureClasses.other++
     bucket.other++
     otherErrorTypes[safeHistoricalErrorType(e)]++
+    otherFailureReasons[safeHistoricalFailureReason(e)]++
    }
   }
  }
@@ -159,7 +161,7 @@ function main(){
  process.stdout.write('V4_PRIVATE_PHYSICAL_VARIANT '+JSON.stringify({
   variant,researchOnly:true,officialWrites:0,networkCalls:0,
   inputPathsReported:false,attempted:paths.length,rejected,failureClasses,
-  failureTerrains,otherErrorTypes,rows,
+  failureTerrains,otherErrorTypes,otherFailureReasons,rows,
  })+'\n')
  // Zero usable stages is a valid diagnostic result, not a child-process crash.
  // The outer operator CLI still returns failure when no comparable triple exists.

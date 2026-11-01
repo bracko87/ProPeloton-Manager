@@ -10,7 +10,8 @@ import {join,resolve,relative,sep,isAbsolute} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
-import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES}
+import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES,
+ HISTORICAL_FAILURE_REASONS}
  from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
@@ -158,14 +159,17 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
      !Array.isArray(report.rows)||!report.failureClasses||
      Object.values(report.failureClasses).some(n=>!Number.isSafeInteger(n)||n<0)||
      report.rows.length+report.rejected.invalid+report.rejected.unsupported!==paths.length||
-     !report.failureTerrains||!report.otherErrorTypes||
+     !report.failureTerrains||!report.otherErrorTypes||!report.otherFailureReasons||
      Object.keys(report.failureTerrains).length!==HISTORICAL_TERRAINS.length||
      HISTORICAL_TERRAINS.some(t=>!report.failureTerrains[t]||
       ['invalid','unsupported','other'].some(k=>!Number.isSafeInteger(report.failureTerrains[t][k])||
       report.failureTerrains[t][k]<0))||
      Object.keys(report.otherErrorTypes).length!==HISTORICAL_ERROR_TYPES.length||
      HISTORICAL_ERROR_TYPES.some(t=>!Number.isSafeInteger(report.otherErrorTypes[t])||
-      report.otherErrorTypes[t]<0))
+      report.otherErrorTypes[t]<0)||
+     Object.keys(report.otherFailureReasons).length!==HISTORICAL_FAILURE_REASONS.length||
+     HISTORICAL_FAILURE_REASONS.some(t=>!Number.isSafeInteger(report.otherFailureReasons[t])||
+      report.otherFailureReasons[t]<0))
     throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
    results.push(report)
   }
@@ -193,6 +197,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
    calibratedReplayUnsynchronized:0,calibratedMissing:0,
    failedPhysicsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.failureClasses])),
    otherErrorTypesByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherErrorTypes])),
+   otherFailureReasonsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureReasons])),
    historicalMismatchKinds,byTerrain}
   const triples=[]
   for(const [id,v2] of maps[0]){
