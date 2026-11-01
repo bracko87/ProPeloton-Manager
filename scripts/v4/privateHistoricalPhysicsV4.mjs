@@ -40,6 +40,11 @@ function aggregate(comparisons,rejected){
   baselineMedianMaxBreakawaySeconds:by(subset.map(x=>x.preserved_v2),'maximumBreakawayGapSeconds'),
   combinedMedianMaxBreakawaySeconds:by(subset.map(x=>x.combined),'maximumBreakawayGapSeconds'),
   energyMedianMaxBreakawaySeconds:by(subset.map(x=>x.combined_energy),'maximumBreakawayGapSeconds'),
+  baselineMedianObservedPhysicalPeakSeconds:by(subset.map(x=>x.preserved_v2),'observedPhysicalPeakSeconds'),
+  combinedMedianObservedPhysicalPeakSeconds:by(subset.map(x=>x.combined),'observedPhysicalPeakSeconds'),
+  energyMedianObservedPhysicalPeakSeconds:by(subset.map(x=>x.combined_energy),'observedPhysicalPeakSeconds'),
+  baselinePublishedMaximumMissedInteriorPeak:subset.filter(x=>
+   x.preserved_v2.omittedPhysicalPeakSeconds>0.01).length,
   combinedChangedClassification:subset.filter(x=>
    x.preserved_v2.classificationHash!==x.combined.classificationHash).length,
   energyChangedClassification:subset.filter(x=>
@@ -128,7 +133,16 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
   const maps=results.map(result=>new Map(result.rows.map(r=>[r.stageHash,r])))
   if(maps.some((m,i)=>m.size!==results[i].rows.length))
    throw Error('DUPLICATE_ANON_STAGE_REJECTED')
-  const byTerrain=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[t,{
+  const savedArchiveGapSummary={
+   evaluableRows:results[0].rows.length,
+   archivedPhysicalPeakRecorded:results[0].rows.filter(r=>
+    typeof r.archivedObservedPhysicalPeakSeconds==='number').length,
+   publishedSummaryUnderreportedObservedPeak:results[0].rows.filter(r=>
+    r.archivedOmittedPhysicalPeakSeconds>0.01).length,
+   largestArchivedPeakOmissionSeconds:results[0].rows.reduce((max,r)=>
+    Math.max(max,r.archivedOmittedPhysicalPeakSeconds??0),0)
+  }
+  const byTerrain=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[{
    ...results[0].failureTerrains[t],historicMismatch:0,baselineReplayUnsynchronized:0,
    calibratedReplayUnsynchronized:0,eligible:0}]))
   const historicalMismatchKinds=Object.fromEntries(HISTORICAL_PARITY_REASONS.map(k=>[k,0]))
@@ -172,7 +186,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
    triples.push({preserved_v2:v2,combined:a,combined_energy:b})
   }
   const agg=aggregate(triples,rejects)
-  return agg
+  return {...agg,savedArchiveGapSummary}
  }finally{rmSync(folder,{recursive:true,force:true})}
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){

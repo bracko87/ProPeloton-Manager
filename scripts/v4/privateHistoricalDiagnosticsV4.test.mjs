@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType as errorType,
- safeHistoricalTerrain as terrain,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES}
+ safeHistoricalTerrain as terrain,historicalPhysicalGapAudit as physicalGap,
+ HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES}
  from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 const row={id:'PRIVATE_RIDER_SHOULD_NEVER_BE_PRINTED',rank:1,status:'finished',gap:0,time:300}
 const run=(change)=>compare([row],[{...row,...change}])
@@ -25,5 +26,28 @@ assert.equal(terrain({input_snapshot_json:{stage:{terrainType:'UNKNOWN'}}}),'unk
 assert.equal(terrain(null),'unknown')
 assert.equal(JSON.stringify({type:errorType(new Error('private details')),kinds:run({rank:99}).reasons})
  .includes('private'),false)
+// A 10.25-second interior physical peak must not disappear in the research
+// comparison, even when the immutable official V2 summary reported less.
+const sample={calibrationSummary:{maximumBreakawayGapSeconds:7},
+ roadRaceResolution:{active:true,phase1Opening:{
+  initialGapSeconds:7,physicalGapTrajectory:[
+   {gapSeconds:6},{gapSeconds:17.25},{gapSeconds:5}]},
+  phase2Development:{startGapSeconds:5,endGapSeconds:4,
+   physicalGapTrajectory:[{gapSeconds:10}]},
+  phase3Decisive:{physicalStartGapSeconds:4,physicalEndGapSeconds:2,
+   physicalGapTrajectory:[{gapSeconds:11}]},
+  phase4Finish:{startGapSeconds:2,endGapSeconds:0,
+   chaseSteps:[{startGapSeconds:2,endGapSeconds:0}]}}}
+assert.deepEqual(physicalGap(sample),{
+ publishedMaximum:7,observedPeak:17.25,omittedPeakSeconds:10.25})
+assert.deepEqual(physicalGap({...sample,calibrationSummary:{maximumBreakawayGapSeconds:20}}),{
+ publishedMaximum:20,observedPeak:17.25,omittedPeakSeconds:0})
+assert.deepEqual(physicalGap({calibrationSummary:{maximumBreakawayGapSeconds:7},
+ roadRaceResolution:{active:false}}),{
+ publishedMaximum:7,observedPeak:null,omittedPeakSeconds:null})
+assert.deepEqual(physicalGap({calibrationSummary:{maximumBreakawayGapSeconds:7},
+ roadRaceResolution:{active:true,phase3Decisive:{
+ physicalStartGapSeconds:1,physicalEndGapSeconds:2,physicalGapTrajectory:[{gapSeconds:9}]}}}),{
+ publishedMaximum:7,observedPeak:9,omittedPeakSeconds:2})
 console.log('V4_PRIVATE_HISTORY_DIAGNOSTICS_UNIT '+JSON.stringify({status:'PASS',syntheticOnly:true,
- cases:16,rawHistoryPublished:false,officialWrites:0}))
+ cases:20,rawHistoryPublished:false,officialWrites:0}))

@@ -37,3 +37,36 @@ export function safeHistoricalTerrain(raw){
  const terrain=raw?.input_snapshot_json?.stage?.terrainType
  return HISTORICAL_TERRAINS.slice(0,4).includes(terrain)?terrain:'unknown'
 }
+
+/**
+ * Research-only physical front-gap peak. Unlike the official V2 calibration
+ * summary, also includes interior main-front trajectory points across phases.
+ * Secondary-front distance is intentionally separate from the primary escape.
+ */
+export function historicalPhysicalGapAudit(result){
+ const road=result?.roadRaceResolution
+ const published=result?.calibrationSummary?.maximumBreakawayGapSeconds
+ const publishedMaximum=typeof published==='number'&&Number.isFinite(published)&&published>=0?published:null
+ if(!road||road.active!==true)
+  return {publishedMaximum,observedPeak:null,omittedPeakSeconds:null}
+ const p1=road.phase1Opening,p2=road.phase2Development
+ const p3=road.phase3Decisive,p4=road.phase4Finish
+ const values=[]
+ const add=n=>{if(typeof n==='number'&&Number.isFinite(n)&&n>=0)values.push(n)}
+ for(const p of [p1,p2,p3,p4]){
+  if(!p)continue
+  for(const point of Array.isArray(p.physicalGapTrajectory)?p.physicalGapTrajectory:[])
+   add(point?.gapSeconds)
+ }
+ add(p1?.initialGapSeconds)
+ add(p2?.startGapSeconds);add(p2?.endGapSeconds)
+ add(p3?.physicalStartGapSeconds);add(p3?.physicalEndGapSeconds)
+ add(p4?.startGapSeconds);add(p4?.endGapSeconds)
+ for(const step of Array.isArray(p4?.chaseSteps)?p4.chaseSteps:[]){
+  add(step?.startGapSeconds);add(step?.endGapSeconds)
+ }
+ const observedPeak=values.length?Number(Math.max(...values).toFixed(6)):null
+ const omittedPeakSeconds=publishedMaximum!==null&&observedPeak!==null?
+  Number(Math.max(0,observedPeak-publishedMaximum).toFixed(6)):null
+ return {publishedMaximum,observedPeak,omittedPeakSeconds}
+}

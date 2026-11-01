@@ -71,3 +71,18 @@ The isolated PostgreSQL reader now accepts `PPM_V4_RESEARCH_COHORT=hilly_latest_
 A read-only aggregate audit verified all nine late-start, synchronized, fully mapped hilly race archives against the strict private exporter contract. All **9/9** passed: distinct team and authoritative entry IDs; original club identity; AI ownership marker agreement; one locked stage plan per team, matching exact team membership; saved finish classification and original in-game start. The broader ten-race late-start cohort has 101–171 riders. The nine most recent synchronized and fully mapped hilly archives are exactly these nine late-start races.
 
 A synthetic PostgreSQL runner test exercises nine unique private hilly snapshots and rejects one newer unsynchronized candidate, with zero database writes. This is **not** a completed real V2/V4 physics comparison, nor proof of historical source-commit parity or V4 realism. The temporary research login remains disabled pending new private credentials.
+
+
+## Physical gap trajectory audit (2026-11-01)
+
+Read-only aggregate queries over the nine late-start, synchronized, fully-mapped hilly archived races found a historical measurement discrepancy:
+
+- Recorded `calibrationSummary.maximumBreakawayGapSeconds`: median **11.78 s**, minimum **7.045696 s**, maximum **225.044679 s**; zero of the nine were exactly 7.000000 s.
+- Reading the internal primary-front physical gap trajectories and phase boundary samples: median physical peak **12.96 s** and mean **64.73 s** versus mean published maximum **62.91 s**.
+- **5/9** race summaries omit an interior physical peak larger than the published maximum by more than 0.01 s (Phase 1: 2, Phase 2: 2, Phase 3: 1; those per-phase counts can overlap). Largest discrepancy **10.25 seconds**.
+- Opening breakaway group recorded in **9/9** races; `breakawaySurvived=true` in **0/9** and `breakawayCaught=true` in **3/9**. The six remaining outcomes were *reduced_group_finish*, not missing race results. Source code defines the catch flag using Phase 2 `breakaway_caught` or Phase 4 `breakawayCaught`, and survival from the Phase 4 survival flag. Hence `caught=false` plus `survived=false` is not intrinsically contradictory.
+- Four races had reported maximum gaps below 10 seconds; two had 10–30 seconds; none 30–60 seconds; one 60–120 seconds; and two exceeded 120 seconds.
+
+The official V2 calibration summary explicitly samples `phase1.initialGapSeconds`, Phase 2 start/end, Phase 4 start/end and late chase steps, rather than all physical trajectory interior points and Phase 3 trajectories. A V4 **research-only** audit now tracks both the immutable published maximum and the maximum *observed primary physical front gap* across trajectory points and phase boundaries, with fixed numerical discrepancies. It does not rewrite results, reinterpret secondary front lanes as the main breakaway, or change either engine's physics.
+
+Nine archived races are insufficient to approve V4 realism. The saved results remain the original production record and the new research metrics remain diagnostic only.

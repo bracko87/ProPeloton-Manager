@@ -60,6 +60,12 @@ try{
  assert.equal(report.calibratedV4PhysicalReruns,2)
  assert.equal(report.historicalV2Reruns,1)
  assert.equal(report.all.eligible,1)
+ assert.equal(report.savedArchiveGapSummary.evaluableRows,1)
+ assert.equal(report.savedArchiveGapSummary.archivedPhysicalPeakRecorded,1)
+ assert.ok(report.all.baselineMedianObservedPhysicalPeakSeconds!==null)
+ assert.ok(report.all.combinedMedianObservedPhysicalPeakSeconds!==null)
+ assert.ok(report.all.energyMedianObservedPhysicalPeakSeconds!==null)
+ assert.ok(Number.isSafeInteger(report.all.baselinePublishedMaximumMissedInteriorPeak))
  assert.equal(report.officialWrites,0)
  assert.equal(report.historicalV4RealismApproved,false)
  assert.equal(report.historicalSourceRevisionAttested,false)
@@ -103,6 +109,6 @@ try{
   await assert.rejects(()=>runPrivateHistoricalPhysicsV4(manifest),/PRIVATE_PATH_REJECTED/)
  }
  console.log('V4_PRIVATE_PHYSICAL_HISTORY_UNIT '+JSON.stringify({
-  status:'PASS',cases:25,syntheticOnly:true,
+  status:'PASS',cases:30,syntheticOnly:true,
   preservedV2Runs:1,calibratedV4Runs:2,officialWrites:0}))
 }finally{rmSync(folder,{recursive:true,force:true})}

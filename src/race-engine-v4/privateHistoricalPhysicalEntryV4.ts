@@ -8,7 +8,7 @@ import {readFileSync,realpathSync,statSync} from 'node:fs'
 import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
 import {explainHistoricalClassificationParity,safeHistoricalErrorType,
- safeHistoricalTerrain,HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES}
+ safeHistoricalTerrain,historicalPhysicalGapAudit,HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES}
  from './privateHistoricalDiagnosticsV4.mjs'
 import {runSelectedRaceEngineV1,selectCompleteRaceEngineLaneV1}
  from '../universal-race-engine/runSelectedRaceEngineV1.ts'
@@ -84,6 +84,8 @@ function evaluate(raw:unknown){
    Number.isFinite(p3.physicalEndGapSeconds))?
     p3.physicalEndGapSeconds-p3.physicalStartGapSeconds:null
  const replaySynchronized=result.replaySynchronization?.synchronized===true
+ const gapAudit=historicalPhysicalGapAudit(result)
+ const archiveGapAudit=historicalPhysicalGapAudit(saved)
  return {
   stageHash,sourceHash:srcHash,terrain:input.stage.terrainType,
   riderCount:input.riders.length,teams:input.teams.length,
@@ -96,7 +98,12 @@ function evaluate(raw:unknown){
   publishedFinishGroups:result.groupAndTimeResolution?.finalGroups?.length??null,
   maximumFinishGapSeconds:gaps.length?Math.max(...gaps):null,
   topFiveGapSeconds:rankings.slice(0,5).map(x=>x.gap),
-  maximumBreakawayGapSeconds:finite(result.calibrationSummary?.maximumBreakawayGapSeconds),
+  maximumBreakawayGapSeconds:gapAudit.publishedMaximum,
+  observedPhysicalPeakSeconds:gapAudit.observedPeak,
+  omittedPhysicalPeakSeconds:gapAudit.omittedPeakSeconds,
+  archivedObservedPhysicalPeakSeconds:archiveGapAudit.observedPeak,
+  archivedReportedMaximumGapSeconds:archiveGapAudit.publishedMaximum,
+  archivedOmittedPhysicalPeakSeconds:archiveGapAudit.omittedPeakSeconds,
   acceptedOpeningAttacks:result.roadRaceResolution?.phase1Opening?.attackAttempts
     ?.filter((a:any)=>a.acceptedEscapeLaunch).length??0,
   phase3GapGrowthSeconds:phase3Growth,
