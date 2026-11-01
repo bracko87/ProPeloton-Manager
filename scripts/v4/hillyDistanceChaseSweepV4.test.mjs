@@ -92,6 +92,29 @@ try{
   throw Error('HILLY_AB_SYNTHETIC_INPUT_GENERATION_FAILED '+details)
  }
  const generated=JSON.parse(readFileSync(join(folder,'generated.json'),'utf8'))
+ const summary=x=>({
+  completedTriples:x.eligible,
+  matchedOpeningBreakaways:x.matchedOpeningBreakawayCases,
+  medianOpeningKmAhead:x.v4OpeningCatchDistanceKmMedian,
+  openingAheadAtLeast25Km:x.v4OpeningAtLeast25KmCount,
+  openingAheadAtLeast50Km:x.v4OpeningAtLeast50KmCount,
+  openingAheadAtLeast100Km:x.v4OpeningAtLeast100KmCount,
+  openingSampledAbove60SecondsAtLeast10Km:x.v4OpeningAbove60SecondsAtLeast10KmCount,
+  openingSampledAbove120SecondsAtLeast10Km:x.v4OpeningAbove120SecondsAtLeast10KmCount,
+  medianSampledKmWithGapAbove60Seconds:x.v4OpeningDistanceOver60SecondsKmMedian,
+  medianSampledKmWithGapAbove120Seconds:x.v4OpeningDistanceOver120SecondsKmMedian,
+  exactOpeningCatchLocations:x.v4OpeningCatchExactCount,
+  estimatedPhase4CatchLocations:x.v4OpeningCatchEstimatedCount,
+  openingLineageUntraceable:x.v4OpeningUntraceableCount,
+  medianObservedPeakAllRacesSeconds:x.combinedMedianObservedPhysicalPeakSeconds,
+  medianObservedPeakWithBreakawaySeconds:x.combinedMedianObservedPeakAmongBreakawaysSeconds,
+  breakawayCaught:x.combinedBreakawayCaughtAmongBreakaways,
+  breakawaySurvived:x.combinedBreakawaySurvivedAmongBreakaways,
+  phase3GapGrowthWithBreakawaySeconds:x.medianCombinedPhase3GrowthAmongBreakawaysSeconds,
+  meanPhase4EnergyAtFinishWithBreakaway:x.medianCombinedEnergyAtFinishAmongBreakaways,
+  changedClassifications:x.combinedChangedClassification,
+  changedWinners:x.combinedChangedWinner
+ })
  const perDistance=[]
  for(let band=0;band<3;band++){
   const paired=Array.from({length:12},(_,seed)=>band*12+seed).filter(i=>
@@ -120,29 +143,7 @@ try{
  }
  assert(perDistance.some(x=>x.noChase.matchedOpeningBreakaways>0),
   'At least one accepted opening breakaway needed for the distance sweep')
- const summary=x=>({
-  completedTriples:x.eligible,
-  matchedOpeningBreakaways:x.matchedOpeningBreakawayCases,
-  medianOpeningKmAhead:x.v4OpeningCatchDistanceKmMedian,
-  openingAheadAtLeast25Km:x.v4OpeningAtLeast25KmCount,
-  openingAheadAtLeast50Km:x.v4OpeningAtLeast50KmCount,
-  openingAheadAtLeast100Km:x.v4OpeningAtLeast100KmCount,
-  openingSampledAbove60SecondsAtLeast10Km:x.v4OpeningAbove60SecondsAtLeast10KmCount,
-  openingSampledAbove120SecondsAtLeast10Km:x.v4OpeningAbove120SecondsAtLeast10KmCount,
-  medianSampledKmWithGapAbove60Seconds:x.v4OpeningDistanceOver60SecondsKmMedian,
-  medianSampledKmWithGapAbove120Seconds:x.v4OpeningDistanceOver120SecondsKmMedian,
-  exactOpeningCatchLocations:x.v4OpeningCatchExactCount,
-  estimatedPhase4CatchLocations:x.v4OpeningCatchEstimatedCount,
-  openingLineageUntraceable:x.v4OpeningUntraceableCount,
-  medianObservedPeakAllRacesSeconds:x.combinedMedianObservedPhysicalPeakSeconds,
-  medianObservedPeakWithBreakawaySeconds:x.combinedMedianObservedPeakAmongBreakawaysSeconds,
-  breakawayCaught:x.combinedBreakawayCaughtAmongBreakaways,
-  breakawaySurvived:x.combinedBreakawaySurvivedAmongBreakaways,
-  phase3GapGrowthWithBreakawaySeconds:x.medianCombinedPhase3GrowthAmongBreakawaysSeconds,
-  meanPhase4EnergyAtFinishWithBreakaway:x.medianCombinedEnergyAtFinishAmongBreakaways,
-  changedClassifications:x.combinedChangedClassification,
-  changedWinners:x.combinedChangedWinner
- })
+
  console.log('V4_HILLY_DISTANCE_CHASE_SWEEP '+JSON.stringify({
   status:'SYNTHETIC_PHYSICAL_DISTANCE_SENSITIVITY_ONLY',
   matchedSeedCasesPerDistance:12,distancesKm:[120,170,220],
