@@ -64,3 +64,10 @@ This optimization changes the **order of attempted historical research compariso
 ## Hilly-focused private replay option — 2026-11-01
 
 The isolated PostgreSQL reader now accepts `PPM_V4_RESEARCH_COHORT=hilly_latest_nine`, selecting up to 9 hilly races only with a bounded pool of 24 candidates. The default balanced cohort is unchanged. This option cannot run official production races or alter results. The 9 later-start hilly records are synchronized and fully team-mapped, but exact source revision and historical V2 replay parity are still unknown. A new private research password is required before any future local database connection; the prior exposed password must not be reused.
+
+
+## Nine-hilly full archive preflight, 2026-11-01
+
+A read-only aggregate audit verified all nine late-start, synchronized, fully mapped hilly race archives against the strict private exporter contract. All **9/9** passed: distinct team and authoritative entry IDs; original club identity; AI ownership marker agreement; one locked stage plan per team, matching exact team membership; saved finish classification and original in-game start. The broader ten-race late-start cohort has 101–171 riders. The nine most recent synchronized and fully mapped hilly archives are exactly these nine late-start races.
+
+A synthetic PostgreSQL runner test exercises nine unique private hilly snapshots and rejects one newer unsynchronized candidate, with zero database writes. This is **not** a completed real V2/V4 physics comparison, nor proof of historical source-commit parity or V4 realism. The temporary research login remains disabled pending new private credentials.

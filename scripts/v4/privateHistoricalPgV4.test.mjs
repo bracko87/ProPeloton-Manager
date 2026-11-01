@@ -91,5 +91,53 @@ class Forbidden extends FakeClient{
 await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
  env,ClientConstructor:Forbidden}),/RESTRICTED_PG_ROLE_REQUIRED/)
 assert.equal(closed,3)
+// Synthetic full batch: the newest archive is unsynchronized, and nine
+// fully mapped hilly records must be the exact private export set.
+const nineStageIds=Array.from({length:9},(_,i)=>u(200+i))
+class HillyClient extends FakeClient{
+ async query(sql,args){
+  if(sql.includes('ORDER BY r.completed_at DESC'))return {rows:[
+   {stage_id:u(299),terrain:'hilly',stage_format:'road_race',
+    completed_at:'2026-10-25T05:00:00Z',saved_replay_synchronized:false,
+    team_count:2,first_entry_mappable:true,all_entries_mapped:true},
+   ...nineStageIds.map((id,i)=>({stage_id:id,terrain:'hilly',stage_format:'road_race',
+    completed_at:new Date(Date.UTC(2026,9,25,4,59-i)).toISOString(),
+    saved_replay_synchronized:true,team_count:2,
+    first_entry_mappable:true,all_entries_mapped:true}))]}
+  if(sql.includes('WHERE stage_id=$1')){
+   const id=args[0]
+   assert.ok(nineStageIds.includes(id))
+   const copy=structuredClone(run)
+   copy.stage_id=id
+   copy.input_snapshot_json.stage.stageId=id
+   copy.input_snapshot_json.stage.terrainType='hilly'
+   return {rows:[copy]}
+  }
+  return super.query(sql,args)
+ }
+}
+let focusedPhysicsCalls=0
+const nine=await runPrivatePgHistoricalPilotV4({
+ env:{...env,PPM_V4_RESEARCH_COHORT:'hilly_latest_nine'},
+ ClientConstructor:HillyClient,
+ physicalRunner:async manifest=>{
+  focusedPhysicsCalls++
+  const paths=JSON.parse(readFileSync(manifest,'utf8')).privateEnvelopePaths
+  assert.equal(paths.length,9)
+  const exports=paths.map(path=>JSON.parse(readFileSync(path,'utf8')))
+  assert.deepEqual(exports.map(x=>x.input_snapshot_json.stage.stageId),nineStageIds)
+  assert.ok(exports.every(x=>x.input_snapshot_json.stage.terrainType==='hilly'))
+  return {officialWrites:0,rawStageDataPublished:false,
+   privatePathsPublished:false,consideredCompleteTriples:9}
+ }
+})
+assert.equal(focusedPhysicsCalls,1)
+assert.deepEqual(nine.attempted,{flat:0,hilly:9,mountain:0,cobbled:0})
+assert.deepEqual(nine.accepted,{flat:0,hilly:9,mountain:0,cobbled:0})
+assert.equal(nine.preflight.hilly.unsynchronized,1)
+assert.equal(nine.preflight.hilly.passed,9)
+assert.equal(nine.consideredCompleteTriples,9)
+assert.equal(nine.officialWrites,0)
+assert.equal(opened,4);assert.equal(closed,4)
 console.log('V4_PRIVATE_PG_READONLY_RESEARCH_UNIT '+JSON.stringify({
- status:'PASS',syntheticOnly:true,cases:16,officialWrites:0}))
+ status:'PASS',syntheticOnly:true,cases:24,officialWrites:0}))
