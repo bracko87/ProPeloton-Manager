@@ -41,6 +41,16 @@ function aggregate(comparisons,rejected){
  return ({
   eligible:subset.length,
   matchedOpeningBreakawayCases:active.length,
+  v4OpeningAtLeast25KmCount:active.filter(x=>
+   x.combined.openingJourney?.kmAhead>=25).length,
+  v4OpeningAtLeast50KmCount:active.filter(x=>
+   x.combined.openingJourney?.kmAhead>=50).length,
+  v4OpeningAtLeast100KmCount:active.filter(x=>
+   x.combined.openingJourney?.kmAhead>=100).length,
+  v4OpeningAbove60SecondsAtLeast10KmCount:active.filter(x=>
+   x.combined.openingJourney?.sampledAbove60Km>=10).length,
+  v4OpeningAbove120SecondsAtLeast10KmCount:active.filter(x=>
+   x.combined.openingJourney?.sampledAbove120Km>=10).length,
   v2OpeningCatchDistanceKmMedian:by(active.map(x=>x.preserved_v2.openingJourney),'kmAhead'),
   v4OpeningCatchDistanceKmMedian:by(active.map(x=>x.combined.openingJourney),'kmAhead'),
   v4OpeningDistanceOver60SecondsKmMedian:by(active.map(x=>x.combined.openingJourney),'sampledAbove60Km'),

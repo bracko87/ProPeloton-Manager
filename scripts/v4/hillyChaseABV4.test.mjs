@@ -1,5 +1,5 @@
 /**
- * Hilly V2 / V4 behavioral A/B: same nine synthetic stage profiles, same riders,
+ * Hilly V2 / V4 behavioral A/B: 24 synthetic stage seeds, matched riders,
  * weather and AI templates. Only one HUMAN team's phase 2+4 chase orders vary.
  * No real archived data, credential access, network calls or production writes.
  */
@@ -24,7 +24,7 @@ try{
   "import {writeFileSync,chmodSync} from 'node:fs'",
   factory,
   "const folder="+JSON.stringify(folder),
-  "const fields=[18,19,20,21,22,18,19,20,21]",
+  "const fields=Array.from({length:24},(_,i)=>[18,19,20,21,22,18,19,20,21][i%9])",
   "const paths={no_chase:{},organized_chase:{}}",
   "const rejected={no_chase:{},organized_chase:{}}",
   "const signature=new Map()",
@@ -39,8 +39,8 @@ try{
   "  const raceId='12345678-1234-4234-8234-'+String(700+index).padStart(12,'0')",
   "  input.race.raceId=raceId;input.stage.stageId=id;input.stage.raceId=raceId",
   "  input.stage.profileType='rolling';input.stage.finishType='flat_finish'",
-  "  const km=[145,153,162,169,177,187,199,205,213][index]",
-  "  input.stage.distanceKm=km;input.stage.elevationGainM=1120+index*170",
+  "  const km=[145,153,162,169,177,187,199,205,213][index%9]",
+  "  input.stage.distanceKm=km;input.stage.elevationGainM=1120+(index%9)*170",
   "  input.stage.terrainPercentages={flat:27,hilly:58,mountain:15,cobbled:0}",
   "  input.stage.profilePoints=[{km:0,elevationM:30},",
   "   {km:km*.16,elevationM:245},{km:km*.36,elevationM:65},",
@@ -91,9 +91,9 @@ try{
   throw Error('HILLY_AB_SYNTHETIC_INPUT_GENERATION_FAILED '+details)
  }
  const generated=JSON.parse(readFileSync(join(folder,'generated.json'),'utf8'))
- const paired=[0,1,2,3,4,5,6,7,8].filter(i=>
+ const paired=Array.from({length:24},(_,i)=>i).filter(i=>
   generated.paths.no_chase[i]&&generated.paths.organized_chase[i])
- assert(paired.length>=3,'Need at least three exact A/B race pairs')
+ assert(paired.length>=12,'Need at least twelve exact A/B race pairs')
  const reports={}
  for(const mode of ['no_chase','organized_chase']){
   const manifest=join(folder,mode+'-manifest.json')
@@ -117,6 +117,11 @@ try{
   completedTriples:x.eligible,
   matchedOpeningBreakaways:x.matchedOpeningBreakawayCases,
   medianOpeningKmAhead:x.v4OpeningCatchDistanceKmMedian,
+  openingAheadAtLeast25Km:x.v4OpeningAtLeast25KmCount,
+  openingAheadAtLeast50Km:x.v4OpeningAtLeast50KmCount,
+  openingAheadAtLeast100Km:x.v4OpeningAtLeast100KmCount,
+  openingSampledAbove60SecondsAtLeast10Km:x.v4OpeningAbove60SecondsAtLeast10KmCount,
+  openingSampledAbove120SecondsAtLeast10Km:x.v4OpeningAbove120SecondsAtLeast10KmCount,
   medianSampledKmWithGapAbove60Seconds:x.v4OpeningDistanceOver60SecondsKmMedian,
   medianSampledKmWithGapAbove120Seconds:x.v4OpeningDistanceOver120SecondsKmMedian,
   exactOpeningCatchLocations:x.v4OpeningCatchExactCount,
@@ -133,7 +138,8 @@ try{
  })
  console.log('V4_HILLY_ORGANIZED_CHASE_AB '+JSON.stringify({
   status:'SYNTHETIC_PHYSICAL_BEHAVIOR_ONLY',pairedInputCases:paired.length,
-  intendedSeedCases:9,baselineFixtureFailures:generated.rejected,
+  intendedSeedCases:24,firstNineSeedsPreserved:true,
+  baselineFixtureFailures:generated.rejected,
   matchedAIPreparationVerified:true,onlyHumanP2P4ChaseOrdersDiffer:true,
   noChase:summary(a),organizedHumanChase:summary(b),
   originalV2SolverModified:false,productionWrites:0,
