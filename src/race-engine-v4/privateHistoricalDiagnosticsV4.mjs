@@ -131,8 +131,8 @@ export function historicalOpeningBreakawayJourney(result,stageDistanceKm=result?
     catchLocation='lineage_untraceable_after_phase3'
    else{
     chaseSteps(p4)
+    const tolerance=0.75
     if(p4.breakawayCaught===true){
-     const tolerance=0.75
      const step=(p4.chaseSteps??[]).find(s=>
       Number.isFinite(s?.kmStart)&&Number.isFinite(s?.kmEnd)&&
       Number.isFinite(s?.startGapSeconds)&&Number.isFinite(s?.endGapSeconds)&&
