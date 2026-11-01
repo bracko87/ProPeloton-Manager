@@ -85,7 +85,11 @@ try{
   outfile:join(folder,'generate-hilly-chase.mjs'),logLevel:'silent'})
  const gen=spawnSync(process.execPath,[join(folder,'generate-hilly-chase.mjs')],{
   cwd:root,encoding:'utf8',timeout:240000,maxBuffer:1024*1024})
- if(gen.status!==0)throw Error('HILLY_AB_SYNTHETIC_INPUT_GENERATION_FAILED')
+ if(gen.status!==0){
+  // Synthetic-only factory; report a bounded stack excerpt for a failing CI test.
+  const details=String(gen.stderr??'').slice(-1000)
+  throw Error('HILLY_AB_SYNTHETIC_INPUT_GENERATION_FAILED '+details)
+ }
  const generated=JSON.parse(readFileSync(join(folder,'generated.json'),'utf8'))
  const paired=[0,1,2,3,4,5,6,7,8].filter(i=>
   generated.paths.no_chase[i]&&generated.paths.organized_chase[i])
