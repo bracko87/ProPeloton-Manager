@@ -8,7 +8,18 @@ import {fileURLToPath} from 'node:url'
 const role='v4_historical_research_reader'
 const project='okuravitxocyevkexfgi'
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-const queryMetadata="SELECT stage_id,completed_at,input_snapshot_json #>> '{stage,terrainType}' AS terrain,input_snapshot_json #>> '{stage,stageFormat}' AS stage_format,CASE result_summary_json #>> '{output_snapshot,universalResult,replaySynchronization,synchronized}' WHEN 'true' THEN true WHEN 'false' THEN false ELSE NULL END AS saved_replay_synchronized,CASE WHEN jsonb_typeof(input_snapshot_json->'teams')='array' THEN jsonb_array_length(input_snapshot_json->'teams') ELSE NULL END AS team_count,COALESCE((input_snapshot_json #>> '{teams,0,raceTeamEntryId}') ~* '^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}
+const queryMetadata=[
+ "SELECT stage_id,completed_at,input_snapshot_json #>> '{stage,terrainType}' AS terrain,",
+ "input_snapshot_json #>> '{stage,stageFormat}' AS stage_format,",
+ "CASE result_summary_json #>> '{output_snapshot,universalResult,replaySynchronization,synchronized}'",
+ "WHEN 'true' THEN true WHEN 'false' THEN false ELSE NULL END AS saved_replay_synchronized,",
+ "CASE WHEN jsonb_typeof(input_snapshot_json->'teams')='array'",
+ "THEN jsonb_array_length(input_snapshot_json->'teams') ELSE NULL END AS team_count,",
+ "COALESCE((input_snapshot_json #>> '{teams,0,raceTeamEntryId}') SIMILAR TO",
+ "'[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}',false)",
+ "AS first_entry_mappable",
+ "FROM v4_historical_research.completed_runs ORDER BY completed_at DESC LIMIT $1",
+].join(' ')
 const queryRun='SELECT stage_id,race_id,status,input_snapshot_json,result_summary_json FROM v4_historical_research.completed_runs WHERE stage_id=$1 LIMIT 2'
 const queryEntries='SELECT race_team_entry_id,race_id,participating_club_id,club_id,entry_source,is_ai_filler FROM v4_historical_research.race_entries WHERE race_id=$1 AND race_team_entry_id=ANY($2::uuid[])'
 const queryRights="SELECT current_user AS db_user,has_table_privilege(current_user,'v4_historical_research.completed_runs','SELECT') AS scoped_runs,has_table_privilege(current_user,'v4_historical_research.race_entries','SELECT') AS scoped_entries,has_table_privilege(current_user,'public.race_stage_simulation_runs','SELECT') AS live_runs,has_table_privilege(current_user,'public.race_participant_teams_v1','SELECT') AS live_entries,(SELECT rolbypassrls FROM pg_roles WHERE rolname=current_user) AS bypass_rls"
