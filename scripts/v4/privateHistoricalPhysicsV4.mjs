@@ -37,6 +37,10 @@ const variants=[
 function aggregate(comparisons,rejected){
  const group=(subset)=>({
   eligible:subset.length,
+  baselineFieldsWithAcceptedOpeningAttacks:subset.filter(x=>x.preserved_v2.acceptedOpeningAttacks>0).length,
+  combinedFieldsWithAcceptedOpeningAttacks:subset.filter(x=>x.combined.acceptedOpeningAttacks>0).length,
+  baselineMedianAcceptedOpeningAttacks:by(subset.map(x=>x.preserved_v2),'acceptedOpeningAttacks'),
+  combinedMedianAcceptedOpeningAttacks:by(subset.map(x=>x.combined),'acceptedOpeningAttacks'),
   baselineMedianMaxBreakawaySeconds:by(subset.map(x=>x.preserved_v2),'maximumBreakawayGapSeconds'),
   combinedMedianMaxBreakawaySeconds:by(subset.map(x=>x.combined),'maximumBreakawayGapSeconds'),
   energyMedianMaxBreakawaySeconds:by(subset.map(x=>x.combined_energy),'maximumBreakawayGapSeconds'),
