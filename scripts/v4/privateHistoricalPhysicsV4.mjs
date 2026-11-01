@@ -59,6 +59,9 @@ function aggregate(comparisons,rejected){
   source:'private_local_locked_historical_snapshots',
   calibratedV4PhysicalReruns:comparisons.length*2,
   historicalV2Reruns:comparisons.length,
+  historicalSourceRevisionAttested:false,
+  savedArchiveReplaySynchronizedAmongEvaluable:rejected.savedArchiveReplaySynchronized,
+  savedArchiveReplayNotSynchronizedAmongEvaluable:rejected.savedArchiveReplayNotSynchronized,
   historicalV4RealismApproved:false,
   existingV2ProductionChanged:false,strictReplayRequired:true,officialWrites:0,
   rawStageDataPublished:false,privatePathsPublished:false,
@@ -67,7 +70,7 @@ function aggregate(comparisons,rejected){
   all:group(comparisons),
   terrain:['flat','hilly','mountain','cobbled'].map(terrain=>({terrain,
    ...group(comparisons.filter(x=>x.preserved_v2.terrain===terrain))})),
-  warning:'Retrospective timing lock is not provable; historical baseline parity and strict replay are required. This is diagnostic evidence, not automatic approval.',
+  warning:'Exact historical source revision is not recorded in the archive. Git commit time is not deployment proof. Classification parity and replay checks are required, but these comparisons remain diagnostic only.',
  }
 }
 export async function runPrivateHistoricalPhysicsV4(manifestRaw){
@@ -130,6 +133,8 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
    calibratedReplayUnsynchronized:0,eligible:0}]))
   const historicalMismatchKinds=Object.fromEntries(HISTORICAL_PARITY_REASONS.map(k=>[k,0]))
   const rejects={baselineInvalid:results[0].rejected.invalid,
+   savedArchiveReplaySynchronized:results[0].rows.filter(r=>r.historicalReplaySynchronized===true).length,
+   savedArchiveReplayNotSynchronized:results[0].rows.filter(r=>r.historicalReplaySynchronized!==true).length,
    baselineUnsupported:results[0].rejected.unsupported,
    baselineReplayUnsynchronized:0,baselineHistoricMismatch:0,
    calibratedReplayUnsynchronized:0,calibratedMissing:0,
