@@ -94,5 +94,15 @@ assert.equal(noLineage.kmAhead,null)
 assert.equal(noLineage.catchLocation,'lineage_untraceable_after_phase1')
 assert.equal(noLineage.phase4Estimated,false)
 assert.equal(noLineage.sampledAbove60Km,2)
+// Real V2/V4 result objects do not embed stage.distanceKm. The trusted
+// locked input supplies that distance separately to the diagnostic.
+const survival=openingJourney({roadRaceResolution:{
+ phase1Opening:start,phase2Development:phase2,phase3Decisive:phase3,
+ phase4Finish:{...phase4,breakawayCaught:false,
+  breakawaySurvived:true,endGapSeconds:90}}},40)
+assert.equal(survival.catchLocation,'survived_to_finish')
+assert.equal(survival.catchKm,null)
+assert.equal(survival.kmAhead,28)
+assert.equal(survival.phase4Estimated,false)
 console.log('V4_PRIVATE_HISTORY_DIAGNOSTICS_UNIT '+JSON.stringify({status:'PASS',syntheticOnly:true,
- cases:29,rawHistoryPublished:false,officialWrites:0}))
+ cases:33,rawHistoryPublished:false,officialWrites:0}))

@@ -147,6 +147,17 @@ try{
    validV4ComparisonsMayHaveDifferentMembership:a.eligible!==b.eligible,
    strictReplayFailures:{noChase:{v2:v2FailedA,v4:v4FailedA},
     organizedHumanChase:{v2:v2FailedB,v4:v4FailedB}},
+   otherStrictExclusions:{
+    noChase:{
+     baselineInvalid:reports.no_chase.rejected.baselineInvalid,
+     baselineUnsupported:reports.no_chase.rejected.baselineUnsupported,
+     calibratedMissing:reports.no_chase.rejected.calibratedMissing,
+     failedPhysicsByVariant:reports.no_chase.rejected.failedPhysicsByVariant},
+    organizedHumanChase:{
+     baselineInvalid:reports.organized_chase.rejected.baselineInvalid,
+     baselineUnsupported:reports.organized_chase.rejected.baselineUnsupported,
+     calibratedMissing:reports.organized_chase.rejected.calibratedMissing,
+     failedPhysicsByVariant:reports.organized_chase.rejected.failedPhysicsByVariant}},
    noChase:summary(a),organizedHumanChase:summary(b)})
  }
  assert(perDistance.some(x=>x.noChase.matchedOpeningBreakaways>0),

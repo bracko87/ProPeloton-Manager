@@ -146,7 +146,7 @@ export function historicalOpeningBreakawayJourney(result,stageDistanceKm=result?
        'phase4_step_estimate',true)
      }else catchLocation='phase4_caught_location_unknown'
     }else if(p4.breakawaySurvived===true&&
-     Number.isFinite(result?.stage?.distanceKm)&&
+     Number.isFinite(stageDistanceKm)&&
      p4.endGapSeconds>tolerance)
      catchLocation='survived_to_finish'
     else catchLocation='phase4_outcome_unresolved'
