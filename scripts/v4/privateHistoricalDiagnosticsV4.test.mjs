@@ -76,7 +76,7 @@ assert.equal(journey.launchKm,12)
 assert.ok(journey.catchKm>29&&journey.catchKm<30)
 assert.ok(journey.kmAhead>17&&journey.kmAhead<18)
 assert.equal(journey.peakSeconds,130)
-assert.equal(journey.sampledAbove60Km,8)
+assert.equal(journey.sampledAbove60Km,12)
 assert.equal(journey.sampledAbove120Km,0)
 assert.equal(openingJourney({roadRaceResolution:{phase1Opening:{
  attackAttempts:[],breakawayRiderIds:[]}}}).openingAccepted,false)

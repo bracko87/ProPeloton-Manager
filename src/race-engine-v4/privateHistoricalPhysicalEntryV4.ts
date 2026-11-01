@@ -87,7 +87,7 @@ function evaluate(raw:unknown){
  const replaySynchronized=result.replaySynchronization?.synchronized===true
  const gapAudit=historicalPhysicalGapAudit(result)
  const archiveGapAudit=historicalPhysicalGapAudit(saved)
- const journey=historicalOpeningBreakawayJourney(result)
+ const journey=historicalOpeningBreakawayJourney(result,input.stage.distanceKm)
  return {
   stageHash,sourceHash:srcHash,terrain:input.stage.terrainType,
   riderCount:input.riders.length,teams:input.teams.length,

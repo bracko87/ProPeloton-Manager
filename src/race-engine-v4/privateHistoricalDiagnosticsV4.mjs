@@ -78,7 +78,7 @@ export function historicalPhysicalGapAudit(result){
  * Unknown or untraceable lineages remain unknown, never "caught at 7 seconds".
  * Metric values only: no stage, rider, team or private-record identifiers.
  */
-export function historicalOpeningBreakawayJourney(result){
+export function historicalOpeningBreakawayJourney(result,stageDistanceKm=result?.stage?.distanceKm){
  const road=result?.roadRaceResolution
  const p1=road?.phase1Opening,p2=road?.phase2Development
  const p3=road?.phase3Decisive,p4=road?.phase4Finish
@@ -153,7 +153,7 @@ export function historicalOpeningBreakawayJourney(result){
    }
   }
  }
- const finishKm=result?.stage?.distanceKm
+ const finishKm=stageDistanceKm
  const endKm=catchKm??(catchLocation==='survived_to_finish'&&
   Number.isFinite(finishKm)?finishKm:null)
  const sorted=points.filter(p=>endKm===null||p.km<=endKm+0.001)
