@@ -18,7 +18,7 @@ try{
  assert(start>=0&&end>start)
  const factory=original.slice(start,end)
  const code=[
-  "import {validateRunInput} from './src/universal-race-engine/runRaceEngine.ts'",
+  "import {validateRunInput,PPM_UNIVERSAL_RACE_ENGINE_KEY,PPM_UNIVERSAL_RACE_ENGINE_VERSION} from './src/universal-race-engine/runRaceEngine.ts'",
   "import {runSelectedRaceEngineV1} from './src/universal-race-engine/runSelectedRaceEngineV1.ts'",
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
   "import {writeFileSync,chmodSync} from 'node:fs'",
