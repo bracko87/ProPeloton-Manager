@@ -14,6 +14,10 @@ import {patchV4MeasuredChaseSplitResearchSource} from './mountainChaseSplitResea
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
+const targetedSeedText=process.env.V4_MOUNTAIN_TARGET_SEED??''
+if(targetedSeedText && (!focused || !/^[0-7]$/.test(targetedSeedText)))
+ throw Error('Target seed must be 0..7 and requires focused mountain forensic')
+const seedIds=targetedSeedText?[Number(targetedSeedText)]:Array.from({length:8},(_,i)=>i)
 const coalesceCandidate=process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
 const measuredCSplitCandidate=process.env.V4_MOUNTAIN_C_SPLIT_CANDIDATE==='1'
 if(measuredCSplitCandidate&&!coalesceCandidate)throw Error('Physical C split candidate requires detachment coalescence')
@@ -80,7 +84,7 @@ function injectV4WinnerCollisionForensics(source){
 const terrains=focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
 const distances=focused?[220]:[120,220]
 const workforces=[0,1,3,5]
-const seeds=8
+const seeds=seedIds.length
 const median=values=>{
  const sorted=values.filter(v=>typeof v==='number'&&Number.isFinite(v)).sort((a,b)=>a-b)
  return sorted.length?Number((sorted.length%2?sorted[(sorted.length-1)/2]:
@@ -97,7 +101,7 @@ try{
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
   "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalReplayIssueCategory,safeHistoricalReplayIssueCode,safeV4PostCatchTransferClass} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
   fixture.slice(start,end),
-  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds,
+  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds+",seedIds="+JSON.stringify(seedIds),
   String.raw`
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex')
 const rows=[]
@@ -156,7 +160,7 @@ const run=(input,pursuitTeamId)=>{
   return {valid:false,error:'OTHER_ERROR'}
  }
 }
-for(const terrain of terrains)for(const km of distances)for(let seed=0;seed<seeds;seed++){
+for(const terrain of terrains)for(const km of distances)for(const seed of seedIds){
  const teams=[18,19,20,21,22,18,19,20][seed]
  let {input,options}=makeField(teams,Math.floor(teams/2),{
   seed:'v4-matched-terrain-workforce-2026-'+seed,
@@ -350,7 +354,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
  }
  const pairedWorkforceContrasts=[]
  for(const terrain of terrains)for(const km of distances){
-  const comparable=Array.from({length:seeds},(_,i)=>i).filter(seed=>
+  const comparable=seedIds.filter(seed=>
    [0,1,3,5].every(workers=>paired.some(r=>
     r.terrain===terrain&&r.km===km&&r.seed===seed&&r.workers===workers&&
     r.v2.valid&&r.v4.valid&&r.v2.opening&&r.v4.opening)))
@@ -400,7 +404,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
-  explicitHumanChaseWorkforce:workforces,seedCount:seeds,
+  explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
   fieldTeamCounts:[18,19,20,21,22],
   humanChasePhases:[2,3,4],
   workerSelection:'indices [2,3,5,0,1]; 5-worker group includes leader and sprinter',
@@ -408,6 +412,10 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   preservedV2AndV4InputsIdentical:true,
   replayExclusionsNeverWaived:true,officialWrites:0,
   cells,pairedWorkforceContrasts,coverageWarnings,
+  v4StrictReplayFailures:paired.filter(r=>!r.v4.valid&&r.v4.error==='STRICT_REPLAY').length,
   originalV2SolverModified:false,realismApproved:false
  }))
+ if(targetedSeedText&&measuredCSplitCandidate)
+  assert(paired.every(r=>r.v4.valid),
+   'Targeted physical C split fix incomplete: strict replay still excludes a seed-2 scenario')
 }finally{rmSync(temporary,{recursive:true,force:true})}
