@@ -15,15 +15,18 @@ import {patchV4ChaseContactResearchSource} from './mountainChaseContactResearchP
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
+const mountainStress=process.env.V4_MOUNTAIN_DISTANCE_STRESS==='1'
 const targetedSeedText=process.env.V4_MOUNTAIN_TARGET_SEED??''
 if(targetedSeedText && (!focused || !/^[0-7]$/.test(targetedSeedText)))
  throw Error('Target seed must be 0..7 and requires focused mountain forensic')
-const seedIds=targetedSeedText?[Number(targetedSeedText)]:Array.from({length:8},(_,i)=>i)
+const seedIds=targetedSeedText?[Number(targetedSeedText)]:mountainStress?[0,1,2,3]:Array.from({length:8},(_,i)=>i)
 const coalesceCandidate=process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
 const measuredCSplitCandidate=process.env.V4_MOUNTAIN_C_SPLIT_CANDIDATE==='1'
 const contactCandidate=process.env.V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE==='1'
 if(contactCandidate&&!coalesceCandidate)throw Error('Contact cohesion candidate requires detachment coalescence')
 if(measuredCSplitCandidate&&!coalesceCandidate)throw Error('Physical C split candidate requires detachment coalescence')
+if(mountainStress&&(!contactCandidate||!coalesceCandidate||focused||targetedSeedText))
+ throw Error('Mountain distance stress requires isolated full contact candidate')
 /** Optional strictly isolated V4-only research transform. */
 function injectV4DetachmentCoalescenceCandidate(source){
  const original=[
@@ -84,8 +87,8 @@ function injectV4WinnerCollisionForensics(source){
   "import {auditV4PostCatchWinnerTransfer} from '../race-engine-v4/mountainPostCatchTransferAuditV4.mjs'\n"+
   source.replace(terrainWinnerReplayThrow,lines)
 }
-const terrains=focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
-const distances=focused?[220]:[120,220]
+const terrains=mountainStress?['mountain']:focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
+const distances=mountainStress?[170,200,240]:focused?[220]:[120,220]
 const workforces=[0,1,3,5]
 const seeds=seedIds.length
 const median=values=>{
@@ -296,7 +299,14 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   const candidates=paired.filter(r=>r.terrain===terrain&&r.km===km&&r.workers===workers)
   const valid=candidates.filter(r=>r.v2.valid&&r.v4.valid)
   const opening=valid.filter(r=>r.v2.opening&&r.v4.opening)
+  const v4OnlyValid=candidates.filter(r=>r.v4.valid)
+  const v4OnlyOpening=v4OnlyValid.filter(r=>r.v4.opening)
   cells.push({terrain,km,workers,attempted:candidates.length,
+   v4Valid:v4OnlyValid.length,v4OpeningAccepted:v4OnlyOpening.length,
+   v4Survived:v4OnlyOpening.filter(r=>r.v4.survived).length,
+   v4MedianKmAhead:median(v4OnlyOpening.map(r=>r.v4.kmAhead)),
+   v4MedianPeakSeconds:median(v4OnlyOpening.map(r=>r.v4.observedPeakSeconds)),
+   v4CatchLocations:Object.fromEntries([...new Set(v4OnlyOpening.map(r=>r.v4.catchLocation))].map(k=>[k,v4OnlyOpening.filter(r=>r.v4.catchLocation===k).length])),
    pairedValid:valid.length,openingPaired:opening.length,
    survived:opening.filter(r=>r.v4.survived).length,
    medianKmAhead:median(opening.map(r=>r.v4.kmAhead)),
@@ -390,7 +400,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   .every(r=>r.fullyPairedOpeningSeeds>=4&&
    r.zeroToFiveMedianPeakReductionSeconds>0),
   'Five explicit human chasers should reduce flat-stage peak gaps in paired openings')
- if(coalesceCandidate){
+ if(coalesceCandidate&&!mountainStress){
   const shortMountain=cells.filter(c=>c.terrain==='mountain'&&c.km===120)
   const longMountain=cells.filter(c=>c.terrain==='mountain'&&c.km===220)
   assert.equal(shortMountain.length,focused?0:4,
@@ -413,6 +423,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   coalescenceCandidateApplied:coalesceCandidate,
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
+  mountainDistanceStress:mountainStress,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
