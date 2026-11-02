@@ -96,8 +96,8 @@ const run=(input,pursuitTeamId)=>{
   if(e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:'))
    return {valid:false,error:'STRICT_REPLAY',
     winnerCollisionKinds:Array.isArray(e?.v4WinnerCollisionKinds)?
-     e.v4WinnerCollisionKinds.filter(k=>['B_B','B_P','B_F','B_C','P_P','P_F',
-      'P_C','F_F','F_C','C_C','OTHER'].includes(k)):[],
+     e.v4WinnerCollisionKinds.filter(k=>['B_B','B_C','B_F','B_P','C_C','C_F',
+      'C_P','F_F','F_P','P_P','OTHER'].includes(k)):[],
     replayReason:safeHistoricalFailureReason(e),
     replayCheckpoint:safeHistoricalFailureLocation(e).checkpoint,
     replayIssueCategory:safeHistoricalReplayIssueCategory(e),
