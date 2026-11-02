@@ -426,7 +426,10 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   v4StrictReplayFailures:paired.filter(r=>!r.v4.valid&&r.v4.error==='STRICT_REPLAY').length,
   originalV2SolverModified:false,realismApproved:false
  }))
- if(targetedSeedText&&measuredCSplitCandidate)
+ if(contactCandidate)
+  assert(paired.every(r=>r.v4.valid),
+   'V4 contact-cohesion candidate must pass every selected strict replay without exclusions')
+ else if(targetedSeedText&&measuredCSplitCandidate)
   assert(paired.every(r=>r.v4.valid),
    'Targeted physical C split fix incomplete: strict replay still excludes a seed-2 scenario')
 }finally{rmSync(temporary,{recursive:true,force:true})}

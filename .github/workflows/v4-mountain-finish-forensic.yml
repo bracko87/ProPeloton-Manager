@@ -57,6 +57,22 @@ jobs:
           V4_MOUNTAIN_TARGET_SEED: '2'
           V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
+  full-contact-cohesion-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Require 192 of 192 strict V4 replays with research-only chase contact correction
+        env:
+          V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
+          V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
+          V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
+        run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   isolated-mountain-220-forensic:
     runs-on: ubuntu-latest
     timeout-minutes: 15
