@@ -476,10 +476,17 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
       threeChasersCloseFaster:three?.phase2?.endGapSeconds<one?.phase2?.endGapSeconds,
       oneCatchLocation:one?.catchLocation,threeCatchLocation:three?.catchLocation}
    }))
-   assert(comparisons.some(c=>c.threeChasersCloseFaster),
-    'Early physical chase candidate had no measurable gain over one chaser')
+   assert(comparisons.length===12,'Controlled early mountain comparison requires 12 matched pairs')
+   assert(comparisons.every(c=>Number.isFinite(c.oneGapSeconds)&&
+     Number.isFinite(c.threeGapSeconds)&&c.threeGapSeconds<=c.oneGapSeconds),
+     'More explicit mountain chasers must not increase the phase-2 gap in matched physical conditions')
+   const activeComparisons=comparisons.filter(c=>c.oneGapSeconds>0)
+   const fasterCount=activeComparisons.filter(c=>c.threeChasersCloseFaster).length
+   assert(activeComparisons.length>=8&&fasterCount>=8,
+     'Additional chasers must physically close the gap faster in at least eight active mountain pairs')
    console.log('V4_CHASE_EARLY_PRIORITY_CONTRAST '+JSON.stringify({
-    status:'EXPERIMENTAL_REQUIRES_REALISM_REVIEW',gain:0.012,comparisons
+    status:'EXPERIMENTAL_REQUIRES_REALISM_REVIEW',gain:0.012,
+    activeComparisons:activeComparisons.length,measurablyFasterPairs:fasterCount,comparisons
    }))
   }
   console.log('V4_CHASE_EARLY_PHASE_AUDIT '+JSON.stringify({

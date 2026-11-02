@@ -24,4 +24,25 @@ for(const invalid of [
  {...race,meanWorkerEnergyFraction:-0.1},{...race,meanWorkerEnergyFraction:NaN},
  {...race,terrainType:''}
 ])assert.throws(()=>pace(invalid),/invalid bounded research inputs/)
-console.log('V4_PHASE2_CHASE_PRIORITY_MODULE '+JSON.stringify({status:'PASS',researchOnly:true,cases:24,productionWrites:0}))
+
+// Exact numerical parity with the pre-refactor isolated V4 expression.
+// This is a deterministic research contract, not validation of cycling realism.
+let parityCases=0
+for(const terrainType of ['flat','hilly','mountain'])
+ for(const eligibleChaseWorkers of [0,1,3,7,12,20])
+  for(const explicitlyChasingWorkers of [0,1,3,5,7,12,20].filter(n=>n<=eligibleChaseWorkers))
+   for(const meanWorkerEnergyFraction of [0,0.3,0.65,1])
+    for(const currentGapSeconds of [0,1,200])
+     for(const gain of [0,0.0044,0.012,0.018]){
+      const input={terrainType,eligibleChaseWorkers,explicitlyChasingWorkers,
+       meanWorkerEnergyFraction,currentGapSeconds,gain}
+      const oldExplicitFraction=eligibleChaseWorkers>0
+       ?explicitlyChasingWorkers/eligibleChaseWorkers:0
+      const expected=terrainType==='mountain'&&currentGapSeconds>0
+       ?1+gain*oldExplicitFraction*meanWorkerEnergyFraction:1
+      assert.equal(pace(input),expected,
+       'Typed V4 research module must be exactly equivalent to prior formula')
+      parityCases++
+     }
+assert(parityCases>=1000,'Require broad exact parity coverage')
+console.log('V4_PHASE2_CHASE_PRIORITY_MODULE '+JSON.stringify({status:'PASS',researchOnly:true,baseCases:24,parityCases,productionWrites:0}))
