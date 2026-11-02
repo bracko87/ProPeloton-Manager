@@ -28,6 +28,8 @@ try{
  const researched=patchPrivateHistoricalPostCatchForensicsV4(engineSource)
  assert(researched.includes('v4_private_phase='))
  assert(researched.includes('v4_private_gap='))
+ assert(researched.includes('classifyPrivateHistoricalPostCatchGapV4('))
+ assert(researched.includes("import {classifyPrivateHistoricalPostCatchGapV4}"))
  assert.equal(patchPrivateHistoricalPostCatchForensicsV4(engineSource.replace(/\r\n?|\n/g,'\r\n')),researched)
  assert.throws(()=>patchPrivateHistoricalPostCatchForensicsV4(researched),/PRIVATE_POST_CATCH_FORENSIC_SOURCE_DRIFT/)
  const fixture=readFileSync(join(root,'src/race-engine-v4/physicalResearchProbeV4.test.ts'),'utf8')

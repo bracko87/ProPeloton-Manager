@@ -7,6 +7,16 @@ on:
       - 'scripts/v4/**'
       - 'docs/race-engine-v4/**'
       - '.github/workflows/v4-physical-readonly-probe.yml'
+      - '!src/race-engine-v4/privateHistoricalPostCatchGapV4.mjs'
+      - '!src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
+      - '!src/race-engine-v4/privateHistoricalPhysicalEntryV4.ts'
+      - '!scripts/v4/privateHistoricalPostCatchForensicPatchV4.mjs'
+      - '!scripts/v4/privateHistoricalPostCatchGapV4.test.mjs'
+      - '!scripts/v4/privateHistoricalDiagnosticsV4.test.mjs'
+      - '!scripts/v4/privateHistoricalPhysicsV4.mjs'
+      - '!scripts/v4/privateHistoricalPhysicsV4.test.mjs'
+      - '!scripts/v4/privateHistoricalPgV4.mjs'
+      - '!scripts/v4/privateHistoricalPgV4.test.mjs'
   workflow_dispatch:
 permissions:
   contents: read
