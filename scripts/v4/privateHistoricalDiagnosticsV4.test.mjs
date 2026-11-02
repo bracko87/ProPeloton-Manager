@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType as errorType,
- safeHistoricalFailureReason as failureReason, HISTORICAL_FAILURE_REASONS,
+ safeHistoricalFailureReason as failureReason, safeHistoricalFailureLocation as failureLocation,
+ HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,HISTORICAL_FAILURE_REASONS,
  safeHistoricalTerrain as terrain,historicalPhysicalGapAudit as physicalGap,
  historicalOpeningBreakawayJourney as openingJourney,
  HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES}
@@ -29,6 +30,11 @@ assert.equal(failureReason(new Error('Universal replay synchronization failed: f
 assert.equal(failureReason(new Error('Universal replay synchronization failed: private data')),'REPLAY_OTHER')
 assert.equal(failureReason(new Error('private details')),'OTHER_RUNTIME_ERROR')
 assert.equal(failureReason('private details'),'NON_ERROR_THROW')
+assert.deepEqual(HISTORICAL_FAILURE_CHECKPOINTS,['LATE_CHASE_STEP','RACE_STATUS','WINNER_FINISH','FINISH_GROUP_TRANSITION','BRIDGE_CATCH','OTHER_CHECKPOINT'])
+assert.deepEqual(HISTORICAL_FAILURE_TRANSFERS,['F1_TO_P','F2_TO_P','OTHER_TRANSFER'])
+assert.deepEqual(failureLocation(new Error('Universal replay synchronization failed: front_group_transfer_without_physical_transition:rider-sensitive:F2->P:stage-secret|replay|late-chase-step-8')), {checkpoint:'LATE_CHASE_STEP',transfer:'F2_TO_P'})
+assert.deepEqual(failureLocation(new Error('secret')), {checkpoint:'OTHER_CHECKPOINT',transfer:'OTHER_TRANSFER'})
+assert.equal(JSON.stringify(failureLocation(new Error('secret-stage|replay|winner-finish'))).includes('secret'),false)
 assert.equal(terrain({input_snapshot_json:{stage:{terrainType:'mountain',stageId:'secret'}}}),'mountain')
 assert.equal(terrain({input_snapshot_json:{stage:{terrainType:'UNKNOWN'}}}),'unknown')
 assert.equal(terrain(null),'unknown')

@@ -7,9 +7,10 @@
 import {readFileSync,realpathSync,statSync} from 'node:fs'
 import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
-import {explainHistoricalClassificationParity,safeHistoricalErrorType,safeHistoricalFailureReason,
+import {explainHistoricalClassificationParity,safeHistoricalErrorType,safeHistoricalFailureReason,safeHistoricalFailureLocation,
  safeHistoricalTerrain,historicalPhysicalGapAudit,historicalOpeningBreakawayJourney,
- HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES,HISTORICAL_FAILURE_REASONS}
+ HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES,HISTORICAL_FAILURE_REASONS,
+ HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS}
  from './privateHistoricalDiagnosticsV4.mjs'
 import {runSelectedRaceEngineV1,selectCompleteRaceEngineLaneV1}
  from '../universal-race-engine/runSelectedRaceEngineV1.ts'
@@ -136,6 +137,8 @@ function main(){
  const failureTerrains=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[t,{invalid:0,unsupported:0,other:0}]))
  const otherErrorTypes=Object.fromEntries(HISTORICAL_ERROR_TYPES.map(t=>[t,0]))
  const otherFailureReasons=Object.fromEntries(HISTORICAL_FAILURE_REASONS.map(t=>[t,0]))
+ const otherFailureCheckpoints=Object.fromEntries(HISTORICAL_FAILURE_CHECKPOINTS.map(t=>[t,0]))
+ const otherFailureTransfers=Object.fromEntries(HISTORICAL_FAILURE_TRANSFERS.map(t=>[t,0]))
  for(const path of paths){
   let data:unknown=null
   try{
@@ -154,6 +157,9 @@ function main(){
     bucket.other++
     otherErrorTypes[safeHistoricalErrorType(e)]++
     otherFailureReasons[safeHistoricalFailureReason(e)]++
+    const safeLocation=safeHistoricalFailureLocation(e)
+    otherFailureCheckpoints[safeLocation.checkpoint]++
+    otherFailureTransfers[safeLocation.transfer]++
    }
   }
  }
@@ -161,7 +167,8 @@ function main(){
  process.stdout.write('V4_PRIVATE_PHYSICAL_VARIANT '+JSON.stringify({
   variant,researchOnly:true,officialWrites:0,networkCalls:0,
   inputPathsReported:false,attempted:paths.length,rejected,failureClasses,
-  failureTerrains,otherErrorTypes,otherFailureReasons,rows,
+  failureTerrains,otherErrorTypes,otherFailureReasons,
+  otherFailureCheckpoints,otherFailureTransfers,rows,
  })+'\n')
  // Zero usable stages is a valid diagnostic result, not a child-process crash.
  // The outer operator CLI still returns failure when no comparable triple exists.

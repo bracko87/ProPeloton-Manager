@@ -18,6 +18,25 @@ export function safeHistoricalFailureReason(error){
     'REPLAY_FRONT_GROUP_TRANSFER':'REPLAY_OTHER'
  return 'OTHER_RUNTIME_ERROR'
 }
+export const HISTORICAL_FAILURE_CHECKPOINTS=Object.freeze([
+ 'LATE_CHASE_STEP','RACE_STATUS','WINNER_FINISH','FINISH_GROUP_TRANSITION',
+ 'BRIDGE_CATCH','OTHER_CHECKPOINT'
+])
+export const HISTORICAL_FAILURE_TRANSFERS=Object.freeze([
+ 'F1_TO_P','F2_TO_P','OTHER_TRANSFER'
+])
+/** Parse only whitelisted checkpoint/transfer types, never IDs or free text. */
+export function safeHistoricalFailureLocation(error){
+ const message=error instanceof Error?error.message:''
+ const checkpoint=message.includes('|replay|late-chase-step-')?'LATE_CHASE_STEP':
+  message.includes('|replay|race-status-')?'RACE_STATUS':
+  message.includes('|replay|winner-finish')?'WINNER_FINISH':
+  message.includes('|replay|finish-group-transition')?'FINISH_GROUP_TRANSITION':
+  message.includes('|replay|bridge-caught-')?'BRIDGE_CATCH':'OTHER_CHECKPOINT'
+ const transfer=message.includes(':F1->P:')?'F1_TO_P':
+  message.includes(':F2->P:')?'F2_TO_P':'OTHER_TRANSFER'
+ return {checkpoint,transfer}
+}
 const equalNumber=(a,b)=>a===null||b===null?a===b:
  Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=0.01
 

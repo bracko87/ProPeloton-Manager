@@ -154,14 +154,18 @@ try{
      calibratedMissing:reports.no_chase.rejected.calibratedMissing,
      failedPhysicsByVariant:reports.no_chase.rejected.failedPhysicsByVariant,
      otherErrorTypesByVariant:reports.no_chase.rejected.otherErrorTypesByVariant,
-     otherFailureReasonsByVariant:reports.no_chase.rejected.otherFailureReasonsByVariant},
+     otherFailureReasonsByVariant:reports.no_chase.rejected.otherFailureReasonsByVariant,
+     otherFailureCheckpointsByVariant:reports.no_chase.rejected.otherFailureCheckpointsByVariant,
+     otherFailureTransfersByVariant:reports.no_chase.rejected.otherFailureTransfersByVariant},
     organizedHumanChase:{
      baselineInvalid:reports.organized_chase.rejected.baselineInvalid,
      baselineUnsupported:reports.organized_chase.rejected.baselineUnsupported,
      calibratedMissing:reports.organized_chase.rejected.calibratedMissing,
      failedPhysicsByVariant:reports.organized_chase.rejected.failedPhysicsByVariant,
      otherErrorTypesByVariant:reports.organized_chase.rejected.otherErrorTypesByVariant,
-     otherFailureReasonsByVariant:reports.organized_chase.rejected.otherFailureReasonsByVariant}},
+     otherFailureReasonsByVariant:reports.organized_chase.rejected.otherFailureReasonsByVariant,
+     otherFailureCheckpointsByVariant:reports.organized_chase.rejected.otherFailureCheckpointsByVariant,
+     otherFailureTransfersByVariant:reports.organized_chase.rejected.otherFailureTransfersByVariant}},
    noChase:summary(a),organizedHumanChase:summary(b)})
  }
  assert(perDistance.some(x=>x.noChase.matchedOpeningBreakaways>0),
