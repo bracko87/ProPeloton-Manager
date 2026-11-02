@@ -12,6 +12,8 @@ on:
       - 'src/race-engine-v4/mountainWinnerDetachmentCandidateV4.test.mjs'
       - 'src/race-engine-v4/mountainPostCatchTransferAuditV4.mjs'
       - 'src/race-engine-v4/mountainPostCatchTransferAuditV4.test.mjs'
+      - 'scripts/v4/mountainChaseSplitResearchPatchV4.mjs'
+      - 'scripts/v4/mountainChaseSplitResearchPatchV4.test.mjs'
       - 'scripts/v4/finishTransitionResearchPatchV4.mjs'
       - '.github/workflows/v4-mountain-finish-forensic.yml'
   workflow_dispatch:
@@ -44,6 +46,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Test rider-membership lineage audit on synthetic groups
         run: node src/race-engine-v4/mountainWinnerLineageAuditV4.test.mjs
+      - name: Test measured C-group split patch is tightly anchored
+        run: node scripts/v4/mountainChaseSplitResearchPatchV4.test.mjs
       - name: Test C-to-C provenance on synthetic groups
         run: node src/race-engine-v4/mountainPostCatchTransferAuditV4.test.mjs
       - name: Test physical detachment consolidation candidate on synthetic groups
@@ -56,4 +60,10 @@ jobs:
         env:
           V4_MOUNTAIN_WINNER_FORENSIC: '1'
           V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
+        run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
+      - name: Evaluate V4 measured C-to-C physical splits without validator relaxation
+        env:
+          V4_MOUNTAIN_WINNER_FORENSIC: '1'
+          V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
+          V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
