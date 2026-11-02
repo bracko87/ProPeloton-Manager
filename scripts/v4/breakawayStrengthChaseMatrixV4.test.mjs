@@ -193,7 +193,18 @@ console.log('V4_MATRIX_WORKER '+JSON.stringify({
  })
  assert.equal(cells.length,9)
  assert(cells.every(c=>c.attempted===seedCount))
- assert(cells.some(c=>c.matchedOpening>0),'No accepted strictly valid openings in pilot')
+ assert(cells.every(c=>c.matchedValid>=10),
+  'Each treatment needs at least ten strictly paired V2/V4 races')
+ assert(cells.every(c=>c.matchedOpening>=5),
+  'Each treatment needs at least five matched accepted opening escapes')
+ assert(cells.every(c=>c.v4ReplayFailures===0),
+  'Calibrated V4 must not silently lose strict replay validity')
+ assert(sameStrength.every(r=>r.fullyPairedOpeningSeeds>=5&&
+  r.passiveToAggressiveMedianPeakReductionSeconds>0),
+  'Aggressive pursuit must reduce the measured peak gap in matched cases')
+ assert(sameChase.every(r=>r.fullyPairedOpeningSeeds>=5&&
+  r.weakToStrongMedianPeakIncreaseSeconds>0),
+  'Stronger designated attackers must improve measured gaps in matched cases')
  console.log('V4_BREAKAWAY_STRENGTH_CHASE_MATRIX '+JSON.stringify({
   status:'SYNTHETIC_ONLY_NOT_REALISM_APPROVAL',seeds:seedCount,raceKm:170,
   terrain:'hilly',conditions:9,
