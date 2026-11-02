@@ -3,7 +3,7 @@ import {storePrivateHistoricalEnvelopeV4} from './privateHistoricalExportV4.mjs'
 import {runPrivateHistoricalPilotV4} from './privateHistoricalPilotV4.mjs'
 import {TERRAIN_TARGETS} from './privateHistoricalPilotSelectionV4.mjs'
 import {runPrivateHistoricalPhysicsV4} from './privateHistoricalPhysicsV4.mjs'
-import {HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,V4_POST_CATCH_TRANSFER_CLASSES,HISTORICAL_POST_CATCH_PERIODS} from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
+import {HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,V4_POST_CATCH_TRANSFER_CLASSES,HISTORICAL_POST_CATCH_PERIODS,HISTORICAL_POST_CATCH_FORENSIC_PHASES,HISTORICAL_POST_CATCH_FORENSIC_GAPS} from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 import {readFileSync} from 'node:fs'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -166,6 +166,12 @@ export function summarizePrivateHistoricalPilotV4(report){
  const firstFailurePeriods=safeHistogram(
   report?.rejected?.postCatchPeriodsByVariant?.preserved_v2,
   HISTORICAL_POST_CATCH_PERIODS)
+ const firstFailurePhase=safeHistogram(
+  report?.rejected?.postCatchForensicPhasesByVariant?.preserved_v2,
+  HISTORICAL_POST_CATCH_FORENSIC_PHASES)
+ const firstFailureGap=safeHistogram(
+  report?.rejected?.postCatchForensicGapsByVariant?.preserved_v2,
+  HISTORICAL_POST_CATCH_FORENSIC_GAPS)
  return {
   status:report?.chasePriority12?.status??report?.status??'UNKNOWN',
   historicalSourceRevisionAttested:false,historicalV4RealismApproved:false,
@@ -181,6 +187,8 @@ export function summarizePrivateHistoricalPilotV4(report){
    otherReplayIssues:replayIssueCounts,
    postCatchFirstTransferTypes:firstFailureTransfers,
    postCatchFirstCheckpointPeriods:firstFailurePeriods,
+   postCatchFirstPhaseRelation:firstFailurePhase,
+   postCatchFirstChaseGapBand:firstFailureGap,
   },
   chasePriority:{
    compared:report?.chasePriorityResearch?.all?.compared??0,

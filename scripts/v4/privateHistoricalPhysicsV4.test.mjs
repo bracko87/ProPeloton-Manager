@@ -10,6 +10,7 @@ import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {runPrivateHistoricalPhysicsV4} from './privateHistoricalPhysicsV4.mjs'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {patchPrivateHistoricalPostCatchForensicsV4} from './privateHistoricalPostCatchForensicPatchV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const folder=mkdtempSync(join(tmpdir(),'ppm-v4-private-physics-synthetic-'))
 try{
@@ -24,6 +25,11 @@ try{
   const crlf=patchV4CalibratedPhysicalSource(engineSource.replace(/\r\n?|\n/g,'\r\n'),config)
   assert.equal(crlf,lf,'Windows CRLF must preserve exact isolated V4 source')
  }
+ const researched=patchPrivateHistoricalPostCatchForensicsV4(engineSource)
+ assert(researched.includes('v4_private_phase='))
+ assert(researched.includes('v4_private_gap='))
+ assert.equal(patchPrivateHistoricalPostCatchForensicsV4(engineSource.replace(/\r\n?|\n/g,'\r\n')),researched)
+ assert.throws(()=>patchPrivateHistoricalPostCatchForensicsV4(researched),/PRIVATE_POST_CATCH_FORENSIC_SOURCE_DRIFT/)
  const fixture=readFileSync(join(root,'src/race-engine-v4/physicalResearchProbeV4.test.ts'),'utf8')
  const first=fixture.indexOf('function makeField('),last=fixture.indexOf('\nconst scenarios=',first)
  if(first<0||last<first)throw Error('Existing synthetic fixture factory drifted')

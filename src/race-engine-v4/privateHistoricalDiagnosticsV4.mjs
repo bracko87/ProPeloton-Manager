@@ -173,6 +173,17 @@ export function safeHistoricalPostCatchPeriod(error){
  if(pct>=75&&pct<=95&&pct%5===0)return 'LATE_75_95_PERCENT'
  return 'OTHER_CHECKPOINT'
 }
+export const HISTORICAL_POST_CATCH_FORENSIC_PHASES=Object.freeze(['SAME_PHASE','CROSS_PHASE','UNKNOWN'])
+export const HISTORICAL_POST_CATCH_FORENSIC_GAPS=Object.freeze(['NEAR','SEPARATED','UNKNOWN'])
+/** Emit only an allowed research enum, never a raw error or private identity. */
+export function safeHistoricalPostCatchForensicTag(error,name,allowed){
+ const msg=error instanceof Error?error.message:''
+ if(!msg.startsWith('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:'))return 'UNKNOWN'
+ const m=msg.match(new RegExp(':v4_private_'+name+'=([A-Z_]+)(?=:|,|$)'))
+ return m&&allowed.includes(m[1])?m[1]:'UNKNOWN'
+}
+export function safeHistoricalPostCatchForensicPhase(error){return safeHistoricalPostCatchForensicTag(error,'phase',HISTORICAL_POST_CATCH_FORENSIC_PHASES)}
+export function safeHistoricalPostCatchForensicGap(error){return safeHistoricalPostCatchForensicTag(error,'gap',HISTORICAL_POST_CATCH_FORENSIC_GAPS)}
 export const HISTORICAL_FINISH_EVIDENCE=Object.freeze([
  'CAUGHT_WITHIN_PHYSICAL_TOLERANCE','CAUGHT_WITHIN_OFFICIAL_GROUP',
  'CAUGHT_BUT_SEPARATED','NOT_CAUGHT_WITHIN_PHYSICAL_TOLERANCE',

@@ -10,10 +10,12 @@ import {join,resolve,relative,sep,isAbsolute} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {patchPrivateHistoricalPostCatchForensicsV4} from './privateHistoricalPostCatchForensicPatchV4.mjs'
 import {patchV4MountainEarlyChasePriorityCandidateSource} from './mountainEarlyChasePriorityCandidateV4.mjs'
 import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES,
  HISTORICAL_FAILURE_REASONS,HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,
  HISTORICAL_FINISH_EVIDENCE,HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,
+ HISTORICAL_POST_CATCH_FORENSIC_PHASES,HISTORICAL_POST_CATCH_FORENSIC_GAPS,
  V4_POST_CATCH_TRANSFER_CLASSES,HISTORICAL_POST_CATCH_PERIODS}
  from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 
@@ -146,15 +148,16 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
     define:{__V4_PRIVATE_PHYSICS_VARIANT__:JSON.stringify(cfg.key)},
     plugins:[{name:'v4-private-physical-src',setup(ctx){
      ctx.onLoad({filter:/[\\/]runRaceEngine\.ts$/},args=>{
-      if(!cfg.patch)return null
-      const calibrated=patchV4CalibratedPhysicalSource(readFileSync(args.path,'utf8'),cfg)
-      const contents=cfg.chasePriority?patchV4MountainEarlyChasePriorityCandidateSource(calibrated):calibrated
+      const source=readFileSync(args.path,'utf8')
+      const calibrated=cfg.patch?patchV4CalibratedPhysicalSource(source,cfg):source
+      const candidate=cfg.chasePriority?patchV4MountainEarlyChasePriorityCandidateSource(calibrated):calibrated
+      const contents=patchPrivateHistoricalPostCatchForensicsV4(candidate)
       patched++
       return {contents,loader:'ts'}
      })
     }}]
    })
-   if(patched!==(cfg.patch?1:0))throw Error('CALIBRATED_ENGINE_SOURCE_NOT_LOADED')
+   if(patched!==1)throw Error('PRIVATE_FORENSIC_ENGINE_SOURCE_NOT_LOADED')
    const run=spawnSync(process.execPath,[outfile,manifest],{
     cwd:root,encoding:'utf8',timeout:300000,maxBuffer:4*1024*1024,
     env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??''},
@@ -173,6 +176,11 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
      Object.entries(report.safeReplayIssueCodes).some(([code,count])=>
       ![...HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,'UNKNOWN_ISSUE_CODE','NOT_REPLAY'].includes(code)||
       !Number.isSafeInteger(count)||count<0)||
+     !report.postCatchForensicPhases||!report.postCatchForensicGaps||
+     Object.keys(report.postCatchForensicPhases).length!==HISTORICAL_POST_CATCH_FORENSIC_PHASES.length||
+     HISTORICAL_POST_CATCH_FORENSIC_PHASES.some(k=>!Number.isSafeInteger(report.postCatchForensicPhases[k])||report.postCatchForensicPhases[k]<0)||
+     Object.keys(report.postCatchForensicGaps).length!==HISTORICAL_POST_CATCH_FORENSIC_GAPS.length||
+     HISTORICAL_POST_CATCH_FORENSIC_GAPS.some(k=>!Number.isSafeInteger(report.postCatchForensicGaps[k])||report.postCatchForensicGaps[k]<0)||
      !report.postCatchTransferClasses||!report.postCatchPeriods||
      Object.keys(report.postCatchTransferClasses).length!==V4_POST_CATCH_TRANSFER_CLASSES.length||
      V4_POST_CATCH_TRANSFER_CLASSES.some(k=>
@@ -231,6 +239,8 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
    safeReplayIssueCodesByVariant:Object.fromEntries(results.map(r=>[r.variant,r.safeReplayIssueCodes])),
    postCatchTransferClassesByVariant:Object.fromEntries(results.map(r=>[r.variant,r.postCatchTransferClasses])),
    postCatchPeriodsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.postCatchPeriods])),
+   postCatchForensicPhasesByVariant:Object.fromEntries(results.map(r=>[r.variant,r.postCatchForensicPhases])),
+   postCatchForensicGapsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.postCatchForensicGaps])),
    otherFailureCheckpointsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureCheckpoints])),
    otherFailureTransfersByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureTransfers])),
    otherFinishEvidenceByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFinishEvidence])),

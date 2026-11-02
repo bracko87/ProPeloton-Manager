@@ -5,6 +5,7 @@ import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType
  safeHistoricalReplayIssueCode as issueCode,HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,
  safeV4PostCatchTransferClass as postCatchClass,V4_POST_CATCH_TRANSFER_CLASSES,
  safeHistoricalPostCatchPeriod as catchPeriod,HISTORICAL_POST_CATCH_PERIODS,
+ safeHistoricalPostCatchForensicPhase as forensicPhase,safeHistoricalPostCatchForensicGap as forensicGap,
  HISTORICAL_FINISH_EVIDENCE,
  HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,HISTORICAL_FAILURE_REASONS,
  safeHistoricalTerrain as terrain,historicalPhysicalGapAudit as physicalGap,
@@ -32,6 +33,11 @@ assert.equal(catchPeriod(new Error('Universal replay synchronization failed: pos
 assert.equal(catchPeriod(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:private-rider:P->C3:stage-private|replay|race-status-90')), 'LATE_75_95_PERCENT')
 assert.equal(catchPeriod(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:private-rider:P->C3:stage-private|replay|winner-finish')), 'OTHER_CHECKPOINT')
 assert.equal(catchPeriod(new Error('other')), 'NOT_POST_CATCH')
+const tagged=new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:secret:P->C1:private|replay|race-status-50:v4_private_phase=SAME_PHASE:v4_private_gap=SEPARATED')
+assert.equal(forensicPhase(tagged),'SAME_PHASE')
+assert.equal(forensicGap(tagged),'SEPARATED')
+assert.equal(forensicPhase(new Error('bad')),'UNKNOWN')
+assert.equal(forensicGap(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:private:v4_private_gap=SECRET_RIDER')),'UNKNOWN')
 assert.equal(postCatchClass(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:secret-rider:C4->C5:other-private-checkpoint')),'C_TO_C')
 assert.equal(postCatchClass(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:secret-rider:P->C7:private')),'P_TO_C')
 assert.equal(postCatchClass(new Error('Universal replay synchronization failed: some_other_issue:secret-rider')),'NOT_POST_CATCH')
