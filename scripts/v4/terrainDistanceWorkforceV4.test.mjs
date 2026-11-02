@@ -11,6 +11,7 @@ import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {patchV4MeasuredChaseSplitResearchSource} from './mountainChaseSplitResearchPatchV4.mjs'
+import {patchV4ChaseContactResearchSource} from './mountainChaseContactResearchPatchV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
@@ -20,6 +21,8 @@ if(targetedSeedText && (!focused || !/^[0-7]$/.test(targetedSeedText)))
 const seedIds=targetedSeedText?[Number(targetedSeedText)]:Array.from({length:8},(_,i)=>i)
 const coalesceCandidate=process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
 const measuredCSplitCandidate=process.env.V4_MOUNTAIN_C_SPLIT_CANDIDATE==='1'
+const contactCandidate=process.env.V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE==='1'
+if(contactCandidate&&!coalesceCandidate)throw Error('Contact cohesion candidate requires detachment coalescence')
 if(measuredCSplitCandidate&&!coalesceCandidate)throw Error('Physical C split candidate requires detachment coalescence')
 /** Optional strictly isolated V4-only research transform. */
 function injectV4DetachmentCoalescenceCandidate(source){
@@ -253,7 +256,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const transformed=patchV4CalibratedPhysicalSource(readFileSync(args.path,'utf8'),config)
      const candidate=coalesceCandidate?injectV4DetachmentCoalescenceCandidate(transformed):transformed
      const withSplits=measuredCSplitCandidate?patchV4MeasuredChaseSplitResearchSource(candidate):candidate
-     return {contents:focused?injectV4WinnerCollisionForensics(withSplits):withSplits,loader:'ts'}
+     const withContact=contactCandidate?patchV4ChaseContactResearchSource(withSplits):withSplits
+     return {contents:focused?injectV4WinnerCollisionForensics(withContact):withContact,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
@@ -408,6 +412,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   status:'SYNTHETIC_DIAGNOSTIC_ONLY_NOT_REALISM_APPROVAL',focusedMountainWinnerForensics:focused,
   coalescenceCandidateApplied:coalesceCandidate,
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
+  contactCohesionCandidateApplied:contactCandidate,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,

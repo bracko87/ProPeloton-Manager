@@ -14,6 +14,9 @@ on:
       - 'src/race-engine-v4/mountainPostCatchTransferAuditV4.test.mjs'
       - 'scripts/v4/mountainChaseSplitResearchPatchV4.mjs'
       - 'scripts/v4/mountainChaseSplitResearchPatchV4.test.mjs'
+      - 'scripts/v4/mountainChaseContactResearchPatchV4.mjs'
+      - 'src/race-engine-v4/mountainChaseContactCohesionV4.mjs'
+      - 'src/race-engine-v4/mountainChaseContactCohesionV4.test.mjs'
       - 'scripts/v4/finishTransitionResearchPatchV4.mjs'
       - '.github/workflows/v4-mountain-finish-forensic.yml'
   workflow_dispatch:
@@ -44,12 +47,15 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: Verify provenance- and tolerance-guarded contact cohesion helper
+        run: node src/race-engine-v4/mountainChaseContactCohesionV4.test.mjs
       - name: Check both known mountain split failures with untouched strict validator
         env:
           V4_MOUNTAIN_WINNER_FORENSIC: '1'
           V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
           V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
           V4_MOUNTAIN_TARGET_SEED: '2'
+          V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   isolated-mountain-220-forensic:
     runs-on: ubuntu-latest
