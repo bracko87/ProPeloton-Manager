@@ -23,7 +23,8 @@ export const HISTORICAL_FAILURE_CHECKPOINTS=Object.freeze([
  'BRIDGE_CATCH','OTHER_CHECKPOINT'
 ])
 export const HISTORICAL_FAILURE_TRANSFERS=Object.freeze([
- 'F1_TO_P','F2_TO_P','OTHER_TRANSFER'
+ 'F1_TO_P','F2_TO_P','B_TO_P','B_TO_F','F_TO_B','F_TO_F',
+ 'F_TO_C','P_TO_F','OTHER_TRANSFER'
 ])
 /** Parse only whitelisted checkpoint/transfer types, never IDs or free text. */
 export function safeHistoricalFailureLocation(error){
@@ -34,7 +35,13 @@ export function safeHistoricalFailureLocation(error){
   message.includes('|replay|finish-group-transition')?'FINISH_GROUP_TRANSITION':
   message.includes('|replay|bridge-caught-')?'BRIDGE_CATCH':'OTHER_CHECKPOINT'
  const transfer=message.includes(':F1->P:')?'F1_TO_P':
-  message.includes(':F2->P:')?'F2_TO_P':'OTHER_TRANSFER'
+  message.includes(':F2->P:')?'F2_TO_P':
+  /:B\\d+->P:/.test(message)?'B_TO_P':
+  /:B\\d+->F\\d+:/.test(message)?'B_TO_F':
+  /:F\\d+->B\\d+:/.test(message)?'F_TO_B':
+  /:F\\d+->F\\d+:/.test(message)?'F_TO_F':
+  /:F\\d+->C\\d+:/.test(message)?'F_TO_C':
+  /:P->F\\d+:/.test(message)?'P_TO_F':'OTHER_TRANSFER'
  return {checkpoint,transfer}
 }
 const equalNumber=(a,b)=>a===null||b===null?a===b:
