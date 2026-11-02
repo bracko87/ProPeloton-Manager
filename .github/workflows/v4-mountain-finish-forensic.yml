@@ -16,6 +16,20 @@ on:
 permissions:
   contents: read
 jobs:
+  full-flat-mountain-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Compare optional V4 candidate across 120 and 220 km flat and mountain scenarios
+        env:
+          V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
+        run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   isolated-mountain-220-forensic:
     runs-on: ubuntu-latest
     timeout-minutes: 15

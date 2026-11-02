@@ -13,7 +13,7 @@ import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.m
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
-const coalesceCandidate=focused&&process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
+const coalesceCandidate=process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
 /** Optional strictly isolated V4-only research transform. */
 function injectV4DetachmentCoalescenceCandidate(source){
  const original=[
@@ -90,7 +90,7 @@ try{
   "import {validateRunInput,PPM_UNIVERSAL_RACE_ENGINE_KEY,PPM_UNIVERSAL_RACE_ENGINE_VERSION} from './src/universal-race-engine/runRaceEngine.ts'",
   "import {runSelectedRaceEngineV1} from './src/universal-race-engine/runSelectedRaceEngineV1.ts'",
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
-  "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalReplayIssueCategory,safeHistoricalReplayIssueCode} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
+  "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalReplayIssueCategory,safeHistoricalReplayIssueCode,safeV4PostCatchTransferClass} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
   fixture.slice(start,end),
   "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds,
   String.raw`
@@ -140,7 +140,8 @@ const run=(input,pursuitTeamId)=>{
     replayReason:safeHistoricalFailureReason(e),
     replayCheckpoint:safeHistoricalFailureLocation(e).checkpoint,
     replayIssueCategory:safeHistoricalReplayIssueCategory(e),
-    replayIssueCode:safeHistoricalReplayIssueCode(e)}
+    replayIssueCode:safeHistoricalReplayIssueCode(e),
+    postCatchTransfer:safeV4PostCatchTransferClass(e)}
   return {valid:false,error:'OTHER_ERROR'}
  }
 }
@@ -308,6 +309,9 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
     candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.finalOutcome===k)).length])),
    v4WinnerGapBands:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.gapBand)))].map(k=>[k,
     candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.gapBand===k)).length])),
+   v4PostCatchTransfers:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY'&&r.v4.postCatchTransfer!=='NOT_POST_CATCH')
+    .map(r=>r.v4.postCatchTransfer))].map(k=>[k,
+     candidates.filter(r=>r.v4.postCatchTransfer===k).length])),
    v4ReplayIssueCodes:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY')
     .map(r=>r.v4.replayIssueCode))].map(code=>[code,
      candidates.filter(r=>r.v4.replayIssueCode===code).length])),

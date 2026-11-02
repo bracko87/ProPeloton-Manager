@@ -3,6 +3,7 @@ import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType
  safeHistoricalFailureReason as failureReason, safeHistoricalFailureLocation as failureLocation, safeHistoricalFinishEvidence as finishEvidence,
  safeHistoricalReplayIssueCategory as issueCategory,HISTORICAL_REPLAY_ISSUE_CATEGORIES,
  safeHistoricalReplayIssueCode as issueCode,HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,
+ safeV4PostCatchTransferClass as postCatchClass,V4_POST_CATCH_TRANSFER_CLASSES,
  HISTORICAL_FINISH_EVIDENCE,
  HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,HISTORICAL_FAILURE_REASONS,
  safeHistoricalTerrain as terrain,historicalPhysicalGapAudit as physicalGap,
@@ -21,6 +22,12 @@ assert.equal(issueCategory(new Error('Universal replay synchronization failed: p
 assert.equal(issueCategory(new Error('Universal replay synchronization failed: unrecognized_private_identity')),'REPLAY_OTHER')
 assert.equal(issueCategory(new Error('public data')),'NOT_REPLAY')
 assert.equal(JSON.stringify(issueCategory(badError)).includes('secret-rider'),false)
+assert(V4_POST_CATCH_TRANSFER_CLASSES.includes('C_TO_C'))
+assert.equal(postCatchClass(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:secret-rider:C4->C5:other-private-checkpoint')),'C_TO_C')
+assert.equal(postCatchClass(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:secret-rider:P->C7:private')),'P_TO_C')
+assert.equal(postCatchClass(new Error('Universal replay synchronization failed: some_other_issue:secret-rider')),'NOT_POST_CATCH')
+assert.equal(postCatchClass(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:secret-rider:invalid')),'OTHER')
+assert(!postCatchClass(new Error('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:secret-rider:C4->C5:private')).includes('secret'))
 const row={id:'PRIVATE_RIDER_SHOULD_NEVER_BE_PRINTED',rank:1,status:'finished',gap:0,time:300}
 const run=(change)=>compare([row],[{...row,...change}])
 assert.deepEqual(run({}),{equal:true,reasons:[]})

@@ -141,6 +141,21 @@ export function safeHistoricalReplayIssueCategory(error){
   return 'REPLAY_GROUP_MEMBERSHIP'
  return 'REPLAY_OTHER'
 }
+export const V4_POST_CATCH_TRANSFER_CLASSES=Object.freeze([
+ 'P_TO_C','C_TO_P','C_TO_C','C_TO_F','F_TO_C','B_TO_C',
+ 'P_TO_F','F_TO_P','B_TO_P','P_TO_B','F_TO_F','OTHER','NOT_POST_CATCH'
+])
+/** Exact fixed class only; no user IDs or raw group names leave the process. */
+export function safeV4PostCatchTransferClass(error){
+ const msg=error instanceof Error?error.message:''
+ if(!msg.startsWith('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:'))
+  return 'NOT_POST_CATCH'
+ const match=msg.match(/post_catch_group_transfer_without_physical_transition:[^:]+:([PBCF][0-9]*)->([PBCF][0-9]*):/)
+ if(!match)return 'OTHER'
+ const c=code=>code[0]
+ const pair=c(match[1])+'_TO_'+c(match[2])
+ return V4_POST_CATCH_TRANSFER_CLASSES.includes(pair)?pair:'OTHER'
+}
 export const HISTORICAL_FINISH_EVIDENCE=Object.freeze([
  'CAUGHT_WITHIN_PHYSICAL_TOLERANCE','CAUGHT_WITHIN_OFFICIAL_GROUP',
  'CAUGHT_BUT_SEPARATED','NOT_CAUGHT_WITHIN_PHYSICAL_TOLERANCE',
