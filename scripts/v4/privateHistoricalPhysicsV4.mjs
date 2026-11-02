@@ -313,7 +313,13 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
     r.replaySynchronized===true&&r.savedV2ClassificationParity===true)
    const counts=rows=>Object.fromEntries(['flat','hilly','mountain'].map(t=>
     [t,rows.filter(r=>r.terrain===t).length]))
+   const probe=candidateResult.physicalProbe
+   if(!probe||!['observed','unavailable','missing','samples','transitions'].every(k=>
+     Number.isSafeInteger(probe[k])&&probe[k]>=0)||
+     probe.observed+probe.unavailable+probe.missing!==paths.length)
+     throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
    replayCandidateResearch={
+    physicalProbe:{...probe}, 
     status:'ISOLATED_REPLAY_REPAIR_DIAGNOSTIC_NOT_HISTORIC_APPROVAL',
     attempted:paths.length,strictReplayValid:candidateResult.rows.length,
     rejectedInvalid:candidateResult.rejected.invalid,
