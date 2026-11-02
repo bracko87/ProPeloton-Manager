@@ -9,6 +9,7 @@ const changeOne=(source,from,to,label)=>{
 }
 export function patchPrivateChaseGroupSplitCandidateV4(source){
  if(typeof source!=='string')throw Error('PRIVATE_CHASE_SPLIT_SOURCE_REQUIRED')
+ if(source.includes('const alreadyPublishedChaseSplit = '))throw Error('PRIVATE_CHASE_SPLIT_SOURCE_DRIFT_ALREADY_APPLIED')
  let result=source.replace(/\r\n?/g,'\n')
  result=changeOne(result,
   "  const physicalDropProbeKms = Array.from(new Set([\n    phase1.phaseBoundary.startKm,",
