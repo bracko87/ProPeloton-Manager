@@ -73,6 +73,24 @@ jobs:
           V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
           V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
+  mountain-200km-forensic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Diagnose 200 km mountain V4 replay exclusions with strict validation intact
+        env:
+          V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
+          V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
+          V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
+          V4_MOUNTAIN_DISTANCE_STRESS: '1'
+          V4_MOUNTAIN_STRESS_200_ONLY: '1'
+        run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   mountain-distance-breakaway-stress:
     runs-on: ubuntu-latest
     timeout-minutes: 25

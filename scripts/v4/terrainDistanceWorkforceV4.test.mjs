@@ -16,6 +16,8 @@ const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
 const mountainStress=process.env.V4_MOUNTAIN_DISTANCE_STRESS==='1'
+const mountainStress200Only=process.env.V4_MOUNTAIN_STRESS_200_ONLY==='1'
+if(mountainStress200Only&&!mountainStress)throw Error('200 km mountain forensic requires stress mode')
 const targetedSeedText=process.env.V4_MOUNTAIN_TARGET_SEED??''
 if(targetedSeedText && (!focused || !/^[0-7]$/.test(targetedSeedText)))
  throw Error('Target seed must be 0..7 and requires focused mountain forensic')
@@ -88,7 +90,7 @@ function injectV4WinnerCollisionForensics(source){
   source.replace(terrainWinnerReplayThrow,lines)
 }
 const terrains=mountainStress?['mountain']:focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
-const distances=mountainStress?[170,200,240]:focused?[220]:[120,220]
+const distances=mountainStress?(mountainStress200Only?[200]:[170,200,240]):focused?[220]:[120,220]
 const workforces=[0,1,3,5]
 const seeds=seedIds.length
 const median=values=>{
@@ -437,7 +439,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   assert(cells.every(c=>!Object.hasOwn(c.v4ReplayIssueCodes,'duplicate_physical_group_gap')),
    'Candidate must not resurrect duplicate physical finish gaps')
  }
- const diagnosedFailures=focused?paired.filter(x=>!x.v4.valid&&x.v4.error==='STRICT_REPLAY').map(x=>({terrain:x.terrain,km:x.km,seed:x.seed,workers:x.workers,issue:x.v4.replayIssueCode,measuredSplitCheckpoints:x.v4.measuredSplitCheckpoints})):[]
+ const diagnosedFailures=(focused||mountainStress)?paired.filter(x=>!x.v4.valid&&x.v4.error==='STRICT_REPLAY').map(x=>({terrain:x.terrain,km:x.km,seed:x.seed,workers:x.workers,issue:x.v4.replayIssueCode,checkpoint:x.v4.replayCheckpoint,transferClass:x.v4.postCatchTransfer,transferAudit:x.v4.transferAudit,measuredSplitCheckpoints:x.v4.measuredSplitCheckpoints})):[]
  const coverageWarnings=cells.filter(c=>c.pairedValid<4||c.openingPaired<3)
   .map(c=>({terrain:c.terrain,km:c.km,workers:c.workers,
    pairedValid:c.pairedValid,openingPaired:c.openingPaired,
@@ -447,7 +449,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   coalescenceCandidateApplied:coalesceCandidate,
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
-  mountainDistanceStress:mountainStress,
+  mountainDistanceStress:mountainStress,mountainStress200Only,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
