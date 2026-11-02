@@ -12,6 +12,8 @@ export interface V4FinishBridge {
 }
 export interface V4FinishTransitionContext {
  readonly allTransitionsAreFrontCaughtByPeloton:boolean
+ readonly allTransitionsAreOpeningCaughtByPeloton:boolean
+ readonly physicalPelotonCatchToleranceSeconds:number
  readonly changedRiderIds:readonly string[]
  readonly finalDisplayCodes:readonly string[]
  readonly bridgeGroups:readonly V4FinishBridge[]
@@ -29,6 +31,16 @@ export interface V4FinishTransitionDecision {
 export function reconcileV4FinishTransition(context:V4FinishTransitionContext):V4FinishTransitionDecision{
  const b=context.bridgeGroups
  const tolerated=context.officialFinishGroupingToleranceSeconds
+ const physicallyCaughtOpeningOnFinish =
+  context.allTransitionsAreOpeningCaughtByPeloton &&
+  context.changedRiderIds.length>0 &&
+  context.breakawayCaught===true &&
+  context.breakawaySurvived===false &&
+  Number.isFinite(context.physicalEndGapSeconds) &&
+  context.physicalEndGapSeconds>=0 &&
+  Number.isFinite(context.physicalPelotonCatchToleranceSeconds) &&
+  context.physicalPelotonCatchToleranceSeconds>=0 &&
+  context.physicalEndGapSeconds<=context.physicalPelotonCatchToleranceSeconds
  const officiallyGroupedButNotCaught=
   context.allTransitionsAreFrontCaughtByPeloton &&
   context.changedRiderIds.length>0 &&
@@ -44,6 +56,14 @@ export function reconcileV4FinishTransition(context:V4FinishTransitionContext):V
       bridge.catchKm===null&&separation!==undefined&&
       Number.isFinite(separation)&&separation>=0&&separation<=tolerated
   }))
+ // An opening B-to-P finish transition needs measured peloton contact, not
+ // just a shared official time group or a synthetic catch label.
+ if(physicallyCaughtOpeningOnFinish)return {
+  officialGroupingWithoutPhysicalCatch:false,
+  eventType:'catch',
+  title:'Opening breakaway caught on the line',
+  usePhysicalPelotonGapAtTransition:false
+ }
  // Preserve physical catches if *any* changed rider has recorded catch evidence.
  if(officiallyGroupedButNotCaught)return {
   officialGroupingWithoutPhysicalCatch:true,

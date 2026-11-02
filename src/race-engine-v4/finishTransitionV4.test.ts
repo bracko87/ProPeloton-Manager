@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 import {reconcileV4FinishTransition,preserveV4FinishGroupGap,canonicalV4OfficialFinishGap} from './finishTransitionV4.ts'
 const context={
  allTransitionsAreFrontCaughtByPeloton:true,
+ allTransitionsAreOpeningCaughtByPeloton:false,
+ physicalPelotonCatchToleranceSeconds:0.75,
  changedRiderIds:['rider-024'],
  finalDisplayCodes:['B1','P'],
  bridgeGroups:[{riderIds:['rider-024'],caughtByPeloton:false,catchKm:null,gapSamples:[{gapToPelotonSeconds:2.964}]}],
@@ -38,6 +40,20 @@ assert.equal(preserveV4FinishGroupGap(5.18724,false)-preserveV4FinishGroupGap(0,
 assert.equal(preserveV4FinishGroupGap(5.468381,false)-preserveV4FinishGroupGap(0,false)>5,true)
 assert.equal(preserveV4FinishGroupGap(5,false)-preserveV4FinishGroupGap(0,false)>5,false)
 
+const actualOpeningCatch={...context,
+ allTransitionsAreFrontCaughtByPeloton:false,
+ allTransitionsAreOpeningCaughtByPeloton:true,
+ changedRiderIds:['rider-024'],finalDisplayCodes:['P'],
+ bridgeGroups:[],breakawayCaught:true,breakawaySurvived:false,
+ physicalEndGapSeconds:0.5}
+const recognizedOpeningCatch=reconcileV4FinishTransition(actualOpeningCatch)
+assert.equal(recognizedOpeningCatch.eventType,'catch')
+assert.equal(recognizedOpeningCatch.usePhysicalPelotonGapAtTransition,false)
+assert.equal(recognizedOpeningCatch.title,'Opening breakaway caught on the line')
+assert.equal(reconcileV4FinishTransition({...actualOpeningCatch,breakawayCaught:false}).eventType,'group_split')
+assert.equal(reconcileV4FinishTransition({...actualOpeningCatch,physicalEndGapSeconds:0.751}).eventType,'group_split')
+assert.equal(reconcileV4FinishTransition({...actualOpeningCatch,breakawaySurvived:true}).eventType,'group_split')
+assert.equal(reconcileV4FinishTransition({...actualOpeningCatch,allTransitionsAreOpeningCaughtByPeloton:false}).eventType,'group_split')
 const physicalGaps=[0,5,5.18724,5.468381,19.655293,25.123674,214.748364]
 for(const gap of physicalGaps){
  const canonical=canonicalV4OfficialFinishGap(13000,gap)
