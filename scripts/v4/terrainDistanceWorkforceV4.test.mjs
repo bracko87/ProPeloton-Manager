@@ -34,7 +34,7 @@ try{
 const terrains=['flat','mountain'],distances=[120,220],workers=[0,1,3,5],seeds=8
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex')
 const rows=[]
-const run=(input)=>{
+const run=(input,pursuitTeamId)=>{
  const errors=validateRunInput(input)
  if(errors.length)return {valid:false,error:'INVALID_INPUT'}
  try{
@@ -44,6 +44,7 @@ const run=(input)=>{
   const journey=historicalOpeningBreakawayJourney(result,input.stage.distanceKm)
   const audit=historicalPhysicalGapAudit(result)
   const phase4=result.roadRaceResolution?.phase4Finish
+  const pursuitTeam=phase4?.chasingTeamStrength?.find(t=>t.teamId===pursuitTeamId)
   const states=phase4?.riderStates??[]
   const energy=states.length?
    states.reduce((sum,r)=>sum+(Number.isFinite(r.energyAtFinish)?r.energyAtFinish:0),0)/states.length:null
@@ -54,7 +55,11 @@ const run=(input)=>{
    observedPeakSeconds:audit.observedPeak,
    endGapSeconds:Number.isFinite(phase4?.endGapSeconds)?phase4.endGapSeconds:null,
    energyAtFinish:energy,
-   phase4ExplicitChaserTeams:phase4?.explicitChasingTeamIds?.length??null}
+   phase4ExplicitChaserTeams:phase4?.explicitChasingTeamIds?.length??null,
+   pursuitExplicitRiders:pursuitTeam?.explicitChaserRiderIds?.length??0,
+   pursuitTotalWorkers:pursuitTeam?.riderCount??0,
+   pursuitStrengthScore:Number.isFinite(pursuitTeam?.strengthScore)?pursuitTeam.strengthScore:null,
+   pursuitMeanEnergy:Number.isFinite(pursuitTeam?.averageLiveEnergy)?pursuitTeam.averageLiveEnergy:null}
  }catch(e){
   if(e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:'))
    return {valid:false,error:'STRICT_REPLAY',
@@ -125,7 +130,7 @@ for(const terrain of terrains)for(const km of distances)for(let seed=0;seed<seed
     points:variant.points,preparation:variant.preparation})!==frozenHash)
    throw Error('IMMUTABLE_COURSE_ROSTER_OR_AI_DRIFT')
   rows.push({terrain,km,seed,workers:count,
-   inputHash:hash(variant),assignedChaseRiders:assigned,result:run(variant)})
+   inputHash:hash(variant),assignedChaseRiders:assigned,result:run(variant,pursuit)})
  }
 }
 console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
@@ -189,6 +194,10 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    medianPeakSeconds:median(opening.map(r=>r.v4.observedPeakSeconds)),
    medianEnergyAtFinish:median(opening.map(r=>r.v4.energyAtFinish)),
    explicitChasingTeams:median(valid.map(r=>r.v4.phase4ExplicitChaserTeams)),
+   medianPursuitExplicitChaseRiders:median(valid.map(r=>r.v4.pursuitExplicitRiders)),
+   medianPursuitTotalWorkers:median(valid.map(r=>r.v4.pursuitTotalWorkers)),
+   medianPursuitTeamStrengthScore:median(valid.map(r=>r.v4.pursuitStrengthScore)),
+   medianPursuitTeamEnergy:median(valid.map(r=>r.v4.pursuitMeanEnergy)),
    v2StrictReplayExclusions:candidates.filter(r=>r.v2.error==='STRICT_REPLAY').length,
    v4StrictReplayExclusions:candidates.filter(r=>r.v4.error==='STRICT_REPLAY').length,
    invalidInputOrOtherErrors:candidates.filter(r=>
