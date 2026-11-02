@@ -213,7 +213,8 @@ export function summarizePrivateHistoricalPilotV4(report){
    postCatchFirstChaseGapBand:firstFailureGap,
   },
   replayRepairCandidate:report?.replayCandidateResearch?
-   {attempted:report.replayCandidateResearch.attempted,
+   {physicalProbe:report.replayCandidateResearch.physicalProbe??null,
+    attempted:report.replayCandidateResearch.attempted,
     strictReplayValid:report.replayCandidateResearch.strictReplayValid,
     recoveredStrictFromBaseline:report.replayCandidateResearch.recoveredStrictFromUnmodifiedBaseline,
     recoveredAndArchivedParity:report.replayCandidateResearch.recoveredWithArchivedClassificationParity,
