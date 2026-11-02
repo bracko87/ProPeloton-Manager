@@ -23,10 +23,11 @@ function connect(url,key,factory){
 export async function runPrivateHistoricalPilotV4({
  url,key,clientFactory=createClient,exportStage=exportPrivateHistoricalStage,
  metadataReader=null,physicalRunner=runPrivateHistoricalPhysicsV4,progress=null,targets=TERRAIN_TARGETS,
- metadataLimit=250,maxProbesPerTerrain=18
+ metadataLimit=250,maxProbesPerTerrain=18,requireVerifiedMetadata=false
 }={}){
  if(!Number.isSafeInteger(metadataLimit)||metadataLimit<1||metadataLimit>350||
  !Number.isSafeInteger(maxProbesPerTerrain)||maxProbesPerTerrain<1||maxProbesPerTerrain>24||
+ typeof requireVerifiedMetadata!=='boolean'||
  !targets||Object.keys(targets).some(t=>!terrains.includes(t))||
  terrains.some(t=>!Number.isSafeInteger(targets[t])||targets[t]<0||targets[t]>12))
   throw Error('Unsafe private pilot limits')
@@ -36,7 +37,7 @@ export async function runPrivateHistoricalPilotV4({
   .eq('status','completed').order('completed_at',{ascending:false}).limit(metadataLimit):
   {data:await metadataReader(metadataLimit),error:null}
  if(response.error||!Array.isArray(response.data))throw Error('Metadata SELECT denied')
- const selection=selectV4HistoricalPilotCandidates(response.data,{maxPerTerrain:maxProbesPerTerrain})
+ const selection=selectV4HistoricalPilotCandidates(response.data,{maxPerTerrain:maxProbesPerTerrain,requireVerifiedMetadata})
  if(progress)progress({phase:'METADATA_READY',metadataRows:selection.metadataRows,potential:selection.potential,preflight:selection.preflight})
  const folder=mkdtempSync(join(tmpdir(),'ppm-v4-historical-pilot-'))
  const created=[],files=[]

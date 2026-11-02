@@ -24,3 +24,17 @@ The archive does not reliably prove its exact production source revision or orig
 
 ## Before production
 Require opt-in synthetic test and historical runner clean, nonzero strictly matched historical cases, believable physical breakaway durations, pursuit-response sensitivity, energy budgets, replay consistency and explicit review. Production V2 and normal V4 remain unchanged.
+
+## Restricted Postgres pilot integration (additional opt-in)
+The existing `scripts/v4/privateHistoricalPgV4.mjs` restricted-reader pilot now supports the private fourth variant **only** when `PPM_V4_RESEARCH_CHASE_PRIORITY=1` is explicitly set by the trusted operator. The default remains the previous three variants.
+
+For Windows CMD in a trusted private machine with the existing restricted-reader credentials and CA configuration (never share those values):
+
+```cmd
+set PPM_V4_RESEARCH_CHASE_PRIORITY=1
+node scripts/v4/privateHistoricalPgV4.mjs
+```
+
+With this flag, candidate discovery considers only archived stages with **confirmed synchronized saved replay and full authoritative team-entry mapping**, rather than relying on missing/unknown metadata as fallback. The private solver must report positive evidence that its opt-in variant ran; missing or malformed candidate evidence is rejected. The usual current-V2 saved-finish parity and strict replay guards still determine eligible paired historical results. The pilot prints only anonymized aggregate outcome categories and metrics and securely deletes temporary private files. Keep the environment flag unset for the default three-variant behavior.
+
+This integration was verified with synthetic data only. The real historical sample has not yet been run with this new mode.

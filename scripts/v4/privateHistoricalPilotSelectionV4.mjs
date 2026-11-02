@@ -3,9 +3,9 @@ export const TERRAIN_TARGETS=Object.freeze({flat:4,hilly:4,mountain:4,cobbled:1}
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const terrainKeys=Object.keys(TERRAIN_TARGETS)
 const newCounts=()=>({passed:0,unknown:0,unsynchronized:0,teamStructure:0,entryMapping:0})
-export function selectV4HistoricalPilotCandidates(rows,{maxPerTerrain=18}={}){
+export function selectV4HistoricalPilotCandidates(rows,{maxPerTerrain=18,requireVerifiedMetadata=false}={}){
  if(!Array.isArray(rows)||rows.length>350||!Number.isSafeInteger(maxPerTerrain)||
-  maxPerTerrain<1||maxPerTerrain>24)throw Error('Invalid historical pilot selection limits')
+  maxPerTerrain<1||maxPerTerrain>24||typeof requireVerifiedMetadata!=='boolean')throw Error('Invalid historical pilot selection limits')
  const prioritized=Object.fromEntries(terrainKeys.map(t=>[t,[]]))
  const fallback=Object.fromEntries(terrainKeys.map(t=>[t,[]]))
  const preflight=Object.fromEntries(terrainKeys.map(t=>[t,newCounts()]))
@@ -42,7 +42,7 @@ export function selectV4HistoricalPilotCandidates(rows,{maxPerTerrain=18}={}){
   }
  }
  const groups=Object.fromEntries(terrainKeys.map(t=>
-  [t,prioritized[t].concat(fallback[t]).slice(0,maxPerTerrain)]))
+  [t,(requireVerifiedMetadata?prioritized[t]:prioritized[t].concat(fallback[t])).slice(0,maxPerTerrain)]))
  return {groups,rejected,preflight,metadataRows:rows.length,
   potential:Object.fromEntries(terrainKeys.map(t=>[t,groups[t].length]))}
 }

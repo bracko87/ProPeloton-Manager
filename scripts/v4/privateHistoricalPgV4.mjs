@@ -60,6 +60,10 @@ export async function runPrivatePgHistoricalPilotV4({
  progress=null
 }={}){
  const plan=historicalPgCohortPlan(env)
+ const candidateFlag=env.PPM_V4_RESEARCH_CHASE_PRIORITY
+ if(candidateFlag!==undefined&&candidateFlag!=='0'&&candidateFlag!=='1')
+  throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
+ const includeChasePriority=candidateFlag==='1'
  const conf=privatePgConfig(env)
  const Client=ClientConstructor??(await import('pg')).default.Client
  const db=new Client(conf)
@@ -89,8 +93,21 @@ export async function runPrivatePgHistoricalPilotV4({
    const entries=(await db.query(queryEntries,[run.race_id,ids])).rows
    return storePrivateHistoricalEnvelopeV4(run,entries,stageId)
   }
+  const candidateRunner=includeChasePriority?async manifest=>{
+   const report=await physicalRunner(manifest,{includeChasePriority:true})
+   const priority=report?.chasePriorityResearch
+   if(!priority||priority.enabledByExplicitOption!==true||
+      priority.status!=='PRIVATE_RESEARCH_DIAGNOSTIC_NOT_REALISM_APPROVAL'||
+      priority.officialWrites!==0||priority.rawStageDataPublished!==false||
+      !Number.isSafeInteger(priority.attemptedPrivateCandidateRuns)||
+      priority.attemptedPrivateCandidateRuns<1||
+      !Number.isSafeInteger(priority.all?.compared)||priority.all.compared<0)
+    throw Error('UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT')
+   return report
+  }:physicalRunner
   return await runPrivateHistoricalPilotV4({
-   metadataReader,exportStage,physicalRunner,
+   metadataReader,exportStage,physicalRunner:candidateRunner,
+   requireVerifiedMetadata:includeChasePriority,
    targets:plan.targets,maxProbesPerTerrain:plan.maxProbesPerTerrain,
    progress:state=>{
     phase=state.phase
@@ -104,7 +121,7 @@ export async function runPrivatePgHistoricalPilotV4({
 function safeError(err){
  const msg=String(err?.message??'')
  const allowed=['INVALID_HISTORICAL_COHORT','RESTRICTED_PG_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
-  'INVALID_PRIVATE_CA_PATH','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
+  'INVALID_PRIVATE_CA_PATH','INVALID_PRIVATE_CANDIDATE_OPTION','UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
   'NO_ARCHIVED_TEAMS','INVALID_ENTRY_MAPPING','PRIVATE_PHYSICAL_ENGINE_FAILED',
   'UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE','PHYSICAL_HISTORIC_INPUT_MISMATCH',
   'PRIVATE_PATH_REJECTED','DUPLICATE_PRIVATE_INPUT','INVALID_MANIFEST',

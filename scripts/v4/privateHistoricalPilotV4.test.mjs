@@ -38,6 +38,15 @@ assert.deepEqual(quality.groups.hilly,[uuid(44),uuid(45),uuid(47)])
 assert.deepEqual(quality.preflight.hilly,{
  passed:3,unknown:1,unsynchronized:1,teamStructure:1,entryMapping:2})
 assert.equal(quality.potential.hilly,3)
+const strict=selectV4HistoricalPilotCandidates(preflightRows,{
+ maxPerTerrain:18,requireVerifiedMetadata:true})
+assert.deepEqual(strict.groups.hilly,[uuid(44),uuid(45),uuid(47)])
+assert.equal(strict.preflight.hilly.unknown,1)
+assert.equal(strict.potential.hilly,3)
+assert.deepEqual(selectV4HistoricalPilotCandidates([entry(99,'flat')],{
+ requireVerifiedMetadata:true}).groups.flat,[])
+assert.throws(()=>selectV4HistoricalPilotCandidates(preflightRows,{
+ requireVerifiedMetadata:'yes'}),/Invalid historical pilot selection limits/)
 const created=[]
 let queries=0,exports=0,physics=0
 function clientFactory(){return{from(table){

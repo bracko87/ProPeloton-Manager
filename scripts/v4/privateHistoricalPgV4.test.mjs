@@ -139,5 +139,37 @@ assert.equal(nine.preflight.hilly.passed,9)
 assert.equal(nine.consideredCompleteTriples,9)
 assert.equal(nine.officialWrites,0)
 assert.equal(opened,4);assert.equal(closed,4)
+// Opt-in can only use verified metadata. It must pass the explicit request to
+// the private worker; no inline snapshot or identifier enters the public report.
+let candidateCalls=0
+const withCandidate=await runPrivatePgHistoricalPilotV4({
+ env:{...env,PPM_V4_RESEARCH_CHASE_PRIORITY:'1'},
+ ClientConstructor:FakeClient,
+ physicalRunner:async (manifest,options)=>{
+  candidateCalls++
+  assert.deepEqual(options,{includeChasePriority:true})
+  const paths=JSON.parse(readFileSync(manifest,'utf8')).privateEnvelopePaths
+  assert.equal(paths.length,1)
+  return {officialWrites:0,rawStageDataPublished:false,privatePathsPublished:false,
+   consideredCompleteTriples:1,chasePriorityResearch:{
+    status:'PRIVATE_RESEARCH_DIAGNOSTIC_NOT_REALISM_APPROVAL',
+    enabledByExplicitOption:true,officialWrites:0,rawStageDataPublished:false,
+    attemptedPrivateCandidateRuns:1,all:{compared:1}}}
+ }})
+assert.equal(candidateCalls,1)
+assert.equal(withCandidate.chasePriorityResearch.all.compared,1)
+assert.equal(withCandidate.preflight.flat.passed,1)
+assert.equal(withCandidate.historicalV4RealismApproved,false)
+await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
+ env:{...env,PPM_V4_RESEARCH_CHASE_PRIORITY:'all'},
+ ClientConstructor:FakeClient}),/INVALID_PRIVATE_CANDIDATE_OPTION/)
+await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
+ env:{...env,PPM_V4_RESEARCH_CHASE_PRIORITY:'1'},
+ ClientConstructor:FakeClient,
+ physicalRunner:async()=>({officialWrites:0,rawStageDataPublished:false,
+  privatePathsPublished:false,consideredCompleteTriples:1})
+}),/UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT/)
+assert.equal(opened,6);assert.equal(closed,6)
+
 console.log('V4_PRIVATE_PG_READONLY_RESEARCH_UNIT '+JSON.stringify({
- status:'PASS',syntheticOnly:true,cases:24,officialWrites:0}))
+ status:'PASS',syntheticOnly:true,cases:31,optionalCandidateVerified:true,officialWrites:0}))
