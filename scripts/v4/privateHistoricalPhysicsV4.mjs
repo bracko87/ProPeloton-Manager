@@ -314,7 +314,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
    const counts=rows=>Object.fromEntries(['flat','hilly','mountain'].map(t=>
     [t,rows.filter(r=>r.terrain===t).length]))
    const probe=candidateResult.physicalProbe
-   if(!probe||!['observed','unavailable','missing','samples','transitions','failedRiderMovementObserved','failedRiderMovementMissing','failedRiderNotMatched'].every(k=>
+   if(!probe||!['observed','unavailable','missing','samples','transitions','failedRiderMovementObserved','failedRiderMovementMissing','failedRiderNotMatched','exactIntervalOverlap','exactIntervalOutside','exactIntervalUnmatchable'].every(k=>
      Number.isSafeInteger(probe[k])&&probe[k]>=0)||
      probe.observed+probe.unavailable+probe.missing!==paths.length)
      throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
