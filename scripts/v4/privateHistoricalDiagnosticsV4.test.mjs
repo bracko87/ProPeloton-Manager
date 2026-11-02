@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType as errorType,
  safeHistoricalFailureReason as failureReason, safeHistoricalFailureLocation as failureLocation, safeHistoricalFinishEvidence as finishEvidence,
  safeHistoricalReplayIssueCategory as issueCategory,HISTORICAL_REPLAY_ISSUE_CATEGORIES,
+ safeHistoricalReplayIssueCode as issueCode,HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,
  HISTORICAL_FINISH_EVIDENCE,
  HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,HISTORICAL_FAILURE_REASONS,
  safeHistoricalTerrain as terrain,historicalPhysicalGapAudit as physicalGap,
@@ -9,6 +10,10 @@ import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType
  HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES}
  from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 assert.equal(HISTORICAL_REPLAY_ISSUE_CATEGORIES.length,10)
+assert(HISTORICAL_REPLAY_KNOWN_ISSUE_CODES.length>=45)
+assert.equal(issueCode(new Error('Universal replay synchronization failed: same_kilometre_physical_state_mismatch:SECRET_ID')),'same_kilometre_physical_state_mismatch')
+assert.equal(issueCode(new Error('Universal replay synchronization failed: hidden_person_id:SECRET_ID')),'UNKNOWN_ISSUE_CODE')
+assert.equal(issueCode(new Error('other error')),'NOT_REPLAY')
 const badError=new Error('Universal replay synchronization failed: same_kilometre_physical_state_mismatch:secret-rider|replay|winner-finish')
 assert.equal(issueCategory(badError),'SAME_KILOMETRE_PHYSICAL_STATE')
 assert.equal(issueCategory(new Error('Universal replay synchronization failed: gap_change_not_distance_bounded:private')),'GAP_DISTANCE_BOUND')

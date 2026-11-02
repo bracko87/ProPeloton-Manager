@@ -44,6 +44,74 @@ export function safeHistoricalFailureLocation(error){
   /:P->F\d+:/.test(message)?'P_TO_F':'OTHER_TRANSFER'
  return {checkpoint,transfer}
 }
+export const HISTORICAL_REPLAY_KNOWN_ISSUE_CODES=Object.freeze([
+ "active_commands_mismatch",
+ "base_checkpoint_count_mismatch",
+ "base_checkpoint_count_must_equal_five",
+ "bridge_attack_invalid",
+ "bridge_group_disappears_without_merge",
+ "bridge_group_without_peloton",
+ "bridge_merge_invalid",
+ "bridge_progress_invalid",
+ "chase_emergency_rail_prolonged_saturation",
+ "checkpoint_commentary_missing",
+ "checkpoint_index_mismatch",
+ "checkpoint_progress_invalid",
+ "checkpoint_rider_identity_mismatch",
+ "checkpoint_rider_states_incomplete",
+ "commentary_decimal_seconds",
+ "commentary_exposes_internal_phase",
+ "commentary_reference_invalid",
+ "duplicate_checkpoint_id",
+ "duplicate_commentary_id",
+ "duplicate_group_display_code",
+ "duplicate_group_rider_membership",
+ "duplicate_physical_group_gap",
+ "event_checkpoint_count_mismatch",
+ "final_checkpoint_identity_mismatch",
+ "final_group_membership_mismatch",
+ "final_replay_timestamp_mismatch",
+ "final_results_visibility_checkpoint_count_mismatch",
+ "final_rider_result_mismatch",
+ "final_road_groups_or_gaps_mismatch",
+ "finish_commentary_winner_mismatch",
+ "finish_replay_timestamp_mismatch",
+ "finish_winner_mismatch",
+ "front_group_transfer_without_physical_transition",
+ "gap_change_not_distance_bounded",
+ "group_gap_cardinality_mismatch",
+ "group_gap_identity_mismatch",
+ "incident_commentary_count_mismatch",
+ "incident_id_set_mismatch",
+ "incident_reference_invalid",
+ "intermediate_results_mismatch",
+ "official_result_leak",
+ "opening_breakaway_formation_missing_physical_group",
+ "opening_breakaway_lineage_changed",
+ "opening_breakaway_lineage_changed_without_bridge_merge",
+ "opening_breakaway_reappears",
+ "playback_recalculates_race",
+ "post_catch_breakaway_or_chase_reappears",
+ "post_catch_group_transfer_without_physical_transition",
+ "pre_finish_status_mismatch",
+ "rider_group_gap_mismatch",
+ "rider_state_missing_group",
+ "same_kilometre_physical_state_mismatch",
+ "successful_attack_without_physical_group",
+ "team_state_count_mismatch",
+ "team_states_incomplete",
+ "timeline_inactive",
+ "timeline_not_complete_before_playback",
+ "unknown_group_rider"
+])
+/** Return ONLY a code whitelisted from the validator's static issue labels. */
+export function safeHistoricalReplayIssueCode(error){
+ const msg=error instanceof Error?error.message:''
+ const head='Universal replay synchronization failed: '
+ if(!msg.startsWith(head))return 'NOT_REPLAY'
+ const code=msg.slice(head.length).split(':')[0]
+ return HISTORICAL_REPLAY_KNOWN_ISSUE_CODES.includes(code)?code:'UNKNOWN_ISSUE_CODE'
+}
 export const HISTORICAL_REPLAY_ISSUE_CATEGORIES=Object.freeze([
  'SAME_KILOMETRE_PHYSICAL_STATE','GAP_DISTANCE_BOUND','FINAL_GROUP_MEMBERSHIP',
  'POST_CATCH_TRANSITION','FRONT_LINEAGE','BRIDGE_SEQUENCE',
