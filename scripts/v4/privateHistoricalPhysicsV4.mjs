@@ -13,6 +13,7 @@ import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.m
 import {patchPrivateHistoricalPostCatchForensicsV4} from './privateHistoricalPostCatchForensicPatchV4.mjs'
 import {patchPrivateLowReserveReplayCandidateV4} from './privateLowReserveReplayCandidateV4.mjs'
 import {patchPrivateChaseGroupSplitCandidateV4} from './privateChaseGroupSplitCandidateV4.mjs'
+import {patchPhysicalReplayProbeSourceV4} from './privatePhysicalReplayProbePatchV4.mjs'
 import {patchV4MountainEarlyChasePriorityCandidateSource} from './mountainEarlyChasePriorityCandidateV4.mjs'
 import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES,
  HISTORICAL_FAILURE_REASONS,HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,
@@ -158,7 +159,11 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
       const prepared=cfg.replayCandidate?
        patchPrivateChaseGroupSplitCandidateV4(patchPrivateLowReserveReplayCandidateV4(candidate)):
        candidate
-      const contents=patchPrivateHistoricalPostCatchForensicsV4(prepared)
+      // Research candidate only: the physical probe records observations without
+      // modifying replay events, validation rules or official race calculations.
+      const instrumented=cfg.replayCandidate?
+        patchPhysicalReplayProbeSourceV4(prepared):prepared
+      const contents=patchPrivateHistoricalPostCatchForensicsV4(instrumented)
       patched++
       return {contents,loader:'ts'}
      })
