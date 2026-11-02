@@ -30,13 +30,19 @@ function injectV4WinnerCollisionForensics(source){
   "    const gaps=cp?.gaps??[]",
   "    const kind=code=>code==='P'?'P':code.startsWith('B')?'B':code.startsWith('F')?'F':code.startsWith('C')?'C':'OTHER'",
   "    const pairs=[]",
+  "    const origins=[]",
+  "    const cpIndex=replayTimeline.checkpoints.findIndex(x=>x.checkpointId.includes('|replay|winner-finish'))",
+  "    const earlier=replayTimeline.checkpoints.slice(0,Math.max(0,cpIndex)).reverse().find(x=>cp&&x.raceProgress.kmFromStart<cp.raceProgress.kmFromStart-0.000001)",
   "    for(let i=0;i<gaps.length;i++)for(let j=i+1;j<gaps.length;j++){",
   "      if(Math.round(gaps[i].gapSeconds*1e6)!==Math.round(gaps[j].gapSeconds*1e6))continue",
   "      const pair=[kind(gaps[i].displayCode),kind(gaps[j].displayCode)].sort()",
   "      pairs.push(pair.includes('OTHER')?'OTHER':pair.join('_'))",
+  "      const first=earlier?.gaps.find(x=>x.displayCode===gaps[i].displayCode)",
+  "      const second=earlier?.gaps.find(x=>x.displayCode===gaps[j].displayCode)",
+  "      origins.push(!first||!second?'NO_PREVIOUS_GROUP_CODE':Math.abs(first.gapSeconds-second.gapSeconds)<=0.000001?'PRE_SHARED_GAP':'PRE_SEPARATED_GAPS')",
   "    }",
   "    const err=new Error(`Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`)",
-  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort()})",
+  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort()})",
   "    throw err",
   "  }"
  ].join('\n')
@@ -95,6 +101,8 @@ const run=(input,pursuitTeamId)=>{
  }catch(e){
   if(e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:'))
    return {valid:false,error:'STRICT_REPLAY',
+    winnerCollisionOrigins:Array.isArray(e?.v4WinnerCollisionOrigins)?
+     e.v4WinnerCollisionOrigins.filter(x=>['PRE_SHARED_GAP','PRE_SEPARATED_GAPS','NO_PREVIOUS_GROUP_CODE'].includes(x)):[],
     winnerCollisionKinds:Array.isArray(e?.v4WinnerCollisionKinds)?
      e.v4WinnerCollisionKinds.filter(k=>['B_B','B_C','B_F','B_P','C_C','C_F',
       'C_P','F_F','F_P','P_P','OTHER'].includes(k)):[],
@@ -256,6 +264,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      candidates.filter(r=>r.v2.replayIssueCode===code).length])),
    v4WinnerCollisionKinds:Object.fromEntries([...new Set(candidates.flatMap(r=>r.v4.winnerCollisionKinds??[]))].map(kind=>[kind,
      candidates.filter(r=>(r.v4.winnerCollisionKinds??[]).includes(kind)).length])),
+   v4WinnerCollisionOrigins:Object.fromEntries([...new Set(candidates.flatMap(r=>r.v4.winnerCollisionOrigins??[]))].map(origin=>[origin,
+     candidates.filter(r=>(r.v4.winnerCollisionOrigins??[]).includes(origin)).length])),
    v4ReplayIssueCodes:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY')
     .map(r=>r.v4.replayIssueCode))].map(code=>[code,
      candidates.filter(r=>r.v4.replayIssueCode===code).length])),
