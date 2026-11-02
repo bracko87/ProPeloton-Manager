@@ -13,6 +13,7 @@ import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.m
 import {patchV4MeasuredChaseSplitResearchSource} from './mountainChaseSplitResearchPatchV4.mjs'
 import {patchV4ChaseContactResearchSource} from './mountainChaseContactResearchPatchV4.mjs'
 import {patchV4MountainFrontCollisionSource} from './mountainFrontCodeCollisionPatchV4.mjs'
+import {patchV4MountainChaseWorkerTelemetrySource} from './mountainChaseWorkerTelemetryV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
@@ -21,6 +22,8 @@ const mountainRealismExpanded=process.env.V4_MOUNTAIN_REALISM_EIGHT_SEEDS==='1'
 const openingForensic=process.env.V4_MOUNTAIN_OPENING_FORENSIC==='1'
 const humanAttackFixture=process.env.V4_MOUNTAIN_HUMAN_ATTACK_CONTROL==='1'
 const humanChaseMiddle=process.env.V4_MOUNTAIN_HUMAN_CHASE_MIDDLE==='1'
+const chaseWorkerTelemetry=process.env.V4_MOUNTAIN_CHASE_WORKER_TELEMETRY==='1'
+if(chaseWorkerTelemetry&&!humanChaseMiddle)throw Error('Phase 4 chase telemetry requires one/three-chaser controlled fixture')
 if(humanChaseMiddle&&!humanAttackFixture)throw Error('Chase-middle research requires explicit human attackers')
 const humanAttackForensic=process.env.V4_MOUNTAIN_HUMAN_ATTACK_FORENSIC==='1'
 if(humanAttackForensic&&!humanAttackFixture)throw Error('Human attack forensic requires controlled attack fixture')
@@ -119,7 +122,7 @@ function injectV4WinnerCollisionForensics(source){
   source.replace(terrainWinnerReplayThrow,lines)
 }
 const terrains=mountainStress?['mountain']:focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
-const distances=mountainStress?(mountainStress200Only||humanAttackForensic?[200]:[170,200,240]):focused?[220]:[120,220]
+const distances=mountainStress?(mountainStress200Only||humanAttackForensic||chaseWorkerTelemetry?[200]:[170,200,240]):focused?[220]:[120,220]
 const workforces=openingForensic||humanAttackForensic?[0]:humanChaseMiddle?[1,3]:humanAttackFixture?[0,5]:[0,1,3,5]
 const seeds=seedIds.length
 const median=values=>{
@@ -323,13 +326,14 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const withSplits=measuredCSplitCandidate?patchV4MeasuredChaseSplitResearchSource(candidate):candidate
      const withContact=contactCandidate?patchV4ChaseContactResearchSource(withSplits):withSplits
      const withFrontCodes=frontCodeCandidate?patchV4MountainFrontCollisionSource(withContact):withContact
-     return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withFrontCodes):withFrontCodes,loader:'ts'}
+     const withTelemetry=chaseWorkerTelemetry?patchV4MountainChaseWorkerTelemetrySource(withFrontCodes):withFrontCodes
+     return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withTelemetry):withTelemetry,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
   const execution=spawnSync(process.execPath,[output],{
    cwd:root,encoding:'utf8',timeout:420000,maxBuffer:8*1024*1024,
-   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??'',V4_MOUNTAIN_SPLIT_TRACE:(targetedSeedText||humanAttackForensic)?'1':'0'}
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??'',V4_MOUNTAIN_SPLIT_TRACE:(targetedSeedText||humanAttackForensic)?'1':'0',V4_CHASE_STEP_TELEMETRY:chaseWorkerTelemetry&&config.patch?'1':'0'}
   })
   assert.equal(execution.status,0,
    config.key+' read-only worker failed '+String(execution.stderr??'').slice(-1100))
@@ -342,6 +346,29 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    console.log('V4_MOUNTAIN_C_SPLIT_PHYSICS_TRACE '+JSON.stringify({
     seedIds,traces:lines.map(line=>JSON.parse(line.slice('V4_MOUNTAIN_C_SPLIT_PHYSICS '.length)))
    }))
+  }
+  if(chaseWorkerTelemetry&&config.key==='calibrated_v4'){
+   const telemetry=stdout.filter(line=>line.startsWith('V4_CHASE_PHYSICS_STEP '))
+    .map(line=>JSON.parse(line.slice('V4_CHASE_PHYSICS_STEP '.length)))
+   assert(telemetry.length>=8,'Expected phase-4 measured chase telemetry')
+   const grouped=seedIds.flatMap(seed=>workforces.map(orders=>{
+    const seedText='v4-matched-terrain-workforce-2026-'+seed
+    const rows=telemetry.filter(t=>t.seed===seedText&&t.explicitOrders===orders)
+    return {seed,orders,steps:rows.length,
+      medianActiveExplicit:median(rows.map(t=>t.activeExplicit)),
+      medianActiveAutomatic:median(rows.map(t=>t.activeAutomatic)),
+      medianTotalActive:median(rows.map(t=>t.activeExplicit+t.activeAutomatic)),
+      medianPelotonKmh:median(rows.map(t=>t.pelotonPaceKmh)),
+      medianWorkIntensity:median(rows.map(t=>t.workIntensity)),
+      medianResponseMultiplier:median(rows.map(t=>t.responseMultiplier)),
+      medianGapSeconds:median(rows.map(t=>t.currentGapSeconds)),
+      responseModes:Object.fromEntries([...new Set(rows.map(t=>t.responseMode))].map(mode=>[
+        mode,rows.filter(t=>t.responseMode===mode).length])),
+    }
+   }))
+   assert(grouped.every(g=>g.steps>0),'Every matched seed/workforce needs telemetry')
+   console.log('V4_CHASE_WORKER_TELEMETRY '+JSON.stringify({
+    source:'V4_SYNTHETIC_RESEARCH_ONLY',stageKm:200,readOnly:true,rows:grouped}))
   }
   assert.equal(parsed.rows.length,terrains.length*distances.length*workforces.length*seeds)
   assert.equal(parsed.officialWrites,0)
@@ -530,7 +557,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
