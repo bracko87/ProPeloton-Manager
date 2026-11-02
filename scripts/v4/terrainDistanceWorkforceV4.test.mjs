@@ -69,7 +69,7 @@ function injectV4WinnerCollisionForensics(source){
   "      origins.push(!first||!second?'NO_PREVIOUS_GROUP_CODE':Math.abs(first.gapSeconds-second.gapSeconds)<=0.000001?'PRE_SHARED_GAP':'PRE_SEPARATED_GAPS')",
   "    }",
   "    const err=new Error(`Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`)",
-  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort(),v4WinnerLineageAudit:auditV4WinnerGapCollisions(replayTimeline.checkpoints),v4TransferAudit:auditV4PostCatchWinnerTransfer(replayTimeline.checkpoints)})",
+  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort(),v4WinnerLineageAudit:auditV4WinnerGapCollisions(replayTimeline.checkpoints),v4TransferAudit:auditV4PostCatchWinnerTransfer(replayTimeline.checkpoints),v4MeasuredSplitCheckpoints:replayTimeline.checkpoints.filter(x=>x.checkpointId.includes('v4-measured-chase-split')).map(x=>Number(x.raceProgress.kmFromStart.toFixed(5))).slice(-16)})",
   "    throw err",
   "  }"
  ].join('\n')
@@ -144,6 +144,7 @@ const run=(input,pursuitTeamId)=>{
       ['ZERO','POSITIVE_UNDER_ONE_SECOND','ONE_TO_TEN_SECONDS','OVER_TEN_SECONDS'].includes(r.gapBand)):[],
     winnerCollisionOrigins:Array.isArray(e?.v4WinnerCollisionOrigins)?
      e.v4WinnerCollisionOrigins.filter(x=>['PRE_SHARED_GAP','PRE_SEPARATED_GAPS','NO_PREVIOUS_GROUP_CODE'].includes(x)):[],
+    measuredSplitCheckpoints:Array.isArray(e?.v4MeasuredSplitCheckpoints)?e.v4MeasuredSplitCheckpoints:[],
     winnerCollisionKinds:Array.isArray(e?.v4WinnerCollisionKinds)?
      e.v4WinnerCollisionKinds.filter(k=>['B_B','B_C','B_F','B_P','C_C','C_F',
       'C_P','F_F','F_P','P_P','OTHER'].includes(k)):[],
@@ -388,6 +389,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   assert(cells.every(c=>!Object.hasOwn(c.v4ReplayIssueCodes,'duplicate_physical_group_gap')),
    'Candidate must not resurrect duplicate physical finish gaps')
  }
+ const diagnosedFailures=focused?paired.filter(x=>!x.v4.valid&&x.v4.error==='STRICT_REPLAY').map(x=>({terrain:x.terrain,km:x.km,seed:x.seed,workers:x.workers,issue:x.v4.replayIssueCode,measuredSplitCheckpoints:x.v4.measuredSplitCheckpoints})):[]
  const coverageWarnings=cells.filter(c=>c.pairedValid<4||c.openingPaired<3)
   .map(c=>({terrain:c.terrain,km:c.km,workers:c.workers,
    pairedValid:c.pairedValid,openingPaired:c.openingPaired,
@@ -396,6 +398,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   status:'SYNTHETIC_DIAGNOSTIC_ONLY_NOT_REALISM_APPROVAL',focusedMountainWinnerForensics:focused,
   coalescenceCandidateApplied:coalesceCandidate,
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
+  diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,
   fieldTeamCounts:[18,19,20,21,22],
