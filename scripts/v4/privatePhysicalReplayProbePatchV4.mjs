@@ -57,13 +57,17 @@ import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupRep
       const checkpoints=replayTimeline.checkpoints
       const at=checkpoints.findIndex(c=>c.checkpointId===checkpointId)
       const probe=(globalThis as typeof globalThis & {__ppmV4PhysicalProbe?: any}).__ppmV4PhysicalProbe
-      if(probe && at>0){
-        probe.failedCheckpointInterval={
+      if(probe){
+        probe.failureCaptureStatus=at>0?'CAPTURED':at===0?'FIRST_CHECKPOINT':'CHECKPOINT_NOT_FOUND'
+        if(at>0)probe.failedCheckpointInterval={
           riderId:parts[1],
           previousKm:checkpoints[at-1].raceProgress.kmFromStart,
           checkpointKm:checkpoints[at].raceProgress.kmFromStart
         }
       }
+    }else{
+      const probe=(globalThis as typeof globalThis & {__ppmV4PhysicalProbe?: any}).__ppmV4PhysicalProbe
+      if(probe)probe.failureCaptureStatus='ISSUE_NOT_FOUND'
     }
   }
 `
