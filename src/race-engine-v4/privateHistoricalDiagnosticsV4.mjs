@@ -44,6 +44,35 @@ export function safeHistoricalFailureLocation(error){
   /:P->F\d+:/.test(message)?'P_TO_F':'OTHER_TRANSFER'
  return {checkpoint,transfer}
 }
+export const HISTORICAL_REPLAY_ISSUE_CATEGORIES=Object.freeze([
+ 'SAME_KILOMETRE_PHYSICAL_STATE','GAP_DISTANCE_BOUND','FINAL_GROUP_MEMBERSHIP',
+ 'POST_CATCH_TRANSITION','FRONT_LINEAGE','BRIDGE_SEQUENCE',
+ 'WINNER_TIMING','REPLAY_GROUP_MEMBERSHIP','REPLAY_OTHER','NOT_REPLAY'
+])
+/** First strict replay invariant only; never echo free text, IDs or checkpoint names. */
+export function safeHistoricalReplayIssueCategory(error){
+ const msg=error instanceof Error?error.message:''
+ const head='Universal replay synchronization failed: '
+ if(!msg.startsWith(head))return 'NOT_REPLAY'
+ const code=msg.slice(head.length).split(':')[0]
+ if(code==='same_kilometre_physical_state_mismatch')return 'SAME_KILOMETRE_PHYSICAL_STATE'
+ if(code==='gap_change_not_distance_bounded')return 'GAP_DISTANCE_BOUND'
+ if(code==='final_group_membership_mismatch'||code==='final_road_groups_or_gaps_mismatch')
+  return 'FINAL_GROUP_MEMBERSHIP'
+ if(code==='post_catch_breakaway_or_chase_reappears'||
+    code==='post_catch_group_transfer_without_physical_transition')
+  return 'POST_CATCH_TRANSITION'
+ if(code.startsWith('opening_breakaway_lineage_')||
+    code==='opening_breakaway_reappears')return 'FRONT_LINEAGE'
+ if(code.startsWith('bridge_'))return 'BRIDGE_SEQUENCE'
+ if(code==='finish_winner_mismatch'||code==='finish_replay_timestamp_mismatch'||
+    code==='final_replay_timestamp_mismatch'||code==='finish_commentary_winner_mismatch')
+  return 'WINNER_TIMING'
+ if(code==='rider_group_gap_mismatch'||code==='rider_state_missing_group'||
+    code==='group_gap_identity_mismatch'||code==='duplicate_group_rider_membership')
+  return 'REPLAY_GROUP_MEMBERSHIP'
+ return 'REPLAY_OTHER'
+}
 export const HISTORICAL_FINISH_EVIDENCE=Object.freeze([
  'CAUGHT_WITHIN_PHYSICAL_TOLERANCE','CAUGHT_WITHIN_OFFICIAL_GROUP',
  'CAUGHT_BUT_SEPARATED','NOT_CAUGHT_WITHIN_PHYSICAL_TOLERANCE',

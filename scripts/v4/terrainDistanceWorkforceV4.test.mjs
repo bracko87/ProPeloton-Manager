@@ -28,7 +28,7 @@ try{
   "import {validateRunInput,PPM_UNIVERSAL_RACE_ENGINE_KEY,PPM_UNIVERSAL_RACE_ENGINE_VERSION} from './src/universal-race-engine/runRaceEngine.ts'",
   "import {runSelectedRaceEngineV1} from './src/universal-race-engine/runSelectedRaceEngineV1.ts'",
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
-  "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
+  "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalReplayIssueCategory} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
   fixture.slice(start,end),
   String.raw`
 const terrains=['flat','mountain'],distances=[120,220],workers=[0,1,3,5],seeds=8
@@ -59,7 +59,8 @@ const run=(input)=>{
   if(e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:'))
    return {valid:false,error:'STRICT_REPLAY',
     replayReason:safeHistoricalFailureReason(e),
-    replayCheckpoint:safeHistoricalFailureLocation(e).checkpoint}
+    replayCheckpoint:safeHistoricalFailureLocation(e).checkpoint,
+    replayIssueCategory:safeHistoricalReplayIssueCategory(e)}
   return {valid:false,error:'OTHER_ERROR'}
  }
 }
@@ -199,6 +200,12 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    v4ReplayReasons:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY')
     .map(r=>r.v4.replayReason))].map(reason=>[reason,
      candidates.filter(r=>r.v4.replayReason===reason).length])),
+   v2ReplayIssueCategories:Object.fromEntries([...new Set(candidates.filter(r=>r.v2.error==='STRICT_REPLAY')
+    .map(r=>r.v2.replayIssueCategory))].map(category=>[category,
+     candidates.filter(r=>r.v2.replayIssueCategory===category).length])),
+   v4ReplayIssueCategories:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY')
+    .map(r=>r.v4.replayIssueCategory))].map(category=>[category,
+     candidates.filter(r=>r.v4.replayIssueCategory===category).length])),
    v2ReplayCheckpoints:Object.fromEntries([...new Set(candidates.filter(r=>r.v2.error==='STRICT_REPLAY')
     .map(r=>r.v2.replayCheckpoint))].map(checkpoint=>[checkpoint,
      candidates.filter(r=>r.v2.replayCheckpoint===checkpoint).length])),
