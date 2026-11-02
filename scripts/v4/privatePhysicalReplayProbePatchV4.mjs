@@ -43,5 +43,29 @@ export function patchPhysicalReplayProbeSourceV4(source){
  const imports=`import {planPhysicalReplaySamplesV4,capturePhysicalReplaySamplesV4} from '../../scripts/v4/physicalReplaySamplingV4.mjs'
 import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupReplayAdapterV4.mjs'
 `;
- return imports+source.replace(anchor,body+anchor)
+ const guarded=source.replace(anchor,body+anchor)
+ const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
+ if(guarded.split(publicationAnchor).length!==2)
+   throw Error('PHYSICAL_REPLAY_PUBLICATION_SOURCE_DRIFT')
+ const capture=`  // Capture precise failed replay checkpoint interval in private memory.
+  if (!replayPublicationPolicy.publishable) {
+    const issue=replayPublicationPolicy.blockingIssues.find((v: string) =>
+      v.startsWith('post_catch_group_transfer_without_physical_transition:'))
+    if(issue){
+      const parts=issue.split(':')
+      const checkpointId=parts.slice(3).join(':')
+      const checkpoints=replayTimeline.checkpoints
+      const at=checkpoints.findIndex(c=>c.checkpointId===checkpointId)
+      const probe=(globalThis as typeof globalThis & {__ppmV4PhysicalProbe?: any}).__ppmV4PhysicalProbe
+      if(probe && at>0){
+        probe.failedCheckpointInterval={
+          riderId:parts[1],
+          previousKm:checkpoints[at-1].raceProgress.kmFromStart,
+          checkpointKm:checkpoints[at].raceProgress.kmFromStart
+        }
+      }
+    }
+  }
+`
+ return imports+guarded.replace(publicationAnchor,capture+publicationAnchor)
 }
