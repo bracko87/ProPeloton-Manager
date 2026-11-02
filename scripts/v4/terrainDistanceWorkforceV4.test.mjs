@@ -26,6 +26,7 @@ const humanChaseMiddle=process.env.V4_MOUNTAIN_HUMAN_CHASE_MIDDLE==='1'
 const chaseWorkerTelemetry=process.env.V4_MOUNTAIN_CHASE_WORKER_TELEMETRY==='1'
 const chaseEfficiencyCandidate=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_CANDIDATE==='1'
 const chaseEfficiencyFullDistances=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_FULL_DISTANCES==='1'
+const earlyPhaseAudit=process.env.V4_MOUNTAIN_EARLY_PHASE_AUDIT==='1'
 const chaseEfficiencyGainText=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_GAIN
 if(chaseEfficiencyGainText!==undefined&&(!chaseEfficiencyCandidate||!['0','0.0022','0.0044','0.0088'].includes(chaseEfficiencyGainText)))
  throw Error('Isolated research chase gain must be one of 0, 0.0022, 0.0044 or 0.0088')
@@ -33,6 +34,7 @@ const chaseEfficiencyGain=chaseEfficiencyGainText===undefined?0.0022:Number(chas
 if(chaseEfficiencyFullDistances&&!chaseEfficiencyCandidate)throw Error('Full distance candidate needs isolated research pace candidate')
 if(chaseEfficiencyCandidate&&!chaseWorkerTelemetry)throw Error('Chase-efficiency candidate requires read-only telemetry')
 if(chaseWorkerTelemetry&&!humanChaseMiddle)throw Error('Phase 4 chase telemetry requires one/three-chaser controlled fixture')
+if(earlyPhaseAudit&&!humanChaseMiddle)throw Error('Early-phase chase audit requires controlled one/three-chaser fixture')
 if(humanChaseMiddle&&!humanAttackFixture)throw Error('Chase-middle research requires explicit human attackers')
 const humanAttackForensic=process.env.V4_MOUNTAIN_HUMAN_ATTACK_FORENSIC==='1'
 if(humanAttackForensic&&!humanAttackFixture)throw Error('Human attack forensic requires controlled attack fixture')
@@ -150,7 +152,7 @@ try{
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
   "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalReplayIssueCategory,safeHistoricalReplayIssueCode,safeV4PostCatchTransferClass} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
   fixture.slice(start,end),
-  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds+",seedIds="+JSON.stringify(seedIds)+",openingForensic="+openingForensic+",humanAttackFixture="+humanAttackFixture+",focused="+focused+",mountainStress200Only="+mountainStress200Only,
+  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds+",seedIds="+JSON.stringify(seedIds)+",openingForensic="+openingForensic+",humanAttackFixture="+humanAttackFixture+",focused="+focused+",mountainStress200Only="+mountainStress200Only+",earlyPhaseAudit="+earlyPhaseAudit,
   String.raw`
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex')
 const rows=[]
@@ -165,6 +167,22 @@ const run=(input,pursuitTeamId)=>{
   const audit=historicalPhysicalGapAudit(result)
   const phase4=result.roadRaceResolution?.phase4Finish
   const phase1=result.roadRaceResolution?.phase1Opening
+  const phase2=result.roadRaceResolution?.phase2Development
+  const phase3=result.roadRaceResolution?.phase3Decisive
+  const phaseSummary=(phase,start,end,catchAt)=>phase?{
+   startKm:phase.phaseBoundary?.startKm??null,
+   endKm:phase.phaseBoundary?.endKm??null,
+   startGapSeconds:Number.isFinite(start)?start:null,
+   endGapSeconds:Number.isFinite(end)?end:null,
+   catchKm:Number.isFinite(catchAt)?catchAt:null,
+   gapTrajectory:(phase.physicalGapTrajectory??[]).map(point=>({
+    km:point.kmFromStart,gapSeconds:point.gapSeconds
+   }))
+  }:null
+  const earlyPhases=earlyPhaseAudit?{
+   phase2:phaseSummary(phase2,phase2?.startGapSeconds,phase2?.endGapSeconds,phase2?.breakawayCatchKm),
+   phase3:phaseSummary(phase3,phase3?.physicalStartGapSeconds,phase3?.physicalEndGapSeconds,phase3?.physicalCatchKm)
+  }:null
   const openingAudit=(openingForensic||humanAttackFixture)?{
    status:phase1?.status??'missing',
    eligibleAttackers:phase1?.eligibleAttackerIds?.length??null,
@@ -190,6 +208,7 @@ const run=(input,pursuitTeamId)=>{
   const energy=states.length?
    states.reduce((sum,r)=>sum+(Number.isFinite(r.energyAtFinish)?r.energyAtFinish:0),0)/states.length:null
   return {valid:true,opening:journey.openingAccepted,openingAudit,
+   ...(earlyPhaseAudit?{earlyPhases}:{}),
    kmAhead:journey.kmAhead,
    survived:journey.catchLocation==='survived_to_finish',
    catchLocation:journey.catchLocation,
@@ -407,6 +426,26 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   return {terrain:a.terrain,km:a.km,seed:a.seed,workers:a.workers,
    v2:a.result,v4:b.result}
  })
+ if(earlyPhaseAudit){
+  const earlyRows=paired.map(r=>({
+   km:r.km,seed:r.seed,workers:r.workers,
+   valid:r.v4.valid,opening:r.v4.opening,
+   catchLocation:r.v4.catchLocation,
+   phase2:r.v4.earlyPhases?.phase2??null,
+   phase3:r.v4.earlyPhases?.phase3??null
+  }))
+  assert(earlyRows.length===24,'Early-phase chase audit must cover all 24 matched race settings')
+  assert(earlyRows.every(r=>r.valid&&r.phase2&&r.phase3),'Early-phase audit requires complete strictly valid phase results')
+  assert(earlyRows.every(r=>[r.phase2,r.phase3].every(p=>
+   p.gapTrajectory.every(pt=>Number.isFinite(pt.km)&&Number.isFinite(pt.gapSeconds)&&pt.gapSeconds>=0))),
+   'Early-phase audit requires real nonnegative physical gap samples')
+  console.log('V4_CHASE_EARLY_PHASE_AUDIT '+JSON.stringify({
+   status:'RESEARCH_READ_ONLY_NOT_REALISM_APPROVAL',
+   distancesKm:distances,workers:workforces,seeds:seedIds,
+   source:'VERIFIED_UNMODIFIED_PHASE_2_3_RESULT',
+   strictReplayValidated:true,officialWrites:0,rows:earlyRows
+  }))
+ }
  const cells=[]
  for(const terrain of terrains)for(const km of distances)for(const workers of workforces){
   const candidates=paired.filter(r=>r.terrain===terrain&&r.km===km&&r.workers===workers)
@@ -580,7 +619,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,chaseEfficiencyCandidate,chaseEfficiencyFullDistances,chaseEfficiencyGain:chaseEfficiencyCandidate?chaseEfficiencyGain:null,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,earlyPhaseAudit,chaseEfficiencyCandidate,chaseEfficiencyFullDistances,chaseEfficiencyGain:chaseEfficiencyCandidate?chaseEfficiencyGain:null,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,

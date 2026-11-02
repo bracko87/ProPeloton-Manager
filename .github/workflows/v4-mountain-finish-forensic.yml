@@ -200,6 +200,29 @@ jobs:
           V4_MOUNTAIN_CHASE_EFFICIENCY_FULL_DISTANCES: '1'
           V4_MOUNTAIN_CHASE_EFFICIENCY_GAIN: ${{ matrix.gain }}
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
+  mountain-chase-early-phase-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Compare measured phase-2 and phase-3 chase gaps for 24 matched mountain races
+        env:
+          V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
+          V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
+          V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
+          V4_MOUNTAIN_FRONT_CODE_COLLISION_CANDIDATE: '1'
+          V4_MOUNTAIN_DISTANCE_STRESS: '1'
+          V4_MOUNTAIN_REALISM_EIGHT_SEEDS: '1'
+          V4_MOUNTAIN_STRESS_SEED_OFFSET: '4'
+          V4_MOUNTAIN_HUMAN_ATTACK_CONTROL: '1'
+          V4_MOUNTAIN_HUMAN_CHASE_MIDDLE: '1'
+          V4_MOUNTAIN_EARLY_PHASE_AUDIT: '1'
+        run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   mountain-chase-efficiency-candidate:
     runs-on: ubuntu-latest
     timeout-minutes: 15
