@@ -18,6 +18,8 @@ const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
 const mountainStress=process.env.V4_MOUNTAIN_DISTANCE_STRESS==='1'
 const mountainRealismExpanded=process.env.V4_MOUNTAIN_REALISM_EIGHT_SEEDS==='1'
+const openingForensic=process.env.V4_MOUNTAIN_OPENING_FORENSIC==='1'
+if(openingForensic&&(!mountainRealismExpanded||!mountainStress))throw Error('Opening forensic requires eight-seed mountain stress research')
 const stressSeedOffset=process.env.V4_MOUNTAIN_STRESS_SEED_OFFSET??'0'
 if(!['0','4'].includes(stressSeedOffset)||stressSeedOffset==='4'&&!mountainRealismExpanded)
  throw Error('Mountain research seed offset must be 0 or, for eight-seed pilot, 4')
@@ -111,7 +113,7 @@ function injectV4WinnerCollisionForensics(source){
 }
 const terrains=mountainStress?['mountain']:focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
 const distances=mountainStress?(mountainStress200Only?[200]:[170,200,240]):focused?[220]:[120,220]
-const workforces=[0,1,3,5]
+const workforces=openingForensic?[0]:[0,1,3,5]
 const seeds=seedIds.length
 const median=values=>{
  const sorted=values.filter(v=>typeof v==='number'&&Number.isFinite(v)).sort((a,b)=>a-b)
@@ -143,11 +145,32 @@ const run=(input,pursuitTeamId)=>{
   const journey=historicalOpeningBreakawayJourney(result,input.stage.distanceKm)
   const audit=historicalPhysicalGapAudit(result)
   const phase4=result.roadRaceResolution?.phase4Finish
+  const phase1=result.roadRaceResolution?.phase1Opening
+  const openingAudit=openingForensic?{
+   status:phase1?.status??'missing',
+   eligibleAttackers:phase1?.eligibleAttackerIds?.length??null,
+   eligibleJoiners:phase1?.eligibleJoinerIds?.length??null,
+   selectedCandidates:phase1?.selectedCandidateIds?.length??null,
+   attackAttempts:phase1?.attackAttempts?.length??null,
+   physicallyValid:phase1?.attackAttempts?.filter(a=>a.physicallyValidAttempt)?.length??null,
+   attackSucceeded:phase1?.attackAttempts?.filter(a=>a.attackSucceeded)?.length??null,
+   acceptedLaunches:phase1?.attackAttempts?.filter(a=>a.acceptedEscapeLaunch)?.length??null,
+   separationBands:Object.fromEntries([...new Set((phase1?.attackAttempts??[]).map(a=>a.separationBand))]
+     .map(k=>[k,phase1.attackAttempts.filter(a=>a.separationBand===k).length])),
+   attemptSummaries:(phase1?.attackAttempts??[]).slice(0,12).map(a=>({
+    separationBand:a.separationBand,physical:a.physicallyValidAttempt,
+    succeeded:a.attackSucceeded,accepted:a.acceptedEscapeLaunch,
+    probability:Number.isFinite(a.attackSuccessProbability)?Number(a.attackSuccessProbability.toFixed(3)):null,
+    roll:Number.isFinite(a.deterministicOutcomeRoll)?Number(a.deterministicOutcomeRoll.toFixed(3)):null,
+   })),
+   phase2Attempts:result.roadRaceResolution?.phase2Development?.attackAttempts?.length??null,
+   phase3Attempts:result.roadRaceResolution?.phase3Decisive?.attackAttempts?.length??null,
+  }:null
   const pursuitTeam=phase4?.chasingTeamStrength?.find(t=>t.teamId===pursuitTeamId)
   const states=phase4?.riderStates??[]
   const energy=states.length?
    states.reduce((sum,r)=>sum+(Number.isFinite(r.energyAtFinish)?r.energyAtFinish:0),0)/states.length:null
-  return {valid:true,opening:journey.openingAccepted,
+  return {valid:true,opening:journey.openingAccepted,openingAudit,
    kmAhead:journey.kmAhead,
    survived:journey.catchLocation==='survived_to_finish',
    catchLocation:journey.catchLocation,
@@ -472,7 +495,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
@@ -483,6 +506,10 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   preservedV2AndV4InputsIdentical:true,
   replayExclusionsNeverWaived:true,officialWrites:0,
   cells,pairedWorkforceContrasts,v4OnlyWorkforceContrasts,coverageWarnings,
+  openingForensicRows:openingForensic?paired.map(r=>({
+    km:r.km,seed:r.seed,workers:r.workers,v4Valid:r.v4.valid,
+    v4Opening:r.v4.opening,openingAudit:r.v4.openingAudit,
+  })):[],
   v4StrictReplayFailures:paired.filter(r=>!r.v4.valid&&r.v4.error==='STRICT_REPLAY').length,
   originalV2SolverModified:false,realismApproved:false
  }))
