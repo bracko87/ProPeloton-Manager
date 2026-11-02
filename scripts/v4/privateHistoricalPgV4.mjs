@@ -3,6 +3,7 @@ import {storePrivateHistoricalEnvelopeV4} from './privateHistoricalExportV4.mjs'
 import {runPrivateHistoricalPilotV4} from './privateHistoricalPilotV4.mjs'
 import {TERRAIN_TARGETS} from './privateHistoricalPilotSelectionV4.mjs'
 import {runPrivateHistoricalPhysicsV4} from './privateHistoricalPhysicsV4.mjs'
+import {HISTORICAL_REPLAY_KNOWN_ISSUE_CODES} from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 import {readFileSync} from 'node:fs'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -150,6 +151,35 @@ export async function runPrivatePgHistoricalPilotV4({
   throw err
  }finally{if(connected)await db.end()}
 }
+/** Small privacy-safe operator summary. Never projects race IDs or file paths. */
+export function summarizePrivateHistoricalPilotV4(report){
+ const terrains=['flat','hilly','mountain']
+ const codes=report?.rejected?.safeReplayIssueCodesByVariant?.preserved_v2??{}
+ const allowed=new Set([...HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,'UNKNOWN_ISSUE_CODE','NOT_REPLAY'])
+ const replayIssueCounts=Object.fromEntries(Object.entries(codes).filter(([k,v])=>
+  allowed.has(k)&&Number.isSafeInteger(v)&&v>0))
+ return {
+  status:report?.chasePriority12?.status??report?.status??'UNKNOWN',
+  historicalSourceRevisionAttested:false,historicalV4RealismApproved:false,
+  officialWrites:0,
+  exportCounts:report?.accepted??null,
+  strictPairs:report?.consideredCompleteTriples??0,
+  pairedByTerrain:Object.fromEntries(terrains.map(k=>
+   [k,report?.rejected?.byTerrain?.[k]?.eligible??0])),
+  exclusions:{
+   unsupportedSolver:report?.rejected?.baselineUnsupported??0,
+   baselineReplayOrOtherInvalid:report?.rejected?.baselineInvalid??0,
+   historicalResultDrift:report?.rejected?.baselineHistoricMismatch??0,
+   otherReplayIssues:replayIssueCounts,
+  },
+  chasePriority:{
+   compared:report?.chasePriorityResearch?.all?.compared??0,
+   medianPeakChangeSeconds:report?.chasePriorityResearch?.all?.medianObservedPeakDifferenceSeconds??null,
+   changedClassification:report?.chasePriorityResearch?.all?.changedClassification??0,
+   changedWinner:report?.chasePriorityResearch?.all?.changedWinner??0,
+  }
+ }
+}
 function safeError(err){
  const msg=String(err?.message??'')
  const allowed=['INVALID_HISTORICAL_COHORT','RESTRICTED_PG_ROLE_REQUIRED','RESTRICTED_LOGIN_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
@@ -170,6 +200,7 @@ if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
   if(process.argv.length!==2)throw Error('NO_CLI_ARGS')
   const report=await runPrivatePgHistoricalPilotV4({
    progress:state=>console.log('V4_PRIVATE_PG_PROGRESS '+JSON.stringify(state))})
+  console.log('V4_PRIVATE_PG_COMPACT_SUMMARY '+JSON.stringify(summarizePrivateHistoricalPilotV4(report)))
   console.log('V4_PRIVATE_PG_HISTORICAL_PILOT '+JSON.stringify(report))
   if(!report.consideredCompleteTriples)process.exitCode=1
  }catch(err){

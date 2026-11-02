@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import {runPrivatePgHistoricalPilotV4,privatePgConfig,historicalPgCohortPlan} from './privateHistoricalPgV4.mjs'
+import {runPrivatePgHistoricalPilotV4,privatePgConfig,historicalPgCohortPlan,summarizePrivateHistoricalPilotV4} from './privateHistoricalPgV4.mjs'
 import {readFileSync} from 'node:fs'
 const env={PPM_V4_RESEARCH_DB_HOST:'aws-7-eu-central-2.pooler.supabase.com',
  PPM_V4_RESEARCH_DB_PASSWORD:'only-a-synthetic-test-password-12345'}
@@ -241,6 +241,23 @@ assert.equal(twelve.preflight.mountain.unsynchronized,1)
 assert.equal(twelve.chasePriority12.status,'READY_FOR_HISTORICAL_REALISM_REVIEW')
 assert.equal(twelve.chasePriority12.strictHistoricalPairs,12)
 assert.equal(twelve.chasePriority12.productionReady,false)
+const compact=summarizePrivateHistoricalPilotV4({
+ ...twelve,
+ rejected:{...twelve.rejected,baselineUnsupported:4,baselineInvalid:5,baselineHistoricMismatch:1,
+  safeReplayIssueCodesByVariant:{preserved_v2:{
+    pre_finish_status_mismatch:5,PRIVATE_STAGE_ID:'secret-should-not-leak'
+   }},byTerrain:{flat:{eligible:1},hilly:{eligible:0},mountain:{eligible:1}}},
+ chasePriorityResearch:{all:{compared:2,medianObservedPeakDifferenceSeconds:0,
+  changedClassification:0,changedWinner:0}}
+})
+assert.equal(compact.status,'READY_FOR_HISTORICAL_REALISM_REVIEW')
+assert.equal(compact.strictPairs,12)
+assert.deepEqual(compact.pairedByTerrain,{flat:1,hilly:0,mountain:1})
+assert.deepEqual(compact.exclusions.otherReplayIssues,{pre_finish_status_mismatch:5})
+assert.equal(compact.chasePriority.compared,2)
+assert.equal(JSON.stringify(compact).includes('secret-should-not-leak'),false)
+assert.equal(JSON.stringify(compact).includes('PRIVATE_STAGE_ID'),false)
+assert.equal(compact.officialWrites,0)
 assert.equal(twelve.chasePriority12.sourceRevisionHistoricallyAttested,false)
 assert.equal(twelve.officialWrites,0)
 const incomplete=await runPrivatePgHistoricalPilotV4({
