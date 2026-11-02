@@ -388,6 +388,30 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    zeroToFiveFewerSurvivals:comparable.filter(seed=>fetch(seed,0).survived).length-
     comparable.filter(seed=>fetch(seed,5).survived).length})
  }
+ const v4OnlyWorkforceContrasts=[]
+ for(const terrain of terrains)for(const km of distances){
+  // Unlike the legacy paired V2/V4 table, count only actual strict V4 validity.
+  // Historical V2 replay exclusions must not conceal V4 chase sensitivity.
+  const eligible=seedIds.filter(seed=>
+   [0,5].every(workers=>paired.some(r=>
+    r.terrain===terrain&&r.km===km&&r.seed===seed&&r.workers===workers&&
+    r.v4.valid&&r.v4.opening)))
+  const get=(seed,workers)=>paired.find(r=>
+   r.terrain===terrain&&r.km===km&&r.seed===seed&&r.workers===workers).v4
+  v4OnlyWorkforceContrasts.push({
+   terrain,km,matchedV4OpeningSeeds:eligible.length,
+   noChaseSurvivals:eligible.filter(seed=>get(seed,0).survived).length,
+   fiveChaserSurvivals:eligible.filter(seed=>get(seed,5).survived).length,
+   medianPeakGapReductionSeconds:median(eligible.map(seed=>
+    get(seed,0).observedPeakSeconds-get(seed,5).observedPeakSeconds)),
+   medianDistanceAheadReductionKm:median(eligible.map(seed=>
+    get(seed,0).kmAhead-get(seed,5).kmAhead)),
+   medianNoChaseKmAhead:median(eligible.map(seed=>get(seed,0).kmAhead)),
+   medianFiveChaserKmAhead:median(eligible.map(seed=>get(seed,5).kmAhead)),
+   evidenceRating:eligible.length>=4?'SAMPLE_FOR_RESEARCH_ONLY':
+     'LOW_V4_MATCHED_OPENING_SAMPLE',
+  })
+ }
  assert.equal(cells.length,terrains.length*distances.length*workforces.length)
  assert(cells.every(c=>c.attempted===seeds))
  assert(cells.every(c=>c.invalidInputOrOtherErrors===0),
@@ -433,7 +457,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   aiPlansPreparedOncePerCourseSeed:true,weatherHeldFixedAcrossWorkers:true,
   preservedV2AndV4InputsIdentical:true,
   replayExclusionsNeverWaived:true,officialWrites:0,
-  cells,pairedWorkforceContrasts,coverageWarnings,
+  cells,pairedWorkforceContrasts,v4OnlyWorkforceContrasts,coverageWarnings,
   v4StrictReplayFailures:paired.filter(r=>!r.v4.valid&&r.v4.error==='STRICT_REPLAY').length,
   originalV2SolverModified:false,realismApproved:false
  }))
