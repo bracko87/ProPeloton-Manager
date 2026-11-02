@@ -271,7 +271,31 @@ assert.equal(incomplete.chasePriority12.productionReady,false)
 await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
  env:{...cohortEnv,PPM_V4_RESEARCH_CHASE_PRIORITY:'0'},
  ClientConstructor:TwelveClient}),/CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN/)
-assert.equal(opened,8);assert.equal(closed,8)
+const replayProbe=await runPrivatePgHistoricalPilotV4({
+ env:{...cohortEnv,PPM_V4_RESEARCH_REPLAY_CANDIDATE:'1'},
+ ClientConstructor:TwelveClient,
+ physicalRunner:async(m,o)=>{
+  assert.equal(o.includeChasePriority,true)
+  assert.equal(o.includeReplayCandidate,true)
+  const normal=makeReport(m,o,2)
+  return {...normal,replayCandidateResearch:{
+   status:'ISOLATED_REPLAY_REPAIR_DIAGNOSTIC_NOT_HISTORIC_APPROVAL',
+   attempted:12,strictReplayValid:7,rejectedInvalid:1,rejectedUnsupported:4,
+   recoveredStrictFromUnmodifiedBaseline:5,
+   recoveredWithArchivedClassificationParity:4,
+   recoveredByTerrain:{flat:1,hilly:4,mountain:0},
+   officialWrites:0,researchOnly:true,historicalV4RealismApproved:false
+  }}
+ }
+})
+assert.equal(replayProbe.consideredCompleteTriples,2)
+assert.equal(replayProbe.replayCandidateResearch.recoveredStrictFromUnmodifiedBaseline,5)
+const replayCompact=summarizePrivateHistoricalPilotV4(replayProbe)
+assert.equal(replayCompact.strictPairs,2)
+assert.equal(replayCompact.replayRepairCandidate.recoveredStrictFromBaseline,5)
+assert.equal(replayCompact.replayRepairCandidate.recoveredAndArchivedParity,4)
+assert.equal(replayCompact.replayRepairCandidate.approved,false)
+assert.equal(opened,9);assert.equal(closed,9)
 // Fail closed if the authenticated session is a privileged or unexpected login.
 class WrongLogin extends FakeClient{
  async query(sql,args){

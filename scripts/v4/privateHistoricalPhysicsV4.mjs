@@ -11,6 +11,7 @@ import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {patchPrivateHistoricalPostCatchForensicsV4} from './privateHistoricalPostCatchForensicPatchV4.mjs'
+import {patchPrivateLowReserveReplayCandidateV4} from './privateLowReserveReplayCandidateV4.mjs'
 import {patchV4MountainEarlyChasePriorityCandidateSource} from './mountainEarlyChasePriorityCandidateV4.mjs'
 import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES,
  HISTORICAL_FAILURE_REASONS,HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,
@@ -41,6 +42,7 @@ const variants=[
  {key:'combined_energy',patch:true,peloton:true,cooperation:true,energy:true},
 ]
 const priorityVariant={key:'combined_energy_priority',patch:true,peloton:true,cooperation:true,energy:true,chasePriority:true}
+const replayCandidateVariant={key:'private_replay_candidate',patch:false,peloton:false,cooperation:false,energy:false,replayCandidate:true}
 function aggregate(comparisons,rejected){
  const group=(subset)=>{
  const active=subset.filter(x=>x.preserved_v2.acceptedOpeningAttacks>0&&
@@ -124,7 +126,8 @@ function aggregate(comparisons,rejected){
   warning:'Exact historical source revision is not recorded in the archive. Git commit time is not deployment proof. Classification parity and replay checks are required, but these comparisons remain diagnostic only.',
  }
 }
-export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePriority=false}={}){
+export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePriority=false,includeReplayCandidate=false}={}){
+ if(typeof includeReplayCandidate!=='boolean')throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
  if(typeof includeChasePriority!=='boolean')
   throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
  const manifest=safeFile(manifestRaw,128*1024)
@@ -138,7 +141,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
  const folder=mkdtempSync(join(tmpdir(),'ppm-v4-historical-physics-'))
  try{
   const results=[]
-  const activeVariants=includeChasePriority?[...variants,priorityVariant]:variants
+  const activeVariants=[...variants,...(includeChasePriority?[priorityVariant]:[]),...(includeReplayCandidate?[replayCandidateVariant]:[])]
   for(const cfg of activeVariants){
    const outfile=join(folder,cfg.key+'.mjs')
    let patched=0
@@ -151,7 +154,8 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
       const source=readFileSync(args.path,'utf8')
       const calibrated=cfg.patch?patchV4CalibratedPhysicalSource(source,cfg):source
       const candidate=cfg.chasePriority?patchV4MountainEarlyChasePriorityCandidateSource(calibrated):calibrated
-      const contents=patchPrivateHistoricalPostCatchForensicsV4(candidate)
+      const prepared=cfg.replayCandidate?patchPrivateLowReserveReplayCandidateV4(candidate):candidate
+      const contents=patchPrivateHistoricalPostCatchForensicsV4(prepared)
       patched++
       return {contents,loader:'ts'}
      })
@@ -290,7 +294,32 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
   }
   const agg=aggregate(triples,rejects)
   const baseReport={...agg,savedArchiveGapSummary}
-  if(!includeChasePriority)return baseReport
+  let replayCandidateResearch=null
+  if(includeReplayCandidate){
+   const candidateResult=results.find(r=>r.variant==='private_replay_candidate')
+   if(!candidateResult||candidateResult.attempted!==paths.length)
+    throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
+   const candidateMap=new Map(candidateResult.rows.map(r=>[r.stageHash,r]))
+   const recovered=candidateResult.rows.filter(r=>!maps[0].has(r.stageHash))
+   const eligibleForHistory=recovered.filter(r=>
+    r.replaySynchronized===true&&r.savedV2ClassificationParity===true)
+   const counts=rows=>Object.fromEntries(['flat','hilly','mountain'].map(t=>
+    [t,rows.filter(r=>r.terrain===t).length]))
+   replayCandidateResearch={
+    status:'ISOLATED_REPLAY_REPAIR_DIAGNOSTIC_NOT_HISTORIC_APPROVAL',
+    attempted:paths.length,strictReplayValid:candidateResult.rows.length,
+    rejectedInvalid:candidateResult.rejected.invalid,
+    rejectedUnsupported:candidateResult.rejected.unsupported,
+    recoveredStrictFromUnmodifiedBaseline:recovered.length,
+    recoveredWithArchivedClassificationParity:eligibleForHistory.length,
+    recoveredByTerrain:counts(recovered),
+    parityMatchingRecoveryByTerrain:counts(eligibleForHistory),
+    noExtraCandidateSourcePaths:!(candidateMap.size!==candidateResult.rows.length),
+    officialWrites:0,researchOnly:true,
+    historicalSourceRevisionAttested:false,historicalV4RealismApproved:false
+   }
+  }
+  if(!includeChasePriority)return {...baseReport,...(includeReplayCandidate?{replayCandidateResearch}:{})}
   const validPriority=triples.filter(r=>r.chase_priority!==null)
   const priorityGroup=rows=>({
    compared:rows.length,
@@ -304,7 +333,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
    changedClassification:rows.filter(x=>x.chase_priority.classificationHash!==x.combined_energy.classificationHash).length,
    prioritySurvivingBreakaways:rows.filter(x=>x.chase_priority.breakawaySurvived).length,
   })
-  return {...baseReport,chasePriorityResearch:{
+  return {...baseReport,...(includeReplayCandidate?{replayCandidateResearch}:{}),chasePriorityResearch:{
    status:'PRIVATE_RESEARCH_DIAGNOSTIC_NOT_REALISM_APPROVAL',
    enabledByExplicitOption:true,officialWrites:0,rawStageDataPublished:false,
    preservedHistoricInputHashes:true,

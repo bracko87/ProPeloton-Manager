@@ -20,7 +20,7 @@ import {runSelectedRaceEngineV1,selectCompleteRaceEngineLaneV1}
  from '../universal-race-engine/runSelectedRaceEngineV1.ts'
 import type {UniversalRaceEngineResult} from '../universal-race-engine/runRaceEngine.ts'
 
-declare const __V4_PRIVATE_PHYSICS_VARIANT__: 'preserved_v2'|'combined'|'combined_energy'|'combined_energy_priority'
+declare const __V4_PRIVATE_PHYSICS_VARIANT__: 'preserved_v2'|'combined'|'combined_energy'|'combined_energy_priority'|'private_replay_candidate'
 const variant=__V4_PRIVATE_PHYSICS_VARIANT__
 const sha=(v:unknown)=>createHash('sha256').update(JSON.stringify(v)).digest('hex')
 const record=(v:unknown):v is Record<string,any>=>!!v&&typeof v==='object'&&!Array.isArray(v)

@@ -72,6 +72,10 @@ export async function runPrivatePgHistoricalPilotV4({
  if(candidateFlag!==undefined&&candidateFlag!=='0'&&candidateFlag!=='1')
   throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
  const includeChasePriority=candidateFlag==='1'
+ const replayFlag=env.PPM_V4_RESEARCH_REPLAY_CANDIDATE
+ if(replayFlag!==undefined&&replayFlag!=='0'&&replayFlag!=='1')
+  throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
+ const includeReplayCandidate=replayFlag==='1'
  if(env.PPM_V4_RESEARCH_COHORT==='chase_priority_12'&&!includeChasePriority)
   throw Error('CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN')
  const conf=privatePgConfig(env)
@@ -111,16 +115,34 @@ export async function runPrivatePgHistoricalPilotV4({
    const entries=(await db.query(queryEntries,[run.race_id,ids])).rows
    return storePrivateHistoricalEnvelopeV4(run,entries,stageId)
   }
-  const candidateRunner=includeChasePriority?async manifest=>{
-   const report=await physicalRunner(manifest,{includeChasePriority:true})
-   const priority=report?.chasePriorityResearch
-   if(!priority||priority.enabledByExplicitOption!==true||
-      priority.status!=='PRIVATE_RESEARCH_DIAGNOSTIC_NOT_REALISM_APPROVAL'||
-      priority.officialWrites!==0||priority.rawStageDataPublished!==false||
-      !Number.isSafeInteger(priority.attemptedPrivateCandidateRuns)||
-      priority.attemptedPrivateCandidateRuns<1||
-      !Number.isSafeInteger(priority.all?.compared)||priority.all.compared<0)
-    throw Error('UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT')
+  const candidateRunner=(includeChasePriority||includeReplayCandidate)?async manifest=>{
+   const report=await physicalRunner(manifest,{includeChasePriority,includeReplayCandidate})
+   if(includeChasePriority){
+    const priority=report?.chasePriorityResearch
+    if(!priority||priority.enabledByExplicitOption!==true||
+       priority.status!=='PRIVATE_RESEARCH_DIAGNOSTIC_NOT_REALISM_APPROVAL'||
+       priority.officialWrites!==0||priority.rawStageDataPublished!==false||
+       !Number.isSafeInteger(priority.attemptedPrivateCandidateRuns)||
+       priority.attemptedPrivateCandidateRuns<1||
+       !Number.isSafeInteger(priority.all?.compared)||priority.all.compared<0)
+     throw Error('UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT')
+   }
+   if(includeReplayCandidate){
+    const replay=report?.replayCandidateResearch
+    if(!replay||replay.status!=='ISOLATED_REPLAY_REPAIR_DIAGNOSTIC_NOT_HISTORIC_APPROVAL'||
+       replay.officialWrites!==0||replay.researchOnly!==true||
+       replay.historicalV4RealismApproved!==false||
+       !Number.isSafeInteger(replay.attempted)||replay.attempted<1||
+       !Number.isSafeInteger(replay.strictReplayValid)||replay.strictReplayValid<0||
+       replay.strictReplayValid>replay.attempted||
+       !Number.isSafeInteger(replay.recoveredStrictFromUnmodifiedBaseline)||
+       replay.recoveredStrictFromUnmodifiedBaseline<0||
+       replay.recoveredStrictFromUnmodifiedBaseline>replay.strictReplayValid||
+       !Number.isSafeInteger(replay.recoveredWithArchivedClassificationParity)||
+       replay.recoveredWithArchivedClassificationParity<0||
+       replay.recoveredWithArchivedClassificationParity>replay.recoveredStrictFromUnmodifiedBaseline)
+     throw Error('UNTRUSTED_PRIVATE_REPLAY_CANDIDATE_REPORT')
+   }
    return report
   }:physicalRunner
   const report=await runPrivateHistoricalPilotV4({
@@ -190,6 +212,15 @@ export function summarizePrivateHistoricalPilotV4(report){
    postCatchFirstPhaseRelation:firstFailurePhase,
    postCatchFirstChaseGapBand:firstFailureGap,
   },
+  replayRepairCandidate:report?.replayCandidateResearch?
+   {attempted:report.replayCandidateResearch.attempted,
+    strictReplayValid:report.replayCandidateResearch.strictReplayValid,
+    recoveredStrictFromBaseline:report.replayCandidateResearch.recoveredStrictFromUnmodifiedBaseline,
+    recoveredAndArchivedParity:report.replayCandidateResearch.recoveredWithArchivedClassificationParity,
+    recoveredByTerrain:report.replayCandidateResearch.recoveredByTerrain,
+    remainingInvalid:report.replayCandidateResearch.rejectedInvalid,
+    remainingUnsupported:report.replayCandidateResearch.rejectedUnsupported,
+    researchOnly:true,approved:false}:null,
   chasePriority:{
    compared:report?.chasePriorityResearch?.all?.compared??0,
    medianPeakChangeSeconds:report?.chasePriorityResearch?.all?.medianObservedPeakDifferenceSeconds??null,
@@ -201,7 +232,7 @@ export function summarizePrivateHistoricalPilotV4(report){
 function safeError(err){
  const msg=String(err?.message??'')
  const allowed=['INVALID_HISTORICAL_COHORT','RESTRICTED_PG_ROLE_REQUIRED','RESTRICTED_LOGIN_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
-  'INVALID_PRIVATE_CA_PATH','INVALID_PRIVATE_CANDIDATE_OPTION','CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN','UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
+  'INVALID_PRIVATE_CA_PATH','INVALID_PRIVATE_CANDIDATE_OPTION','CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN','UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT','UNTRUSTED_PRIVATE_REPLAY_CANDIDATE_REPORT','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
   'NO_ARCHIVED_TEAMS','INVALID_ENTRY_MAPPING','PRIVATE_PHYSICAL_ENGINE_FAILED',
   'UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE','PHYSICAL_HISTORIC_INPUT_MISMATCH',
   'PRIVATE_PATH_REJECTED','DUPLICATE_PRIVATE_INPUT','INVALID_MANIFEST',
