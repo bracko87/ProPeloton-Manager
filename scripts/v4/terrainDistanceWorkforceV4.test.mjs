@@ -66,11 +66,13 @@ function injectV4WinnerCollisionForensics(source){
   "      origins.push(!first||!second?'NO_PREVIOUS_GROUP_CODE':Math.abs(first.gapSeconds-second.gapSeconds)<=0.000001?'PRE_SHARED_GAP':'PRE_SEPARATED_GAPS')",
   "    }",
   "    const err=new Error(`Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`)",
-  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort(),v4WinnerLineageAudit:auditV4WinnerGapCollisions(replayTimeline.checkpoints)})",
+  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort(),v4WinnerLineageAudit:auditV4WinnerGapCollisions(replayTimeline.checkpoints),v4TransferAudit:auditV4PostCatchWinnerTransfer(replayTimeline.checkpoints)})",
   "    throw err",
   "  }"
  ].join('\n')
- return "import {auditV4WinnerGapCollisions} from '../race-engine-v4/mountainWinnerLineageAuditV4.mjs'\n"+source.replace(terrainWinnerReplayThrow,lines)
+ return "import {auditV4WinnerGapCollisions} from '../race-engine-v4/mountainWinnerLineageAuditV4.mjs'\n"+
+  "import {auditV4PostCatchWinnerTransfer} from '../race-engine-v4/mountainPostCatchTransferAuditV4.mjs'\n"+
+  source.replace(terrainWinnerReplayThrow,lines)
 }
 const terrains=focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
 const distances=focused?[220]:[120,220]
@@ -125,6 +127,11 @@ const run=(input,pursuitTeamId)=>{
  }catch(e){
   if(e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:'))
    return {valid:false,error:'STRICT_REPLAY',
+    transferAudit:Array.isArray(e?.v4TransferAudit)?e.v4TransferAudit.filter(x=>x&&
+      ['SAME','JOIN','SPLIT','REARRANGE','UNKNOWN'].includes(x.membership)&&
+      ['MULTIPLE','ONE','NONE'].includes(x.sourceGroupCount)&&
+      ['EQUAL','WITHIN_FIVE_SECONDS','SIX_TO_TEN_SECONDS','SEPARATED','UNKNOWN'].includes(x.sourceGapSpread)&&
+      ['SAME_KM','UNDER_100_METERS','UNDER_1_KM','OVER_1_KM','UNKNOWN'].includes(x.lastCheckpointDistance)):[],
     winnerLineageAudit:Array.isArray(e?.v4WinnerLineageAudit)?
      e.v4WinnerLineageAudit.filter(r=>r&&r.kind==='C_C'&&
       ['SAME_PREVIOUS_GROUP','DISTINCT_PREVIOUS_GROUPS','MIXED_PREVIOUS_GROUPS','MEMBERSHIP_MISSING','NO_PREVIOUS_CHECKPOINT'].includes(r.previousMembership)&&
@@ -315,6 +322,14 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
     candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.finalOutcome===k)).length])),
    v4WinnerGapBands:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.gapBand)))].map(k=>[k,
     candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.gapBand===k)).length])),
+   v4PostCatchAuditMembership:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.transferAudit??[]).map(a=>a.membership)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.transferAudit??[]).some(a=>a.membership===k)).length])),
+   v4PostCatchAuditSources:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.transferAudit??[]).map(a=>a.sourceGroupCount)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.transferAudit??[]).some(a=>a.sourceGroupCount===k)).length])),
+   v4PostCatchAuditGapSpread:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.transferAudit??[]).map(a=>a.sourceGapSpread)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.transferAudit??[]).some(a=>a.sourceGapSpread===k)).length])),
+   v4PostCatchAuditCheckpointDistance:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.transferAudit??[]).map(a=>a.lastCheckpointDistance)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.transferAudit??[]).some(a=>a.lastCheckpointDistance===k)).length])),
    v4PostCatchTransfers:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY'&&r.v4.postCatchTransfer!=='NOT_POST_CATCH')
     .map(r=>r.v4.postCatchTransfer))].map(k=>[k,
      candidates.filter(r=>r.v4.postCatchTransfer===k).length])),
