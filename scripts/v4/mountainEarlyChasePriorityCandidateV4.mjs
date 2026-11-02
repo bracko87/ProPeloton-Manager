@@ -17,7 +17,7 @@ export function patchV4MountainEarlyChasePriorityCandidateSource(source,{gain=0.
   "      explicitlyChasingWorkers:v4Phase2ExplicitChaseWorkers,",
   "      meanWorkerEnergyFraction:phase2WorkerEnergyFraction,gain:"+value,
   "    })",
- ].join('\\n')
+ ].join('\n')
  const withPriority=source.replace(paceAnchor,additions+'\n'+paceAnchor)
   .replace(outputAnchor,"        pelotonComponents.selectedResponseMultiplier *\n        v4Phase2ChasePriorityMultiplier *\n        (chasingTeamIds.length === 0 ? 0.97 : 1) *")
  return "import {calculateV4Phase2ChasePriorityMultiplier} from '../race-engine-v4/phase2ChasePriorityV4.ts'\n"+withPriority
