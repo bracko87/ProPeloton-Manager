@@ -15,6 +15,7 @@ import {patchV4ChaseContactResearchSource} from './mountainChaseContactResearchP
 import {patchV4MountainFrontCollisionSource} from './mountainFrontCodeCollisionPatchV4.mjs'
 import {patchV4MountainChaseWorkerTelemetrySource} from './mountainChaseWorkerTelemetryV4.mjs'
 import {patchV4EarlyChaseWorkforceTelemetrySource} from './mountainEarlyChaseWorkforceTelemetryV4.mjs'
+import {patchV4MountainEarlyChasePriorityCandidateSource} from './mountainEarlyChasePriorityCandidateV4.mjs'
 import {patchV4MountainChaseEfficiencyCandidateSource} from './mountainChaseEfficiencyCandidateV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
@@ -28,6 +29,7 @@ const chaseWorkerTelemetry=process.env.V4_MOUNTAIN_CHASE_WORKER_TELEMETRY==='1'
 const chaseEfficiencyCandidate=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_CANDIDATE==='1'
 const chaseEfficiencyFullDistances=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_FULL_DISTANCES==='1'
 const earlyPhaseAudit=process.env.V4_MOUNTAIN_EARLY_PHASE_AUDIT==='1'
+const earlyChasePriorityCandidate=process.env.V4_MOUNTAIN_EARLY_CHASE_PRIORITY_CANDIDATE==='1'
 const chaseEfficiencyGainText=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_GAIN
 if(chaseEfficiencyGainText!==undefined&&(!chaseEfficiencyCandidate||!['0','0.0022','0.0044','0.0088'].includes(chaseEfficiencyGainText)))
  throw Error('Isolated research chase gain must be one of 0, 0.0022, 0.0044 or 0.0088')
@@ -36,6 +38,7 @@ if(chaseEfficiencyFullDistances&&!chaseEfficiencyCandidate)throw Error('Full dis
 if(chaseEfficiencyCandidate&&!chaseWorkerTelemetry)throw Error('Chase-efficiency candidate requires read-only telemetry')
 if(chaseWorkerTelemetry&&!humanChaseMiddle)throw Error('Phase 4 chase telemetry requires one/three-chaser controlled fixture')
 if(earlyPhaseAudit&&!humanChaseMiddle)throw Error('Early-phase chase audit requires controlled one/three-chaser fixture')
+if(earlyChasePriorityCandidate&&!earlyPhaseAudit)throw Error('Early physical chase candidate needs strict early-phase gap and workforce audit')
 if(humanChaseMiddle&&!humanAttackFixture)throw Error('Chase-middle research requires explicit human attackers')
 const humanAttackForensic=process.env.V4_MOUNTAIN_HUMAN_ATTACK_FORENSIC==='1'
 if(humanAttackForensic&&!humanAttackFixture)throw Error('Human attack forensic requires controlled attack fixture')
@@ -358,7 +361,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const withEfficiency=chaseEfficiencyCandidate?patchV4MountainChaseEfficiencyCandidateSource(withFrontCodes,{gain:chaseEfficiencyGain}):withFrontCodes
      const withTelemetry=chaseWorkerTelemetry?patchV4MountainChaseWorkerTelemetrySource(withEfficiency):withEfficiency
      const withEarlyWorkerAudit=earlyPhaseAudit?patchV4EarlyChaseWorkforceTelemetrySource(withTelemetry):withTelemetry
-     return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withEarlyWorkerAudit):withEarlyWorkerAudit,loader:'ts'}
+     const withChasePriority=earlyChasePriorityCandidate?patchV4MountainEarlyChasePriorityCandidateSource(withEarlyWorkerAudit):withEarlyWorkerAudit
+     return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withChasePriority):withChasePriority,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
@@ -463,6 +467,21 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   assert(earlyRows.every(r=>[r.phase2,r.phase3].every(p=>
    p.gapTrajectory.every(pt=>Number.isFinite(pt.km)&&Number.isFinite(pt.gapSeconds)&&pt.gapSeconds>=0))),
    'Early-phase audit requires real nonnegative physical gap samples')
+  if(earlyChasePriorityCandidate){
+   const comparisons=distances.flatMap(km=>seedIds.map(seed=>{
+    const one=earlyRows.find(r=>r.km===km&&r.seed===seed&&r.workers===1)
+    const three=earlyRows.find(r=>r.km===km&&r.seed===seed&&r.workers===3)
+    return {km,seed,oneGapSeconds:one?.phase2?.endGapSeconds??null,
+      threeGapSeconds:three?.phase2?.endGapSeconds??null,
+      threeChasersCloseFaster:three?.phase2?.endGapSeconds<one?.phase2?.endGapSeconds,
+      oneCatchLocation:one?.catchLocation,threeCatchLocation:three?.catchLocation}
+   }))
+   assert(comparisons.some(c=>c.threeChasersCloseFaster),
+    'Early physical chase candidate had no measurable gain over one chaser')
+   console.log('V4_CHASE_EARLY_PRIORITY_CONTRAST '+JSON.stringify({
+    status:'EXPERIMENTAL_REQUIRES_REALISM_REVIEW',gain:0.012,comparisons
+   }))
+  }
   console.log('V4_CHASE_EARLY_PHASE_AUDIT '+JSON.stringify({
    status:'RESEARCH_READ_ONLY_NOT_REALISM_APPROVAL',
    distancesKm:distances,workers:workforces,seeds:seedIds,
@@ -643,7 +662,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,earlyPhaseAudit,chaseEfficiencyCandidate,chaseEfficiencyFullDistances,chaseEfficiencyGain:chaseEfficiencyCandidate?chaseEfficiencyGain:null,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,earlyPhaseAudit,earlyChasePriorityCandidate,chaseEfficiencyCandidate,chaseEfficiencyFullDistances,chaseEfficiencyGain:chaseEfficiencyCandidate?chaseEfficiencyGain:null,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
