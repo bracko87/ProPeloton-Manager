@@ -20,6 +20,8 @@ const mountainStress=process.env.V4_MOUNTAIN_DISTANCE_STRESS==='1'
 const mountainRealismExpanded=process.env.V4_MOUNTAIN_REALISM_EIGHT_SEEDS==='1'
 const openingForensic=process.env.V4_MOUNTAIN_OPENING_FORENSIC==='1'
 const humanAttackFixture=process.env.V4_MOUNTAIN_HUMAN_ATTACK_CONTROL==='1'
+const humanAttackForensic=process.env.V4_MOUNTAIN_HUMAN_ATTACK_FORENSIC==='1'
+if(humanAttackForensic&&!humanAttackFixture)throw Error('Human attack forensic requires controlled attack fixture')
 if(humanAttackFixture&&(!mountainStress||!mountainRealismExpanded||openingForensic||process.env.V4_MOUNTAIN_STRESS_SEED_OFFSET!=='4'))
  throw Error('Controlled human attack fixture requires second-half mountain stress seeds, no opening forensic')
 if(openingForensic&&(!mountainRealismExpanded||!mountainStress))throw Error('Opening forensic requires eight-seed mountain stress research')
@@ -32,7 +34,7 @@ if(mountainStress200Only&&!mountainStress)throw Error('200 km mountain forensic 
 const targetedSeedText=process.env.V4_MOUNTAIN_TARGET_SEED??''
 if(targetedSeedText && (!focused || !/^[0-7]$/.test(targetedSeedText)))
  throw Error('Target seed must be 0..7 and requires focused mountain forensic')
-const seedIds=targetedSeedText?[Number(targetedSeedText)]:mountainStress?Array.from({length:4},(_,i)=>i+(mountainRealismExpanded?Number(stressSeedOffset):0)):Array.from({length:8},(_,i)=>i)
+const seedIds=humanAttackForensic?[5]:targetedSeedText?[Number(targetedSeedText)]:mountainStress?Array.from({length:4},(_,i)=>i+(mountainRealismExpanded?Number(stressSeedOffset):0)):Array.from({length:8},(_,i)=>i)
 const coalesceCandidate=process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
 const measuredCSplitCandidate=process.env.V4_MOUNTAIN_C_SPLIT_CANDIDATE==='1'
 const contactCandidate=process.env.V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE==='1'
@@ -115,8 +117,8 @@ function injectV4WinnerCollisionForensics(source){
   source.replace(terrainWinnerReplayThrow,lines)
 }
 const terrains=mountainStress?['mountain']:focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
-const distances=mountainStress?(mountainStress200Only?[200]:[170,200,240]):focused?[220]:[120,220]
-const workforces=openingForensic?[0]:humanAttackFixture?[0,5]:[0,1,3,5]
+const distances=mountainStress?(mountainStress200Only||humanAttackForensic?[200]:[170,200,240]):focused?[220]:[120,220]
+const workforces=openingForensic||humanAttackForensic?[0]:humanAttackFixture?[0,5]:[0,1,3,5]
 const seeds=seedIds.length
 const median=values=>{
  const sorted=values.filter(v=>typeof v==='number'&&Number.isFinite(v)).sort((a,b)=>a-b)
@@ -319,13 +321,13 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const withSplits=measuredCSplitCandidate?patchV4MeasuredChaseSplitResearchSource(candidate):candidate
      const withContact=contactCandidate?patchV4ChaseContactResearchSource(withSplits):withSplits
      const withFrontCodes=frontCodeCandidate?patchV4MountainFrontCollisionSource(withContact):withContact
-     return {contents:(focused||mountainStress200Only)?injectV4WinnerCollisionForensics(withFrontCodes):withFrontCodes,loader:'ts'}
+     return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withFrontCodes):withFrontCodes,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
   const execution=spawnSync(process.execPath,[output],{
    cwd:root,encoding:'utf8',timeout:420000,maxBuffer:8*1024*1024,
-   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??'',V4_MOUNTAIN_SPLIT_TRACE:targetedSeedText?'1':'0'}
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??'',V4_MOUNTAIN_SPLIT_TRACE:(targetedSeedText||humanAttackForensic)?'1':'0'}
   })
   assert.equal(execution.status,0,
    config.key+' read-only worker failed '+String(execution.stderr??'').slice(-1100))
@@ -333,7 +335,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   const report=stdout.filter(s=>s.startsWith('V4_TERRAIN_WORKFORCE_WORKER '))
   assert.equal(report.length,1)
   const parsed=JSON.parse(report[0].slice('V4_TERRAIN_WORKFORCE_WORKER '.length))
-  if(targetedSeedText&&measuredCSplitCandidate&&config.key==='calibrated_v4'){
+  if((targetedSeedText||humanAttackForensic)&&measuredCSplitCandidate&&config.key==='calibrated_v4'){
    const lines=stdout.filter(line=>line.startsWith('V4_MOUNTAIN_C_SPLIT_PHYSICS '))
    console.log('V4_MOUNTAIN_C_SPLIT_PHYSICS_TRACE '+JSON.stringify({
     seedIds,traces:lines.map(line=>JSON.parse(line.slice('V4_MOUNTAIN_C_SPLIT_PHYSICS '.length)))
@@ -507,7 +509,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
@@ -525,7 +527,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   v4StrictReplayFailures:paired.filter(r=>!r.v4.valid&&r.v4.error==='STRICT_REPLAY').length,
   originalV2SolverModified:false,realismApproved:false
  }))
- if(contactCandidate)
+ if(contactCandidate&&!humanAttackForensic)
   assert(paired.every(r=>r.v4.valid),
    'V4 contact-cohesion candidate must pass every selected strict replay without exclusions')
  else if(targetedSeedText&&measuredCSplitCandidate)

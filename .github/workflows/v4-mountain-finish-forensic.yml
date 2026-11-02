@@ -118,6 +118,28 @@ jobs:
           V4_MOUNTAIN_REALISM_EIGHT_SEEDS: '1'
           V4_MOUNTAIN_STRESS_SEED_OFFSET: '0'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
+  mountain-controlled-human-200km-seed5-trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Trace physical chasing groups for controlled 200 km seed 5 no-chase replay issue
+        env:
+          V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
+          V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
+          V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
+          V4_MOUNTAIN_FRONT_CODE_COLLISION_CANDIDATE: '1'
+          V4_MOUNTAIN_DISTANCE_STRESS: '1'
+          V4_MOUNTAIN_REALISM_EIGHT_SEEDS: '1'
+          V4_MOUNTAIN_STRESS_SEED_OFFSET: '4'
+          V4_MOUNTAIN_HUMAN_ATTACK_CONTROL: '1'
+          V4_MOUNTAIN_HUMAN_ATTACK_FORENSIC: '1'
+        run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   mountain-controlled-human-attacks:
     runs-on: ubuntu-latest
     timeout-minutes: 15
