@@ -25,8 +25,11 @@ export function patchPhysicalReplayProbeSourceV4(source){
       const observed=buildReplayFromPhysicalGroupsV4(samples,{
         groupToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
       })
+      // Keep detailed observations in isolated process memory only.
+      // Never serialize rider IDs, checkpoint locations, or raw groups.
       return {status:'OBSERVED',samples:observed.frames.length,
         transitions:observed.observations.length,
+        observations:observed.observations,
         physicsModified:false}
     }catch{
       return {status:'UNAVAILABLE',samples:0,transitions:0,physicsModified:false}
