@@ -13,7 +13,7 @@ import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.m
 import {patchV4MountainEarlyChasePriorityCandidateSource} from './mountainEarlyChasePriorityCandidateV4.mjs'
 import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES,
  HISTORICAL_FAILURE_REASONS,HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,
- HISTORICAL_FINISH_EVIDENCE}
+ HISTORICAL_FINISH_EVIDENCE,HISTORICAL_REPLAY_KNOWN_ISSUE_CODES}
  from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
@@ -167,6 +167,11 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
      Object.values(report.failureClasses).some(n=>!Number.isSafeInteger(n)||n<0)||
      report.rows.length+report.rejected.invalid+report.rejected.unsupported!==paths.length||
      !report.failureTerrains||!report.otherErrorTypes||!report.otherFailureReasons||
+     !report.safeReplayIssueCodes||typeof report.safeReplayIssueCodes!=='object'||
+     Array.isArray(report.safeReplayIssueCodes)||
+     Object.entries(report.safeReplayIssueCodes).some(([code,count])=>
+      ![...HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,'UNKNOWN_ISSUE_CODE','NOT_REPLAY'].includes(code)||
+      !Number.isSafeInteger(count)||count<0)||
      !report.otherFailureCheckpoints||!report.otherFailureTransfers||!report.otherFinishEvidence||
      Object.keys(report.failureTerrains).length!==HISTORICAL_TERRAINS.length||
      HISTORICAL_TERRAINS.some(t=>!report.failureTerrains[t]||
@@ -215,6 +220,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
    failedPhysicsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.failureClasses])),
    otherErrorTypesByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherErrorTypes])),
    otherFailureReasonsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureReasons])),
+   safeReplayIssueCodesByVariant:Object.fromEntries(results.map(r=>[r.variant,r.safeReplayIssueCodes])),
    otherFailureCheckpointsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureCheckpoints])),
    otherFailureTransfersByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureTransfers])),
    otherFinishEvidenceByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFinishEvidence])),

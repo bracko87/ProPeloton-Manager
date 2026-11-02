@@ -9,6 +9,7 @@ import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
 import {explainHistoricalClassificationParity,safeHistoricalErrorType,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalFinishEvidence,
  safeHistoricalTerrain,historicalPhysicalGapAudit,historicalOpeningBreakawayJourney,
+ safeHistoricalReplayIssueCode,
  HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES,HISTORICAL_FAILURE_REASONS,
  HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,HISTORICAL_FINISH_EVIDENCE}
  from './privateHistoricalDiagnosticsV4.mjs'
@@ -137,6 +138,7 @@ function main(){
  const failureTerrains=Object.fromEntries(HISTORICAL_TERRAINS.map(t=>[t,{invalid:0,unsupported:0,other:0}]))
  const otherErrorTypes=Object.fromEntries(HISTORICAL_ERROR_TYPES.map(t=>[t,0]))
  const otherFailureReasons=Object.fromEntries(HISTORICAL_FAILURE_REASONS.map(t=>[t,0]))
+ const safeReplayIssueCodes:Record<string,number>={}
  const otherFailureCheckpoints=Object.fromEntries(HISTORICAL_FAILURE_CHECKPOINTS.map(t=>[t,0]))
  const otherFailureTransfers=Object.fromEntries(HISTORICAL_FAILURE_TRANSFERS.map(t=>[t,0]))
  const otherFinishEvidence=Object.fromEntries(HISTORICAL_FINISH_EVIDENCE.map(t=>[t,0]))
@@ -158,6 +160,8 @@ function main(){
     bucket.other++
     otherErrorTypes[safeHistoricalErrorType(e)]++
     otherFailureReasons[safeHistoricalFailureReason(e)]++
+    const replayCode=safeHistoricalReplayIssueCode(e)
+    safeReplayIssueCodes[replayCode]=(safeReplayIssueCodes[replayCode]??0)+1
     const safeLocation=safeHistoricalFailureLocation(e)
     otherFailureCheckpoints[safeLocation.checkpoint]++
     otherFailureTransfers[safeLocation.transfer]++
@@ -170,6 +174,7 @@ function main(){
   variant,researchOnly:true,officialWrites:0,networkCalls:0,
   inputPathsReported:false,attempted:paths.length,rejected,failureClasses,
   failureTerrains,otherErrorTypes,otherFailureReasons,
+  safeReplayIssueCodes,
   otherFailureCheckpoints,otherFailureTransfers,otherFinishEvidence,rows,
  })+'\n')
  // Zero usable stages is a valid diagnostic result, not a child-process crash.
