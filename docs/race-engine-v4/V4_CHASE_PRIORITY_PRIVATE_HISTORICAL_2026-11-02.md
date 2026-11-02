@@ -38,3 +38,30 @@ node scripts/v4/privateHistoricalPgV4.mjs
 With this flag, candidate discovery considers only archived stages with **confirmed synchronized saved replay and full authoritative team-entry mapping**, rather than relying on missing/unknown metadata as fallback. The private solver must report positive evidence that its opt-in variant ran; missing or malformed candidate evidence is rejected. The usual current-V2 saved-finish parity and strict replay guards still determine eligible paired historical results. The pilot prints only anonymized aggregate outcome categories and metrics and securely deletes temporary private files. Keep the environment flag unset for the default three-variant behavior.
 
 This integration was verified with synthetic data only. The real historical sample has not yet been run with this new mode.
+
+## Strict twelve-race historical pilot (4+4+4)
+Set `PPM_V4_RESEARCH_COHORT=chase_priority_12` **together with**
+`PPM_V4_RESEARCH_CHASE_PRIORITY=1`. This selects at most **four flat, four
+hilly and four mountain** records; no cobbled races. It rejects any pilot
+without the explicit chase-priority opt-in, excludes unsynchronized or unmapped
+metadata, checks original locked input and team-entry authority on private
+export, and preserves the unmodified strict V2 reproduction/replay checks.
+
+Windows CMD on the already configured **trusted private workstation**, with
+its existing restricted read-only Postgres credentials and CA file (never send
+the password, stages or snapshots to GitHub, chat or CI):
+
+```cmd
+git pull origin main
+set PPM_V4_RESEARCH_COHORT=chase_priority_12
+set PPM_V4_RESEARCH_CHASE_PRIORITY=1
+node scripts/v4/privateHistoricalPgV4.mjs
+```
+
+The final aggregate `chasePriority12` reports the export count and the number
+of **strict, reproduced V2 and validated V4 matched pairs**. A cohort with
+fewer than 12 valid pairs is labeled incomplete; passing selection preflight
+does not count as replay or realism acceptance. Even a full 12/12 produces
+`READY_FOR_HISTORICAL_REALISM_REVIEW` rather than production approval.
+These flags and guardrails have been tested with synthetic archive records
+only; **no real private rerun** has been claimed.

@@ -34,6 +34,8 @@ const queryEntries='SELECT race_team_entry_id,race_id,participating_club_id,club
 export function historicalPgCohortPlan(env={}){
  const mode=env.PPM_V4_RESEARCH_COHORT??'balanced'
  if(mode==='balanced')return {targets:TERRAIN_TARGETS,maxProbesPerTerrain:18}
+ if(mode==='chase_priority_12')return {
+  targets:{flat:4,hilly:4,mountain:4,cobbled:0},maxProbesPerTerrain:18}
  if(mode==='hilly_latest_nine')return {
   targets:{flat:0,hilly:9,mountain:0,cobbled:0},maxProbesPerTerrain:24}
  throw Error('INVALID_HISTORICAL_COHORT')
@@ -64,6 +66,8 @@ export async function runPrivatePgHistoricalPilotV4({
  if(candidateFlag!==undefined&&candidateFlag!=='0'&&candidateFlag!=='1')
   throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
  const includeChasePriority=candidateFlag==='1'
+ if(env.PPM_V4_RESEARCH_COHORT==='chase_priority_12'&&!includeChasePriority)
+  throw Error('CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN')
  const conf=privatePgConfig(env)
  const Client=ClientConstructor??(await import('pg')).default.Client
  const db=new Client(conf)
@@ -105,7 +109,7 @@ export async function runPrivatePgHistoricalPilotV4({
     throw Error('UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT')
    return report
   }:physicalRunner
-  return await runPrivateHistoricalPilotV4({
+  const report=await runPrivateHistoricalPilotV4({
    metadataReader,exportStage,physicalRunner:candidateRunner,
    requireVerifiedMetadata:includeChasePriority,
    targets:plan.targets,maxProbesPerTerrain:plan.maxProbesPerTerrain,
@@ -113,6 +117,21 @@ export async function runPrivatePgHistoricalPilotV4({
     phase=state.phase
     if(progress)progress(state)
    }})
+  if(env.PPM_V4_RESEARCH_COHORT!=='chase_priority_12')return report
+  const exported=report.accepted??{flat:0,hilly:0,mountain:0,cobbled:0}
+  const exactlyTwelve=['flat','hilly','mountain'].every(t=>exported[t]===4)&&
+    exported.cobbled===0
+  const strictPaired=report.chasePriorityResearch?.all?.compared??0
+  const complete=exactlyTwelve&&strictPaired===12
+  return {...report,chasePriority12:{
+   status:complete?'READY_FOR_HISTORICAL_REALISM_REVIEW':
+    exactlyTwelve?'STRICT_HISTORICAL_PAIRS_INCOMPLETE':'EXPORT_COHORT_INCOMPLETE',
+   researchOnly:true,officialWrites:0,
+   targets:{flat:4,hilly:4,mountain:4,cobbled:0},
+   actualExports:exported,strictHistoricalPairs:strictPaired,
+   sourceRevisionHistoricallyAttested:false,
+   productionReady:false
+  }}
  }catch(err){
   if(err&&typeof err==='object')err.v4ResearchPhase=phase
   throw err
@@ -121,7 +140,7 @@ export async function runPrivatePgHistoricalPilotV4({
 function safeError(err){
  const msg=String(err?.message??'')
  const allowed=['INVALID_HISTORICAL_COHORT','RESTRICTED_PG_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
-  'INVALID_PRIVATE_CA_PATH','INVALID_PRIVATE_CANDIDATE_OPTION','UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
+  'INVALID_PRIVATE_CA_PATH','INVALID_PRIVATE_CANDIDATE_OPTION','CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN','UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
   'NO_ARCHIVED_TEAMS','INVALID_ENTRY_MAPPING','PRIVATE_PHYSICAL_ENGINE_FAILED',
   'UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE','PHYSICAL_HISTORIC_INPUT_MISMATCH',
   'PRIVATE_PATH_REJECTED','DUPLICATE_PRIVATE_INPUT','INVALID_MANIFEST',

@@ -6,6 +6,9 @@ const env={PPM_V4_RESEARCH_DB_HOST:'aws-0-eu-central-1.pooler.supabase.com',
 const cfg=privatePgConfig(env)
 assert.deepEqual(historicalPgCohortPlan(env).targets,{flat:4,hilly:4,mountain:4,cobbled:1})
 assert.equal(historicalPgCohortPlan(env).maxProbesPerTerrain,18)
+const exact12=historicalPgCohortPlan({...env,PPM_V4_RESEARCH_COHORT:'chase_priority_12'})
+assert.deepEqual(exact12.targets,{flat:4,hilly:4,mountain:4,cobbled:0})
+assert.equal(exact12.maxProbesPerTerrain,18)
 const focused=historicalPgCohortPlan({...env,PPM_V4_RESEARCH_COHORT:'hilly_latest_nine'})
 assert.deepEqual(focused.targets,{flat:0,hilly:9,mountain:0,cobbled:0})
 assert.equal(focused.maxProbesPerTerrain,24)
@@ -171,5 +174,79 @@ await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
 }),/UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT/)
 assert.equal(opened,6);assert.equal(closed,6)
 
+// Read-only 12-stage privacy/selection test: 4 flat + 4 hilly + 4 mountain,
+// with three newer non-synchronized records deliberately excluded.
+const stages=Array.from({length:12},(_,i)=>({
+ stageId:u(400+i),terrain:['flat','hilly','mountain'][i%3]}))
+class TwelveClient extends FakeClient{
+ async query(sql,args){
+  if(sql.includes('ORDER BY r.completed_at DESC')){
+   const wrong=['flat','hilly','mountain'].map((terrain,i)=>({
+    stage_id:u(500+i),terrain,stage_format:'road_race',
+    completed_at:'2026-10-30T12:00:00Z',
+    saved_replay_synchronized:false,team_count:2,
+    first_entry_mappable:true,all_entries_mapped:true}))
+   return {rows:[...wrong,...stages.map(({stageId,terrain},i)=>({
+    stage_id:stageId,terrain,stage_format:'road_race',
+    completed_at:new Date(Date.UTC(2026,9,29,23,59-i)).toISOString(),
+    saved_replay_synchronized:true,team_count:2,
+    first_entry_mappable:true,all_entries_mapped:true}))]}
+  }
+  if(sql.includes('WHERE stage_id=$1')){
+   const match=stages.find(s=>s.stageId===args[0])
+   assert(match,'Only selected synchronized stage may be exported')
+   const copy=structuredClone(run)
+   copy.stage_id=match.stageId
+   copy.input_snapshot_json.stage.stageId=match.stageId
+   copy.input_snapshot_json.stage.terrainType=match.terrain
+   return {rows:[copy]}
+  }
+  return super.query(sql,args)
+ }
+}
+const cohortEnv={...env,PPM_V4_RESEARCH_CHASE_PRIORITY:'1',
+ PPM_V4_RESEARCH_COHORT:'chase_priority_12'}
+const makeReport=(manifest,{includeChasePriority},compared)=>{
+ assert.equal(includeChasePriority,true)
+ const paths=JSON.parse(readFileSync(manifest,'utf8')).privateEnvelopePaths
+ assert.equal(paths.length,12)
+ const exported=paths.map(path=>JSON.parse(readFileSync(path,'utf8')))
+ const terrainCounts=Object.fromEntries(['flat','hilly','mountain'].map(t=>
+  [t,exported.filter(v=>v.input_snapshot_json.stage.terrainType===t).length]))
+ assert.deepEqual(terrainCounts,{flat:4,hilly:4,mountain:4})
+ assert(exported.every(v=>stages.some(s=>s.stageId===v.input_snapshot_json.stage.stageId)))
+ return {officialWrites:0,rawStageDataPublished:false,
+  privatePathsPublished:false,consideredCompleteTriples:compared,
+  chasePriorityResearch:{
+   status:'PRIVATE_RESEARCH_DIAGNOSTIC_NOT_REALISM_APPROVAL',
+   enabledByExplicitOption:true,officialWrites:0,rawStageDataPublished:false,
+   attemptedPrivateCandidateRuns:12,all:{compared}}}
+}
+let countRuns=0
+const twelve=await runPrivatePgHistoricalPilotV4({
+ env:cohortEnv,ClientConstructor:TwelveClient,
+ physicalRunner:async(m,o)=>{countRuns++;return makeReport(m,o,12)}})
+assert.equal(countRuns,1)
+assert.deepEqual(twelve.accepted,{flat:4,hilly:4,mountain:4,cobbled:0})
+assert.deepEqual(twelve.attempted,{flat:4,hilly:4,mountain:4,cobbled:0})
+assert.equal(twelve.preflight.flat.unsynchronized,1)
+assert.equal(twelve.preflight.hilly.unsynchronized,1)
+assert.equal(twelve.preflight.mountain.unsynchronized,1)
+assert.equal(twelve.chasePriority12.status,'READY_FOR_HISTORICAL_REALISM_REVIEW')
+assert.equal(twelve.chasePriority12.strictHistoricalPairs,12)
+assert.equal(twelve.chasePriority12.productionReady,false)
+assert.equal(twelve.chasePriority12.sourceRevisionHistoricallyAttested,false)
+assert.equal(twelve.officialWrites,0)
+const incomplete=await runPrivatePgHistoricalPilotV4({
+ env:cohortEnv,ClientConstructor:TwelveClient,
+ physicalRunner:async(m,o)=>makeReport(m,o,7)})
+assert.equal(incomplete.chasePriority12.status,'STRICT_HISTORICAL_PAIRS_INCOMPLETE')
+assert.equal(incomplete.chasePriority12.strictHistoricalPairs,7)
+assert.equal(incomplete.chasePriority12.productionReady,false)
+await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
+ env:{...cohortEnv,PPM_V4_RESEARCH_CHASE_PRIORITY:'0'},
+ ClientConstructor:TwelveClient}),/CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN/)
+assert.equal(opened,8);assert.equal(closed,8)
 console.log('V4_PRIVATE_PG_READONLY_RESEARCH_UNIT '+JSON.stringify({
- status:'PASS',syntheticOnly:true,cases:31,optionalCandidateVerified:true,officialWrites:0}))
+ status:'PASS',syntheticOnly:true,cases:50,
+ optionalCandidateVerified:true,strictTwelveCohortVerified:true,officialWrites:0}))
