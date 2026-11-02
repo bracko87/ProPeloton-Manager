@@ -131,7 +131,7 @@ try{
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
   "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalReplayIssueCategory,safeHistoricalReplayIssueCode,safeV4PostCatchTransferClass} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
   fixture.slice(start,end),
-  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds+",seedIds="+JSON.stringify(seedIds),
+  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds+",seedIds="+JSON.stringify(seedIds)+",openingForensic="+openingForensic+",focused="+focused+",mountainStress200Only="+mountainStress200Only,
   String.raw`
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex')
 const rows=[]
