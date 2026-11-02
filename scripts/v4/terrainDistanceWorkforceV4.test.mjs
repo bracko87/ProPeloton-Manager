@@ -14,6 +14,7 @@ import {patchV4MeasuredChaseSplitResearchSource} from './mountainChaseSplitResea
 import {patchV4ChaseContactResearchSource} from './mountainChaseContactResearchPatchV4.mjs'
 import {patchV4MountainFrontCollisionSource} from './mountainFrontCodeCollisionPatchV4.mjs'
 import {patchV4MountainChaseWorkerTelemetrySource} from './mountainChaseWorkerTelemetryV4.mjs'
+import {patchV4EarlyChaseWorkforceTelemetrySource} from './mountainEarlyChaseWorkforceTelemetryV4.mjs'
 import {patchV4MountainChaseEfficiencyCandidateSource} from './mountainChaseEfficiencyCandidateV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
@@ -356,13 +357,14 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const withFrontCodes=frontCodeCandidate?patchV4MountainFrontCollisionSource(withContact):withContact
      const withEfficiency=chaseEfficiencyCandidate?patchV4MountainChaseEfficiencyCandidateSource(withFrontCodes,{gain:chaseEfficiencyGain}):withFrontCodes
      const withTelemetry=chaseWorkerTelemetry?patchV4MountainChaseWorkerTelemetrySource(withEfficiency):withEfficiency
-     return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withTelemetry):withTelemetry,loader:'ts'}
+     const withEarlyWorkerAudit=earlyPhaseAudit?patchV4EarlyChaseWorkforceTelemetrySource(withTelemetry):withTelemetry
+     return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withEarlyWorkerAudit):withEarlyWorkerAudit,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
   const execution=spawnSync(process.execPath,[output],{
    cwd:root,encoding:'utf8',timeout:420000,maxBuffer:8*1024*1024,
-   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??'',V4_MOUNTAIN_SPLIT_TRACE:(targetedSeedText||humanAttackForensic)?'1':'0',V4_CHASE_STEP_TELEMETRY:chaseWorkerTelemetry&&config.patch?'1':'0'}
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??'',V4_MOUNTAIN_SPLIT_TRACE:(targetedSeedText||humanAttackForensic)?'1':'0',V4_CHASE_STEP_TELEMETRY:chaseWorkerTelemetry&&config.patch?'1':'0',V4_EARLY_CHASE_WORKFORCE_TELEMETRY:earlyPhaseAudit&&config.patch?'1':'0'}
   })
   assert.equal(execution.status,0,
    config.key+' read-only worker failed '+String(execution.stderr??'').slice(-1100))
@@ -374,6 +376,28 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    const lines=stdout.filter(line=>line.startsWith('V4_MOUNTAIN_C_SPLIT_PHYSICS '))
    console.log('V4_MOUNTAIN_C_SPLIT_PHYSICS_TRACE '+JSON.stringify({
     seedIds,traces:lines.map(line=>JSON.parse(line.slice('V4_MOUNTAIN_C_SPLIT_PHYSICS '.length)))
+   }))
+  }
+  if(earlyPhaseAudit&&config.key==='calibrated_v4'){
+   const earlyEvents=stdout.filter(line=>line.startsWith('V4_EARLY_CHASE_WORKFORCE '))
+    .map(line=>JSON.parse(line.slice('V4_EARLY_CHASE_WORKFORCE '.length)))
+   assert.equal(earlyEvents.length,distances.length*seedIds.length*workforces.length*2,
+    'Expected one phase-2 and phase-3 worker audit per synthetic V4 race')
+   const earlyRows=distances.flatMap(km=>seedIds.flatMap(seed=>workforces.map((orders,index)=>{
+    const seedText='v4-matched-terrain-workforce-2026-'+seed
+    const find=phase=>earlyEvents.filter(t=>t.stageKm===km&&t.seed===seedText&&t.phase===phase)
+    const p2=find(2),p3=find(3)
+    assert.equal(p2.length,workforces.length,'Each race needs two phase-2 workforce snapshots')
+    assert.equal(p3.length,workforces.length,'Each race needs two phase-3 workforce snapshots')
+    return {km,seed,orders,phase2:p2[index],phase3:p3[index]}
+   })))
+   assert(earlyRows.every(row=>[row.phase2,row.phase3].every(phase=>
+    Number.isInteger(phase.eligibleChaseAssets)&&phase.eligibleChaseAssets>=0&&
+    phase.selectedChaseOrderedWorkers+phase.roleEligibleNonChaseWorkers===phase.eligibleChaseAssets)),
+    'Early-worker counts must exactly partition eligible assets')
+   console.log('V4_CHASE_EARLY_WORKFORCE_AUDIT '+JSON.stringify({
+    status:'RESEARCH_READ_ONLY_NOT_REALISM_APPROVAL',
+    strictReplayValidated:true,officialWrites:0,rows:earlyRows
    }))
   }
   if(chaseWorkerTelemetry&&config.key==='calibrated_v4'){
