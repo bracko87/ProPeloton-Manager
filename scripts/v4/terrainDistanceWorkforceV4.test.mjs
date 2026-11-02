@@ -104,6 +104,7 @@ const run=(input,pursuitTeamId)=>{
     winnerLineageAudit:Array.isArray(e?.v4WinnerLineageAudit)?
      e.v4WinnerLineageAudit.filter(r=>r&&r.kind==='C_C'&&
       ['SAME_PREVIOUS_GROUP','DISTINCT_PREVIOUS_GROUPS','MIXED_PREVIOUS_GROUPS','MEMBERSHIP_MISSING','NO_PREVIOUS_CHECKPOINT'].includes(r.previousMembership)&&
+      ['B','F','P','C','OTHER','MULTIPLE','NO_MATCH'].includes(r.previousSharedGroupKind)&&
       ['SAME_TAGGED_LINEAGE','DISTINCT_TAGGED_LINEAGES','UNTAGGED_LINEAGE'].includes(r.physicalLineage)&&
       ['PERSISTENT_SEPARATE_EQUAL_GAP','SEPARATE_DIFFERENT_GAPS','PHYSICALLY_MERGED','FINAL_MEMBERSHIP_CHANGED','NO_FINAL_CHECKPOINT'].includes(r.finalOutcome)&&
       ['ZERO','POSITIVE_UNDER_ONE_SECOND','ONE_TO_TEN_SECONDS','OVER_TEN_SECONDS'].includes(r.gapBand)):[],
@@ -274,6 +275,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      candidates.filter(r=>(r.v4.winnerCollisionOrigins??[]).includes(origin)).length])),
    v4WinnerMembership:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.previousMembership)))].map(k=>[k,
     candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.previousMembership===k)).length])),
+   v4WinnerPreviousGroupKinds:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.previousSharedGroupKind)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.previousSharedGroupKind===k)).length])),
    v4WinnerPhysicalLineages:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.physicalLineage)))].map(k=>[k,
     candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.physicalLineage===k)).length])),
    v4WinnerFinalOutcomes:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.finalOutcome)))].map(k=>[k,

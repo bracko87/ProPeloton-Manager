@@ -44,6 +44,17 @@ const membership=(a,b,prior)=>{
   'SAME_PREVIOUS_GROUP':'DISTINCT_PREVIOUS_GROUPS'
  return 'MIXED_PREVIOUS_GROUPS'
 }
+
+export const COLLISION_PRIOR_GROUP_KIND=Object.freeze([
+ 'B','F','P','C','OTHER','MULTIPLE','NO_MATCH'
+])
+function priorSharedGroupKind(a,b,prior){
+ if(!prior)return 'NO_MATCH'
+ const all=[...(a.riderIds??[]),...(b.riderIds??[])]
+ const candidates=(prior.groups??[]).filter(g=>all.every(id=>g.riderIds?.includes(id)))
+ if(candidates.length===1)return kind(candidates[0].displayCode)
+ return candidates.length?'MULTIPLE':'NO_MATCH'
+}
 const lineage=(a,b)=>a.physicalLineageId&&b.physicalLineageId?
  a.physicalLineageId===b.physicalLineageId?'SAME_TAGGED_LINEAGE':'DISTINCT_TAGGED_LINEAGES':
  'UNTAGGED_LINEAGE'
@@ -85,6 +96,7 @@ export function auditV4WinnerGapCollisions(checkpoints){
   const result={
    kind:pairKind(a.displayCode,b.displayCode),
    previousMembership:membership(a,b,prior),
+   previousSharedGroupKind:priorSharedGroupKind(a,b,prior),
    physicalLineage:lineage(a,b),
    finalOutcome:finalStatus(a,b,last),
    gapBand:gapBand(ga.gapSeconds)

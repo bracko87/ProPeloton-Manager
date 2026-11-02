@@ -12,11 +12,12 @@ const final=checkpoint('final-results',220,[group('C5',['alpha']),group('C6',['b
 let rows=auditV4WinnerGapCollisions([previous,winner,final])
 assert.equal(rows.length,1)
 assert.deepEqual(rows[0],{kind:'C_C',
- previousMembership:'DISTINCT_PREVIOUS_GROUPS',physicalLineage:'UNTAGGED_LINEAGE',
+ previousMembership:'DISTINCT_PREVIOUS_GROUPS',previousSharedGroupKind:'NO_MATCH',physicalLineage:'UNTAGGED_LINEAGE',
  finalOutcome:'PERSISTENT_SEPARATE_EQUAL_GAP',gapBand:'OVER_TEN_SECONDS'})
 rows=auditV4WinnerGapCollisions([checkpoint('pre',219.9,[group('C0',['alpha','beta'])],[5]),winner,
  checkpoint('final-results',220,[group('P',['alpha','beta'])],[0],true)])
 assert.equal(rows[0].previousMembership,'SAME_PREVIOUS_GROUP')
+assert.equal(rows[0].previousSharedGroupKind,'C')
 assert.equal(rows[0].finalOutcome,'PHYSICALLY_MERGED')
 const tagged=checkpoint('winner-finish',220,
  [group('C1',['alpha'],'physical-a'),group('C2',['beta'],'physical-b')],[0,0])
