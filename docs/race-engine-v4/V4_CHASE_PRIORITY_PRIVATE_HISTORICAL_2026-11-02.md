@@ -65,3 +65,24 @@ does not count as replay or realism acceptance. Even a full 12/12 produces
 `READY_FOR_HISTORICAL_REALISM_REVIEW` rather than production approval.
 These flags and guardrails have been tested with synthetic archive records
 only; **no real private rerun** has been claimed.
+
+## Connection fix: separate login from the restricted reader
+The original research reader `v4_historical_research_reader` is **NOLOGIN** by design and cannot authenticate directly through Supabase's shared pooler. A failed attempt resulted in `phase:CONNECT, postgresCode:XX000`; this is not a race-engine failure. The project region is **eu-central-2**, but the pooler cluster index must always be copied from the Supabase **Connect → Session pooler** dialog rather than guessed.
+
+The runner now authenticates only as a dedicated `v4_historical_research_login` account via **session pooler port 5432**, verifies that exact login identity, executes `SET ROLE v4_historical_research_reader`, then checks the effective reader is still NOLOGIN, has SELECT on precisely the two research views and no SELECT access to the two live production tables, and is not a BYPASSRLS role. Fail closed otherwise. The reader group itself is not modified.
+
+**One-time trusted Supabase SQL editor configuration** (choose a new unique password yourself; do not commit, paste in ChatGPT or print it in logs):
+
+```sql
+CREATE ROLE v4_historical_research_login
+  LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS
+  PASSWORD '<choose-a-new-long-unique-private-password>';
+GRANT v4_historical_research_reader TO v4_historical_research_login
+  WITH INHERIT FALSE, SET TRUE;
+```
+
+If this login role already exists, review its privileges and ownership instead of blindly creating or altering it. Use a dedicated strong password for this one read-only research login, never the database administrator password.
+
+On your own Windows CMD with the updated `main`, set `PPM_V4_RESEARCH_DB_HOST` to the **exact** hostname copied from the dashboard (no URL scheme or port), and set `PPM_V4_RESEARCH_DB_PASSWORD` locally to the newly chosen login-role password. Keep the existing trusted CA file setting. Do not upload or share secrets. The older `v4_historical_research_reader.<project-ref>` username is no longer used for authentication.
+
+The app, source, production V2, default V4, user database permissions and replay validator are not modified. All proof tests use synthetic Postgres clients and no private archive inputs.

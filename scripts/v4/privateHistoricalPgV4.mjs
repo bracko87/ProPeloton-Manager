@@ -7,6 +7,9 @@ import {readFileSync} from 'node:fs'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
 const role='v4_historical_research_reader'
+// Reader is intentionally NOLOGIN. Authenticate with a separate NOINHERIT
+// login, then SET ROLE inside the shared SESSION pooler connection.
+const loginRole='v4_historical_research_login'
 const project='okuravitxocyevkexfgi'
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const queryMetadata=[
@@ -40,7 +43,9 @@ export function historicalPgCohortPlan(env={}){
   targets:{flat:0,hilly:9,mountain:0,cobbled:0},maxProbesPerTerrain:24}
  throw Error('INVALID_HISTORICAL_COHORT')
 }
-const queryRights="SELECT current_user AS db_user,has_table_privilege(current_user,'v4_historical_research.completed_runs','SELECT') AS scoped_runs,has_table_privilege(current_user,'v4_historical_research.race_entries','SELECT') AS scoped_entries,has_table_privilege(current_user,'public.race_stage_simulation_runs','SELECT') AS live_runs,has_table_privilege(current_user,'public.race_participant_teams_v1','SELECT') AS live_entries,(SELECT rolbypassrls FROM pg_roles WHERE rolname=current_user) AS bypass_rls"
+const queryLoginIdentity='SELECT session_user AS login_user,current_user AS active_user'
+const activateReaderRole='SET ROLE v4_historical_research_reader'
+const queryRights="SELECT session_user AS login_user,current_user AS db_user,has_table_privilege(current_user,'v4_historical_research.completed_runs','SELECT') AS scoped_runs,has_table_privilege(current_user,'v4_historical_research.race_entries','SELECT') AS scoped_entries,has_table_privilege(current_user,'public.race_stage_simulation_runs','SELECT') AS live_runs,has_table_privilege(current_user,'public.race_participant_teams_v1','SELECT') AS live_entries,(SELECT rolbypassrls FROM pg_roles WHERE rolname=current_user) AS bypass_rls,(SELECT rolcanlogin FROM pg_roles WHERE rolname=current_user) AS reader_can_login"
 export function privatePgConfig(env){
  const host=String(env.PPM_V4_RESEARCH_DB_HOST??'').trim().toLowerCase()
  const password=env.PPM_V4_RESEARCH_DB_PASSWORD
@@ -53,7 +58,7 @@ export function privatePgConfig(env){
    throw Error('INVALID_PRIVATE_CA_PATH')
   ssl.ca=readFileSync(env.PPM_V4_RESEARCH_DB_CA_FILE,'utf8')
  }
- return {host,port:5432,user:role+'.'+project,password,
+ return {host,port:5432,user:loginRole+'.'+project,password,
   database:'postgres',ssl,connectionTimeoutMillis:12000,query_timeout:20000,
   application_name:'v4-research-readonly'}
 }
@@ -75,9 +80,17 @@ export async function runPrivatePgHistoricalPilotV4({
  let phase='CONNECT'
  try{
   await db.connect();connected=true
+  phase='VERIFY_LOGIN_IDENTITY'
+  const auth=(await db.query(queryLoginIdentity)).rows[0]
+  if(auth?.login_user!==loginRole||auth?.active_user!==loginRole)
+   throw Error('RESTRICTED_LOGIN_ROLE_REQUIRED')
+  phase='ACTIVATE_RESTRICTED_ROLE'
+  await db.query(activateReaderRole)
   phase='VERIFY_RESEARCH_ROLE'
   const x=(await db.query(queryRights)).rows[0]
-  if(x?.db_user!==role||x.scoped_runs!==true||x.scoped_entries!==true||
+  if(x?.login_user!==loginRole||x.db_user!==role||
+     x.reader_can_login!==false||
+     x.scoped_runs!==true||x.scoped_entries!==true||
      x.live_runs!==false||x.live_entries!==false||x.bypass_rls!==false)
    throw Error('RESTRICTED_PG_ROLE_REQUIRED')
   const metadataReader=async(limit)=>{
@@ -139,7 +152,7 @@ export async function runPrivatePgHistoricalPilotV4({
 }
 function safeError(err){
  const msg=String(err?.message??'')
- const allowed=['INVALID_HISTORICAL_COHORT','RESTRICTED_PG_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
+ const allowed=['INVALID_HISTORICAL_COHORT','RESTRICTED_PG_ROLE_REQUIRED','RESTRICTED_LOGIN_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
   'INVALID_PRIVATE_CA_PATH','INVALID_PRIVATE_CANDIDATE_OPTION','CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN','UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
   'NO_ARCHIVED_TEAMS','INVALID_ENTRY_MAPPING','PRIVATE_PHYSICAL_ENGINE_FAILED',
   'UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE','PHYSICAL_HISTORIC_INPUT_MISMATCH',
@@ -149,7 +162,7 @@ function safeError(err){
  return {phase:typeof err?.v4ResearchPhase==='string'?err.v4ResearchPhase:'CONFIGURATION',
   postgresCode:/^[0-9A-Z]{5}$/.test(code)?code:null,
   systemCode:['ENOENT','EACCES','EPERM','ETIMEDOUT'].includes(code)?code:null,
-  reason:allowed.includes(msg)?msg:code==='SELF_SIGNED_CERT_IN_CHAIN'?'TLS_CHAIN':null,
+  reason:allowed.includes(msg)?msg:code==='SELF_SIGNED_CERT_IN_CHAIN'?'TLS_CHAIN':code==='XX000'&&err?.v4ResearchPhase==='CONNECT'?'POOLER_ROUTING_OR_LOGIN_REJECTED':null,
   errorType:['Error','TypeError','RangeError'].includes(err?.name)?err.name:'UNKNOWN'}
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){

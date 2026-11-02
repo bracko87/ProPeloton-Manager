@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import {runPrivatePgHistoricalPilotV4,privatePgConfig,historicalPgCohortPlan} from './privateHistoricalPgV4.mjs'
 import {readFileSync} from 'node:fs'
-const env={PPM_V4_RESEARCH_DB_HOST:'aws-0-eu-central-1.pooler.supabase.com',
+const env={PPM_V4_RESEARCH_DB_HOST:'aws-7-eu-central-2.pooler.supabase.com',
  PPM_V4_RESEARCH_DB_PASSWORD:'only-a-synthetic-test-password-12345'}
 const cfg=privatePgConfig(env)
 assert.deepEqual(historicalPgCohortPlan(env).targets,{flat:4,hilly:4,mountain:4,cobbled:1})
@@ -13,7 +13,8 @@ const focused=historicalPgCohortPlan({...env,PPM_V4_RESEARCH_COHORT:'hilly_lates
 assert.deepEqual(focused.targets,{flat:0,hilly:9,mountain:0,cobbled:0})
 assert.equal(focused.maxProbesPerTerrain,24)
 assert.throws(()=>historicalPgCohortPlan({...env,PPM_V4_RESEARCH_COHORT:'all_unlimited'}),/INVALID_HISTORICAL_COHORT/)
-assert.equal(cfg.user,'v4_historical_research_reader.okuravitxocyevkexfgi')
+assert.equal(cfg.user,'v4_historical_research_login.okuravitxocyevkexfgi')
+assert.equal(cfg.port,5432)
 assert.equal(cfg.ssl.rejectUnauthorized,true)
 assert.throws(()=>privatePgConfig({...env,PPM_V4_RESEARCH_DB_HOST:'evil.example'}))
 assert.throws(()=>privatePgConfig({...env,PPM_V4_RESEARCH_DB_PASSWORD:'short'}))
@@ -32,9 +33,14 @@ class FakeClient{
  async connect(){opened++}
  async end(){closed++}
  async query(sql,args){
+  if(sql==='SELECT session_user AS login_user,current_user AS active_user')
+   return {rows:[{login_user:'v4_historical_research_login',
+    active_user:'v4_historical_research_login'}]}
+  if(sql==='SET ROLE v4_historical_research_reader')return {rows:[]}
   if(sql.includes('current_user AS db_user'))return{rows:[{
+   login_user:'v4_historical_research_login',
    db_user:'v4_historical_research_reader',scoped_runs:true,scoped_entries:true,
-   live_runs:false,live_entries:false,bypass_rls:false}]}
+   live_runs:false,live_entries:false,bypass_rls:false,reader_can_login:false}]}
   if(sql.includes('ORDER BY r.completed_at DESC')){
    assert.ok(sql.includes('v4_historical_research.race_entries'))
    assert.ok(sql.includes('AS all_entries_mapped'))
@@ -247,6 +253,26 @@ await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
  env:{...cohortEnv,PPM_V4_RESEARCH_CHASE_PRIORITY:'0'},
  ClientConstructor:TwelveClient}),/CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN/)
 assert.equal(opened,8);assert.equal(closed,8)
+// Fail closed if the authenticated session is a privileged or unexpected login.
+class WrongLogin extends FakeClient{
+ async query(sql,args){
+  if(sql==='SELECT session_user AS login_user,current_user AS active_user')
+   return {rows:[{login_user:'postgres',active_user:'postgres'}]}
+  return super.query(sql,args)
+ }
+}
+await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
+ env,ClientConstructor:WrongLogin}),/RESTRICTED_LOGIN_ROLE_REQUIRED/)
+class SetRoleDenied extends FakeClient{
+ async query(sql,args){
+  if(sql==='SET ROLE v4_historical_research_reader')
+   throw Error('Role not granted (synthetic)')
+  return super.query(sql,args)
+ }
+}
+await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
+ env,ClientConstructor:SetRoleDenied}),/Role not granted/)
+assert.equal(opened,10);assert.equal(closed,10)
 console.log('V4_PRIVATE_PG_READONLY_RESEARCH_UNIT '+JSON.stringify({
- status:'PASS',syntheticOnly:true,cases:50,
+ status:'PASS',syntheticOnly:true,cases:56,sessionRoleActivationVerified:true,
  optionalCandidateVerified:true,strictTwelveCohortVerified:true,officialWrites:0}))
