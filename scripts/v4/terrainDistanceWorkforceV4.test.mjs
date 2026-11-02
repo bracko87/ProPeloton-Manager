@@ -42,11 +42,11 @@ function injectV4WinnerCollisionForensics(source){
   "      origins.push(!first||!second?'NO_PREVIOUS_GROUP_CODE':Math.abs(first.gapSeconds-second.gapSeconds)<=0.000001?'PRE_SHARED_GAP':'PRE_SEPARATED_GAPS')",
   "    }",
   "    const err=new Error(`Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`)",
-  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort()})",
+  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort(),v4WinnerLineageAudit:auditV4WinnerGapCollisions(replayTimeline.checkpoints)})",
   "    throw err",
   "  }"
  ].join('\n')
- return source.replace(terrainWinnerReplayThrow,lines)
+ return "import {auditV4WinnerGapCollisions} from '../race-engine-v4/mountainWinnerLineageAuditV4.mjs'\n"+source.replace(terrainWinnerReplayThrow,lines)
 }
 const terrains=focused?['mountain']:['flat','mountain']
 const distances=focused?[220]:[120,220]
@@ -101,6 +101,12 @@ const run=(input,pursuitTeamId)=>{
  }catch(e){
   if(e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:'))
    return {valid:false,error:'STRICT_REPLAY',
+    winnerLineageAudit:Array.isArray(e?.v4WinnerLineageAudit)?
+     e.v4WinnerLineageAudit.filter(r=>r&&r.kind==='C_C'&&
+      ['SAME_PREVIOUS_GROUP','DISTINCT_PREVIOUS_GROUPS','MIXED_PREVIOUS_GROUPS','MEMBERSHIP_MISSING','NO_PREVIOUS_CHECKPOINT'].includes(r.previousMembership)&&
+      ['SAME_TAGGED_LINEAGE','DISTINCT_TAGGED_LINEAGES','UNTAGGED_LINEAGE'].includes(r.physicalLineage)&&
+      ['PERSISTENT_SEPARATE_EQUAL_GAP','SEPARATE_DIFFERENT_GAPS','PHYSICALLY_MERGED','FINAL_MEMBERSHIP_CHANGED','NO_FINAL_CHECKPOINT'].includes(r.finalOutcome)&&
+      ['ZERO','POSITIVE_UNDER_ONE_SECOND','ONE_TO_TEN_SECONDS','OVER_TEN_SECONDS'].includes(r.gapBand)):[],
     winnerCollisionOrigins:Array.isArray(e?.v4WinnerCollisionOrigins)?
      e.v4WinnerCollisionOrigins.filter(x=>['PRE_SHARED_GAP','PRE_SEPARATED_GAPS','NO_PREVIOUS_GROUP_CODE'].includes(x)):[],
     winnerCollisionKinds:Array.isArray(e?.v4WinnerCollisionKinds)?
@@ -266,6 +272,14 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      candidates.filter(r=>(r.v4.winnerCollisionKinds??[]).includes(kind)).length])),
    v4WinnerCollisionOrigins:Object.fromEntries([...new Set(candidates.flatMap(r=>r.v4.winnerCollisionOrigins??[]))].map(origin=>[origin,
      candidates.filter(r=>(r.v4.winnerCollisionOrigins??[]).includes(origin)).length])),
+   v4WinnerMembership:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.previousMembership)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.previousMembership===k)).length])),
+   v4WinnerPhysicalLineages:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.physicalLineage)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.physicalLineage===k)).length])),
+   v4WinnerFinalOutcomes:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.finalOutcome)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.finalOutcome===k)).length])),
+   v4WinnerGapBands:Object.fromEntries([...new Set(candidates.flatMap(r=>(r.v4.winnerLineageAudit??[]).map(a=>a.gapBand)))].map(k=>[k,
+    candidates.filter(r=>(r.v4.winnerLineageAudit??[]).some(a=>a.gapBand===k)).length])),
    v4ReplayIssueCodes:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY')
     .map(r=>r.v4.replayIssueCode))].map(code=>[code,
      candidates.filter(r=>r.v4.replayIssueCode===code).length])),
