@@ -133,7 +133,7 @@ function main(){
  const paths=doc.privateEnvelopePaths.map((raw:unknown)=>privatePath(raw,repo,64*1024*1024))
  if(new Set(paths).size!==paths.length)throw Error('DUPLICATE_PRIVATE_PATH')
  const rows=[],rejected={invalid:0,unsupported:0,unsynchronized:0}
- const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0}
+ const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0,failedRiderMovementObserved:0,failedRiderMovementMissing:0,failedRiderNotMatched:0}
  const safeCodes=['INCOMPLETE_HISTORY','INVALID_LOCKED_HISTORY',
   'UNVERIFIED_TEAM_CONTROL','UNSUPPORTED_V2_SOLVER_LANE',
   'MISSING_SAVED_RESULT','PHYSICAL_RESULT_INVALID','NO_FINISH_CLASSIFICATION']
@@ -155,6 +155,7 @@ function main(){
   const globalProbe=globalThis as typeof globalThis & {__ppmV4PhysicalProbe?: unknown}
   delete globalProbe.__ppmV4PhysicalProbe
   let data:unknown=null
+  let failedRiderId:string|null=null
   try{
    data=JSON.parse(readFileSync(path,'utf8'))
    rows.push(evaluate(data))
@@ -171,6 +172,10 @@ function main(){
     bucket.other++
     otherErrorTypes[safeHistoricalErrorType(e)]++
     otherFailureReasons[safeHistoricalFailureReason(e)]++
+    if(variant==='private_replay_candidate'&&
+       code.startsWith('post_catch_group_transfer_without_physical_transition:')){
+      failedRiderId=code.slice('post_catch_group_transfer_without_physical_transition:'.length).split(':')[0]||null
+    }
     const replayCode=safeHistoricalReplayIssueCode(e)
     safeReplayIssueCodes[replayCode]=(safeReplayIssueCodes[replayCode]??0)+1
     postCatchTransferClasses[safeV4PostCatchTransferClass(e)]++
@@ -189,8 +194,18 @@ function main(){
       physicalProbe.observed++
       physicalProbe.samples+=probe.samples as number
       physicalProbe.transitions+=probe.transitions as number
-    }else if(probe?.status==='UNAVAILABLE')physicalProbe.unavailable++
-    else physicalProbe.missing++
+      if(failedRiderId){
+       const observations=(probe as {observations?:readonly {riderIds?:readonly string[]}[]}).observations
+       if(!Array.isArray(observations))physicalProbe.failedRiderNotMatched++
+       else if(observations.some(o=>o.riderIds?.includes(failedRiderId!)))
+         physicalProbe.failedRiderMovementObserved++
+       else physicalProbe.failedRiderMovementMissing++
+      }
+    }else if(probe?.status==='UNAVAILABLE'){
+     physicalProbe.unavailable++
+     if(failedRiderId)physicalProbe.failedRiderNotMatched++
+    }
+    else {physicalProbe.missing++;if(failedRiderId)physicalProbe.failedRiderNotMatched++}
     delete globalProbe.__ppmV4PhysicalProbe
    }
   }
