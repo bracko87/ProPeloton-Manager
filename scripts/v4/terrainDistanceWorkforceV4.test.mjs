@@ -259,7 +259,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
   const execution=spawnSync(process.execPath,[output],{
    cwd:root,encoding:'utf8',timeout:420000,maxBuffer:8*1024*1024,
-   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??''}
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??'',V4_MOUNTAIN_SPLIT_TRACE:targetedSeedText?'1':'0'}
   })
   assert.equal(execution.status,0,
    config.key+' read-only worker failed '+String(execution.stderr??'').slice(-1100))
@@ -267,6 +267,12 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   const report=stdout.filter(s=>s.startsWith('V4_TERRAIN_WORKFORCE_WORKER '))
   assert.equal(report.length,1)
   const parsed=JSON.parse(report[0].slice('V4_TERRAIN_WORKFORCE_WORKER '.length))
+  if(targetedSeedText&&measuredCSplitCandidate&&config.key==='calibrated_v4'){
+   const lines=stdout.filter(line=>line.startsWith('V4_MOUNTAIN_C_SPLIT_PHYSICS '))
+   console.log('V4_MOUNTAIN_C_SPLIT_PHYSICS_TRACE '+JSON.stringify({
+    seedIds,traces:lines.map(line=>JSON.parse(line.slice('V4_MOUNTAIN_C_SPLIT_PHYSICS '.length)))
+   }))
+  }
   assert.equal(parsed.rows.length,terrains.length*distances.length*workforces.length*seeds)
   assert.equal(parsed.officialWrites,0)
   assert.equal(parsed.aiPlansLocked,true)
