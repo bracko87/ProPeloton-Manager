@@ -19,6 +19,9 @@ const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
 const mountainStress=process.env.V4_MOUNTAIN_DISTANCE_STRESS==='1'
 const mountainRealismExpanded=process.env.V4_MOUNTAIN_REALISM_EIGHT_SEEDS==='1'
 const openingForensic=process.env.V4_MOUNTAIN_OPENING_FORENSIC==='1'
+const humanAttackFixture=process.env.V4_MOUNTAIN_HUMAN_ATTACK_CONTROL==='1'
+if(humanAttackFixture&&(!mountainStress||!mountainRealismExpanded||openingForensic||process.env.V4_MOUNTAIN_STRESS_SEED_OFFSET!=='4'))
+ throw Error('Controlled human attack fixture requires second-half mountain stress seeds, no opening forensic')
 if(openingForensic&&(!mountainRealismExpanded||!mountainStress))throw Error('Opening forensic requires eight-seed mountain stress research')
 const stressSeedOffset=process.env.V4_MOUNTAIN_STRESS_SEED_OFFSET??'0'
 if(!['0','4'].includes(stressSeedOffset)||stressSeedOffset==='4'&&!mountainRealismExpanded)
@@ -113,7 +116,7 @@ function injectV4WinnerCollisionForensics(source){
 }
 const terrains=mountainStress?['mountain']:focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
 const distances=mountainStress?(mountainStress200Only?[200]:[170,200,240]):focused?[220]:[120,220]
-const workforces=openingForensic?[0]:[0,1,3,5]
+const workforces=openingForensic?[0]:humanAttackFixture?[0,5]:[0,1,3,5]
 const seeds=seedIds.length
 const median=values=>{
  const sorted=values.filter(v=>typeof v==='number'&&Number.isFinite(v)).sort((a,b)=>a-b)
@@ -131,7 +134,7 @@ try{
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
   "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalReplayIssueCategory,safeHistoricalReplayIssueCode,safeV4PostCatchTransferClass} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
   fixture.slice(start,end),
-  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds+",seedIds="+JSON.stringify(seedIds)+",openingForensic="+openingForensic+",focused="+focused+",mountainStress200Only="+mountainStress200Only,
+  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds+",seedIds="+JSON.stringify(seedIds)+",openingForensic="+openingForensic+",humanAttackFixture="+humanAttackFixture+",focused="+focused+",mountainStress200Only="+mountainStress200Only,
   String.raw`
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex')
 const rows=[]
@@ -146,7 +149,7 @@ const run=(input,pursuitTeamId)=>{
   const audit=historicalPhysicalGapAudit(result)
   const phase4=result.roadRaceResolution?.phase4Finish
   const phase1=result.roadRaceResolution?.phase1Opening
-  const openingAudit=openingForensic?{
+  const openingAudit=(openingForensic||humanAttackFixture)?{
    status:phase1?.status??'missing',
    eligibleAttackers:phase1?.eligibleAttackerIds?.length??null,
    eligibleJoiners:phase1?.eligibleJoinerIds?.length??null,
@@ -158,7 +161,7 @@ const run=(input,pursuitTeamId)=>{
    separationBands:Object.fromEntries([...new Set((phase1?.attackAttempts??[]).map(a=>a.separationBand))]
      .map(k=>[k,phase1.attackAttempts.filter(a=>a.separationBand===k).length])),
    attemptSummaries:(phase1?.attackAttempts??[]).slice(0,12).map(a=>({
-    separationBand:a.separationBand,physical:a.physicallyValidAttempt,
+    command:a.command,wave:a.waveCode,separationBand:a.separationBand,physical:a.physicallyValidAttempt,
     succeeded:a.attackSucceeded,accepted:a.acceptedEscapeLaunch,
     probability:Number.isFinite(a.attackSuccessProbability)?Number(a.attackSuccessProbability.toFixed(3)):null,
     roll:Number.isFinite(a.deterministicOutcomeRoll)?Number(a.deterministicOutcomeRoll.toFixed(3)):null,
@@ -256,6 +259,15 @@ for(const terrain of terrains)for(const km of distances)for(const seed of seedId
  const human=options.teamControl.filter(t=>t.kind==='human')
  const pursuit=human.at(-1)?.teamId
  if(!pursuit)throw Error('MISSING_HUMAN_PURSUIT_TEAM')
+ if(humanAttackFixture){
+  const initiators=human.filter(team=>team.teamId!==pursuit).slice(0,3)
+  if(initiators.length!==3)throw Error('INSUFFICIENT_CONTROLLED_ATTACK_TEAMS')
+  for(const team of initiators){
+   const rider=base.stagePlans.find(p=>p.teamId===team.teamId)?.riders.find(r=>r.stageRole==='breakaway_rider')
+   if(!rider||rider.commands.phase1!=='join_breakaway')throw Error('CONTROLLED_ATTACK_COMMAND_ANCHOR_DRIFT')
+   rider.commands.phase1='attack'
+  }
+ }
  const aiPlanHash=hash(base.stagePlans.filter(p=>aiIds.has(p.teamId)))
  const frozenHash=hash({engine:base.engine,stage:base.stage,race:base.race,
   teams:base.teams,riders:base.riders,weather:base.weather,points:base.points,
@@ -495,7 +507,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
@@ -506,7 +518,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   preservedV2AndV4InputsIdentical:true,
   replayExclusionsNeverWaived:true,officialWrites:0,
   cells,pairedWorkforceContrasts,v4OnlyWorkforceContrasts,coverageWarnings,
-  openingForensicRows:openingForensic?paired.map(r=>({
+  openingForensicRows:(openingForensic||humanAttackFixture)?paired.map(r=>({
     km:r.km,seed:r.seed,workers:r.workers,v4Valid:r.v4.valid,
     v4Opening:r.v4.opening,openingAudit:r.v4.openingAudit,
   })):[],
