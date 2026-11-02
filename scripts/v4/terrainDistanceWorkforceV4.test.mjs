@@ -78,7 +78,7 @@ for(const terrain of terrains)for(const km of distances)for(let seed=0;seed<seed
  let {input,options}=makeField(teams,Math.floor(teams/2),{
   seed:'v4-matched-terrain-workforce-2026-'+seed,
   terrain,humanPursuitTeam:true,humanChase:false,neutral:false})
- const key=terrains.indexOf(terrain)*2+distances.indexOf(km)
+ const key=(terrain==='mountain'?2:0)+(km===220?1:0)
  const stageId='12345678-1234-4234-8234-'+String(2400+key*100+seed).padStart(12,'0')
  const raceId='12345678-1234-4234-8234-'+String(2500+key*100+seed).padStart(12,'0')
  input.race.raceId=raceId
