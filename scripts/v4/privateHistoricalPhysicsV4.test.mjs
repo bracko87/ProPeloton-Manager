@@ -72,6 +72,31 @@ try{
  assert.equal(report.savedArchiveReplaySynchronizedAmongEvaluable,1)
  assert.equal(report.savedArchiveReplayNotSynchronizedAmongEvaluable,0)
  assert.equal(report.rawStageDataPublished,false)
+ // Optional fourth runner must remain private and preserve the old
+ // three-variant API when the flag is absent.
+ assert.equal(Object.hasOwn(report,'chasePriorityResearch'),false)
+ await assert.rejects(
+  ()=>runPrivateHistoricalPhysicsV4(manifest,{includeChasePriority:'yes'}),
+  /INVALID_PRIVATE_CANDIDATE_OPTION/
+ )
+ const priority=await runPrivateHistoricalPhysicsV4(manifest,{includeChasePriority:true})
+ assert.equal(priority.consideredCompleteTriples,1)
+ assert.equal(priority.all.eligible,1)
+ assert.equal(priority.chasePriorityResearch.status,
+  'PRIVATE_RESEARCH_DIAGNOSTIC_NOT_REALISM_APPROVAL')
+ assert.equal(priority.chasePriorityResearch.enabledByExplicitOption,true)
+ assert.equal(priority.chasePriorityResearch.attemptedPrivateCandidateRuns,1)
+ assert.equal(priority.chasePriorityResearch.eligibleBaselineTriples,1)
+ assert.equal(priority.chasePriorityResearch.all.compared,1)
+ assert.equal(priority.chasePriorityResearch.priorityMissing,0)
+ assert.equal(priority.chasePriorityResearch.priorityUnsynchronized,0)
+ assert.equal(priority.chasePriorityResearch.terrain.find(x=>x.terrain==='flat').compared,1)
+ assert.equal(priority.chasePriorityResearch.officialWrites,0)
+ assert.equal(priority.chasePriorityResearch.rawStageDataPublished,false)
+ assert.equal(priority.historicalV4RealismApproved,false)
+ assert.equal(priority.rejected.baselineHistoricMismatch,0)
+ assert.equal(JSON.stringify(priority).includes(privateStage),false)
+ assert.equal(JSON.stringify(priority).includes('rider-'),false)
  assert.equal(report.privatePathsPublished,false)
  assert.equal(report.rejected.baselineHistoricMismatch,0)
  assert.equal(report.rejected.baselineReplayUnsynchronized,0)
@@ -109,6 +134,6 @@ try{
   await assert.rejects(()=>runPrivateHistoricalPhysicsV4(manifest),/PRIVATE_PATH_REJECTED/)
  }
  console.log('V4_PRIVATE_PHYSICAL_HISTORY_UNIT '+JSON.stringify({
-  status:'PASS',cases:30,syntheticOnly:true,
+  status:'PASS',cases:47,syntheticOnly:true,optionalPriorityCompared:1,
   preservedV2Runs:1,calibratedV4Runs:2,officialWrites:0}))
 }finally{rmSync(folder,{recursive:true,force:true})}

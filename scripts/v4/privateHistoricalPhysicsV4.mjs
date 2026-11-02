@@ -10,6 +10,7 @@ import {join,resolve,relative,sep,isAbsolute} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {patchV4MountainEarlyChasePriorityCandidateSource} from './mountainEarlyChasePriorityCandidateV4.mjs'
 import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES,
  HISTORICAL_FAILURE_REASONS,HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,
  HISTORICAL_FINISH_EVIDENCE}
@@ -36,6 +37,7 @@ const variants=[
  {key:'combined',patch:true,peloton:true,cooperation:true,energy:false},
  {key:'combined_energy',patch:true,peloton:true,cooperation:true,energy:true},
 ]
+const priorityVariant={key:'combined_energy_priority',patch:true,peloton:true,cooperation:true,energy:true,chasePriority:true}
 function aggregate(comparisons,rejected){
  const group=(subset)=>{
  const active=subset.filter(x=>x.preserved_v2.acceptedOpeningAttacks>0&&
@@ -119,7 +121,9 @@ function aggregate(comparisons,rejected){
   warning:'Exact historical source revision is not recorded in the archive. Git commit time is not deployment proof. Classification parity and replay checks are required, but these comparisons remain diagnostic only.',
  }
 }
-export async function runPrivateHistoricalPhysicsV4(manifestRaw){
+export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePriority=false}={}){
+ if(typeof includeChasePriority!=='boolean')
+  throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
  const manifest=safeFile(manifestRaw,128*1024)
  const envelope=JSON.parse(readFileSync(manifest,'utf8'))
  if(!envelope||!Array.isArray(envelope.privateEnvelopePaths)||
@@ -131,7 +135,8 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
  const folder=mkdtempSync(join(tmpdir(),'ppm-v4-historical-physics-'))
  try{
   const results=[]
-  for(const cfg of variants){
+  const activeVariants=includeChasePriority?[...variants,priorityVariant]:variants
+  for(const cfg of activeVariants){
    const outfile=join(folder,cfg.key+'.mjs')
    let patched=0
    await build({
@@ -141,7 +146,8 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
     plugins:[{name:'v4-private-physical-src',setup(ctx){
      ctx.onLoad({filter:/[\\/]runRaceEngine\.ts$/},args=>{
       if(!cfg.patch)return null
-      const contents=patchV4CalibratedPhysicalSource(readFileSync(args.path,'utf8'),cfg)
+      const calibrated=patchV4CalibratedPhysicalSource(readFileSync(args.path,'utf8'),cfg)
+      const contents=cfg.chasePriority?patchV4MountainEarlyChasePriorityCandidateSource(calibrated):calibrated
       patched++
       return {contents,loader:'ts'}
      })
@@ -214,6 +220,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
    otherFinishEvidenceByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFinishEvidence])),
    historicalMismatchKinds,byTerrain}
   const triples=[]
+  let priorityMissing=0,priorityUnsynchronized=0
   for(const [id,v2] of maps[0]){
    if(!HISTORICAL_TERRAINS.includes(v2.terrain)||!Array.isArray(v2.savedV2ParityFailureKinds)||
       v2.savedV2ParityFailureKinds.some(k=>!HISTORICAL_PARITY_REASONS.includes(k)))
@@ -240,16 +247,58 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
     byTerrain[v2.terrain].calibratedReplayUnsynchronized++
     continue
    }
+   let candidate=null
+   if(includeChasePriority){
+    const c=maps[3]?.get(id)
+    if(c){
+     if(c.sourceHash!==v2.sourceHash||c.riderCount!==v2.riderCount||
+        c.terrain!==v2.terrain)
+      throw Error('PHYSICAL_HISTORIC_INPUT_MISMATCH')
+     if(c.replaySynchronized)candidate=c
+     else priorityUnsynchronized++
+    }else priorityMissing++
+   }
    byTerrain[v2.terrain].eligible++
-   triples.push({preserved_v2:v2,combined:a,combined_energy:b})
+   triples.push({preserved_v2:v2,combined:a,combined_energy:b,
+    ...(includeChasePriority?{chase_priority:candidate}:{})})
   }
   const agg=aggregate(triples,rejects)
-  return {...agg,savedArchiveGapSummary}
+  const baseReport={...agg,savedArchiveGapSummary}
+  if(!includeChasePriority)return baseReport
+  const validPriority=triples.filter(r=>r.chase_priority!==null)
+  const priorityGroup=rows=>({
+   compared:rows.length,
+   baselineEnergyMedianObservedPeakSeconds:by(rows.map(x=>x.combined_energy),'observedPhysicalPeakSeconds'),
+   priorityMedianObservedPeakSeconds:by(rows.map(x=>x.chase_priority),'observedPhysicalPeakSeconds'),
+   medianObservedPeakDifferenceSeconds:median(rows.map(x=>
+    x.chase_priority.observedPhysicalPeakSeconds-x.combined_energy.observedPhysicalPeakSeconds)),
+   medianMeanPhase4EnergyDifference:median(rows.map(x=>
+    x.chase_priority.meanPhase4EnergyAtFinish-x.combined_energy.meanPhase4EnergyAtFinish)),
+   changedWinner:rows.filter(x=>x.chase_priority.winnerHash!==x.combined_energy.winnerHash).length,
+   changedClassification:rows.filter(x=>x.chase_priority.classificationHash!==x.combined_energy.classificationHash).length,
+   prioritySurvivingBreakaways:rows.filter(x=>x.chase_priority.breakawaySurvived).length,
+  })
+  return {...baseReport,chasePriorityResearch:{
+   status:'PRIVATE_RESEARCH_DIAGNOSTIC_NOT_REALISM_APPROVAL',
+   enabledByExplicitOption:true,officialWrites:0,rawStageDataPublished:false,
+   preservedHistoricInputHashes:true,
+   attemptedPrivateCandidateRuns:paths.length,
+   eligibleBaselineTriples:triples.length,priorityMissing,priorityUnsynchronized,
+   all:priorityGroup(validPriority),
+   terrain:HISTORICAL_TERRAINS.map(terrain=>({terrain,...priorityGroup(
+     validPriority.filter(x=>x.preserved_v2.terrain===terrain))})),
+   warning:'The archived deployed V2 source revision is not proven; apply strict historical classification parity and replay exclusions before realism interpretation.'
+  }}
  }finally{rmSync(folder,{recursive:true,force:true})}
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
  try{
-  const report=await runPrivateHistoricalPhysicsV4(process.argv[2])
+  if(process.argv.length!==3&&process.argv.length!==4)
+   throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
+  if(process.argv.length===4&&process.argv[3]!=='--v4-private-chase-priority')
+   throw Error('INVALID_PRIVATE_CANDIDATE_OPTION')
+  const report=await runPrivateHistoricalPhysicsV4(process.argv[2],{
+   includeChasePriority:process.argv[3]==='--v4-private-chase-priority'})
   console.log('V4_PRIVATE_HISTORICAL_PHYSICS_REPORT '+JSON.stringify(report))
   if(report.consideredCompleteTriples===0)process.exitCode=1
  }catch{
