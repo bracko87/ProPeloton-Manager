@@ -13,6 +13,30 @@ import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.m
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
+const coalesceCandidate=focused&&process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
+/** Optional strictly isolated V4-only research transform. */
+function injectV4DetachmentCoalescenceCandidate(source){
+ const original=[
+  "    return [...retainedGroups, ...selectedGroups]",
+  "      .sort(",
+  "        (left, right) =>",
+  "          left.gapSeconds - right.gapSeconds ||",
+  "          left.groupOrder - right.groupOrder ||",
+  "          left.displayCode.localeCompare(right.displayCode),",
+  "      )",
+  "      .map((group, index) => ({",
+  "        ...group,",
+  "        groupOrder: index + 1,",
+  "      }))",
+  "  }"
+ ].join('\n')
+ const replacement=original.replace(
+  "return [...retainedGroups, ...selectedGroups]",
+  "return [...retainedGroups, ...coalesceV4CoincidentDetachmentGroups(sourceGroups,selectedGroups)]")
+ if(source.split(original).length!==2)throw Error('V4 candidate detachment anchor drift')
+ return "import {coalesceV4CoincidentDetachmentGroups} from '../race-engine-v4/mountainWinnerDetachmentCandidateV4.mjs'\n"+
+  source.replace(original,replacement)
+}
 const terrainWinnerReplayThrow=[
  "  if (!replayPublicationPolicy.publishable) {",
  "    throw new Error(",
@@ -205,7 +229,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      if(!config.patch)return null
      patched++
      const transformed=patchV4CalibratedPhysicalSource(readFileSync(args.path,'utf8'),config)
-     return {contents:focused?injectV4WinnerCollisionForensics(transformed):transformed,loader:'ts'}
+     const candidate=coalesceCandidate?injectV4DetachmentCoalescenceCandidate(transformed):transformed
+     return {contents:focused?injectV4WinnerCollisionForensics(candidate):candidate,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
@@ -327,6 +352,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    reason:'LOW_MATCHED_SAMPLE_DO_NOT_CALIBRATE'}))
  console.log('V4_TERRAIN_DISTANCE_WORKFORCE_PILOT '+JSON.stringify({
   status:'SYNTHETIC_DIAGNOSTIC_ONLY_NOT_REALISM_APPROVAL',focusedMountainWinnerForensics:focused,
+  coalescenceCandidateApplied:coalesceCandidate,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,
   fieldTeamCounts:[18,19,20,21,22],
