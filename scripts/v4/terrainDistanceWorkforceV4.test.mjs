@@ -12,7 +12,10 @@ import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
-const terrains=['flat','mountain'],distances=[120,220],workforces=[0,1,3,5]
+const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
+const terrains=focused?['mountain']:['flat','mountain']
+const distances=focused?[220]:[120,220]
+const workforces=[0,1,3,5]
 const seeds=8
 const median=values=>{
  const sorted=values.filter(v=>typeof v==='number'&&Number.isFinite(v)).sort((a,b)=>a-b)
@@ -30,8 +33,8 @@ try{
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
   "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalReplayIssueCategory,safeHistoricalReplayIssueCode} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
   fixture.slice(start,end),
+  "const terrains="+JSON.stringify(terrains)+",distances="+JSON.stringify(distances)+",workers="+JSON.stringify(workforces)+",seeds="+seeds,
   String.raw`
-const terrains=['flat','mountain'],distances=[120,220],workers=[0,1,3,5],seeds=8
 const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex')
 const rows=[]
 const run=(input,pursuitTeamId)=>{
@@ -245,7 +248,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    zeroToFiveFewerSurvivals:comparable.filter(seed=>fetch(seed,0).survived).length-
     comparable.filter(seed=>fetch(seed,5).survived).length})
  }
- assert.equal(cells.length,16)
+ assert.equal(cells.length,terrains.length*distances.length*workforces.length)
  assert(cells.every(c=>c.attempted===seeds))
  assert(cells.every(c=>c.invalidInputOrOtherErrors===0),
   'No invalid synthetic fields or unexpected runtime errors permitted')
@@ -262,7 +265,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    pairedValid:c.pairedValid,openingPaired:c.openingPaired,
    reason:'LOW_MATCHED_SAMPLE_DO_NOT_CALIBRATE'}))
  console.log('V4_TERRAIN_DISTANCE_WORKFORCE_PILOT '+JSON.stringify({
-  status:'SYNTHETIC_DIAGNOSTIC_ONLY_NOT_REALISM_APPROVAL',
+  status:'SYNTHETIC_DIAGNOSTIC_ONLY_NOT_REALISM_APPROVAL',focusedMountainWinnerForensics:focused,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,
   fieldTeamCounts:[18,19,20,21,22],
