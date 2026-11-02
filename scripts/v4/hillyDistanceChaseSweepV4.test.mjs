@@ -170,6 +170,14 @@ try{
      otherFinishEvidenceByVariant:reports.organized_chase.rejected.otherFinishEvidenceByVariant}},
    noChase:summary(a),organizedHumanChase:summary(b)})
  }
+ // Regression: a near-finish B1-to-P official grouping is not a physical
+ // catch. All 170-km strict V2/V4 comparisons must now remain usable.
+ const distance170=perDistance.find(x=>x.distanceKm===170)
+ assert.equal(distance170?.noChase.completedTriples,12)
+ assert.equal(distance170?.organizedHumanChase.completedTriples,12)
+ assert.equal(distance170?.otherStrictExclusions.noChase.calibratedMissing,0)
+ assert.equal(distance170?.otherStrictExclusions.noChase.failedPhysicsByVariant.combined.other,0)
+ assert.equal(distance170?.otherStrictExclusions.noChase.failedPhysicsByVariant.combined_energy.other,0)
  assert(perDistance.some(x=>x.noChase.matchedOpeningBreakaways>0),
   'At least one accepted opening breakaway needed for the distance sweep')
 
