@@ -354,7 +354,19 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    const grouped=seedIds.flatMap(seed=>workforces.map(orders=>{
     const seedText='v4-matched-terrain-workforce-2026-'+seed
     const rows=telemetry.filter(t=>t.seed===seedText&&t.explicitOrders===orders)
+    const active=rows.filter(t=>t.responseMode!=='no_active_escape'&&t.currentGapSeconds>0)
     return {seed,orders,steps:rows.length,
+      activeEscapeSteps:active.length,
+      medianActiveEscapeExplicit:median(active.map(t=>t.activeExplicit)),
+      medianActiveEscapeAutomatic:median(active.map(t=>t.activeAutomatic)),
+      medianActiveEscapeTotal:median(active.map(t=>t.activeExplicit+t.activeAutomatic)),
+      medianActiveEscapePelotonKmh:median(active.map(t=>t.pelotonPaceKmh)),
+      medianActiveEscapeWorkIntensity:median(active.map(t=>t.workIntensity)),
+      medianActiveEscapeResponseMultiplier:median(active.map(t=>t.responseMultiplier)),
+      medianActiveEscapeGapSeconds:median(active.map(t=>t.currentGapSeconds)),
+      activeEscapeCheckpoints:active.map(t=>({km:t.km,explicit:t.activeExplicit,
+        automatic:t.activeAutomatic,pace:t.pelotonPaceKmh,
+        intensity:t.workIntensity,gap:t.currentGapSeconds,response:t.responseMode})),
       medianActiveExplicit:median(rows.map(t=>t.activeExplicit)),
       medianActiveAutomatic:median(rows.map(t=>t.activeAutomatic)),
       medianTotalActive:median(rows.map(t=>t.activeExplicit+t.activeAutomatic)),
@@ -367,6 +379,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
     }
    }))
    assert(grouped.every(g=>g.steps>0),'Every matched seed/workforce needs telemetry')
+   assert(grouped.some(g=>g.activeEscapeSteps>0),'Expected at least one physical escape-active chase window')
    console.log('V4_CHASE_WORKER_TELEMETRY '+JSON.stringify({
     source:'V4_SYNTHETIC_RESEARCH_ONLY',stageKm:200,readOnly:true,rows:grouped}))
   }
