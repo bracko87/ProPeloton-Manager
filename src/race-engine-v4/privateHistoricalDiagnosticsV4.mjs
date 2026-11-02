@@ -44,6 +44,27 @@ export function safeHistoricalFailureLocation(error){
   /:P->F\d+:/.test(message)?'P_TO_F':'OTHER_TRANSFER'
  return {checkpoint,transfer}
 }
+export const HISTORICAL_FINISH_EVIDENCE=Object.freeze([
+ 'CAUGHT_WITHIN_PHYSICAL_TOLERANCE','CAUGHT_WITHIN_OFFICIAL_GROUP',
+ 'CAUGHT_BUT_SEPARATED','NOT_CAUGHT_WITHIN_PHYSICAL_TOLERANCE',
+ 'NOT_CAUGHT_WITHIN_OFFICIAL_GROUP','NOT_CAUGHT_AND_SEPARATED','UNKNOWN'
+])
+/** Report a fixed category only; raw race results never enter public logs. */
+export function safeHistoricalFinishEvidence(error){
+ const msg=error instanceof Error?error.message:''
+ const pairs=[
+  ['YES','WITHIN_CATCH','CAUGHT_WITHIN_PHYSICAL_TOLERANCE'],
+  ['YES','WITHIN_OFFICIAL_GROUP','CAUGHT_WITHIN_OFFICIAL_GROUP'],
+  ['YES','SEPARATED','CAUGHT_BUT_SEPARATED'],
+  ['NO','WITHIN_CATCH','NOT_CAUGHT_WITHIN_PHYSICAL_TOLERANCE'],
+  ['NO','WITHIN_OFFICIAL_GROUP','NOT_CAUGHT_WITHIN_OFFICIAL_GROUP'],
+  ['NO','SEPARATED','NOT_CAUGHT_AND_SEPARATED']
+ ]
+ for(const [flag,gap,label] of pairs)
+  if(msg.includes(':v4_finish_caught='+flag+':v4_finish_gap='+gap))
+   return label
+ return 'UNKNOWN'
+}
 const equalNumber=(a,b)=>a===null||b===null?a===b:
  Number.isFinite(a)&&Number.isFinite(b)&&Math.abs(a-b)<=0.01
 

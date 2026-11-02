@@ -11,7 +11,8 @@ import {spawnSync} from 'node:child_process'
 import {fileURLToPath} from 'node:url'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES,
- HISTORICAL_FAILURE_REASONS,HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS}
+ HISTORICAL_FAILURE_REASONS,HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,
+ HISTORICAL_FINISH_EVIDENCE}
  from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
@@ -160,7 +161,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
      Object.values(report.failureClasses).some(n=>!Number.isSafeInteger(n)||n<0)||
      report.rows.length+report.rejected.invalid+report.rejected.unsupported!==paths.length||
      !report.failureTerrains||!report.otherErrorTypes||!report.otherFailureReasons||
-     !report.otherFailureCheckpoints||!report.otherFailureTransfers||
+     !report.otherFailureCheckpoints||!report.otherFailureTransfers||!report.otherFinishEvidence||
      Object.keys(report.failureTerrains).length!==HISTORICAL_TERRAINS.length||
      HISTORICAL_TERRAINS.some(t=>!report.failureTerrains[t]||
       ['invalid','unsupported','other'].some(k=>!Number.isSafeInteger(report.failureTerrains[t][k])||
@@ -176,7 +177,10 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
       report.otherFailureCheckpoints[t]<0)||
      Object.keys(report.otherFailureTransfers).length!==HISTORICAL_FAILURE_TRANSFERS.length||
      HISTORICAL_FAILURE_TRANSFERS.some(t=>!Number.isSafeInteger(report.otherFailureTransfers[t])||
-      report.otherFailureTransfers[t]<0))
+      report.otherFailureTransfers[t]<0)||
+     Object.keys(report.otherFinishEvidence).length!==HISTORICAL_FINISH_EVIDENCE.length||
+     HISTORICAL_FINISH_EVIDENCE.some(t=>!Number.isSafeInteger(report.otherFinishEvidence[t])||
+      report.otherFinishEvidence[t]<0))
     throw Error('UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE')
    results.push(report)
   }
@@ -207,6 +211,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw){
    otherFailureReasonsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureReasons])),
    otherFailureCheckpointsByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureCheckpoints])),
    otherFailureTransfersByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFailureTransfers])),
+   otherFinishEvidenceByVariant:Object.fromEntries(results.map(r=>[r.variant,r.otherFinishEvidence])),
    historicalMismatchKinds,byTerrain}
   const triples=[]
   for(const [id,v2] of maps[0]){

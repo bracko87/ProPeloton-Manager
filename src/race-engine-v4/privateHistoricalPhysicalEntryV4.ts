@@ -7,10 +7,10 @@
 import {readFileSync,realpathSync,statSync} from 'node:fs'
 import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
-import {explainHistoricalClassificationParity,safeHistoricalErrorType,safeHistoricalFailureReason,safeHistoricalFailureLocation,
+import {explainHistoricalClassificationParity,safeHistoricalErrorType,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalFinishEvidence,
  safeHistoricalTerrain,historicalPhysicalGapAudit,historicalOpeningBreakawayJourney,
  HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES,HISTORICAL_FAILURE_REASONS,
- HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS}
+ HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,HISTORICAL_FINISH_EVIDENCE}
  from './privateHistoricalDiagnosticsV4.mjs'
 import {runSelectedRaceEngineV1,selectCompleteRaceEngineLaneV1}
  from '../universal-race-engine/runSelectedRaceEngineV1.ts'
@@ -139,6 +139,7 @@ function main(){
  const otherFailureReasons=Object.fromEntries(HISTORICAL_FAILURE_REASONS.map(t=>[t,0]))
  const otherFailureCheckpoints=Object.fromEntries(HISTORICAL_FAILURE_CHECKPOINTS.map(t=>[t,0]))
  const otherFailureTransfers=Object.fromEntries(HISTORICAL_FAILURE_TRANSFERS.map(t=>[t,0]))
+ const otherFinishEvidence=Object.fromEntries(HISTORICAL_FINISH_EVIDENCE.map(t=>[t,0]))
  for(const path of paths){
   let data:unknown=null
   try{
@@ -160,6 +161,7 @@ function main(){
     const safeLocation=safeHistoricalFailureLocation(e)
     otherFailureCheckpoints[safeLocation.checkpoint]++
     otherFailureTransfers[safeLocation.transfer]++
+    otherFinishEvidence[safeHistoricalFinishEvidence(e)]++
    }
   }
  }
@@ -168,7 +170,7 @@ function main(){
   variant,researchOnly:true,officialWrites:0,networkCalls:0,
   inputPathsReported:false,attempted:paths.length,rejected,failureClasses,
   failureTerrains,otherErrorTypes,otherFailureReasons,
-  otherFailureCheckpoints,otherFailureTransfers,rows,
+  otherFailureCheckpoints,otherFailureTransfers,otherFinishEvidence,rows,
  })+'\n')
  // Zero usable stages is a valid diagnostic result, not a child-process crash.
  // The outer operator CLI still returns failure when no comparable triple exists.

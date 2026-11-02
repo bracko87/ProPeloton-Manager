@@ -60,5 +60,8 @@ export function patchV4FinishTransitionSource(original){
  source=replaceExact(source,
   "      return laterFrontExists ? terminalIndex : candidateIndex",
   "      return (survivingFrontAtCatch || laterFrontExists) ? terminalIndex : candidateIndex")
+ const issueNeedle="`front_group_transfer_without_physical_transition:${riderId}:${previousDisplayCode}->${currentDisplayCode}:${checkpoint.checkpointId}`"
+ const issueReplacement="`front_group_transfer_without_physical_transition:${riderId}:${previousDisplayCode}->${currentDisplayCode}:${checkpoint.checkpointId}:v4_finish_caught=${roadRaceResolution?.phase4Finish?.breakawayCaught===true?'YES':'NO'}:v4_finish_gap=${Number.isFinite(roadRaceResolution?.phase4Finish?.endGapSeconds)?(roadRaceResolution.phase4Finish.endGapSeconds<=PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS?'WITHIN_CATCH':roadRaceResolution.phase4Finish.endGapSeconds<=PHASE5_GROUP_MERGE_TOLERANCE_SECONDS?'WITHIN_OFFICIAL_GROUP':'SEPARATED'):'UNKNOWN'}`"
+ source=replaceExact(source,issueNeedle,issueReplacement)
  return "import { reconcileV4FinishTransition, preserveV4FinishGroupGap, canonicalV4OfficialFinishGap } from '../race-engine-v4/finishTransitionV4.ts'\n"+source
 }

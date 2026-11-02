@@ -156,7 +156,8 @@ try{
      otherErrorTypesByVariant:reports.no_chase.rejected.otherErrorTypesByVariant,
      otherFailureReasonsByVariant:reports.no_chase.rejected.otherFailureReasonsByVariant,
      otherFailureCheckpointsByVariant:reports.no_chase.rejected.otherFailureCheckpointsByVariant,
-     otherFailureTransfersByVariant:reports.no_chase.rejected.otherFailureTransfersByVariant},
+     otherFailureTransfersByVariant:reports.no_chase.rejected.otherFailureTransfersByVariant,
+     otherFinishEvidenceByVariant:reports.no_chase.rejected.otherFinishEvidenceByVariant},
     organizedHumanChase:{
      baselineInvalid:reports.organized_chase.rejected.baselineInvalid,
      baselineUnsupported:reports.organized_chase.rejected.baselineUnsupported,
@@ -165,7 +166,8 @@ try{
      otherErrorTypesByVariant:reports.organized_chase.rejected.otherErrorTypesByVariant,
      otherFailureReasonsByVariant:reports.organized_chase.rejected.otherFailureReasonsByVariant,
      otherFailureCheckpointsByVariant:reports.organized_chase.rejected.otherFailureCheckpointsByVariant,
-     otherFailureTransfersByVariant:reports.organized_chase.rejected.otherFailureTransfersByVariant}},
+     otherFailureTransfersByVariant:reports.organized_chase.rejected.otherFailureTransfersByVariant,
+     otherFinishEvidenceByVariant:reports.organized_chase.rejected.otherFinishEvidenceByVariant}},
    noChase:summary(a),organizedHumanChase:summary(b)})
  }
  assert(perDistance.some(x=>x.noChase.matchedOpeningBreakaways>0),

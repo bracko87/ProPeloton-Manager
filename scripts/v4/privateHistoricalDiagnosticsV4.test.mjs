@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import {explainHistoricalClassificationParity as compare,safeHistoricalErrorType as errorType,
- safeHistoricalFailureReason as failureReason, safeHistoricalFailureLocation as failureLocation,
+ safeHistoricalFailureReason as failureReason, safeHistoricalFailureLocation as failureLocation, safeHistoricalFinishEvidence as finishEvidence,
+ HISTORICAL_FINISH_EVIDENCE,
  HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,HISTORICAL_FAILURE_REASONS,
  safeHistoricalTerrain as terrain,historicalPhysicalGapAudit as physicalGap,
  historicalOpeningBreakawayJourney as openingJourney,
@@ -36,6 +37,11 @@ assert.equal(failureLocation(new Error('Universal replay synchronization failed:
 assert.deepEqual(failureLocation(new Error('Universal replay synchronization failed: front_group_transfer_without_physical_transition:rider-sensitive:F2->P:stage-secret|replay|late-chase-step-8')), {checkpoint:'LATE_CHASE_STEP',transfer:'F2_TO_P'})
 assert.deepEqual(failureLocation(new Error('secret')), {checkpoint:'OTHER_CHECKPOINT',transfer:'OTHER_TRANSFER'})
 assert.equal(JSON.stringify(failureLocation(new Error('secret-stage|replay|winner-finish'))).includes('secret'),false)
+assert.equal(HISTORICAL_FINISH_EVIDENCE.length,7)
+assert.equal(finishEvidence(new Error('rider-private:v4_finish_caught=NO:v4_finish_gap=WITHIN_OFFICIAL_GROUP')),'NOT_CAUGHT_WITHIN_OFFICIAL_GROUP')
+assert.equal(finishEvidence(new Error('rider-private:v4_finish_caught=YES:v4_finish_gap=WITHIN_CATCH')),'CAUGHT_WITHIN_PHYSICAL_TOLERANCE')
+assert.equal(finishEvidence(new Error('private identity')),'UNKNOWN')
+assert.equal(JSON.stringify({evidence:finishEvidence(new Error('private name'))}).includes('private'),false)
 assert.equal(terrain({input_snapshot_json:{stage:{terrainType:'mountain',stageId:'secret'}}}),'mountain')
 assert.equal(terrain({input_snapshot_json:{stage:{terrainType:'UNKNOWN'}}}),'unknown')
 assert.equal(terrain(null),'unknown')
