@@ -8,17 +8,17 @@ export function patchV4MountainEarlyChasePriorityCandidateSource(source,{gain=0.
   throw Error('V4 phase-2 chase priority anchor drift: fail closed')
  const value=Number(gain.toFixed(4))
  const additions=[
-  "    // Synthetic V4 only. Prioritize committed, energy-capable workers over role-eligible bystanders.",
-  "    // Physical pace only: never replace the measured gap integrator, catch conditions or replay.",
+  "    // V4 research only. Explicit chasers receive bounded physical chase priority.",
   "    const v4Phase2ExplicitChaseWorkers = phase2ChaseWorkerRows.filter(({phase})=>",
   "      phase.behaviour==='chase').length",
-  "    const v4Phase2ExplicitCommitmentFraction = phase2ChaseWorkerRows.length>0",
-  "      ? v4Phase2ExplicitChaseWorkers/phase2ChaseWorkerRows.length : 0",
-  "    const v4Phase2ChasePriorityMultiplier =",
-  "      input.stage.terrainType === 'mountain' && currentGapSeconds>0",
-  `        ? 1+${value}*v4Phase2ExplicitCommitmentFraction*phase2WorkerEnergyFraction`,
-  "        : 1",
- ].join('\n')
- return source.replace(paceAnchor,additions+'\n'+paceAnchor)
+  "    const v4Phase2ChasePriorityMultiplier = calculateV4Phase2ChasePriorityMultiplier({",
+  "      terrainType:input.stage.terrainType,currentGapSeconds,",
+  "      eligibleChaseWorkers:phase2ChaseWorkerRows.length,",
+  "      explicitlyChasingWorkers:v4Phase2ExplicitChaseWorkers,",
+  "      meanWorkerEnergyFraction:phase2WorkerEnergyFraction,gain:"+value,
+  "    })",
+ ].join('\\n')
+ const withPriority=source.replace(paceAnchor,additions+'\n'+paceAnchor)
   .replace(outputAnchor,"        pelotonComponents.selectedResponseMultiplier *\n        v4Phase2ChasePriorityMultiplier *\n        (chasingTeamIds.length === 0 ? 0.97 : 1) *")
+ return "import {calculateV4Phase2ChasePriorityMultiplier} from '../race-engine-v4/phase2ChasePriorityV4.ts'\n"+withPriority
 }

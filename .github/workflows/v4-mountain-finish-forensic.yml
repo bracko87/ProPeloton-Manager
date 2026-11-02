@@ -23,6 +23,8 @@ on:
       - 'scripts/v4/mountainEarlyChaseWorkforceTelemetryV4.test.mjs'
       - 'scripts/v4/mountainEarlyChasePriorityCandidateV4.mjs'
       - 'scripts/v4/mountainEarlyChasePriorityCandidateV4.test.mjs'
+      - 'src/race-engine-v4/phase2ChasePriorityV4.ts'
+      - 'src/race-engine-v4/phase2ChasePriorityV4.test.ts'
       - 'scripts/v4/mountainChaseEfficiencyCandidateV4.mjs'
       - 'scripts/v4/mountainChaseEfficiencyCandidateV4.test.mjs'
       - 'src/race-engine-v4/mountainChaseContactCohesionV4.mjs'
@@ -299,6 +301,8 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci --no-audit --no-fund
+      - name: Test native V4 research chase-priority module
+        run: node --experimental-strip-types src/race-engine-v4/phase2ChasePriorityV4.test.ts
       - name: Test isolated explicit-workforce priority physical speed candidate
         run: node scripts/v4/mountainEarlyChasePriorityCandidateV4.test.mjs
       - name: Validate isolated early chase workforce counters
