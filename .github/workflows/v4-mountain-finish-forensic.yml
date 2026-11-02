@@ -15,6 +15,8 @@ on:
       - 'scripts/v4/mountainChaseSplitResearchPatchV4.mjs'
       - 'scripts/v4/mountainChaseSplitResearchPatchV4.test.mjs'
       - 'scripts/v4/mountainChaseContactResearchPatchV4.mjs'
+      - 'scripts/v4/mountainFrontCodeCollisionPatchV4.mjs'
+      - 'scripts/v4/mountainFrontCodeCollisionPatchV4.test.mjs'
       - 'src/race-engine-v4/mountainChaseContactCohesionV4.mjs'
       - 'src/race-engine-v4/mountainChaseContactCohesionV4.test.mjs'
       - 'scripts/v4/finishTransitionResearchPatchV4.mjs'
@@ -49,6 +51,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Verify provenance- and tolerance-guarded contact cohesion helper
         run: node src/race-engine-v4/mountainChaseContactCohesionV4.test.mjs
+      - name: Check front-label collision patch anchor without altering physical group models
+        run: node scripts/v4/mountainFrontCodeCollisionPatchV4.test.mjs
       - name: Check both known mountain split failures with untouched strict validator
         env:
           V4_MOUNTAIN_WINNER_FORENSIC: '1'
@@ -56,6 +60,7 @@ jobs:
           V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
           V4_MOUNTAIN_TARGET_SEED: '2'
           V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
+          V4_MOUNTAIN_FRONT_CODE_COLLISION_CANDIDATE: '1'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   full-contact-cohesion-regression:
     runs-on: ubuntu-latest
@@ -72,6 +77,7 @@ jobs:
           V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
           V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
           V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
+          V4_MOUNTAIN_FRONT_CODE_COLLISION_CANDIDATE: '1'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   mountain-200km-forensic:
     runs-on: ubuntu-latest
@@ -88,6 +94,7 @@ jobs:
           V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
           V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
           V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
+          V4_MOUNTAIN_FRONT_CODE_COLLISION_CANDIDATE: '1'
           V4_MOUNTAIN_DISTANCE_STRESS: '1'
           V4_MOUNTAIN_STRESS_200_ONLY: '1'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
@@ -106,6 +113,7 @@ jobs:
           V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE: '1'
           V4_MOUNTAIN_C_SPLIT_CANDIDATE: '1'
           V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE: '1'
+          V4_MOUNTAIN_FRONT_CODE_COLLISION_CANDIDATE: '1'
           V4_MOUNTAIN_DISTANCE_STRESS: '1'
         run: node scripts/v4/terrainDistanceWorkforceV4.test.mjs
   isolated-mountain-220-forensic:

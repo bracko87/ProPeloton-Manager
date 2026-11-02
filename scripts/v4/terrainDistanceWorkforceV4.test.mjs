@@ -12,6 +12,7 @@ import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {patchV4MeasuredChaseSplitResearchSource} from './mountainChaseSplitResearchPatchV4.mjs'
 import {patchV4ChaseContactResearchSource} from './mountainChaseContactResearchPatchV4.mjs'
+import {patchV4MountainFrontCollisionSource} from './mountainFrontCodeCollisionPatchV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
@@ -25,6 +26,8 @@ const seedIds=targetedSeedText?[Number(targetedSeedText)]:mountainStress?[0,1,2,
 const coalesceCandidate=process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
 const measuredCSplitCandidate=process.env.V4_MOUNTAIN_C_SPLIT_CANDIDATE==='1'
 const contactCandidate=process.env.V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE==='1'
+const frontCodeCandidate=process.env.V4_MOUNTAIN_FRONT_CODE_COLLISION_CANDIDATE==='1'
+if(frontCodeCandidate&&!contactCandidate)throw Error('Front code candidate requires contact-replay research isolation')
 if(contactCandidate&&!coalesceCandidate)throw Error('Contact cohesion candidate requires detachment coalescence')
 if(measuredCSplitCandidate&&!coalesceCandidate)throw Error('Physical C split candidate requires detachment coalescence')
 if(mountainStress&&(!contactCandidate||!coalesceCandidate||focused||targetedSeedText))
@@ -275,7 +278,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const candidate=coalesceCandidate?injectV4DetachmentCoalescenceCandidate(transformed):transformed
      const withSplits=measuredCSplitCandidate?patchV4MeasuredChaseSplitResearchSource(candidate):candidate
      const withContact=contactCandidate?patchV4ChaseContactResearchSource(withSplits):withSplits
-     return {contents:(focused||mountainStress200Only)?injectV4WinnerCollisionForensics(withContact):withContact,loader:'ts'}
+     const withFrontCodes=frontCodeCandidate?patchV4MountainFrontCollisionSource(withContact):withContact
+     return {contents:(focused||mountainStress200Only)?injectV4WinnerCollisionForensics(withFrontCodes):withFrontCodes,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
@@ -462,6 +466,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   coalescenceCandidateApplied:coalesceCandidate,
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
+  frontCodeCollisionCandidateApplied:frontCodeCandidate,
   mountainDistanceStress:mountainStress,mountainStress200Only,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
