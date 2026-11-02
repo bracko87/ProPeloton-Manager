@@ -81,7 +81,19 @@ function injectV4WinnerCollisionForensics(source){
   "      origins.push(!first||!second?'NO_PREVIOUS_GROUP_CODE':Math.abs(first.gapSeconds-second.gapSeconds)<=0.000001?'PRE_SHARED_GAP':'PRE_SEPARATED_GAPS')",
   "    }",
   "    const err=new Error(`Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`)",
-  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort(),v4WinnerLineageAudit:auditV4WinnerGapCollisions(replayTimeline.checkpoints),v4TransferAudit:auditV4PostCatchWinnerTransfer(replayTimeline.checkpoints),v4MeasuredSplitCheckpoints:replayTimeline.checkpoints.filter(x=>x.checkpointId.includes('v4-measured-chase-split')).map(x=>Number(x.raceProgress.kmFromStart.toFixed(5))).slice(-16)})",
+  "    const duplicateCodes=replayTimeline.checkpoints.flatMap(cp=>{",
+  "      const counts=new Map()",
+  "      for(const g of cp.groups??[]){",
+  "        const list=counts.get(g.displayCode)??[]",
+  "        list.push({riders:g.riderIds?.length??0,gap:Number(g.gapSeconds.toFixed(3)),",
+  "          family:g.displayCode?.[0]??'?',tagged:!!g.physicalLineageId})",
+  "        counts.set(g.displayCode,list)",
+  "      }",
+  "      return [...counts.entries()].filter(([,groups])=>groups.length>1)",
+  "        .map(([code,groups])=>({km:cp.raceProgress.kmFromStart,code,groups,",
+  "          checkpoint:cp.checkpointId.split('|replay|').at(-1)}))",
+  "    }).slice(0,12)",
+  "    Object.assign(err,{v4DuplicateCodeAudit:duplicateCodes,v4WinnerCollisionKinds:[...new Set(pairs)].sort(),v4WinnerCollisionOrigins:[...new Set(origins)].sort(),v4WinnerLineageAudit:auditV4WinnerGapCollisions(replayTimeline.checkpoints),v4TransferAudit:auditV4PostCatchWinnerTransfer(replayTimeline.checkpoints),v4MeasuredSplitCheckpoints:replayTimeline.checkpoints.filter(x=>x.checkpointId.includes('v4-measured-chase-split')).map(x=>Number(x.raceProgress.kmFromStart.toFixed(5))).slice(-16)})",
   "    throw err",
   "  }"
  ].join('\n')
@@ -157,6 +169,7 @@ const run=(input,pursuitTeamId)=>{
     winnerCollisionOrigins:Array.isArray(e?.v4WinnerCollisionOrigins)?
      e.v4WinnerCollisionOrigins.filter(x=>['PRE_SHARED_GAP','PRE_SEPARATED_GAPS','NO_PREVIOUS_GROUP_CODE'].includes(x)):[],
     measuredSplitCheckpoints:Array.isArray(e?.v4MeasuredSplitCheckpoints)?e.v4MeasuredSplitCheckpoints:[],
+    duplicateCodeAudit:Array.isArray(e?.v4DuplicateCodeAudit)?e.v4DuplicateCodeAudit:[],
     winnerCollisionKinds:Array.isArray(e?.v4WinnerCollisionKinds)?
      e.v4WinnerCollisionKinds.filter(k=>['B_B','B_C','B_F','B_P','C_C','C_F',
       'C_P','F_F','F_P','P_P','OTHER'].includes(k)):[],
@@ -439,7 +452,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   assert(cells.every(c=>!Object.hasOwn(c.v4ReplayIssueCodes,'duplicate_physical_group_gap')),
    'Candidate must not resurrect duplicate physical finish gaps')
  }
- const diagnosedFailures=(focused||mountainStress)?paired.filter(x=>!x.v4.valid&&x.v4.error==='STRICT_REPLAY').map(x=>({terrain:x.terrain,km:x.km,seed:x.seed,workers:x.workers,issue:x.v4.replayIssueCode,checkpoint:x.v4.replayCheckpoint,transferClass:x.v4.postCatchTransfer,transferAudit:x.v4.transferAudit,measuredSplitCheckpoints:x.v4.measuredSplitCheckpoints})):[]
+ const diagnosedFailures=(focused||mountainStress)?paired.filter(x=>!x.v4.valid&&x.v4.error==='STRICT_REPLAY').map(x=>({terrain:x.terrain,km:x.km,seed:x.seed,workers:x.workers,issue:x.v4.replayIssueCode,checkpoint:x.v4.replayCheckpoint,transferClass:x.v4.postCatchTransfer,transferAudit:x.v4.transferAudit,duplicateCodeAudit:x.v4.duplicateCodeAudit,measuredSplitCheckpoints:x.v4.measuredSplitCheckpoints})):[]
  const coverageWarnings=cells.filter(c=>c.pairedValid<4||c.openingPaired<3)
   .map(c=>({terrain:c.terrain,km:c.km,workers:c.workers,
    pairedValid:c.pairedValid,openingPaired:c.openingPaired,
