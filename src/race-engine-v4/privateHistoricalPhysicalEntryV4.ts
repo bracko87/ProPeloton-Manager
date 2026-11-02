@@ -5,6 +5,7 @@
  * No network, SQL, publication, rider names or raw snapshots in stdout.
  */
 import {readFileSync,realpathSync,statSync} from 'node:fs'
+import {matchPhysicalFailureCheckpointV4} from '../../scripts/v4/privatePhysicalFailureMatchV4.mjs'
 import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
 import {explainHistoricalClassificationParity,safeHistoricalErrorType,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalFinishEvidence,
@@ -133,7 +134,7 @@ function main(){
  const paths=doc.privateEnvelopePaths.map((raw:unknown)=>privatePath(raw,repo,64*1024*1024))
  if(new Set(paths).size!==paths.length)throw Error('DUPLICATE_PRIVATE_PATH')
  const rows=[],rejected={invalid:0,unsupported:0,unsynchronized:0}
- const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0,failedRiderMovementObserved:0,failedRiderMovementMissing:0,failedRiderNotMatched:0,failedRiderLateBandObserved:0,failedRiderLateBandMissing:0,failedRiderOtherPeriod:0}
+ const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0,failedRiderMovementObserved:0,failedRiderMovementMissing:0,failedRiderNotMatched:0,failedRiderLateBandObserved:0,failedRiderLateBandMissing:0,failedRiderOtherPeriod:0,exactIntervalOverlap:0,exactIntervalOutside:0,exactIntervalUnmatchable:0}
  const safeCodes=['INCOMPLETE_HISTORY','INVALID_LOCKED_HISTORY',
   'UNVERIFIED_TEAM_CONTROL','UNSUPPORTED_V2_SOLVER_LANE',
   'MISSING_SAVED_RESULT','PHYSICAL_RESULT_INVALID','NO_FINISH_CLASSIFICATION']
@@ -198,6 +199,21 @@ function main(){
       physicalProbe.observed++
       physicalProbe.samples+=probe.samples as number
       physicalProbe.transitions+=probe.transitions as number
+      const fullProbe=probe as {failedCheckpointInterval?:{riderId?:string,previousKm?:number,checkpointKm?:number},observations?:unknown}
+      if(failedRiderId){
+        const failure=fullProbe.failedCheckpointInterval
+        const match=matchPhysicalFailureCheckpointV4({
+          riderId:failedRiderId,
+          previousKm:failure?.previousKm,
+          checkpointKm:failure?.checkpointKm,
+          observations:fullProbe.observations
+        })
+        if(failure?.riderId!==failedRiderId||match==='UNMATCHABLE')
+          physicalProbe.exactIntervalUnmatchable++
+        else if(match==='CHECKPOINT_INTERVAL_OVERLAP')
+          physicalProbe.exactIntervalOverlap++
+        else physicalProbe.exactIntervalOutside++
+      }
       if(failedRiderId){
        const observations=(probe as {observations?:readonly {riderIds?:readonly string[]}[]}).observations
        if(!Array.isArray(observations))physicalProbe.failedRiderNotMatched++
