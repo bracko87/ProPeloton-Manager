@@ -13,6 +13,7 @@ on:
       - '!scripts/v4/privateHistoricalPostCatchForensicPatchV4.mjs'
       - '!scripts/v4/privateHistoricalPostCatchGapV4.test.mjs'
       - '!scripts/v4/privateLowReserveReplayCandidateV4.mjs'
+      - '!scripts/v4/privateChaseGroupSplitCandidateV4.mjs'
       - '!scripts/v4/privateLowReserveReplayCandidateV4.test.mjs'
       - '!scripts/v4/privateHistoricalDiagnosticsV4.test.mjs'
       - '!scripts/v4/privateHistoricalPhysicsV4.mjs'

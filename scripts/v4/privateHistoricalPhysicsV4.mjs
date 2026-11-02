@@ -12,6 +12,7 @@ import {fileURLToPath} from 'node:url'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {patchPrivateHistoricalPostCatchForensicsV4} from './privateHistoricalPostCatchForensicPatchV4.mjs'
 import {patchPrivateLowReserveReplayCandidateV4} from './privateLowReserveReplayCandidateV4.mjs'
+import {patchPrivateChaseGroupSplitCandidateV4} from './privateChaseGroupSplitCandidateV4.mjs'
 import {patchV4MountainEarlyChasePriorityCandidateSource} from './mountainEarlyChasePriorityCandidateV4.mjs'
 import {HISTORICAL_TERRAINS,HISTORICAL_PARITY_REASONS,HISTORICAL_ERROR_TYPES,
  HISTORICAL_FAILURE_REASONS,HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,
@@ -154,7 +155,9 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
       const source=readFileSync(args.path,'utf8')
       const calibrated=cfg.patch?patchV4CalibratedPhysicalSource(source,cfg):source
       const candidate=cfg.chasePriority?patchV4MountainEarlyChasePriorityCandidateSource(calibrated):calibrated
-      const prepared=cfg.replayCandidate?patchPrivateLowReserveReplayCandidateV4(candidate):candidate
+      const prepared=cfg.replayCandidate?
+       patchPrivateChaseGroupSplitCandidateV4(patchPrivateLowReserveReplayCandidateV4(candidate)):
+       candidate
       const contents=patchPrivateHistoricalPostCatchForensicsV4(prepared)
       patched++
       return {contents,loader:'ts'}

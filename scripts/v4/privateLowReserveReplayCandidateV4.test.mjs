@@ -6,14 +6,19 @@ import {resolve,join} from 'node:path'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchPrivateLowReserveReplayCandidateV4 as patch} from './privateLowReserveReplayCandidateV4.mjs'
+import {patchPrivateChaseGroupSplitCandidateV4 as patchChase} from './privateChaseGroupSplitCandidateV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const source=readFileSync(join(root,'src/universal-race-engine/runRaceEngine.ts'),'utf8')
-const candidate=patch(source)
+const candidate=patchChase(patch(source))
 assert(candidate.includes('reserve < -0.000001'))
 assert(candidate.includes('phase: phaseForKm(crossing)'))
 assert(candidate.includes('energyAtKm(phaseForKm(crossing),crossing)'))
 assert(candidate.includes('phase1.phaseBoundary.startKm'))
-assert.equal(patch(source.replace(/\r\n?|\n/g,'\r\n')),candidate)
+assert.equal(patchChase(patch(source.replace(/\r\n?|\n/g,'\r\n'))),candidate)
+assert(candidate.includes('physical-chase-subgroup-split-'))
+assert(candidate.includes('separatedRemainder'))
+assert(candidate.includes('...baseDefinitions.map(d=>d.kmFromStart)'))
+assert.throws(()=>patchChase(candidate),/PRIVATE_CHASE_SPLIT_SOURCE_DRIFT/)
 assert.throws(()=>patch(candidate),/PRIVATE_REPLAY_SOURCE_DRIFT/)
 assert.throws(()=>patch('not a real source'),/PRIVATE_REPLAY_SOURCE_DRIFT/)
 const fixture=readFileSync(join(root,'src/race-engine-v4/physicalResearchProbeV4.test.ts'),'utf8')
@@ -46,7 +51,7 @@ try{
     ctx.onLoad({filter:/[\\/]runRaceEngine\.ts$/},args=>{
      if(mode==='baseline')return null
      patched++
-     return {contents:patch(readFileSync(args.path,'utf8')),loader:'ts'}
+     return {contents:patchChase(patch(readFileSync(args.path,'utf8'))),loader:'ts'}
     })
    }}]
   })
