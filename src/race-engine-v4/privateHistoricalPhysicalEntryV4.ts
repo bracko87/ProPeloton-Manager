@@ -133,6 +133,7 @@ function main(){
  const paths=doc.privateEnvelopePaths.map((raw:unknown)=>privatePath(raw,repo,64*1024*1024))
  if(new Set(paths).size!==paths.length)throw Error('DUPLICATE_PRIVATE_PATH')
  const rows=[],rejected={invalid:0,unsupported:0,unsynchronized:0}
+ const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0}
  const safeCodes=['INCOMPLETE_HISTORY','INVALID_LOCKED_HISTORY',
   'UNVERIFIED_TEAM_CONTROL','UNSUPPORTED_V2_SOLVER_LANE',
   'MISSING_SAVED_RESULT','PHYSICAL_RESULT_INVALID','NO_FINISH_CLASSIFICATION']
@@ -150,6 +151,9 @@ function main(){
  const otherFailureTransfers=Object.fromEntries(HISTORICAL_FAILURE_TRANSFERS.map(t=>[t,0]))
  const otherFinishEvidence=Object.fromEntries(HISTORICAL_FINISH_EVIDENCE.map(t=>[t,0]))
  for(const path of paths){
+  // Isolated worker state only. Never emit rider identities or snapshots.
+  const globalProbe=globalThis as typeof globalThis & {__ppmV4PhysicalProbe?: unknown}
+  delete globalProbe.__ppmV4PhysicalProbe
   let data:unknown=null
   try{
    data=JSON.parse(readFileSync(path,'utf8'))
@@ -178,6 +182,17 @@ function main(){
     otherFailureTransfers[safeLocation.transfer]++
     otherFinishEvidence[safeHistoricalFinishEvidence(e)]++
    }
+  }finally{
+   if(variant==='private_replay_candidate'){
+    const probe=globalProbe.__ppmV4PhysicalProbe as {status?:unknown,samples?:unknown,transitions?:unknown}|undefined
+    if(probe?.status==='OBSERVED'&&Number.isSafeInteger(probe.samples)&&Number.isSafeInteger(probe.transitions)){
+      physicalProbe.observed++
+      physicalProbe.samples+=probe.samples as number
+      physicalProbe.transitions+=probe.transitions as number
+    }else if(probe?.status==='UNAVAILABLE')physicalProbe.unavailable++
+    else physicalProbe.missing++
+    delete globalProbe.__ppmV4PhysicalProbe
+   }
   }
  }
  // Never emit the original stage/rider/team identity or error details.
@@ -188,6 +203,7 @@ function main(){
   safeReplayIssueCodes,postCatchTransferClasses,postCatchPeriods,
   postCatchForensicPhases,postCatchForensicGaps,
   otherFailureCheckpoints,otherFailureTransfers,otherFinishEvidence,rows,
+  physicalProbe,
  })+'\n')
  // Zero usable stages is a valid diagnostic result, not a child-process crash.
  // The outer operator CLI still returns failure when no comparable triple exists.
