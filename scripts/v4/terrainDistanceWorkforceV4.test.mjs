@@ -85,7 +85,7 @@ function injectV4WinnerCollisionForensics(source){
   "      const counts=new Map()",
   "      for(const g of cp.groups??[]){",
   "        const list=counts.get(g.displayCode)??[]",
-  "        list.push({riders:g.riderIds?.length??0,gap:Number(g.gapSeconds.toFixed(3)),",
+  "        list.push({riders:g.riderIds?.length??0,gap:Number.isFinite(g.gapSeconds)?Number(g.gapSeconds.toFixed(3)):null,",
   "          family:g.displayCode?.[0]??'?',tagged:!!g.physicalLineageId})",
   "        counts.set(g.displayCode,list)",
   "      }",
@@ -178,7 +178,7 @@ const run=(input,pursuitTeamId)=>{
     replayIssueCategory:safeHistoricalReplayIssueCategory(e),
     replayIssueCode:safeHistoricalReplayIssueCode(e),
     postCatchTransfer:safeV4PostCatchTransferClass(e)}
-  return {valid:false,error:'OTHER_ERROR'}
+  return {valid:false,error:'OTHER_ERROR',diagnosticError:(focused||mountainStress200Only)?String(e instanceof Error?e.message:'unknown').replace(/[a-f0-9]{8}-[a-f0-9-]{27,}/ig,'[id]').slice(0,160):null}
  }
 }
 for(const terrain of terrains)for(const km of distances)for(const seed of seedIds){
@@ -452,7 +452,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   assert(cells.every(c=>!Object.hasOwn(c.v4ReplayIssueCodes,'duplicate_physical_group_gap')),
    'Candidate must not resurrect duplicate physical finish gaps')
  }
- const diagnosedFailures=(focused||mountainStress)?paired.filter(x=>!x.v4.valid&&x.v4.error==='STRICT_REPLAY').map(x=>({terrain:x.terrain,km:x.km,seed:x.seed,workers:x.workers,issue:x.v4.replayIssueCode,checkpoint:x.v4.replayCheckpoint,transferClass:x.v4.postCatchTransfer,transferAudit:x.v4.transferAudit,duplicateCodeAudit:x.v4.duplicateCodeAudit,measuredSplitCheckpoints:x.v4.measuredSplitCheckpoints})):[]
+ const diagnosedFailures=(focused||mountainStress)?paired.filter(x=>!x.v4.valid).map(x=>({terrain:x.terrain,km:x.km,seed:x.seed,workers:x.workers,issue:x.v4.replayIssueCode,diagnosticError:x.v4.diagnosticError,checkpoint:x.v4.replayCheckpoint,transferClass:x.v4.postCatchTransfer,transferAudit:x.v4.transferAudit,duplicateCodeAudit:x.v4.duplicateCodeAudit,measuredSplitCheckpoints:x.v4.measuredSplitCheckpoints})):[]
  const coverageWarnings=cells.filter(c=>c.pairedValid<4||c.openingPaired<3)
   .map(c=>({terrain:c.terrain,km:c.km,workers:c.workers,
    pairedValid:c.pairedValid,openingPaired:c.openingPaired,
