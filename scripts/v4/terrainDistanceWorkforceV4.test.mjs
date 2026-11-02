@@ -275,7 +275,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const candidate=coalesceCandidate?injectV4DetachmentCoalescenceCandidate(transformed):transformed
      const withSplits=measuredCSplitCandidate?patchV4MeasuredChaseSplitResearchSource(candidate):candidate
      const withContact=contactCandidate?patchV4ChaseContactResearchSource(withSplits):withSplits
-     return {contents:focused?injectV4WinnerCollisionForensics(withContact):withContact,loader:'ts'}
+     return {contents:(focused||mountainStress200Only)?injectV4WinnerCollisionForensics(withContact):withContact,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
