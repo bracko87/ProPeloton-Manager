@@ -156,6 +156,23 @@ export function safeV4PostCatchTransferClass(error){
  const pair=c(match[1])+'_TO_'+c(match[2])
  return V4_POST_CATCH_TRANSFER_CLASSES.includes(pair)?pair:'OTHER'
 }
+export const HISTORICAL_POST_CATCH_PERIODS=Object.freeze([
+ 'EARLY_5_30_PERCENT','MIDDLE_35_70_PERCENT','LATE_75_95_PERCENT',
+ 'OTHER_CHECKPOINT','NOT_POST_CATCH'
+])
+/** Only a coarse, fixed range; no private checkpoint ID is disclosed. */
+export function safeHistoricalPostCatchPeriod(error){
+ const msg=error instanceof Error?error.message:''
+ if(!msg.startsWith('Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:'))
+  return 'NOT_POST_CATCH'
+ const m=msg.match(/\|replay\|race-status-(\d{1,2})(?:[^0-9]|$)/)
+ if(!m)return 'OTHER_CHECKPOINT'
+ const pct=Number(m[1])
+ if(pct>=5&&pct<=30&&pct%5===0)return 'EARLY_5_30_PERCENT'
+ if(pct>=35&&pct<=70&&pct%5===0)return 'MIDDLE_35_70_PERCENT'
+ if(pct>=75&&pct<=95&&pct%5===0)return 'LATE_75_95_PERCENT'
+ return 'OTHER_CHECKPOINT'
+}
 export const HISTORICAL_FINISH_EVIDENCE=Object.freeze([
  'CAUGHT_WITHIN_PHYSICAL_TOLERANCE','CAUGHT_WITHIN_OFFICIAL_GROUP',
  'CAUGHT_BUT_SEPARATED','NOT_CAUGHT_WITHIN_PHYSICAL_TOLERANCE',

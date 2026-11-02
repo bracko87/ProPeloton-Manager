@@ -9,7 +9,8 @@ import {relative,isAbsolute,sep} from 'node:path'
 import {createHash} from 'node:crypto'
 import {explainHistoricalClassificationParity,safeHistoricalErrorType,safeHistoricalFailureReason,safeHistoricalFailureLocation,safeHistoricalFinishEvidence,
  safeHistoricalTerrain,historicalPhysicalGapAudit,historicalOpeningBreakawayJourney,
- safeHistoricalReplayIssueCode,
+ safeHistoricalReplayIssueCode,safeV4PostCatchTransferClass,V4_POST_CATCH_TRANSFER_CLASSES,
+ safeHistoricalPostCatchPeriod,HISTORICAL_POST_CATCH_PERIODS,
  HISTORICAL_TERRAINS,HISTORICAL_ERROR_TYPES,HISTORICAL_FAILURE_REASONS,
  HISTORICAL_FAILURE_CHECKPOINTS,HISTORICAL_FAILURE_TRANSFERS,HISTORICAL_FINISH_EVIDENCE}
  from './privateHistoricalDiagnosticsV4.mjs'
@@ -139,6 +140,8 @@ function main(){
  const otherErrorTypes=Object.fromEntries(HISTORICAL_ERROR_TYPES.map(t=>[t,0]))
  const otherFailureReasons=Object.fromEntries(HISTORICAL_FAILURE_REASONS.map(t=>[t,0]))
  const safeReplayIssueCodes:Record<string,number>={}
+ const postCatchTransferClasses=Object.fromEntries(V4_POST_CATCH_TRANSFER_CLASSES.map(k=>[k,0]))
+ const postCatchPeriods=Object.fromEntries(HISTORICAL_POST_CATCH_PERIODS.map(k=>[k,0]))
  const otherFailureCheckpoints=Object.fromEntries(HISTORICAL_FAILURE_CHECKPOINTS.map(t=>[t,0]))
  const otherFailureTransfers=Object.fromEntries(HISTORICAL_FAILURE_TRANSFERS.map(t=>[t,0]))
  const otherFinishEvidence=Object.fromEntries(HISTORICAL_FINISH_EVIDENCE.map(t=>[t,0]))
@@ -162,6 +165,8 @@ function main(){
     otherFailureReasons[safeHistoricalFailureReason(e)]++
     const replayCode=safeHistoricalReplayIssueCode(e)
     safeReplayIssueCodes[replayCode]=(safeReplayIssueCodes[replayCode]??0)+1
+    postCatchTransferClasses[safeV4PostCatchTransferClass(e)]++
+    postCatchPeriods[safeHistoricalPostCatchPeriod(e)]++
     const safeLocation=safeHistoricalFailureLocation(e)
     otherFailureCheckpoints[safeLocation.checkpoint]++
     otherFailureTransfers[safeLocation.transfer]++
@@ -174,7 +179,7 @@ function main(){
   variant,researchOnly:true,officialWrites:0,networkCalls:0,
   inputPathsReported:false,attempted:paths.length,rejected,failureClasses,
   failureTerrains,otherErrorTypes,otherFailureReasons,
-  safeReplayIssueCodes,
+  safeReplayIssueCodes,postCatchTransferClasses,postCatchPeriods,
   otherFailureCheckpoints,otherFailureTransfers,otherFinishEvidence,rows,
  })+'\n')
  // Zero usable stages is a valid diagnostic result, not a child-process crash.

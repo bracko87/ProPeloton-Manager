@@ -93,3 +93,10 @@ The restricted research pilot successfully exported **12/12** verified archived 
 Do not relax strict replay or edit archived stage IDs to hide exclusions. The runner now reports `rejected.safeReplayIssueCodesByVariant` with **only whitelisted static replay issue codes**, aggregated by solver variant. Unknown codes are reported as `UNKNOWN_ISSUE_CODE`, never echoed verbatim. Raw messages, checkpoints, stage IDs and rider identities remain private. This additional diagnostic distinguishes the race-status replay failures for targeted future repairs without changing physics or strict validation.
 
 The first 12 were the newest four qualified metadata stages per terrain; successful export is not equivalent to proving historical reproduction. Four already-known unsupported solver stages should be excluded by lane from expanded analysis.
+
+## Safe post-catch physical transition classification
+The five historical `post_catch_group_transfer_without_physical_transition` rejections occur in original preserved V2 and all three V4 research variants, generally at a generated `race-status-XX` checkpoint. The validator checks consecutive checkpoint membership and requires an actual documented `group_split`, `group_merge` or `incident` whenever a group change is more than positional C-number relabeling.
+
+The new research-only diagnostics collect the **first failing transfer family** (P→C, C→C, etc.) and a coarse checkpoint position (5–30%, 35–70%, 75–95% or other). They **do not** expose rider IDs, stages, group identifiers, or raw error text and **do not** change the original strict validator. Do not interpret shared error codes alone as proving a particular race physics fix; physical group membership evidence and legitimate event chronology still need a test before any solver change.
+
+The private operator's `V4_PRIVATE_PG_COMPACT_SUMMARY` adds `postCatchFirstTransferTypes` and `postCatchFirstCheckpointPeriods`; this is the next actionable diagnostic needed to narrow the five failures. No production write or promotion is included.

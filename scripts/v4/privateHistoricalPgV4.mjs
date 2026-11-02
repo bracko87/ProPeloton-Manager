@@ -3,7 +3,7 @@ import {storePrivateHistoricalEnvelopeV4} from './privateHistoricalExportV4.mjs'
 import {runPrivateHistoricalPilotV4} from './privateHistoricalPilotV4.mjs'
 import {TERRAIN_TARGETS} from './privateHistoricalPilotSelectionV4.mjs'
 import {runPrivateHistoricalPhysicsV4} from './privateHistoricalPhysicsV4.mjs'
-import {HISTORICAL_REPLAY_KNOWN_ISSUE_CODES} from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
+import {HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,V4_POST_CATCH_TRANSFER_CLASSES,HISTORICAL_POST_CATCH_PERIODS} from '../../src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'
 import {readFileSync} from 'node:fs'
 import {resolve} from 'node:path'
 import {fileURLToPath} from 'node:url'
@@ -158,6 +158,14 @@ export function summarizePrivateHistoricalPilotV4(report){
  const allowed=new Set([...HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,'UNKNOWN_ISSUE_CODE','NOT_REPLAY'])
  const replayIssueCounts=Object.fromEntries(Object.entries(codes).filter(([k,v])=>
   allowed.has(k)&&Number.isSafeInteger(v)&&v>0))
+ const safeHistogram=(items,allow)=>Object.fromEntries(Object.entries(items??{})
+  .filter(([k,v])=>allow.includes(k)&&Number.isSafeInteger(v)&&v>0))
+ const firstFailureTransfers=safeHistogram(
+  report?.rejected?.postCatchTransferClassesByVariant?.preserved_v2,
+  V4_POST_CATCH_TRANSFER_CLASSES)
+ const firstFailurePeriods=safeHistogram(
+  report?.rejected?.postCatchPeriodsByVariant?.preserved_v2,
+  HISTORICAL_POST_CATCH_PERIODS)
  return {
   status:report?.chasePriority12?.status??report?.status??'UNKNOWN',
   historicalSourceRevisionAttested:false,historicalV4RealismApproved:false,
@@ -171,6 +179,8 @@ export function summarizePrivateHistoricalPilotV4(report){
    baselineReplayOrOtherInvalid:report?.rejected?.baselineInvalid??0,
    historicalResultDrift:report?.rejected?.baselineHistoricMismatch??0,
    otherReplayIssues:replayIssueCounts,
+   postCatchFirstTransferTypes:firstFailureTransfers,
+   postCatchFirstCheckpointPeriods:firstFailurePeriods,
   },
   chasePriority:{
    compared:report?.chasePriorityResearch?.all?.compared??0,
