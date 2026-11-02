@@ -14,6 +14,7 @@ import {patchV4MeasuredChaseSplitResearchSource} from './mountainChaseSplitResea
 import {patchV4ChaseContactResearchSource} from './mountainChaseContactResearchPatchV4.mjs'
 import {patchV4MountainFrontCollisionSource} from './mountainFrontCodeCollisionPatchV4.mjs'
 import {patchV4MountainChaseWorkerTelemetrySource} from './mountainChaseWorkerTelemetryV4.mjs'
+import {patchV4MountainChaseEfficiencyCandidateSource} from './mountainChaseEfficiencyCandidateV4.mjs'
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
@@ -23,6 +24,8 @@ const openingForensic=process.env.V4_MOUNTAIN_OPENING_FORENSIC==='1'
 const humanAttackFixture=process.env.V4_MOUNTAIN_HUMAN_ATTACK_CONTROL==='1'
 const humanChaseMiddle=process.env.V4_MOUNTAIN_HUMAN_CHASE_MIDDLE==='1'
 const chaseWorkerTelemetry=process.env.V4_MOUNTAIN_CHASE_WORKER_TELEMETRY==='1'
+const chaseEfficiencyCandidate=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_CANDIDATE==='1'
+if(chaseEfficiencyCandidate&&!chaseWorkerTelemetry)throw Error('Chase-efficiency candidate requires read-only telemetry')
 if(chaseWorkerTelemetry&&!humanChaseMiddle)throw Error('Phase 4 chase telemetry requires one/three-chaser controlled fixture')
 if(humanChaseMiddle&&!humanAttackFixture)throw Error('Chase-middle research requires explicit human attackers')
 const humanAttackForensic=process.env.V4_MOUNTAIN_HUMAN_ATTACK_FORENSIC==='1'
@@ -326,7 +329,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const withSplits=measuredCSplitCandidate?patchV4MeasuredChaseSplitResearchSource(candidate):candidate
      const withContact=contactCandidate?patchV4ChaseContactResearchSource(withSplits):withSplits
      const withFrontCodes=frontCodeCandidate?patchV4MountainFrontCollisionSource(withContact):withContact
-     const withTelemetry=chaseWorkerTelemetry?patchV4MountainChaseWorkerTelemetrySource(withFrontCodes):withFrontCodes
+     const withEfficiency=chaseEfficiencyCandidate?patchV4MountainChaseEfficiencyCandidateSource(withFrontCodes):withFrontCodes
+     const withTelemetry=chaseWorkerTelemetry?patchV4MountainChaseWorkerTelemetrySource(withEfficiency):withEfficiency
      return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withTelemetry):withTelemetry,loader:'ts'}
     })
    }}]})
@@ -570,7 +574,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,chaseEfficiencyCandidate,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
