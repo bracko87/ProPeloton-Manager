@@ -72,7 +72,7 @@ function injectV4WinnerCollisionForensics(source){
  ].join('\n')
  return "import {auditV4WinnerGapCollisions} from '../race-engine-v4/mountainWinnerLineageAuditV4.mjs'\n"+source.replace(terrainWinnerReplayThrow,lines)
 }
-const terrains=focused?['mountain']:['flat','mountain']
+const terrains=focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
 const distances=focused?[220]:[120,220]
 const workforces=[0,1,3,5]
 const seeds=8
@@ -150,7 +150,7 @@ for(const terrain of terrains)for(const km of distances)for(let seed=0;seed<seed
  let {input,options}=makeField(teams,Math.floor(teams/2),{
   seed:'v4-matched-terrain-workforce-2026-'+seed,
   terrain,humanPursuitTeam:true,humanChase:false,neutral:false})
- const key=(terrain==='mountain'?2:0)+(km===220?1:0)
+ const key=(terrain==='mountain'?2:terrain==='hilly'?4:0)+(km===220?1:0)
  const stageId='12345678-1234-4234-8234-'+String(2400+key*100+seed).padStart(12,'0')
  const raceId='12345678-1234-4234-8234-'+String(2500+key*100+seed).padStart(12,'0')
  input.race.raceId=raceId
@@ -158,17 +158,23 @@ for(const terrain of terrains)for(const km of distances)for(let seed=0;seed<seed
  input.stage.raceId=raceId
  input.stage.distanceKm=km
  input.stage.terrainType=terrain
- input.stage.profileType=terrain==='mountain'?'mountain':'sprinter'
+ input.stage.profileType=terrain==='mountain'?'mountain':terrain==='hilly'?'rolling':'sprinter'
  input.stage.finishType=terrain==='mountain'?'summit_finish':'flat_finish'
  input.stage.summitFinish=terrain==='mountain'
- input.stage.elevationGainM=terrain==='mountain'?(km===120?2600:3600):(km===120?500:750)
+ input.stage.elevationGainM=terrain==='mountain'?(km===120?2600:3600):
+  terrain==='hilly'?(km===120?1350:2350):(km===120?500:750)
  input.stage.terrainPercentages=terrain==='mountain'?
   {flat:10,hilly:15,mountain:75,cobbled:0}:
+  terrain==='hilly'?{flat:27,hilly:58,mountain:15,cobbled:0}:
   {flat:80,hilly:15,mountain:5,cobbled:0}
  input.stage.profilePoints=terrain==='mountain'?
   [{km:0,elevationM:100},{km:km*.22,elevationM:900},
    {km:km*.4,elevationM:300},{km:km*.62,elevationM:1300},
    {km:km*.8,elevationM:850},{km,elevationM:2600}]:
+  terrain==='hilly'?
+  [{km:0,elevationM:35},{km:km*.16,elevationM:280},
+   {km:km*.36,elevationM:70},{km:km*.57,elevationM:415},
+   {km:km*.76,elevationM:135},{km:km*.9,elevationM:330},{km,elevationM:150}]:
   [{km:0,elevationM:10},{km:km*.5,elevationM:120},{km,elevationM:15}]
  for(const point of input.points){
   point.stageId=stageId
@@ -350,6 +356,18 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   .every(r=>r.fullyPairedOpeningSeeds>=4&&
    r.zeroToFiveMedianPeakReductionSeconds>0),
   'Five explicit human chasers should reduce flat-stage peak gaps in paired openings')
+ if(coalesceCandidate){
+  const shortMountain=cells.filter(c=>c.terrain==='mountain'&&c.km===120)
+  const longMountain=cells.filter(c=>c.terrain==='mountain'&&c.km===220)
+  assert.equal(shortMountain.length,4)
+  assert.equal(longMountain.length,4)
+  assert(shortMountain.every(c=>c.v4StrictReplayExclusions===0),
+   'Candidate must preserve all V4 120km mountain strict replay validations')
+  assert(longMountain.reduce((sum,c)=>sum+c.v4StrictReplayExclusions,0)<=2,
+   'Candidate must not regress the 30/32 validated 220km mountain research pilot')
+  assert(cells.every(c=>!Object.hasOwn(c.v4ReplayIssueCodes,'duplicate_physical_group_gap')),
+   'Candidate must not resurrect duplicate physical finish gaps')
+ }
  const coverageWarnings=cells.filter(c=>c.pairedValid<4||c.openingPaired<3)
   .map(c=>({terrain:c.terrain,km:c.km,workers:c.workers,
    pairedValid:c.pairedValid,openingPaired:c.openingPaired,
