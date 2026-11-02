@@ -116,7 +116,7 @@ export async function runPrivatePgHistoricalPilotV4({
    return storePrivateHistoricalEnvelopeV4(run,entries,stageId)
   }
   const candidateRunner=(includeChasePriority||includeReplayCandidate)?async manifest=>{
-   const report=await physicalRunner(manifest,{includeChasePriority,includeReplayCandidate})
+   const report=await physicalRunner(manifest,{includeChasePriority,...(includeReplayCandidate?{includeReplayCandidate:true}:{})})
    if(includeChasePriority){
     const priority=report?.chasePriorityResearch
     if(!priority||priority.enabledByExplicitOption!==true||

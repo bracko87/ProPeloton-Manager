@@ -315,7 +315,7 @@ class SetRoleDenied extends FakeClient{
 }
 await assert.rejects(()=>runPrivatePgHistoricalPilotV4({
  env,ClientConstructor:SetRoleDenied}),/Role not granted/)
-assert.equal(opened,10);assert.equal(closed,10)
+assert.equal(opened,11);assert.equal(closed,11)
 console.log('V4_PRIVATE_PG_READONLY_RESEARCH_UNIT '+JSON.stringify({
  status:'PASS',syntheticOnly:true,cases:56,sessionRoleActivationVerified:true,
  optionalCandidateVerified:true,strictTwelveCohortVerified:true,officialWrites:0}))
