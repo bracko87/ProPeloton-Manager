@@ -22,7 +22,7 @@ export function patchV4FinishTransitionSource(original){
   "    const v4FinishTransition = reconcileV4FinishTransition({",
   "      allTransitionsAreFrontCaughtByPeloton,",
   "      allTransitionsAreOpeningCaughtByPeloton: finalTransitionRiderIds.length>0 && finalTransitionRiderIds.every(id=>beforeCodes.get(id)?.startsWith('B')===true && finalCodes.get(id)==='P'),",
-  "      physicalPelotonCatchToleranceSeconds:PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS,
+  "      physicalPelotonCatchToleranceSeconds:PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS,",
   "      changedRiderIds:finalTransitionRiderIds,",
   "      finalDisplayCodes:finalGroups.map(group=>group.displayCode),",
   "      bridgeGroups:phase4.bridgeGroups,",
