@@ -41,6 +41,8 @@ jobs:
         run: node scripts/v4/hillyChaseABV4.test.mjs
       - name: Evaluate 120 170 220 km hilly breakaway persistence with matched chasing tactics
         run: node scripts/v4/hillyDistanceChaseSweepV4.test.mjs
+      - name: Compare 3x3 breakaway strength and chase motivation with strict isolated physics
+        run: node scripts/v4/breakawayStrengthChaseMatrixV4.test.mjs
       - name: Test automated PRIVATE historical pilot metadata selection and cleanup using mocks only
         run: node scripts/v4/privateHistoricalPilotV4.test.mjs
       - name: Test restricted PG historical access with mocks, no database
