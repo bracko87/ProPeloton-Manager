@@ -26,6 +26,10 @@ const humanChaseMiddle=process.env.V4_MOUNTAIN_HUMAN_CHASE_MIDDLE==='1'
 const chaseWorkerTelemetry=process.env.V4_MOUNTAIN_CHASE_WORKER_TELEMETRY==='1'
 const chaseEfficiencyCandidate=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_CANDIDATE==='1'
 const chaseEfficiencyFullDistances=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_FULL_DISTANCES==='1'
+const chaseEfficiencyGainText=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_GAIN
+if(chaseEfficiencyGainText!==undefined&&(!chaseEfficiencyCandidate||!['0','0.0022','0.0044','0.0088'].includes(chaseEfficiencyGainText)))
+ throw Error('Isolated research chase gain must be one of 0, 0.0022, 0.0044 or 0.0088')
+const chaseEfficiencyGain=chaseEfficiencyGainText===undefined?0.0022:Number(chaseEfficiencyGainText)
 if(chaseEfficiencyFullDistances&&!chaseEfficiencyCandidate)throw Error('Full distance candidate needs isolated research pace candidate')
 if(chaseEfficiencyCandidate&&!chaseWorkerTelemetry)throw Error('Chase-efficiency candidate requires read-only telemetry')
 if(chaseWorkerTelemetry&&!humanChaseMiddle)throw Error('Phase 4 chase telemetry requires one/three-chaser controlled fixture')
@@ -331,7 +335,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
      const withSplits=measuredCSplitCandidate?patchV4MeasuredChaseSplitResearchSource(candidate):candidate
      const withContact=contactCandidate?patchV4ChaseContactResearchSource(withSplits):withSplits
      const withFrontCodes=frontCodeCandidate?patchV4MountainFrontCollisionSource(withContact):withContact
-     const withEfficiency=chaseEfficiencyCandidate?patchV4MountainChaseEfficiencyCandidateSource(withFrontCodes):withFrontCodes
+     const withEfficiency=chaseEfficiencyCandidate?patchV4MountainChaseEfficiencyCandidateSource(withFrontCodes,{gain:chaseEfficiencyGain}):withFrontCodes
      const withTelemetry=chaseWorkerTelemetry?patchV4MountainChaseWorkerTelemetrySource(withEfficiency):withEfficiency
      return {contents:(focused||mountainStress200Only||humanAttackForensic)?injectV4WinnerCollisionForensics(withTelemetry):withTelemetry,loader:'ts'}
     })
@@ -357,11 +361,11 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    const telemetry=stdout.filter(line=>line.startsWith('V4_CHASE_PHYSICS_STEP '))
     .map(line=>JSON.parse(line.slice('V4_CHASE_PHYSICS_STEP '.length)))
    assert(telemetry.length>=8,'Expected phase-4 measured chase telemetry')
-   const grouped=seedIds.flatMap(seed=>workforces.map(orders=>{
+   const grouped=distances.flatMap(km=>seedIds.flatMap(seed=>workforces.map(orders=>{
     const seedText='v4-matched-terrain-workforce-2026-'+seed
-    const rows=telemetry.filter(t=>t.seed===seedText&&t.explicitOrders===orders)
+    const rows=telemetry.filter(t=>t.seed===seedText&&t.explicitOrders===orders&&t.stageKm===km)
     const active=rows.filter(t=>t.responseMode!=='no_active_escape'&&t.currentGapSeconds>0)
-    return {seed,orders,steps:rows.length,
+    return {km,seed,orders,steps:rows.length,
       activeEscapeSteps:active.length,
       medianActiveEscapeExplicit:median(active.map(t=>t.activeExplicit)),
       medianActiveEscapeAutomatic:median(active.map(t=>t.activeAutomatic)),
@@ -383,11 +387,11 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
       responseModes:Object.fromEntries([...new Set(rows.map(t=>t.responseMode))].map(mode=>[
         mode,rows.filter(t=>t.responseMode===mode).length])),
     }
-   }))
+   })))
    assert(grouped.every(g=>g.steps>0),'Every matched seed/workforce needs telemetry')
    assert(grouped.some(g=>g.activeEscapeSteps>0),'Expected at least one physical escape-active chase window')
    console.log('V4_CHASE_WORKER_TELEMETRY '+JSON.stringify({
-    source:'V4_SYNTHETIC_RESEARCH_ONLY',stageKm:200,readOnly:true,rows:grouped}))
+    source:'V4_SYNTHETIC_RESEARCH_ONLY',stageKms:distances,researchGain:chaseEfficiencyCandidate?chaseEfficiencyGain:null,readOnly:true,rows:grouped}))
   }
   assert.equal(parsed.rows.length,terrains.length*distances.length*workforces.length*seeds)
   assert.equal(parsed.officialWrites,0)
@@ -576,7 +580,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,chaseEfficiencyCandidate,chaseEfficiencyFullDistances,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,chaseEfficiencyCandidate,chaseEfficiencyFullDistances,chaseEfficiencyGain:chaseEfficiencyCandidate?chaseEfficiencyGain:null,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,

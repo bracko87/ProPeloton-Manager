@@ -5,9 +5,10 @@ export function patchV4MountainChaseWorkerTelemetrySource(source){
   throw Error('V4 chase-telemetry anchor drift: fail closed')
  const extra=[
   "    if (process.env.V4_CHASE_STEP_TELEMETRY === '1' &&",
-  "        input.stage.terrainType === 'mountain' && input.stage.distanceKm === 200) {",
+  "        input.stage.terrainType === 'mountain' && input.stage.distanceKm >= 170) {",
   "      console.log('V4_CHASE_PHYSICS_STEP '+JSON.stringify({",
   "        seed:input.engine.deterministicSeed,",
+  "        stageKm:input.stage.distanceKm,",
   "        km:Number(currentKm.toFixed(3)),",
   "        explicitOrders:explicitChasers.length,",
   "        activeExplicit:effectiveExplicitChaserCount,",

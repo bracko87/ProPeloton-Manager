@@ -1,7 +1,9 @@
 /** Isolated V4 mountain chase-speed experiment. No production source or replay-validation edits. */
 const paceAnchor="    const effectivePelotonPaceKmh = deterministicRound("
 const multiplierAnchor="        unopposedPhysicalPelotonPaceKmh *\n          calculateBaselinePelotonCruiseMultiplierV1("
-export function patchV4MountainChaseEfficiencyCandidateSource(source){
+export function patchV4MountainChaseEfficiencyCandidateSource(source,{gain=0.0022}={}){
+ if(!Number.isFinite(gain)||gain<0||gain>0.0088)throw Error('V4 research chase gain must be between 0 and 0.0088')
+ const boundedGain=Number(gain.toFixed(4))
  if(typeof source!=='string'||source.split(paceAnchor).length!==2||
     source.split(multiplierAnchor).length!==2)
   throw Error('V4 mountain chase-efficiency anchor drift: fail closed')
@@ -17,7 +19,7 @@ export function patchV4MountainChaseEfficiencyCandidateSource(source){
   "    const v4MountainChaseEfficiency =",
   "      input.stage.terrainType === 'mountain' &&",
   "      input.stage.distanceKm >= 170 && currentGapSeconds>0",
-  "        ? 1+Math.min(0.009,Math.max(0,effectiveExplicitChaserCount-1)*0.0022)",
+  `        ? 1+Math.min(0.018,Math.max(0,effectiveExplicitChaserCount-1)*${boundedGain})`,
   "          *v4MountainChaseEnergyFraction",
   "        : 1",
  ].join('\n')
