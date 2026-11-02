@@ -133,7 +133,7 @@ function main(){
  const paths=doc.privateEnvelopePaths.map((raw:unknown)=>privatePath(raw,repo,64*1024*1024))
  if(new Set(paths).size!==paths.length)throw Error('DUPLICATE_PRIVATE_PATH')
  const rows=[],rejected={invalid:0,unsupported:0,unsynchronized:0}
- const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0,failedRiderMovementObserved:0,failedRiderMovementMissing:0,failedRiderNotMatched:0}
+ const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0,failedRiderMovementObserved:0,failedRiderMovementMissing:0,failedRiderNotMatched:0,failedRiderLateBandObserved:0,failedRiderLateBandMissing:0,failedRiderOtherPeriod:0}
  const safeCodes=['INCOMPLETE_HISTORY','INVALID_LOCKED_HISTORY',
   'UNVERIFIED_TEAM_CONTROL','UNSUPPORTED_V2_SOLVER_LANE',
   'MISSING_SAVED_RESULT','PHYSICAL_RESULT_INVALID','NO_FINISH_CLASSIFICATION']
@@ -156,6 +156,7 @@ function main(){
   delete globalProbe.__ppmV4PhysicalProbe
   let data:unknown=null
   let failedRiderId:string|null=null
+  let failedPeriod:string|null=null
   try{
    data=JSON.parse(readFileSync(path,'utf8'))
    rows.push(evaluate(data))
@@ -182,6 +183,7 @@ function main(){
     safeReplayIssueCodes[replayCode]=(safeReplayIssueCodes[replayCode]??0)+1
     postCatchTransferClasses[safeV4PostCatchTransferClass(e)]++
     postCatchPeriods[safeHistoricalPostCatchPeriod(e)]++
+    if(variant==='private_replay_candidate')failedPeriod=safeHistoricalPostCatchPeriod(e)
     postCatchForensicPhases[safeHistoricalPostCatchForensicPhase(e)]++
     postCatchForensicGaps[safeHistoricalPostCatchForensicGap(e)]++
     const safeLocation=safeHistoricalFailureLocation(e)
@@ -199,8 +201,19 @@ function main(){
       if(failedRiderId){
        const observations=(probe as {observations?:readonly {riderIds?:readonly string[]}[]}).observations
        if(!Array.isArray(observations))physicalProbe.failedRiderNotMatched++
-       else if(observations.some(o=>o.riderIds?.includes(failedRiderId!)))
+       else if(observations.some(o=>o.riderIds?.includes(failedRiderId!))){
          physicalProbe.failedRiderMovementObserved++
+         if(failedPeriod==='LATE_75_95_PERCENT'){
+           const distance=(data as {input_snapshot_json?:{stage?:{distanceKm?:unknown}}})?.input_snapshot_json?.stage?.distanceKm
+           if(typeof distance==='number'&&Number.isFinite(distance)&&distance>0&&
+              observations.some(o=>o.riderIds?.includes(failedRiderId!)&&
+                Array.isArray((o as {observedBetweenKm?:number[]}).observedBetweenKm)&&
+                (o as {observedBetweenKm:number[]}).observedBetweenKm[0]<=distance*0.95&&
+                (o as {observedBetweenKm:number[]}).observedBetweenKm[1]>=distance*0.75))
+             physicalProbe.failedRiderLateBandObserved++
+           else physicalProbe.failedRiderLateBandMissing++
+         }else physicalProbe.failedRiderOtherPeriod++
+       }
        else physicalProbe.failedRiderMovementMissing++
       }
     }else if(probe?.status==='UNAVAILABLE'){
