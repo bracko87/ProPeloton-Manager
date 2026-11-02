@@ -20,6 +20,8 @@ const mountainStress=process.env.V4_MOUNTAIN_DISTANCE_STRESS==='1'
 const mountainRealismExpanded=process.env.V4_MOUNTAIN_REALISM_EIGHT_SEEDS==='1'
 const openingForensic=process.env.V4_MOUNTAIN_OPENING_FORENSIC==='1'
 const humanAttackFixture=process.env.V4_MOUNTAIN_HUMAN_ATTACK_CONTROL==='1'
+const humanChaseMiddle=process.env.V4_MOUNTAIN_HUMAN_CHASE_MIDDLE==='1'
+if(humanChaseMiddle&&!humanAttackFixture)throw Error('Chase-middle research requires explicit human attackers')
 const humanAttackForensic=process.env.V4_MOUNTAIN_HUMAN_ATTACK_FORENSIC==='1'
 if(humanAttackForensic&&!humanAttackFixture)throw Error('Human attack forensic requires controlled attack fixture')
 if(humanAttackFixture&&(!mountainStress||!mountainRealismExpanded||openingForensic||process.env.V4_MOUNTAIN_STRESS_SEED_OFFSET!=='4'))
@@ -118,7 +120,7 @@ function injectV4WinnerCollisionForensics(source){
 }
 const terrains=mountainStress?['mountain']:focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
 const distances=mountainStress?(mountainStress200Only||humanAttackForensic?[200]:[170,200,240]):focused?[220]:[120,220]
-const workforces=openingForensic||humanAttackForensic?[0]:humanAttackFixture?[0,5]:[0,1,3,5]
+const workforces=openingForensic||humanAttackForensic?[0]:humanChaseMiddle?[1,3]:humanAttackFixture?[0,5]:[0,1,3,5]
 const seeds=seedIds.length
 const median=values=>{
  const sorted=values.filter(v=>typeof v==='number'&&Number.isFinite(v)).sort((a,b)=>a-b)
@@ -498,6 +500,25 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   assert(cells.every(c=>!Object.hasOwn(c.v4ReplayIssueCodes,'duplicate_physical_group_gap')),
    'Candidate must not resurrect duplicate physical finish gaps')
  }
+ const humanChaseMiddleContrasts=humanChaseMiddle?distances.map(km=>{
+  const matched=seedIds.filter(seed=>[1,3].every(workers=>paired.some(r=>
+    r.terrain==='mountain'&&r.km===km&&r.seed===seed&&r.workers===workers&&
+    r.v4.valid&&r.v4.opening)))
+  const get=(seed,workers)=>paired.find(r=>
+    r.terrain==='mountain'&&r.km===km&&r.seed===seed&&r.workers===workers).v4
+  return {terrain:'mountain',km,matchedV4OpeningSeeds:matched.length,
+    oneChaserSurvivals:matched.filter(seed=>get(seed,1).survived).length,
+    threeChaserSurvivals:matched.filter(seed=>get(seed,3).survived).length,
+    medianPeakGapReductionSeconds:median(matched.map(seed=>
+      get(seed,1).observedPeakSeconds-get(seed,3).observedPeakSeconds)),
+    medianDistanceAheadReductionKm:median(matched.map(seed=>
+      get(seed,1).kmAhead-get(seed,3).kmAhead)),
+    medianOneActualWorkers:median(matched.map(seed=>get(seed,1).pursuitTotalWorkers)),
+    medianThreeActualWorkers:median(matched.map(seed=>get(seed,3).pursuitTotalWorkers)),
+    medianOneExplicitRiders:median(matched.map(seed=>get(seed,1).pursuitExplicitRiders)),
+    medianThreeExplicitRiders:median(matched.map(seed=>get(seed,3).pursuitExplicitRiders)),
+  }
+ }):[]
  const diagnosedFailures=(focused||mountainStress)?paired.filter(x=>!x.v4.valid).map(x=>({terrain:x.terrain,km:x.km,seed:x.seed,workers:x.workers,issue:x.v4.replayIssueCode,diagnosticError:x.v4.diagnosticError,checkpoint:x.v4.replayCheckpoint,transferClass:x.v4.postCatchTransfer,transferAudit:x.v4.transferAudit,duplicateCodeAudit:x.v4.duplicateCodeAudit,measuredSplitCheckpoints:x.v4.measuredSplitCheckpoints})):[]
  const coverageWarnings=cells.filter(c=>c.pairedValid<4||c.openingPaired<3)
   .map(c=>({terrain:c.terrain,km:c.km,workers:c.workers,
@@ -509,7 +530,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
@@ -519,7 +540,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   aiPlansPreparedOncePerCourseSeed:true,weatherHeldFixedAcrossWorkers:true,
   preservedV2AndV4InputsIdentical:true,
   replayExclusionsNeverWaived:true,officialWrites:0,
-  cells,pairedWorkforceContrasts,v4OnlyWorkforceContrasts,coverageWarnings,
+  cells,pairedWorkforceContrasts,v4OnlyWorkforceContrasts,humanChaseMiddleContrasts,coverageWarnings,
   openingForensicRows:(openingForensic||humanAttackFixture)?paired.map(r=>({
     km:r.km,seed:r.seed,workers:r.workers,v4Valid:r.v4.valid,
     v4Opening:r.v4.opening,openingAudit:r.v4.openingAudit,
