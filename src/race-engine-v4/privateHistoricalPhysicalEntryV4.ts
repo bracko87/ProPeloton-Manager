@@ -185,7 +185,7 @@ function main(){
   }finally{
    if(variant==='private_replay_candidate'){
     const probe=globalProbe.__ppmV4PhysicalProbe as {status?:unknown,samples?:unknown,transitions?:unknown}|undefined
-    if(probe?.status==='OBSERVED'&&Number.isSafeInteger(probe.samples)&&Number.isSafeInteger(probe.transitions)){
+    if(probe?.status==='OBSERVED'&&typeof probe.samples==='number'&&Number.isSafeInteger(probe.samples)&&typeof probe.transitions==='number'&&Number.isSafeInteger(probe.transitions)){
       physicalProbe.observed++
       physicalProbe.samples+=probe.samples as number
       physicalProbe.transitions+=probe.transitions as number
