@@ -359,7 +359,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
  if(coalesceCandidate){
   const shortMountain=cells.filter(c=>c.terrain==='mountain'&&c.km===120)
   const longMountain=cells.filter(c=>c.terrain==='mountain'&&c.km===220)
-  assert.equal(shortMountain.length,4)
+  assert.equal(shortMountain.length,focused?0:4,
+   'Focused 220km forensic must not require 120km mountain cells')
   assert.equal(longMountain.length,4)
   assert(shortMountain.every(c=>c.v4StrictReplayExclusions===0),
    'Candidate must preserve all V4 120km mountain strict replay validations')
