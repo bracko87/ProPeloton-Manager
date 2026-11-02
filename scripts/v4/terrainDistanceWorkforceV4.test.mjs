@@ -28,7 +28,7 @@ try{
   "import {validateRunInput,PPM_UNIVERSAL_RACE_ENGINE_KEY,PPM_UNIVERSAL_RACE_ENGINE_VERSION} from './src/universal-race-engine/runRaceEngine.ts'",
   "import {runSelectedRaceEngineV1} from './src/universal-race-engine/runSelectedRaceEngineV1.ts'",
   "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
-  "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
+  "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit,safeHistoricalFailureReason,safeHistoricalFailureLocation} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
   fixture.slice(start,end),
   String.raw`
 const terrains=['flat','mountain'],distances=[120,220],workers=[0,1,3,5],seeds=8
@@ -55,9 +55,13 @@ const run=(input)=>{
    endGapSeconds:Number.isFinite(phase4?.endGapSeconds)?phase4.endGapSeconds:null,
    energyAtFinish:energy,
    phase4ExplicitChaserTeams:phase4?.explicitChasingTeamIds?.length??null}
- }catch(e){return {valid:false,
-  error:e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:')
-   ?'STRICT_REPLAY':'OTHER_ERROR'}}
+ }catch(e){
+  if(e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:'))
+   return {valid:false,error:'STRICT_REPLAY',
+    replayReason:safeHistoricalFailureReason(e),
+    replayCheckpoint:safeHistoricalFailureLocation(e).checkpoint}
+  return {valid:false,error:'OTHER_ERROR'}
+ }
 }
 for(const terrain of terrains)for(const km of distances)for(let seed=0;seed<seeds;seed++){
  const teams=[18,19,20,21,22,18,19,20][seed]
@@ -188,7 +192,19 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    v4StrictReplayExclusions:candidates.filter(r=>r.v4.error==='STRICT_REPLAY').length,
    invalidInputOrOtherErrors:candidates.filter(r=>
     ['INVALID_INPUT','OTHER_ERROR'].includes(r.v2.error)||
-    ['INVALID_INPUT','OTHER_ERROR'].includes(r.v4.error)).length})
+    ['INVALID_INPUT','OTHER_ERROR'].includes(r.v4.error)).length,
+   v2ReplayReasons:Object.fromEntries([...new Set(candidates.filter(r=>r.v2.error==='STRICT_REPLAY')
+    .map(r=>r.v2.replayReason))].map(reason=>[reason,
+     candidates.filter(r=>r.v2.replayReason===reason).length])),
+   v4ReplayReasons:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY')
+    .map(r=>r.v4.replayReason))].map(reason=>[reason,
+     candidates.filter(r=>r.v4.replayReason===reason).length])),
+   v2ReplayCheckpoints:Object.fromEntries([...new Set(candidates.filter(r=>r.v2.error==='STRICT_REPLAY')
+    .map(r=>r.v2.replayCheckpoint))].map(checkpoint=>[checkpoint,
+     candidates.filter(r=>r.v2.replayCheckpoint===checkpoint).length])),
+   v4ReplayCheckpoints:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY')
+    .map(r=>r.v4.replayCheckpoint))].map(checkpoint=>[checkpoint,
+     candidates.filter(r=>r.v4.replayCheckpoint===checkpoint).length]))})
  }
  const pairedWorkforceContrasts=[]
  for(const terrain of terrains)for(const km of distances){
@@ -210,6 +226,18 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
  assert(cells.every(c=>c.attempted===seeds))
  assert(cells.every(c=>c.invalidInputOrOtherErrors===0),
   'No invalid synthetic fields or unexpected runtime errors permitted')
+ const flat=cells.filter(c=>c.terrain==='flat')
+ assert(flat.every(c=>c.pairedValid===seeds&&c.openingPaired>=4&&
+  c.v4StrictReplayExclusions===0),
+  'Flat stage controls require adequate strictly matched openings')
+ assert(pairedWorkforceContrasts.filter(r=>r.terrain==='flat')
+  .every(r=>r.fullyPairedOpeningSeeds>=4&&
+   r.zeroToFiveMedianPeakReductionSeconds>0),
+  'Five explicit human chasers should reduce flat-stage peak gaps in paired openings')
+ const coverageWarnings=cells.filter(c=>c.pairedValid<4||c.openingPaired<3)
+  .map(c=>({terrain:c.terrain,km:c.km,workers:c.workers,
+   pairedValid:c.pairedValid,openingPaired:c.openingPaired,
+   reason:'LOW_MATCHED_SAMPLE_DO_NOT_CALIBRATE'}))
  console.log('V4_TERRAIN_DISTANCE_WORKFORCE_PILOT '+JSON.stringify({
   status:'SYNTHETIC_DIAGNOSTIC_ONLY_NOT_REALISM_APPROVAL',
   raceProfiles:terrains,raceDistancesKm:distances,
@@ -220,7 +248,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   aiPlansPreparedOncePerCourseSeed:true,weatherHeldFixedAcrossWorkers:true,
   preservedV2AndV4InputsIdentical:true,
   replayExclusionsNeverWaived:true,officialWrites:0,
-  cells,pairedWorkforceContrasts,
+  cells,pairedWorkforceContrasts,coverageWarnings,
   originalV2SolverModified:false,realismApproved:false
  }))
 }finally{rmSync(temporary,{recursive:true,force:true})}
