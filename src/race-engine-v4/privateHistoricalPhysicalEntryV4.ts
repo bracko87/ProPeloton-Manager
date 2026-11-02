@@ -172,9 +172,11 @@ function main(){
     bucket.other++
     otherErrorTypes[safeHistoricalErrorType(e)]++
     otherFailureReasons[safeHistoricalFailureReason(e)]++
-    if(variant==='private_replay_candidate'&&
-       code.startsWith('post_catch_group_transfer_without_physical_transition:')){
-      failedRiderId=code.slice('post_catch_group_transfer_without_physical_transition:'.length).split(':')[0]||null
+    if(variant==='private_replay_candidate'){
+      // The engine wraps blocking replay issues in a longer exception message.
+      // Extract the rider from the known issue token, never report the ID.
+      const match=code.match(/(?:^|[\\s,])post_catch_group_transfer_without_physical_transition:([^:,\\s]+):/)
+      failedRiderId=match?.[1]??null
     }
     const replayCode=safeHistoricalReplayIssueCode(e)
     safeReplayIssueCodes[replayCode]=(safeReplayIssueCodes[replayCode]??0)+1
