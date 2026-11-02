@@ -38,7 +38,7 @@ if(chaseEfficiencyFullDistances&&!chaseEfficiencyCandidate)throw Error('Full dis
 if(chaseEfficiencyCandidate&&!chaseWorkerTelemetry)throw Error('Chase-efficiency candidate requires read-only telemetry')
 if(chaseWorkerTelemetry&&!humanChaseMiddle)throw Error('Phase 4 chase telemetry requires one/three-chaser controlled fixture')
 if(earlyPhaseAudit&&!humanChaseMiddle)throw Error('Early-phase chase audit requires controlled one/three-chaser fixture')
-if(earlyChasePriorityCandidate&&!earlyPhaseAudit)throw Error('Early physical chase candidate needs strict early-phase gap and workforce audit')
+if(earlyChasePriorityCandidate&&!earlyPhaseAudit&&process.env.V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE!=='1')throw Error('Early physical chase candidate requires isolated V4 contact or early-phase research scaffold')
 if(humanChaseMiddle&&!humanAttackFixture)throw Error('Chase-middle research requires explicit human attackers')
 const humanAttackForensic=process.env.V4_MOUNTAIN_HUMAN_ATTACK_FORENSIC==='1'
 if(humanAttackForensic&&!humanAttackFixture)throw Error('Human attack forensic requires controlled attack fixture')
