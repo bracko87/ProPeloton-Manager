@@ -54,6 +54,19 @@ assert.equal(reconcileV4FinishTransition({...actualOpeningCatch,breakawayCaught:
 assert.equal(reconcileV4FinishTransition({...actualOpeningCatch,physicalEndGapSeconds:0.751}).eventType,'group_split')
 assert.equal(reconcileV4FinishTransition({...actualOpeningCatch,breakawaySurvived:true}).eventType,'group_split')
 assert.equal(reconcileV4FinishTransition({...actualOpeningCatch,allTransitionsAreOpeningCaughtByPeloton:false}).eventType,'group_split')
+const officiallyGroupedOpening={
+ ...actualOpeningCatch,breakawayCaught:false,breakawaySurvived:true,
+ physicalEndGapSeconds:2.5,officialFinishGroupingToleranceSeconds:5
+}
+const groupedOpeningResult=reconcileV4FinishTransition(officiallyGroupedOpening)
+assert.equal(groupedOpeningResult.officialGroupingWithoutPhysicalCatch,true)
+assert.equal(groupedOpeningResult.eventType,'catch')
+assert.equal(groupedOpeningResult.usePhysicalPelotonGapAtTransition,true)
+assert.ok(groupedOpeningResult.title.includes('official'))
+assert.equal(reconcileV4FinishTransition({...officiallyGroupedOpening,physicalEndGapSeconds:5.1}).eventType,'group_split')
+assert.equal(reconcileV4FinishTransition({...officiallyGroupedOpening,physicalEndGapSeconds:0.5}).eventType,'group_split')
+assert.equal(reconcileV4FinishTransition({...officiallyGroupedOpening,breakawaySurvived:false}).eventType,'group_split')
+assert.equal(reconcileV4FinishTransition({...officiallyGroupedOpening,breakawayCaught:true}).eventType,'group_split')
 const physicalGaps=[0,5,5.18724,5.468381,19.655293,25.123674,214.748364]
 for(const gap of physicalGaps){
  const canonical=canonicalV4OfficialFinishGap(13000,gap)

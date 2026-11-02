@@ -56,6 +56,29 @@ export function reconcileV4FinishTransition(context:V4FinishTransitionContext):V
       bridge.catchKm===null&&separation!==undefined&&
       Number.isFinite(separation)&&separation>=0&&separation<=tolerated
   }))
+ // The leading opening B can remain physically ahead by more than catch
+ // tolerance while official timing legitimately assigns the same finish group.
+ // Preserve that distinction. The replay catch-type event is only a grouping
+ // transition marker, NOT evidence that the peloton physically caught B.
+ const officialOpeningGroupingWithoutPhysicalCatch =
+  context.allTransitionsAreOpeningCaughtByPeloton &&
+  context.changedRiderIds.length>0 &&
+  context.breakawayCaught===false &&
+  context.breakawaySurvived===true &&
+  context.finalDisplayCodes.includes('P') &&
+  Number.isFinite(context.physicalPelotonCatchToleranceSeconds) &&
+  context.physicalPelotonCatchToleranceSeconds>=0 &&
+  Number.isFinite(context.officialFinishGroupingToleranceSeconds) &&
+  context.officialFinishGroupingToleranceSeconds>context.physicalPelotonCatchToleranceSeconds &&
+  Number.isFinite(context.physicalEndGapSeconds) &&
+  context.physicalEndGapSeconds>context.physicalPelotonCatchToleranceSeconds &&
+  context.physicalEndGapSeconds<=context.officialFinishGroupingToleranceSeconds
+ if(officialOpeningGroupingWithoutPhysicalCatch)return {
+  officialGroupingWithoutPhysicalCatch:true,
+  eventType:'catch',
+  title:'Opening breakaway shares the official peloton finish group',
+  usePhysicalPelotonGapAtTransition:true
+ }
  // An opening B-to-P finish transition needs measured peloton contact, not
  // just a shared official time group or a synthetic catch label.
  if(physicallyCaughtOpeningOnFinish)return {
