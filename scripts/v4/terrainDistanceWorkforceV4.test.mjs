@@ -25,6 +25,8 @@ const humanAttackFixture=process.env.V4_MOUNTAIN_HUMAN_ATTACK_CONTROL==='1'
 const humanChaseMiddle=process.env.V4_MOUNTAIN_HUMAN_CHASE_MIDDLE==='1'
 const chaseWorkerTelemetry=process.env.V4_MOUNTAIN_CHASE_WORKER_TELEMETRY==='1'
 const chaseEfficiencyCandidate=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_CANDIDATE==='1'
+const chaseEfficiencyFullDistances=process.env.V4_MOUNTAIN_CHASE_EFFICIENCY_FULL_DISTANCES==='1'
+if(chaseEfficiencyFullDistances&&!chaseEfficiencyCandidate)throw Error('Full distance candidate needs isolated research pace candidate')
 if(chaseEfficiencyCandidate&&!chaseWorkerTelemetry)throw Error('Chase-efficiency candidate requires read-only telemetry')
 if(chaseWorkerTelemetry&&!humanChaseMiddle)throw Error('Phase 4 chase telemetry requires one/three-chaser controlled fixture')
 if(humanChaseMiddle&&!humanAttackFixture)throw Error('Chase-middle research requires explicit human attackers')
@@ -125,7 +127,7 @@ function injectV4WinnerCollisionForensics(source){
   source.replace(terrainWinnerReplayThrow,lines)
 }
 const terrains=mountainStress?['mountain']:focused?['mountain']:coalesceCandidate?['flat','hilly','mountain']:['flat','mountain']
-const distances=mountainStress?(mountainStress200Only||humanAttackForensic||chaseWorkerTelemetry?[200]:[170,200,240]):focused?[220]:[120,220]
+const distances=mountainStress?(mountainStress200Only||humanAttackForensic||(chaseWorkerTelemetry&&!chaseEfficiencyFullDistances)?[200]:[170,200,240]):focused?[220]:[120,220]
 const workforces=openingForensic||humanAttackForensic?[0]:humanChaseMiddle?[1,3]:humanAttackFixture?[0,5]:[0,1,3,5]
 const seeds=seedIds.length
 const median=values=>{
@@ -574,7 +576,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,chaseEfficiencyCandidate,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,mountainSeedOffset:stressSeedOffset,openingForensic,humanAttackFixture,humanAttackForensic,humanChaseMiddle,chaseWorkerTelemetry,chaseEfficiencyCandidate,chaseEfficiencyFullDistances,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
