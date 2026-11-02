@@ -8,6 +8,8 @@ on:
       - 'src/race-engine-v4/privateHistoricalPhysicalEntryV4.ts'
       - 'scripts/v4/privateHistoricalPostCatchForensicPatchV4.mjs'
       - 'scripts/v4/privateHistoricalPostCatchGapV4.test.mjs'
+      - 'scripts/v4/privateLowReserveReplayCandidateV4.mjs'
+      - 'scripts/v4/privateLowReserveReplayCandidateV4.test.mjs'
       - 'scripts/v4/privateHistoricalDiagnosticsV4.test.mjs'
       - 'scripts/v4/privateHistoricalPhysicsV4.mjs'
       - 'scripts/v4/privateHistoricalPhysicsV4.test.mjs'
@@ -34,6 +36,8 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - name: Verify replay gap fields and isolated source patch
         run: node scripts/v4/privateHistoricalPostCatchGapV4.test.mjs
+      - name: Verify low-reserve replay candidate using isolated strict synthetic solver
+        run: node scripts/v4/privateLowReserveReplayCandidateV4.test.mjs
       - name: Verify private replay error whitelists and redaction
         run: node scripts/v4/privateHistoricalDiagnosticsV4.test.mjs
       - name: Verify restricted reader via synthetic mocks (no database)
