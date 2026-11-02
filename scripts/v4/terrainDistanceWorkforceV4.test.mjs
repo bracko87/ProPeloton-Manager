@@ -13,6 +13,35 @@ import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.m
 const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
+const terrainWinnerReplayThrow=[
+ "  if (!replayPublicationPolicy.publishable) {",
+ "    throw new Error(",
+ "      `Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`,",
+ "    )",
+ "  }"
+].join('\n')
+/** Instrument ONLY a synthetic V4 executable; strict replay still fails closed. */
+function injectV4WinnerCollisionForensics(source){
+ if(source.split(terrainWinnerReplayThrow).length!==2)
+  throw Error('V4 winner forensic throw anchor changed; fail closed')
+ const lines=[
+  "  if (!replayPublicationPolicy.publishable) {",
+  "    const cp=replayTimeline.checkpoints.find(x=>x.checkpointId.includes('|replay|winner-finish'))",
+  "    const gaps=cp?.gaps??[]",
+  "    const kind=code=>code==='P'?'P':code.startsWith('B')?'B':code.startsWith('F')?'F':code.startsWith('C')?'C':'OTHER'",
+  "    const pairs=[]",
+  "    for(let i=0;i<gaps.length;i++)for(let j=i+1;j<gaps.length;j++){",
+  "      if(Math.round(gaps[i].gapSeconds*1e6)!==Math.round(gaps[j].gapSeconds*1e6))continue",
+  "      const pair=[kind(gaps[i].displayCode),kind(gaps[j].displayCode)].sort()",
+  "      pairs.push(pair.includes('OTHER')?'OTHER':pair.join('_'))",
+  "    }",
+  "    const err=new Error(`Universal replay synchronization failed: ${replayPublicationPolicy.blockingIssues.join(', ')}`)",
+  "    Object.assign(err,{v4WinnerCollisionKinds:[...new Set(pairs)].sort()})",
+  "    throw err",
+  "  }"
+ ].join('\n')
+ return source.replace(terrainWinnerReplayThrow,lines)
+}
 const terrains=focused?['mountain']:['flat','mountain']
 const distances=focused?[220]:[120,220]
 const workforces=[0,1,3,5]
@@ -66,6 +95,9 @@ const run=(input,pursuitTeamId)=>{
  }catch(e){
   if(e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:'))
    return {valid:false,error:'STRICT_REPLAY',
+    winnerCollisionKinds:Array.isArray(e?.v4WinnerCollisionKinds)?
+     e.v4WinnerCollisionKinds.filter(k=>['B_B','B_P','B_F','B_C','P_P','P_F',
+      'P_C','F_F','F_C','C_C','OTHER'].includes(k)):[],
     replayReason:safeHistoricalFailureReason(e),
     replayCheckpoint:safeHistoricalFailureLocation(e).checkpoint,
     replayIssueCategory:safeHistoricalReplayIssueCategory(e),
@@ -157,8 +189,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
     ctx.onLoad({filter:/[\\/]runRaceEngine\.ts$/},args=>{
      if(!config.patch)return null
      patched++
-     return {contents:patchV4CalibratedPhysicalSource(
-      readFileSync(args.path,'utf8'),config),loader:'ts'}
+     const transformed=patchV4CalibratedPhysicalSource(readFileSync(args.path,'utf8'),config)
+     return {contents:focused?injectV4WinnerCollisionForensics(transformed):transformed,loader:'ts'}
     })
    }}]})
   assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
@@ -222,6 +254,8 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
    v2ReplayIssueCodes:Object.fromEntries([...new Set(candidates.filter(r=>r.v2.error==='STRICT_REPLAY')
     .map(r=>r.v2.replayIssueCode))].map(code=>[code,
      candidates.filter(r=>r.v2.replayIssueCode===code).length])),
+   v4WinnerCollisionKinds:Object.fromEntries([...new Set(candidates.flatMap(r=>r.v4.winnerCollisionKinds??[]))].map(kind=>[kind,
+     candidates.filter(r=>(r.v4.winnerCollisionKinds??[]).includes(kind)).length])),
    v4ReplayIssueCodes:Object.fromEntries([...new Set(candidates.filter(r=>r.v4.error==='STRICT_REPLAY')
     .map(r=>r.v4.replayIssueCode))].map(code=>[code,
      candidates.filter(r=>r.v4.replayIssueCode===code).length])),
