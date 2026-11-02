@@ -220,6 +220,21 @@ export function summarizePrivateHistoricalPilotV4(report){
     recoveredByTerrain:report.replayCandidateResearch.recoveredByTerrain,
     remainingInvalid:report.replayCandidateResearch.rejectedInvalid,
     remainingUnsupported:report.replayCandidateResearch.rejectedUnsupported,
+    remainingReplayIssues:safeHistogram(
+     report?.rejected?.safeReplayIssueCodesByVariant?.private_replay_candidate,
+     [...HISTORICAL_REPLAY_KNOWN_ISSUE_CODES,'UNKNOWN_ISSUE_CODE','NOT_REPLAY']),
+    remainingFirstTransferTypes:safeHistogram(
+     report?.rejected?.postCatchTransferClassesByVariant?.private_replay_candidate,
+     V4_POST_CATCH_TRANSFER_CLASSES),
+    remainingFirstCheckpointPeriods:safeHistogram(
+     report?.rejected?.postCatchPeriodsByVariant?.private_replay_candidate,
+     HISTORICAL_POST_CATCH_PERIODS),
+    remainingFirstPhaseRelation:safeHistogram(
+     report?.rejected?.postCatchForensicPhasesByVariant?.private_replay_candidate,
+     HISTORICAL_POST_CATCH_FORENSIC_PHASES),
+    remainingFirstChaseGapBand:safeHistogram(
+     report?.rejected?.postCatchForensicGapsByVariant?.private_replay_candidate,
+     HISTORICAL_POST_CATCH_FORENSIC_GAPS),
     researchOnly:true,approved:false}:null,
   chasePriority:{
    compared:report?.chasePriorityResearch?.all?.compared??0,

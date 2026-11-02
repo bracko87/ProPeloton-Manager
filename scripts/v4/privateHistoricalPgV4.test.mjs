@@ -278,7 +278,19 @@ const replayProbe=await runPrivatePgHistoricalPilotV4({
   assert.equal(o.includeChasePriority,true)
   assert.equal(o.includeReplayCandidate,true)
   const normal=makeReport(m,o,2)
-  return {...normal,replayCandidateResearch:{
+  return {...normal,
+  rejected:{safeReplayIssueCodesByVariant:{private_replay_candidate:{
+    post_catch_group_transfer_without_physical_transition:4,
+    PRIVATE_STAGE_ID:'should-never-show'}},
+   postCatchTransferClassesByVariant:{private_replay_candidate:{
+    C_TO_P:2,P_TO_C:2,PRIVATE_RIDER_NAME:123}},
+   postCatchPeriodsByVariant:{private_replay_candidate:{
+    MIDDLE_35_70_PERCENT:4,PRIVATE_CHECKPOINT:7}},
+   postCatchForensicPhasesByVariant:{private_replay_candidate:{
+    SAME_PHASE:4,PRIVATE_PHASE:7}},
+   postCatchForensicGapsByVariant:{private_replay_candidate:{
+    SEPARATED:4,PRIVATE_GAP:5}}},
+  replayCandidateResearch:{
    status:'ISOLATED_REPLAY_REPAIR_DIAGNOSTIC_NOT_HISTORIC_APPROVAL',
    attempted:12,strictReplayValid:7,rejectedInvalid:1,rejectedUnsupported:4,
    recoveredStrictFromUnmodifiedBaseline:5,
@@ -295,6 +307,18 @@ assert.equal(replayCompact.strictPairs,2)
 assert.equal(replayCompact.replayRepairCandidate.recoveredStrictFromBaseline,5)
 assert.equal(replayCompact.replayRepairCandidate.recoveredAndArchivedParity,4)
 assert.equal(replayCompact.replayRepairCandidate.approved,false)
+assert.deepEqual(replayCompact.replayRepairCandidate.remainingReplayIssues,
+ {post_catch_group_transfer_without_physical_transition:4})
+assert.deepEqual(replayCompact.replayRepairCandidate.remainingFirstTransferTypes,
+ {C_TO_P:2,P_TO_C:2})
+assert.deepEqual(replayCompact.replayRepairCandidate.remainingFirstCheckpointPeriods,
+ {MIDDLE_35_70_PERCENT:4})
+assert.deepEqual(replayCompact.replayRepairCandidate.remainingFirstPhaseRelation,
+ {SAME_PHASE:4})
+assert.deepEqual(replayCompact.replayRepairCandidate.remainingFirstChaseGapBand,
+ {SEPARATED:4})
+assert.equal(JSON.stringify(replayCompact).includes('PRIVATE_'),false)
+assert.equal(JSON.stringify(replayCompact).includes('should-never-show'),false)
 assert.equal(opened,9);assert.equal(closed,9)
 // Fail closed if the authenticated session is a privileged or unexpected login.
 class WrongLogin extends FakeClient{
