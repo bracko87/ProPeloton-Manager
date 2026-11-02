@@ -17,12 +17,14 @@ const root=resolve(import.meta.dirname,'../..')
 const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
 const focused=process.env.V4_MOUNTAIN_WINNER_FORENSIC==='1'
 const mountainStress=process.env.V4_MOUNTAIN_DISTANCE_STRESS==='1'
+const mountainRealismExpanded=process.env.V4_MOUNTAIN_REALISM_EIGHT_SEEDS==='1'
+if(mountainRealismExpanded&&!mountainStress)throw Error('Eight-seed mountain pilot requires mountain stress mode')
 const mountainStress200Only=process.env.V4_MOUNTAIN_STRESS_200_ONLY==='1'
 if(mountainStress200Only&&!mountainStress)throw Error('200 km mountain forensic requires stress mode')
 const targetedSeedText=process.env.V4_MOUNTAIN_TARGET_SEED??''
 if(targetedSeedText && (!focused || !/^[0-7]$/.test(targetedSeedText)))
  throw Error('Target seed must be 0..7 and requires focused mountain forensic')
-const seedIds=targetedSeedText?[Number(targetedSeedText)]:mountainStress?[0,1,2,3]:Array.from({length:8},(_,i)=>i)
+const seedIds=targetedSeedText?[Number(targetedSeedText)]:mountainStress?Array.from({length:mountainRealismExpanded?8:4},(_,i)=>i):Array.from({length:8},(_,i)=>i)
 const coalesceCandidate=process.env.V4_MOUNTAIN_WINNER_COALESCE_CANDIDATE==='1'
 const measuredCSplitCandidate=process.env.V4_MOUNTAIN_C_SPLIT_CANDIDATE==='1'
 const contactCandidate=process.env.V4_MOUNTAIN_CONTACT_COHESION_CANDIDATE==='1'
@@ -467,7 +469,7 @@ console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
   measuredCSplitCandidateApplied:measuredCSplitCandidate,
   contactCohesionCandidateApplied:contactCandidate,
   frontCodeCollisionCandidateApplied:frontCodeCandidate,
-  mountainDistanceStress:mountainStress,mountainStress200Only,
+  mountainDistanceStress:mountainStress,mountainStress200Only,mountainRealismExpanded,
   diagnosedFailures,
   raceProfiles:terrains,raceDistancesKm:distances,
   explicitHumanChaseWorkforce:workforces,seedCount:seeds,seedIds,
