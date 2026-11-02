@@ -1,0 +1,226 @@
+/**
+ * Synthetic V4 Step 3 pilot: flat/mountain x 120/220km x 0/1/3/5
+ * explicit human chase workers. Strict V2/V4 input parity, independent replay
+ * validation, AI plans generated only once per seed/course. Zero official writes.
+ */
+import assert from 'node:assert/strict'
+import {readFileSync,mkdtempSync,rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join,resolve} from 'node:path'
+import {spawnSync} from 'node:child_process'
+import {build} from 'esbuild'
+import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+const root=resolve(import.meta.dirname,'../..')
+const temporary=mkdtempSync(join(tmpdir(),'ppm-v4-terrain-workforce-'))
+const terrains=['flat','mountain'],distances=[120,220],workforces=[0,1,3,5]
+const seeds=8
+const median=values=>{
+ const sorted=values.filter(v=>typeof v==='number'&&Number.isFinite(v)).sort((a,b)=>a-b)
+ return sorted.length?Number((sorted.length%2?sorted[(sorted.length-1)/2]:
+  (sorted[sorted.length/2-1]+sorted[sorted.length/2])/2).toFixed(4)):null
+}
+try{
+ const fixture=readFileSync(join(root,'src/race-engine-v4/physicalResearchProbeV4.test.ts'),'utf8')
+ const start=fixture.indexOf('function makeField('),end=fixture.indexOf('\nconst scenarios=',start)
+ assert(start>=0&&end>start,'Pinned V4 synthetic field factory missing')
+ const worker=[
+  "import {createHash} from 'node:crypto'",
+  "import {validateRunInput,PPM_UNIVERSAL_RACE_ENGINE_KEY,PPM_UNIVERSAL_RACE_ENGINE_VERSION} from './src/universal-race-engine/runRaceEngine.ts'",
+  "import {runSelectedRaceEngineV1} from './src/universal-race-engine/runSelectedRaceEngineV1.ts'",
+  "import {prepareV4ShadowRace} from './src/race-engine-v4/templateFirstPlannerV4.ts'",
+  "import {historicalOpeningBreakawayJourney,historicalPhysicalGapAudit} from './src/race-engine-v4/privateHistoricalDiagnosticsV4.mjs'",
+  fixture.slice(start,end),
+  String.raw`
+const terrains=['flat','mountain'],distances=[120,220],workers=[0,1,3,5],seeds=8
+const hash=x=>createHash('sha256').update(JSON.stringify(x)).digest('hex')
+const rows=[]
+const run=(input)=>{
+ const errors=validateRunInput(input)
+ if(errors.length)return {valid:false,error:'INVALID_INPUT'}
+ try{
+  const result=runSelectedRaceEngineV1(input)
+  if(!result.validationPassed||result.replaySynchronization?.synchronized!==true)
+   return {valid:false,error:'STRICT_REPLAY'}
+  const journey=historicalOpeningBreakawayJourney(result,input.stage.distanceKm)
+  const audit=historicalPhysicalGapAudit(result)
+  const phase4=result.roadRaceResolution?.phase4Finish
+  const states=phase4?.riderStates??[]
+  const energy=states.length?
+   states.reduce((sum,r)=>sum+(Number.isFinite(r.energyAtFinish)?r.energyAtFinish:0),0)/states.length:null
+  return {valid:true,opening:journey.openingAccepted,
+   kmAhead:journey.kmAhead,
+   survived:journey.catchLocation==='survived_to_finish',
+   catchLocation:journey.catchLocation,
+   observedPeakSeconds:audit.observedPeak,
+   endGapSeconds:Number.isFinite(phase4?.endGapSeconds)?phase4.endGapSeconds:null,
+   energyAtFinish:energy,
+   phase4ExplicitChaserTeams:phase4?.explicitChasingTeamIds?.length??null}
+ }catch(e){return {valid:false,
+  error:e instanceof Error&&e.message.startsWith('Universal replay synchronization failed:')
+   ?'STRICT_REPLAY':'OTHER_ERROR'}}
+}
+for(const terrain of terrains)for(const km of distances)for(let seed=0;seed<seeds;seed++){
+ const teams=[18,19,20,21,22,18,19,20][seed]
+ let {input,options}=makeField(teams,Math.floor(teams/2),{
+  seed:'v4-matched-terrain-workforce-2026-'+seed,
+  terrain,humanPursuitTeam:true,humanChase:false,neutral:false})
+ const key=terrains.indexOf(terrain)*2+distances.indexOf(km)
+ const stageId='12345678-1234-4234-8234-'+String(2400+key*100+seed).padStart(12,'0')
+ const raceId='12345678-1234-4234-8234-'+String(2500+key*100+seed).padStart(12,'0')
+ input.race.raceId=raceId
+ input.stage.stageId=stageId
+ input.stage.raceId=raceId
+ input.stage.distanceKm=km
+ input.stage.terrainType=terrain
+ input.stage.profileType=terrain==='mountain'?'mountain':'sprinter'
+ input.stage.finishType=terrain==='mountain'?'summit_finish':'flat_finish'
+ input.stage.summitFinish=terrain==='mountain'
+ input.stage.elevationGainM=terrain==='mountain'?(km===120?2600:3600):(km===120?500:750)
+ input.stage.terrainPercentages=terrain==='mountain'?
+  {flat:10,hilly:15,mountain:75,cobbled:0}:
+  {flat:80,hilly:15,mountain:5,cobbled:0}
+ input.stage.profilePoints=terrain==='mountain'?
+  [{km:0,elevationM:100},{km:km*.22,elevationM:900},
+   {km:km*.4,elevationM:300},{km:km*.62,elevationM:1300},
+   {km:km*.8,elevationM:850},{km,elevationM:2600}]:
+  [{km:0,elevationM:10},{km:km*.5,elevationM:120},{km,elevationM:15}]
+ for(const point of input.points){
+  point.stageId=stageId
+  if(point.pointType==='FINISH')point.kmFromStart=km
+ }
+ options.lock.stageId=stageId
+ const prepared=prepareV4ShadowRace(input,options)
+ if(prepared.status!=='ai_prepared'||!prepared.intents.length)
+  throw Error('MISSING_AI_PREPARATION')
+ const base=prepared.combinedInput
+ const aiIds=new Set(options.teamControl.filter(t=>t.kind==='ai').map(t=>t.teamId))
+ const human=options.teamControl.filter(t=>t.kind==='human')
+ const pursuit=human.at(-1)?.teamId
+ if(!pursuit)throw Error('MISSING_HUMAN_PURSUIT_TEAM')
+ const aiPlanHash=hash(base.stagePlans.filter(p=>aiIds.has(p.teamId)))
+ const frozenHash=hash({engine:base.engine,stage:base.stage,race:base.race,
+  teams:base.teams,riders:base.riders,weather:base.weather,points:base.points,
+  preparation:base.preparation})
+ for(const count of workers){
+  const variant=structuredClone(base)
+  const chosen=[2,3,5,0,1].slice(0,count)
+  for(const plan of variant.stagePlans){
+   if(plan.teamId!==pursuit)continue
+   plan.riders.forEach((r,i)=>{
+    if(!chosen.includes(i))return
+    for(const phase of ['phase2','phase3','phase4'])r.commands[phase]='chase'
+   })
+  }
+  const assigned=variant.stagePlans.filter(p=>p.teamId===pursuit)
+   .flatMap(p=>p.riders).filter(r=>r.commands.phase4==='chase').length
+  if(assigned!==count)throw Error('PURSUIT_WORKFORCE_NOT_ASSIGNED')
+  if(hash(variant.stagePlans.filter(p=>aiIds.has(p.teamId)))!==aiPlanHash||
+   hash({engine:variant.engine,stage:variant.stage,race:variant.race,
+    teams:variant.teams,riders:variant.riders,weather:variant.weather,
+    points:variant.points,preparation:variant.preparation})!==frozenHash)
+   throw Error('IMMUTABLE_COURSE_ROSTER_OR_AI_DRIFT')
+  rows.push({terrain,km,seed,workers:count,
+   inputHash:hash(variant),assignedChaseRiders:assigned,result:run(variant)})
+ }
+}
+console.log('V4_TERRAIN_WORKFORCE_WORKER '+JSON.stringify({
+ source:'synthetic_only',seeds,rows,aiPlansLocked:true,
+ officialWrites:0,strictReplay:true}))
+`
+ ].join('\n')
+ const variants=[
+  {key:'preserved_v2',patch:false,peloton:false,cooperation:false,energy:false},
+  {key:'calibrated_v4',patch:true,peloton:true,cooperation:true,energy:true}
+ ]
+ const results={}
+ for(const config of variants){
+  const output=join(temporary,config.key+'.mjs')
+  let patched=0
+  await build({absWorkingDir:root,stdin:{contents:worker,
+   resolveDir:root,sourcefile:'v4-terrain-distance-workforce-synthetic.ts',loader:'ts'},
+   bundle:true,platform:'node',format:'esm',target:'node22',outfile:output,
+   logLevel:'silent',plugins:[{name:'strict-v4-terrain-isolation',setup(ctx){
+    ctx.onLoad({filter:/[\\/]runRaceEngine\.ts$/},args=>{
+     if(!config.patch)return null
+     patched++
+     return {contents:patchV4CalibratedPhysicalSource(
+      readFileSync(args.path,'utf8'),config),loader:'ts'}
+    })
+   }}]})
+  assert.equal(patched,config.patch?1:0,'V4 research bundle patch count')
+  const execution=spawnSync(process.execPath,[output],{
+   cwd:root,encoding:'utf8',timeout:420000,maxBuffer:8*1024*1024,
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??''}
+  })
+  assert.equal(execution.status,0,
+   config.key+' read-only worker failed '+String(execution.stderr??'').slice(-1100))
+  const stdout=String(execution.stdout??'').split('\n')
+  const report=stdout.filter(s=>s.startsWith('V4_TERRAIN_WORKFORCE_WORKER '))
+  assert.equal(report.length,1)
+  const parsed=JSON.parse(report[0].slice('V4_TERRAIN_WORKFORCE_WORKER '.length))
+  assert.equal(parsed.rows.length,terrains.length*distances.length*workforces.length*seeds)
+  assert.equal(parsed.officialWrites,0)
+  assert.equal(parsed.aiPlansLocked,true)
+  results[config.key]=parsed.rows
+ }
+ const paired=results.preserved_v2.map((a,i)=>{
+  const b=results.calibrated_v4[i]
+  assert.deepEqual(
+   [a.terrain,a.km,a.seed,a.workers,a.inputHash,a.assignedChaseRiders],
+   [b.terrain,b.km,b.seed,b.workers,b.inputHash,b.assignedChaseRiders],
+   'Preserved V2 and isolated V4 must receive EXACTLY identical input')
+  return {terrain:a.terrain,km:a.km,seed:a.seed,workers:a.workers,
+   v2:a.result,v4:b.result}
+ })
+ const cells=[]
+ for(const terrain of terrains)for(const km of distances)for(const workers of workforces){
+  const candidates=paired.filter(r=>r.terrain===terrain&&r.km===km&&r.workers===workers)
+  const valid=candidates.filter(r=>r.v2.valid&&r.v4.valid)
+  const opening=valid.filter(r=>r.v2.opening&&r.v4.opening)
+  cells.push({terrain,km,workers,attempted:candidates.length,
+   pairedValid:valid.length,openingPaired:opening.length,
+   survived:opening.filter(r=>r.v4.survived).length,
+   medianKmAhead:median(opening.map(r=>r.v4.kmAhead)),
+   medianPeakSeconds:median(opening.map(r=>r.v4.observedPeakSeconds)),
+   medianEnergyAtFinish:median(opening.map(r=>r.v4.energyAtFinish)),
+   explicitChasingTeams:median(valid.map(r=>r.v4.phase4ExplicitChaserTeams)),
+   v2StrictReplayExclusions:candidates.filter(r=>r.v2.error==='STRICT_REPLAY').length,
+   v4StrictReplayExclusions:candidates.filter(r=>r.v4.error==='STRICT_REPLAY').length,
+   invalidInputOrOtherErrors:candidates.filter(r=>
+    ['INVALID_INPUT','OTHER_ERROR'].includes(r.v2.error)||
+    ['INVALID_INPUT','OTHER_ERROR'].includes(r.v4.error)).length})
+ }
+ const pairedWorkforceContrasts=[]
+ for(const terrain of terrains)for(const km of distances){
+  const comparable=Array.from({length:seeds},(_,i)=>i).filter(seed=>
+   [0,1,3,5].every(workers=>paired.some(r=>
+    r.terrain===terrain&&r.km===km&&r.seed===seed&&r.workers===workers&&
+    r.v2.valid&&r.v4.valid&&r.v2.opening&&r.v4.opening)))
+  const fetch=(seed,workers)=>paired.find(r=>
+   r.terrain===terrain&&r.km===km&&r.seed===seed&&r.workers===workers).v4
+  pairedWorkforceContrasts.push({terrain,km,fullyPairedOpeningSeeds:comparable.length,
+   zeroToFiveMedianPeakReductionSeconds:median(comparable.map(seed=>
+    fetch(seed,0).observedPeakSeconds-fetch(seed,5).observedPeakSeconds)),
+   zeroToFiveMedianKmAheadReduction:median(comparable.map(seed=>
+    fetch(seed,0).kmAhead-fetch(seed,5).kmAhead)),
+   zeroToFiveFewerSurvivals:comparable.filter(seed=>fetch(seed,0).survived).length-
+    comparable.filter(seed=>fetch(seed,5).survived).length})
+ }
+ assert.equal(cells.length,16)
+ assert(cells.every(c=>c.attempted===seeds))
+ assert(cells.every(c=>c.invalidInputOrOtherErrors===0),
+  'No invalid synthetic fields or unexpected runtime errors permitted')
+ console.log('V4_TERRAIN_DISTANCE_WORKFORCE_PILOT '+JSON.stringify({
+  status:'SYNTHETIC_DIAGNOSTIC_ONLY_NOT_REALISM_APPROVAL',
+  raceProfiles:terrains,raceDistancesKm:distances,
+  explicitHumanChaseWorkforce:workforces,seedCount:seeds,
+  fieldTeamCounts:[18,19,20,21,22],
+  humanChasePhases:[2,3,4],
+  workerSelection:'indices [2,3,5,0,1]; 5-worker group includes leader and sprinter',
+  aiPlansPreparedOncePerCourseSeed:true,weatherHeldFixedAcrossWorkers:true,
+  preservedV2AndV4InputsIdentical:true,
+  replayExclusionsNeverWaived:true,officialWrites:0,
+  cells,pairedWorkforceContrasts,
+  originalV2SolverModified:false,realismApproved:false
+ }))
+}finally{rmSync(temporary,{recursive:true,force:true})}
