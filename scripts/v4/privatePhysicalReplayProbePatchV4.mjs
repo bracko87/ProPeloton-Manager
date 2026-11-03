@@ -74,11 +74,14 @@ import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/private
           probe.replayPresentationStatus=classifyReplayCheckpointPresentationV4({
             riderId:parts[1],previous:checkpoints[at-1],current:checkpoints[at]
           })
-          probe.physicalCheckpointCandidate=reconstructPhysicalCheckpointCandidateV4({
+          const physicalCandidate=reconstructPhysicalCheckpointCandidateV4({
             ...probe.failedCheckpointInterval,
             physicalGroupsAtKm:probe.physicalGroupsAtKm,
             groupToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
-          }).classification
+          })
+          probe.physicalCheckpointCandidate=physicalCandidate.classification
+          // Proposal retains rider identities only in isolated worker memory.
+          probe.physicalCheckpointProposal=physicalCandidate.proposal
           probe.boundaryPhysicalStatus=classifyPhysicalCheckpointBoundaryV4({
             ...probe.failedCheckpointInterval,
             physicalGroupsAtKm:probe.physicalGroupsAtKm
