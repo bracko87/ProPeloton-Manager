@@ -44,7 +44,7 @@ export function patchPhysicalReplayProbeSourceV4(source){
 `;
  const imports=`import {planPhysicalReplaySamplesV4,capturePhysicalReplaySamplesV4} from '../../scripts/v4/physicalReplaySamplingV4.mjs'
 import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupReplayAdapterV4.mjs'
-import {classifyPhysicalCheckpointBoundaryV4} from '../../scripts/v4/privatePhysicalBoundaryCompareV4.mjs'
+import {classifyPhysicalCheckpointBoundaryV4,diagnosePhysicalCheckpointBoundaryV4} from '../../scripts/v4/privatePhysicalBoundaryCompareV4.mjs'
 `;
  const guarded=source.replace(anchor,body+anchor)
  const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
@@ -73,6 +73,11 @@ import {classifyPhysicalCheckpointBoundaryV4} from '../../scripts/v4/privatePhys
             ...probe.failedCheckpointInterval,
             physicalGroupsAtKm:probe.physicalGroupsAtKm
           })
+          if(probe.boundaryPhysicalStatus==='UNAVAILABLE')
+            probe.boundaryUnavailableReason=diagnosePhysicalCheckpointBoundaryV4({
+              ...probe.failedCheckpointInterval,
+              physicalGroupsAtKm:probe.physicalGroupsAtKm
+            })
         }
       }
     }else{
