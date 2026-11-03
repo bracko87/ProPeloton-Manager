@@ -32,3 +32,10 @@ test('exact checkpoint instrumentation calls physical boundary classifier privat
  assert.ok(patched.includes('probe.boundaryPhysicalStatus=classifyPhysicalCheckpointBoundaryV4('));
  assert.ok(patched.includes('physicalGroupsAtKm:probe.physicalGroupsAtKm'));
 });
+
+test('isolated replay failure capture classifies same-distance presentation separately',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('probe.replayPresentationStatus=classifyReplayCheckpointPresentationV4('));
+ assert.ok(patched.includes('previous:checkpoints[at-1],current:checkpoints[at]'));
+});
