@@ -46,6 +46,7 @@ export function patchPhysicalReplayProbeSourceV4(source){
 import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupReplayAdapterV4.mjs'
 import {classifyPhysicalCheckpointBoundaryV4,diagnosePhysicalCheckpointBoundaryV4} from '../../scripts/v4/privatePhysicalBoundaryCompareV4.mjs'
 import {classifyReplayCheckpointPresentationV4} from '../../scripts/v4/privateReplayCheckpointPresentationV4.mjs'
+import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/privatePhysicalCheckpointCandidateV4.mjs'
 `;
  const guarded=source.replace(anchor,body+anchor)
  const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
@@ -73,6 +74,11 @@ import {classifyReplayCheckpointPresentationV4} from '../../scripts/v4/privateRe
           probe.replayPresentationStatus=classifyReplayCheckpointPresentationV4({
             riderId:parts[1],previous:checkpoints[at-1],current:checkpoints[at]
           })
+          probe.physicalCheckpointCandidate=reconstructPhysicalCheckpointCandidateV4({
+            ...probe.failedCheckpointInterval,
+            physicalGroupsAtKm:probe.physicalGroupsAtKm,
+            groupToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+          }).classification
           probe.boundaryPhysicalStatus=classifyPhysicalCheckpointBoundaryV4({
             ...probe.failedCheckpointInterval,
             physicalGroupsAtKm:probe.physicalGroupsAtKm
