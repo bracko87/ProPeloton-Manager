@@ -45,6 +45,7 @@ export function patchPhysicalReplayProbeSourceV4(source){
  const imports=`import {planPhysicalReplaySamplesV4,capturePhysicalReplaySamplesV4} from '../../scripts/v4/physicalReplaySamplingV4.mjs'
 import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupReplayAdapterV4.mjs'
 import {classifyPhysicalCheckpointBoundaryV4,diagnosePhysicalCheckpointBoundaryV4} from '../../scripts/v4/privatePhysicalBoundaryCompareV4.mjs'
+import {classifyReplayCheckpointPresentationV4} from '../../scripts/v4/privateReplayCheckpointPresentationV4.mjs'
 `;
  const guarded=source.replace(anchor,body+anchor)
  const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
@@ -69,6 +70,9 @@ import {classifyPhysicalCheckpointBoundaryV4,diagnosePhysicalCheckpointBoundaryV
             previousKm:checkpoints[at-1].raceProgress.kmFromStart,
             checkpointKm:checkpoints[at].raceProgress.kmFromStart
           }
+          probe.replayPresentationStatus=classifyReplayCheckpointPresentationV4({
+            riderId:parts[1],previous:checkpoints[at-1],current:checkpoints[at]
+          })
           probe.boundaryPhysicalStatus=classifyPhysicalCheckpointBoundaryV4({
             ...probe.failedCheckpointInterval,
             physicalGroupsAtKm:probe.physicalGroupsAtKm
