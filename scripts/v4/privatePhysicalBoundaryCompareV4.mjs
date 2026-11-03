@@ -27,3 +27,29 @@ export function classifyPhysicalCheckpointBoundaryV4({riderId,previousKm,checkpo
    return 'CHANGED_MEMBERSHIP';
  }catch{return 'UNAVAILABLE'}
 }
+
+/**
+ * Diagnostic reasons only. No rider identities or race distances returned.
+ * Uses the same physical source as the membership classifier.
+ */
+export function diagnosePhysicalCheckpointBoundaryV4({riderId,previousKm,checkpointKm,physicalGroupsAtKm}){
+ if(typeof riderId!=='string'||!riderId||!Number.isFinite(previousKm)||
+    !Number.isFinite(checkpointKm)||previousKm<0||
+    typeof physicalGroupsAtKm!=='function')return 'INVALID_INPUT';
+ if(checkpointKm<previousKm)return 'REVERSED_INTERVAL';
+ if(checkpointKm===previousKm)return 'ZERO_LENGTH_INTERVAL';
+ try{
+   for(const km of [previousKm,checkpointKm]){
+     const groups=physicalGroupsAtKm(km);
+     if(!Array.isArray(groups)||!groups.length)return 'NO_GROUPS';
+     const matches=groups.filter(g=>Array.isArray(g.riderIds)&&g.riderIds.includes(riderId));
+     if(matches.length===0)return 'RIDER_ABSENT';
+     if(matches.length>1)return 'DUPLICATE_RIDER';
+     const g=matches[0];
+     if(!Number.isFinite(g.gapSeconds)||g.gapSeconds<0||
+        !g.riderIds.every(id=>typeof id==='string'&&id))
+       return 'INVALID_PHYSICAL_GROUP';
+   }
+   return 'VALID';
+ }catch{return 'PHYSICAL_MODEL_ERROR'}
+}
