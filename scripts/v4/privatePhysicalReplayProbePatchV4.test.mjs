@@ -15,3 +15,12 @@ test('physical shadow replay injection preserves official checkpoint constructio
 test('source change fails closed instead of silently instrumenting wrong function',()=>{
  assert.throws(()=>patchPhysicalReplayProbeSourceV4('irrelevant source'),/SOURCE_DRIFT/);
 });
+
+test('forensic suffix is removed from the checkpoint lookup, not from the issue itself',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("parts.slice(3).join(':').split(':v4_private_phase=')[0]"));
+ const issue='post_catch_group_transfer_without_physical_transition:rider-x:C1->C2:race-checkpoint-32:v4_private_phase=CROSS_PHASE:v4_private_gap=SEPARATED';
+ const parts=issue.split(':');
+ assert.equal(parts.slice(3).join(':').split(':v4_private_phase=')[0],'race-checkpoint-32');
+});
