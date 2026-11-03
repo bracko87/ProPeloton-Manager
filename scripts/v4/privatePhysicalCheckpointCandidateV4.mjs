@@ -31,7 +31,30 @@ export function reconstructPhysicalCheckpointCandidateV4({
    const observed=replay.observations.some(event=>
      event.riderIds.includes(riderId)||
      event.previousGroupMembers.some(group=>group.includes(riderId)));
-   return {classification:observed?'PHYSICAL_TRANSITION_CANDIDATE':'UNSUPPORTED_TRANSITION'};
+   if(!observed)return {classification:'UNSUPPORTED_TRANSITION'};
+   const targetPrevious=replay.frames[0].groups.find(g=>g.riderIds.includes(riderId));
+   const targetNext=replay.frames[1].groups.find(g=>g.riderIds.includes(riderId));
+   const previousMembers=new Set(targetPrevious.riderIds);
+   const nextMembers=new Set(targetNext.riderIds);
+   const departures=[...previousMembers].filter(id=>!nextMembers.has(id));
+   const arrivals=[...nextMembers].filter(id=>!previousMembers.has(id));
+   const eventType=departures.length&&arrivals.length?'group_reorganization':
+     departures.length?'group_split':arrivals.length?'group_merge':'group_reorganization';
+   // This is an interval-bounded event proposal, NOT a checkpoint commentary
+   // or publication authorization. Exact event km/time remain unknown.
+   return {
+     classification:'PHYSICAL_TRANSITION_CANDIDATE',
+     proposal:{
+       eventType,
+       observedBetweenKm:[previousKm,checkpointKm],
+       exactEventKmKnown:false,
+       exactEventTimeKnown:false,
+       source:'authoritative_physical_groups',
+       riderIds:[...new Set([...targetPrevious.riderIds,...targetNext.riderIds])].sort(),
+       beforeMembers:[...targetPrevious.riderIds],
+       afterMembers:[...targetNext.riderIds],
+     }
+   };
  }catch{
    return {classification:'INVALID_PHYSICAL_EVIDENCE'};
  }
