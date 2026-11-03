@@ -39,3 +39,11 @@ test('isolated replay failure capture classifies same-distance presentation sepa
  assert.ok(patched.includes('probe.replayPresentationStatus=classifyReplayCheckpointPresentationV4('));
  assert.ok(patched.includes('previous:checkpoints[at-1],current:checkpoints[at]'));
 });
+
+test('isolated physical candidate uses real checkpoint bounds without replay mutation',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('probe.physicalCheckpointCandidate=reconstructPhysicalCheckpointCandidateV4('));
+ assert.ok(patched.includes('groupToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS'));
+ assert.ok(patched.includes('physicalGroupsAtKm:probe.physicalGroupsAtKm'));
+});
