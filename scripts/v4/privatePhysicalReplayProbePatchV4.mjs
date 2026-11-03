@@ -30,6 +30,8 @@ export function patchPhysicalReplayProbeSourceV4(source){
       return {status:'OBSERVED',samples:observed.frames.length,
         transitions:observed.observations.length,
         observations:observed.observations,
+        // Closure remains private to the isolated process, never serialized.
+        physicalGroupsAtKm:groupsAtKm,
         physicsModified:false}
     }catch{
       return {status:'UNAVAILABLE',samples:0,transitions:0,physicsModified:false}
@@ -42,6 +44,7 @@ export function patchPhysicalReplayProbeSourceV4(source){
 `;
  const imports=`import {planPhysicalReplaySamplesV4,capturePhysicalReplaySamplesV4} from '../../scripts/v4/physicalReplaySamplingV4.mjs'
 import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupReplayAdapterV4.mjs'
+import {classifyPhysicalCheckpointBoundaryV4} from '../../scripts/v4/privatePhysicalBoundaryCompareV4.mjs'
 `;
  const guarded=source.replace(anchor,body+anchor)
  const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
@@ -60,10 +63,16 @@ import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupRep
       const probe=(globalThis as typeof globalThis & {__ppmV4PhysicalProbe?: any}).__ppmV4PhysicalProbe
       if(probe){
         probe.failureCaptureStatus=at>0?'CAPTURED':at===0?'FIRST_CHECKPOINT':'CHECKPOINT_NOT_FOUND'
-        if(at>0)probe.failedCheckpointInterval={
-          riderId:parts[1],
-          previousKm:checkpoints[at-1].raceProgress.kmFromStart,
-          checkpointKm:checkpoints[at].raceProgress.kmFromStart
+        if(at>0){
+          probe.failedCheckpointInterval={
+            riderId:parts[1],
+            previousKm:checkpoints[at-1].raceProgress.kmFromStart,
+            checkpointKm:checkpoints[at].raceProgress.kmFromStart
+          }
+          probe.boundaryPhysicalStatus=classifyPhysicalCheckpointBoundaryV4({
+            ...probe.failedCheckpointInterval,
+            physicalGroupsAtKm:probe.physicalGroupsAtKm
+          })
         }
       }
     }else{
