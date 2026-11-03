@@ -47,3 +47,11 @@ test('isolated physical candidate uses real checkpoint bounds without replay mut
  assert.ok(patched.includes('groupToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS'));
  assert.ok(patched.includes('physicalGroupsAtKm:probe.physicalGroupsAtKm'));
 });
+
+test('physical event proposal is retained only in private probe memory',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('probe.physicalCheckpointProposal=physicalCandidate.proposal'));
+ assert.ok(patched.includes('probe.physicalCheckpointCandidate=physicalCandidate.classification'));
+ assert.ok(patched.includes("import {reconstructPhysicalCheckpointCandidateV4}"));
+});
