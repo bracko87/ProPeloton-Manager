@@ -53,7 +53,8 @@ import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupRep
       v.startsWith('post_catch_group_transfer_without_physical_transition:'))
     if(issue){
       const parts=issue.split(':')
-      const checkpointId=parts.slice(3).join(':')
+      // Historical forensics appends diagnostic suffixes after the real ID.
+      const checkpointId=parts.slice(3).join(':').split(':v4_private_phase=')[0]
       const checkpoints=replayTimeline.checkpoints
       const at=checkpoints.findIndex(c=>c.checkpointId===checkpointId)
       const probe=(globalThis as typeof globalThis & {__ppmV4PhysicalProbe?: any}).__ppmV4PhysicalProbe
