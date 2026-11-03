@@ -24,3 +24,11 @@ test('forensic suffix is removed from the checkpoint lookup, not from the issue 
  const parts=issue.split(':');
  assert.equal(parts.slice(3).join(':').split(':v4_private_phase=')[0],'race-checkpoint-32');
 });
+
+test('exact checkpoint instrumentation calls physical boundary classifier privately',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('physicalGroupsAtKm:groupsAtKm'));
+ assert.ok(patched.includes('probe.boundaryPhysicalStatus=classifyPhysicalCheckpointBoundaryV4('));
+ assert.ok(patched.includes('physicalGroupsAtKm:probe.physicalGroupsAtKm'));
+});
