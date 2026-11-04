@@ -37,13 +37,47 @@ export function buildPrivateResidualPhysicalCheckpointV4({
  const km=cp.raceProgress?.kmFromStart,kmNext=next.raceProgress?.kmFromStart;
  if(!Number.isFinite(km)||km<=0||!Number.isFinite(kmNext)||kmNext<km)
   return {status:'INVALID_DISTANCE'};
- if(cp.finalResultsVisible||next.finalResultsVisible||
-    !['base','event'].includes(cp.checkpointKind)||
-    !Array.isArray(cp.commentary)||!cp.commentary.every(c=>passive.has(c?.eventType))||
-    (cp.incidents!==undefined&&(!Array.isArray(cp.incidents)||cp.incidents.length>0))||
-    !Array.isArray(cp.groups)||!Array.isArray(cp.gaps)||
-    !Array.isArray(cp.riderStates)||!Array.isArray(next.groups))
-  return {status:'CAUSAL_OR_INCIDENT_UNSAFE'};
+ // Keep every recorded event, incident, and rider attribute unchanged.
+ // A recorded incident may coexist with a stale group presentation, but it
+ // must have exactly matching, independently recorded incident commentary.
+ const unsafe=reason=>({status:'CAUSAL_OR_INCIDENT_UNSAFE',reason});
+ if(cp.finalResultsVisible||next.finalResultsVisible)
+  return unsafe('FINISH_VISIBLE');
+ if(!['base','event'].includes(cp.checkpointKind))
+  return unsafe('CHECKPOINT_KIND');
+ if(!Array.isArray(cp.groups)||!Array.isArray(cp.gaps)||
+    !Array.isArray(cp.riderStates)||!Array.isArray(next.groups)||
+    !Array.isArray(cp.commentary))
+  return unsafe('CHECKPOINT_DATA_INVALID');
+ if(cp.commentary.some(c=>!c||(
+    !passive.has(c.eventType)&&c.eventType!=='incident')))
+  return unsafe('CAUSAL_EVENT');
+ const incidentEvents=cp.commentary.filter(c=>c.eventType==='incident');
+ if(cp.incidents!==undefined&&!Array.isArray(cp.incidents))
+  return unsafe('INCIDENT_LEDGER_INVALID');
+ const incidents=cp.incidents??[];
+ if(incidentEvents.length!==incidents.length)
+  return unsafe('INCIDENT_PROVENANCE_MISSING');
+ if(incidents.length){
+  const seen=new Set();
+  for(const incident of incidents){
+   if(typeof incident?.incidentId!=='string'||!incident.incidentId||
+      seen.has(incident.incidentId)||!Array.isArray(incident.riderIds)||
+      incident.riderIds.length===0||
+      new Set(incident.riderIds).size!==incident.riderIds.length||
+      incident.riderIds.some(id=>typeof id!=='string'||!id))
+    return unsafe('INCIDENT_LEDGER_INVALID');
+   seen.add(incident.incidentId);
+   const mentions=incidentEvents.filter(c=>
+     c.commentaryId==='commentary:'+incident.incidentId);
+   if(mentions.length!==1||!Array.isArray(mentions[0].riderIds)||
+      !eq([...mentions[0].riderIds].sort(),[...incident.riderIds].sort()))
+    return unsafe('INCIDENT_PROVENANCE_MISSING');
+  }
+ }
+ // Subsequent physical bracketing and 'racing'-only state guards ensure
+ // this incident did not detach riders, induce a catch, or change membership.
+
  let before,at,later;
  try{
   before=partition(physicalGroupsAtKm(Math.max(0,km-0.00001)));
