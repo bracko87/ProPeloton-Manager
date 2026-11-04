@@ -154,3 +154,23 @@ test('unified research candidate uses original strict validator and does not pub
  assert.ok(patched.includes('  if (!replayPublicationPolicy.publishable) {'));
  assert.ok(patched.includes('throw new Error('));
 });
+
+test('private end-to-end repair re-enters unchanged strict publication and acceptance checks',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('  let replayTimeline ='));
+ assert.ok(patched.includes('  let replaySynchronization ='));
+ assert.ok(patched.includes('  let replayPublicationPolicy ='));
+ assert.ok(patched.includes('replayPublicationPolicy.blockingIssues.length===1'));
+ assert.ok(patched.includes("audit.integratedRepairStatus='STRICT_ACCEPTED'") || patched.includes("'STRICT_ACCEPTED':'STRICT_BLOCKED'"));
+ assert.ok(patched.includes('replayTimeline=unified.timeline'));
+ assert.ok(patched.includes('replaySynchronization=candidateSync'));
+ assert.ok(patched.includes('replayPublicationPolicy=candidatePolicy'));
+ assert.ok(patched.includes('const postStageUpdate = buildUniversalPostStageUpdateSummary('));
+ assert.ok(patched.includes('const phase78Acceptance = buildUniversalPhase78AcceptanceReport('));
+ assert.ok(patched.indexOf('replayTimeline=unified.timeline')<patched.indexOf('const postStageUpdate ='));
+ // Guarded transformation is limited to the private candidate compilation.
+ assert.ok(source.includes('  const replayTimeline ='));
+ assert.ok(source.includes('  const replayPublicationPolicy ='));
+ assert.ok(!source.includes('integratedRepairStatus'));
+});
