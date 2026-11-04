@@ -58,6 +58,7 @@ import {auditPrivateReachedDnfCheckpointV4} from '../../scripts/v4/privateReache
 import {attributePrivatePhase10HandoffV4} from '../../scripts/v4/privatePhase10HandoffAttributionV4.mjs'
 import {buildPrivateDnfTransitionCommentaryV4} from '../../scripts/v4/privateDnfTransitionCommentaryV4.mjs'
 import {buildPrivateDnfSurvivorIdentityV4} from '../../scripts/v4/privateDnfSurvivorIdentityV4.mjs'
+import {buildPrivateIncidentAdjustedCheckpointV4} from '../../scripts/v4/privateIncidentAdjustedCheckpointV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -431,6 +432,34 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                 checkpoint:curr,physicalGroupsAtKm:audit.physicalGroupsAtKm,
                 phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
               })
+              // Replace a wrong checkpoint partition only if the last
+              // constructed Phase10 snapshot independently matches physical
+              // survivor membership. Always use the original strict validator.
+              const incidentAdjusted=buildPrivateIncidentAdjustedCheckpointV4({
+                timeline:replayTimeline,checkpointId,
+                physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
+              })
+              audit.incidentAdjustedStatus=incidentAdjusted.status
+              if(incidentAdjusted.status==='INCIDENT_CHECKPOINT_RECONSTRUCTED'){
+                const candidateSync=buildUniversalReplaySynchronizationSummary(
+                  calculationInput,riderReadiness,roadCommandResolution,
+                  intermediatePointFinalization,groupAndTimeResolution,
+                  finishResolution,phase10Incidents,incidentAdjusted.timeline,
+                  roadRaceResolution
+                )
+                const candidatePolicy=classifyUniversalReplaySynchronizationForPublication(candidateSync)
+                audit.incidentAdjustedStrictStatus=candidatePolicy.publishable?
+                  'STRICT_PASS':'STRICT_BLOCKED'
+                audit.integratedRepairStatus=candidatePolicy.publishable?
+                  'STRICT_ACCEPTED':'STRICT_BLOCKED'
+                if(candidatePolicy.publishable){
+                  replayTimeline=incidentAdjusted.timeline
+                  replaySynchronization=candidateSync
+                  replayPublicationPolicy=candidatePolicy
+                  audit.integratedRepairMode='INCIDENT_ADJUSTED_CHECKPOINT'
+                }
+              }
               audit.firstPhysicalDivergence=tracePrivateFirstPhysicalDivergenceV4({
                 timeline:replayTimeline,checkpointId,
                 physicalGroupsAtKm:audit.physicalGroupsAtKm
