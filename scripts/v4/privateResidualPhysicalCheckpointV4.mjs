@@ -59,6 +59,8 @@ export function buildPrivateResidualPhysicalCheckpointV4({
  if(incidentEvents.length!==incidents.length)
   return unsafe('INCIDENT_PROVENANCE_MISSING');
  if(incidents.length){
+  if(new Set(incidents.map(row=>row?.incidentId)).size!==incidents.length)
+   return unsafe('INCIDENT_LEDGER_INVALID');
   const seen=new Set();
   for(const incident of incidents){
    if(typeof incident?.incidentId!=='string'||!incident.incidentId||
