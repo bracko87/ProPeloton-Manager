@@ -178,12 +178,12 @@ test('rejects catch when movement into peloton is absent, fabricated, or disagre
   {...physical[0],riderIds:['a','b']},
   {...physical[1],riderIds:['c']}
  ]:[
-  {...physical[0],riderIds:['a','b','c']}
+  {...physical[0],riderIds:['a','b','x']}
  ];
  const candidate={...args,timeline:{checkpoints:[{checkpointId:'start'},event]},
   baseTimeline:{checkpoints:[event]},physicalGroupsAtKm:physicalMove};
  // No checkpoint repair can introduce or hide riders.
- assert.equal(build(candidate).status,'INVALID_PARTITION');
+ assert.equal(build(candidate).status,'CATCH_PHYSICAL_TRANSITION_UNVERIFIED');
  const wrong={...event,commentary:[{...event.commentary[0],riderIds:['b']}]};
  assert.equal(build({...candidate,timeline:{checkpoints:[{checkpointId:'start'},wrong]}}).status,
   'CATCH_EVENT_SOURCE_UNVERIFIED');
