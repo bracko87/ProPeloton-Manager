@@ -26,15 +26,25 @@ test('repairs only exact event with verified future identities and exact physica
  assert.equal(out.status,'EXACT_EVENT_CANDIDATE_CREATED');
  assert.deepEqual(out.timeline.checkpoints[1].groups.map(x=>x.riderIds),[['a'],['b','c']]);
  assert.equal(out.timeline.checkpoints[1].riderStates[1].displayCode,'C2');
+ assert.equal(out.timeline.checkpoints[1].riderStates[1].gapSeconds,11);
  assert.equal(out.timeline.checkpoints[1].riderStates[1].energy,12);
  assert.equal(out.timeline.checkpoints[1].commentary[0].eventType,'incident');
  assert.deepEqual(event.groups[0].riderIds,['a','b']);
  assert.equal(out.officialWrites,0);
 });
+test('uses physical gaps at the exact event, not later gaps from a different kilometre',()=>{
+ const sample=km=>km<90?physicalGroupsAtKm(km):km===90?
+ [{riderIds:['a'],gapSeconds:8},{riderIds:['b','c'],gapSeconds:10}]:physicalGroupsAtKm(km);
+ const out=build({...args,physicalGroupsAtKm:sample});
+ assert.equal(out.status,'EXACT_EVENT_CANDIDATE_CREATED');
+ assert.deepEqual(out.timeline.checkpoints[1].gaps.map(g=>g.gapSeconds),[8,10]);
+ assert.equal(out.timeline.checkpoints[1].riderStates[1].gapSeconds,10);
+ assert.deepEqual(future.gaps.map(g=>g.gapSeconds),[7,11]);
+});
 test('rejects gap invention, unsupported provenance and nonphysical future grouping',()=>{
  assert.equal(build({...args,provenance:{status:'INHERITED_BASE_DRIFT'}}).status,'PROVENANCE_NOT_CONFIRMED');
  assert.equal(build({...args,physicalGroupsAtKm:km=>km<90?
- physicalGroupsAtKm(km):[{riderIds:['a'],gapSeconds:8},{riderIds:['b','c'],gapSeconds:11}]}).status,'PHYSICAL_GAP_MISMATCH');
+ physicalGroupsAtKm(km):[{riderIds:['a'],gapSeconds:NaN},{riderIds:['b','c'],gapSeconds:11}]}).status,'PHYSICAL_GAP_MISMATCH');
  assert.equal(build({...args,physicalGroupsAtKm:km=>km===95?
  [{riderIds:['a','b'],gapSeconds:5},{riderIds:['c'],gapSeconds:9}]:physicalGroupsAtKm(km)}).status,'FUTURE_GROUPS_NOT_PHYSICAL');
 });
