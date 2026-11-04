@@ -48,6 +48,7 @@ import {classifyPhysicalCheckpointBoundaryV4,diagnosePhysicalCheckpointBoundaryV
 import {classifyReplayCheckpointPresentationV4} from '../../scripts/v4/privateReplayCheckpointPresentationV4.mjs'
 import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/privatePhysicalCheckpointCandidateV4.mjs'
 import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysicalMergerShadowV4.mjs'
+import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 `;
  const guarded=source.replace(anchor,body+anchor)
  const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
@@ -94,6 +95,15 @@ import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysic
             })
             probe.shadowMergerStatus=shadow.status
             probe.shadowMismatch=shadow.mismatch
+            if(shadow.mismatch==='CURRENT_MEMBERSHIP'){
+              probe.shadowHandoff=classifyPhysicalReplayMembershipHandoffV4({
+                riderId:parts[1],
+                physicalMembers:physicalCandidate.proposal.afterMembers,
+                replayGroups:checkpoints[at].groups
+              })
+              probe.shadowHandoffCheckpointKind=checkpoints[at].checkpointKind==='event'?
+                'EVENT':checkpoints[at].checkpointKind==='base'?'BASE':'OTHER'
+            }
             if(shadow.status==='SHADOW_CREATED'){
               // Invoke the ORIGINAL strict synchronization function on a
               // separate shadow timeline. The published replay is untouched.
