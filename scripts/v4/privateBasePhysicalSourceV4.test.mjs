@@ -126,3 +126,24 @@ test('accepts an existing bridge attack only when physical P-to-C movement is in
  assert.equal(out.timeline.checkpoints[1].riderStates.find(s=>s.riderId==='b').displayCode,'C1');
  assert.equal(out.timeline.checkpoints[1].commentary[0].commentaryId,'existing-bridge-attack');
 });
+
+test('reports only fixed event kind and physical boundary when causal base event is blocked',()=>{
+ const catchEvent={...cp,checkpointKind:'event',
+  commentary:[{eventType:'catch',commentaryId:'existing-catch',riderIds:['b']}]};
+ const candidate={...args,
+  timeline:{checkpoints:[{checkpointId:'start'},catchEvent]},
+  baseTimeline:{checkpoints:[catchEvent]}};
+ const unchanged=build(candidate);
+ assert.equal(unchanged.status,'NON_NEUTRAL_EVENT');
+ assert.equal(unchanged.eventKind,'CATCH');
+ assert.equal(unchanged.eventBoundary,'PHYSICALLY_STABLE');
+ assert.ok(!JSON.stringify(unchanged).includes('existing-catch'));
+ const witnessed=km=>km<90?
+  [{...physical[0],riderIds:['a','b']},
+   {...physical[1],riderIds:['c']}]:physical;
+ const changed=build({...candidate,physicalGroupsAtKm:witnessed});
+ assert.equal(changed.status,'NON_NEUTRAL_EVENT');
+ assert.equal(changed.eventKind,'CATCH');
+ assert.equal(changed.eventBoundary,'PHYSICAL_TRANSITION');
+ assert.equal(changed.timeline,undefined);
+});
