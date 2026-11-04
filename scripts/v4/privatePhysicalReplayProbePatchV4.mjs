@@ -61,6 +61,7 @@ import {buildPrivateDnfSurvivorIdentityV4} from '../../scripts/v4/privateDnfSurv
 import {buildPrivateIncidentAdjustedCheckpointV4} from '../../scripts/v4/privateIncidentAdjustedCheckpointV4.mjs'
 import {classifyPrivatePhase10SourceDriftV4} from '../../scripts/v4/privatePhase10SourceDriftV4.mjs'
 import {classifyPrivatePostCatchContinuityV4} from '../../scripts/v4/privatePostCatchContinuityV4.mjs'
+import {classifyPrivateExactEventSourceV4} from '../../scripts/v4/privateExactEventSourceV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -453,6 +454,11 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                 })
                 // Diagnose that earlier checkpoint at its OWN source boundary.
                 // The reported current checkpoint may be physically correct.
+                audit.earlierExactEventSource=classifyPrivateExactEventSourceV4({
+                  timeline:replayTimeline,checkpointId:earlierId,
+                  physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                  baseTimeline:baseReplayTimeline
+                })
                 audit.earlierPhase10SourceDrift=classifyPrivatePhase10SourceDriftV4({
                   checkpoint:prev,physicalGroupsAtKm:audit.physicalGroupsAtKm,
                   phase10Stages:earlierStages,
