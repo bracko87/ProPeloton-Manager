@@ -311,5 +311,84 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
     }
   }
 `
- return imports+guarded.replace(publicationAnchor,capture+publicationAnchor)
+
+ // This transformation applies ONLY to private_replay_candidate's in-memory
+ // compiled engine source. The committed source and live race engine are intact.
+ // Re-evaluate the ORIGINAL strict gate on the isolated candidate before
+ // continuing through ordinary Phase 9 and Phase 7/8 acceptance.
+ const slots=[
+  '  const replayTimeline =',
+  '  const replaySynchronization =',
+  '  const replayPublicationPolicy ='
+ ]
+ let writable=guarded
+ for(const slot of slots){
+   if(writable.split(slot).length!==2)throw Error('PHYSICAL_REPLAY_REPAIR_SOURCE_DRIFT')
+   writable=writable.replace(slot,slot.replace('  const ','  let '))
+ }
+ const repair=`  // Private candidate-only: run an evidence-backed candidate through the
+  // ordinary strict publication gate. The baseline would otherwise throw.
+  if (!replayPublicationPolicy.publishable) {
+    const privateStore=(globalThis as typeof globalThis & {
+      __ppmV4PhysicalProbe?:any,
+      __ppmV4Phase10DetachEvidence?:Map<string,any>
+    })
+    const audit=privateStore.__ppmV4PhysicalProbe
+    // Fail closed on any ambiguous or multiple strict blocking issues.
+    if(audit?.status==='OBSERVED'&&
+       replayPublicationPolicy.blockingIssues.length===1){
+      const problem=replayPublicationPolicy.blockingIssues[0]
+      if(problem.startsWith('post_catch_group_transfer_without_physical_transition:')){
+        const segments=problem.split(':')
+        const riderId=segments[1]
+        const checkpointId=segments.slice(3).join(':').split(':v4_private_phase=')[0]
+        const n=replayTimeline.checkpoints.findIndex(cp=>cp.checkpointId===checkpointId)
+        if(n>0){
+          const prev=replayTimeline.checkpoints[n-1]
+          const curr=replayTimeline.checkpoints[n]
+          const physical=reconstructPhysicalCheckpointCandidateV4({
+            riderId,previousKm:prev.raceProgress.kmFromStart,
+            checkpointKm:curr.raceProgress.kmFromStart,
+            physicalGroupsAtKm:audit.physicalGroupsAtKm,
+            groupToleranceSeconds:PHASE5_GROUP_MERGE_TOLERANCE_SECONDS
+          })
+          if(physical.classification==='PHYSICAL_TRANSITION_CANDIDATE'&&
+             physical.proposal?.eventType==='group_merge'){
+            const phaseEvidence=privateStore.__ppmV4Phase10DetachEvidence?.get(checkpointId)
+            // DNF-aware fallback is allowed only after exact detachment
+            // justification was computed by the earlier private probe.
+            const unified=buildPrivateUnifiedMergerCandidateV4({
+              timeline:replayTimeline,checkpointId,riderId,
+              proposal:physical.proposal,
+              detachmentClass:audit.phase10DetachmentEvidence,
+              reachedDnfRiderIds:phaseEvidence?.dnfRiderIds
+            })
+            audit.integratedRepairStatus=unified.status==='CANDIDATE_CREATED'?
+              'CANDIDATE_CHECKED':'NOT_ELIGIBLE'
+            if(unified.status==='CANDIDATE_CREATED'){
+              const candidateSync=buildUniversalReplaySynchronizationSummary(
+                calculationInput,riderReadiness,roadCommandResolution,
+                intermediatePointFinalization,groupAndTimeResolution,
+                finishResolution,phase10Incidents,unified.timeline,
+                roadRaceResolution
+              )
+              const candidatePolicy=classifyUniversalReplaySynchronizationForPublication(candidateSync)
+              audit.integratedRepairStatus=candidatePolicy.publishable?
+                'STRICT_ACCEPTED':'STRICT_BLOCKED'
+              if(candidatePolicy.publishable){
+                // Only the local private compiled candidate has mutable slots.
+                // Later acceptance reports still run unmodified.
+                replayTimeline=unified.timeline
+                replaySynchronization=candidateSync
+                replayPublicationPolicy=candidatePolicy
+                audit.integratedRepairMode=unified.mode
+              }
+            }
+          }else audit.integratedRepairStatus='NOT_ELIGIBLE'
+        }else audit.integratedRepairStatus='NOT_ELIGIBLE'
+      }else audit.integratedRepairStatus='NOT_ELIGIBLE'
+    }else if(audit)audit.integratedRepairStatus='AMBIGUOUS_ISSUES'
+  }
+`
+ return imports+writable.replace(publicationAnchor,capture+repair+publicationAnchor)
 }
