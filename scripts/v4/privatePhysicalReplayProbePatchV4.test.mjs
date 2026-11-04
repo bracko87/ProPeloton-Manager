@@ -356,6 +356,9 @@ test('base physical source repair is private and must pass unchanged strict publ
  assert.ok(patched.includes("'BASE_PHYSICAL_PASSIVE_EVENT':'BASE_PHYSICAL_SOURCE'"));
  assert.ok(patched.includes("baseSourceCandidate.status==='BASE_PHYSICAL_PASSIVE_EVENT_CREATED'"));
  assert.ok(patched.includes("baseSourceCandidate.status==='BASE_PHYSICAL_EVENT_CREATED'"));
+ assert.ok(patched.includes("baseSourceCandidate.status==='BASE_PHYSICAL_CATCH_CREATED'"));
+ assert.ok(patched.includes("'BASE_PHYSICAL_CATCH':"));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(baseSourceSync)'));
  assert.ok(patched.includes("baseSourceCandidate.status==='BASE_PHYSICAL_SOURCE_CREATED'"));
  assert.ok(patched.includes('audit.baseSourceRejectedEventKind=baseSourceCandidate.status'));
  assert.ok(patched.includes('audit.baseSourceRejectedEventBoundary=baseSourceCandidate.status'));
