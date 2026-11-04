@@ -40,12 +40,33 @@ export function buildPrivatePhysicalLabelHandoffV4({
  if(b.commentary?.some(e=>['group_split','group_merge','incident'].includes(e.eventType)))
    return {status:'EXISTING_TRANSITION'};
  const g=b.groups.find(g=>g.riderIds.includes(riderId));
- if(!g||typeof g.displayCode!=='string')return {status:'NOT_ELIGIBLE'};
- const incorrect=b.riderStates.filter(s=>g.riderIds.includes(s.riderId)&&s.status!=='dnf'&&
-   s.displayCode!==g.displayCode);
- if(incorrect.length===0)return {status:'NO_LABEL_MISMATCH'};
- // Reconcile only the group's riders to its already authoritative published code.
- const states=b.riderStates.map(s=>incorrect.includes(s)?{...s,displayCode:g.displayCode}:s);
- const checkpoints=timeline.checkpoints.map((cp,j)=>i===j?{...cp,riderStates:states}:cp);
+ const previousGroup=a.groups.find(g=>g.riderIds.includes(riderId));
+ if(!g||!previousGroup||typeof g.displayCode!=='string'||
+    typeof previousGroup.displayCode!=='string')return {status:'NOT_ELIGIBLE'};
+ // When physical membership is unchanged, a changed P/C presentation name
+ // is not evidence of a group transfer. Reuse the previous presentation code
+ // only when its identity is free, and paired gap metadata stays consistent.
+ const rename=g.displayCode!==previousGroup.displayCode;
+ if(rename&&b.groups.some(other=>other!==g&&other.displayCode===previousGroup.displayCode))
+   return {status:'CODE_COLLISION'};
+ if(!Array.isArray(b.gaps))return {status:'NOT_ELIGIBLE'};
+ const oldGap=b.gaps.filter(row=>row.displayCode===g.displayCode);
+ if(oldGap.length!==1)return {status:'GAP_UNAVAILABLE'};
+ if(rename&&b.gaps.some(row=>row.displayCode===previousGroup.displayCode))
+   return {status:'CODE_COLLISION'};
+ const code=rename?previousGroup.displayCode:g.displayCode;
+ const correctedIds=new Set(g.riderIds);
+ // All riders in the affected physical group must agree with its current
+ // group display before changing the group label. No DNF may be reintroduced.
+ const affected=b.riderStates.filter(s=>correctedIds.has(s.riderId));
+ if(affected.length!==correctedIds.size||
+    affected.some(s=>s.status==='dnf'||s.displayCode!==g.displayCode))
+   return {status:'RIDER_STATE_INCONSISTENT'};
+ if(!rename)return {status:'NO_LABEL_MISMATCH'};
+ const states=b.riderStates.map(s=>correctedIds.has(s.riderId)?{...s,displayCode:code}:s);
+ const groups=b.groups.map(row=>row===g?{...row,displayCode:code}:row);
+ const gaps=b.gaps.map(row=>row===oldGap[0]?{...row,displayCode:code}:row);
+ const checkpoints=timeline.checkpoints.map((cp,j)=>i===j?
+   {...cp,riderStates:states,groups,gaps}:cp);
  return {status:'LABEL_HANDOFF_CREATED',timeline:{...timeline,checkpoints},researchOnly:true,officialWrites:0};
 }
