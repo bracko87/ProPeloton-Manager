@@ -24,12 +24,19 @@ export function buildPrivatePhysicalMergerShadowV4({timeline,checkpointId,riderI
  if(index<=0)return {status:'CHECKPOINT_NOT_FOUND'};
  const before=timeline.checkpoints[index-1],after=timeline.checkpoints[index];
  const first=members(before,riderId),last=members(after,riderId);
- if(!first||!last||!equal(first,sorted(proposal.beforeMembers))||
-    !equal(last,sorted(proposal.afterMembers))||
-    before.raceProgress?.kmFromStart!==proposal.observedBetweenKm[0]||
-    after.raceProgress?.kmFromStart!==proposal.observedBetweenKm[1]||
-    !Array.isArray(after.commentary))
-   return {status:'REPLAY_PHYSICAL_MEMBERSHIP_MISMATCH'};
+ // Only fixed diagnostic categories may leave the private worker.
+ if(!first||!last)return {status:'REPLAY_PHYSICAL_MEMBERSHIP_MISMATCH',mismatch:'RIDER_GROUP_UNAVAILABLE'};
+ if(before.raceProgress?.kmFromStart!==proposal.observedBetweenKm[0]||
+    after.raceProgress?.kmFromStart!==proposal.observedBetweenKm[1])
+   return {status:'REPLAY_PHYSICAL_MEMBERSHIP_MISMATCH',mismatch:'DISTANCE_MISMATCH'};
+ const beforeMatches=equal(first,sorted(proposal.beforeMembers));
+ const afterMatches=equal(last,sorted(proposal.afterMembers));
+ if(!beforeMatches||!afterMatches)
+   return {status:'REPLAY_PHYSICAL_MEMBERSHIP_MISMATCH',mismatch:
+     !beforeMatches&&!afterMatches?'BOTH_MEMBERSHIPS':
+     !beforeMatches?'PREVIOUS_MEMBERSHIP':'CURRENT_MEMBERSHIP'};
+ if(!Array.isArray(after.commentary))
+   return {status:'REPLAY_PHYSICAL_MEMBERSHIP_MISMATCH',mismatch:'INVALID_COMMENTARY'};
  if(after.commentary.some(c=>['group_merge','group_split','incident'].includes(c.eventType)))
    return {status:'ALREADY_HAS_TRANSITION'};
  const commentaryId='commentary:private-v4-physical-merge:'+checkpointId;
