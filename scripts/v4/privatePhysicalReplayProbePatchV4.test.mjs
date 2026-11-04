@@ -97,3 +97,13 @@ test('checkpoint construction stages are observed without mutating published rep
  assert.ok(patched.includes('finalGroups:checkpoints[at].groups'));
  assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
 });
+
+test('downstream handoff probe separates Phase 10 from final reconciliation without mutating replay',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('probe.postConstructionHandoff=classifyPostConstructionHandoffV4({'));
+ assert.ok(patched.includes('baseTimeline:baseReplayTimeline'));
+ assert.ok(patched.includes('phase10Timeline:phase10Resolution.replayTimeline'));
+ assert.ok(patched.includes('finalTimeline:replayTimeline'));
+ assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
+});
