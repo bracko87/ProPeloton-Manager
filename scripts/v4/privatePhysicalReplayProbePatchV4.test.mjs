@@ -402,3 +402,17 @@ test('bounded catch residual trial uses evidence-backed builders and unchanged s
  assert.ok(patched.includes("audit.integratedRepairMode='BASE_CATCH_PLUS_RESIDUAL'"));
  assert.ok(!source.includes('baseSourceResidualRepairStatus'));
 });
+
+test('stable physical C-to-C residual can only re-enter unchanged publication gate',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('buildPrivateResidualPhysicalCheckpointV4({'));
+ assert.ok(patched.includes("baseSourceCandidate.status==='BASE_PHYSICAL_CATCH_CREATED'"));
+ assert.ok(patched.includes("audit.baseSourceResidualTransfer==='C_TO_C'"));
+ assert.ok(patched.includes('residualCheckpointId:residualId'));
+ assert.ok(patched.includes("audit.baseSourceResidualPhysicalCandidate=stableResidual.status"));
+ assert.ok(patched.includes("candidates.push({mode:'RESIDUAL_PHYSICAL',timeline:stableResidual.timeline})"));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('buildPrivateResidualPhysicalCheckpointV4'));
+});
