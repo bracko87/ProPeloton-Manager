@@ -300,3 +300,13 @@ test('earlier physical checkpoint trial uses its own Phase10 DNF evidence and or
  assert.ok(patched.includes('if(earlierPolicy.publishable){'));
  assert.ok(!source.includes('earlierCheckpointStrictStatus'));
 });
+
+test('previous checkpoint Phase10 drift diagnosis is independent and observational',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('audit.earlierPhase10SourceDrift=classifyPrivatePhase10SourceDriftV4({'));
+ assert.ok(patched.includes('checkpoint:prev,physicalGroupsAtKm:audit.physicalGroupsAtKm'));
+ assert.ok(patched.includes('phase10Stages:earlierStages'));
+ assert.ok(patched.includes('autonomousRiderIds:earlierDetachment?.autonomousRiderIds'));
+ assert.ok(!source.includes('earlierPhase10SourceDrift'));
+});
