@@ -64,6 +64,7 @@ import {classifyPrivatePostCatchContinuityV4} from '../../scripts/v4/privatePost
 import {classifyPrivateExactEventSourceV4} from '../../scripts/v4/privateExactEventSourceV4.mjs'
 import {classifyPrivatePhase10InputProvenanceV4} from '../../scripts/v4/privatePhase10InputProvenanceV4.mjs'
 import {buildPrivateExactEventPhysicalCandidateV4} from '../../scripts/v4/privateExactEventPhysicalCandidateV4.mjs'
+import {buildPrivateBasePhysicalSourceV4} from '../../scripts/v4/privateBasePhysicalSourceV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -461,6 +462,35 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   baseTimeline:baseReplayTimeline,
                   physicalGroupsAtKm:audit.physicalGroupsAtKm
                 })
+                // Source-level base replay correction is isolated to the
+                // research candidate. It is never applied to live race
+                // physics or production V2 checkpoints.
+                const baseSourceCandidate=buildPrivateBasePhysicalSourceV4({
+                  timeline:replayTimeline,baseTimeline:baseReplayTimeline,
+                  checkpointId:earlierId,
+                  physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                  provenance:audit.earlierInputProvenance,
+                  reachedDnfRiderIds:earlierDetachment?.dnfRiderIds
+                })
+                audit.baseSourceCandidateStatus=baseSourceCandidate.status
+                if(baseSourceCandidate.status==='BASE_PHYSICAL_SOURCE_CREATED'){
+                  const baseSourceSync=buildUniversalReplaySynchronizationSummary(
+                    calculationInput,riderReadiness,roadCommandResolution,
+                    intermediatePointFinalization,groupAndTimeResolution,
+                    finishResolution,phase10Incidents,baseSourceCandidate.timeline,
+                    roadRaceResolution
+                  )
+                  const baseSourcePolicy=classifyUniversalReplaySynchronizationForPublication(baseSourceSync)
+                  audit.baseSourceStrictStatus=baseSourcePolicy.publishable?
+                    'STRICT_PASS':'STRICT_BLOCKED'
+                  if(baseSourcePolicy.publishable){
+                    replayTimeline=baseSourceCandidate.timeline
+                    replaySynchronization=baseSourceSync
+                    replayPublicationPolicy=baseSourcePolicy
+                    audit.integratedRepairStatus='STRICT_ACCEPTED'
+                    audit.integratedRepairMode='BASE_PHYSICAL_SOURCE'
+                  }
+                }
                 const exactCandidate=buildPrivateExactEventPhysicalCandidateV4({
                   timeline:replayTimeline,checkpointId:earlierId,
                   physicalGroupsAtKm:audit.physicalGroupsAtKm,
