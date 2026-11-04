@@ -263,3 +263,14 @@ test('private DNF-survivor identity repair retains full physical and strict publ
  assert.ok(patched.includes("audit.integratedRepairMode='DNF_SURVIVOR_IDENTITY'"));
  assert.ok(!source.includes('buildPrivateDnfSurvivorIdentityV4'));
 });
+
+test('incident-adjusted physical checkpoint reconstruction requires independent Phase10 and original strict acceptance',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('buildPrivateIncidentAdjustedCheckpointV4({'));
+ assert.ok(patched.includes("incidentAdjusted.status==='INCIDENT_CHECKPOINT_RECONSTRUCTED'"));
+ assert.ok(patched.includes('phase10Incidents,incidentAdjusted.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(candidateSync)'));
+ assert.ok(patched.includes("audit.integratedRepairMode='INCIDENT_ADJUSTED_CHECKPOINT'"));
+ assert.ok(!source.includes('buildPrivateIncidentAdjustedCheckpointV4('));
+});
