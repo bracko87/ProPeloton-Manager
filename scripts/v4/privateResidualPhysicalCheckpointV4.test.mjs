@@ -73,3 +73,39 @@ test('rejects DNF, duplicate codes and changed physical lineage labels',()=>{
   physical.map(g=>g.displayCode==='C1'?{...g,displayCode:'C3'}:g)})
   .status,'PHYSICAL_GROUP_IDENTITY_UNSAFE');
 });
+
+test('preserves a source-confirmed non-detaching incident without inventing movement',()=>{
+ const incident={incidentId:'incident-1',riderIds:['b']};
+ const annotated={...checkpoint,
+   commentary:[...checkpoint.commentary,{
+     eventType:'incident',commentaryId:'commentary:incident-1',riderIds:['b']}],
+   incidents:[incident]};
+ const result=build({...args,timeline:{checkpoints:[
+   timeline.checkpoints[0],annotated,next]}});
+ assert.equal(result.status,'RESIDUAL_PHYSICAL_CHECKPOINT_CREATED');
+ assert.deepEqual(result.timeline.checkpoints[1].incidents,annotated.incidents);
+ assert.deepEqual(result.timeline.checkpoints[1].commentary,annotated.commentary);
+ assert.equal(result.timeline.checkpoints[1].riderStates.find(s=>s.riderId==='b').energy,42);
+ assert.deepEqual(annotated.groups[1].riderIds,['b']);
+ assert.equal(result.officialWrites,0);
+});
+test('refuses fabricated incident, changed rider list or causal event despite stable physics',()=>{
+ const changed={...checkpoint,incidents:[{incidentId:'i',riderIds:['b']}],
+  commentary:[...checkpoint.commentary,
+   {eventType:'incident',commentaryId:'commentary:i',riderIds:['c']}]};
+ const wrong=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],changed,next]}});
+ assert.equal(wrong.status,'CAUSAL_OR_INCIDENT_UNSAFE');
+ assert.equal(wrong.reason,'INCIDENT_PROVENANCE_MISSING');
+ const loose=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],
+  {...checkpoint,incidents:[{incidentId:'i',riderIds:['b']}]},next]}});
+ assert.equal(loose.reason,'INCIDENT_PROVENANCE_MISSING');
+ const causal=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],
+  {...checkpoint,commentary:[...checkpoint.commentary,
+   {eventType:'group_merge',riderIds:['b']}]},next]}});
+ assert.equal(causal.reason,'CAUSAL_EVENT');
+ const duplicates=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],
+  {...checkpoint,incidents:[{incidentId:'i',riderIds:['b']},{incidentId:'i',riderIds:['b']}],
+   commentary:[{eventType:'incident',commentaryId:'commentary:i',riderIds:['b']},
+    {eventType:'incident',commentaryId:'commentary:i',riderIds:['b']}]},next]}});
+ assert.equal(duplicates.reason,'INCIDENT_LEDGER_INVALID');
+});
