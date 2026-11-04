@@ -141,3 +141,16 @@ test('DNF-aware shadow is confined to confirmed incident detachment and reuses s
  assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(dnfStrict)'));
  assert.ok(!patched.includes('replayTimeline=dnfShadow.timeline'));
 });
+
+test('unified research candidate uses original strict validator and does not publish repair',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('const unified=buildPrivateUnifiedMergerCandidateV4({'));
+ assert.ok(patched.includes('detachmentClass:probe.phase10DetachmentEvidence'));
+ assert.ok(patched.includes('phase10Incidents,unified.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(unifiedSummary)'));
+ assert.ok(patched.includes('probe.unifiedMergerStrictStatus=unifiedPolicy.publishable?'));
+ assert.ok(!patched.includes('replayTimeline=unified.timeline'));
+ assert.ok(patched.includes('  if (!replayPublicationPolicy.publishable) {'));
+ assert.ok(patched.includes('throw new Error('));
+});
