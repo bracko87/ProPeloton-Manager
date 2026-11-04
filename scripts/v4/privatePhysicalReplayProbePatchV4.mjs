@@ -50,6 +50,7 @@ import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/private
 import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysicalMergerShadowV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
+import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
 `;
  // Only in private candidate compilation: inspect actual source definition,
  // normalization and filtering without changing any checkpoint groups.
@@ -119,6 +120,13 @@ import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpoin
               const savedStages=(globalThis as typeof globalThis & {
                 __ppmV4CheckpointStages?:Map<string,any>
               }).__ppmV4CheckpointStages?.get(checkpointId)
+              probe.postConstructionHandoff=classifyPostConstructionHandoffV4({
+                riderId:parts[1],checkpointId,
+                physicalMembers:physicalCandidate.proposal.afterMembers,
+                baseTimeline:baseReplayTimeline,
+                phase10Timeline:phase10Resolution.replayTimeline,
+                finalTimeline:replayTimeline
+              })
               if(savedStages){
                 probe.checkpointStageDivergence=classifyCheckpointGroupStagesV4({
                   riderId:parts[1],
