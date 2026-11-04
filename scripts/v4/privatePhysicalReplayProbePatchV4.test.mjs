@@ -181,3 +181,15 @@ test('private end-to-end repair re-enters unchanged strict publication and accep
  assert.ok(source.includes('  const replayPublicationPolicy ='));
  assert.ok(!source.includes('integratedRepairStatus'));
 });
+
+test('physical-parity label handoff is research-only and subject to complete strict gate',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('const handoff=buildPrivatePhysicalLabelHandoffV4({'));
+ assert.ok(patched.includes('physicalGroupsAtKm:audit.physicalGroupsAtKm'));
+ assert.ok(patched.includes("handoff.status==='LABEL_HANDOFF_CREATED'"));
+ assert.ok(patched.includes('phase10Incidents,handoff.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(labelSync)'));
+ assert.ok(patched.includes("audit.integratedRepairMode='PHYSICAL_LABEL_HANDOFF'"));
+ assert.ok(!source.includes('buildPrivatePhysicalLabelHandoffV4('));
+});
