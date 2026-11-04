@@ -93,6 +93,25 @@ import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysic
               proposal:physicalCandidate.proposal
             })
             probe.shadowMergerStatus=shadow.status
+            probe.shadowMismatch=shadow.mismatch
+            if(shadow.status==='SHADOW_CREATED'){
+              // Invoke the ORIGINAL strict synchronization function on a
+              // separate shadow timeline. The published replay is untouched.
+              try{
+                const strictShadow=buildUniversalReplaySynchronizationSummary(
+                  calculationInput,riderReadiness,roadCommandResolution,
+                  intermediatePointFinalization,groupAndTimeResolution,
+                  finishResolution,phase10Incidents,shadow.timeline,
+                  roadRaceResolution
+                )
+                const strictPolicy=classifyUniversalReplaySynchronizationForPublication(strictShadow)
+                probe.shadowStrictStatus=strictPolicy.publishable?
+                  'STRICT_PASS':'STRICT_BLOCKED'
+                probe.shadowStrictRemainingIssues=strictPolicy.blockingIssues.length
+              }catch{
+                probe.shadowStrictStatus='STRICT_ERROR'
+              }
+            }
           }
           probe.boundaryPhysicalStatus=classifyPhysicalCheckpointBoundaryV4({
             ...probe.failedCheckpointInterval,
