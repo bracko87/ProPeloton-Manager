@@ -59,6 +59,7 @@ import {attributePrivatePhase10HandoffV4} from '../../scripts/v4/privatePhase10H
 import {buildPrivateDnfTransitionCommentaryV4} from '../../scripts/v4/privateDnfTransitionCommentaryV4.mjs'
 import {buildPrivateDnfSurvivorIdentityV4} from '../../scripts/v4/privateDnfSurvivorIdentityV4.mjs'
 import {buildPrivateIncidentAdjustedCheckpointV4} from '../../scripts/v4/privateIncidentAdjustedCheckpointV4.mjs'
+import {classifyPrivatePhase10SourceDriftV4} from '../../scripts/v4/privatePhase10SourceDriftV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -428,6 +429,12 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
               })
               // Aggregate fixed categories only; never expose rider IDs.
               audit.latePhysicalEvidence=late
+              audit.phase10SourceDrift=classifyPrivatePhase10SourceDriftV4({
+                checkpoint:curr,physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                phase10Stages:stages,
+                reachedDnfRiderIds:detachment?.dnfRiderIds,
+                autonomousRiderIds:detachment?.autonomousRiderIds
+              })
               audit.phase10HandoffAttribution=attributePrivatePhase10HandoffV4({
                 checkpoint:curr,physicalGroupsAtKm:audit.physicalGroupsAtKm,
                 phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
