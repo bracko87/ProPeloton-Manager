@@ -50,7 +50,8 @@ export function classifyPrivatePhase10SourceDriftV4({
  const sourceStatus=matches(last,physical)?'SOURCE_ALIGNED':
   !same(last.ids,physical.ids)?'RIDER_SET_DIFFERS':'GROUP_PARTITION_DIFFERS';
  const first=aligned.findIndex((v,i)=>i>0&&!v);
- const firstDifference=first<0?'NO_STAGE_DRIFT':phaseKeys[first];
+ const firstDifference=!aligned[0]?'INITIAL_ALREADY_DIFFERS':
+  first<0?'NO_STAGE_DRIFT':phaseKeys[first];
  const autonomousOnly=()=>{
   if(sourceStatus!=='GROUP_PARTITION_DIFFERS')return 'NOT_APPLICABLE';
   // Does removing all autonomous participants from both partitions make the
