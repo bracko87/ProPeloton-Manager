@@ -63,6 +63,7 @@ import {classifyPrivatePhase10SourceDriftV4} from '../../scripts/v4/privatePhase
 import {classifyPrivatePostCatchContinuityV4} from '../../scripts/v4/privatePostCatchContinuityV4.mjs'
 import {classifyPrivateExactEventSourceV4} from '../../scripts/v4/privateExactEventSourceV4.mjs'
 import {classifyPrivatePhase10InputProvenanceV4} from '../../scripts/v4/privatePhase10InputProvenanceV4.mjs'
+import {buildPrivateExactEventPhysicalCandidateV4} from '../../scripts/v4/privateExactEventPhysicalCandidateV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -460,6 +461,32 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   baseTimeline:baseReplayTimeline,
                   physicalGroupsAtKm:audit.physicalGroupsAtKm
                 })
+                const exactCandidate=buildPrivateExactEventPhysicalCandidateV4({
+                  timeline:replayTimeline,checkpointId:earlierId,
+                  physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                  baseTimeline:baseReplayTimeline,
+                  provenance:audit.earlierInputProvenance,
+                  reachedDnfRiderIds:earlierDetachment?.dnfRiderIds
+                })
+                audit.exactEventCandidateStatus=exactCandidate.status
+                if(exactCandidate.status==='EXACT_EVENT_CANDIDATE_CREATED'){
+                  const exactSync=buildUniversalReplaySynchronizationSummary(
+                    calculationInput,riderReadiness,roadCommandResolution,
+                    intermediatePointFinalization,groupAndTimeResolution,
+                    finishResolution,phase10Incidents,exactCandidate.timeline,
+                    roadRaceResolution
+                  )
+                  const exactPolicy=classifyUniversalReplaySynchronizationForPublication(exactSync)
+                  audit.exactEventStrictStatus=exactPolicy.publishable?
+                    'STRICT_PASS':'STRICT_BLOCKED'
+                  if(exactPolicy.publishable){
+                    replayTimeline=exactCandidate.timeline
+                    replaySynchronization=exactSync
+                    replayPublicationPolicy=exactPolicy
+                    audit.integratedRepairStatus='STRICT_ACCEPTED'
+                    audit.integratedRepairMode='EXACT_EVENT_PHYSICAL'
+                  }
+                }
                 audit.earlierExactEventSource=classifyPrivateExactEventSourceV4({
                   timeline:replayTimeline,checkpointId:earlierId,
                   physicalGroupsAtKm:audit.physicalGroupsAtKm,
