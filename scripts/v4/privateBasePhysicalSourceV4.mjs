@@ -34,13 +34,19 @@ export function buildPrivateBasePhysicalSourceV4({
  if(!Number.isFinite(km)||km<=0||cp.finalResultsVisible||
   original.finalResultsVisible||cp.checkpointKind!==original.checkpointKind||
   !Array.isArray(cp.groups)||!Array.isArray(cp.gaps)||
-  !Array.isArray(cp.riderStates)||!Array.isArray(cp.commentary)||
-  cp.commentary.some(c=>['group_split','group_merge','bridge_merge','catch'].includes(c.eventType)))
+  !Array.isArray(cp.riderStates)||!Array.isArray(cp.commentary))
   return {status:'CHECKPOINT_UNSAFE'};
- // Do not rewrite an event checkpoint encoding a legitimate pre/post same-km
- // physical transition. Only unambiguous neutral race-status observations.
- if(cp.commentary.length!==1||cp.commentary[0]?.eventType!=='race_status')
-  return {status:'NON_NEUTRAL_EVENT'};
+ // Existing catch/merge/finish boundary checkpoints are never rewritten.
+ // An ordinary race-status checkpoint is eligible as before. For the
+ // remaining P-to-C case, allow ONLY an already recorded group_split, where
+ // raw physical snapshots at the event boundary independently establish the
+ // split and confirm every mentioned rider actually moved from P to C.
+ const neutral=cp.commentary.length===1&&
+  cp.commentary[0]?.eventType==='race_status';
+ const split=cp.commentary.length===1&&
+  cp.commentary[0]?.eventType==='group_split'&&
+  cp.checkpointKind==='event';
+ if(!neutral&&!split)return {status:'NON_NEUTRAL_EVENT'};
  const dnf=new Set(reachedDnfRiderIds);
  const states=new Map(cp.riderStates.map(row=>[row.riderId,row]));
  if(dnf.size!==reachedDnfRiderIds.length||
@@ -50,6 +56,37 @@ export function buildPrivateBasePhysicalSourceV4({
  let physical;
  try{physical=partition(physicalGroupsAtKm(km));}
  catch{return {status:'PHYSICAL_UNAVAILABLE'};}
+ if(split){
+  // Never infer a split simply because two distant replay checkpoints
+  // disagree. Use an immediate pre-event physical snapshot, not replay data.
+  if(dnf.size!==0)return {status:'EVENT_DNF_UNSAFE'};
+  const event=cp.commentary[0];
+  if(!Array.isArray(event.riderIds)||event.riderIds.length===0||
+    new Set(event.riderIds).size!==event.riderIds.length)
+    return {status:'EVENT_RIDERS_UNVERIFIED'};
+  let beforeSplit;
+  try{beforeSplit=partition(physicalGroupsAtKm(Math.max(0,km-0.00001)));}
+  catch{return {status:'PHYSICAL_UNAVAILABLE'};}
+  if(!physical||!beforeSplit||!equal(beforeSplit.ids,physical.ids)||
+     equal(beforeSplit.keys,physical.keys))
+    return {status:'EVENT_PHYSICAL_TRANSITION_UNVERIFIED'};
+  const byDisplay=(groups)=>{
+    const result=new Map();
+    for(const group of groups.rows){
+      if(typeof group.displayCode!=='string')return null;
+      for(const id of group.riderIds)result.set(id,group.displayCode);
+    }
+    return result;
+  };
+  const beforeCodes=byDisplay(beforeSplit),afterCodes=byDisplay(physical);
+  if(!beforeCodes||!afterCodes)return {status:'EVENT_PHYSICAL_TRANSITION_UNVERIFIED'};
+  const moved=[...beforeCodes.keys()].filter(id=>
+    beforeCodes.get(id)!==afterCodes.get(id)).sort();
+  if(!equal(moved,[...event.riderIds].sort())||
+    moved.some(id=>beforeCodes.get(id)!=='P'||
+      !/^C[0-9]+$/.test(afterCodes.get(id)??'')))
+    return {status:'EVENT_RIDERS_UNVERIFIED'};
+ }
  const prior=partition(cp.groups);
  if(!prior||!physical)return {status:'INVALID_PARTITION'};
  const expected=partition(physical.rows.map(g=>({
@@ -91,6 +128,6 @@ export function buildPrivateBasePhysicalSourceV4({
  });
  const checkpoints=timeline.checkpoints.map((row,index)=>index===i?
   {...row,groups,gaps,riderStates}:row);
- return {status:'BASE_PHYSICAL_SOURCE_CREATED',timeline:{...timeline,checkpoints},
-  researchOnly:true,officialWrites:0};
+ return {status:split?'BASE_PHYSICAL_EVENT_CREATED':'BASE_PHYSICAL_SOURCE_CREATED',
+  timeline:{...timeline,checkpoints},researchOnly:true,officialWrites:0};
 }
