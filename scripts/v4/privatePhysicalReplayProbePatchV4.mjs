@@ -473,7 +473,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   reachedDnfRiderIds:earlierDetachment?.dnfRiderIds
                 })
                 audit.baseSourceCandidateStatus=baseSourceCandidate.status
-                if(baseSourceCandidate.status==='BASE_PHYSICAL_SOURCE_CREATED'){
+                if(baseSourceCandidate.status==='BASE_PHYSICAL_SOURCE_CREATED'||
+                   baseSourceCandidate.status==='BASE_PHYSICAL_EVENT_CREATED'){
                   const baseSourceSync=buildUniversalReplaySynchronizationSummary(
                     calculationInput,riderReadiness,roadCommandResolution,
                     intermediatePointFinalization,groupAndTimeResolution,
@@ -488,7 +489,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                     replaySynchronization=baseSourceSync
                     replayPublicationPolicy=baseSourcePolicy
                     audit.integratedRepairStatus='STRICT_ACCEPTED'
-                    audit.integratedRepairMode='BASE_PHYSICAL_SOURCE'
+                    audit.integratedRepairMode=baseSourceCandidate.status==='BASE_PHYSICAL_EVENT_CREATED'?
+                      'BASE_PHYSICAL_EVENT':'BASE_PHYSICAL_SOURCE'
                   }
                 }
                 const exactCandidate=buildPrivateExactEventPhysicalCandidateV4({
