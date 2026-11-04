@@ -52,6 +52,7 @@ import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privat
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
 import {classifyPhase10MembershipStageV4} from '../../scripts/v4/privatePhase10MembershipStagesV4.mjs'
+import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase10DetachmentEvidenceV4.mjs'
 `;
  // Only in private candidate compilation: inspect actual source definition,
  // normalization and filtering without changing any checkpoint groups.
@@ -101,6 +102,24 @@ import {classifyPhase10MembershipStageV4} from '../../scripts/v4/privatePhase10M
    // INITIAL is after groups and gaps declarations; others before the next step.
    phaseSource=phaseSource.replace(needle,snap(key)+needle)
  }
+ // At the detach boundary, both the autonomous episode set and reached DNF
+ // set are available. Retain these only inside the isolated worker.
+ const detachmentMarker="        const autonomousGroupByDisplayCode = new Map<"
+ const detachmentCapture=`        ;(() => {
+          const store=(globalThis as typeof globalThis & {
+            __ppmV4Phase10DetachEvidence?: Map<string,unknown>
+          })
+          if(!store.__ppmV4Phase10DetachEvidence)
+            store.__ppmV4Phase10DetachEvidence=new Map()
+          store.__ppmV4Phase10DetachEvidence.set(checkpoint.checkpointId,{
+            autonomousRiderIds:[...autonomousRiderIds],
+            dnfRiderIds:[...reachedDnfRiderIds]
+          })
+        })()
+`
+ if(phaseSource.split(detachmentMarker).length!==2)
+   throw Error('PHYSICAL_REPLAY_DETACHMENT_SOURCE_DRIFT')
+ phaseSource=phaseSource.replace(detachmentMarker,detachmentCapture+detachmentMarker)
  const phaseInstrumented=source.slice(0,p10Start)+phaseSource+source.slice(p10End)
  const adjustedStageLocation=phaseInstrumented.indexOf(stagesAnchor,phaseInstrumented.indexOf('const publishedGroups ='))
  if(adjustedStageLocation<0)throw Error('PHYSICAL_REPLAY_GROUP_STAGE_SOURCE_DRIFT')
@@ -157,6 +176,19 @@ import {classifyPhase10MembershipStageV4} from '../../scripts/v4/privatePhase10M
               const phase10Stages=(globalThis as typeof globalThis & {
                 __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
               }).__ppmV4Phase10GroupStages?.get(checkpointId)
+              const detachment=(globalThis as typeof globalThis & {
+                __ppmV4Phase10DetachEvidence?:Map<string,any>
+              }).__ppmV4Phase10DetachEvidence?.get(checkpointId)
+              if(detachment&&phase10Stages){
+                probe.phase10DetachmentEvidence=classifyPhase10DetachmentEvidenceV4({
+                  riderId:parts[1],
+                  physicalMembers:physicalCandidate.proposal.afterMembers,
+                  initialGroups:phase10Stages.INITIAL,
+                  detachedGroups:phase10Stages.AFTER_DETACHMENT,
+                  autonomousRiderIds:detachment.autonomousRiderIds,
+                  dnfRiderIds:detachment.dnfRiderIds
+                })
+              }else probe.phase10DetachmentEvidence='UNAVAILABLE'
               probe.phase10MembershipStage=classifyPhase10MembershipStageV4({
                 riderId:parts[1],
                 physicalMembers:physicalCandidate.proposal.afterMembers,
