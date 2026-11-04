@@ -416,3 +416,12 @@ test('stable physical C-to-C residual can only re-enter unchanged publication ga
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('buildPrivateResidualPhysicalCheckpointV4'));
 });
+
+test('residual unsafe reason is private categorical metadata, not identity',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.baseSourceResidualPhysicalGuard='NONE'"));
+ assert.ok(patched.includes("audit.baseSourceResidualPhysicalGuard=stableResidual.reason??'NONE'"));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('baseSourceResidualPhysicalGuard'));
+});
