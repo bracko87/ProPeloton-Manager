@@ -228,3 +228,13 @@ test('private historical diagnostics trace first physical drift and verify DNF s
  assert.ok(!source.includes('tracePrivateFirstPhysicalDivergenceV4'));
  assert.ok(!source.includes('auditPrivateReachedDnfCheckpointV4'));
 });
+
+test('private handoff attribution is observational and cannot bypass strict validation',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('attributePrivatePhase10HandoffV4({'));
+ assert.ok(patched.includes('audit.phase10HandoffAttribution='));
+ assert.ok(patched.includes('phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds'));
+ assert.ok(!source.includes('attributePrivatePhase10HandoffV4'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(stableSync)'));
+});
