@@ -193,3 +193,15 @@ test('physical-parity label handoff is research-only and subject to complete str
  assert.ok(patched.includes("audit.integratedRepairMode='PHYSICAL_LABEL_HANDOFF'"));
  assert.ok(!source.includes('buildPrivatePhysicalLabelHandoffV4('));
 });
+
+test('stable physical checkpoint reconstruction is confined to private candidate and full strict validation',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("handoff.status==='MEMBERSHIP_MISMATCH'"));
+ assert.ok(patched.includes('buildPrivateStablePhysicalCheckpointV4({'));
+ assert.ok(patched.includes("stable.status==='STABLE_CHECKPOINT_CREATED'"));
+ assert.ok(patched.includes('phase10Incidents,stable.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(stableSync)'));
+ assert.ok(patched.includes('if(stablePolicy.publishable){'));
+ assert.ok(!source.includes('buildPrivateStablePhysicalCheckpointV4('));
+});
