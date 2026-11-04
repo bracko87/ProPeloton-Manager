@@ -142,7 +142,7 @@ test('DNF-aware shadow is confined to confirmed incident detachment and reuses s
  assert.ok(!patched.includes('replayTimeline=dnfShadow.timeline'));
 });
 
-test('unified research candidate uses original strict validator and does not publish repair',()=>{
+test('unified research candidate validates independently before private end-to-end integration',()=>{
  const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
  const patched=patchPhysicalReplayProbeSourceV4(source);
  assert.ok(patched.includes('const unified=buildPrivateUnifiedMergerCandidateV4({'));
@@ -150,7 +150,11 @@ test('unified research candidate uses original strict validator and does not pub
  assert.ok(patched.includes('phase10Incidents,unified.timeline,'));
  assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(unifiedSummary)'));
  assert.ok(patched.includes('probe.unifiedMergerStrictStatus=unifiedPolicy.publishable?'));
- assert.ok(!patched.includes('replayTimeline=unified.timeline'));
+ // The isolated, compiled research engine may adopt the candidate only after
+ // it passes the original strict validator; the repository engine stays intact.
+ assert.ok(patched.includes('replayTimeline=unified.timeline'));
+ assert.ok(patched.includes('if(candidatePolicy.publishable){'));
+ assert.ok(!source.includes('replayTimeline=unified.timeline'));
  assert.ok(patched.includes('  if (!replayPublicationPolicy.publishable) {'));
  assert.ok(patched.includes('throw new Error('));
 });
