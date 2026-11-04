@@ -65,6 +65,7 @@ import {classifyPrivateExactEventSourceV4} from '../../scripts/v4/privateExactEv
 import {classifyPrivatePhase10InputProvenanceV4} from '../../scripts/v4/privatePhase10InputProvenanceV4.mjs'
 import {buildPrivateExactEventPhysicalCandidateV4} from '../../scripts/v4/privateExactEventPhysicalCandidateV4.mjs'
 import {buildPrivateBasePhysicalSourceV4} from '../../scripts/v4/privateBasePhysicalSourceV4.mjs'
+import {buildPrivateResidualPhysicalCheckpointV4} from '../../scripts/v4/privateResidualPhysicalCheckpointV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -568,6 +569,7 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   // checkpoint. Never patch a later correct physical checkpoint.
                   audit.baseSourceResidualRepairStatus='NOT_RUN'
                   audit.baseSourceResidualRepairMode='NONE'
+                  audit.baseSourceResidualPhysicalCandidate='NOT_RUN'
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -630,6 +632,22 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                         })
                         if(secondStable.status==='STABLE_CHECKPOINT_CREATED')
                           candidates.push({mode:'STABLE_CHECKPOINT',timeline:secondStable.timeline})
+                      }
+
+                      // C-to-C residual only: if BOTH physical snapshots are
+                      // stable and the next replay is physical, reconstruct a
+                      // passive prior checkpoint. No causal/incident rewrites.
+                      if(baseSourceCandidate.status==='BASE_PHYSICAL_CATCH_CREATED'&&
+                         audit.baseSourceResidualTransfer==='C_TO_C'){
+                        const stableResidual=buildPrivateResidualPhysicalCheckpointV4({
+                          timeline:baseSourceCandidate.timeline,
+                          checkpointId:staleId,
+                          residualCheckpointId:residualId,
+                          physicalGroupsAtKm:audit.physicalGroupsAtKm
+                        })
+                        audit.baseSourceResidualPhysicalCandidate=stableResidual.status
+                        if(stableResidual.status==='RESIDUAL_PHYSICAL_CHECKPOINT_CREATED')
+                          candidates.push({mode:'RESIDUAL_PHYSICAL',timeline:stableResidual.timeline})
                       }
                       audit.baseSourceResidualRepairStatus=candidates.length?
                         'STRICT_BLOCKED':'NO_PROVEN_CANDIDATE'
