@@ -75,18 +75,20 @@ export function buildPrivateExactEventPhysicalCandidateV4({
   const gap=gapMap.get(group.displayCode);
   const match=physical.records.find(r=>group.riderIds.every(id=>r.group.riderIds.includes(id))&&
     r.group.riderIds.filter(id=>!reached.has(id)).length===group.riderIds.length);
-  // Reusing a gap from a different kilometre is unsafe unless independently
-  // verified against the physical gap at this exact event.
+  // Identity comes from the later physically aligned checkpoint,
+  // but its gap MUST NOT be copied backwards in distance. The authoritative
+  // physical gap at this exact event is the only permitted gap value.
   if(!match||!gap||gap.groupCode!==group.groupCode||
-    !Number.isFinite(match.group.gapSeconds)||
-    !Number.isFinite(gap.gapSeconds)||
-    Math.abs(match.group.gapSeconds-gap.gapSeconds)>0.000001)
+    !Number.isFinite(match.group.gapSeconds)||match.group.gapSeconds<0||
+    !Number.isFinite(gap.gapSeconds)||gap.gapSeconds<0)
     return {status:'PHYSICAL_GAP_MISMATCH'};
+  const eventGap={...gap,gapSeconds:match.group.gapSeconds,
+    officialTimeSeconds:null};
   groups.push({...group,riderIds:[...group.riderIds]});
-  gaps.push({...gap,officialTimeSeconds:null});
+  gaps.push(eventGap);
   for(const id of group.riderIds){
    if(mapped.has(id))return {status:'INVALID_GROUPS'};
-   mapped.set(id,{group,gap});
+   mapped.set(id,{group,gap:eventGap});
   }
  }
  if(mapped.size!==survivors.ids.length||
