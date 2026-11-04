@@ -57,3 +57,12 @@ test('physical event proposal is retained only in private probe memory',()=>{
  assert.ok(patched.includes('probe.physicalCheckpointCandidate=physicalCandidate.classification'));
  assert.ok(patched.includes("import {reconstructPhysicalCheckpointCandidateV4}"));
 });
+
+test('historical shadow merger is diagnostic only and never replaces original replay timeline',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('const shadow=buildPrivatePhysicalMergerShadowV4({'));
+ assert.ok(patched.includes('timeline:replayTimeline,'));
+ assert.ok(patched.includes('probe.shadowMergerStatus=shadow.status'));
+ assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
+});
