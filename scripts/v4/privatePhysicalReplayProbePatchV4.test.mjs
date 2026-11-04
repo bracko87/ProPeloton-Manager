@@ -66,3 +66,14 @@ test('historical shadow merger is diagnostic only and never replaces original re
  assert.ok(patched.includes('probe.shadowMergerStatus=shadow.status'));
  assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
 });
+
+test('shadow trial runs original synchronization checks without replacing published replay',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('const strictShadow=buildUniversalReplaySynchronizationSummary('));
+ assert.ok(patched.includes('phase10Incidents,shadow.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(strictShadow)'));
+ assert.ok(patched.includes("probe.shadowStrictStatus=strictPolicy.publishable?"));
+ assert.ok(patched.includes("probe.shadowMismatch=shadow.mismatch"));
+ assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
+});
