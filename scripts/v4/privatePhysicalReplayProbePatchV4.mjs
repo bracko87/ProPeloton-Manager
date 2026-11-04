@@ -424,6 +424,17 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
               })
               // Aggregate fixed categories only; never expose rider IDs.
               audit.latePhysicalEvidence=late
+              audit.firstPhysicalDivergence=tracePrivateFirstPhysicalDivergenceV4({
+                timeline:replayTimeline,checkpointId,
+                physicalGroupsAtKm:audit.physicalGroupsAtKm
+              })
+              if(late.incident==='CONFIRMED_DNF_REMOVAL'){
+                audit.reachedDnfHandoff=auditPrivateReachedDnfCheckpointV4({
+                  timeline:replayTimeline,checkpointId,
+                  physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                  phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
+                }).status
+              }
             }
             if(stable.status==='STABLE_CHECKPOINT_CREATED'){
               const stableSync=buildUniversalReplaySynchronizationSummary(
