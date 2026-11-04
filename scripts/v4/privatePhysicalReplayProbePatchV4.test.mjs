@@ -251,3 +251,15 @@ test('private reached-DNF split evidence uses failed rider and full unchanged st
  assert.ok(patched.includes('if(policy.publishable){'));
  assert.ok(!source.includes('buildPrivateDnfTransitionCommentaryV4('));
 });
+
+test('private DNF-survivor identity repair retains full physical and strict publication gates',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.reachedDnfHandoff==='DNF_HANDOFF_CONFIRMED'"));
+ assert.ok(patched.includes('buildPrivateDnfSurvivorIdentityV4({'));
+ assert.ok(patched.includes("survivorIdentity.status==='DNF_SURVIVOR_IDENTITY_CREATED'"));
+ assert.ok(patched.includes('phase10Incidents,survivorIdentity.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(candidateSync)'));
+ assert.ok(patched.includes("audit.integratedRepairMode='DNF_SURVIVOR_IDENTITY'"));
+ assert.ok(!source.includes('buildPrivateDnfSurvivorIdentityV4'));
+});
