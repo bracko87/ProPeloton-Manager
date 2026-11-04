@@ -57,7 +57,9 @@ export function buildPrivateResidualPhysicalCheckpointV4({
   return unsafe('INCIDENT_LEDGER_INVALID');
  const incidents=cp.incidents??[];
  if(incidentEvents.length!==incidents.length)
-  return unsafe('INCIDENT_PROVENANCE_MISSING');
+  return {...unsafe('INCIDENT_PROVENANCE_MISSING'),
+    detail:!incidents.length?'COMMENTARY_WITHOUT_LEDGER':
+      !incidentEvents.length?'LEDGER_WITHOUT_COMMENTARY':'COUNT_MISMATCH'};
  if(incidents.length){
   if(new Set(incidents.map(row=>row?.incidentId)).size!==incidents.length)
    return unsafe('INCIDENT_LEDGER_INVALID');
@@ -72,9 +74,13 @@ export function buildPrivateResidualPhysicalCheckpointV4({
    seen.add(incident.incidentId);
    const mentions=incidentEvents.filter(c=>
      c.commentaryId==='commentary:'+incident.incidentId);
-   if(mentions.length!==1||!Array.isArray(mentions[0].riderIds)||
+   if(mentions.length!==1)
+    return {...unsafe('INCIDENT_PROVENANCE_MISSING'),
+      detail:mentions.length?'DUPLICATE_COMMENTARY':'INCIDENT_ID_LINK_MISSING'};
+   if(!Array.isArray(mentions[0].riderIds)||
       !eq([...mentions[0].riderIds].sort(),[...incident.riderIds].sort()))
-    return unsafe('INCIDENT_PROVENANCE_MISSING');
+    return {...unsafe('INCIDENT_PROVENANCE_MISSING'),
+      detail:'INCIDENT_RIDER_SET_MISMATCH'};
   }
  }
  // Subsequent physical bracketing and 'racing'-only state guards ensure
