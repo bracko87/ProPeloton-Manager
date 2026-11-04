@@ -6,7 +6,7 @@ import {auditPrivateReachedDnfCheckpointV4} from './privateReachedDnfCheckpointV
  * are never changed. The original replay strict gate must validate the candidate.
  */
 export function buildPrivateDnfTransitionCommentaryV4({
- timeline,checkpointId,physicalGroupsAtKm,phase10Stages,reachedDnfRiderIds
+ timeline,checkpointId,riderId,physicalGroupsAtKm,phase10Stages,reachedDnfRiderIds
 }={}){
  const audit=auditPrivateReachedDnfCheckpointV4({
    timeline,checkpointId,physicalGroupsAtKm,phase10Stages,reachedDnfRiderIds
@@ -27,6 +27,12 @@ export function buildPrivateDnfTransitionCommentaryV4({
    previous.groups.some(g=>g.riderIds?.includes(id))&&
    !current.groups.some(g=>g.riderIds?.includes(id))));
  if(!removed.size)return {status:'NOT_NEWLY_DETACHED'};
+ // The post-catch validation failure must concern a survivor of the
+ // DNF-affected physical group, never an unrelated rider transfer.
+ if(typeof riderId!=='string'||!riderId||
+    !previous.groups.some(g=>g.riderIds?.includes(riderId)&&g.riderIds.some(id=>removed.has(id)))||
+    !current.groups.some(g=>g.riderIds?.includes(riderId)))
+   return {status:'FAILED_RIDER_UNRELATED'};
  // The physically observed transition is an actual rider removal, not an
  // arbitrary P-to-C display-name change. Require every removed rider to be
  // newly DNF at this checkpoint and every survivor to retain group membership.
