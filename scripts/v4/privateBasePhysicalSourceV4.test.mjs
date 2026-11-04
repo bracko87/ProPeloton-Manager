@@ -39,7 +39,7 @@ test('reconstructs a neutral base replay checkpoint from same-km physical group 
 test('does not invent movement at a causal transition or overwrite result',()=>{
  const changed={...cp,commentary:[{eventType:'group_split'}]};
  assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},changed]}}).status,
-  'EVENT_RIDERS_UNVERIFIED');
+  'NON_NEUTRAL_EVENT');
  assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},
   {...cp,finalResultsVisible:true}]}}).status,'CHECKPOINT_UNSAFE');
  assert.equal(build({...args,provenance:{status:'EXACT_INHERITED_STALE_BASE_MEMBERSHIP',
