@@ -55,6 +55,7 @@ import {buildPrivateStablePhysicalCheckpointV4} from '../../scripts/v4/privateSt
 import {classifyPrivateLatePhysicalMismatchV4} from '../../scripts/v4/privateLatePhysicalMismatchV4.mjs'
 import {tracePrivateFirstPhysicalDivergenceV4} from '../../scripts/v4/privateFirstPhysicalDivergenceV4.mjs'
 import {auditPrivateReachedDnfCheckpointV4} from '../../scripts/v4/privateReachedDnfCheckpointV4.mjs'
+import {attributePrivatePhase10HandoffV4} from '../../scripts/v4/privatePhase10HandoffAttributionV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -424,6 +425,10 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
               })
               // Aggregate fixed categories only; never expose rider IDs.
               audit.latePhysicalEvidence=late
+              audit.phase10HandoffAttribution=attributePrivatePhase10HandoffV4({
+                checkpoint:curr,physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
+              })
               audit.firstPhysicalDivergence=tracePrivateFirstPhysicalDivergenceV4({
                 timeline:replayTimeline,checkpointId,
                 physicalGroupsAtKm:audit.physicalGroupsAtKm
