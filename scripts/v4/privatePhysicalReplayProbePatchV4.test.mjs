@@ -320,3 +320,13 @@ test('exact-event source inheritance probe uses base timeline privately without 
  assert.ok(!source.includes('earlierExactEventSource'));
  assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(earlierSync)'));
 });
+
+test('Phase10 input provenance uses base timeline only in isolated physical replay probe',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('audit.earlierInputProvenance=classifyPrivatePhase10InputProvenanceV4({'));
+ assert.ok(patched.includes('checkpoint:prev,phase10Stages:earlierStages'));
+ assert.ok(patched.includes('baseTimeline:baseReplayTimeline'));
+ assert.ok(!source.includes('earlierInputProvenance'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(earlierSync)'));
+});
