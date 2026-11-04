@@ -334,10 +334,14 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
       __ppmV4Phase10DetachEvidence?:Map<string,any>
     })
     const audit=privateStore.__ppmV4PhysicalProbe
-    // Fail closed on any ambiguous or multiple strict blocking issues.
+    // More than one issue can describe the same missing transition.
+    // Select the first recognized issue, but accept ONLY when the original
+    // validator clears ALL blocking issues on the completed candidate.
     if(audit?.status==='OBSERVED'&&
-       replayPublicationPolicy.blockingIssues.length===1){
-      const problem=replayPublicationPolicy.blockingIssues[0]
+       replayPublicationPolicy.blockingIssues.length>0){
+      const problem=replayPublicationPolicy.blockingIssues.find(
+        (issue: string)=>issue.startsWith('post_catch_group_transfer_without_physical_transition:')
+      )??''
       if(problem.startsWith('post_catch_group_transfer_without_physical_transition:')){
         const segments=problem.split(':')
         const riderId=segments[1]
@@ -387,7 +391,7 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
           }else audit.integratedRepairStatus='NOT_ELIGIBLE'
         }else audit.integratedRepairStatus='NOT_ELIGIBLE'
       }else audit.integratedRepairStatus='NOT_ELIGIBLE'
-    }else if(audit)audit.integratedRepairStatus='AMBIGUOUS_ISSUES'
+    }else if(audit)audit.integratedRepairStatus='NO_BLOCKING_ISSUE'
   }
 `
  return imports+writable.replace(publicationAnchor,capture+repair+publicationAnchor)
