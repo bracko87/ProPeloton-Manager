@@ -39,7 +39,7 @@ test('reconstructs a neutral base replay checkpoint from same-km physical group 
 test('does not invent movement at a causal transition or overwrite result',()=>{
  const changed={...cp,commentary:[{eventType:'group_split'}]};
  assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},changed]}}).status,
-  'NON_NEUTRAL_EVENT');
+  'EVENT_SOURCE_UNVERIFIED');
  assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},
   {...cp,finalResultsVisible:true}]}}).status,'CHECKPOINT_UNSAFE');
  assert.equal(build({...args,provenance:{status:'EXACT_INHERITED_STALE_BASE_MEMBERSHIP',
@@ -84,4 +84,31 @@ test('fails closed when P-to-C movement is not physically witnessed or incident 
   'EVENT_RIDERS_UNVERIFIED');
  assert.equal(build({...args,timeline,baseTimeline:{checkpoints:[event]},
   physicalGroupsAtKm:witnessed,reachedDnfRiderIds:['c']}).status,'DNF_UNVERIFIED');
+});
+
+test('preserves an independently sourced passive base event plus Phase10 incident commentary',()=>{
+ const base={...cp,checkpointKind:'event',commentary:[
+  {eventType:'late_chase',commentaryId:'race|replay|late-chase-step-1|commentary'}]};
+ const published={...base,incidents:[{incidentId:'inc-1',riderIds:['c']}],
+  commentary:[...base.commentary,{
+   eventType:'incident',commentaryId:'commentary:inc-1',riderIds:['c']}]};
+ const out=build({...args,timeline:{checkpoints:[{checkpointId:'start'},published]},
+  baseTimeline:{checkpoints:[base]}});
+ assert.equal(out.status,'BASE_PHYSICAL_PASSIVE_EVENT_CREATED');
+ assert.deepEqual(out.timeline.checkpoints[1].groups.map(g=>g.riderIds),[['a'],['b','c']]);
+ assert.equal(out.timeline.checkpoints[1].commentary[1].commentaryId,'commentary:inc-1');
+ assert.deepEqual(out.timeline.checkpoints[1].incidents,published.incidents);
+ assert.equal(out.timeline.checkpoints[1].riderStates.find(s=>s.riderId==='b').energy,47);
+ assert.deepEqual(published.groups[0].riderIds,['a','b']);
+});
+test('rejects unverified Phase10 commentary and physically causal base events',()=>{
+ const base={...cp,checkpointKind:'event',commentary:[
+  {eventType:'late_chase',commentaryId:'late|commentary'}]};
+ const bad={...base,incidents:[],commentary:[...base.commentary,{
+  eventType:'incident',commentaryId:'commentary:unconfirmed',riderIds:['a']}]};
+ assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},bad]},
+  baseTimeline:{checkpoints:[base]}}).status,'ADDITIONAL_EVENT_UNVERIFIED');
+ const causal={...base,commentary:[{eventType:'bridge_attack',commentaryId:'attack'}]};
+ assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},causal]},
+  baseTimeline:{checkpoints:[causal]}}).status,'NON_NEUTRAL_EVENT');
 });
