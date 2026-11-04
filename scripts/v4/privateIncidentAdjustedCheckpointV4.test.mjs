@@ -37,6 +37,7 @@ test('preserves reached DNF and refuses to restore nonphysical riders',()=>{
  const dnfStage={AFTER_DISPLAY_NORMALIZATION:[group('C1',['a','b'])]};
  const out=build({...args,timeline:{checkpoints:[initial,dnf]},
  phase10Stages:dnfStage,reachedDnfRiderIds:['c']});
- assert.equal(out.status,'GAP_OR_GROUP_IDENTITY_MISSING');
+ assert.equal(out.status,'INCIDENT_CHECKPOINT_RECONSTRUCTED');
+ assert.equal(out.timeline.checkpoints[1].riderStates.find(s=>s.riderId==='c').status,'dnf');
  assert.equal(build({...args,reachedDnfRiderIds:['c']}).status,'DNF_UNVERIFIED');
 });
