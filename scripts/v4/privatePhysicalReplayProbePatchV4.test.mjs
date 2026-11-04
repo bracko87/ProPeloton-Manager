@@ -385,3 +385,20 @@ test('catch residual classification remains private and strict acceptance unchan
  assert.ok(patched.includes("if(baseSourcePolicy.publishable){"));
  assert.ok(!source.includes('baseSourceResidualPosition'));
 });
+
+test('bounded catch residual trial uses evidence-backed builders and unchanged strict validator',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.baseSourceResidualPosition==='LATER'"));
+ assert.ok(patched.includes("audit.baseSourceResidualPhysical==='PHYSICALLY_STABLE'"));
+ assert.ok(patched.includes("audit.baseSourceResidualSource==='PREVIOUS_MISMATCH'"));
+ assert.ok(patched.includes("audit.baseSourceResidualMovement==='PRESENTATION_MEMBERSHIP_CHANGE'"));
+ assert.ok(patched.includes('checkpointId:staleId,'));
+ assert.ok(patched.includes('baseTimeline:baseReplayTimeline,'));
+ assert.ok(patched.includes('phase10Stages:staleStages,'));
+ assert.ok(patched.includes('reachedDnfRiderIds:staleDnf?.dnfRiderIds'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(patched.includes("audit.integratedRepairMode='BASE_CATCH_PLUS_RESIDUAL'"));
+ assert.ok(!source.includes('baseSourceResidualRepairStatus'));
+});
