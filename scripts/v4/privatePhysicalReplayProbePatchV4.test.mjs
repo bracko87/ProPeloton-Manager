@@ -425,3 +425,12 @@ test('residual unsafe reason is private categorical metadata, not identity',()=>
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('baseSourceResidualPhysicalGuard'));
 });
+
+test('provenance detail is a fixed research-only category',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.baseSourceResidualProvenanceDetail='NONE'"));
+ assert.ok(patched.includes("audit.baseSourceResidualProvenanceDetail=stableResidual.detail??'NONE'"));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('baseSourceResidualProvenanceDetail'));
+});
