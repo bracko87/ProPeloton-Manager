@@ -52,6 +52,7 @@ import {buildPrivateDnfAwareMergerShadowV4} from '../../scripts/v4/privateDnfAwa
 import {buildPrivateUnifiedMergerCandidateV4} from '../../scripts/v4/privateUnifiedMergerCandidateV4.mjs'
 import {buildPrivatePhysicalLabelHandoffV4} from '../../scripts/v4/privatePhysicalLabelHandoffV4.mjs'
 import {buildPrivateStablePhysicalCheckpointV4} from '../../scripts/v4/privateStablePhysicalCheckpointV4.mjs'
+import {classifyPrivateLatePhysicalMismatchV4} from '../../scripts/v4/privateLatePhysicalMismatchV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -408,6 +409,20 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                 physicalGroupsAtKm:audit.physicalGroupsAtKm
               }):{status:'NOT_ELIGIBLE'}
             audit.stablePhysicalStatus=stable.status
+            if(stable.status==='INCIDENT_OR_FINISH_UNSAFE'||
+               stable.status==='PHYSICAL_NOT_STABLE'){
+              const stages=(globalThis as typeof globalThis & {
+                __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+              }).__ppmV4Phase10GroupStages?.get(checkpointId)
+              const detachment=privateStore.__ppmV4Phase10DetachEvidence?.get(checkpointId)
+              const late=classifyPrivateLatePhysicalMismatchV4({
+                timeline:replayTimeline,checkpointId,riderId,
+                physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
+              })
+              // Aggregate fixed categories only; never expose rider IDs.
+              audit.latePhysicalEvidence=late
+            }
             if(stable.status==='STABLE_CHECKPOINT_CREATED'){
               const stableSync=buildUniversalReplaySynchronizationSummary(
                 calculationInput,riderReadiness,roadCommandResolution,
