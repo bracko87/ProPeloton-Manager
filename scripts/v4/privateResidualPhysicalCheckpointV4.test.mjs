@@ -109,3 +109,27 @@ test('refuses fabricated incident, changed rider list or causal event despite st
     {eventType:'incident',commentaryId:'commentary:i',riderIds:['b']}]},next]}});
  assert.equal(duplicates.reason,'INCIDENT_LEDGER_INVALID');
 });
+
+test('provenance failure detail distinguishes missing ledger, missing commentary and ID mismatch',()=>{
+ const cp=checkpoint,cpNext=next,first=timeline.checkpoints[0];
+ const incident={incidentId:'event-1',riderIds:['b']};
+ const one={...cp,incidents:[incident],
+   commentary:[...cp.commentary,{eventType:'incident',
+      commentaryId:'commentary:event-1',riderIds:['b']}]};
+ const cases=[
+  [{...one,incidents:[]},'COMMENTARY_WITHOUT_LEDGER'],
+  [{...one,commentary:[...cp.commentary]},'LEDGER_WITHOUT_COMMENTARY'],
+  [{...one,incidents:[incident,{incidentId:'event-2',riderIds:['a']}]},'COUNT_MISMATCH'],
+  [{...one,commentary:[...cp.commentary,{eventType:'incident',
+      commentaryId:'commentary:event-999',riderIds:['b']}]},'INCIDENT_ID_LINK_MISSING'],
+  [{...one,commentary:[...cp.commentary,{eventType:'incident',
+      commentaryId:'commentary:event-1',riderIds:['a']}]},'INCIDENT_RIDER_SET_MISMATCH']
+ ];
+ for(const [changed,reason] of cases){
+  const out=build({...args,timeline:{checkpoints:[first,changed,cpNext]}});
+  assert.equal(out.status,'CAUSAL_OR_INCIDENT_UNSAFE');
+  assert.equal(out.reason,'INCIDENT_PROVENANCE_MISSING');
+  assert.equal(out.detail,reason);
+  assert.equal(out.timeline,undefined);
+ }
+});
