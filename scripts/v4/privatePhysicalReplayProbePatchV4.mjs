@@ -48,6 +48,7 @@ import {classifyPhysicalCheckpointBoundaryV4,diagnosePhysicalCheckpointBoundaryV
 import {classifyReplayCheckpointPresentationV4} from '../../scripts/v4/privateReplayCheckpointPresentationV4.mjs'
 import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/privatePhysicalCheckpointCandidateV4.mjs'
 import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysicalMergerShadowV4.mjs'
+import {buildPrivateDnfAwareMergerShadowV4} from '../../scripts/v4/privateDnfAwareMergerShadowV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -189,6 +190,31 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   dnfRiderIds:detachment.dnfRiderIds
                 })
               }else probe.phase10DetachmentEvidence='UNAVAILABLE'
+              // Only try DNF-aware reconstruction when an actual Phase 10
+              // detachment was proven, never for arbitrary membership drift.
+              if(probe.phase10DetachmentEvidence==='DNF_DETACHMENT'&&detachment){
+                const dnfShadow=buildPrivateDnfAwareMergerShadowV4({
+                  timeline:replayTimeline,checkpointId,riderId:parts[1],
+                  proposal:physicalCandidate.proposal,
+                  reachedDnfRiderIds:detachment.dnfRiderIds
+                })
+                probe.dnfShadowStatus=dnfShadow.status
+                if(dnfShadow.status==='DNF_AWARE_SHADOW_CREATED'){
+                  try{
+                    const dnfStrict=buildUniversalReplaySynchronizationSummary(
+                      calculationInput,riderReadiness,roadCommandResolution,
+                      intermediatePointFinalization,groupAndTimeResolution,
+                      finishResolution,phase10Incidents,dnfShadow.timeline,
+                      roadRaceResolution
+                    )
+                    const dnfPolicy=classifyUniversalReplaySynchronizationForPublication(dnfStrict)
+                    probe.dnfShadowStrictStatus=dnfPolicy.publishable?
+                      'STRICT_PASS':'STRICT_BLOCKED'
+                  }catch{
+                    probe.dnfShadowStrictStatus='STRICT_ERROR'
+                  }
+                }
+              }
               probe.phase10MembershipStage=classifyPhase10MembershipStageV4({
                 riderId:parts[1],
                 physicalMembers:physicalCandidate.proposal.afterMembers,
