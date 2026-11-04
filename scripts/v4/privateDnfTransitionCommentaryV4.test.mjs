@@ -12,7 +12,7 @@ const current={
  .concat([{riderId:'c',status:'dnf'}]),commentary:[],finalResultsVisible:false
 };
 const args={
- timeline:{checkpoints:[previous,current]},checkpointId:'after',
+ timeline:{checkpoints:[previous,current]},checkpointId:'after',riderId:'a',
  physicalGroupsAtKm:()=>groups(['a','b','c'],['d']),
  phase10Stages:{INITIAL:groups(['a','b','c'],['d']),
  AFTER_DETACHMENT:groups(['a','b'],['d'])},reachedDnfRiderIds:['c']
