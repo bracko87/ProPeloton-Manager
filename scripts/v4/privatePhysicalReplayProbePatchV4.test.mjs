@@ -364,3 +364,13 @@ test('base physical source repair is private and must pass unchanged strict publ
  assert.ok(patched.includes('audit.baseSourceRejectedEventBoundary=baseSourceCandidate.status'));
  assert.ok(!source.includes('buildPrivateBasePhysicalSourceV4'));
 });
+
+test('physical catch strict diagnostic exposes only allowlisted issue classes',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('audit.baseSourceStrictIssueCodes=[...new Set('));
+ assert.ok(patched.includes("knownStrictIssueCodes.has(code)?code:'OTHER'"));
+ assert.ok(patched.includes('baseSourcePolicy.blockingIssues.map(issue=>{'));
+ assert.ok(patched.includes('if(baseSourcePolicy.publishable){'));
+ assert.ok(!source.includes('baseSourceStrictIssueCodes'));
+});
