@@ -56,6 +56,7 @@ import {classifyPrivateLatePhysicalMismatchV4} from '../../scripts/v4/privateLat
 import {tracePrivateFirstPhysicalDivergenceV4} from '../../scripts/v4/privateFirstPhysicalDivergenceV4.mjs'
 import {auditPrivateReachedDnfCheckpointV4} from '../../scripts/v4/privateReachedDnfCheckpointV4.mjs'
 import {attributePrivatePhase10HandoffV4} from '../../scripts/v4/privatePhase10HandoffAttributionV4.mjs'
+import {buildPrivateDnfTransitionCommentaryV4} from '../../scripts/v4/privateDnfTransitionCommentaryV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -439,6 +440,33 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   physicalGroupsAtKm:audit.physicalGroupsAtKm,
                   phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
                 }).status
+                if(audit.reachedDnfHandoff==='DNF_HANDOFF_CONFIRMED'){
+                  const dnfTransition=buildPrivateDnfTransitionCommentaryV4({
+                    timeline:replayTimeline,checkpointId,
+                    physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                    phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
+                  })
+                  audit.dnfTransitionStatus=dnfTransition.status
+                  if(dnfTransition.status==='DNF_TRANSITION_CREATED'){
+                    const sync=buildUniversalReplaySynchronizationSummary(
+                      calculationInput,riderReadiness,roadCommandResolution,
+                      intermediatePointFinalization,groupAndTimeResolution,
+                      finishResolution,phase10Incidents,dnfTransition.timeline,
+                      roadRaceResolution
+                    )
+                    const policy=classifyUniversalReplaySynchronizationForPublication(sync)
+                    audit.dnfTransitionStrictStatus=policy.publishable?
+                      'STRICT_PASS':'STRICT_BLOCKED'
+                    audit.integratedRepairStatus=policy.publishable?
+                      'STRICT_ACCEPTED':'STRICT_BLOCKED'
+                    if(policy.publishable){
+                      replayTimeline=dnfTransition.timeline
+                      replaySynchronization=sync
+                      replayPublicationPolicy=policy
+                      audit.integratedRepairMode='CONFIRMED_DNF_TRANSITION'
+                    }
+                  }
+                }
               }
             }
             if(stable.status==='STABLE_CHECKPOINT_CREATED'){
