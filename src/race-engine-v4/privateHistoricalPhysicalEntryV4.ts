@@ -134,7 +134,7 @@ function main(){
  const paths=doc.privateEnvelopePaths.map((raw:unknown)=>privatePath(raw,repo,64*1024*1024))
  if(new Set(paths).size!==paths.length)throw Error('DUPLICATE_PRIVATE_PATH')
  const rows=[],rejected={invalid:0,unsupported:0,unsynchronized:0}
- const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0,failedRiderMovementObserved:0,failedRiderMovementMissing:0,failedRiderNotMatched:0,failedRiderLateBandObserved:0,failedRiderLateBandMissing:0,failedRiderOtherPeriod:0,exactIntervalOverlap:0,exactIntervalOutside:0,exactIntervalUnmatchable:0,boundaryPhysical:{CHANGED_MEMBERSHIP:0,SAME_MEMBERSHIP:0,UNAVAILABLE:0},boundaryUnavailableReasons:{INVALID_INPUT:0,REVERSED_INTERVAL:0,ZERO_LENGTH_INTERVAL:0,NO_GROUPS:0,RIDER_ABSENT:0,DUPLICATE_RIDER:0,INVALID_PHYSICAL_GROUP:0,PHYSICAL_MODEL_ERROR:0,VALID:0,UNKNOWN:0},replayPresentation:{SAME_KM_UNCHANGED:0,SAME_KM_RENUMBER_ONLY:0,SAME_KM_MEMBERSHIP_CHANGED:0,DISTANCE_UNCHANGED:0,DISTANCE_RENUMBER_ONLY:0,DISTANCE_MEMBERSHIP_CHANGED:0,UNAVAILABLE:0},physicalCheckpointCandidates:{PHYSICAL_TRANSITION_CANDIDATE:0,NO_PHYSICAL_MEMBERSHIP_CHANGE:0,NOT_ELIGIBLE:0,INVALID_PHYSICAL_EVIDENCE:0,UNSUPPORTED_TRANSITION:0,UNAVAILABLE:0},physicalEventProposals:{group_split:0,group_merge:0,group_reorganization:0,unavailable:0},failureCaptureStatus:{CAPTURED:0,FIRST_CHECKPOINT:0,CHECKPOINT_NOT_FOUND:0,ISSUE_NOT_FOUND:0,NOT_REACHED:0}}
+ const physicalProbe={observed:0,unavailable:0,missing:0,samples:0,transitions:0,failedRiderMovementObserved:0,failedRiderMovementMissing:0,failedRiderNotMatched:0,failedRiderLateBandObserved:0,failedRiderLateBandMissing:0,failedRiderOtherPeriod:0,exactIntervalOverlap:0,exactIntervalOutside:0,exactIntervalUnmatchable:0,boundaryPhysical:{CHANGED_MEMBERSHIP:0,SAME_MEMBERSHIP:0,UNAVAILABLE:0},boundaryUnavailableReasons:{INVALID_INPUT:0,REVERSED_INTERVAL:0,ZERO_LENGTH_INTERVAL:0,NO_GROUPS:0,RIDER_ABSENT:0,DUPLICATE_RIDER:0,INVALID_PHYSICAL_GROUP:0,PHYSICAL_MODEL_ERROR:0,VALID:0,UNKNOWN:0},replayPresentation:{SAME_KM_UNCHANGED:0,SAME_KM_RENUMBER_ONLY:0,SAME_KM_MEMBERSHIP_CHANGED:0,DISTANCE_UNCHANGED:0,DISTANCE_RENUMBER_ONLY:0,DISTANCE_MEMBERSHIP_CHANGED:0,UNAVAILABLE:0},physicalCheckpointCandidates:{PHYSICAL_TRANSITION_CANDIDATE:0,NO_PHYSICAL_MEMBERSHIP_CHANGE:0,NOT_ELIGIBLE:0,INVALID_PHYSICAL_EVIDENCE:0,UNSUPPORTED_TRANSITION:0,UNAVAILABLE:0},physicalEventProposals:{group_split:0,group_merge:0,group_reorganization:0,unavailable:0},shadowMerger:{SHADOW_CREATED:0,REJECTED_EVIDENCE:0,CHECKPOINT_NOT_FOUND:0,REPLAY_PHYSICAL_MEMBERSHIP_MISMATCH:0,ALREADY_HAS_TRANSITION:0,DUPLICATE_COMMENTARY_ID:0,UNAVAILABLE:0},failureCaptureStatus:{CAPTURED:0,FIRST_CHECKPOINT:0,CHECKPOINT_NOT_FOUND:0,ISSUE_NOT_FOUND:0,NOT_REACHED:0}}
  const safeCodes=['INCOMPLETE_HISTORY','INVALID_LOCKED_HISTORY',
   'UNVERIFIED_TEAM_CONTROL','UNSUPPORTED_V2_SOLVER_LANE',
   'MISSING_SAVED_RESULT','PHYSICAL_RESULT_INVALID','NO_FINISH_CLASSIFICATION']
@@ -210,6 +210,13 @@ function main(){
         if(outcome&&Object.prototype.hasOwnProperty.call(categories,outcome))
           categories[outcome as keyof typeof categories]++
         else categories.UNAVAILABLE++
+        if(outcome==='PHYSICAL_TRANSITION_CANDIDATE'){
+          const shadow=(probe as {shadowMergerStatus?:string}).shadowMergerStatus
+          const shadowCounts=physicalProbe.shadowMerger
+          if(shadow&&Object.prototype.hasOwnProperty.call(shadowCounts,shadow))
+            shadowCounts[shadow as keyof typeof shadowCounts]++
+          else shadowCounts.UNAVAILABLE++
+        }
         if(outcome==='PHYSICAL_TRANSITION_CANDIDATE'){
           const proposal=(probe as {physicalCheckpointProposal?:{eventType?:string,exactEventKmKnown?:boolean,exactEventTimeKnown?:boolean,source?:string}}).physicalCheckpointProposal
           const type=proposal?.eventType
