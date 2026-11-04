@@ -570,6 +570,7 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualRepairStatus='NOT_RUN'
                   audit.baseSourceResidualRepairMode='NONE'
                   audit.baseSourceResidualPhysicalCandidate='NOT_RUN'
+                  audit.baseSourceResidualPhysicalGuard='NONE'
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -646,6 +647,7 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                           physicalGroupsAtKm:audit.physicalGroupsAtKm
                         })
                         audit.baseSourceResidualPhysicalCandidate=stableResidual.status
+                        audit.baseSourceResidualPhysicalGuard=stableResidual.reason??'NONE'
                         if(stableResidual.status==='RESIDUAL_PHYSICAL_CHECKPOINT_CREATED')
                           candidates.push({mode:'RESIDUAL_PHYSICAL',timeline:stableResidual.timeline})
                       }
