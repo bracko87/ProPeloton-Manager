@@ -474,7 +474,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                 })
                 audit.baseSourceCandidateStatus=baseSourceCandidate.status
                 if(baseSourceCandidate.status==='BASE_PHYSICAL_SOURCE_CREATED'||
-                   baseSourceCandidate.status==='BASE_PHYSICAL_EVENT_CREATED'){
+                   baseSourceCandidate.status==='BASE_PHYSICAL_EVENT_CREATED'||
+                   baseSourceCandidate.status==='BASE_PHYSICAL_PASSIVE_EVENT_CREATED'){
                   const baseSourceSync=buildUniversalReplaySynchronizationSummary(
                     calculationInput,riderReadiness,roadCommandResolution,
                     intermediatePointFinalization,groupAndTimeResolution,
@@ -490,7 +491,9 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                     replayPublicationPolicy=baseSourcePolicy
                     audit.integratedRepairStatus='STRICT_ACCEPTED'
                     audit.integratedRepairMode=baseSourceCandidate.status==='BASE_PHYSICAL_EVENT_CREATED'?
-                      'BASE_PHYSICAL_EVENT':'BASE_PHYSICAL_SOURCE'
+                      'BASE_PHYSICAL_EVENT':
+                      baseSourceCandidate.status==='BASE_PHYSICAL_PASSIVE_EVENT_CREATED'?
+                      'BASE_PHYSICAL_PASSIVE_EVENT':'BASE_PHYSICAL_SOURCE'
                   }
                 }
                 const exactCandidate=buildPrivateExactEventPhysicalCandidateV4({
