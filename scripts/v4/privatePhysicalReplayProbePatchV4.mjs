@@ -49,8 +49,28 @@ import {classifyReplayCheckpointPresentationV4} from '../../scripts/v4/privateRe
 import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/privatePhysicalCheckpointCandidateV4.mjs'
 import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysicalMergerShadowV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
+import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 `;
- const guarded=source.replace(anchor,body+anchor)
+ // Only in private candidate compilation: inspect actual source definition,
+ // normalization and filtering without changing any checkpoint groups.
+ const stagesAnchor='      const groupByRiderId = new Map<'
+ if(source.split(stagesAnchor).length!==3)
+   throw Error('PHYSICAL_REPLAY_GROUP_STAGE_SOURCE_DRIFT')
+ const stageCapture=`      // Isolated private checkpoint construction evidence.
+      const privateStageStore=(globalThis as typeof globalThis & {
+        __ppmV4CheckpointStages?: Map<string,unknown>
+      })
+      if(!privateStageStore.__ppmV4CheckpointStages)
+        privateStageStore.__ppmV4CheckpointStages=new Map()
+      privateStageStore.__ppmV4CheckpointStages.set(
+        \`\${input.stage.stageId}|replay|\${definition.checkpointIdSuffix}\`,
+        {raw:definition.groups,normalized:normalizedGroups,published:publishedGroups}
+      )
+`
+ const stageLocation=source.indexOf(stagesAnchor,source.indexOf('const publishedGroups ='))
+ if(stageLocation<0)throw Error('PHYSICAL_REPLAY_GROUP_STAGE_SOURCE_DRIFT')
+ const withStages=source.slice(0,stageLocation)+stageCapture+source.slice(stageLocation)
+ const guarded=withStages.replace(anchor,body+anchor)
  const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
  if(guarded.split(publicationAnchor).length!==2)
    throw Error('PHYSICAL_REPLAY_PUBLICATION_SOURCE_DRIFT')
@@ -96,6 +116,17 @@ import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privat
             probe.shadowMergerStatus=shadow.status
             probe.shadowMismatch=shadow.mismatch
             if(shadow.mismatch==='CURRENT_MEMBERSHIP'){
+              const savedStages=(globalThis as typeof globalThis & {
+                __ppmV4CheckpointStages?:Map<string,any>
+              }).__ppmV4CheckpointStages?.get(checkpointId)
+              if(savedStages){
+                probe.checkpointStageDivergence=classifyCheckpointGroupStagesV4({
+                  riderId:parts[1],
+                  physicalMembers:physicalCandidate.proposal.afterMembers,
+                  ...savedStages,
+                  finalGroups:checkpoints[at].groups
+                })
+              }else probe.checkpointStageDivergence='CHECKPOINT_NOT_IN_BUILDER'
               probe.shadowHandoff=classifyPhysicalReplayMembershipHandoffV4({
                 riderId:parts[1],
                 physicalMembers:physicalCandidate.proposal.afterMembers,
