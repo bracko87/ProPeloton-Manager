@@ -73,6 +73,14 @@ export function buildPrivateIncidentAdjustedCheckpointV4({
    gap.groupCode!==g.groupCode||
    !Number.isFinite(gap.gapSeconds)||gap.gapSeconds<0)
    return {status:'GAP_OR_GROUP_IDENTITY_MISSING'};
+  // Do not attach an existing display gap to a different physical road
+  // position. Incident-specific chase gaps can diverge: reject in that case.
+  const physical=expected.records.find(row=>row.key===entry.key);
+  const physicalGap=original.records.find(row=>
+    row.riderIds.some(id=>entry.riderIds.includes(id)))?.group?.gapSeconds;
+  if(!physical||!Number.isFinite(physicalGap)||
+     Math.abs(physicalGap-gap.gapSeconds)>0.000001)
+   return {status:'PHYSICAL_GAP_MISMATCH'};
   groups.push({...g,riderIds:[...entry.riderIds]});
   gaps.push({...gap});
   for(const id of entry.riderIds){
