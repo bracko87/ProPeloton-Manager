@@ -473,6 +473,10 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   reachedDnfRiderIds:earlierDetachment?.dnfRiderIds
                 })
                 audit.baseSourceCandidateStatus=baseSourceCandidate.status
+                audit.baseSourceRejectedEventKind=baseSourceCandidate.status==='NON_NEUTRAL_EVENT'?
+                  baseSourceCandidate.eventKind:undefined
+                audit.baseSourceRejectedEventBoundary=baseSourceCandidate.status==='NON_NEUTRAL_EVENT'?
+                  baseSourceCandidate.eventBoundary:undefined
                 if(baseSourceCandidate.status==='BASE_PHYSICAL_SOURCE_CREATED'||
                    baseSourceCandidate.status==='BASE_PHYSICAL_EVENT_CREATED'||
                    baseSourceCandidate.status==='BASE_PHYSICAL_PASSIVE_EVENT_CREATED'){
