@@ -330,3 +330,16 @@ test('Phase10 input provenance uses base timeline only in isolated physical repl
  assert.ok(!source.includes('earlierInputProvenance'));
  assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(earlierSync)'));
 });
+
+test('physical exact-event repair remains private and cannot bypass strict publication',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('buildPrivateExactEventPhysicalCandidateV4({'));
+ assert.ok(patched.includes('provenance:audit.earlierInputProvenance'));
+ assert.ok(patched.includes('reachedDnfRiderIds:earlierDetachment?.dnfRiderIds'));
+ assert.ok(patched.includes('phase10Incidents,exactCandidate.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(exactSync)'));
+ assert.ok(patched.includes('if(exactPolicy.publishable){'));
+ assert.ok(patched.includes("audit.integratedRepairMode='EXACT_EVENT_PHYSICAL'"));
+ assert.ok(!source.includes('buildPrivateExactEventPhysicalCandidateV4'));
+});
