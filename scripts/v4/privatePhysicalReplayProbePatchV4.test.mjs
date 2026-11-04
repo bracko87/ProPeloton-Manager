@@ -374,3 +374,14 @@ test('physical catch strict diagnostic exposes only allowlisted issue classes',(
  assert.ok(patched.includes('if(baseSourcePolicy.publishable){'));
  assert.ok(!source.includes('baseSourceStrictIssueCodes'));
 });
+
+test('catch residual classification remains private and strict acceptance unchanged',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.baseSourceResidualPosition='NONE'"));
+ assert.ok(patched.includes("audit.baseSourceResidualSource=continuity.source??'UNAVAILABLE'"));
+ assert.ok(patched.includes("audit.baseSourceResidualTransfer=previous===current?"));
+ assert.ok(patched.includes("classifyUniversalReplaySynchronizationForPublication(baseSourceSync)"));
+ assert.ok(patched.includes("if(baseSourcePolicy.publishable){"));
+ assert.ok(!source.includes('baseSourceResidualPosition'));
+});
