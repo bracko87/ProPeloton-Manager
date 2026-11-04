@@ -52,7 +52,30 @@ export function buildPrivateBasePhysicalSourceV4({
  const neutral=passiveEvents.has(mainType);
  const split=(mainType==='group_split'||mainType==='bridge_attack')&&
   cp.checkpointKind==='event';
- if(!neutral&&!split)return {status:'NON_NEUTRAL_EVENT'};
+ if(!neutral&&!split){
+  // Report only a fixed, non-identifying source-event category. Some
+  // checkpoint kinds have causal same-km semantics (catch, merge, contact).
+  // Those are never rewritten without a separate, physically proven fix.
+  const eventKinds={
+   attack:'ATTACK',breakaway_formation:'BREAKAWAY_FORMATION',
+   catch:'CATCH',bridge_merge:'BRIDGE_MERGE',
+   bridge_contact:'BRIDGE_CONTACT',group_merge:'GROUP_MERGE',
+   finish:'FINISH',incident:'INCIDENT'
+  };
+  const eventKind=Object.prototype.hasOwnProperty.call(eventKinds,mainType)?
+   eventKinds[mainType]:'OTHER';
+  let eventBoundary='UNAVAILABLE';
+  try{
+   const at=partition(physicalGroupsAtKm(km));
+   const immediatelyBefore=partition(physicalGroupsAtKm(Math.max(0,km-0.00001)));
+   if(at&&immediatelyBefore){
+    eventBoundary=!equal(at.ids,immediatelyBefore.ids)?
+     'RIDER_SET_CHANGED':equal(at.keys,immediatelyBefore.keys)?
+     'PHYSICALLY_STABLE':'PHYSICAL_TRANSITION';
+   }
+  }catch{}
+  return {status:'NON_NEUTRAL_EVENT',eventKind,eventBoundary};
+ }
  const additional=cp.commentary.slice(1);
  const incidentById=new Map((Array.isArray(cp.incidents)?cp.incidents:[])
   .map(incident=>[incident.incidentId,incident]));
