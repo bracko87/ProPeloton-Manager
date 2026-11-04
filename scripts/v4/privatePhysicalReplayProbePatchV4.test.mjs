@@ -120,3 +120,13 @@ test('Phase 10 mutation boundary probe captures physical memberships privately',
  assert.ok(patched.includes('probe.phase10MembershipStage=classifyPhase10MembershipStageV4({'));
  assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
 });
+
+test('Phase 10 detachment evidence distinguishes autonomous episodes from reached DNF',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('__ppmV4Phase10DetachEvidence.set(checkpoint.checkpointId'));
+ assert.ok(patched.includes('autonomousRiderIds:[...autonomousRiderIds]'));
+ assert.ok(patched.includes('dnfRiderIds:[...reachedDnfRiderIds]'));
+ assert.ok(patched.includes('probe.phase10DetachmentEvidence=classifyPhase10DetachmentEvidenceV4({'));
+ assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
+});
