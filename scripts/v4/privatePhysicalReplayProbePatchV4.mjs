@@ -51,6 +51,7 @@ import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysic
 import {buildPrivateDnfAwareMergerShadowV4} from '../../scripts/v4/privateDnfAwareMergerShadowV4.mjs'
 import {buildPrivateUnifiedMergerCandidateV4} from '../../scripts/v4/privateUnifiedMergerCandidateV4.mjs'
 import {buildPrivatePhysicalLabelHandoffV4} from '../../scripts/v4/privatePhysicalLabelHandoffV4.mjs'
+import {buildPrivateStablePhysicalCheckpointV4} from '../../scripts/v4/privateStablePhysicalCheckpointV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -398,6 +399,35 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
             })
             audit.labelHandoffStatus=handoff.status
             audit.integratedRepairStatus='NOT_ELIGIBLE'
+            // If a stale replay group partition causes a failed label-only
+            // check, trial a physically stable checkpoint reconstruction.
+            // A genuine split/merge or DNF is never invented here.
+            const stable=handoff.status==='MEMBERSHIP_MISMATCH'?
+              buildPrivateStablePhysicalCheckpointV4({
+                timeline:replayTimeline,checkpointId,
+                physicalGroupsAtKm:audit.physicalGroupsAtKm
+              }):{status:'NOT_ELIGIBLE'}
+            audit.stablePhysicalStatus=stable.status
+            if(stable.status==='STABLE_CHECKPOINT_CREATED'){
+              const stableSync=buildUniversalReplaySynchronizationSummary(
+                calculationInput,riderReadiness,roadCommandResolution,
+                intermediatePointFinalization,groupAndTimeResolution,
+                finishResolution,phase10Incidents,stable.timeline,
+                roadRaceResolution
+              )
+              const stablePolicy=classifyUniversalReplaySynchronizationForPublication(stableSync)
+              audit.stablePhysicalStrictStatus=stablePolicy.publishable?
+                'STRICT_PASS':'STRICT_BLOCKED'
+              audit.integratedRepairStatus=stablePolicy.publishable?
+                'STRICT_ACCEPTED':'STRICT_BLOCKED'
+              if(stablePolicy.publishable){
+                replayTimeline=stable.timeline
+                replaySynchronization=stableSync
+                replayPublicationPolicy=stablePolicy
+                audit.integratedRepairMode=stable.mode==='SAME_KM_STABLE'?
+                  'SAME_KM_STABLE':'DISTANCE_STABLE'
+              }
+            }
             if(handoff.status==='LABEL_HANDOFF_CREATED'){
               const labelSync=buildUniversalReplaySynchronizationSummary(
                 calculationInput,riderReadiness,roadCommandResolution,
