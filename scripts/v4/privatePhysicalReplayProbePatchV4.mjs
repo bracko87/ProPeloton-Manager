@@ -51,6 +51,7 @@ import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysic
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
+import {classifyPhase10MembershipStageV4} from '../../scripts/v4/privatePhase10MembershipStagesV4.mjs'
 `;
  // Only in private candidate compilation: inspect actual source definition,
  // normalization and filtering without changing any checkpoint groups.
@@ -70,7 +71,40 @@ import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostCon
 `
  const stageLocation=source.indexOf(stagesAnchor,source.indexOf('const publishedGroups ='))
  if(stageLocation<0)throw Error('PHYSICAL_REPLAY_GROUP_STAGE_SOURCE_DRIFT')
- const withStages=source.slice(0,stageLocation)+stageCapture+source.slice(stageLocation)
+ // Pin each Phase 10 mutation boundary in the isolated compilation only.
+ // Capture all group memberships in worker memory, never in the report.
+ const p10Start=source.indexOf('  const replayCheckpoints = phase10SourceReplayTimeline.checkpoints.map(')
+ const p10End=source.indexOf('  const replayTimeline: UniversalReplayTimeline = {',p10Start)
+ if(p10Start<0||p10End<=p10Start)throw Error('PHYSICAL_REPLAY_PHASE10_SOURCE_DRIFT')
+ const snap=(key)=>`      ;(() => {
+        const privateStore=(globalThis as typeof globalThis & {
+          __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+        })
+        if(!privateStore.__ppmV4Phase10GroupStages)
+          privateStore.__ppmV4Phase10GroupStages=new Map()
+        const cpStages=privateStore.__ppmV4Phase10GroupStages.get(checkpoint.checkpointId)??{}
+        cpStages['${key}']=groups.map(g=>({...g,riderIds:[...g.riderIds]}))
+        privateStore.__ppmV4Phase10GroupStages.set(checkpoint.checkpointId,cpStages)
+      })()
+`
+ let phaseSource=source.slice(p10Start,p10End)
+ const boundaries=[
+  ['INITIAL','      let gaps = checkpoint.gaps.map((gap) => ({ ...gap }))'],
+  ['AFTER_DETACHMENT','        const autonomousGroupByDisplayCode = new Map<'],
+  ['AFTER_AUTONOMOUS_GROUPS','        const consolidatedGroups: Array<(typeof groups)[number]> = []'],
+  ['AFTER_CONSOLIDATION','        // Keep autonomous incident groups physically authoritative.'],
+  ['AFTER_FINISH_COMMIT','      const replayIncidents: UniversalReplayIncident[] = occurred.map('],
+  ['AFTER_DISPLAY_NORMALIZATION','      const activeCommands = checkpoint.activeCommands.filter(']
+ ]
+ for(const [key,needle] of boundaries){
+   if(phaseSource.split(needle).length!==2)throw Error('PHYSICAL_REPLAY_PHASE10_SOURCE_DRIFT:'+key)
+   // INITIAL is after groups and gaps declarations; others before the next step.
+   phaseSource=phaseSource.replace(needle,snap(key)+needle)
+ }
+ const phaseInstrumented=source.slice(0,p10Start)+phaseSource+source.slice(p10End)
+ const adjustedStageLocation=phaseInstrumented.indexOf(stagesAnchor,phaseInstrumented.indexOf('const publishedGroups ='))
+ if(adjustedStageLocation<0)throw Error('PHYSICAL_REPLAY_GROUP_STAGE_SOURCE_DRIFT')
+ const withStages=phaseInstrumented.slice(0,adjustedStageLocation)+stageCapture+phaseInstrumented.slice(adjustedStageLocation)
  const guarded=withStages.replace(anchor,body+anchor)
  const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
  if(guarded.split(publicationAnchor).length!==2)
@@ -120,6 +154,14 @@ import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostCon
               const savedStages=(globalThis as typeof globalThis & {
                 __ppmV4CheckpointStages?:Map<string,any>
               }).__ppmV4CheckpointStages?.get(checkpointId)
+              const phase10Stages=(globalThis as typeof globalThis & {
+                __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+              }).__ppmV4Phase10GroupStages?.get(checkpointId)
+              probe.phase10MembershipStage=classifyPhase10MembershipStageV4({
+                riderId:parts[1],
+                physicalMembers:physicalCandidate.proposal.afterMembers,
+                stages:phase10Stages
+              })
               probe.postConstructionHandoff=classifyPostConstructionHandoffV4({
                 riderId:parts[1],checkpointId,
                 physicalMembers:physicalCandidate.proposal.afterMembers,
