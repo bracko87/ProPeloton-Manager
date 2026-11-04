@@ -87,3 +87,13 @@ test('current membership mismatch is classified without changing the strict repl
  assert.ok(patched.includes('replayGroups:checkpoints[at].groups'));
  assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
 });
+
+test('checkpoint construction stages are observed without mutating published replay',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('__ppmV4CheckpointStages.set('));
+ assert.ok(patched.includes('{raw:definition.groups,normalized:normalizedGroups,published:publishedGroups}'));
+ assert.ok(patched.includes('probe.checkpointStageDivergence=classifyCheckpointGroupStagesV4({'));
+ assert.ok(patched.includes('finalGroups:checkpoints[at].groups'));
+ assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
+});
