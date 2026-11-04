@@ -205,3 +205,14 @@ test('stable physical checkpoint reconstruction is confined to private candidate
  assert.ok(patched.includes('if(stablePolicy.publishable){'));
  assert.ok(!source.includes('buildPrivateStablePhysicalCheckpointV4('));
 });
+
+test('late physical mismatch classification remains private and cannot bypass strict replay',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("stable.status==='INCIDENT_OR_FINISH_UNSAFE'"));
+ assert.ok(patched.includes("stable.status==='PHYSICAL_NOT_STABLE'"));
+ assert.ok(patched.includes('classifyPrivateLatePhysicalMismatchV4({'));
+ assert.ok(patched.includes('audit.latePhysicalEvidence=late'));
+ assert.ok(!source.includes('classifyPrivateLatePhysicalMismatchV4'));
+ assert.ok(patched.includes('  if (!replayPublicationPolicy.publishable) {'));
+});
