@@ -50,6 +50,7 @@ import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/private
 import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysicalMergerShadowV4.mjs'
 import {buildPrivateDnfAwareMergerShadowV4} from '../../scripts/v4/privateDnfAwareMergerShadowV4.mjs'
 import {buildPrivateUnifiedMergerCandidateV4} from '../../scripts/v4/privateUnifiedMergerCandidateV4.mjs'
+import {buildPrivatePhysicalLabelHandoffV4} from '../../scripts/v4/privatePhysicalLabelHandoffV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -388,7 +389,35 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                 audit.integratedRepairMode=unified.mode
               }
             }
-          }else audit.integratedRepairStatus='NOT_ELIGIBLE'
+          }else{
+            // Separate presentation-only lane for unchanged physical group
+            // membership. Never invent physical splits, merges or transfers.
+            const handoff=buildPrivatePhysicalLabelHandoffV4({
+              timeline:replayTimeline,checkpointId,riderId,
+              physicalGroupsAtKm:audit.physicalGroupsAtKm
+            })
+            audit.labelHandoffStatus=handoff.status
+            audit.integratedRepairStatus='NOT_ELIGIBLE'
+            if(handoff.status==='LABEL_HANDOFF_CREATED'){
+              const labelSync=buildUniversalReplaySynchronizationSummary(
+                calculationInput,riderReadiness,roadCommandResolution,
+                intermediatePointFinalization,groupAndTimeResolution,
+                finishResolution,phase10Incidents,handoff.timeline,
+                roadRaceResolution
+              )
+              const labelPolicy=classifyUniversalReplaySynchronizationForPublication(labelSync)
+              audit.labelHandoffStrictStatus=labelPolicy.publishable?
+                'STRICT_PASS':'STRICT_BLOCKED'
+              audit.integratedRepairStatus=labelPolicy.publishable?
+                'STRICT_ACCEPTED':'STRICT_BLOCKED'
+              if(labelPolicy.publishable){
+                replayTimeline=handoff.timeline
+                replaySynchronization=labelSync
+                replayPublicationPolicy=labelPolicy
+                audit.integratedRepairMode='PHYSICAL_LABEL_HANDOFF'
+              }
+            }
+          }
         }else audit.integratedRepairStatus='NOT_ELIGIBLE'
       }else audit.integratedRepairStatus='NOT_ELIGIBLE'
     }else if(audit)audit.integratedRepairStatus='NO_BLOCKING_ISSUE'
