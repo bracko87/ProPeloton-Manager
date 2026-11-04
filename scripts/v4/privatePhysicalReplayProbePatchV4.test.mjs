@@ -77,3 +77,13 @@ test('shadow trial runs original synchronization checks without replacing publis
  assert.ok(patched.includes("probe.shadowMismatch=shadow.mismatch"));
  assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
 });
+
+test('current membership mismatch is classified without changing the strict replay',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("if(shadow.mismatch==='CURRENT_MEMBERSHIP')"));
+ assert.ok(patched.includes('probe.shadowHandoff=classifyPhysicalReplayMembershipHandoffV4({'));
+ assert.ok(patched.includes('physicalMembers:physicalCandidate.proposal.afterMembers'));
+ assert.ok(patched.includes('replayGroups:checkpoints[at].groups'));
+ assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
+});
