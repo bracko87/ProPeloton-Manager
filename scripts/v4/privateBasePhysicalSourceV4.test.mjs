@@ -39,7 +39,7 @@ test('reconstructs a neutral base replay checkpoint from same-km physical group 
 test('does not invent movement at a causal transition or overwrite result',()=>{
  const changed={...cp,commentary:[{eventType:'group_split'}]};
  assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},changed]}}).status,
-  'CHECKPOINT_UNSAFE');
+  'EVENT_RIDERS_UNVERIFIED');
  assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},
   {...cp,finalResultsVisible:true}]}}).status,'CHECKPOINT_UNSAFE');
  assert.equal(build({...args,provenance:{status:'EXACT_INHERITED_STALE_BASE_MEMBERSHIP',
@@ -52,4 +52,36 @@ test('fails closed on unmatched riders, absent physical gaps and DNF mismatches'
   physical[0],{...physical[1],gapSeconds:NaN}]}).status,
   'PHYSICAL_GROUP_IDENTITY_UNSAFE');
  assert.equal(build({...args,reachedDnfRiderIds:['b']}).status,'DNF_UNVERIFIED');
+});
+
+test('repairs only independently witnessed P-to-C split at an existing event',()=>{
+ const event={...cp,checkpointKind:'event',
+  commentary:[{eventType:'group_split',riderIds:['b'],commentaryId:'split-evidence'}]};
+ const original={...event};
+ const physicallyWitnessed=km=>km<90?
+  [{...physical[0],riderIds:['a','b']},
+   {...physical[1],riderIds:['c']}]:physical;
+ const result=build({...args,timeline:{checkpoints:[{checkpointId:'start'},event]},
+  baseTimeline:{checkpoints:[original]},physicalGroupsAtKm:physicallyWitnessed});
+ assert.equal(result.status,'BASE_PHYSICAL_EVENT_CREATED');
+ assert.deepEqual(result.timeline.checkpoints[1].groups.map(g=>g.riderIds),[['a'],['b','c']]);
+ assert.equal(result.timeline.checkpoints[1].commentary[0].commentaryId,'split-evidence');
+ assert.equal(result.officialWrites,0);
+ assert.deepEqual(event.groups[0].riderIds,['a','b']);
+});
+test('fails closed when P-to-C movement is not physically witnessed or incident riders differ',()=>{
+ const event={...cp,checkpointKind:'event',
+  commentary:[{eventType:'group_split',riderIds:['b']}]};
+ const timeline={checkpoints:[{checkpointId:'start'},event]};
+ assert.equal(build({...args,timeline,baseTimeline:{checkpoints:[event]}}).status,
+  'EVENT_PHYSICAL_TRANSITION_UNVERIFIED');
+ const witnessed=km=>km<90?
+  [{...physical[0],riderIds:['a','b']},
+   {...physical[1],riderIds:['c']}]:physical;
+ assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},
+  {...event,commentary:[{eventType:'group_split',riderIds:['c']}]}]},
+  baseTimeline:{checkpoints:[event]},physicalGroupsAtKm:witnessed}).status,
+  'EVENT_RIDERS_UNVERIFIED');
+ assert.equal(build({...args,timeline,baseTimeline:{checkpoints:[event]},
+  physicalGroupsAtKm:witnessed,reachedDnfRiderIds:['c']}).status,'DNF_UNVERIFIED');
 });
