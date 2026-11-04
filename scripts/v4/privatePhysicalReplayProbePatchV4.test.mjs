@@ -274,3 +274,15 @@ test('incident-adjusted physical checkpoint reconstruction requires independent 
  assert.ok(patched.includes("audit.integratedRepairMode='INCIDENT_ADJUSTED_CHECKPOINT'"));
  assert.ok(!source.includes('buildPrivateIncidentAdjustedCheckpointV4('));
 });
+
+test('source-drift and continuity evidence remain isolated from official replay physics',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('classifyPrivatePhase10SourceDriftV4({'));
+ assert.ok(patched.includes('classifyPrivatePostCatchContinuityV4({'));
+ assert.ok(patched.includes('audit.phase10SourceDrift='));
+ assert.ok(patched.includes('audit.postCatchContinuity='));
+ assert.ok(!source.includes('classifyPrivatePhase10SourceDriftV4'));
+ assert.ok(!source.includes('classifyPrivatePostCatchContinuityV4'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(candidateSync)'));
+});
