@@ -134,16 +134,57 @@ test('reports only fixed event kind and physical boundary when causal base event
   timeline:{checkpoints:[{checkpointId:'start'},catchEvent]},
   baseTimeline:{checkpoints:[catchEvent]}};
  const unchanged=build(candidate);
- assert.equal(unchanged.status,'NON_NEUTRAL_EVENT');
- assert.equal(unchanged.eventKind,'CATCH');
- assert.equal(unchanged.eventBoundary,'PHYSICALLY_STABLE');
- assert.ok(!JSON.stringify(unchanged).includes('existing-catch'));
+ assert.equal(unchanged.status,'CATCH_PHYSICAL_TRANSITION_UNVERIFIED');
+ assert.equal(unchanged.timeline,undefined);
  const witnessed=km=>km<90?
   [{...physical[0],riderIds:['a','b']},
    {...physical[1],riderIds:['c']}]:physical;
  const changed=build({...candidate,physicalGroupsAtKm:witnessed});
- assert.equal(changed.status,'NON_NEUTRAL_EVENT');
- assert.equal(changed.eventKind,'CATCH');
- assert.equal(changed.eventBoundary,'PHYSICAL_TRANSITION');
+ assert.equal(changed.status,'CATCH_DIRECTION_OR_RIDERS_UNVERIFIED');
  assert.equal(changed.timeline,undefined);
+});
+
+test('corrects an existing catch checkpoint ONLY when its riders physically join the peloton',()=>{
+ const staleCatchGroups=[
+  {...physical[0],riderIds:['a']},
+  {...physical[1],riderIds:['b','c']}
+ ];
+ const catchEvent={...cp,checkpointKind:'event',
+  groups:staleCatchGroups,
+  commentary:[{eventType:'catch',commentaryId:'recorded-catch',
+    title:'An existing group is caught',riderIds:['b']}]
+ };
+ const physicallyWitnessed=km=>km<90?staleCatchGroups:[
+  {...physical[0],riderIds:['a','b']},
+  {...physical[1],riderIds:['c']}
+ ];
+ const result=build({...args,
+  timeline:{checkpoints:[{checkpointId:'start'},catchEvent]},
+  baseTimeline:{checkpoints:[catchEvent]},
+  physicalGroupsAtKm:physicallyWitnessed
+ });
+ assert.equal(result.status,'BASE_PHYSICAL_CATCH_CREATED');
+ assert.deepEqual(result.timeline.checkpoints[1].groups.map(g=>g.riderIds),[['a','b'],['c']]);
+ assert.equal(result.timeline.checkpoints[1].riderStates.find(s=>s.riderId==='b').displayCode,'P');
+ assert.equal(result.timeline.checkpoints[1].commentary[0].commentaryId,'recorded-catch');
+ assert.equal(result.timeline.checkpoints[1].riderStates.find(s=>s.riderId==='b').energy,47);
+ assert.equal(result.officialWrites,0);
+ assert.deepEqual(catchEvent.groups[0].riderIds,['a']);
+});
+test('rejects catch when movement into peloton is absent, fabricated, or disagrees with source riders',()=>{
+ const event={...cp,checkpointKind:'event',commentary:[
+  {eventType:'catch',commentaryId:'recorded-catch',riderIds:['c']}]};
+ const physicalMove=km=>km<90?[
+  {...physical[0],riderIds:['a','b']},
+  {...physical[1],riderIds:['c']}
+ ]:[
+  {...physical[0],riderIds:['a','b','c']}
+ ];
+ const candidate={...args,timeline:{checkpoints:[{checkpointId:'start'},event]},
+  baseTimeline:{checkpoints:[event]},physicalGroupsAtKm:physicalMove};
+ // No checkpoint repair can introduce or hide riders.
+ assert.equal(build(candidate).status,'INVALID_PARTITION');
+ const wrong={...event,commentary:[{...event.commentary[0],riderIds:['b']}]};
+ assert.equal(build({...candidate,timeline:{checkpoints:[{checkpointId:'start'},wrong]}}).status,
+  'CATCH_EVENT_SOURCE_UNVERIFIED');
 });
