@@ -434,6 +434,43 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                 timeline:replayTimeline,checkpointId,
                 physicalGroupsAtKm:audit.physicalGroupsAtKm
               })
+              // The failing checkpoint can be physically correct while the
+              // preceding replay checkpoint is not. Reconstruct ONLY that
+              // earlier checkpoint from its own authoritative Phase10 stage.
+              // Never reuse current-checkpoint incident/DNF evidence for it.
+              if(audit.postCatchContinuity.source==='PREVIOUS_MISMATCH'&&
+                 audit.postCatchContinuity.phys==='PHYSICALLY_STABLE'){
+                const earlierId=prev.checkpointId
+                const earlierStages=(globalThis as typeof globalThis & {
+                  __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+                }).__ppmV4Phase10GroupStages?.get(earlierId)
+                const earlierDetachment=privateStore.__ppmV4Phase10DetachEvidence?.get(earlierId)
+                const earlier=buildPrivateIncidentAdjustedCheckpointV4({
+                  timeline:replayTimeline,checkpointId:earlierId,
+                  physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                  phase10Stages:earlierStages,
+                  reachedDnfRiderIds:earlierDetachment?.dnfRiderIds
+                })
+                audit.earlierCheckpointStatus=earlier.status
+                if(earlier.status==='INCIDENT_CHECKPOINT_RECONSTRUCTED'){
+                  const earlierSync=buildUniversalReplaySynchronizationSummary(
+                    calculationInput,riderReadiness,roadCommandResolution,
+                    intermediatePointFinalization,groupAndTimeResolution,
+                    finishResolution,phase10Incidents,earlier.timeline,
+                    roadRaceResolution
+                  )
+                  const earlierPolicy=classifyUniversalReplaySynchronizationForPublication(earlierSync)
+                  audit.earlierCheckpointStrictStatus=earlierPolicy.publishable?
+                    'STRICT_PASS':'STRICT_BLOCKED'
+                  if(earlierPolicy.publishable){
+                    replayTimeline=earlier.timeline
+                    replaySynchronization=earlierSync
+                    replayPublicationPolicy=earlierPolicy
+                    audit.integratedRepairStatus='STRICT_ACCEPTED'
+                    audit.integratedRepairMode='EARLIER_PHYSICAL_CHECKPOINT'
+                  }
+                }
+              }
               audit.phase10SourceDrift=classifyPrivatePhase10SourceDriftV4({
                 checkpoint:curr,physicalGroupsAtKm:audit.physicalGroupsAtKm,
                 phase10Stages:stages,
