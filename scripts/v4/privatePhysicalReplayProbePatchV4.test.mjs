@@ -238,3 +238,16 @@ test('private handoff attribution is observational and cannot bypass strict vali
  assert.ok(!source.includes('attributePrivatePhase10HandoffV4'));
  assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(stableSync)'));
 });
+
+test('private reached-DNF split evidence uses failed rider and full unchanged strict gate',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('buildPrivateDnfTransitionCommentaryV4({'));
+ assert.ok(patched.includes('timeline:replayTimeline,checkpointId,riderId,'));
+ assert.ok(patched.includes("audit.reachedDnfHandoff==='DNF_HANDOFF_CONFIRMED'"));
+ assert.ok(patched.includes("dnfTransition.status==='DNF_TRANSITION_CREATED'"));
+ assert.ok(patched.includes('phase10Incidents,dnfTransition.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(sync)'));
+ assert.ok(patched.includes('if(policy.publishable){'));
+ assert.ok(!source.includes('buildPrivateDnfTransitionCommentaryV4('));
+});
