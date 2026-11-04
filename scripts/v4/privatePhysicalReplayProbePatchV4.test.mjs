@@ -216,3 +216,15 @@ test('late physical mismatch classification remains private and cannot bypass st
  assert.ok(!source.includes('classifyPrivateLatePhysicalMismatchV4'));
  assert.ok(patched.includes('  if (!replayPublicationPolicy.publishable) {'));
 });
+
+test('private historical diagnostics trace first physical drift and verify DNF survivor provenance',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('tracePrivateFirstPhysicalDivergenceV4({'));
+ assert.ok(patched.includes('audit.firstPhysicalDivergence='));
+ assert.ok(patched.includes("late.incident==='CONFIRMED_DNF_REMOVAL'"));
+ assert.ok(patched.includes('auditPrivateReachedDnfCheckpointV4({'));
+ assert.ok(patched.includes('audit.reachedDnfHandoff='));
+ assert.ok(!source.includes('tracePrivateFirstPhysicalDivergenceV4'));
+ assert.ok(!source.includes('auditPrivateReachedDnfCheckpointV4'));
+});
