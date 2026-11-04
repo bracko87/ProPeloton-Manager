@@ -50,7 +50,8 @@ export function buildPrivateBasePhysicalSourceV4({
  const passiveEvents=new Set(['race_status','late_chase','bridge_progress',
   'peloton_control','kom','intermediate_sprint','bonus_sprint']);
  const neutral=passiveEvents.has(mainType);
- const split=mainType==='group_split'&&cp.checkpointKind==='event';
+ const split=(mainType==='group_split'||mainType==='bridge_attack')&&
+  cp.checkpointKind==='event';
  if(!neutral&&!split)return {status:'NON_NEUTRAL_EVENT'};
  const additional=cp.commentary.slice(1);
  const incidentById=new Map((Array.isArray(cp.incidents)?cp.incidents:[])
