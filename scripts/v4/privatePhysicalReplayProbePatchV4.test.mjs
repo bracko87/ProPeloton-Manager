@@ -343,3 +343,16 @@ test('physical exact-event repair remains private and cannot bypass strict publi
  assert.ok(patched.includes("audit.integratedRepairMode='EXACT_EVENT_PHYSICAL'"));
  assert.ok(!source.includes('buildPrivateExactEventPhysicalCandidateV4'));
 });
+
+test('base physical source repair is private and must pass unchanged strict publication',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('buildPrivateBasePhysicalSourceV4({'));
+ assert.ok(patched.includes('baseTimeline:baseReplayTimeline'));
+ assert.ok(patched.includes('provenance:audit.earlierInputProvenance'));
+ assert.ok(patched.includes('phase10Incidents,baseSourceCandidate.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(baseSourceSync)'));
+ assert.ok(patched.includes('if(baseSourcePolicy.publishable){'));
+ assert.ok(patched.includes("audit.integratedRepairMode='BASE_PHYSICAL_SOURCE'"));
+ assert.ok(!source.includes('buildPrivateBasePhysicalSourceV4'));
+});
