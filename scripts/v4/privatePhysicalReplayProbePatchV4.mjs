@@ -442,7 +442,7 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                 }).status
                 if(audit.reachedDnfHandoff==='DNF_HANDOFF_CONFIRMED'){
                   const dnfTransition=buildPrivateDnfTransitionCommentaryV4({
-                    timeline:replayTimeline,checkpointId,
+                    timeline:replayTimeline,checkpointId,riderId,
                     physicalGroupsAtKm:audit.physicalGroupsAtKm,
                     phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
                   })
