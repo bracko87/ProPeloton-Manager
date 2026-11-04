@@ -517,6 +517,50 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                       return knownStrictIssueCodes.has(code)?code:'OTHER'
                     })
                   )].sort()
+
+                  // Research-only audit of the first residual strict issue.
+                  // Never export its rider or checkpoint identity.
+                  const residualIssue=baseSourcePolicy.blockingIssues.find(issue=>
+                    issue.startsWith('post_catch_group_transfer_without_physical_transition:'))
+                  audit.baseSourceResidualPosition='NONE'
+                  audit.baseSourceResidualPhysical='UNAVAILABLE'
+                  audit.baseSourceResidualSource='UNAVAILABLE'
+                  audit.baseSourceResidualMovement='UNAVAILABLE'
+                  audit.baseSourceResidualTransfer='UNAVAILABLE'
+                  if(residualIssue){
+                    const segments=residualIssue.split(':')
+                    const residualId=segments.slice(3).join(':').split(':v4_private_phase=')[0]
+                    const correctedIndex=baseSourceCandidate.timeline.checkpoints.findIndex(
+                      row=>row.checkpointId===earlierId)
+                    const residualIndex=baseSourceCandidate.timeline.checkpoints.findIndex(
+                      row=>row.checkpointId===residualId)
+                    audit.baseSourceResidualPosition=correctedIndex<0||residualIndex<0?
+                      'MISSING':residualIndex<correctedIndex?'BEFORE':
+                      residualIndex===correctedIndex?'SAME':
+                      residualIndex===correctedIndex+1?'NEXT':'LATER'
+                    const continuity=classifyPrivatePostCatchContinuityV4({
+                      timeline:baseSourceCandidate.timeline,checkpointId:residualId,
+                      physicalGroupsAtKm:audit.physicalGroupsAtKm
+                    })
+                    audit.baseSourceResidualPhysical=continuity.phys??'UNAVAILABLE'
+                    audit.baseSourceResidualSource=continuity.source??'UNAVAILABLE'
+                    audit.baseSourceResidualMovement=continuity.movement??'UNAVAILABLE'
+                    if(residualIndex>0){
+                      const before=baseSourceCandidate.timeline.checkpoints[residualIndex-1]
+                      const after=baseSourceCandidate.timeline.checkpoints[residualIndex]
+                      const code=(checkpoint:any)=>checkpoint.groups?.find((group:any)=>
+                        Array.isArray(group.riderIds)&&
+                        group.riderIds.includes(segments[1]))?.displayCode
+                      const previous=code(before),current=code(after)
+                      if(typeof previous==='string'&&typeof current==='string'){
+                        audit.baseSourceResidualTransfer=previous===current?
+                          'NO_TRANSFER':previous==='P'&&/^C[0-9]+$/.test(current)?
+                          'P_TO_C':/^C[0-9]+$/.test(previous)&&current==='P'?
+                          'C_TO_P':/^C[0-9]+$/.test(previous)&&/^C[0-9]+$/.test(current)?
+                          'C_TO_C':'UNAVAILABLE'
+                      }
+                    }
+                  }
                   if(baseSourcePolicy.publishable){
                     replayTimeline=baseSourceCandidate.timeline
                     replaySynchronization=baseSourceSync
