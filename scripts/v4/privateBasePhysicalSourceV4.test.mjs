@@ -110,5 +110,19 @@ test('rejects unverified Phase10 commentary and physically causal base events',(
   baseTimeline:{checkpoints:[base]}}).status,'ADDITIONAL_EVENT_UNVERIFIED');
  const causal={...base,commentary:[{eventType:'bridge_attack',commentaryId:'attack'}]};
  assert.equal(build({...args,timeline:{checkpoints:[{checkpointId:'start'},causal]},
-  baseTimeline:{checkpoints:[causal]}}).status,'NON_NEUTRAL_EVENT');
+  baseTimeline:{checkpoints:[causal]}}).status,'EVENT_RIDERS_UNVERIFIED');
+});
+
+test('accepts an existing bridge attack only when physical P-to-C movement is independently witnessed',()=>{
+ const bridge={...cp,checkpointKind:'event',commentary:[
+  {eventType:'bridge_attack',commentaryId:'existing-bridge-attack',riderIds:['b']}]};
+ const witnessed=km=>km<90?[
+  {...physical[0],riderIds:['a','b']},
+  {...physical[1],riderIds:['c']}
+ ]:physical;
+ const out=build({...args,timeline:{checkpoints:[{checkpointId:'start'},bridge]},
+  baseTimeline:{checkpoints:[bridge]},physicalGroupsAtKm:witnessed});
+ assert.equal(out.status,'BASE_PHYSICAL_EVENT_CREATED');
+ assert.equal(out.timeline.checkpoints[1].riderStates.find(s=>s.riderId==='b').displayCode,'C1');
+ assert.equal(out.timeline.checkpoints[1].commentary[0].commentaryId,'existing-bridge-attack');
 });
