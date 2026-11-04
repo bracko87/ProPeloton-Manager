@@ -57,6 +57,7 @@ import {tracePrivateFirstPhysicalDivergenceV4} from '../../scripts/v4/privateFir
 import {auditPrivateReachedDnfCheckpointV4} from '../../scripts/v4/privateReachedDnfCheckpointV4.mjs'
 import {attributePrivatePhase10HandoffV4} from '../../scripts/v4/privatePhase10HandoffAttributionV4.mjs'
 import {buildPrivateDnfTransitionCommentaryV4} from '../../scripts/v4/privateDnfTransitionCommentaryV4.mjs'
+import {buildPrivateDnfSurvivorIdentityV4} from '../../scripts/v4/privateDnfSurvivorIdentityV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -441,6 +442,32 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
                 }).status
                 if(audit.reachedDnfHandoff==='DNF_HANDOFF_CONFIRMED'){
+                  const survivorIdentity=buildPrivateDnfSurvivorIdentityV4({
+                    timeline:replayTimeline,checkpointId,riderId,
+                    physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                    phase10Stages:stages,reachedDnfRiderIds:detachment?.dnfRiderIds
+                  })
+                  audit.survivorIdentityStatus=survivorIdentity.status
+                  if(survivorIdentity.status==='DNF_SURVIVOR_IDENTITY_CREATED'){
+                    const candidateSync=buildUniversalReplaySynchronizationSummary(
+                      calculationInput,riderReadiness,roadCommandResolution,
+                      intermediatePointFinalization,groupAndTimeResolution,
+                      finishResolution,phase10Incidents,survivorIdentity.timeline,
+                      roadRaceResolution
+                    )
+                    const candidatePolicy=classifyUniversalReplaySynchronizationForPublication(candidateSync)
+                    audit.survivorIdentityStrictStatus=candidatePolicy.publishable?
+                      'STRICT_PASS':'STRICT_BLOCKED'
+                    audit.integratedRepairStatus=candidatePolicy.publishable?
+                      'STRICT_ACCEPTED':'STRICT_BLOCKED'
+                    if(candidatePolicy.publishable){
+                      replayTimeline=survivorIdentity.timeline
+                      replaySynchronization=candidateSync
+                      replayPublicationPolicy=candidatePolicy
+                      audit.integratedRepairMode='DNF_SURVIVOR_IDENTITY'
+                    }
+                  }
+
                   const dnfTransition=buildPrivateDnfTransitionCommentaryV4({
                     timeline:replayTimeline,checkpointId,riderId,
                     physicalGroupsAtKm:audit.physicalGroupsAtKm,
