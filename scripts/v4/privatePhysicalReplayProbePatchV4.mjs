@@ -561,6 +561,103 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                       }
                     }
                   }
+
+                  // An independently witnessed catch can uncover a SECOND stale
+                  // checkpoint later in the replay. Research-only: try bounded
+                  // evidence-backed reconstruction of that residual's PREVIOUS
+                  // checkpoint. Never patch a later correct physical checkpoint.
+                  audit.baseSourceResidualRepairStatus='NOT_RUN'
+                  audit.baseSourceResidualRepairMode='NONE'
+                  if(!baseSourcePolicy.publishable&&
+                     baseSourcePolicy.blockingIssues.length>0&&
+                     baseSourcePolicy.blockingIssues.every(issue=>
+                       issue.startsWith('post_catch_group_transfer_without_physical_transition:'))&&
+                     audit.baseSourceResidualPosition==='LATER'&&
+                     audit.baseSourceResidualPhysical==='PHYSICALLY_STABLE'&&
+                     audit.baseSourceResidualSource==='PREVIOUS_MISMATCH'&&
+                     audit.baseSourceResidualMovement==='PRESENTATION_MEMBERSHIP_CHANGE'&&
+                     residualIssue){
+                    const parts=residualIssue.split(':')
+                    const residualId=parts.slice(3).join(':').split(':v4_private_phase=')[0]
+                    const checkpoints=baseSourceCandidate.timeline.checkpoints
+                    const residualAt=checkpoints.findIndex(cp=>cp.checkpointId===residualId)
+                    if(residualAt>1){
+                      const stale=checkpoints[residualAt-1]
+                      const staleId=stale.checkpointId
+                      const staleStages=(globalThis as typeof globalThis & {
+                        __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+                      }).__ppmV4Phase10GroupStages?.get(staleId)
+                      const staleDnf=privateStore.__ppmV4Phase10DetachEvidence?.get(staleId)
+                      const staleProvenance=classifyPrivatePhase10InputProvenanceV4({
+                        checkpoint:stale,phase10Stages:staleStages,
+                        baseTimeline:baseReplayTimeline,
+                        physicalGroupsAtKm:audit.physicalGroupsAtKm
+                      })
+                      const candidates:Array<{mode:string,timeline:any}>=[]
+                      const secondBase=buildPrivateBasePhysicalSourceV4({
+                        timeline:baseSourceCandidate.timeline,
+                        baseTimeline:baseReplayTimeline,
+                        checkpointId:staleId,
+                        physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                        provenance:staleProvenance,
+                        reachedDnfRiderIds:staleDnf?.dnfRiderIds
+                      })
+                      if(['BASE_PHYSICAL_SOURCE_CREATED','BASE_PHYSICAL_EVENT_CREATED',
+                          'BASE_PHYSICAL_PASSIVE_EVENT_CREATED',
+                          'BASE_PHYSICAL_CATCH_CREATED'].includes(secondBase.status))
+                        candidates.push({mode:'BASE_SOURCE',timeline:secondBase.timeline})
+                      const secondExact=buildPrivateExactEventPhysicalCandidateV4({
+                        timeline:baseSourceCandidate.timeline,
+                        checkpointId:staleId,
+                        physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                        baseTimeline:baseReplayTimeline,
+                        provenance:staleProvenance,
+                        reachedDnfRiderIds:staleDnf?.dnfRiderIds
+                      })
+                      if(secondExact.status==='EXACT_EVENT_CANDIDATE_CREATED')
+                        candidates.push({mode:'EXACT_EVENT',timeline:secondExact.timeline})
+                      // Causal narration and incidents remain untouched. The
+                      // stable fallback is allowed only for passive checkpoints.
+                      const passiveTypes=new Set(['race_status','peloton_control',
+                        'bridge_progress','kom','intermediate_sprint','bonus_sprint'])
+                      if(Array.isArray(stale.commentary)&&
+                         stale.commentary.every(entry=>passiveTypes.has(entry.eventType))&&
+                         (!Array.isArray(stale.incidents)||stale.incidents.length===0)){
+                        const secondStable=buildPrivateStablePhysicalCheckpointV4({
+                          timeline:baseSourceCandidate.timeline,
+                          checkpointId:staleId,
+                          physicalGroupsAtKm:audit.physicalGroupsAtKm
+                        })
+                        if(secondStable.status==='STABLE_CHECKPOINT_CREATED')
+                          candidates.push({mode:'STABLE_CHECKPOINT',timeline:secondStable.timeline})
+                      }
+                      audit.baseSourceResidualRepairStatus=candidates.length?
+                        'STRICT_BLOCKED':'NO_PROVEN_CANDIDATE'
+                      for(const candidate of candidates){
+                        // No partial acceptance: use the original full gate
+                        // across ALL checkpoints, not only the repaired pair.
+                        const residualSync=buildUniversalReplaySynchronizationSummary(
+                          calculationInput,riderReadiness,roadCommandResolution,
+                          intermediatePointFinalization,groupAndTimeResolution,
+                          finishResolution,phase10Incidents,candidate.timeline,
+                          roadRaceResolution
+                        )
+                        const residualPolicy=classifyUniversalReplaySynchronizationForPublication(residualSync)
+                        if(residualPolicy.publishable){
+                          replayTimeline=candidate.timeline
+                          replaySynchronization=residualSync
+                          replayPublicationPolicy=residualPolicy
+                          audit.baseSourceResidualRepairStatus='STRICT_ACCEPTED'
+                          audit.baseSourceResidualRepairMode=candidate.mode
+                          audit.integratedRepairStatus='STRICT_ACCEPTED'
+                          audit.integratedRepairMode='BASE_CATCH_PLUS_RESIDUAL'
+                          break
+                        }
+                      }
+                    }else{
+                      audit.baseSourceResidualRepairStatus='NO_PROVEN_CANDIDATE'
+                    }
+                  }
                   if(baseSourcePolicy.publishable){
                     replayTimeline=baseSourceCandidate.timeline
                     replaySynchronization=baseSourceSync
