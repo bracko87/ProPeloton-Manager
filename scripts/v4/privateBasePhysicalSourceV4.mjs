@@ -36,17 +36,35 @@ export function buildPrivateBasePhysicalSourceV4({
   !Array.isArray(cp.groups)||!Array.isArray(cp.gaps)||
   !Array.isArray(cp.riderStates)||!Array.isArray(cp.commentary))
   return {status:'CHECKPOINT_UNSAFE'};
- // Existing catch/merge/finish boundary checkpoints are never rewritten.
- // An ordinary race-status checkpoint is eligible as before. For the
- // remaining P-to-C case, allow ONLY an already recorded group_split, where
- // raw physical snapshots at the event boundary independently establish the
- // split and confirm every mentioned rider actually moved from P to C.
- const neutral=cp.commentary.length===1&&
-  cp.commentary[0]?.eventType==='race_status';
- const split=cp.commentary.length===1&&
-  cp.commentary[0]?.eventType==='group_split'&&
-  cp.checkpointKind==='event';
+ // Match the original base event by identity/type. Phase10 can append
+ // incident commentary without changing the base event, which makes the
+ // previous "one race_status only" rule reject otherwise-safe checkpoints.
+ // Preserve every existing commentary entry unchanged; extras must be
+ // source-confirmed incident announcements, never inferred group movement.
+ if(!Array.isArray(original.commentary)||original.commentary.length!==1||
+    cp.commentary.length<1||!cp.commentary[0]||
+    cp.commentary[0].eventType!==original.commentary[0]?.eventType||
+    cp.commentary[0].commentaryId!==original.commentary[0]?.commentaryId)
+   return {status:'EVENT_SOURCE_UNVERIFIED'};
+ const mainType=original.commentary[0].eventType;
+ const passiveEvents=new Set(['race_status','late_chase','bridge_progress',
+  'peloton_control','kom','intermediate_sprint','bonus_sprint']);
+ const neutral=passiveEvents.has(mainType);
+ const split=mainType==='group_split'&&cp.checkpointKind==='event';
  if(!neutral&&!split)return {status:'NON_NEUTRAL_EVENT'};
+ const additional=cp.commentary.slice(1);
+ const incidentById=new Map((Array.isArray(cp.incidents)?cp.incidents:[])
+  .map(incident=>[incident.incidentId,incident]));
+ for(const extra of additional){
+  const incidentId=typeof extra?.commentaryId==='string'&&
+   extra.commentaryId.startsWith('commentary:')?
+   extra.commentaryId.slice('commentary:'.length):null;
+  const recorded=incidentId?incidentById.get(incidentId):null;
+  if(extra?.eventType!=='incident'||!recorded||
+    !Array.isArray(extra.riderIds)||!Array.isArray(recorded.riderIds)||
+    !equal([...extra.riderIds].sort(),[...recorded.riderIds].sort()))
+    return {status:'ADDITIONAL_EVENT_UNVERIFIED'};
+ }
  const dnf=new Set(reachedDnfRiderIds);
  const states=new Map(cp.riderStates.map(row=>[row.riderId,row]));
  if(dnf.size!==reachedDnfRiderIds.length||
@@ -128,6 +146,8 @@ export function buildPrivateBasePhysicalSourceV4({
  });
  const checkpoints=timeline.checkpoints.map((row,index)=>index===i?
   {...row,groups,gaps,riderStates}:row);
- return {status:split?'BASE_PHYSICAL_EVENT_CREATED':'BASE_PHYSICAL_SOURCE_CREATED',
+ return {status:split?'BASE_PHYSICAL_EVENT_CREATED':
+   mainType==='race_status'?'BASE_PHYSICAL_SOURCE_CREATED':
+   'BASE_PHYSICAL_PASSIVE_EVENT_CREATED',
   timeline:{...timeline,checkpoints},researchOnly:true,officialWrites:0};
 }
