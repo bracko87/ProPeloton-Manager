@@ -36,3 +36,12 @@ test('distinguishes downstream change and protects DNF status',()=>{
  assert.equal(changed.publication,'POST_SOURCE_CHANGE');
  assert.equal(classify({...args,reachedDnfRiderIds:['b']}).status,'UNAVAILABLE');
 });
+
+test('exposes incorrect Phase10 initial source instead of calling it no stage drift',()=>{
+ const wrong=group(['a','c'],['b','d']);
+ const initialWrong=Object.fromEntries(labels.map(label=>[label,wrong]));
+ const out=classify({...args,phase10Stages:initialWrong});
+ assert.equal(out.firstDifference,'INITIAL_ALREADY_DIFFERS');
+ assert.equal(out.sourceStatus,'GROUP_PARTITION_DIFFERS');
+ assert.equal(out.detachmentEffect,'UNCHANGED');
+});
