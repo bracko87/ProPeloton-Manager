@@ -130,3 +130,14 @@ test('Phase 10 detachment evidence distinguishes autonomous episodes from reache
  assert.ok(patched.includes('probe.phase10DetachmentEvidence=classifyPhase10DetachmentEvidenceV4({'));
  assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
 });
+
+test('DNF-aware shadow is confined to confirmed incident detachment and reuses strict validator',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("probe.phase10DetachmentEvidence==='DNF_DETACHMENT'"));
+ assert.ok(patched.includes('const dnfShadow=buildPrivateDnfAwareMergerShadowV4({'));
+ assert.ok(patched.includes('reachedDnfRiderIds:detachment.dnfRiderIds'));
+ assert.ok(patched.includes('phase10Incidents,dnfShadow.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(dnfStrict)'));
+ assert.ok(!patched.includes('replayTimeline=dnfShadow.timeline'));
+});
