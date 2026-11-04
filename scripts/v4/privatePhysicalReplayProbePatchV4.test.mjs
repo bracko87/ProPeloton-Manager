@@ -286,3 +286,17 @@ test('source-drift and continuity evidence remain isolated from official replay 
  assert.ok(!source.includes('classifyPrivatePostCatchContinuityV4'));
  assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(candidateSync)'));
 });
+
+test('earlier physical checkpoint trial uses its own Phase10 DNF evidence and original strict gate',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.postCatchContinuity.source==='PREVIOUS_MISMATCH'"));
+ assert.ok(patched.includes("audit.postCatchContinuity.phys==='PHYSICALLY_STABLE'"));
+ assert.ok(patched.includes('const earlierId=prev.checkpointId'));
+ assert.ok(patched.includes('get(earlierId)'));
+ assert.ok(patched.includes('reachedDnfRiderIds:earlierDetachment?.dnfRiderIds'));
+ assert.ok(patched.includes('phase10Incidents,earlier.timeline,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(earlierSync)'));
+ assert.ok(patched.includes('if(earlierPolicy.publishable){'));
+ assert.ok(!source.includes('earlierCheckpointStrictStatus'));
+});
