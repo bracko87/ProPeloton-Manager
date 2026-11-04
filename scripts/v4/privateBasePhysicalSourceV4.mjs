@@ -52,7 +52,11 @@ export function buildPrivateBasePhysicalSourceV4({
  const neutral=passiveEvents.has(mainType);
  const split=(mainType==='group_split'||mainType==='bridge_attack')&&
   cp.checkpointKind==='event';
- if(!neutral&&!split){
+ // Existing source catch checkpoints are after-contact events. Only
+ // physically observed movement INTO the peloton may be corrected; a
+ // concurrent P-to-C split must not be disguised as a catch.
+ const catchEvent=mainType==='catch'&&cp.checkpointKind==='event';
+ if(!neutral&&!split&&!catchEvent){
   // Report only a fixed, non-identifying source-event category. Some
   // checkpoint kinds have causal same-km semantics (catch, merge, contact).
   // Those are never rewritten without a separate, physically proven fix.
@@ -98,6 +102,44 @@ export function buildPrivateBasePhysicalSourceV4({
  let physical;
  try{physical=partition(physicalGroupsAtKm(km));}
  catch{return {status:'PHYSICAL_UNAVAILABLE'};}
+ if(catchEvent){
+  // Read the physical snapshot immediately before and at the source catch.
+  // No replay group, incident state, or commentary may create a transition.
+  if(dnf.size!==0)return {status:'EVENT_DNF_UNSAFE'};
+  const sourceCatch=original.commentary[0];
+  const displayedCatch=cp.commentary[0];
+  if(!Array.isArray(sourceCatch?.riderIds)||
+    !equal([...sourceCatch.riderIds].sort(),
+      [...(Array.isArray(displayedCatch.riderIds)?displayedCatch.riderIds:[])].sort()))
+    return {status:'CATCH_EVENT_SOURCE_UNVERIFIED'};
+  let immediatelyBefore;
+  try{immediatelyBefore=partition(physicalGroupsAtKm(Math.max(0,km-0.00001)));}
+  catch{return {status:'PHYSICAL_UNAVAILABLE'};}
+  if(!physical||!immediatelyBefore||
+    !equal(immediatelyBefore.ids,physical.ids)||
+    equal(immediatelyBefore.keys,physical.keys))
+    return {status:'CATCH_PHYSICAL_TRANSITION_UNVERIFIED'};
+  const beforeByRider=new Map();
+  const afterByRider=new Map();
+  for(const group of immediatelyBefore.rows){
+    if(typeof group.displayCode!=='string')return {status:'CATCH_GROUP_IDENTITY_UNVERIFIED'};
+    for(const id of group.riderIds)beforeByRider.set(id,group.displayCode);
+  }
+  for(const group of physical.rows){
+    if(typeof group.displayCode!=='string')return {status:'CATCH_GROUP_IDENTITY_UNVERIFIED'};
+    for(const id of group.riderIds)afterByRider.set(id,group.displayCode);
+  }
+  const moved=[...beforeByRider.keys()].filter(id=>
+    beforeByRider.get(id)!==afterByRider.get(id));
+  const announced=new Set(sourceCatch.riderIds);
+  // Catch events may announce more riders than move at this precise
+  // kilometre (some have already joined). At least one announced rider
+  // must actually be caught; *every* physical mover must be announced.
+  if(moved.length===0||moved.some(id=>
+    !announced.has(id)||beforeByRider.get(id)==='P'||
+    afterByRider.get(id)!=='P'))
+    return {status:'CATCH_DIRECTION_OR_RIDERS_UNVERIFIED'};
+ }
  if(split){
   // Never infer a split simply because two distant replay checkpoints
   // disagree. Use an immediate pre-event physical snapshot, not replay data.
@@ -170,7 +212,8 @@ export function buildPrivateBasePhysicalSourceV4({
  });
  const checkpoints=timeline.checkpoints.map((row,index)=>index===i?
   {...row,groups,gaps,riderStates}:row);
- return {status:split?'BASE_PHYSICAL_EVENT_CREATED':
+ return {status:catchEvent?'BASE_PHYSICAL_CATCH_CREATED':
+   split?'BASE_PHYSICAL_EVENT_CREATED':
    mainType==='race_status'?'BASE_PHYSICAL_SOURCE_CREATED':
    'BASE_PHYSICAL_PASSIVE_EVENT_CREATED',
   timeline:{...timeline,checkpoints},researchOnly:true,officialWrites:0};
