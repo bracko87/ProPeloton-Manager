@@ -41,3 +41,10 @@ test('preserves reached DNF and refuses to restore nonphysical riders',()=>{
  assert.equal(out.timeline.checkpoints[1].riderStates.find(s=>s.riderId==='c').status,'dnf');
  assert.equal(build({...args,reachedDnfRiderIds:['c']}).status,'DNF_UNVERIFIED');
 });
+
+test('rejects gaps not confirmed by authoritative physical road groups',()=>{
+ const mismatch=build({...args,physicalGroupsAtKm:()=>[
+  {riderIds:['a','b'],gapSeconds:11},{riderIds:['c'],gapSeconds:40}
+ ]});
+ assert.equal(mismatch.status,'PHYSICAL_GAP_MISMATCH');
+});
