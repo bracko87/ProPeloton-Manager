@@ -47,6 +47,7 @@ import {buildReplayFromPhysicalGroupsV4} from '../../scripts/v4/physicalGroupRep
 import {classifyPhysicalCheckpointBoundaryV4,diagnosePhysicalCheckpointBoundaryV4} from '../../scripts/v4/privatePhysicalBoundaryCompareV4.mjs'
 import {classifyReplayCheckpointPresentationV4} from '../../scripts/v4/privateReplayCheckpointPresentationV4.mjs'
 import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/privatePhysicalCheckpointCandidateV4.mjs'
+import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysicalMergerShadowV4.mjs'
 `;
  const guarded=source.replace(anchor,body+anchor)
  const publicationAnchor='  if (!replayPublicationPolicy.publishable) {'
@@ -82,6 +83,17 @@ import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/private
           probe.physicalCheckpointCandidate=physicalCandidate.classification
           // Proposal retains rider identities only in isolated worker memory.
           probe.physicalCheckpointProposal=physicalCandidate.proposal
+          // Guarded shadow is diagnostic-only; never replace replayTimeline.
+          if(physicalCandidate.classification==='PHYSICAL_TRANSITION_CANDIDATE'&&
+             physicalCandidate.proposal?.eventType==='group_merge'){
+            const shadow=buildPrivatePhysicalMergerShadowV4({
+              timeline:replayTimeline,
+              checkpointId,
+              riderId:parts[1],
+              proposal:physicalCandidate.proposal
+            })
+            probe.shadowMergerStatus=shadow.status
+          }
           probe.boundaryPhysicalStatus=classifyPhysicalCheckpointBoundaryV4({
             ...probe.failedCheckpointInterval,
             physicalGroupsAtKm:probe.physicalGroupsAtKm
