@@ -310,3 +310,13 @@ test('previous checkpoint Phase10 drift diagnosis is independent and observation
  assert.ok(patched.includes('autonomousRiderIds:earlierDetachment?.autonomousRiderIds'));
  assert.ok(!source.includes('earlierPhase10SourceDrift'));
 });
+
+test('exact-event source inheritance probe uses base timeline privately without changing acceptance gates',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('audit.earlierExactEventSource=classifyPrivateExactEventSourceV4({'));
+ assert.ok(patched.includes('baseTimeline:baseReplayTimeline'));
+ assert.ok(patched.includes('checkpointId:earlierId'));
+ assert.ok(!source.includes('earlierExactEventSource'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(earlierSync)'));
+});
