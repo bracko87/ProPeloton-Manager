@@ -53,6 +53,8 @@ import {buildPrivateUnifiedMergerCandidateV4} from '../../scripts/v4/privateUnif
 import {buildPrivatePhysicalLabelHandoffV4} from '../../scripts/v4/privatePhysicalLabelHandoffV4.mjs'
 import {buildPrivateStablePhysicalCheckpointV4} from '../../scripts/v4/privateStablePhysicalCheckpointV4.mjs'
 import {classifyPrivateLatePhysicalMismatchV4} from '../../scripts/v4/privateLatePhysicalMismatchV4.mjs'
+import {tracePrivateFirstPhysicalDivergenceV4} from '../../scripts/v4/privateFirstPhysicalDivergenceV4.mjs'
+import {auditPrivateReachedDnfCheckpointV4} from '../../scripts/v4/privateReachedDnfCheckpointV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
