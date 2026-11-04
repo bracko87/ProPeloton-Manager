@@ -7,7 +7,7 @@
  */
 const partition=groups=>{
  if(!Array.isArray(groups)||!groups.length)return null;
- const seen=new Set(),rows=[],keys=[],codes=new Set();
+ const seen=new Set(),rows=[],keys=[];
  for(const g of groups){
   if(!Array.isArray(g?.riderIds)||!g.riderIds.length||
      g.riderIds.some(id=>typeof id!=='string'||!id||seen.has(id)))return null;
@@ -40,7 +40,7 @@ export function buildPrivateResidualPhysicalCheckpointV4({
  if(cp.finalResultsVisible||next.finalResultsVisible||
     !['base','event'].includes(cp.checkpointKind)||
     !Array.isArray(cp.commentary)||!cp.commentary.every(c=>passive.has(c?.eventType))||
-    !Array.isArray(cp.incidents)||cp.incidents.length>0||
+    (cp.incidents!==undefined&&(!Array.isArray(cp.incidents)||cp.incidents.length>0))||
     !Array.isArray(cp.groups)||!Array.isArray(cp.gaps)||
     !Array.isArray(cp.riderStates)||!Array.isArray(next.groups))
   return {status:'CAUSAL_OR_INCIDENT_UNSAFE'};
