@@ -451,6 +451,14 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   phase10Stages:earlierStages,
                   reachedDnfRiderIds:earlierDetachment?.dnfRiderIds
                 })
+                // Diagnose that earlier checkpoint at its OWN source boundary.
+                // The reported current checkpoint may be physically correct.
+                audit.earlierPhase10SourceDrift=classifyPrivatePhase10SourceDriftV4({
+                  checkpoint:prev,physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                  phase10Stages:earlierStages,
+                  reachedDnfRiderIds:earlierDetachment?.dnfRiderIds,
+                  autonomousRiderIds:earlierDetachment?.autonomousRiderIds
+                })
                 audit.earlierCheckpointStatus=earlier.status
                 if(earlier.status==='INCIDENT_CHECKPOINT_RECONSTRUCTED'){
                   const earlierSync=buildUniversalReplaySynchronizationSummary(
