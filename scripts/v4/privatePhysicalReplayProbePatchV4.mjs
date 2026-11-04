@@ -490,6 +490,33 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   const baseSourcePolicy=classifyUniversalReplaySynchronizationForPublication(baseSourceSync)
                   audit.baseSourceStrictStatus=baseSourcePolicy.publishable?
                     'STRICT_PASS':'STRICT_BLOCKED'
+                  // Strict issues may include private rider/checkpoint IDs.
+                  // Retain only fixed allowlisted category labels.
+                  const knownStrictIssueCodes=new Set([
+                    'post_catch_group_transfer_without_physical_transition',
+                    'same_kilometre_physical_state_mismatch',
+                    'front_group_transfer_without_physical_transition',
+                    'gap_change_not_distance_bounded',
+                    'duplicate_physical_group_gap',
+                    'group_gap_identity_mismatch',
+                    'rider_group_gap_mismatch',
+                    'rider_state_missing_group',
+                    'group_gap_cardinality_mismatch',
+                    'bridge_merge_invalid',
+                    'bridge_group_disappears_without_merge',
+                    'bridge_group_without_peloton',
+                    'opening_breakaway_lineage_changed',
+                    'opening_breakaway_lineage_changed_without_bridge_merge',
+                    'pre_finish_status_mismatch',
+                    'checkpoint_rider_states_incomplete',
+                    'final_road_groups_or_gaps_mismatch'
+                  ])
+                  audit.baseSourceStrictIssueCodes=[...new Set(
+                    baseSourcePolicy.blockingIssues.map(issue=>{
+                      const code=issue.split(':')[0]
+                      return knownStrictIssueCodes.has(code)?code:'OTHER'
+                    })
+                  )].sort()
                   if(baseSourcePolicy.publishable){
                     replayTimeline=baseSourceCandidate.timeline
                     replaySynchronization=baseSourceSync
