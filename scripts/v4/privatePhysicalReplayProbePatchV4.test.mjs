@@ -165,7 +165,10 @@ test('private end-to-end repair re-enters unchanged strict publication and accep
  assert.ok(patched.includes('  let replayTimeline ='));
  assert.ok(patched.includes('  let replaySynchronization ='));
  assert.ok(patched.includes('  let replayPublicationPolicy ='));
- assert.ok(patched.includes('replayPublicationPolicy.blockingIssues.length===1'));
+ assert.ok(patched.includes('replayPublicationPolicy.blockingIssues.length>0'));
+ assert.ok(patched.includes("blockingIssues.find("));
+ assert.ok(patched.includes("candidatePolicy.publishable"));
+ assert.ok(!patched.includes('replayPublicationPolicy.blockingIssues.length===1'));
  assert.ok(patched.includes("audit.integratedRepairStatus='STRICT_ACCEPTED'") || patched.includes("'STRICT_ACCEPTED':'STRICT_BLOCKED'"));
  assert.ok(patched.includes('replayTimeline=unified.timeline'));
  assert.ok(patched.includes('replaySynchronization=candidateSync'));
