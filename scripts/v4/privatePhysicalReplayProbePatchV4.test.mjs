@@ -107,3 +107,16 @@ test('downstream handoff probe separates Phase 10 from final reconciliation with
  assert.ok(patched.includes('finalTimeline:replayTimeline'));
  assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
 });
+
+test('Phase 10 mutation boundary probe captures physical memberships privately',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("cpStages['INITIAL']=groups.map"));
+ assert.ok(patched.includes("cpStages['AFTER_DETACHMENT']=groups.map"));
+ assert.ok(patched.includes("cpStages['AFTER_AUTONOMOUS_GROUPS']=groups.map"));
+ assert.ok(patched.includes("cpStages['AFTER_CONSOLIDATION']=groups.map"));
+ assert.ok(patched.includes("cpStages['AFTER_FINISH_COMMIT']=groups.map"));
+ assert.ok(patched.includes("cpStages['AFTER_DISPLAY_NORMALIZATION']=groups.map"));
+ assert.ok(patched.includes('probe.phase10MembershipStage=classifyPhase10MembershipStageV4({'));
+ assert.ok(!patched.includes('replayTimeline=shadow.timeline'));
+});
