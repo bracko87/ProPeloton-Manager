@@ -34,3 +34,12 @@ test('identical-distance checkpoints cannot create a shadow merger',()=>{
  const same={...timeline,checkpoints:[cp('before',20,[['a'],['b'],['c','d']]),timeline.checkpoints[1]]};
  assert.equal(build({...args,timeline:same}).status,'REPLAY_PHYSICAL_MEMBERSHIP_MISMATCH');
 });
+
+test('mismatch category distinguishes earlier from later replay membership',()=>{
+ const earlier=build({...args,proposal:{...proposal,beforeMembers:['b']}});
+ assert.equal(earlier.mismatch,'PREVIOUS_MEMBERSHIP');
+ const later=build({...args,proposal:{...proposal,afterMembers:['a']}});
+ assert.equal(later.mismatch,'CURRENT_MEMBERSHIP');
+ const both=build({...args,proposal:{...proposal,beforeMembers:['b'],afterMembers:['a']}});
+ assert.equal(both.mismatch,'BOTH_MEMBERSHIPS');
+});
