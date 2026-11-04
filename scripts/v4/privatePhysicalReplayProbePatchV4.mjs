@@ -49,6 +49,7 @@ import {classifyReplayCheckpointPresentationV4} from '../../scripts/v4/privateRe
 import {reconstructPhysicalCheckpointCandidateV4} from '../../scripts/v4/privatePhysicalCheckpointCandidateV4.mjs'
 import {buildPrivatePhysicalMergerShadowV4} from '../../scripts/v4/privatePhysicalMergerShadowV4.mjs'
 import {buildPrivateDnfAwareMergerShadowV4} from '../../scripts/v4/privateDnfAwareMergerShadowV4.mjs'
+import {buildPrivateUnifiedMergerCandidateV4} from '../../scripts/v4/privateUnifiedMergerCandidateV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -259,6 +260,37 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                 probe.shadowStrictRemainingIssues=strictPolicy.blockingIssues.length
               }catch{
                 probe.shadowStrictStatus='STRICT_ERROR'
+              }
+            }
+          }
+          // Unified trial runs once for either physically grounded merger path.
+          // It evaluates the unmodified validator on an isolated copy only.
+          if(physicalCandidate.classification==='PHYSICAL_TRANSITION_CANDIDATE'&&
+             physicalCandidate.proposal?.eventType==='group_merge'){
+            const incidentEvidence=(globalThis as typeof globalThis & {
+              __ppmV4Phase10DetachEvidence?:Map<string,any>
+            }).__ppmV4Phase10DetachEvidence?.get(checkpointId)
+            const unified=buildPrivateUnifiedMergerCandidateV4({
+              timeline:replayTimeline,checkpointId,riderId:parts[1],
+              proposal:physicalCandidate.proposal,
+              detachmentClass:probe.phase10DetachmentEvidence,
+              reachedDnfRiderIds:incidentEvidence?.dnfRiderIds
+            })
+            probe.unifiedMergerStatus=unified.status
+            probe.unifiedMergerMode=unified.mode
+            if(unified.status==='CANDIDATE_CREATED'){
+              try{
+                const unifiedSummary=buildUniversalReplaySynchronizationSummary(
+                  calculationInput,riderReadiness,roadCommandResolution,
+                  intermediatePointFinalization,groupAndTimeResolution,
+                  finishResolution,phase10Incidents,unified.timeline,
+                  roadRaceResolution
+                )
+                const unifiedPolicy=classifyUniversalReplaySynchronizationForPublication(unifiedSummary)
+                probe.unifiedMergerStrictStatus=unifiedPolicy.publishable?
+                  'STRICT_PASS':'STRICT_BLOCKED'
+              }catch{
+                probe.unifiedMergerStrictStatus='STRICT_ERROR'
               }
             }
           }
