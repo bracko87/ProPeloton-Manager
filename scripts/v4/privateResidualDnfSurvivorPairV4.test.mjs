@@ -257,3 +257,44 @@ test('published autonomous display name must agree with final normalized Phase10
  assert.equal(result.stage,'AFTER_DISPLAY_NORMALIZATION');
  assert.equal(result.detail,'DISPLAY_CODE_CHANGED');
 });
+
+test('two autonomous groups can share dropped_group type without colliding display labels',()=>{
+ const detached=[
+  physical[0],{...physical[1],riderIds:['c']}
+ ];
+ const autonomousB={...physical[1],groupCode:'dropped_group',
+  displayCode:'C3',riderIds:['b'],gapSeconds:74};
+ const autonomousD={...physical[2],groupCode:'dropped_group',
+  displayCode:'C4',riderIds:['d'],gapSeconds:89};
+ const stageGroups=[...detached,autonomousB,autonomousD];
+ const staleFirst=[
+  {...physical[0],riderIds:['a','c']},autonomousB,autonomousD
+ ];
+ const prepared=(cp,groups)=>({...cp,groups,
+  gaps:groups.map(g=>({groupCode:g.groupCode,
+   displayCode:g.displayCode,gapSeconds:g.gapSeconds}))});
+ const sameAutonomous={dnfRiderIds:['e'],autonomousRiderIds:['b','d']};
+ const stageData=(initial)=>({
+  INITIAL:initial,AFTER_DETACHMENT:detached,
+  AFTER_AUTONOMOUS_GROUPS:stageGroups,
+  AFTER_CONSOLIDATION:stageGroups,
+  AFTER_FINISH_COMMIT:stageGroups,
+  AFTER_DISPLAY_NORMALIZATION:stageGroups
+ });
+ const result=trial({...arg,
+  timeline:{checkpoints:[source.checkpoints[0],
+   prepared(first,staleFirst),prepared(second,stageGroups)]},
+  firstDetachment:sameAutonomous,secondDetachment:sameAutonomous,
+  firstPhase10Stages:stageData(initialStale),
+  secondPhase10Stages:stageData(physical)
+ });
+ assert.equal(result.status,'DNF_SURVIVOR_PAIR_CREATED');
+ assert.equal(result.first,'SURVIVOR_RECONSTRUCTED');
+ assert.equal(result.second,'ALREADY_ALIGNED');
+ const groups=result.timeline.checkpoints[1].groups;
+ assert.deepEqual(groups.map(g=>[g.displayCode,g.riderIds]),
+  [['P',['a']],['C1',['c']],['C3',['b']],['C4',['d']]]);
+ assert.equal(groups.filter(g=>g.groupCode==='dropped_group').length,2);
+ assert.equal(result.researchOnly,true);
+ assert.equal(result.officialWrites,0);
+});
