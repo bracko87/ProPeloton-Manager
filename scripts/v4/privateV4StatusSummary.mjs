@@ -5,7 +5,7 @@
  */
 import {readFileSync} from 'node:fs'
 const marker='V4_PRIVATE_PG_COMPACT_SUMMARY '
-const lines=readFileSync(0,'utf8').split(/\\r?\\n/)
+const lines=readFileSync(0,'utf8').split(/\r?\n/)
 const line=lines.findLast(row=>row.startsWith(marker))
 if(!line){
  console.error('V4_COMPACT_SUMMARY_MISSING')
