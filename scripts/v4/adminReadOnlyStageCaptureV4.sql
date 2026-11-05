@@ -1,5 +1,5 @@
 -- V4 RESEARCH ONLY: private SQL Editor / trusted administrator connector.
--- Replace exactly one __STAGE_ID_UUID__ placeholder with a validated UUID.
+-- Replace the stage UUID placeholder in the WHERE clause with a validated UUID.
 -- No login/password for research role, no production payload RPC, no writes.
 -- IMPORTANT: Capture result may contain private rider/team records when eligible.
 -- Never post the eligible result to GitHub, logs, chat or an unsecured location.
