@@ -178,6 +178,7 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
  });
  if(!['NONE','VERIFIED'].includes(autonomy.status))
   return reject(autonomy.status,kind);
+ let restorePriorFromSource=false;
  if(autonomous.size){
   if(!previousPhase10Stages||
      keys.some(k=>!partition(previousPhase10Stages[k])))
@@ -186,7 +187,6 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
    cp:previous,physical:observed[0],det:previousDetachment,
    stages:previousPhase10Stages,absent:previousReached
   });
-  let restorePriorFromSource=false;
   if(priorAutonomy.status!=='VERIFIED'){
    // An earlier private physical-source repair can legitimately make the
    // candidate's previous checkpoint RAW_PHYSICAL while its original Phase10
