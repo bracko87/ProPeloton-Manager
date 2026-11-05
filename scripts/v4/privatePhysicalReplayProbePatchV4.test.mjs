@@ -482,3 +482,16 @@ test('residual DNF survivor exception uses recorded Phase10 source, not guessed 
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('nextReachedDnfRiderIds'));
 });
+
+test('residual root diagnosis audits two checkpoints without changing source replay',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('classifyPrivateResidualRiderSetOriginV4({'));
+ assert.ok(patched.includes('audit.baseSourceResidualOriginFirst=classifyPrivateResidualRiderSetOriginV4('));
+ assert.ok(patched.includes('audit.baseSourceResidualOriginSecond=classifyPrivateResidualRiderSetOriginV4('));
+ assert.ok(patched.includes('phase10Stages:staleStages,detachment:staleDnf'));
+ assert.ok(patched.includes('phase10Stages:laterStages,detachment:laterDnf'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('classifyPrivateResidualRiderSetOriginV4'));
+});
