@@ -28,6 +28,21 @@ replay publication gates.
 - `.github/workflows/v4-isolated-shadow-validation.yml`: synthetic-only
   CI; no Supabase secrets, migrations or deployed worker changes.
 
+## Verified automated synthetic end-to-end gate (5 Nov 2026)
+[GitHub CI run 42058494214](https://github.com/bracko87/ProPeloton-Manager/actions/runs/42058494214)
+completed successfully. The build and external CLI both executed the complete
+calibrated V4 physics and template planner with an authoritatively formatted
+**synthetic** locked race containing one human team and one AI team:
+
+- `SHADOW_STRICT_REPLAY_PASS`, replay quality `full`.
+- Exactly `officialWrites:0`, `productionEnabled:false`.
+- No private IDs, raw results, engine objects, DB access or credentials emitted.
+- The unchanged source worker-routing regression guard also passed.
+
+This validates the executable offline integration path. It does **not**
+approve V4 for an official race or prove historical replay 8/8, realism,
+existing production deployment, real-stage lock evidence or sporting fallback.
+
 ## Use on a privately controlled machine (NOT a production worker)
 Provide an absolute path to a file **outside** the repository containing:
 
