@@ -51,21 +51,25 @@ if(!line){
  try{
   const summary=JSON.parse(line.slice(marker.length))
   const probe=summary.replayRepairCandidate?.physicalProbe??{}
+  // Histogram keys are already fixed privacy-safe categories; hide the
+  // zero-value keys so the operator sees only outcomes that occurred.
+  const positive=counts=>Object.fromEntries(Object.entries(counts??{})
+   .filter(([,count])=>Number.isSafeInteger(count)&&count>0))
   const obj={
    status:summary.status,
    testsAttempted:summary.replayRepairCandidate?.attempted??null,
    strictReplayValid:summary.replayRepairCandidate?.strictReplayValid??null,
    remainingInvalid:summary.replayRepairCandidate?.remainingInvalid??null,
    remainingUnsupported:summary.replayRepairCandidate?.remainingUnsupported??null,
-   newPairStatus:probe.baseSourceResidualDnfPairStatus??null,
-   newPairFirst:probe.baseSourceResidualDnfPairFirst??null,
-   newPairSecond:probe.baseSourceResidualDnfPairSecond??null,
-   newPairStrictIssues:probe.baseSourceResidualDnfPairStrictIssues??null,
+   newPairStatus:positive(probe.baseSourceResidualDnfPairStatus),
+   newPairFirst:positive(probe.baseSourceResidualDnfPairFirst),
+   newPairSecond:positive(probe.baseSourceResidualDnfPairSecond),
+   newPairStrictIssues:positive(probe.baseSourceResidualDnfPairStrictIssues),
    newPairStrictResidual:probe.baseSourceResidualDnfPairStrictResidual??null,
-   precedingExactPrevious:probe.baseSourceResidualPrePairExactPrevious??null,
-   precedingExactCurrent:probe.baseSourceResidualPrePairExactCurrent??null,
-   precedingExactCombined:probe.baseSourceResidualPrePairExactCombined??null,
-   repairStatus:probe.baseSourceResidualRepair??null,
+   precedingExactPrevious:positive(probe.baseSourceResidualPrePairExactPrevious),
+   precedingExactCurrent:positive(probe.baseSourceResidualPrePairExactCurrent),
+   precedingExactCombined:positive(probe.baseSourceResidualPrePairExactCombined),
+   repairStatus:positive(probe.baseSourceResidualRepair),
    officialWrites:summary.officialWrites
   }
   console.log('V4_RESEARCH_SHORT_SUMMARY '+JSON.stringify(obj))
