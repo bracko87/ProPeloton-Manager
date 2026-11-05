@@ -12,6 +12,43 @@ import {
  type UniversalRaceEngineInput
 } from '../../src/universal-race-engine/runRaceEngine.ts'
 
+function createRider(
+  riderId: string,
+  participantRiderId: string,
+  teamId: string,
+  overall: number,
+) {
+  return {
+    participantRiderId,
+    riderId,
+    teamId,
+    participatingClubId: teamId === 'team-a' ? 'club-a' : 'club-b',
+    sprint: overall,
+    climbing: overall,
+    timeTrial: overall,
+    flat: overall,
+    endurance: overall,
+    recovery: overall,
+    resistance: overall,
+    raceIQ: overall,
+    teamwork: overall,
+    overall,
+    morale: 75,
+    fatigueBeforeStage: 10,
+    raceSharpness: 70,
+    startStamina: 90,
+    recentFormScore: 0,
+    availabilityStatus: 'fit' as const,
+    unavailableUntil: null,
+    unavailableReason: null,
+    startStatus: 'starter' as const,
+    healthSnapshot: null,
+    snapshot: {
+      displayName: riderId,
+    },
+  }
+}
+
 function createSyntheticValidInput(): UniversalRaceEngineInput {
   return {
     engine: {
