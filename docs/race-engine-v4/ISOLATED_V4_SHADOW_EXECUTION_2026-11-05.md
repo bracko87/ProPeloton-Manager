@@ -140,3 +140,49 @@ without altering current race workers, then execute one private real-input
 shadow test, extend to representative terrain types, and only after strict
 replay/realism validation consider an allowlisted pilot. Production remains
 unchanged and V4 remains disabled.
+
+
+## Next source milestone: private lock-window reconstruction (research-only)
+
+The existing production payload routines are not read-only:
+- public.universal_race_stage_get_calculation_payload_v1 records survival heartbeats.
+- public.universal_race_stage_get_calculation_payload_full_v1 invokes
+  jersey eligibility/mandatory supply operations and stage-points sync.
+Do **not** invoke either from an offline V4 read-only export.
+
+scripts/v4/privateReadOnlyLockedCaptureV4.mjs implements a separate capture:
+- Operator-only PostgreSQL session with dedicated **non-superuser,
+  NO-BYPASSRLS and SELECT-only** login named
+  v4_live_shadow_read_login; never use service_role, worker secrets or
+  postgres admin credentials.
+- BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY.
+  Verifies the active role and the STABLE signatures of all called RPCs.
+  Hardcoded SQL SELECT statements only. ROLLBACK followed by disconnect.
+- Requires an official road-stage start time and a game clock between the
+  exact three-game-hour cutoff and five game minutes later.
+  Any missing stage lock evidence, ambiguous human/AI ownership,
+  unverified team mapping, changed source signatures or incomplete input
+  rejects the capture. No production writes.
+- Reconstructs the V4 input using the existing local pure production
+  input adapter. Captured input is only passed through a private mode-0600
+  temporary file to the already isolated, credential-free V4 physical
+  shadow runner. The file is deleted even after a runner error. Only
+  categorical safe status escapes to the output.
+- Source classification is
+  V4_READ_ONLY_CAPTURE_RECONSTRUCTION_ONLY, **distinct** from
+  V4_REAL_INPUT_CANDIDATE_ONLY for a genuinely stored immutable full-stage
+  source. Lock-window reconstruction alone does NOT prove that all
+  production inputs were persisted at cutoff or that it is identical
+  to the live runner's jersey, source filtering or scenario selection.
+  Even full strict replay means **research only**, never production approval.
+
+This code does not provision database roles, connect to production from
+GitHub CI, schedule a capture, or enable race workers. It needs an
+independently provisioned least-privilege database reader and an upcoming
+stage that actually locks inside the brief capture window before it can
+run on real data. Never store credential values in the repository.
+
+The read-only database inventory at game time 20 October 2000 06:38
+found two stage cutoffs within the following 24 game hours, but neither
+stage had a locked plan yet at that time. This is **not** a real V4
+execution result; real capture and sporting parity remain blocked.
