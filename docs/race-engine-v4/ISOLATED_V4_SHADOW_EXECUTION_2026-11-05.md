@@ -1,0 +1,78 @@
+# V4 isolated shadow execution — release boundary (5 Nov 2026)
+
+## Decision
+Stop the repetitive private historical checkpoint-repair loop. Final read-only
+cohort: 12 attempted, 7 valid strict historical replay candidates, 1 invalid
+(causal autonomous-group change at an original covered-attack event), 4
+unsupported. This is NOT a release pass and is NOT evidence for bypassing strict
+replay publication gates.
+
+## Delivered: first executable offline V4 candidate
+- `src/race-engine-v4/templateFirstPlannerV4.ts`: deterministic V4 AI template
+  selection, preserving human commands; requires an immutable three-game-hour
+  lock and verified human/AI ownership.
+- `scripts/v4/calibratedPhysicalTransformV4.mjs`: isolated, fixed V4
+  peloton/cooperation/energy physics transform. It does not change the
+  accepted source file in the repository.
+- `src/race-engine-v4/isolatedShadowWorkerV4.ts`: executes a single combined
+  V4 input against the isolated calibrated physical engine **in memory**.
+  It invokes the unchanged `classifyUniversalReplaySynchronizationForPublication`.
+- `scripts/v4/isolatedShadowGateV4.mjs`: fail-closed gate. Only synchronized,
+  `full` replay is an isolated-shadows-pass status. `degraded` and `blocked`
+  are NOT successes. Output is categorical; no rider data, stage identity,
+  original results, private issue strings or raw engine objects.
+- `scripts/v4/runIsolatedShadowV4.mjs`: local, private, single-stage offline
+  command. Bundles the patched race core into an OS temporary directory,
+  supplies a locked race envelope over stdin to a credential-free child,
+  validates the categorical result and deletes temporary compiled code.
+- `.github/workflows/v4-isolated-shadow-validation.yml`: synthetic-only
+  CI; no Supabase secrets, migrations or deployed worker changes.
+
+## Use on a privately controlled machine (NOT a production worker)
+Provide an absolute path to a file **outside** the repository containing:
+
+```json
+{"input":{"...":"complete UniversalRaceEngineInput"},"options":{"...":"V4Options with authoritative stage lock and team ownership"}}
+```
+
+The placeholders above are explanatory, not a runnable race fixture. The
+trusted, complete input must be supplied by a future read-only export adapter.
+
+```cmd
+node scripts/v4/runIsolatedShadowV4.mjs "C:\\private\\locked-v4-envelope.json"
+```
+
+No credentials are passed to the child. The script rejects non-absolute,
+repository-resident or oversized files. On non-Windows systems the input
+must also have owner-only filesystem permissions.
+
+## Explicitly not delivered yet
+1. **Real locked-stage read-only input adapter.** Existing historical snapshots
+   do not prove the original lock time and cannot establish a production lock.
+   Until a verified live lock is available, do not claim real race acceptance.
+2. **Verified end-to-end live-data shadow execution.** A synthetic-only
+   compile/rejection test is not a complete real-race calculation.
+3. **Production V4 routing/fallback.** Four existing workers are unchanged.
+   Their deployed versions have independent Git pins and differ from
+   repository copies. Production rollback must be based on the deployed
+   artifacts, not blind redeployment from main.
+4. **Official V4 race publication.** No stage is opted in; no official results,
+   player data, finances, rankings, payouts or scheduler state may be written.
+5. **Realism approval.** Strict replay is necessary but not sufficient for
+   believable stage outcomes, realistic energy or tactical response.
+
+## Next acceptance sequence
+- Run the offline candidate once against one **authoritatively locked**
+  read-only snapshot, then a representative terrain set. Record only
+  aggregated status and comparisons with preserved baseline, keeping source
+  data private.
+- Require all eligible shadow candidates to pass strict full replay.
+  Inspect physical group identity, catch distance, rider DNF status, energy,
+  team orders and winner gaps. No shortcut for the unresolved 7/8 history.
+- Add a **separate, stage-ID allowlisted pilot** and engine-source pin,
+  matched across runner/pass1/pass2/safe-resume, with verified behavior for
+  in-flight checkpoints, failures and sporting fallback.
+- Verify worker deployment settings, source pins, execution provenance and
+  publication read-back before any owner-approved pilot stage.
+
+No automatic V4 activation, no SQL changes, no worker deployments.
