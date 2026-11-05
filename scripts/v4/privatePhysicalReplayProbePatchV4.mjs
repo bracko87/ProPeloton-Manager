@@ -68,6 +68,7 @@ import {buildPrivateBasePhysicalSourceV4} from '../../scripts/v4/privateBasePhys
 import {buildPrivateResidualPhysicalCheckpointV4,buildPrivateResidualPhysicalPairV4} from '../../scripts/v4/privateResidualPhysicalCheckpointV4.mjs'
 import {classifyPrivateResidualRiderSetOriginV4} from '../../scripts/v4/privateResidualRiderSetOriginV4.mjs'
 import {buildPrivateResidualDnfSurvivorPairV4} from '../../scripts/v4/privateResidualDnfSurvivorPairV4.mjs'
+import {classifyPrivateDnfPairStrictResidualV4} from '../../scripts/v4/privateDnfPairStrictResidualV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -589,6 +590,7 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualDnfPairFirst='NONE'
                   audit.baseSourceResidualDnfPairSecond='NONE'
                   audit.baseSourceResidualDnfPairStrictIssues=[]
+                  audit.baseSourceResidualDnfPairStrictResidual=null
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -768,6 +770,14 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                               return knownStrictIssueCodes.has(code)?code:'OTHER'
                             })
                           )].sort()
+                          audit.baseSourceResidualDnfPairStrictResidual=
+                            classifyPrivateDnfPairStrictResidualV4({
+                              timeline:candidate.timeline,
+                              blockingIssues:residualPolicy.blockingIssues,
+                              firstId:staleId,secondId:residualId,
+                              baselineIssue:residualIssue,
+                              physicalGroupsAtKm:audit.physicalGroupsAtKm
+                            })
                         }
                         if(residualPolicy.publishable){
                           replayTimeline=candidate.timeline
