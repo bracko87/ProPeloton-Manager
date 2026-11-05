@@ -271,6 +271,15 @@ test('stable witnessed autonomous group remains intact while covered attack road
   dnfRiderIds:[],autonomousRiderIds:[]}}).status,'AUTONOMOUS_WINDOW_CHANGED');
  assert.equal(trial({...input,previousPhase10Stages:null}).status,
   'PREVIOUS_AUTONOMOUS_WITNESS_MISSING');
+ const priorBad={...stableStages,AFTER_DISPLAY_NORMALIZATION:groups(raw)};
+ const detail=trial({...input,previousPhase10Stages:priorBad});
+ assert.equal(detail.status,'PREVIOUS_AUTONOMOUS_WITNESS_UNVERIFIED');
+ assert.equal(detail.previousAutonomyReason,'AUTONOMOUS_PHASE10_SET_UNSAFE');
+ assert.equal(detail.previousAutonomyStage,'NONE');
+ assert.equal(detail.previousAutonomyDetail,'NONE');
+ assert.equal(detail.previousAutonomyPresentation,'OTHER');
+ assert.equal(detail.previousAutonomousGroup,'SEPARATE_AUTONOMOUS');
+ assert.ok(!('riderIds' in detail)&&!('checkpoints' in detail));
  assert.equal(trial({...input,phase10Stages:{...sourceStages,
   AFTER_AUTONOMOUS_GROUPS:groups(staleRoad)}}).status,
   'AUTONOMOUS_PHASE10_SET_UNSAFE');
