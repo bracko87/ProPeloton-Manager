@@ -58,7 +58,8 @@ const input={
 const out={identity:{
  login_user:'v4_live_shadow_read_login',
  active_user:'v4_live_shadow_read_login',
- transaction_read_only:'on',rolsuper:false,rolbypassrls:false,
+ transaction_read_only:'on',rolcanlogin:true,callable_volatile_definer_count:0,
+ rolsuper:false,rolbypassrls:false,
  rolcreatedb:false,rolcreaterole:false,can_insert_results:false,
  can_update_plans:false,can_publish:false
  },clock:{game_now:capture}}
@@ -153,6 +154,8 @@ test('a late game-time source or a role with write privileges is rejected before
   {clock:{game_now:'2000-10-21T06:59:00.000Z'}},
   {identity:{...out.identity,can_publish:true}},
   {identity:{...out.identity,rolbypassrls:true}},
+  {identity:{...out.identity,rolcanlogin:false}},
+  {identity:{...out.identity,callable_volatile_definer_count:1}},
   {plans:[]},
   {plans:[{...plans[0],engine_stage_payload_json:{
    ...plans[0].engine_stage_payload_json,built_at_game_ts:'2000-10-21T07:04:00.000Z'}},plans[1]]}
