@@ -66,6 +66,7 @@ import {classifyPrivatePhase10InputProvenanceV4} from '../../scripts/v4/privateP
 import {buildPrivateExactEventPhysicalCandidateV4} from '../../scripts/v4/privateExactEventPhysicalCandidateV4.mjs'
 import {buildPrivateBasePhysicalSourceV4} from '../../scripts/v4/privateBasePhysicalSourceV4.mjs'
 import {buildPrivateResidualPhysicalCheckpointV4,buildPrivateResidualPhysicalPairV4} from '../../scripts/v4/privateResidualPhysicalCheckpointV4.mjs'
+import {classifyPrivateResidualRiderSetOriginV4} from '../../scripts/v4/privateResidualRiderSetOriginV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -579,6 +580,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualPairReason='NONE'
                   audit.baseSourceResidualPairDetail='NONE'
                   audit.baseSourceResidualPairStrictIssues=[]
+                  audit.baseSourceResidualOriginFirst=null
+                  audit.baseSourceResidualOriginSecond=null
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -599,6 +602,20 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                         __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
                       }).__ppmV4Phase10GroupStages?.get(staleId)
                       const staleDnf=privateStore.__ppmV4Phase10DetachEvidence?.get(staleId)
+                      const laterStages=(globalThis as typeof globalThis & {
+                        __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+                      }).__ppmV4Phase10GroupStages?.get(residualId)
+                      const laterDnf=privateStore.__ppmV4Phase10DetachEvidence?.get(residualId)
+                      audit.baseSourceResidualOriginFirst=classifyPrivateResidualRiderSetOriginV4({
+                        checkpoint:stale,
+                        physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                        phase10Stages:staleStages,detachment:staleDnf
+                      })
+                      audit.baseSourceResidualOriginSecond=classifyPrivateResidualRiderSetOriginV4({
+                        checkpoint:checkpoints[residualAt],
+                        physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                        phase10Stages:laterStages,detachment:laterDnf
+                      })
                       const staleProvenance=classifyPrivatePhase10InputProvenanceV4({
                         checkpoint:stale,phase10Stages:staleStages,
                         baseTimeline:baseReplayTimeline,
