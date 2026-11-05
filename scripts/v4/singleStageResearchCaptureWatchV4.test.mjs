@@ -28,6 +28,16 @@ test('time, terrain and stage identity cannot drift to a different race',()=>{
  assert.match(sql,/V4_RESEARCH_STAGE_IDENTITY_CHANGED/)
  assert.match(sql,/THEN private\.v4_capture_research_locked_stage_source_v1\(/)
 })
+test('expiry and stage start are checked BEFORE capture is attempted',()=>{
+ const capture=sql.indexOf('THEN private.v4_capture_research_locked_stage_source_v1(')
+ const early=sql.indexOf("now() < '2026-11-08 00:00:00+00'::timestamptz")
+ const start=sql.indexOf("public.get_current_game_timestamp() <")
+ const stop=sql.indexOf("now() >= '2026-11-08 00:00:00+00'::timestamptz")
+ assert(early>=0&&early<capture)
+ assert(start>=0&&start<capture)
+ assert(stop>capture)
+ assert.equal((sql.match(/private\.v4_capture_research_locked_stage_source_v1\(/g)||[]).length,1)
+})
 test('scheduled job contains no official write, game-clock reset or worker call',()=>{
  assert.doesNotMatch(sql,/\b(?:UPDATE|INSERT|DELETE|TRUNCATE|ALTER|DROP)\s+(?:public|auth|net|storage|cron)\./i)
  assert.equal((sql.match(/cron\.unschedule\('/g)||[]).length,1)
