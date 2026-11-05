@@ -570,6 +570,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualRepairStatus='NOT_RUN'
                   audit.baseSourceResidualRepairMode='NONE'
                   audit.baseSourceResidualPhysicalCandidate='NOT_RUN'
+                  audit.baseSourceResidualPhysicalDetail='NONE'
+                  audit.baseSourceResidualNextDnfAlignment='NONE'
                   audit.baseSourceResidualPhysicalGuard='NONE'
                   audit.baseSourceResidualProvenanceDetail='NONE'
                   audit.baseSourceResidualIncidentRelation='NONE'
@@ -646,13 +648,17 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                       // passive prior checkpoint. No causal/incident rewrites.
                       if(baseSourceCandidate.status==='BASE_PHYSICAL_CATCH_CREATED'&&
                          audit.baseSourceResidualTransfer==='C_TO_C'){
+                        const nextDnf=privateStore.__ppmV4Phase10DetachEvidence?.get(residualId)
                         const stableResidual=buildPrivateResidualPhysicalCheckpointV4({
                           timeline:baseSourceCandidate.timeline,
                           checkpointId:staleId,
                           residualCheckpointId:residualId,
-                          physicalGroupsAtKm:audit.physicalGroupsAtKm
+                          physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                          nextReachedDnfRiderIds:nextDnf?.dnfRiderIds
                         })
                         audit.baseSourceResidualPhysicalCandidate=stableResidual.status
+                        audit.baseSourceResidualPhysicalDetail=stableResidual.detail??'NONE'
+                        audit.baseSourceResidualNextDnfAlignment=stableResidual.nextDnfAlignment??'NONE'
                         audit.baseSourceResidualPhysicalGuard=stableResidual.reason??'NONE'
                         audit.baseSourceResidualProvenanceDetail=stableResidual.detail??'NONE'
                         audit.baseSourceResidualIncidentRelation=stableResidual.incidentProvenanceRelation??'NONE'
