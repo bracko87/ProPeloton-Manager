@@ -123,8 +123,9 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
    return reject('EVENT_SOURCE_UNVERIFIED',kind);
   extras.add(id);
  }
- // Don't rewrite a Phase10 separation or recorded DNF. This specialized
- // original-event correction is for a pure stale source partition only.
+ // Preserve reached DNFs exactly as independently witnessed at both
+ // event checkpoints. Autonomous separations or new DNF events in this
+ // interval are not eligible for a membership-only source correction.
  if(!Array.isArray(detachment?.dnfRiderIds)||
     !Array.isArray(detachment?.autonomousRiderIds)||
     new Set(detachment.dnfRiderIds).size!==detachment.dnfRiderIds.length||
