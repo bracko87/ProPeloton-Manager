@@ -265,3 +265,54 @@ A persisted three-hour cutoff record and full input provenance must be
 verified or built before this strict export can yield an official-lock
 research candidate. Do not silently treat submitted records as locked.
 No live production V4 processing was enabled.
+
+
+## Forward-only V4 immutable research source sidecar
+
+A new **private** database storage definition is in
+scripts/v4/sql/v4_research_only_stage_source_lock.sql.
+
+Read-only source audit (5 November 2026):
+- Production game clock remains **paused** on game day 20 October 2000 at 06:38 UTC.
+  Do not unpause it for research; no future lock should be fabricated.
+- All 3,619 submitted general-stage plan rows have non-empty, **not immutable**
+  engine_stage_payload_json values. These encode other competitions, mainly
+  national championship (3,506), Nations Cup (71) and world road
+  championship (42). The old research lock builder returns
+  "already_snapshotted" on any non-empty payload, and its due finalizer
+  requires an empty payload. It also has no active scheduling job.
+  Do not overwrite other competitions' engine metadata merely to satisfy
+  the old research locking check.
+- Upcoming standard road-race entries exist with accepted team/rider source
+  rows but often **no saved team plan**. Their human/AI ownership must be
+  checked from authoritative entries, never guessed.
+
+The sidecar creates a private RLS-protected table, a never-update/delete
+trigger and an admin-only SECURITY INVOKER capture function. The capture
+requires an explicit REPEATABLE READ read-write administrative transaction,
+unpaused authoritative clock, stage format and terrain eligibility, a
+cutoff equal to stage start minus exactly three game hours, a capture no
+more than 15 game minutes beyond cutoff, no completed stage, no prohibited
+disqualifications, source row completeness, and unique team/rider ownership.
+It stores a SHA-256 hash and a full **research-only** snapshot of original
+rows, without touching the original race-stage plans, riders, results,
+workers, season clock or any sporting state. This is a separate immutable
+research capture, **not an authoritative production stage lock or proof of
+parity** with production scenario selection and mandatory jersey processing.
+A future rollout still requires independent production lock provenance.
+
+The function has no cron job. The stage-source data table is private and
+intentionally not accessible to public application API roles. The actual
+first capture remains blocked while the game clock is paused and no
+eligible stage has passed its cutoff. It is inappropriate to bypass the
+clock or populate the table with retroactive stage data.
+
+Operator-only dry-run (never supply a historical/started stage):
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+SELECT private.v4_capture_research_locked_stage_source_v1(
+  '<future-stage-uuid>'::uuid, true
+);
+ROLLBACK;
+
+Do not pass private captured rider data into GitHub, chat logs, or public
+CI. Any subsequent research replay must use a private offline bridge.
