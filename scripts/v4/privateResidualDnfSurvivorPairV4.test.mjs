@@ -207,7 +207,7 @@ test('autonomous drift reports earliest stage and mismatch kind without any ride
   ...base,AFTER_AUTONOMOUS_GROUPS:base.AFTER_AUTONOMOUS_GROUPS.map(g=>
    g.displayCode==='C3'?{...g,riderIds:['d','c']}:g)
  }});
- assert.equal(mixedMembers.status,'AUTONOMOUS_PHASE10_SET_UNSAFE');
+ assert.equal(mixedMembers.status,'AUTONOMOUS_PHASE10_WITNESS_MISSING');
  const renamedDisplay=trial({...autonomousArg,firstPhase10Stages:{
   ...base,AFTER_FINISH_COMMIT:base.AFTER_FINISH_COMMIT.map(g=>
    g.displayCode==='C3'?{...g,displayCode:'C5'}:g)
