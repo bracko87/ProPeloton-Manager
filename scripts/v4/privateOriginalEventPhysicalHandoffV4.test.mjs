@@ -284,3 +284,90 @@ test('stable witnessed autonomous group remains intact while covered attack road
   AFTER_AUTONOMOUS_GROUPS:groups(staleRoad)}}).status,
   'AUTONOMOUS_PHASE10_SET_UNSAFE');
 });
+
+test('restores verified original Phase10 autonomy lost by prior private raw-physical repair',()=>{
+ const raw=[
+  {...physical[0],riderIds:['a','b','d']},
+  {...physical[1],riderIds:['c']}
+ ];
+ const autonomous={groupCode:'dropped_group',displayCode:'I1',
+  physicalPosition:'behind_peloton',colorKey:'dropped_gray',
+  riderIds:['d'],gapSeconds:69};
+ const priorRoad=[
+  {...physical[0],riderIds:['a','b']},
+  {...physical[1],riderIds:['c']}
+ ];
+ const staleRoad=[
+  {...physical[0],riderIds:['a']},
+  {...physical[1],riderIds:['b','c']}
+ ];
+ const sourceRoad=[
+  {...physical[0],riderIds:['a','d']},
+  {...physical[1],riderIds:['b','c']}
+ ];
+ const previousAutonomous=[...priorRoad,autonomous];
+ const currentAutonomous=[...staleRoad,autonomous];
+ const stagesPrior=Object.fromEntries(['INITIAL','AFTER_DETACHMENT',
+  'AFTER_AUTONOMOUS_GROUPS','AFTER_CONSOLIDATION',
+  'AFTER_FINISH_COMMIT','AFTER_DISPLAY_NORMALIZATION'].map(k=>
+  [k,groups(k==='INITIAL'?raw:
+   k==='AFTER_DETACHMENT'?priorRoad:previousAutonomous)]));
+ const stagesCurrent=Object.fromEntries(['INITIAL','AFTER_DETACHMENT',
+  'AFTER_AUTONOMOUS_GROUPS','AFTER_CONSOLIDATION',
+  'AFTER_FINISH_COMMIT','AFTER_DISPLAY_NORMALIZATION'].map(k=>
+  [k,groups(k==='INITIAL'?sourceRoad:
+   k==='AFTER_DETACHMENT'?staleRoad:currentAutonomous)]));
+ const statesFor=rows=>['a','b','c','d'].map(riderId=>{
+  const item=rows.find(group=>group.riderIds.includes(riderId));
+  return {riderId,status:'racing',groupCode:item.groupCode,
+   displayCode:item.displayCode,gapSeconds:item.gapSeconds,
+   energy:59,liveEnergyPercent:64};
+ });
+ const originalPrevious={...previous,groups:groups(previousAutonomous),
+  gaps:gaps(previousAutonomous),riderStates:statesFor(previousAutonomous)};
+ const candidatePrevious={...originalPrevious,groups:groups(raw),
+  gaps:gaps(raw),riderStates:statesFor(raw)};
+ const attack={...source,eventType:'attack',title:'Attack is covered',
+  description:'Covered before a lasting gap',riderIds:['c']};
+ const currentCheckpoint={...current,groups:groups(currentAutonomous),
+  gaps:gaps(currentAutonomous),riderStates:statesFor(currentAutonomous),
+  commentary:[attack]};
+ const baseCheckpoint={...currentCheckpoint,groups:groups(sourceRoad),
+  gaps:gaps(sourceRoad),riderStates:statesFor(sourceRoad)};
+ const witnessed={dnfRiderIds:[],autonomousRiderIds:['d']};
+ const input={...args,
+  timeline:{checkpoints:[candidatePrevious,currentCheckpoint]},
+  sourcePhase10Timeline:{checkpoints:[originalPrevious,currentCheckpoint]},
+  baseTimeline:{checkpoints:[originalPrevious,baseCheckpoint]},
+  physicalGroupsAtKm:()=>groups(raw),previousPhase10Stages:stagesPrior,
+  phase10Stages:stagesCurrent,
+  previousDetachment:witnessed,detachment:witnessed};
+ const repaired=trial(input);
+ assert.equal(repaired.status,'ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED');
+ assert.equal(repaired.restoredPreviousAutonomous,true);
+ const prior=repaired.timeline.checkpoints[0];
+ const after=repaired.timeline.checkpoints[1];
+ assert.deepEqual(prior.groups.map(g=>[g.displayCode,g.riderIds]),
+  [['P',['a','b']],['C1',['c']],['I1',['d']]]);
+ assert.deepEqual(after.groups.map(g=>[g.displayCode,g.riderIds]),
+  [['P',['a','b']],['C1',['c']],['I1',['d']]]);
+ assert.deepEqual(prior.gaps.find(g=>g.displayCode==='I1'),gaps([autonomous])[0]);
+ assert.equal(prior.riderStates.find(s=>s.riderId==='d').displayCode,'I1');
+ assert.equal(prior.riderStates.find(s=>s.riderId==='d').energy,59);
+ assert.deepEqual(prior.commentary,candidatePrevious.commentary);
+ assert.deepEqual(after.commentary,[attack]);
+ assert.deepEqual(candidatePrevious.groups,raw);
+ assert.equal(trial({...input,sourcePhase10Timeline:null}).status,
+  'PREVIOUS_AUTONOMOUS_WITNESS_UNVERIFIED');
+ const changedSource={...originalPrevious,commentary:[{
+  ...originalPrevious.commentary[0],commentaryId:'not-the-same'}]};
+ assert.equal(trial({...input,sourcePhase10Timeline:{
+  checkpoints:[changedSource,currentCheckpoint]}}).status,
+  'PREVIOUS_AUTONOMOUS_WITNESS_UNVERIFIED');
+ const wrongEnergy={...originalPrevious,riderStates:
+  originalPrevious.riderStates.map(row=>row.riderId==='d'?
+   {...row,energy:33}:row)};
+ assert.equal(trial({...input,sourcePhase10Timeline:{
+  checkpoints:[wrongEnergy,currentCheckpoint]}}).status,
+  'PREVIOUS_AUTONOMOUS_WITNESS_UNVERIFIED');
+});
