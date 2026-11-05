@@ -55,7 +55,7 @@ function safeEvents(cp,allIds){
 // Autonomous groups are constructed in Phase10, outside the sampled road
 // partitions. Keep only groups with independent before/after Phase10 witnesses
 // and matching final published membership/identity. Never synthesize a group.
-function protectedAutonomousGroups({
+export function verifyPrivateAutonomousGroupsV4({
   cp,physical,det,stages,absent
 }){
  const active=new Set(det.autonomousRiderIds);
@@ -197,7 +197,7 @@ export function buildPrivateResidualDnfSurvivorPairV4({
   const absent=new Set(det.dnfRiderIds);
   if([...absent].some(id=>!physical.ids.includes(id)))
    return {status:'DNF_RIDER_UNWITNESSED'};
-  const protectedGroups=protectedAutonomousGroups({
+  const protectedGroups=verifyPrivateAutonomousGroupsV4({
     cp,physical,det,stages:stages[j],absent
   });
   if(!['NONE','VERIFIED'].includes(protectedGroups.status))
