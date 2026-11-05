@@ -251,3 +251,58 @@ test('two-checkpoint recovery retains source incident and rejects unsupported se
  assert.equal(unsafe.status,'PAIR_SECOND_REJECTED');
  assert.equal(unsafe.reason,'CAUSAL_OR_INCIDENT_UNSAFE');
 });
+
+test('single stale checkpoint can be fixed when next checkpoint excludes ONLY Phase10-confirmed DNF',()=>{
+ const reached='d';
+ const survivorGroups=physical.map(g=>({...g,
+   riderIds:g.riderIds.filter(id=>id!==reached)})).filter(g=>g.riderIds.length);
+ const nextWithDnf={...next,groups:survivorGroups,
+  gaps:survivorGroups.map(g=>({...g,gapSeconds:20})),
+  riderStates:states.map(s=>s.riderId===reached?
+    {...s,status:'dnf',groupCode:null,displayCode:null,gapSeconds:null}:s)};
+ const caseArgs={...args,timeline:{checkpoints:[timeline.checkpoints[0],checkpoint,nextWithDnf]}};
+ const notProven=build(caseArgs);
+ assert.equal(notProven.status,'CURRENT_NOT_PHYSICAL');
+ assert.equal(notProven.detail,'NO_VERIFIED_DNF_EXCLUSION');
+ const validated=build({...caseArgs,nextReachedDnfRiderIds:[reached]});
+ assert.equal(validated.status,'RESIDUAL_PHYSICAL_CHECKPOINT_CREATED');
+ assert.equal(validated.nextDnfAlignment,'REACHED_DNF_EXCLUSION');
+ assert.deepEqual(validated.timeline.checkpoints[2],nextWithDnf);
+ assert.equal(validated.timeline.checkpoints.length,3);
+ assert.equal(validated.officialWrites,0);
+ assert.equal(build({...caseArgs,nextReachedDnfRiderIds:['c']}).status,'CURRENT_NOT_PHYSICAL');
+});
+test('DNF exception refuses invented detachments and nonmatching survivor groups',()=>{
+ const nextWrong={...next,groups:[physical[0],{...physical[1],riderIds:['b']},physical[2]],
+  riderStates:states.map(s=>s.riderId==='c'?{...s,status:'dnf'}:s)};
+ const cases=[
+  {...nextWrong,riderStates:states},
+  {...nextWrong,groups:[physical[0],{...physical[1],riderIds:['b']},
+    {...physical[2],riderIds:['c','d']}]},
+  {...nextWrong,riderStates:states.map(s=>s.riderId==='c'?{...s,status:'racing'}:s)}
+ ];
+ for(const bad of cases){
+  const result=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],checkpoint,bad]},
+   nextReachedDnfRiderIds:['c']});
+  assert.equal(result.status,'CURRENT_NOT_PHYSICAL');
+ }
+});
+test('paired failure diagnostic separates rider-set mismatches from already-aligned snapshots',()=>{
+ const first=timeline.checkpoints[0];
+ const cp1={...next,groups:stale};
+ const api=timeline=>buildPrivateResidualPhysicalPairV4({timeline,
+  checkpointId:'stale',residualCheckpointId:'residual',physicalGroupsAtKm:()=>physical});
+ const firstMismatch=api({checkpoints:[first,
+  {...checkpoint,groups:[physical[0],{...physical[1],riderIds:['b']},physical[2]]},cp1]});
+ assert.equal(firstMismatch.detail,'FIRST_RIDER_SET_DIFFERS');
+ const secondMismatch=api({checkpoints:[first,checkpoint,
+  {...cp1,groups:[physical[0],physical[1],
+    {...physical[2],riderIds:[] }]}]});
+ assert.equal(secondMismatch.status,'PAIR_REPLAY_INVALID');
+ const secondRiderSet=api({checkpoints:[first,checkpoint,{
+  ...cp1,groups:[physical[0],{...physical[1],riderIds:['b']},
+   {...physical[2],riderIds:['d']}]}]});
+ assert.equal(secondRiderSet.detail,'SECOND_RIDER_SET_DIFFERS');
+ const already=api({checkpoints:[first,checkpoint,next]});
+ assert.equal(already.detail,'SECOND_ALREADY_PHYSICAL');
+});
