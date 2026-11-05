@@ -250,15 +250,40 @@ function safeError(err){
  const allowed=['INVALID_HISTORICAL_COHORT','RESTRICTED_PG_ROLE_REQUIRED','RESTRICTED_LOGIN_ROLE_REQUIRED','PRIVATE_PG_CONFIGURATION_REQUIRED',
   'INVALID_PRIVATE_CA_PATH','INVALID_PRIVATE_CANDIDATE_OPTION','CHASING_COHORT_REQUIRES_PRIORITY_OPT_IN','UNTRUSTED_PRIVATE_CHASE_PRIORITY_REPORT','UNTRUSTED_PRIVATE_REPLAY_CANDIDATE_REPORT','INVALID_STAGE_ID','MISSING_OR_AMBIGUOUS_STAGE',
   'NO_ARCHIVED_TEAMS','INVALID_ENTRY_MAPPING','PRIVATE_PHYSICAL_ENGINE_FAILED',
-  'UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE','PHYSICAL_HISTORIC_INPUT_MISMATCH',
-  'PRIVATE_PATH_REJECTED','DUPLICATE_PRIVATE_INPUT','INVALID_MANIFEST',
-  'Unsafe physics report','Metadata SELECT denied','Invalid historical pilot selection limits']
+  'PRIVATE_FORENSIC_ENGINE_SOURCE_NOT_LOADED','UNTRUSTED_PRIVATE_PHYSICAL_EVIDENCE',
+  'PHYSICAL_HISTORIC_INPUT_MISMATCH','PRIVATE_PATH_REJECTED',
+  'DUPLICATE_PRIVATE_INPUT','INVALID_MANIFEST','Unsafe physics report',
+  'Metadata SELECT denied','Invalid historical pilot selection limits']
+ const variants=['preserved_v2','combined','combined_energy',
+  'combined_energy_priority','private_replay_candidate']
+ const steps=['BUNDLE','WORKER']
+ const childFailures=['TIMEOUT','SPAWN_ERROR','WORKER_INPUT_REJECTED',
+  'WORKER_NONZERO_EXIT','WORKER_SUMMARY_MISSING']
+ // No raw esbuild diagnostics: messages may contain paths/source excerpts.
+ const text=Array.isArray(err?.errors)?
+  err.errors.map(e=>String(e?.text??'')).join(' '):''
+ const buildFailureClass=!text?null:
+  /Could not resolve|Cannot find module/i.test(text)?'MODULE_RESOLUTION':
+  /Expected|Unexpected|syntax error/i.test(text)?'SOURCE_SYNTAX':
+  /No matching export/i.test(text)?'IMPORT_EXPORT_MISMATCH':
+  'OTHER_BUILD_FAILURE'
  const code=String(err?.code??'')
- return {phase:typeof err?.v4ResearchPhase==='string'?err.v4ResearchPhase:'CONFIGURATION',
+ return {
+  phase:typeof err?.v4ResearchPhase==='string'?err.v4ResearchPhase:'CONFIGURATION',
+  physicsStep:steps.includes(err?.v4PhysicsStep)?err.v4PhysicsStep:null,
+  physicsVariant:variants.includes(err?.v4PhysicsVariant)?err.v4PhysicsVariant:null,
+  childFailure:childFailures.includes(err?.v4PhysicsChildFailure)?
+   err.v4PhysicsChildFailure:null,
+  buildFailureClass,
   postgresCode:/^[0-9A-Z]{5}$/.test(code)?code:null,
   systemCode:['ENOENT','EACCES','EPERM','ETIMEDOUT'].includes(code)?code:null,
-  reason:allowed.includes(msg)?msg:code==='SELF_SIGNED_CERT_IN_CHAIN'?'TLS_CHAIN':code==='XX000'&&err?.v4ResearchPhase==='CONNECT'?'POOLER_ROUTING_OR_LOGIN_REJECTED':null,
-  errorType:['Error','TypeError','RangeError'].includes(err?.name)?err.name:'UNKNOWN'}
+  reason:allowed.includes(msg)?msg:
+   code==='SELF_SIGNED_CERT_IN_CHAIN'?'TLS_CHAIN':
+   code==='XX000'&&err?.v4ResearchPhase==='CONNECT'?
+    'POOLER_ROUTING_OR_LOGIN_REJECTED':null,
+  errorType:['Error','TypeError','RangeError'].includes(err?.name)?
+   err.name:'UNKNOWN'
+ }
 }
 if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
  try{
