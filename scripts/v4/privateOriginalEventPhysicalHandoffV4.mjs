@@ -186,8 +186,46 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
    cp:previous,physical:observed[0],det:previousDetachment,
    stages:previousPhase10Stages,absent:previousReached
   });
-  if(priorAutonomy.status!=='VERIFIED')
-   return reject('PREVIOUS_AUTONOMOUS_WITNESS_UNVERIFIED',kind);
+  if(priorAutonomy.status!=='VERIFIED'){
+   // Only fixed categorical evidence is returned; rider IDs, groups,
+   // checkpoint distances and stage content remain private.
+   const allowedReasons=new Set(['AUTONOMOUS_IDENTITY_UNSAFE',
+    'AUTONOMOUS_PHASE10_WITNESS_MISSING',
+    'AUTONOMOUS_PHASE10_SET_UNSAFE','AUTONOMOUS_GROUP_AMBIGUOUS',
+    'AUTONOMOUS_GROUP_MIXED','AUTONOMOUS_GROUP_NOT_STABLE',
+    'AUTONOMOUS_STAGE_CODE_COLLISION','AUTONOMOUS_GAP_UNVERIFIED']);
+   const priorRaw=partition(observed[0].rows.map(r=>r.group));
+   const priorStage=partition(previousPhase10Stages.AFTER_DISPLAY_NORMALIZATION);
+   const previousPublished=partition(previous.groups);
+   const priorPresentation=same(previousPublished,priorRaw)?
+    'RAW_PHYSICAL':same(previousPublished,priorStage)?
+    'PHASE10_FINAL':'OTHER';
+   const activeGroups=previous.groups.filter(g=>
+    Array.isArray(g.riderIds)&&g.riderIds.some(id=>previousAutonomous.has(id)));
+   const coveredIds=new Set(activeGroups.flatMap(g=>
+    g.riderIds.filter(id=>previousAutonomous.has(id))));
+   const priorAutonomousPresentation=coveredIds.size!==previousAutonomous.size?
+    'MISSING_MEMBERS':activeGroups.some(g=>
+     g.riderIds.some(id=>!previousAutonomous.has(id)))?
+    'MIXED_WITH_ROAD':'SEPARATE_AUTONOMOUS';
+   const allowedStages=new Set(['AFTER_AUTONOMOUS_GROUPS',
+    'AFTER_CONSOLIDATION','AFTER_FINISH_COMMIT',
+    'AFTER_DISPLAY_NORMALIZATION']);
+   const allowedDetails=new Set(['DUPLICATE_MEMBERSHIP',
+    'MEMBERSHIP_CHANGED','AUTONOMOUS_RIDERS_MISSING',
+    'BOTH_CODES_CHANGED','GROUP_CODE_CHANGED','DISPLAY_CODE_INVALID',
+    'DISPLAY_CODE_CHANGED']);
+   return {status:'PREVIOUS_AUTONOMOUS_WITNESS_UNVERIFIED',
+    eventKind:kind,
+    previousAutonomyReason:allowedReasons.has(priorAutonomy.status)?
+     priorAutonomy.status:'OTHER',
+    previousAutonomyStage:allowedStages.has(priorAutonomy.stage)?
+     priorAutonomy.stage:'NONE',
+    previousAutonomyDetail:allowedDetails.has(priorAutonomy.detail)?
+     priorAutonomy.detail:'NONE',
+    previousAutonomyPresentation:priorPresentation,
+    previousAutonomousGroup:priorAutonomousPresentation};
+  }
   // The protected autonomous group must represent exactly the same riders
   // and group identity across the interval, not merely share a label.
   const normalized=x=>x.groups.map(({row})=>({
