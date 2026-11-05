@@ -62,6 +62,9 @@ if(!line){
    newPairSecond:probe.baseSourceResidualDnfPairSecond??null,
    newPairStrictIssues:probe.baseSourceResidualDnfPairStrictIssues??null,
    newPairStrictResidual:probe.baseSourceResidualDnfPairStrictResidual??null,
+   precedingExactPrevious:probe.baseSourceResidualPrePairExactPrevious??null,
+   precedingExactCurrent:probe.baseSourceResidualPrePairExactCurrent??null,
+   precedingExactCombined:probe.baseSourceResidualPrePairExactCombined??null,
    repairStatus:probe.baseSourceResidualRepair??null,
    officialWrites:summary.officialWrites
   }
