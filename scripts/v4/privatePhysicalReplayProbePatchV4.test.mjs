@@ -547,3 +547,19 @@ test('DNF survivor pair strict residual audit classifies position without leakin
  assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
  assert.ok(!source.includes('classifyPrivateDnfPairStrictResidualV4'));
 });
+
+test('strict-blocked DNF pair can only trial source-proven earlier exact events',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("diagnostic.position==='BEFORE_PAIR'"));
+ assert.ok(patched.includes("diagnostic.transfer==='P_TO_C'"));
+ assert.ok(patched.includes("diagnostic.physicalMembership==='UNCHANGED'"));
+ assert.ok(patched.includes("diagnostic.kinds==='EVENT_TO_EVENT'"));
+ assert.ok(patched.includes("const origin=classifyPrivatePhase10InputProvenanceV4({"));
+ assert.ok(patched.includes("const exact=buildPrivateExactEventPhysicalCandidateV4({"));
+ assert.ok(patched.includes("if(exact.status==='EXACT_EVENT_CANDIDATE_CREATED')"));
+ assert.ok(patched.includes("candidates.push({mode:'DNF_PAIR_PLUS_EXACT'"));
+ assert.ok(patched.includes('const residualPolicy=classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes("mode:'DNF_PAIR_PLUS_EXACT'"));
+});
