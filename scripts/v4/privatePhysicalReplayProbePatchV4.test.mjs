@@ -563,3 +563,19 @@ test('strict-blocked DNF pair can only trial source-proven earlier exact events'
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes("mode:'DNF_PAIR_PLUS_EXACT'"));
 });
+
+test('original event trial requires stable real source, no Phase10 detach and unchanged strict gate',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("diagnostic.currentOrigin==='ORIGINAL'"));
+ assert.ok(patched.includes("diagnostic.previousPhysicalParity==='MATCH'"));
+ assert.ok(patched.includes("diagnostic.currentPhysicalParity==='DIFFERS'"));
+ assert.ok(patched.includes('const originalEvent=buildPrivateOriginalEventPhysicalHandoffV4({'));
+ assert.ok(patched.includes('phase10Stages:sourceStages,'));
+ assert.ok(patched.includes('detachment:observedDetachment,'));
+ assert.ok(patched.includes("originalEvent.status==='ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED'"));
+ assert.ok(patched.includes("candidates.push({mode:'DNF_PAIR_PLUS_ORIGINAL_EVENT'"));
+ assert.ok(patched.includes('const residualPolicy=classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('buildPrivateOriginalEventPhysicalHandoffV4'));
+});
