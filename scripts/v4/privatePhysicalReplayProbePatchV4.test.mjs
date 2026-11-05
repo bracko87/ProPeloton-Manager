@@ -495,3 +495,22 @@ test('residual root diagnosis audits two checkpoints without changing source rep
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('classifyPrivateResidualRiderSetOriginV4'));
 });
+
+test('DNF survivor pair is source-witnessed, research-only and subject to original strict validator',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.baseSourceResidualOriginFirst?.phase10Initial==="));
+ assert.ok(patched.includes("'INITIAL_SAME_RIDERS_DIFFERENT_GROUPS'"));
+ assert.ok(patched.includes("'INITIAL_RAW_PHYSICAL'"));
+ assert.ok(patched.includes("audit.baseSourceResidualOriginSecond?.recordedMissingCoverage==="));
+ assert.ok(patched.includes("'ALL_CONFIRMED_DNF'"));
+ assert.ok(patched.includes('buildPrivateResidualDnfSurvivorPairV4({'));
+ assert.ok(patched.includes('firstDetachment:staleDnf,secondDetachment:laterDnf'));
+ assert.ok(patched.includes('firstPhase10Stages:staleStages,'));
+ assert.ok(patched.includes("candidates.push({mode:'DNF_SURVIVOR_PAIR',timeline:survivorPair.timeline})"));
+ assert.ok(patched.includes("if(candidate.mode==='DNF_SURVIVOR_PAIR'){"));
+ assert.ok(patched.includes("knownStrictIssueCodes.has(code)?code:'OTHER'"));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('buildPrivateResidualDnfSurvivorPairV4'));
+});
