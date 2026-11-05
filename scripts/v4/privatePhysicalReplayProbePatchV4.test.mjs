@@ -575,6 +575,9 @@ test('original event trial requires stable real source, no Phase10 detach and un
  assert.ok(patched.includes('detachment:observedDetachment,'));
  assert.ok(patched.includes('previousDetachment,'));
  assert.ok(patched.includes('previousPhase10Stages,'));
+ assert.ok(patched.includes('sourcePhase10Timeline:replayTimeline,'));
+ assert.ok(patched.includes("originalEvent.restoredPreviousAutonomous?'RESTORED':'NOT_REQUIRED'"));
+ assert.ok(patched.includes('audit.baseSourceResidualOriginalEventStrictIssues=['));
  assert.ok(patched.includes('originalEvent.previousAutonomyReason'));
  assert.ok(patched.includes('originalEvent.previousAutonomyStage'));
  assert.ok(patched.includes('originalEvent.previousAutonomyDetail'));
