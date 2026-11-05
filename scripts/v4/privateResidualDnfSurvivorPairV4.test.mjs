@@ -274,18 +274,18 @@ test('two autonomous groups can share dropped_group type without colliding displ
   gaps:groups.map(g=>({groupCode:g.groupCode,
    displayCode:g.displayCode,gapSeconds:g.gapSeconds}))});
  const sameAutonomous={dnfRiderIds:['e'],autonomousRiderIds:['b','d']};
- const stageData=(initial)=>({
+ const stageData=(initial,normalized=stageGroups)=>({
   INITIAL:initial,AFTER_DETACHMENT:detached,
   AFTER_AUTONOMOUS_GROUPS:stageGroups,
   AFTER_CONSOLIDATION:stageGroups,
   AFTER_FINISH_COMMIT:stageGroups,
-  AFTER_DISPLAY_NORMALIZATION:stageGroups
+  AFTER_DISPLAY_NORMALIZATION:normalized
  });
  const result=trial({...arg,
   timeline:{checkpoints:[source.checkpoints[0],
    prepared(first,staleFirst),prepared(second,stageGroups)]},
   firstDetachment:sameAutonomous,secondDetachment:sameAutonomous,
-  firstPhase10Stages:stageData(initialStale),
+  firstPhase10Stages:stageData(initialStale,staleFirst),
   secondPhase10Stages:stageData(physical)
  });
  assert.equal(result.status,'DNF_SURVIVOR_PAIR_CREATED');
