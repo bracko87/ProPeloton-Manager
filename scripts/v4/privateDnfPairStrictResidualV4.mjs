@@ -37,7 +37,9 @@ export function classifyPrivateDnfPairStrictResidualV4({
  const invalid={status:'UNAVAILABLE',position:'UNAVAILABLE',
   rider:'UNKNOWN',transfer:'UNAVAILABLE',
   publishedMembership:'UNAVAILABLE',physicalMembership:'UNAVAILABLE',
-  kinds:'UNAVAILABLE'};
+  kinds:'UNAVAILABLE',previousPhysicalParity:'UNAVAILABLE',
+  currentPhysicalParity:'UNAVAILABLE',previousOrigin:'UNAVAILABLE',
+  currentOrigin:'UNAVAILABLE'};
  const cps=timeline?.checkpoints;
  if(!Array.isArray(cps)||!Array.isArray(blockingIssues))return invalid;
  const firstIndex=cps.findIndex(c=>c.checkpointId===firstId);
@@ -56,6 +58,10 @@ export function classifyPrivateDnfPairStrictResidualV4({
  const after=members(current,issue.riderId);
  const pm=physicalMembers(physicalGroupsAtKm,previous,issue.riderId);
  const cm=physicalMembers(physicalGroupsAtKm,current,issue.riderId);
+ const physicalParity=(replay,source)=>!replay||!source?'UNAVAILABLE':
+  same([...replay].sort(),[...source].sort())?'MATCH':'DIFFERS';
+ const origin=cp=>cp.checkpointId.includes(':phase10-exact:')?
+  'PHASE10_EXACT':'ORIGINAL';
  const kinds=[previous.checkpointKind,current.checkpointKind];
  const allowedKinds=['base','event'];
  const position=index<firstIndex?'BEFORE_PAIR':
@@ -72,5 +78,8 @@ export function classifyPrivateDnfPairStrictResidualV4({
    same([...before].sort(),[...after].sort())?'UNCHANGED':'CHANGED',
   physicalMembership:!pm||!cm?'UNAVAILABLE':
    same([...pm].sort(),[...cm].sort())?'UNCHANGED':'CHANGED',
-  kinds:kindsCategory};
+  kinds:kindsCategory,
+  previousPhysicalParity:physicalParity(before,pm),
+  currentPhysicalParity:physicalParity(after,cm),
+  previousOrigin:origin(previous),currentOrigin:origin(current)};
 }
