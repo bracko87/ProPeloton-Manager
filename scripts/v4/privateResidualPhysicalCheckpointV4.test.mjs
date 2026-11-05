@@ -98,7 +98,8 @@ test('refuses fabricated incident, changed rider list or causal event despite st
  assert.equal(wrong.reason,'INCIDENT_PROVENANCE_MISSING');
  const loose=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],
   {...checkpoint,incidents:[{incidentId:'i',riderIds:['b']}]},next]}});
- assert.equal(loose.reason,'INCIDENT_LEDGER_INVALID');
+ assert.equal(loose.status,'RESIDUAL_PHYSICAL_CHECKPOINT_CREATED');
+ assert.equal(loose.incidentProvenanceRelation,'LEDGER_EXTRAS_VERIFIED');
  const causal=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],
   {...checkpoint,commentary:[...checkpoint.commentary,
    {eventType:'group_merge',riderIds:['b']}]},next]}});
@@ -118,7 +119,7 @@ test('provenance failure detail distinguishes missing ledger, missing commentary
       commentaryId:'commentary:event-1',riderIds:['b']}]};
  const cases=[
   [{...one,incidents:[]},'COMMENTARY_WITHOUT_LEDGER'],
-  [{...one,commentary:[...cp.commentary,{eventType:'incident',
+  [{...one,commentary:[...one.commentary,{eventType:'incident',
       commentaryId:'commentary:event-2',riderIds:['a']}]},'COMMENTARY_EXCEEDS_LEDGER'],
   [{...one,commentary:[...cp.commentary,{eventType:'incident',
       commentaryId:'commentary:event-999',riderIds:['b']}]},'INCIDENT_ID_LINK_MISSING'],
