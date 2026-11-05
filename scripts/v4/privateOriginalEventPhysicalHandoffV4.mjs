@@ -35,7 +35,7 @@ const eventClass=type=>passive.has(type)?'PASSIVE':
  type==='late_chase'?'LATE_CHASE':
  type==='incident'?'INCIDENT':typeof type==='string'?'OTHER':'UNKNOWN';
 export function buildPrivateOriginalEventPhysicalHandoffV4({
- timeline,checkpointId,baseTimeline,physicalGroupsAtKm,
+ timeline,checkpointId,baseTimeline,sourcePhase10Timeline,physicalGroupsAtKm,
  phase10Stages,previousPhase10Stages,detachment,previousDetachment,failedRiderId
 }={}){
  const reject=(status,kind='UNKNOWN')=>({status,eventKind:kind});
@@ -182,10 +182,48 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
   if(!previousPhase10Stages||
      keys.some(k=>!partition(previousPhase10Stages[k])))
    return reject('PREVIOUS_AUTONOMOUS_WITNESS_MISSING',kind);
-  const priorAutonomy=verifyPrivateAutonomousGroupsV4({
+  let priorAutonomy=verifyPrivateAutonomousGroupsV4({
    cp:previous,physical:observed[0],det:previousDetachment,
    stages:previousPhase10Stages,absent:previousReached
   });
+  let restorePriorFromSource=false;
+  if(priorAutonomy.status!=='VERIFIED'){
+   // An earlier private physical-source repair can legitimately make the
+   // candidate's previous checkpoint RAW_PHYSICAL while its original Phase10
+   // checkpoint independently witnessed a stable autonomous group. Only in
+   // this narrow case restore that independently verified original autonomous
+   // component alongside the physical road survivor groups. The original
+   // commentary, incidents, status and energy must be byte-equivalent.
+   const sourcePrior=sourcePhase10Timeline?.checkpoints?.find(cp=>
+     cp.checkpointId===previous.checkpointId);
+   const rawPrevious=partition(observed[0].rows.map(r=>r.group));
+   const rawCandidate=partition(previous.groups);
+   const equalStates=sourcePrior&&Array.isArray(sourcePrior.riderStates)&&
+     sourcePrior.riderStates.length===previous.riderStates?.length&&
+     sourcePrior.riderStates.every(x=>{
+       const y=previous.riderStates.find(r=>r.riderId===x.riderId);
+       return y&&y.status===x.status&&y.energy===x.energy&&
+        y.liveEnergyPercent===x.liveEnergyPercent;
+     });
+   const sourceIdentityVerified=sourcePrior&&
+     sourcePrior.checkpointKind===previous.checkpointKind&&
+     sourcePrior.raceProgress?.kmFromStart===
+      previous.raceProgress?.kmFromStart&&
+     sourcePrior.finalResultsVisible===previous.finalResultsVisible&&
+     JSON.stringify(sourcePrior.commentary)===JSON.stringify(previous.commentary)&&
+     JSON.stringify(sourcePrior.incidents)===JSON.stringify(previous.incidents)&&
+     equalStates;
+   if(sourceIdentityVerified&&same(rawPrevious,rawCandidate)){
+     const originalPrior=verifyPrivateAutonomousGroupsV4({
+       cp:sourcePrior,physical:observed[0],det:previousDetachment,
+       stages:previousPhase10Stages,absent:previousReached
+     });
+     if(originalPrior.status==='VERIFIED'){
+       priorAutonomy=originalPrior;
+       restorePriorFromSource=true;
+     }
+   }
+  }
   if(priorAutonomy.status!=='VERIFIED'){
    // Only fixed categorical evidence is returned; rider IDs, groups,
    // checkpoint distances and stage content remain private.
@@ -325,8 +363,66 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
    displayCode:entry.group.displayCode,gapSeconds:entry.gap.gapSeconds};
  });
  const replaced={...current,groups,gaps,riderStates};
- const checkpoints=cps.map((cp,j)=>j===i?replaced:cp);
+ let restoredPrevious=previous;
+ if(restorePriorFromSource){
+  // Restore precisely the protected source Phase10 autonomous group, NOT
+  // any source road group. Road survivors always come from independent
+  // physical simulation. No DNF, event, energy or official data is changed.
+  const oldStates=new Map(previous.riderStates.map(s=>[s.riderId,s]));
+  const expectedPriorIds=[...physicalPrevious.ids,...previousAutonomous].sort();
+  if(oldStates.size!==previous.riderStates.length||
+     !eq([...oldStates.keys()].sort(),observed[0].ids)||
+     [...previousReached].some(id=>oldStates.get(id)?.status!=='dnf')||
+     expectedPriorIds.some(id=>oldStates.get(id)?.status!=='racing'))
+   return reject('PREVIOUS_AUTONOMOUS_STATE_UNSAFE',kind);
+  const priorGroups=[],priorGaps=[],priorAssignments=new Map(),priorCodes=new Set();
+  for(const {group} of physicalPrevious.rows){
+   if(typeof group.groupCode!=='string'||!group.groupCode||
+      typeof group.displayCode!=='string'||!group.displayCode||
+      priorCodes.has(group.displayCode)||!Number.isFinite(group.gapSeconds)||
+      group.gapSeconds<0)
+    return reject('PREVIOUS_AUTONOMOUS_GROUP_INVALID',kind);
+   priorCodes.add(group.displayCode);
+   const row={groupCode:group.groupCode,displayCode:group.displayCode,
+     physicalLineageId:group.physicalLineageId??null,
+     physicalPosition:group.physicalPosition,colorKey:group.colorKey,
+     riderIds:[...group.riderIds]};
+   const gap={groupCode:group.groupCode,displayCode:group.displayCode,
+     gapSeconds:group.gapSeconds,officialTimeSeconds:null};
+   priorGroups.push(row);priorGaps.push(gap);
+   for(const id of row.riderIds)priorAssignments.set(id,{row,gap});
+  }
+  for(const witness of priorAutonomy.groups){
+   const row=witness.row,gap=witness.gap;
+   if(typeof row.groupCode!=='string'||!row.groupCode||
+      typeof row.displayCode!=='string'||!row.displayCode||
+      priorCodes.has(row.displayCode)||
+      gap.groupCode!==row.groupCode||gap.displayCode!==row.displayCode||
+      !Number.isFinite(gap.gapSeconds)||gap.gapSeconds<0)
+    return reject('PREVIOUS_AUTONOMOUS_GROUP_INVALID',kind);
+   priorCodes.add(row.displayCode);
+   priorGroups.push({...row,riderIds:[...row.riderIds]});
+   priorGaps.push({...gap});
+   for(const id of row.riderIds){
+    if(priorAssignments.has(id))
+     return reject('PREVIOUS_AUTONOMOUS_GROUP_INVALID',kind);
+    priorAssignments.set(id,{row,gap});
+   }
+  }
+  if(priorAssignments.size!==expectedPriorIds.length)
+   return reject('PREVIOUS_AUTONOMOUS_GROUP_INVALID',kind);
+  const previousStates=previous.riderStates.map(s=>{
+   const item=priorAssignments.get(s.riderId);
+   return !item?s:{...s,groupCode:item.row.groupCode,
+     displayCode:item.row.displayCode,gapSeconds:item.gap.gapSeconds};
+  });
+  restoredPrevious={...previous,groups:priorGroups,gaps:priorGaps,
+   riderStates:previousStates};
+ }
+ const checkpoints=cps.map((cp,j)=>j===i?replaced:
+    j===i-1?restoredPrevious:cp);
  return {status:'ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED',
   eventKind:kind,timeline:{...timeline,checkpoints},
+  restoredPreviousAutonomous:restorePriorFromSource,
   researchOnly:true,officialWrites:0};
 }
