@@ -1,7 +1,7 @@
 -- PRIVATE RESEARCH EXPORT: run only through an existing trusted postgres
 -- admin session. Requires zero new credentials; never paste real rider data
 -- into GitHub, public logs or chat. Research snapshots are NOT official locks.
--- Replace __STAGE_ID_UUID__ with one validated UUID.
+-- Replace the UUID placeholder in the WHERE clause with one validated UUID.
 BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY;
 WITH checked AS (
  SELECT stage_id,race_id,stage_start_game_ts,lock_cutoff_game_ts,
