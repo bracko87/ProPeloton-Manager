@@ -65,7 +65,7 @@ import {classifyPrivateExactEventSourceV4} from '../../scripts/v4/privateExactEv
 import {classifyPrivatePhase10InputProvenanceV4} from '../../scripts/v4/privatePhase10InputProvenanceV4.mjs'
 import {buildPrivateExactEventPhysicalCandidateV4} from '../../scripts/v4/privateExactEventPhysicalCandidateV4.mjs'
 import {buildPrivateBasePhysicalSourceV4} from '../../scripts/v4/privateBasePhysicalSourceV4.mjs'
-import {buildPrivateResidualPhysicalCheckpointV4} from '../../scripts/v4/privateResidualPhysicalCheckpointV4.mjs'
+import {buildPrivateResidualPhysicalCheckpointV4,buildPrivateResidualPhysicalPairV4} from '../../scripts/v4/privateResidualPhysicalCheckpointV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -573,6 +573,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualPhysicalGuard='NONE'
                   audit.baseSourceResidualProvenanceDetail='NONE'
                   audit.baseSourceResidualIncidentRelation='NONE'
+                  audit.baseSourceResidualPairStatus='NOT_RUN'
+                  audit.baseSourceResidualPairReason='NONE'
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -654,6 +656,25 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                         audit.baseSourceResidualIncidentRelation=stableResidual.incidentProvenanceRelation??'NONE'
                         if(stableResidual.status==='RESIDUAL_PHYSICAL_CHECKPOINT_CREATED')
                           candidates.push({mode:'RESIDUAL_PHYSICAL',timeline:stableResidual.timeline})
+                        // If BOTH adjacent replay checkpoints are stale, a
+                        // one-checkpoint correction cannot work. A bounded
+                        // two-checkpoint trial requires independently stable
+                        // physics at every sampled point and checks EACH
+                        // checkpoint's original incident/narration source.
+                        if(stableResidual.status==='CURRENT_NOT_PHYSICAL'){
+                          const pair=buildPrivateResidualPhysicalPairV4({
+                            timeline:baseSourceCandidate.timeline,
+                            checkpointId:staleId,residualCheckpointId:residualId,
+                            physicalGroupsAtKm:audit.physicalGroupsAtKm
+                          })
+                          audit.baseSourceResidualPairStatus=pair.status
+                          audit.baseSourceResidualPairReason=pair.reason??'NONE'
+                          if(pair.status==='RESIDUAL_PHYSICAL_PAIR_CREATED'){
+                            audit.baseSourceResidualIncidentRelation=
+                              pair.incidentProvenanceRelation??'NONE'
+                            candidates.push({mode:'RESIDUAL_PHYSICAL_PAIR',timeline:pair.timeline})
+                          }
+                        }
                       }
                       audit.baseSourceResidualRepairStatus=candidates.length?
                         'STRICT_BLOCKED':'NO_PROVEN_CANDIDATE'
