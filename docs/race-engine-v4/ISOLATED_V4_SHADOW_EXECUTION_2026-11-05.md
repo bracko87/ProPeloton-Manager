@@ -186,3 +186,34 @@ The read-only database inventory at game time 20 October 2000 06:38
 found two stage cutoffs within the following 24 game hours, but neither
 stage had a locked plan yet at that time. This is **not** a real V4
 execution result; real capture and sporting parity remain blocked.
+
+
+## Security gate on dedicated research database reader (5 Nov 2026)
+
+A migration created v4_live_shadow_read_login with narrowly scoped table
+SELECT grants, function EXECUTE grants for the seven approved read helpers,
+and SELECT-only RLS policies for the race source tables. Verification showed
+INSERT/UPDATE/DELETE false on all directly granted tables; no official
+simulation results or publication privileges were granted.
+
+**The reader is deliberately NOLOGIN and has no password.** A subsequent
+security inventory discovered that PostgreSQL PUBLIC function grants expose
+849 VOLATILE SECURITY DEFINER functions in the public schema to this role
+despite its narrow direct table grants. This is a broader pre-existing ACL
+condition. Do not solve it by blindly revoking PUBLIC function grants:
+that could break live game RPC access. Do not set a password, enable LOGIN,
+or send production credentials into the V4 test path.
+
+The private V4 capture now also checks that its actual active reader has
+**zero** callable VOLATILE SECURITY DEFINER functions. Otherwise it fails
+closed before selecting any race inputs. A login is not equivalent to
+read-only merely because default_transaction_read_only=on, since a session
+can override that default. The explicit REPEATABLE READ READ ONLY
+transaction is still required even after function permissions are fixed.
+
+Next safe step: audit the 849 callable routines and their actual PUBLIC ACL
+dependencies, then design a credential-isolated export mechanism that
+does not require changing live function ACLs, or prepare a separately
+reviewed, non-disruptive permission migration. This is not an invitation
+to broadly revoke privileges or deploy V4. No real V4 shadow race has been
+executed yet.
