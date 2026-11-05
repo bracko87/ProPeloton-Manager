@@ -179,7 +179,9 @@ export async function captureReadOnlyLockedStageV4({
    deterministicSeed:'v4:read-only-lock:'+stage.race_id+':'+stageId+':'+cutoff}
   await db.query('ROLLBACK');begun=false
   const input=await inputBuilder(sources)
-  if(input.stage?.stageId!==stageId||input.race?.raceId!==stage.race_id)
+  if(input.stage?.stageId!==stageId||input.race?.raceId!==stage.race_id||
+     input.stage?.stageFormat!==stage.stage_format||
+     input.stage?.terrainType!==stage.terrain_type)
    throw Error('V4_CAPTURE_OUTPUT_IDENTITY_REJECTED')
   const evidence={
    stage:{stageId,raceId:stage.race_id,stageFormat:'road_race',
