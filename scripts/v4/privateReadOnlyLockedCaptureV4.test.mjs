@@ -79,7 +79,7 @@ function mockConnection(overrides={}){
    if(sql===V4_CAPTURE_QUERIES.clock)return {rows:[overrides.clock??out.clock]}
    if(sql===V4_CAPTURE_QUERIES.stage)return {rows:[{value:{
     id:stageId,race_id:raceId,stage_date:'2000-10-21',
-    stage_number:1,stage_format:'road_race',
+    stage_number:1,stage_format:'road_race',terrain_type:'hilly',
     planned_start_hour_number:10,planned_start_minute:0
    }}]}
    if(sql===V4_CAPTURE_QUERIES.race)return {rows:[{value:{id:raceId}}]}
@@ -153,7 +153,9 @@ test('a late game-time source or a role with write privileges is rejected before
   {clock:{game_now:'2000-10-21T06:59:00.000Z'}},
   {identity:{...out.identity,can_publish:true}},
   {identity:{...out.identity,rolbypassrls:true}},
-  {plans:[]}
+  {plans:[]},
+  {plans:[{...plans[0],engine_stage_payload_json:{
+   ...plans[0].engine_stage_payload_json,built_at_game_ts:'2000-10-21T07:04:00.000Z'}},plans[1]]}
  ]){
   const db=mockConnection(override)
   await assert.rejects(()=>captureReadOnlyLockedStageV4({
@@ -193,4 +195,16 @@ test('mocked shadow failure cannot leave private race input on disk',async()=>{
   shadowRunner:async p=>{path=p;throw Error('private-details')}
  }),/private-details/)
  assert.equal(existsSync(path),false)
+})
+
+test('captured terrain cannot be silently changed by a builder',async()=>{
+ const db=mockConnection()
+ await assert.rejects(()=>captureReadOnlyLockedStageV4({
+  stageId,env,ClientConstructor:db.MockClient,
+  inputBuilder:async sources=>{
+   const x=await builder(sources)
+   return {...x,stage:{...x.stage,terrainType:'flat'}}
+  }
+ }),/V4_CAPTURE_OUTPUT_IDENTITY_REJECTED/)
+ assert.equal(db.calls.filter(x=>x[0]==='ROLLBACK').length,1)
 })
