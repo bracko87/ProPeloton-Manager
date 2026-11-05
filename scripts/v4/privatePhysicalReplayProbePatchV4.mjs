@@ -816,12 +816,20 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                             }).__ppmV4Phase10GroupStages?.get(sourceId)
                             const observedDetachment=privateStore.__ppmV4Phase10DetachEvidence
                               ?.get(sourceId)
+                            const sourceIndex=candidate.timeline.checkpoints.findIndex(cp=>
+                              cp.checkpointId===sourceId)
+                            const previousSourceId=sourceIndex>0?
+                              candidate.timeline.checkpoints[sourceIndex-1].checkpointId:null
+                            const previousDetachment=previousSourceId?
+                              privateStore.__ppmV4Phase10DetachEvidence
+                               ?.get(previousSourceId):null
                             const originalEvent=buildPrivateOriginalEventPhysicalHandoffV4({
                               timeline:candidate.timeline,checkpointId:sourceId,
                               baseTimeline:baseReplayTimeline,
                               physicalGroupsAtKm:audit.physicalGroupsAtKm,
                               phase10Stages:sourceStages,
                               detachment:observedDetachment,
+                              previousDetachment,
                               failedRiderId:bits[1]
                             })
                             audit.baseSourceResidualOriginalEventStatus=originalEvent.status
