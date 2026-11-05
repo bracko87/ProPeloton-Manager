@@ -20,7 +20,7 @@ const partition=(rows,excluded=new Set())=>{
   if(riderIds.length)out.push({key:key(riderIds),group:{...group,riderIds}});
  }
  if(new Set(out.map(r=>r.key)).size!==out.length)return null;
- return {rows:out,ids:[...seen].sort(),
+ return {rows:out,ids:out.flatMap(r=>r.group.riderIds).sort(),
    keys:out.map(r=>r.key).sort()};
 };
 const same=(a,b)=>!!a&&!!b&&eq(a.ids,b.ids)&&eq(a.keys,b.keys);
