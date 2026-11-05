@@ -96,18 +96,28 @@ function protectedAutonomousGroups({
   // Each recorded stage must independently agree that the autonomous group
   // exists with the same members. Group names may be normalized, but the
   // published group identity must be traceable to the source stage.
-  for(const stage of [
-   stages.AFTER_AUTONOMOUS_GROUPS,
-   stages.AFTER_CONSOLIDATION,
-   stages.AFTER_FINISH_COMMIT,
-   stages.AFTER_DISPLAY_NORMALIZATION
+  for(const [stageKey,stage] of [
+   ['AFTER_AUTONOMOUS_GROUPS',stages.AFTER_AUTONOMOUS_GROUPS],
+   ['AFTER_CONSOLIDATION',stages.AFTER_CONSOLIDATION],
+   ['AFTER_FINISH_COMMIT',stages.AFTER_FINISH_COMMIT],
+   ['AFTER_DISPLAY_NORMALIZATION',stages.AFTER_DISPLAY_NORMALIZATION]
   ]){
    const matching=stage.filter(g=>Array.isArray(g?.riderIds)&&
     equal([...g.riderIds].sort(),[...row.riderIds].sort()));
-   if(matching.length!==1||
-      matching[0].groupCode!==row.groupCode||
-      matching[0].displayCode!==row.displayCode)
-    return {status:'AUTONOMOUS_GROUP_NOT_STABLE'};
+   if(matching.length!==1){
+    const members=new Set(row.riderIds);
+    const partial=stage.some(g=>Array.isArray(g?.riderIds)&&
+      g.riderIds.some(id=>members.has(id)));
+    return {status:'AUTONOMOUS_GROUP_NOT_STABLE',stage:stageKey,
+      detail:matching.length>1?'DUPLICATE_MEMBERSHIP':
+        partial?'MEMBERSHIP_CHANGED':'AUTONOMOUS_RIDERS_MISSING'};
+   }
+   const groupCodeChanged=matching[0].groupCode!==row.groupCode;
+   const displayCodeChanged=matching[0].displayCode!==row.displayCode;
+   if(groupCodeChanged||displayCodeChanged)
+    return {status:'AUTONOMOUS_GROUP_NOT_STABLE',stage:stageKey,
+      detail:groupCodeChanged&&displayCodeChanged?'BOTH_CODES_CHANGED':
+        groupCodeChanged?'GROUP_CODE_CHANGED':'DISPLAY_CODE_CHANGED'};
   }
   const matchingGaps=cp.gaps.filter(g=>g.groupCode===row.groupCode&&
     g.displayCode===row.displayCode&&Number.isFinite(g.gapSeconds)&&
@@ -168,7 +178,9 @@ export function buildPrivateResidualDnfSurvivorPairV4({
     cp,physical,det,stages:stages[j],absent
   });
   if(!['NONE','VERIFIED'].includes(protectedGroups.status))
-   return {status:protectedGroups.status};
+   return {status:protectedGroups.status,
+     stage:protectedGroups.stage??'UNKNOWN',
+     detail:protectedGroups.detail??'NONE'};
   const autonomous=new Set(det.autonomousRiderIds);
   const original=partition(cp.groups);
   const expected=partition(physical.rows,new Set([...absent,...autonomous]));
