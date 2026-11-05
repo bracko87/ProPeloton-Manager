@@ -316,3 +316,34 @@ ROLLBACK;
 
 Do not pass private captured rider data into GitHub, chat logs, or public
 CI. Any subsequent research replay must use a private offline bridge.
+
+
+## Offline replay of immutable private V4 research sidecars
+
+The replay bridge is scripts/v4/privateResearchSidecarReplayV4.mjs and the
+trusted SELECT template is scripts/v4/sql/v4_private_research_sidecar_export.sql.
+
+For an approved, **already captured** stage:
+1. Generate the fixed SQL using the CLI with --sql and the stage UUID.
+   Run it with an existing trusted Supabase admin connection. The query
+   uses REPEATABLE READ READ ONLY and independently verifies the stored
+   SHA-256 of the PostgreSQL JSONB serialization.
+2. Save only the private_capture JSON object to a protected mode-0600
+   file **outside the repository**. Never paste rider data, source input
+   or credentials into chat, GitHub, CI or public logs.
+3. Run the CLI with --run and the absolute filename. It independently
+   verifies the exact source bytes/hash, stage ID/time, pre-start cutoff,
+   duplicate team/rider controls and authoritative AI ownership. The
+   pure production input adapter builds the input for the existing
+   isolated calibrated V4 physical runner. The temporary engine envelope
+   is always removed and only sanitized categorical results are printed.
+4. Even if strict replay succeeds this remains **research only**:
+   production parity and original official production locks remain unverified.
+
+At the paused game clock 20 October 2000 06:38, the next upcoming
+ordinary road-race candidate starts at 11:15 game time, with cutoff
+08:15. It has 18 accepted AI-controlled teams and no human saved-plan
+requirements. The game is paused, so no real capture has happened.
+
+No capture scheduler or official-race worker was changed. Future
+automation requires a separate reviewed research-only change.
