@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import {readFileSync,statSync,mkdtempSync,rmSync} from 'node:fs'
+import {readFileSync,writeFileSync,statSync,mkdtempSync,rmSync} from 'node:fs'
 import {join,resolve} from 'node:path'
 import {tmpdir} from 'node:os'
 import {spawnSync} from 'node:child_process'
@@ -98,5 +98,36 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
   assert.equal(syntheticReport.humanTeams,1)
   assert.doesNotMatch(live.stdout,/rider-1|stage-1|race-1/)
   assert.equal(live.status,syntheticReport.status==='SHADOW_STRICT_REPLAY_PASS'?0:1)
+  // Exercise the public, user-callable wrapper as well: path validation,
+  // isolated rebuild, sanitized report and automatic cleanup.
+  const privateFile=join(folder,'synthetic-private-envelope.json')
+  writeFileSync(privateFile,fixture.stdout,{encoding:'utf8',mode:0o600,flag:'wx'})
+  const cli=spawnSync(process.execPath,[
+   resolve(root,'scripts/v4/runIsolatedShadowV4.mjs'),privateFile
+  ],{
+   cwd:root,encoding:'utf8',timeout:180000,maxBuffer:512*1024,
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',
+    TMPDIR:process.env.TMPDIR??'',TEMP:process.env.TEMP??'',
+    TMP:process.env.TMP??'',SYSTEMROOT:process.env.SYSTEMROOT??''}
+  })
+  assert([0,1].includes(cli.status),'offline wrapper must finish')
+  assert.equal(cli.stderr,'')
+  const cliLines=cli.stdout.trim().split(/\r?\n/)
+  assert.equal(cliLines.length,1)
+  assert(cliLines[0].startsWith('V4_ISOLATED_SHADOW_SUMMARY '))
+  const cliReport=JSON.parse(
+   cliLines[0].slice('V4_ISOLATED_SHADOW_SUMMARY '.length))
+  assert.equal(cliReport.status,syntheticReport.status)
+  assert.equal(cliReport.officialWrites,0)
+  assert.equal(cliReport.productionEnabled,false)
+  assert.equal(cliReport.calibration,'peloton_cooperation_energy')
+  assert.doesNotMatch(cli.stdout,/rider-1|stage-1|race-1/)
+  assert.equal(cli.status,syntheticReport.status==='SHADOW_STRICT_REPLAY_PASS'?0:1)
+  console.log('V4_SYNTHETIC_OFFLINE_EXECUTION '+JSON.stringify({
+   endToEnd:true,strictStatus:cliReport.status,
+   replayQuality:cliReport.replayQuality,
+   officialWrites:cliReport.officialWrites,
+   aiTeams:cliReport.aiTeams,humanTeams:cliReport.humanTeams
+  }))
  }finally{rmSync(folder,{recursive:true,force:true})}
 })
