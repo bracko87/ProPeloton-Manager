@@ -143,6 +143,12 @@ BEGIN
   WHERE t.race_id=v_stage.race_id
     AND lower(coalesce(t.status,'accepted'))='accepted';
   v_teams_count := jsonb_array_length(v_teams);
+  IF (SELECT count(DISTINCT t->>'race_team_entry_id')
+      FROM jsonb_array_elements(v_teams) t) <> v_teams_count OR
+     (SELECT count(DISTINCT t->>'participating_club_id')
+      FROM jsonb_array_elements(v_teams) t) <> v_teams_count THEN
+    RETURN jsonb_build_object('status','V4_RESEARCH_DUPLICATE_TEAM_OWNERSHIP','research_writes',0);
+  END IF;
   IF v_teams_count<2 OR EXISTS (
      SELECT 1 FROM jsonb_array_elements(v_teams) t
      WHERE nullif(t->>'race_team_entry_id','') IS NULL OR
@@ -158,6 +164,14 @@ BEGIN
   SELECT coalesce(jsonb_agg(to_jsonb(x) ORDER BY x.team_id,x.rider_id),'[]'::jsonb)
     INTO v_commands FROM public.race_engine_get_stage_phase_commands_v1(p_stage_id) x;
   v_riders_count := jsonb_array_length(v_riders);
+  IF (SELECT count(DISTINCT r->>'rider_id') FROM jsonb_array_elements(v_riders) r)
+       <>v_riders_count OR
+     (SELECT count(DISTINCT r->>'rider_id') FROM jsonb_array_elements(v_inputs) r)
+       <>jsonb_array_length(v_inputs) OR
+     (SELECT count(DISTINCT r->>'rider_id') FROM jsonb_array_elements(v_commands) r)
+       <>jsonb_array_length(v_commands) THEN
+    RETURN jsonb_build_object('status','V4_RESEARCH_DUPLICATE_RIDER_OWNERSHIP','research_writes',0);
+  END IF;
   IF v_riders_count<2 OR jsonb_array_length(v_inputs)<2 OR
      jsonb_array_length(v_inputs)<>v_riders_count OR
      jsonb_array_length(v_commands)<>v_riders_count THEN
