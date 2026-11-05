@@ -65,7 +65,9 @@ if(!line){
    newPairFirst:positive(probe.baseSourceResidualDnfPairFirst),
    newPairSecond:positive(probe.baseSourceResidualDnfPairSecond),
    newPairStrictIssues:positive(probe.baseSourceResidualDnfPairStrictIssues),
-   newPairStrictResidual:probe.baseSourceResidualDnfPairStrictResidual??null,
+   newPairStrictResidual:Object.fromEntries(Object.entries(
+     probe.baseSourceResidualDnfPairStrictResidual??{}
+   ).map(([category,counts])=>[category,positive(counts)])),
    precedingExactPrevious:positive(probe.baseSourceResidualPrePairExactPrevious),
    precedingExactCurrent:positive(probe.baseSourceResidualPrePairExactCurrent),
    precedingExactCombined:positive(probe.baseSourceResidualPrePairExactCombined),
