@@ -8,7 +8,44 @@ const marker='V4_PRIVATE_PG_COMPACT_SUMMARY '
 const lines=readFileSync(0,'utf8').split(/\r?\n/)
 const line=lines.findLast(row=>row.startsWith(marker))
 if(!line){
- console.error('V4_COMPACT_SUMMARY_MISSING')
+ // A failed physics worker has no compact summary. Surface the launcher
+ // error's already-allowlisted fields, never raw stderr or archived inputs.
+ const errorMarker='V4_PRIVATE_PG_HISTORICAL_PILOT_REJECTED '
+ const failure=lines.findLast(row=>row.startsWith(errorMarker))
+ if(failure){
+  try{
+   const parsed=JSON.parse(failure.slice(errorMarker.length))
+   const enums={
+    phase:['CONFIGURATION','CONNECT','VERIFY_LOGIN_IDENTITY',
+     'ACTIVATE_RESTRICTED_ROLE','VERIFY_RESEARCH_ROLE','READ_METADATA',
+     'READ_AND_VALIDATE_EXPORTS','METADATA_READY','EXPORTS_READY','PHYSICS_START'],
+    physicsStep:['BUNDLE','WORKER'],
+    physicsVariant:['preserved_v2','combined','combined_energy',
+     'combined_energy_priority','private_replay_candidate'],
+    childFailure:['TIMEOUT','SPAWN_ERROR','WORKER_INPUT_REJECTED',
+     'WORKER_NONZERO_EXIT','WORKER_SUMMARY_MISSING'],
+    buildFailureClass:['MODULE_RESOLUTION','SOURCE_SYNTAX',
+     'IMPORT_EXPORT_MISMATCH','OTHER_BUILD_FAILURE']
+   }
+   const clean={}
+   for(const [key,values] of Object.entries(enums))
+    clean[key]=values.includes(parsed[key])?parsed[key]:null
+   clean.reason=typeof parsed.reason==='string'&&
+    /^[A-Z_]+$/.test(parsed.reason)?parsed.reason:null
+   console.log('V4_RESEARCH_FAILURE '+JSON.stringify(clean))
+  }catch{
+   console.error('V4_RESEARCH_FAILURE_UNREADABLE')
+  }
+ }else{
+  const lastProgress=lines.filter(row=>row.startsWith('V4_PRIVATE_PG_PROGRESS ')).at(-1)
+  let phase='UNKNOWN'
+  try{phase=JSON.parse(lastProgress?.slice('V4_PRIVATE_PG_PROGRESS '.length)??'{}').phase??'UNKNOWN'}
+  catch{}
+  console.error('V4_RESEARCH_NO_COMPLETE_SUMMARY '+JSON.stringify({
+   lastPhase:['PHYSICS_START','EXPORTS_READY','METADATA_READY'].includes(phase)?
+    phase:'UNKNOWN'
+  }))
+ }
  process.exitCode=1
 }else{
  try{
