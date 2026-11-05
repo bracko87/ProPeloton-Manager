@@ -159,3 +159,90 @@ export function buildPrivateResidualPhysicalCheckpointV4({
     'LEDGER_EXTRAS_VERIFIED':'EXACT',
   researchOnly:true,officialWrites:0};
 }
+
+/**
+ * Private-only two-checkpoint recovery. BOTH existing adjacent checkpoints
+ * must be stale and both independently checked against stable physical road
+ * states. A temporary physical anchor is used solely to run the already
+ * proven single-checkpoint safeguards, then discarded BEFORE strict replay.
+ * No anchor, commentary, or incident is added to the returned timeline.
+ */
+export function buildPrivateResidualPhysicalPairV4({
+ timeline,checkpointId,residualCheckpointId,physicalGroupsAtKm
+}={}){
+ if(!Array.isArray(timeline?.checkpoints)||
+    typeof checkpointId!=='string'||!checkpointId||
+    typeof residualCheckpointId!=='string'||!residualCheckpointId||
+    typeof physicalGroupsAtKm!=='function')
+  return {status:'PAIR_INVALID_INPUT'};
+ const checkpoints=timeline.checkpoints;
+ const start=checkpoints.findIndex(cp=>cp.checkpointId===checkpointId);
+ if(start<1||start+1>=checkpoints.length||
+    checkpoints[start+1].checkpointId!==residualCheckpointId)
+  return {status:'PAIR_NOT_ADJACENT'};
+ const cp0=checkpoints[start],cp1=checkpoints[start+1];
+ const k0=cp0.raceProgress?.kmFromStart,k1=cp1.raceProgress?.kmFromStart;
+ if(!Number.isFinite(k0)||!Number.isFinite(k1)||k0<=0||
+    k1<k0||k1-k0>5)
+  return {status:'PAIR_DISTANCE_UNSAFE'};
+ let p0,p1;
+ try{
+  p0=partition(physicalGroupsAtKm(k0));
+  p1=partition(physicalGroupsAtKm(k1));
+  const samples=[0.25,0.5,0.75].map(f=>
+    partition(physicalGroupsAtKm(k0+(k1-k0)*f)));
+  if(!p0||!p1||samples.some(x=>!x))
+   return {status:'PAIR_PHYSICAL_UNAVAILABLE'};
+  if(!same(p0,p1)||samples.some(x=>!same(x,p0)))
+   return {status:'PAIR_PHYSICAL_MOVEMENT'};
+ }catch{return {status:'PAIR_PHYSICAL_UNAVAILABLE'};}
+ const r0=partition(cp0.groups),r1=partition(cp1.groups);
+ if(!r0||!r1)return {status:'PAIR_REPLAY_INVALID'};
+ if(!same(p0,r0)&&!same(p1,r1)&&
+    eq(p0.ids,r0.ids)&&eq(p1.ids,r1.ids)){
+  // Both snapshots are stale yet contain the SAME active rider population.
+  // We do not infer any between-checkpoint transfer event.
+ }else return {status:'PAIR_NOT_TWO_STALE_MEMBERSHIPS'};
+ let resultTimeline=timeline;
+ const provenance=[];
+ for(let j=start;j<=start+1;j++){
+  const item=resultTimeline.checkpoints[j];
+  const km=item.raceProgress?.kmFromStart;
+  let physical;
+  try{physical=partition(physicalGroupsAtKm(km));}
+  catch{return {status:'PAIR_PHYSICAL_UNAVAILABLE'};}
+  if(!physical)return {status:'PAIR_PHYSICAL_UNAVAILABLE'};
+  const virtualId=item.checkpointId+':v4_private_discarded_physical_anchor';
+  if(resultTimeline.checkpoints.some(cp=>cp.checkpointId===virtualId))
+   return {status:'PAIR_VIRTUAL_ID_COLLISION'};
+  const virtualAnchor={
+   checkpointId:virtualId,raceProgress:{kmFromStart:km},
+   finalResultsVisible:false,
+   groups:physical.rows.map(g=>({...g,riderIds:[...g.riderIds]}))
+  };
+  const temporaryCheckpoints=[
+    ...resultTimeline.checkpoints.slice(0,j+1),virtualAnchor,
+    ...resultTimeline.checkpoints.slice(j+1)
+  ];
+  const candidate=buildPrivateResidualPhysicalCheckpointV4({
+   timeline:{...resultTimeline,checkpoints:temporaryCheckpoints},
+   checkpointId:item.checkpointId,residualCheckpointId:virtualId,
+   physicalGroupsAtKm
+  });
+  if(candidate.status!=='RESIDUAL_PHYSICAL_CHECKPOINT_CREATED')
+   return {status:j===start?'PAIR_FIRST_REJECTED':'PAIR_SECOND_REJECTED',
+     reason:candidate.status,detail:candidate.detail??candidate.reason??'NONE'};
+  // Copy only the corrected EXISTING checkpoint, not the virtual anchor.
+  const corrected=candidate.timeline.checkpoints[j];
+  const restored=resultTimeline.checkpoints.map((row,i)=>i===j?corrected:row);
+  resultTimeline={...resultTimeline,checkpoints:restored};
+  provenance.push(candidate.incidentProvenanceRelation);
+ }
+ if(resultTimeline.checkpoints.length!==checkpoints.length||
+    resultTimeline.checkpoints.some((cp,i)=>cp.checkpointId!==checkpoints[i].checkpointId))
+  return {status:'PAIR_REPLAY_INVALID'};
+ return {status:'RESIDUAL_PHYSICAL_PAIR_CREATED',timeline:resultTimeline,
+  incidentProvenanceRelation:provenance.includes('LEDGER_EXTRAS_VERIFIED')?
+   'LEDGER_EXTRAS_VERIFIED':'EXACT',
+  researchOnly:true,officialWrites:0};
+}
