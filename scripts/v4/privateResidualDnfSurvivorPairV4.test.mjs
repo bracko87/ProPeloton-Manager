@@ -91,7 +91,7 @@ test('cannot rewrite causal event, autonomous episode or already published finis
    .status,'INCIDENT_OR_EVENT_UNSAFE');
  }
  assert.equal(trial({...arg,secondDetachment:{...det,autonomousRiderIds:['b']}})
-  .status,'AUTONOMOUS_EPISODE_PRESENT');
+  .status,'AUTONOMOUS_PHASE10_WITNESS_MISSING');
  assert.equal(trial({...arg,timeline:{checkpoints:[source.checkpoints[0],first,
   {...second,finalResultsVisible:true}]}}).status,'CHECKPOINT_UNSAFE');
 });
@@ -114,4 +114,77 @@ test('keeps deterministic source when one of the two checkpoints already aligned
  assert.deepEqual(out.timeline.checkpoints[2],already);
  assert.equal(out.first,'SURVIVOR_RECONSTRUCTED');
  assert.equal(out.second,'ALREADY_ALIGNED');
+});
+
+const isolatedAutonomous={...physical[2],groupCode:'autonomous3',
+ displayCode:'C3',gapSeconds:76,riderIds:['d']};
+const compact=[physical[0],physical[1]];
+const firstDetached=[physical[0],
+ {...physical[1],riderIds:['b']},
+ {...physical[2],riderIds:['c']}];
+const afterFirst=[...firstDetached,isolatedAutonomous];
+const afterSecond=[...compact,isolatedAutonomous];
+const makeStages=(initial,detached,after)=>({
+ INITIAL:initial,AFTER_DETACHMENT:detached,
+ AFTER_AUTONOMOUS_GROUPS:after,AFTER_CONSOLIDATION:after,
+ AFTER_FINISH_COMMIT:after,AFTER_DISPLAY_NORMALIZATION:after
+});
+const autonomousArg={
+ ...arg,
+ firstDetachment:{...det,autonomousRiderIds:['d']},
+ secondDetachment:{...det,autonomousRiderIds:['d']},
+ firstPhase10Stages:makeStages(initialStale,firstDetached,afterFirst),
+ secondPhase10Stages:makeStages(physical,compact,afterSecond),
+ timeline:{checkpoints:[source.checkpoints[0],
+  {...first,groups:afterFirst,
+   gaps:afterFirst.map(g=>({groupCode:g.groupCode,
+     displayCode:g.displayCode,gapSeconds:g.gapSeconds}))},
+  {...second,groups:afterSecond,
+   gaps:afterSecond.map(g=>({groupCode:g.groupCode,
+     displayCode:g.displayCode,gapSeconds:g.gapSeconds}))}
+ ]}
+};
+test('preserves independent autonomous Phase10 group rather than converting it to physical road group',()=>{
+ const res=trial(autonomousArg);
+ assert.equal(res.status,'DNF_SURVIVOR_PAIR_CREATED');
+ assert.equal(res.first,'SURVIVOR_RECONSTRUCTED');
+ assert.equal(res.second,'ALREADY_ALIGNED');
+ assert.deepEqual(res.timeline.checkpoints[1].groups.map(g=>g.riderIds),
+  [['a'],['b','c'],['d']]);
+ const protectedGroup=res.timeline.checkpoints[1].groups.find(g=>g.displayCode==='C3');
+ assert.deepEqual(protectedGroup.riderIds,['d']);
+ assert.equal(protectedGroup.groupCode,'autonomous3');
+ assert.equal(res.timeline.checkpoints[1].gaps.find(g=>g.displayCode==='C3')
+  .gapSeconds,76);
+ assert.deepEqual(res.timeline.checkpoints[2],
+  autonomousArg.timeline.checkpoints[2]);
+ assert.deepEqual(autonomousArg.timeline.checkpoints[1].groups[2].riderIds,['c']);
+ assert.equal(res.researchOnly,true);
+ assert.equal(res.officialWrites,0);
+});
+test('fails closed when autonomous group mixes ordinary riders or overlaps DNF',()=>{
+ const mixed={...autonomousArg.timeline.checkpoints[1],
+  groups:[{...physical[0]},{...physical[1],riderIds:['b','c']},
+  {...isolatedAutonomous,riderIds:['d','e']}]};
+ const res=trial({...autonomousArg,timeline:{checkpoints:[
+  source.checkpoints[0],mixed,autonomousArg.timeline.checkpoints[2]]}});
+ assert.equal(res.status,'SURVIVOR_SET_MISMATCH');
+ assert.equal(trial({...autonomousArg,
+  firstDetachment:{...autonomousArg.firstDetachment,autonomousRiderIds:['e']}})
+   .status,'AUTONOMOUS_IDENTITY_UNSAFE');
+});
+test('autonomous membership requires matching Phase10 creation, stable lineage and valid gap',()=>{
+ const initial=autonomousArg.firstPhase10Stages;
+ assert.equal(trial({...autonomousArg,firstPhase10Stages:{
+  ...initial,AFTER_AUTONOMOUS_GROUPS:initial.AFTER_DETACHMENT
+ }}).status,'AUTONOMOUS_PHASE10_SET_UNSAFE');
+ assert.equal(trial({...autonomousArg,firstPhase10Stages:{
+  ...initial,AFTER_CONSOLIDATION:initial.AFTER_CONSOLIDATION.map(g=>
+    g.displayCode==='C3'?{...g,groupCode:'different'}:g)
+ }}).status,'AUTONOMOUS_GROUP_NOT_STABLE');
+ const firstCp=autonomousArg.timeline.checkpoints[1];
+ const badGaps={...firstCp,gaps:firstCp.gaps.filter(g=>g.displayCode!=='C3')};
+ assert.equal(trial({...autonomousArg,timeline:{checkpoints:[
+  source.checkpoints[0],badGaps,autonomousArg.timeline.checkpoints[2]]}})
+  .status,'AUTONOMOUS_GAP_UNVERIFIED');
 });
