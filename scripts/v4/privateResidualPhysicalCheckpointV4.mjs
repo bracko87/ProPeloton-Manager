@@ -21,7 +21,8 @@ const same=(a,b)=>a&&b&&eq(a.keys,b.keys)&&eq(a.ids,b.ids);
 const passive=new Set(['race_status','late_chase','bridge_progress',
  'peloton_control','kom','intermediate_sprint','bonus_sprint']);
 export function buildPrivateResidualPhysicalCheckpointV4({
- timeline,checkpointId,residualCheckpointId,physicalGroupsAtKm
+ timeline,checkpointId,residualCheckpointId,physicalGroupsAtKm,
+ nextReachedDnfRiderIds
 }={}){
  if(!Array.isArray(timeline?.checkpoints)||
     typeof checkpointId!=='string'||!checkpointId||
@@ -104,8 +105,31 @@ export function buildPrivateResidualPhysicalCheckpointV4({
   return {status:'INVALID_PARTITION'};
  if(!same(before,at)||!same(at,later))
   return {status:'PHYSICAL_MOVEMENT_PRESENT'};
- if(!same(current,later))
-  return {status:'CURRENT_NOT_PHYSICAL'};
+ let nextDnfAlignment='EXACT';
+ if(!same(current,later)){
+  // The road physics may still contain a rider who was independently
+  // recorded as having reached DNF at the NEXT checkpoint. Accept only
+  // that exact, explicit Phase10 removal. Never alter next's published
+  // groups, rider states, incidents or results.
+  if(!Array.isArray(nextReachedDnfRiderIds)||
+     nextReachedDnfRiderIds.length===0||
+     new Set(nextReachedDnfRiderIds).size!==nextReachedDnfRiderIds.length)
+   return {status:'CURRENT_NOT_PHYSICAL',detail:'NO_VERIFIED_DNF_EXCLUSION'};
+  const reached=new Set(nextReachedDnfRiderIds);
+  const nextStates=Array.isArray(next.riderStates)?next.riderStates:[];
+  const byState=new Map(nextStates.map(state=>[state.riderId,state]));
+  if(byState.size!==nextStates.length||
+     [...reached].some(id=>!later.ids.includes(id)||byState.get(id)?.status!=='dnf'))
+   return {status:'CURRENT_NOT_PHYSICAL',detail:'DNF_STATUS_NOT_CONFIRMED'};
+  const survivors=partition(later.rows.map(group=>({
+    ...group,riderIds:group.riderIds.filter(id=>!reached.has(id))
+   })).filter(group=>group.riderIds.length));
+  if(!survivors||!same(current,survivors))
+   return {status:'CURRENT_NOT_PHYSICAL',detail:'DNF_SURVIVOR_PARTITION_DIFFERS'};
+  if(nextStates.some(row=>survivors.ids.includes(row.riderId)&&row.status!=='racing'))
+   return {status:'CURRENT_NOT_PHYSICAL',detail:'DNF_SURVIVOR_STATE_UNSAFE'};
+  nextDnfAlignment='REACHED_DNF_EXCLUSION';
+ }
  if(!eq(stale.ids,at.ids))
   return {status:'RIDER_SET_MISMATCH'};
  if(same(stale,at))
@@ -157,6 +181,7 @@ export function buildPrivateResidualPhysicalCheckpointV4({
   timeline:{...timeline,checkpoints:repaired},
   incidentProvenanceRelation:incidents.length>incidentEvents.length?
     'LEDGER_EXTRAS_VERIFIED':'EXACT',
+  nextDnfAlignment,
   researchOnly:true,officialWrites:0};
 }
 
@@ -202,7 +227,15 @@ export function buildPrivateResidualPhysicalPairV4({
     eq(p0.ids,r0.ids)&&eq(p1.ids,r1.ids)){
   // Both snapshots are stale yet contain the SAME active rider population.
   // We do not infer any between-checkpoint transfer event.
- }else return {status:'PAIR_NOT_TWO_STALE_MEMBERSHIPS'};
+ }else{
+  const detail=!eq(p0.ids,r0.ids)&&!eq(p1.ids,r1.ids)?
+    'BOTH_RIDER_SETS_DIFFER':!eq(p0.ids,r0.ids)?
+    'FIRST_RIDER_SET_DIFFERS':!eq(p1.ids,r1.ids)?
+    'SECOND_RIDER_SET_DIFFERS':same(p0,r0)?
+    'FIRST_ALREADY_PHYSICAL':same(p1,r1)?
+    'SECOND_ALREADY_PHYSICAL':'OTHER';
+  return {status:'PAIR_NOT_TWO_STALE_MEMBERSHIPS',detail};
+ }
  let resultTimeline=timeline;
  const provenance=[];
  for(let j=start;j<=start+1;j++){
