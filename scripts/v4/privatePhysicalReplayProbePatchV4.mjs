@@ -67,6 +67,7 @@ import {buildPrivateExactEventPhysicalCandidateV4} from '../../scripts/v4/privat
 import {buildPrivateBasePhysicalSourceV4} from '../../scripts/v4/privateBasePhysicalSourceV4.mjs'
 import {buildPrivateResidualPhysicalCheckpointV4,buildPrivateResidualPhysicalPairV4} from '../../scripts/v4/privateResidualPhysicalCheckpointV4.mjs'
 import {classifyPrivateResidualRiderSetOriginV4} from '../../scripts/v4/privateResidualRiderSetOriginV4.mjs'
+import {buildPrivateResidualDnfSurvivorPairV4} from '../../scripts/v4/privateResidualDnfSurvivorPairV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -582,6 +583,10 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualPairStrictIssues=[]
                   audit.baseSourceResidualOriginFirst=null
                   audit.baseSourceResidualOriginSecond=null
+                  audit.baseSourceResidualDnfPairStatus='NOT_RUN'
+                  audit.baseSourceResidualDnfPairFirst='NONE'
+                  audit.baseSourceResidualDnfPairSecond='NONE'
+                  audit.baseSourceResidualDnfPairStrictIssues=[]
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -702,6 +707,36 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                           }
                         }
                       }
+                      // Both source checkpoints carry confirmed DNF removals;
+                      // their surviving riders have stale group partitions.
+                      // Require source-drift and DNF-only provenance at BOTH
+                      // checkpoints before constructing a bounded, private
+                      // pair candidate. Autonomous detachment, causal events
+                      // or a true physical movement fail closed.
+                      if(baseSourceCandidate.status==='BASE_PHYSICAL_CATCH_CREATED'&&
+                         audit.baseSourceResidualTransfer==='C_TO_C'&&
+                         audit.baseSourceResidualOriginFirst?.phase10Initial===
+                           'INITIAL_SAME_RIDERS_DIFFERENT_GROUPS'&&
+                         audit.baseSourceResidualOriginSecond?.phase10Initial===
+                           'INITIAL_RAW_PHYSICAL'&&
+                         audit.baseSourceResidualOriginFirst?.recordedMissingCoverage===
+                           'ALL_CONFIRMED_DNF'&&
+                         audit.baseSourceResidualOriginSecond?.recordedMissingCoverage===
+                           'ALL_CONFIRMED_DNF'){
+                        const survivorPair=buildPrivateResidualDnfSurvivorPairV4({
+                          timeline:baseSourceCandidate.timeline,
+                          checkpointId:staleId,residualCheckpointId:residualId,
+                          physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                          firstDetachment:staleDnf,secondDetachment:laterDnf,
+                          firstPhase10Stages:staleStages,
+                          secondPhase10Stages:laterStages
+                        })
+                        audit.baseSourceResidualDnfPairStatus=survivorPair.status
+                        audit.baseSourceResidualDnfPairFirst=survivorPair.first??'NONE'
+                        audit.baseSourceResidualDnfPairSecond=survivorPair.second??'NONE'
+                        if(survivorPair.status==='DNF_SURVIVOR_PAIR_CREATED')
+                          candidates.push({mode:'DNF_SURVIVOR_PAIR',timeline:survivorPair.timeline})
+                      }
                       audit.baseSourceResidualRepairStatus=candidates.length?
                         'STRICT_BLOCKED':'NO_PROVEN_CANDIDATE'
                       for(const candidate of candidates){
@@ -716,6 +751,14 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                         const residualPolicy=classifyUniversalReplaySynchronizationForPublication(residualSync)
                         if(candidate.mode==='RESIDUAL_PHYSICAL_PAIR'){
                           audit.baseSourceResidualPairStrictIssues=[...new Set(
+                            residualPolicy.blockingIssues.map(issue=>{
+                              const code=issue.split(':')[0]
+                              return knownStrictIssueCodes.has(code)?code:'OTHER'
+                            })
+                          )].sort()
+                        }
+                        if(candidate.mode==='DNF_SURVIVOR_PAIR'){
+                          audit.baseSourceResidualDnfPairStrictIssues=[...new Set(
                             residualPolicy.blockingIssues.map(issue=>{
                               const code=issue.split(':')[0]
                               return knownStrictIssueCodes.has(code)?code:'OTHER'
