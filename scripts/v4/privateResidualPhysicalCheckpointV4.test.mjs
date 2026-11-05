@@ -98,7 +98,7 @@ test('refuses fabricated incident, changed rider list or causal event despite st
  assert.equal(wrong.reason,'INCIDENT_PROVENANCE_MISSING');
  const loose=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],
   {...checkpoint,incidents:[{incidentId:'i',riderIds:['b']}]},next]}});
- assert.equal(loose.reason,'INCIDENT_PROVENANCE_MISSING');
+ assert.equal(loose.reason,'INCIDENT_LEDGER_INVALID');
  const causal=build({...args,timeline:{checkpoints:[timeline.checkpoints[0],
   {...checkpoint,commentary:[...checkpoint.commentary,
    {eventType:'group_merge',riderIds:['b']}]},next]}});
@@ -118,8 +118,8 @@ test('provenance failure detail distinguishes missing ledger, missing commentary
       commentaryId:'commentary:event-1',riderIds:['b']}]};
  const cases=[
   [{...one,incidents:[]},'COMMENTARY_WITHOUT_LEDGER'],
-  [{...one,commentary:[...cp.commentary]},'LEDGER_WITHOUT_COMMENTARY'],
-  [{...one,incidents:[incident,{incidentId:'event-2',riderIds:['a']}]},'COUNT_MISMATCH'],
+  [{...one,commentary:[...cp.commentary,{eventType:'incident',
+      commentaryId:'commentary:event-2',riderIds:['a']}]},'COMMENTARY_EXCEEDS_LEDGER'],
   [{...one,commentary:[...cp.commentary,{eventType:'incident',
       commentaryId:'commentary:event-999',riderIds:['b']}]},'INCIDENT_ID_LINK_MISSING'],
   [{...one,commentary:[...cp.commentary,{eventType:'incident',
@@ -132,4 +132,43 @@ test('provenance failure detail distinguishes missing ledger, missing commentary
   assert.equal(out.detail,reason);
   assert.equal(out.timeline,undefined);
  }
+});
+
+test('keeps valid unnarrated source incidents during a physically stable checkpoint repair',()=>{
+ const source=[
+  {incidentId:'event-1',riderIds:['b']},
+  {incidentId:'event-2',riderIds:['c']}
+ ];
+ const recorded={...checkpoint,incidents:source,
+  commentary:[...checkpoint.commentary,{eventType:'incident',
+    commentaryId:'commentary:event-1',riderIds:['b']}]};
+ const out=build({...args,timeline:{checkpoints:[
+    timeline.checkpoints[0],recorded,next]}});
+ assert.equal(out.status,'RESIDUAL_PHYSICAL_CHECKPOINT_CREATED');
+ assert.equal(out.incidentProvenanceRelation,'LEDGER_EXTRAS_VERIFIED');
+ assert.deepEqual(out.timeline.checkpoints[1].incidents,source);
+ assert.deepEqual(out.timeline.checkpoints[1].commentary,recorded.commentary);
+ assert.equal(recorded.groups[2].riderIds.length,2);
+ assert.equal(out.officialWrites,0);
+});
+test('rejects unmatched commentary and invalid unnarrated incidents',()=>{
+ const base={...checkpoint,incidents:[{incidentId:'valid-1',riderIds:['b']},
+   {incidentId:'valid-2',riderIds:['c']}],
+  commentary:[...checkpoint.commentary,{eventType:'incident',
+     commentaryId:'commentary:unknown',riderIds:['b']}]};
+ const mismatch=build({...args,timeline:{checkpoints:[
+  timeline.checkpoints[0],base,next]}});
+ assert.equal(mismatch.reason,'INCIDENT_PROVENANCE_MISSING');
+ assert.equal(mismatch.detail,'INCIDENT_ID_LINK_MISSING');
+ const missing={...base,commentary:[...checkpoint.commentary],
+   incidents:[{incidentId:'valid-1',riderIds:['outside']}]};
+ const other=build({...args,timeline:{checkpoints:[
+  timeline.checkpoints[0],missing,next]}});
+ assert.equal(other.reason,'INCIDENT_LEDGER_INVALID');
+ assert.equal(other.detail,'INCIDENT_RIDER_NOT_ACTIVE');
+ const broken={...base,incidents:[{incidentId:'valid-1',riderIds:['b']},
+    {incidentId:'valid-1',riderIds:['c']}]};
+ const duplicate=build({...args,timeline:{checkpoints:[
+  timeline.checkpoints[0],broken,next]}});
+ assert.equal(duplicate.reason,'INCIDENT_LEDGER_INVALID');
 });
