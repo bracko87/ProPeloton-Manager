@@ -51,6 +51,75 @@ function safeEvents(cp,allIds){
  }
  return true;
 }
+
+// Autonomous groups are constructed in Phase10, outside the sampled road
+// partitions. Keep only groups with independent before/after Phase10 witnesses
+// and matching final published membership/identity. Never synthesize a group.
+function protectedAutonomousGroups({
+  cp,physical,det,stages,absent
+}){
+ const active=new Set(det.autonomousRiderIds);
+ if(!active.size)return {status:'NONE',groups:[],gaps:[]};
+ if([...active].some(id=>absent.has(id)||!physical.ids.includes(id)))
+  return {status:'AUTONOMOUS_IDENTITY_UNSAFE'};
+ const detached=partition(stages?.AFTER_DETACHMENT);
+ const added=partition(stages?.AFTER_AUTONOMOUS_GROUPS);
+ const consolidated=partition(stages?.AFTER_CONSOLIDATION);
+ const finished=partition(stages?.AFTER_FINISH_COMMIT);
+ const normalized=partition(stages?.AFTER_DISPLAY_NORMALIZATION);
+ const original=partition(cp.groups);
+ if(!detached||!added||!consolidated||!finished||!normalized||!original)
+  return {status:'AUTONOMOUS_PHASE10_WITNESS_MISSING'};
+ const detachedExpected=physical.ids.filter(id=>!active.has(id)&&!absent.has(id));
+ const rejoinedExpected=physical.ids.filter(id=>!absent.has(id));
+ if(!equal(detached.ids,detachedExpected)||
+    !equal(added.ids,rejoinedExpected)||
+    !equal(consolidated.ids,rejoinedExpected)||
+    !equal(finished.ids,rejoinedExpected)||
+    !equal(normalized.ids,rejoinedExpected)||
+    !same(normalized,original))
+  return {status:'AUTONOMOUS_PHASE10_SET_UNSAFE'};
+ const collected=[];
+ const groupOf=(groups,id)=>groups.filter(g=>
+  Array.isArray(g?.riderIds)&&g.riderIds.includes(id));
+ const witnessed=new Set();
+ for(const id of active){
+  if(witnessed.has(id))continue;
+  const target=groupOf(cp.groups,id);
+  if(target.length!==1)return {status:'AUTONOMOUS_GROUP_AMBIGUOUS'};
+  const row=target[0];
+  if(row.riderIds.some(x=>!active.has(x))||
+     row.riderIds.some(x=>witnessed.has(x))||
+     typeof row.groupCode!=='string'||!row.groupCode||
+     typeof row.displayCode!=='string'||!row.displayCode)
+   return {status:'AUTONOMOUS_GROUP_MIXED'};
+  // Each recorded stage must independently agree that the autonomous group
+  // exists with the same members. Group names may be normalized, but the
+  // published group identity must be traceable to the source stage.
+  for(const stage of [
+   stages.AFTER_AUTONOMOUS_GROUPS,
+   stages.AFTER_CONSOLIDATION,
+   stages.AFTER_FINISH_COMMIT,
+   stages.AFTER_DISPLAY_NORMALIZATION
+  ]){
+   const matching=stage.filter(g=>Array.isArray(g?.riderIds)&&
+    equal([...g.riderIds].sort(),[...row.riderIds].sort()));
+   if(matching.length!==1||
+      matching[0].groupCode!==row.groupCode||
+      matching[0].displayCode!==row.displayCode)
+    return {status:'AUTONOMOUS_GROUP_NOT_STABLE'};
+  }
+  const matchingGaps=cp.gaps.filter(g=>g.groupCode===row.groupCode&&
+    g.displayCode===row.displayCode&&Number.isFinite(g.gapSeconds)&&
+    g.gapSeconds>=0);
+  if(matchingGaps.length!==1)
+   return {status:'AUTONOMOUS_GAP_UNVERIFIED'};
+  row.riderIds.forEach(x=>witnessed.add(x));
+  collected.push({row,gap:matchingGaps[0]});
+ }
+ if(witnessed.size!==active.size)return {status:'AUTONOMOUS_GROUP_AMBIGUOUS'};
+ return {status:'VERIFIED',groups:collected};
+}
 export function buildPrivateResidualDnfSurvivorPairV4({
  timeline,checkpointId,residualCheckpointId,physicalGroupsAtKm,
  firstDetachment,secondDetachment,firstPhase10Stages,secondPhase10Stages
@@ -92,22 +161,25 @@ export function buildPrivateResidualDnfSurvivorPairV4({
      new Set(det.dnfRiderIds).size!==det.dnfRiderIds.length||
      new Set(det.autonomousRiderIds).size!==det.autonomousRiderIds.length)
    return {status:'DETACHMENT_UNVERIFIED'};
-  // Autonomous episodes are physically causal. Do not silently convert them
-  // into an ordinary road group. A separate source-level repair is required.
-  if(det.autonomousRiderIds.length)return {status:'AUTONOMOUS_EPISODE_PRESENT'};
   const absent=new Set(det.dnfRiderIds);
   if([...absent].some(id=>!physical.ids.includes(id)))
    return {status:'DNF_RIDER_UNWITNESSED'};
+  const protectedGroups=protectedAutonomousGroups({
+    cp,physical,det,stages:stages[j],absent
+  });
+  if(!['NONE','VERIFIED'].includes(protectedGroups.status))
+   return {status:protectedGroups.status};
+  const autonomous=new Set(det.autonomousRiderIds);
   const original=partition(cp.groups);
-  const expected=partition(physical.rows,absent);
+  const expected=partition(physical.rows,new Set([...absent,...autonomous]));
   if(!original||!expected||!expected.rows.length||
-     !equal(original.ids,expected.ids))
+     !equal(original.ids,[...expected.ids,...autonomous].sort()))
    return {status:'SURVIVOR_SET_MISMATCH'};
   const states=new Map(cp.riderStates.map(row=>[row.riderId,row]));
   if(states.size!==cp.riderStates.length||
      !equal([...states.keys()].sort(),physical.ids)||
      [...absent].some(id=>states.get(id)?.status!=='dnf')||
-     expected.ids.some(id=>states.get(id)?.status!=='racing'))
+     [...expected.ids,...autonomous].some(id=>states.get(id)?.status!=='racing'))
    return {status:'RIDER_STATE_UNSAFE'};
   if(!safeEvents(cp,states))return {status:'INCIDENT_OR_EVENT_UNSAFE'};
   const initial=partition(stages[j]?.INITIAL);
@@ -119,7 +191,11 @@ export function buildPrivateResidualDnfSurvivorPairV4({
    return {status:'FIRST_SOURCE_NOT_STALE'};
   if(j===1&&!same(initial,physical))
    return {status:'SECOND_SOURCE_NOT_PHYSICAL'};
-  if(same(original,expected)){
+  const expectedCombined=partition([
+    ...expected.rows,...protectedGroups.groups.map(row=>row.row)
+  ]);
+  if(!expectedCombined)return {status:'PHYSICAL_GROUP_INVALID'};
+  if(same(original,expectedCombined)){
    statuses.push('ALREADY_ALIGNED');continue;
   }
   const codes=new Set(),groups=[],gaps=[],byId=new Map();
@@ -140,6 +216,18 @@ export function buildPrivateResidualDnfSurvivorPairV4({
    groups.push(row);gaps.push(gap);
    for(const id of row.riderIds)byId.set(id,{row,gap});
   }
+  for(const witness of protectedGroups.groups){
+    const {row,gap}=witness;
+    if(codes.has(row.displayCode))return {status:'AUTONOMOUS_CODE_COLLISION'};
+    codes.add(row.displayCode);
+    groups.push({...row,riderIds:[...row.riderIds]});
+    gaps.push({...gap});
+    for(const id of row.riderIds){
+      if(byId.has(id))return {status:'AUTONOMOUS_IDENTITY_UNSAFE'};
+      byId.set(id,{row,gap});
+    }
+  }
+  if(byId.size!==original.ids.length)return {status:'SURVIVOR_SET_MISMATCH'};
   const updated=cp.riderStates.map(state=>{
    const mapping=byId.get(state.riderId);
    return mapping?{...state,groupCode:mapping.row.groupCode,
