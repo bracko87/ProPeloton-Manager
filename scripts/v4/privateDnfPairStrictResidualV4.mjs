@@ -26,9 +26,9 @@ const physicalMembers=(func,cp,id)=>{
    g.riderIds.includes(id))?.riderIds??null:null;
  }catch{return null;}
 };
-const transition=(from,to)=>from==='P'&&/^C\\d+$/.test(to)?'P_TO_C':
- /^C\\d+$/.test(from)&&to==='P'?'C_TO_P':
- /^C\\d+$/.test(from)&&/^C\\d+$/.test(to)?'C_TO_C':
+const transition=(from,to)=>from==='P'&&/^C\d+$/.test(to)?'P_TO_C':
+ /^C\d+$/.test(from)&&to==='P'?'C_TO_P':
+ /^C\d+$/.test(from)&&/^C\d+$/.test(to)?'C_TO_C':
  from===to?'NO_TRANSFER':'OTHER';
 export function classifyPrivateDnfPairStrictResidualV4({
  timeline,blockingIssues,firstId,secondId,
