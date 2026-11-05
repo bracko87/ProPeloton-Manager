@@ -526,3 +526,12 @@ test('autonomous Phase10 pair repair requires independently witnessed groups and
  assert.ok(patched.includes("if(residualPolicy.publishable){"));
  assert.ok(!source.includes("buildPrivateResidualDnfSurvivorPairV4"));
 });
+
+test('autonomous group source drift categories stay private and keep strict publication',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('audit.baseSourceResidualDnfPairStage=survivorPair.stage'));
+ assert.ok(patched.includes('audit.baseSourceResidualDnfPairDetail=survivorPair.detail'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(!source.includes('audit.baseSourceResidualDnfPairStage'));
+});
