@@ -69,6 +69,7 @@ import {buildPrivateResidualPhysicalCheckpointV4,buildPrivateResidualPhysicalPai
 import {classifyPrivateResidualRiderSetOriginV4} from '../../scripts/v4/privateResidualRiderSetOriginV4.mjs'
 import {buildPrivateResidualDnfSurvivorPairV4} from '../../scripts/v4/privateResidualDnfSurvivorPairV4.mjs'
 import {classifyPrivateDnfPairStrictResidualV4} from '../../scripts/v4/privateDnfPairStrictResidualV4.mjs'
+import {buildPrivateOriginalEventPhysicalHandoffV4} from '../../scripts/v4/privateOriginalEventPhysicalHandoffV4.mjs'
 import {classifyPhysicalReplayMembershipHandoffV4} from '../../scripts/v4/privatePhysicalReplayHandoffV4.mjs'
 import {classifyCheckpointGroupStagesV4} from '../../scripts/v4/privateCheckpointGroupStagesV4.mjs'
 import {classifyPostConstructionHandoffV4} from '../../scripts/v4/privatePostConstructionHandoffV4.mjs'
@@ -594,6 +595,9 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualPrePairExactPrevious='NOT_RUN'
                   audit.baseSourceResidualPrePairExactCurrent='NOT_RUN'
                   audit.baseSourceResidualPrePairExactCombined='NOT_RUN'
+                  audit.baseSourceResidualOriginalEventStatus='NOT_RUN'
+                  audit.baseSourceResidualOriginalEventKind='UNKNOWN'
+                  audit.baseSourceResidualOriginalEventStrict='NOT_RUN'
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -794,6 +798,44 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                              diagnostic.position==='BEFORE_PAIR'&&
                              diagnostic.transfer==='P_TO_C'&&
                              diagnostic.kinds==='EVENT_TO_EVENT'&&
+                             diagnostic.previousPhysicalParity==='MATCH'&&
+                             diagnostic.currentPhysicalParity==='DIFFERS'&&
+                             diagnostic.physicalMembership==='UNCHANGED'&&
+                             diagnostic.previousOrigin==='ORIGINAL'&&
+                             diagnostic.currentOrigin==='ORIGINAL'){
+                            // The failed edge is between two original source
+                            // event checkpoints. Try only an event that was
+                            // source-passive, with stable physical groups and
+                            // independently unchanged Phase10 memberships.
+                            const issue=residualPolicy.blockingIssues.find(x=>
+                              x.startsWith('post_catch_group_transfer_without_physical_transition:'))
+                            const bits=issue?.split(':')??[]
+                            const sourceId=bits.slice(3).join(':').split(':v4_private_phase=')[0]
+                            const sourceStages=(globalThis as typeof globalThis & {
+                              __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+                            }).__ppmV4Phase10GroupStages?.get(sourceId)
+                            const observedDetachment=privateStore.__ppmV4Phase10DetachEvidence
+                              ?.get(sourceId)
+                            const originalEvent=buildPrivateOriginalEventPhysicalHandoffV4({
+                              timeline:candidate.timeline,checkpointId:sourceId,
+                              baseTimeline:baseReplayTimeline,
+                              physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                              phase10Stages:sourceStages,
+                              detachment:observedDetachment,
+                              failedRiderId:bits[1]
+                            })
+                            audit.baseSourceResidualOriginalEventStatus=originalEvent.status
+                            audit.baseSourceResidualOriginalEventKind=originalEvent.eventKind??'UNKNOWN'
+                            if(originalEvent.status==='ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED'){
+                              candidates.push({mode:'DNF_PAIR_PLUS_ORIGINAL_EVENT',
+                                timeline:originalEvent.timeline})
+                            }
+                          }
+                          if(!residualPolicy.publishable&&
+                             diagnostic.status==='CLASSIFIED'&&
+                             diagnostic.position==='BEFORE_PAIR'&&
+                             diagnostic.transfer==='P_TO_C'&&
+                             diagnostic.kinds==='EVENT_TO_EVENT'&&
                              diagnostic.physicalMembership==='UNCHANGED'&&
                              diagnostic.publishedMembership==='CHANGED'){
                             const firstBlock=residualPolicy.blockingIssues.find(issue=>
@@ -863,6 +905,10 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                         }
                         if(candidate.mode==='DNF_PAIR_PLUS_EXACT'){
                           audit.baseSourceResidualPrePairExactCombined=
+                            residualPolicy.publishable?'STRICT_PASS':'STRICT_BLOCKED'
+                        }
+                        if(candidate.mode==='DNF_PAIR_PLUS_ORIGINAL_EVENT'){
+                          audit.baseSourceResidualOriginalEventStrict=
                             residualPolicy.publishable?'STRICT_PASS':'STRICT_BLOCKED'
                         }
                         if(residualPolicy.publishable){
