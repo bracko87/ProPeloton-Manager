@@ -235,8 +235,11 @@ export function buildPrivateResidualDnfSurvivorPairV4({
   }
   const codes=new Set(),groups=[],gaps=[],byId=new Map();
   for(const group of expected.rows){
-   const source=physical.rows.find(g=>equal([...g.riderIds].filter(id=>!absent.has(id)).sort(),
-      [...group.riderIds].sort()));
+   // Compare physical groups after BOTH recorded DNF and independently
+   // witnessed autonomous detachment; preserve the autonomous groups below.
+   const source=physical.rows.find(g=>equal(g.riderIds.filter(id=>
+     !absent.has(id)&&!autonomous.has(id)).sort(),
+     [...group.riderIds].sort()));
    if(!source||typeof source.displayCode!=='string'||!source.displayCode||
       typeof source.groupCode!=='string'||!source.groupCode||
       codes.has(source.displayCode)||!Number.isFinite(source.gapSeconds)||
