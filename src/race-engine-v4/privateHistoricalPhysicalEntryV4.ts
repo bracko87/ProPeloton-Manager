@@ -402,8 +402,7 @@ function main(){
       if(dnfPair.baseSourceResidualDnfPairStrictResidual){
         for(const field of ['status','position','rider','transfer',
           'publishedMembership','physicalMembership','kinds'] as const){
-          const bucket=physicalProbe.baseSourceResidualDnfPairStrictResidual[field]
-            as Record<string,number>
+          const bucket=(physicalProbe.baseSourceResidualDnfPairStrictResidual[field]) as Record<string,number>
           const code=dnfPair.baseSourceResidualDnfPairStrictResidual[field]
           bucket[typeof code==='string'&&Object.prototype.hasOwnProperty.call(bucket,code)?
             code:'OTHER']++
