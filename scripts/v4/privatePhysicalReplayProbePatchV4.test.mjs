@@ -514,3 +514,15 @@ test('DNF survivor pair is source-witnessed, research-only and subject to origin
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('buildPrivateResidualDnfSurvivorPairV4'));
 });
+
+test('autonomous Phase10 pair repair requires independently witnessed groups and original strict gate',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("buildPrivateResidualDnfSurvivorPairV4({"));
+ assert.ok(patched.includes("firstPhase10Stages:staleStages,"));
+ assert.ok(patched.includes("secondPhase10Stages:laterStages"));
+ assert.ok(patched.includes("candidates.push({mode:'DNF_SURVIVOR_PAIR',timeline:survivorPair.timeline})"));
+ assert.ok(patched.includes("classifyUniversalReplaySynchronizationForPublication(residualSync)"));
+ assert.ok(patched.includes("if(residualPolicy.publishable){"));
+ assert.ok(!source.includes("buildPrivateResidualDnfSurvivorPairV4"));
+});
