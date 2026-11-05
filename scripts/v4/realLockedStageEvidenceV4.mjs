@@ -82,13 +82,15 @@ export function auditV4RealLockedStageEvidence(evidence) {
  const snap=evidence.completeLockSnapshot
  if(snap===undefined||snap===null)
   return report('V4_FULL_STAGE_LOCKED_INPUT_MISSING',base)
- if(!isObj(snap)||snap.sourceKind!=='immutable_full_stage_lock'||
+ if(!isObj(snap)||!['immutable_full_stage_lock','read_only_lock_window_capture'].includes(snap.sourceKind)||
     snap.status!=='locked'||snap.immutable!==true||
     snap.stageId!==core.stage.stageId||snap.raceId!==core.stage.raceId||
     !uuid.test(snap.snapshotId)||dateMs(snap.stageStartGameTs)!==core.start||
     dateMs(snap.lockCutoffGameTs)!==core.cutoff||
     !(dateMs(snap.snapshotGameTs)>=core.cutoff&&
       dateMs(snap.snapshotGameTs)<core.start)||
+    (snap.sourceKind==='read_only_lock_window_capture'&&
+      dateMs(snap.snapshotGameTs)-core.cutoff>5*60000)||
     typeof snap.inputSha256!=='string'||!/^[0-9a-f]{64}$/i.test(snap.inputSha256))
   return report('V4_FULL_STAGE_LOCK_PROVENANCE_REJECTED',base)
  const input=snap.input
@@ -131,7 +133,9 @@ export function auditV4RealLockedStageEvidence(evidence) {
  }
  if(teamIds.size!==core.entries.size||humans+ai!==teamIds.size||!ai)
   return report('V4_INPUT_TEAM_OWNERSHIP_REJECTED',base)
- return report('V4_REAL_INPUT_CANDIDATE_ONLY',{...base,humans,ai})
+ return report(snap.sourceKind==='read_only_lock_window_capture'?
+  'V4_READ_ONLY_CAPTURE_RECONSTRUCTION_ONLY':'V4_REAL_INPUT_CANDIDATE_ONLY',
+  {...base,humans,ai})
 }
 /**
  * Private in-process handoff, only after audit. Never print or commit the
@@ -140,7 +144,7 @@ export function auditV4RealLockedStageEvidence(evidence) {
  */
 export function prepareV4RealLockedShadowEnvelope(evidence) {
  const gate=auditV4RealLockedStageEvidence(evidence)
- if(gate.status!=='V4_REAL_INPUT_CANDIDATE_ONLY')
+ if(!['V4_REAL_INPUT_CANDIDATE_ONLY','V4_READ_ONLY_CAPTURE_RECONSTRUCTION_ONLY'].includes(gate.status))
   throw Error('V4_REAL_INPUT_PROOF_REJECTED')
  const snap=evidence.completeLockSnapshot
  const byEntry=new Map(evidence.authoritativeEntries.map(e=>[e.race_team_entry_id,e]))
