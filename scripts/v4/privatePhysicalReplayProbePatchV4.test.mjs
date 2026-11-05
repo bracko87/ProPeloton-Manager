@@ -458,3 +458,14 @@ test('two stale adjacent replay checkpoints require physical pair proof and unch
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('buildPrivateResidualPhysicalPairV4'));
 });
+
+test('paired residual candidate records only allowlisted strict blocking issue categories',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.baseSourceResidualPairDetail=pair.detail??'NONE'"));
+ assert.ok(patched.includes("if(candidate.mode==='RESIDUAL_PHYSICAL_PAIR'){"));
+ assert.ok(patched.includes('audit.baseSourceResidualPairStrictIssues=[...new Set('));
+ assert.ok(patched.includes("knownStrictIssueCodes.has(code)?code:'OTHER'"));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('baseSourceResidualPairStrictIssues'));
+});
