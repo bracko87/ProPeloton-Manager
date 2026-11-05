@@ -199,3 +199,79 @@ test('source-witnessed reached DNF preserves failed rider while repairing covere
  assert.equal(trial({...input,phase10Stages:{...phases,
   AFTER_DETACHMENT:groups(staleWithDnf)}}).status,'DNF_SOURCE_UNVERIFIED')
 });
+
+test('stable witnessed autonomous group remains intact while covered attack road source is corrected',()=>{
+ const raw=[
+  {...physical[0],riderIds:['a','b','d']},
+  {...physical[1],riderIds:['c']}
+ ];
+ const auto={groupCode:'dropped_group',displayCode:'I1',
+  physicalPosition:'behind_peloton',colorKey:'dropped_gray',
+  riderIds:['d'],gapSeconds:69};
+ const oldRoad=[
+  {...physical[0],riderIds:['a','b']},
+  {...physical[1],riderIds:['c']}
+ ];
+ const staleRoad=[
+  {...physical[0],riderIds:['a']},
+  {...physical[1],riderIds:['b','c']}
+ ];
+ const sourceRoad=[
+  {...physical[0],riderIds:['a','d']},
+  {...physical[1],riderIds:['b','c']}
+ ];
+ const oldGroups=[...oldRoad,auto],newGroups=[...staleRoad,auto];
+ const stableStages={
+  INITIAL:groups(raw),
+  AFTER_DETACHMENT:groups(oldRoad),
+  AFTER_AUTONOMOUS_GROUPS:groups(oldGroups),
+  AFTER_CONSOLIDATION:groups(oldGroups),
+  AFTER_FINISH_COMMIT:groups(oldGroups),
+  AFTER_DISPLAY_NORMALIZATION:groups(oldGroups)
+ };
+ const sourceStages={
+  INITIAL:groups(sourceRoad),
+  AFTER_DETACHMENT:groups(staleRoad),
+  AFTER_AUTONOMOUS_GROUPS:groups(newGroups),
+  AFTER_CONSOLIDATION:groups(newGroups),
+  AFTER_FINISH_COMMIT:groups(newGroups),
+  AFTER_DISPLAY_NORMALIZATION:groups(newGroups)
+ };
+ const stateMap=(rows)=>['a','b','c','d'].map(riderId=>{
+  const g=rows.find(x=>x.riderIds.includes(riderId));
+  return {riderId,status:'racing',groupCode:g.groupCode,
+   displayCode:g.displayCode,gapSeconds:g.gapSeconds,energy:61};
+ });
+ const before={...previous,groups:groups(oldGroups),gaps:gaps(oldGroups),
+  riderStates:stateMap(oldGroups)};
+ const covered={...source,eventType:'attack',title:'Attack is covered',
+  description:'Covered without creating a new group',riderIds:['c']};
+ const currentCp={...current,groups:groups(newGroups),
+  gaps:gaps(newGroups),riderStates:stateMap(newGroups),
+  commentary:[covered]};
+ const rawCurrent={...currentCp,groups:groups(sourceRoad),
+  gaps:gaps(sourceRoad),riderStates:stateMap(sourceRoad)};
+ const det={dnfRiderIds:[],autonomousRiderIds:['d']};
+ const input={...args,timeline:{checkpoints:[before,currentCp]},
+  baseTimeline:{checkpoints:[before,rawCurrent]},
+  physicalGroupsAtKm:()=>groups(raw),phase10Stages:sourceStages,
+  previousPhase10Stages:stableStages,
+  detachment:det,previousDetachment:det};
+ const result=trial(input);
+ assert.equal(result.status,'ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED');
+ const actual=result.timeline.checkpoints[1];
+ assert.deepEqual(actual.groups.map(g=>[g.displayCode,g.riderIds]),
+  [['P',['a','b']],['C1',['c']],['I1',['d']]]);
+ assert.deepEqual(actual.gaps.find(g=>g.displayCode==='I1'),
+  gaps([auto])[0]);
+ assert.equal(actual.riderStates.find(s=>s.riderId==='d').energy,61);
+ assert.equal(actual.riderStates.find(s=>s.riderId==='d').displayCode,'I1');
+ assert.deepEqual(actual.commentary,[covered]);
+ assert.equal(trial({...input,previousDetachment:{
+  dnfRiderIds:[],autonomousRiderIds:[]}}).status,'AUTONOMOUS_WINDOW_CHANGED');
+ assert.equal(trial({...input,previousPhase10Stages:null}).status,
+  'PREVIOUS_AUTONOMOUS_WITNESS_MISSING');
+ assert.equal(trial({...input,phase10Stages:{...sourceStages,
+  AFTER_AUTONOMOUS_GROUPS:groups(staleRoad)}}).status,
+  'AUTONOMOUS_PHASE10_SET_UNSAFE');
+});
