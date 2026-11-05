@@ -1,5 +1,5 @@
 /**
- * Research-only correction of an ORIGINAL, source-passive event checkpoint.
+ * Research-only correction of an ORIGINAL passive or verified covered-attack checkpoint.
  * Use authoritative physical rider groups at its own distance, never a
  * neighbour's guessed group membership. Every source and rider-state guard
  * fails closed; original strict publication acceptance is still mandatory.
