@@ -49,7 +49,8 @@ test('original passive event corrects only provably stale physical rider groups'
  assert.equal(result.researchOnly,true)
  assert.equal(result.officialWrites,0)
  const cp=result.timeline.checkpoints[1]
- assert.deepEqual(cp.groups,physical.map(g=>({...g,physicalLineageId:null})))
+ assert.deepEqual(cp.groups,physical.map(({gapSeconds,...g})=>
+  ({...g,physicalLineageId:null})))
  assert.deepEqual(cp.gaps,gaps(physical))
  assert.equal(cp.riderStates.find(s=>s.riderId==='b').displayCode,'P')
  assert.equal(cp.riderStates.find(s=>s.riderId==='b').energy,71)
@@ -70,7 +71,7 @@ test('refuses physical movement and unrelated or missing rider evidence',()=>{
  const moving=km=>km<87.5?groups(physical):groups(stale)
  assert.equal(trial({...args,physicalGroupsAtKm:moving}).status,
   'PHYSICAL_MOVEMENT_PRESENT')
- assert.equal(trial({...args,failedRiderId:'c'}).status,
+ assert.equal(trial({...args,failedRiderId:'a'}).status,
   'AFFECTED_RIDER_UNVERIFIED')
  assert.equal(trial({...args,detachment:null}).status,
   'DETACHMENT_UNAVAILABLE')
