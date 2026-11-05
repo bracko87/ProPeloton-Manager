@@ -347,3 +347,42 @@ requirements. The game is paused, so no real capture has happened.
 
 No capture scheduler or official-race worker was changed. Future
 automation requires a separate reviewed research-only change.
+
+
+## One-stage automatic research capture watch (5 Nov 2026)
+
+The active experimental pilot is scoped to exactly one normal hilly road stage
+in-game 20 October 2000 at 11:15 UTC, with cutoff 08:15:
+stage ID c7800ffd-f417-4feb-8a66-b928551daa4d. The limited source
+preflight in a restricted READ ONLY transaction checked:
+18/18 uniquely identified accepted AI teams, 108 unique riders,
+108 complete rider source inputs, 108 complete phase-command rows,
+zero missing/duplicate rider IDs, and object stage profile/Phase 9 payload.
+There are zero saved human-stage plans, as this entire field is AI.
+
+Supabase pg_cron was verified with a disposable every-30-seconds
+REPEATABLE READ transaction probe that succeeded; the probe was then
+unscheduled and removed. The production game clock remains paused at
+20 October 2000 06:38 UTC; no first real V4 run has occurred.
+
+A new one-stage-only, per-real-minute research watch is defined in:
+scripts/v4/sql/v4_single_stage_private_research_capture_cron_20261105.sql
+
+It calls only the approved SECURITY INVOKER private sidecar function inside
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ WRITE, and never
+calls live race processing or writes a stage result. It does not change the
+clock. The sidecar itself rejects a paused game, premature/late cutoff,
+already-completed stage, missing source, ambiguous identity and other unsafe
+conditions. If successful it stores only one private immutable research
+source, not a new official race plan lock. The scheduled job checks
+the original stage date/format/terrain/time, then self-unschedules if
+the source was captured, game race start is reached, stage metadata changed,
+or the real date reaches 8 November 2026 00:00 UTC. A CLI/PR run does not
+export rider data to GitHub. The watch can be manually removed at any time
+by: SELECT cron.unschedule('ppm-v4-private-capture-c7800ffd-20261105');
+Only this new research job is affected.
+
+Any original race plan, race timing, startlist, standings, finance or workers
+must remain untouched. The resulting snapshot, if any, is research data;
+the separately isolated V4 replay bridge must be invoked in private with
+the hash-verified source. This is **not** approval to enable V4 live.
