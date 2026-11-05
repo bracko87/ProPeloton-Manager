@@ -575,6 +575,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualIncidentRelation='NONE'
                   audit.baseSourceResidualPairStatus='NOT_RUN'
                   audit.baseSourceResidualPairReason='NONE'
+                  audit.baseSourceResidualPairDetail='NONE'
+                  audit.baseSourceResidualPairStrictIssues=[]
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -669,6 +671,7 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                           })
                           audit.baseSourceResidualPairStatus=pair.status
                           audit.baseSourceResidualPairReason=pair.reason??'NONE'
+                          audit.baseSourceResidualPairDetail=pair.detail??'NONE'
                           if(pair.status==='RESIDUAL_PHYSICAL_PAIR_CREATED'){
                             audit.baseSourceResidualIncidentRelation=
                               pair.incidentProvenanceRelation??'NONE'
@@ -688,6 +691,14 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                           roadRaceResolution
                         )
                         const residualPolicy=classifyUniversalReplaySynchronizationForPublication(residualSync)
+                        if(candidate.mode==='RESIDUAL_PHYSICAL_PAIR'){
+                          audit.baseSourceResidualPairStrictIssues=[...new Set(
+                            residualPolicy.blockingIssues.map(issue=>{
+                              const code=issue.split(':')[0]
+                              return knownStrictIssueCodes.has(code)?code:'OTHER'
+                            })
+                          )].sort()
+                        }
                         if(residualPolicy.publishable){
                           replayTimeline=candidate.timeline
                           replaySynchronization=residualSync
