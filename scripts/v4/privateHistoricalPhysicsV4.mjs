@@ -147,6 +147,7 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
   for(const cfg of activeVariants){
    const outfile=join(folder,cfg.key+'.mjs')
    let patched=0
+   try{
    await build({
     absWorkingDir:root,entryPoints:['src/race-engine-v4/privateHistoricalPhysicalEntryV4.ts'],
     bundle:true,platform:'node',format:'esm',target:'node22',outfile,logLevel:'silent',
@@ -169,13 +170,37 @@ export async function runPrivateHistoricalPhysicsV4(manifestRaw,{includeChasePri
      })
     }}]
    })
-   if(patched!==1)throw Error('PRIVATE_FORENSIC_ENGINE_SOURCE_NOT_LOADED')
+   }catch(err){
+    // Local-only metadata: never print esbuild's raw message, locations, or
+    // material from private manifests. The operator CLI allowlists categories.
+    if(err&&typeof err==='object'){
+     err.v4PhysicsStep='BUNDLE'
+     err.v4PhysicsVariant=cfg.key
+    }
+    throw err
+   }
+   if(patched!==1){
+    const err=Error('PRIVATE_FORENSIC_ENGINE_SOURCE_NOT_LOADED')
+    err.v4PhysicsStep='BUNDLE'
+    err.v4PhysicsVariant=cfg.key
+    throw err
+   }
    const run=spawnSync(process.execPath,[outfile,manifest],{
     cwd:root,encoding:'utf8',timeout:300000,maxBuffer:4*1024*1024,
     env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??''},
    })
    const printed=String(run.stdout??'').trim().split('\n').filter(line=>line.startsWith('V4_PRIVATE_PHYSICAL_VARIANT '))
-   if(run.status!==0||printed.length!==1)throw Error('PRIVATE_PHYSICAL_ENGINE_FAILED')
+   if(run.status!==0||printed.length!==1){
+    const err=Error('PRIVATE_PHYSICAL_ENGINE_FAILED')
+    err.v4PhysicsStep='WORKER'
+    err.v4PhysicsVariant=cfg.key
+    err.v4PhysicsChildFailure=run.error?.code==='ETIMEDOUT'?
+     'TIMEOUT':run.error?'SPAWN_ERROR':
+     String(run.stderr??'').includes('V4_PRIVATE_PHYSICAL_REJECTED')?
+     'WORKER_INPUT_REJECTED':run.status!==0?'WORKER_NONZERO_EXIT':
+     'WORKER_SUMMARY_MISSING'
+    throw err
+   }
    const report=JSON.parse(printed[0].slice('V4_PRIVATE_PHYSICAL_VARIANT '.length))
    if(report.variant!==cfg.key||report.officialWrites!==0||report.networkCalls!==0||
      report.researchOnly!==true||report.attempted!==paths.length||
