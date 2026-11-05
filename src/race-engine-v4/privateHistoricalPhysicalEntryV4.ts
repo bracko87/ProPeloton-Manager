@@ -426,7 +426,7 @@ function main(){
       }
       if(Array.isArray(dnfPair.baseSourceResidualOriginalEventStrictIssues)){
         for(const code of new Set(dnfPair.baseSourceResidualOriginalEventStrictIssues)){
-          const bucket=physicalProbe.baseSourceResidualOriginalEventStrictIssues
+          const bucket=physicalProbe.baseSourceResidualOriginalEventStrictIssues as Record<string,number>
           bucket[Object.prototype.hasOwnProperty.call(bucket,code)?code:'OTHER']++
         }
       }
