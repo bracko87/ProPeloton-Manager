@@ -30,6 +30,8 @@ jobs:
       - run: npm ci
       - name: Verify strict zero-write shadow gate
         run: node --test scripts/v4/isolatedShadowGateV4.test.mjs
+      - name: Validate read-only real-stage lock provenance and zero-write preflight
+        run: node --test scripts/v4/realLockedStageEvidenceV4.test.mjs
       - name: Compile isolated calibrated V4 physical executable and reject invalid envelope
         run: node --test scripts/v4/isolatedShadowBuildV4.test.mjs
       - name: Check independent template planner (no simulation writes)
