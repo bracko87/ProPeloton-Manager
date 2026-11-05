@@ -198,7 +198,7 @@ simulation results or publication privileges were granted.
 
 **The reader is deliberately NOLOGIN and has no password.** A subsequent
 security inventory discovered that PostgreSQL PUBLIC function grants expose
-849 VOLATILE SECURITY DEFINER functions in the public schema to this role
+additional privileged routines in the database to this role
 despite its narrow direct table grants. This is a broader pre-existing ACL
 condition. Do not solve it by blindly revoking PUBLIC function grants:
 that could break live game RPC access. Do not set a password, enable LOGIN,
@@ -211,7 +211,7 @@ read-only merely because default_transaction_read_only=on, since a session
 can override that default. The explicit REPEATABLE READ READ ONLY
 transaction is still required even after function permissions are fixed.
 
-Next safe step: audit the 849 callable routines and their actual PUBLIC ACL
+Next safe step: privately audit the inherited callable routines and their actual PUBLIC ACL
 dependencies, then design a credential-isolated export mechanism that
 does not require changing live function ACLs, or prepare a separately
 reviewed, non-disruptive permission migration. This is not an invitation
