@@ -1,0 +1,116 @@
+/**
+ * Single-race V4 calibrated shadow execution. Local only and research-only:
+ * - NO Supabase, SQL, Edge Worker, scheduler, result publisher or HTTP client
+ * - NO use of official production output writer
+ * - Complete locked input is read from an owner-controlled file OUTSIDE repo
+ * - Isolated V4 physical source is compiled into OS temporary space
+ * - Child is launched with no application credentials or database environment
+ * - Report contains only fixed categorical validation data
+ *
+ * Input file JSON: {"input":<UniversalRaceEngineInput>,
+ *                   "options":<V4Options>}.
+ */
+import {build} from 'esbuild'
+import {readFileSync,realpathSync,statSync,mkdtempSync,rmSync} from 'node:fs'
+import {tmpdir} from 'node:os'
+import {join,resolve,relative,sep,isAbsolute,dirname} from 'node:path'
+import {fileURLToPath} from 'node:url'
+import {spawnSync} from 'node:child_process'
+import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {V4_ISOLATED_SHADOW_CONTRACT} from './isolatedShadowGateV4.mjs'
+
+const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
+const enginePath=resolve(repo,'src/universal-race-engine/runRaceEngine.ts')
+const entryPath=resolve(repo,'src/race-engine-v4/isolatedShadowWorkerV4.ts')
+const maxBytes=16*1024*1024
+
+const allowedStatuses=new Set([
+ 'SHADOW_STRICT_REPLAY_PASS','SHADOW_STRICT_REPLAY_BLOCKED',
+ 'SHADOW_PLAN_REJECTED','SHADOW_STAGE_NOT_ELIGIBLE',
+ 'SHADOW_ENGINE_CONTRACT_REJECTED','SHADOW_EXECUTION_REJECTED'
+])
+function validateLocalPath(raw){
+ if(typeof raw!=='string'||!isAbsolute(raw))throw Error('PRIVATE_INPUT_PATH_REJECTED')
+ const real=realpathSync(raw),home=realpathSync(repo)
+ const rel=relative(home,real),meta=statSync(real)
+ if(rel===''||(rel!=='..'&&!rel.startsWith('..'+sep)&&!isAbsolute(rel))||
+    !meta.isFile()||meta.size<10||meta.size>maxBytes||
+    (process.platform!=='win32'&&(meta.mode&0o077)!==0))
+  throw Error('PRIVATE_INPUT_PATH_REJECTED')
+ return real
+}
+export async function runIsolatedV4Shadow(envelopePath,{compile=build,execute=spawnSync}={}){
+ const file=validateLocalPath(envelopePath)
+ const input=readFileSync(file,'utf8')
+ const original=readFileSync(enginePath,'utf8')
+ // Fixed, reviewed physical V4 transform. Never patch the production file.
+ const patch=patchV4CalibratedPhysicalSource(original,{
+  peloton:true,cooperation:true,energy:true
+ })
+ if(typeof patch!=='string'||patch.length<=original.length||
+    !patch.includes('calculateV4Phase3PaceEnergySurcharge'))
+  throw Error('V4_PHYSICAL_SOURCE_REJECTED')
+ const folder=mkdtempSync(join(tmpdir(),'ppm-v4-shadow-'))
+ const outfile=join(folder,'isolated-shadow.mjs')
+ try{
+  let patchedLoads=0
+  await compile({
+   entryPoints:[entryPath],outfile,bundle:true,platform:'node',
+   format:'esm',target:'node20',logLevel:'silent',write:true,
+   plugins:[{name:'v4-physical-only',setup(api){
+    api.onLoad({filter:/[\\/]src[\\/]universal-race-engine[\\/]runRaceEngine\.ts$/},args=>{
+     if(resolve(args.path)!==enginePath)throw Error('V4_ENGINE_SOURCE_UNEXPECTED')
+     patchedLoads++
+     if(patchedLoads!==1)throw Error('V4_ENGINE_SOURCE_DUPLICATED')
+     return {contents:patch,loader:'ts',resolveDir:dirname(enginePath)}
+    })
+   }}]
+  })
+  if(patchedLoads!==1)throw Error('V4_ENGINE_PATCH_NOT_APPLIED')
+  const child=execute(process.execPath,[outfile],{
+   cwd:repo,encoding:'utf8',timeout:180000,maxBuffer:512*1024,
+   input,env:{PATH:process.env.PATH??'',
+    HOME:process.env.HOME??'',TMPDIR:process.env.TMPDIR??'',
+    TEMP:process.env.TEMP??'',TMP:process.env.TMP??'',
+    SYSTEMROOT:process.env.SYSTEMROOT??''}
+  })
+  const prefix='V4_ISOLATED_SHADOW_REPORT '
+  const lines=String(child.stdout??'').trim().split(/\r?\n/)
+   .filter(row=>row.startsWith(prefix))
+  if(child.error||lines.length!==1||
+    ![0,1].includes(child.status)||lines.length>1)
+   throw Error('V4_SHADOW_WORKER_FAILED')
+  const report=JSON.parse(lines[0].slice(prefix.length))
+  if(report?.contract!==V4_ISOLATED_SHADOW_CONTRACT||
+    report.researchOnly!==true||report.productionEnabled!==false||
+    report.officialWrites!==0||!allowedStatuses.has(report.status)||
+    !['full','degraded','blocked','unavailable'].includes(report.replayQuality)||
+    (report.status==='SHADOW_STRICT_REPLAY_PASS')!==(child.status===0)||
+    (report.status==='SHADOW_STRICT_REPLAY_PASS'&&
+     report.replayQuality!=='full'))
+   throw Error('V4_SHADOW_REPORT_REJECTED')
+  // Return only schema-audited, categorical data; never return child logs.
+  return {
+   contract:V4_ISOLATED_SHADOW_CONTRACT,status:report.status,
+   researchOnly:true,productionEnabled:false,officialWrites:0,
+   replayQuality:report.replayQuality,calibration:'peloton_cooperation_energy',
+   aiTeams:Number.isSafeInteger(report.aiTeams)?report.aiTeams:null,
+   humanTeams:Number.isSafeInteger(report.humanTeams)?report.humanTeams:null,
+   plannedAIIntents:Number.isSafeInteger(report.plannedAIIntents)?
+    report.plannedAIIntents:null
+  }
+ }finally{
+  rmSync(folder,{recursive:true,force:true})
+ }
+}
+if(process.argv[1]&&fileURLToPath(import.meta.url)===resolve(process.argv[1])){
+ try{
+  if(process.argv.length!==3)throw Error('PRIVATE_INPUT_PATH_REJECTED')
+  const report=await runIsolatedV4Shadow(process.argv[2])
+  console.log('V4_ISOLATED_SHADOW_SUMMARY '+JSON.stringify(report))
+  if(report.status!=='SHADOW_STRICT_REPLAY_PASS')process.exitCode=1
+ }catch{
+  console.error('V4_ISOLATED_SHADOW_REJECTED: private input, build or execution gate failed')
+  process.exitCode=1
+ }
+}
