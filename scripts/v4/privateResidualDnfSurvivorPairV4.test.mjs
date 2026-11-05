@@ -168,7 +168,7 @@ test('fails closed when autonomous group mixes ordinary riders or overlaps DNF',
   {...isolatedAutonomous,riderIds:['d','e']}]};
  const res=trial({...autonomousArg,timeline:{checkpoints:[
   source.checkpoints[0],mixed,autonomousArg.timeline.checkpoints[2]]}});
- assert.equal(res.status,'SURVIVOR_SET_MISMATCH');
+ assert.equal(res.status,'AUTONOMOUS_PHASE10_SET_UNSAFE');
  assert.equal(trial({...autonomousArg,
   firstDetachment:{...autonomousArg.firstDetachment,autonomousRiderIds:['e']}})
    .status,'AUTONOMOUS_IDENTITY_UNSAFE');
