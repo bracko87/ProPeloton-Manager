@@ -444,3 +444,17 @@ test('ledger-only incident relation is aggregated privately and never bypasses s
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('baseSourceResidualIncidentRelation'));
 });
+
+test('two stale adjacent replay checkpoints require physical pair proof and unchanged strict gate',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("if(stableResidual.status==='CURRENT_NOT_PHYSICAL'){"));
+ assert.ok(patched.includes('buildPrivateResidualPhysicalPairV4({'));
+ assert.ok(patched.includes('timeline:baseSourceCandidate.timeline,'));
+ assert.ok(patched.includes('checkpointId:staleId,residualCheckpointId:residualId,'));
+ assert.ok(patched.includes("audit.baseSourceResidualPairStatus=pair.status"));
+ assert.ok(patched.includes("candidates.push({mode:'RESIDUAL_PHYSICAL_PAIR',timeline:pair.timeline})"));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('buildPrivateResidualPhysicalPairV4'));
+});
