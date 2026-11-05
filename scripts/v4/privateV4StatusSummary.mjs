@@ -74,6 +74,8 @@ if(!line){
    originalEventStatus:positive(probe.baseSourceResidualOriginalEventStatus),
    originalEventKind:positive(probe.baseSourceResidualOriginalEventKind),
    originalEventStrict:positive(probe.baseSourceResidualOriginalEventStrict),
+   previousAutonomousRestoration:positive(probe.baseSourceResidualOriginalEventPreviousRestoration),
+   originalEventStrictIssues:positive(probe.baseSourceResidualOriginalEventStrictIssues),
    precedingAutonomousReason:positive(probe.baseSourceResidualOriginalEventPreviousReason),
    precedingAutonomousStage:positive(probe.baseSourceResidualOriginalEventPreviousStage),
    precedingAutonomousDetail:positive(probe.baseSourceResidualOriginalEventPreviousDetail),
