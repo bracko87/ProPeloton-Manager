@@ -34,6 +34,8 @@ jobs:
         run: node --test scripts/v4/realLockedStageEvidenceV4.test.mjs
       - name: Validate read-only real-stage capture and private shadow isolation
         run: node --test scripts/v4/privateReadOnlyLockedCaptureV4.test.mjs
+      - name: Validate credential-free admin read-only SQL source export
+        run: node --test scripts/v4/adminReadOnlyStageExportV4.test.mjs
       - name: Compile isolated calibrated V4 physical executable and reject invalid envelope
         run: node --test scripts/v4/isolatedShadowBuildV4.test.mjs
       - name: Check independent template planner (no simulation writes)

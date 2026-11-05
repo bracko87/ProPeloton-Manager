@@ -217,3 +217,51 @@ does not require changing live function ACLs, or prepare a separately
 reviewed, non-disruptive permission migration. This is not an invitation
 to broadly revoke privileges or deploy V4. No real V4 shadow race has been
 executed yet.
+
+
+## Credential-free administrator mediated read-only SQL export
+
+A safer path is now available without enabling a new LOGIN or changing live
+PUBLIC function grants. The trusted Supabase admin connection begins an
+explicit REPEATABLE READ READ ONLY transaction, switches **locally** to the
+NOLOGIN V4 research reader, runs only fixed SELECT statements, and rolls back
+before returning. The admin's role membership was narrowly extended to permit
+SET ROLE, without granting login or inheritance to the research account.
+
+Read-only production verification completed:
+- Effective database role: v4_live_shadow_read_login
+- Authenticated session role: postgres
+- Transaction state: read_only=on
+- Stage and plan SELECTs were accessible.
+- A road-stage source check returned 176 rider and 176 phase-command rows
+  with matched participant data, with no writes.
+- A later flat-road stage had an available profile and Phase 9 data, but
+  its 24 plans were submitted, **none persisted as immutable locked**.
+  Thus no private rider payload was exported.
+
+New research-only files:
+- scripts/v4/adminReadOnlyStageCaptureV4.sql
+- scripts/v4/adminReadOnlyStageExportV4.mjs
+- scripts/v4/adminReadOnlyStageExportV4.test.mjs
+
+The SQL source is an owner-invoked template: an exact stage UUID is inserted
+only after validation, and the query itself rejects unqualified lock timing,
+missing locked plan snapshots, absent accepted team rows, unsupported formats
+and disqualification cases. If ineligible, only counts and categorical status
+return, with bundle=NULL; no rider payload is returned.
+
+When a real eligible stage exists, the private SQL result's capture_result
+JSON must be kept in a mode-0600 file **outside the repository**. The new
+offline CLI can validate this input, build the race from the original local
+pure production adapter, run the existing calibrated isolated V4 runner,
+delete its temporary envelope and emit only sanitized status. The operation
+does not produce or publish official race outcomes and does not certify
+original persistent production-source identity.
+
+An important separate source issue remains: all 1,078 September–October
+stage plans examined are still status=submitted, without immutable locked
+plan snapshots. The 51 historical persisted locked plan rows are older.
+A persisted three-hour cutoff record and full input provenance must be
+verified or built before this strict export can yield an official-lock
+research candidate. Do not silently treat submitted records as locked.
+No live production V4 processing was enabled.
