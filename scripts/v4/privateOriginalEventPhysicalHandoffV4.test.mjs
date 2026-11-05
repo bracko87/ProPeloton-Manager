@@ -98,3 +98,50 @@ test('source must preserve the original passive event and ledger',()=>{
   }]
  }]}}).status,'EVENT_SOURCE_UNVERIFIED')
 })
+
+test('a covered attack preserves its causal event and repairs only another rider',()=>{
+ const covered={...source,eventType:'attack',title:'Attack is covered',
+  description:'The move is covered before a lasting gap forms.',
+  riderIds:['c'],teamIds:['team-c']};
+ const attacked={...current,commentary:[covered]};
+ const result=trial({...args,
+  baseTimeline:{checkpoints:[previous,attacked]},
+  timeline:{checkpoints:[previous,attacked]}
+ });
+ assert.equal(result.status,'ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED')
+ assert.equal(result.eventKind,'ATTACK_COVERED')
+ const fixed=result.timeline.checkpoints[1]
+ assert.deepEqual(fixed.commentary,[covered])
+ assert.deepEqual(fixed.incidents,[])
+ assert.deepEqual(fixed.riderStates.map(s=>s.energy),[71,71,71])
+ assert.equal(fixed.riderStates.find(s=>s.riderId==='b').displayCode,'P')
+ assert.equal(fixed.riderStates.find(s=>s.riderId==='c').displayCode,'C1')
+});
+test('a successful or unknown attack is never silently reclassified',()=>{
+ for(const title of ['Attack succeeds','A decisive attack is launched',
+  'Unexpected attack']){
+  const attack={...source,eventType:'attack',title,riderIds:['c']};
+  const cp={...current,commentary:[attack]};
+  const result=trial({...args,timeline:{checkpoints:[previous,cp]},
+    baseTimeline:{checkpoints:[previous,cp]}});
+  assert.equal(result.status,'ATTACK_NOT_COVERED')
+  assert.equal(result.eventKind,'ATTACK_OTHER')
+ }
+});
+test('covered attack actor cannot be the rider whose unexplained transfer is repaired',()=>{
+ const attack={...source,eventType:'attack',title:'Attack is covered',
+  riderIds:['b']};
+ const cp={...current,commentary:[attack]};
+ const result=trial({...args,timeline:{checkpoints:[previous,cp]},
+  baseTimeline:{checkpoints:[previous,cp]}});
+ assert.equal(result.status,'ATTACK_SOURCE_UNVERIFIED')
+});
+test('covered-attack source and displayed narration must agree exactly',()=>{
+ const attack={...source,eventType:'attack',title:'Attack is covered',
+  riderIds:['c']};
+ const cp={...current,commentary:[{...attack,title:'Changed title'}]};
+ const sourceCp={...current,commentary:[attack]};
+ const result=trial({...args,timeline:{checkpoints:[previous,cp]},
+  baseTimeline:{checkpoints:[previous,sourceCp]}});
+ assert.equal(result.status,'ATTACK_SOURCE_UNVERIFIED')
+});
