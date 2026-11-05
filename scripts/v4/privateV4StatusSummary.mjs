@@ -71,6 +71,9 @@ if(!line){
    precedingExactPrevious:positive(probe.baseSourceResidualPrePairExactPrevious),
    precedingExactCurrent:positive(probe.baseSourceResidualPrePairExactCurrent),
    precedingExactCombined:positive(probe.baseSourceResidualPrePairExactCombined),
+   originalEventStatus:positive(probe.baseSourceResidualOriginalEventStatus),
+   originalEventKind:positive(probe.baseSourceResidualOriginalEventKind),
+   originalEventStrict:positive(probe.baseSourceResidualOriginalEventStrict),
    repairStatus:positive(probe.baseSourceResidualRepair),
    officialWrites:summary.officialWrites
   }
