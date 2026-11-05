@@ -12,7 +12,12 @@ SELECT cron.schedule(
  '* * * * *',
  $v4_private$
  BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ WRITE;
- SELECT CASE WHEN EXISTS (
+ -- Check both stop times BEFORE invoking the only write-capable routine.
+ SELECT CASE WHEN
+   now() < '2026-11-08 00:00:00+00'::timestamptz AND
+   public.get_current_game_timestamp() <
+     '2000-10-20 11:15:00+00'::timestamptz AND
+   EXISTS (
    SELECT 1 FROM public.race_stages s
    WHERE s.id='c7800ffd-f417-4feb-8a66-b928551daa4d'::uuid
      AND s.stage_date=DATE '2000-10-20'
