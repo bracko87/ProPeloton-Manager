@@ -40,6 +40,8 @@ jobs:
         run: node --test scripts/v4/privateStageSourceLockV4.test.mjs
       - name: Validate SHA-256 private V4 sidecar export and offline replay
         run: node --test scripts/v4/privateResearchSidecarReplayV4.test.mjs
+      - name: Validate one-stage auto-expiring research capture job
+        run: node --test scripts/v4/singleStageResearchCaptureWatchV4.test.mjs
       - name: Compile isolated calibrated V4 physical executable and reject invalid envelope
         run: node --test scripts/v4/isolatedShadowBuildV4.test.mjs
       - name: Check independent template planner (no simulation writes)
