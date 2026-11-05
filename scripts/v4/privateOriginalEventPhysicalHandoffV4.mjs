@@ -6,6 +6,7 @@
  *
  * Does not touch official physics, event narration, DNF, energy or results.
  */
+import {verifyPrivateAutonomousGroupsV4} from './privateResidualDnfSurvivorPairV4.mjs'
 const eq=(a,b)=>a.length===b.length&&a.every((v,i)=>v===b[i]);
 const key=ids=>[...ids].sort().join('\u0000');
 const partition=(rows,excluded=new Set())=>{
@@ -35,7 +36,7 @@ const eventClass=type=>passive.has(type)?'PASSIVE':
  type==='incident'?'INCIDENT':typeof type==='string'?'OTHER':'UNKNOWN';
 export function buildPrivateOriginalEventPhysicalHandoffV4({
  timeline,checkpointId,baseTimeline,physicalGroupsAtKm,
- phase10Stages,detachment,previousDetachment,failedRiderId
+ phase10Stages,previousPhase10Stages,detachment,previousDetachment,failedRiderId
 }={}){
  const reject=(status,kind='UNKNOWN')=>({status,eventKind:kind});
  if(typeof checkpointId!=='string'||typeof failedRiderId!=='string'||
@@ -131,22 +132,32 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
     new Set(detachment.dnfRiderIds).size!==detachment.dnfRiderIds.length||
     new Set(detachment.autonomousRiderIds).size!==detachment.autonomousRiderIds.length)
   return reject('DETACHMENT_UNAVAILABLE',kind);
- if(detachment.autonomousRiderIds.length)
-  return reject('PHASE10_AUTONOMOUS_PRESENT',kind);
  const reached=new Set(detachment.dnfRiderIds);
- let previousReached=new Set();
- if(reached.size){
+ const autonomous=new Set(detachment.autonomousRiderIds);
+ if([...reached].some(id=>autonomous.has(id)))
+  return reject('DETACHMENT_OVERLAP',kind);
+ let previousReached=new Set(),previousAutonomous=new Set();
+ if(reached.size||autonomous.size){
   if(!Array.isArray(previousDetachment?.dnfRiderIds)||
      !Array.isArray(previousDetachment?.autonomousRiderIds)||
-     previousDetachment.autonomousRiderIds.length||
      new Set(previousDetachment.dnfRiderIds).size!==
-       previousDetachment.dnfRiderIds.length)
+       previousDetachment.dnfRiderIds.length||
+     new Set(previousDetachment.autonomousRiderIds).size!==
+       previousDetachment.autonomousRiderIds.length)
    return reject('PREVIOUS_DETACHMENT_UNAVAILABLE',kind);
   previousReached=new Set(previousDetachment.dnfRiderIds);
+  previousAutonomous=new Set(previousDetachment.autonomousRiderIds);
   if(previousReached.size!==reached.size||
      [...previousReached].some(id=>!reached.has(id)))
    return reject('DNF_WINDOW_CHANGED',kind);
+  // A newly created or disappeared autonomous incident group is a genuine
+  // causal transition; never mask it by editing an attack checkpoint.
+  if(previousAutonomous.size!==autonomous.size||
+     [...previousAutonomous].some(id=>!autonomous.has(id)))
+   return reject('AUTONOMOUS_WINDOW_CHANGED',kind);
  }
+ if([...reached,...autonomous].some(id=>!physical.ids.includes(id)))
+  return reject('DETACHMENT_SOURCE_UNVERIFIED',kind);
  const stages=phase10Stages;
  const keys=['INITIAL','AFTER_DETACHMENT','AFTER_AUTONOMOUS_GROUPS',
   'AFTER_CONSOLIDATION','AFTER_FINISH_COMMIT','AFTER_DISPLAY_NORMALIZATION'];
@@ -154,43 +165,82 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
   return reject('PHASE10_SOURCE_UNVERIFIED',kind);
  const initial=partition(stages.INITIAL);
  if(!same(initial,partition(original.groups))||
-    !eq(initial.ids,physical.ids)||
-    [...reached].some(id=>!physical.ids.includes(id)))
+    !eq(initial.ids,physical.ids))
   return reject('PHASE10_SOURCE_UNVERIFIED',kind);
- const detached=partition(stages.AFTER_DETACHMENT);
- const expectedSourceSurvivors=partition(stages.INITIAL,reached);
- if(!same(detached,expectedSourceSurvivors))
+ const afterDetach=partition(stages.AFTER_DETACHMENT);
+ const expectedDetached=partition(stages.INITIAL,new Set([...reached,...autonomous]));
+ if(!same(afterDetach,expectedDetached))
   return reject('DNF_SOURCE_UNVERIFIED',kind);
- if(keys.slice(2).some(k=>!same(partition(stages[k]),detached))||
-    !same(partition(stages.AFTER_DISPLAY_NORMALIZATION),currentPartition))
+ if(!same(partition(stages.AFTER_DISPLAY_NORMALIZATION),currentPartition))
   return reject('PHASE10_SOURCE_CHANGED',kind);
- const physicalSurvivors=partition(observed.at(-1).rows.map(r=>r.group),reached);
- const physicalPrevious=partition(observed[0].rows.map(r=>r.group),previousReached);
+ const autonomy=verifyPrivateAutonomousGroupsV4({
+  cp:current,physical,det:detachment,stages,absent:reached
+ });
+ if(!['NONE','VERIFIED'].includes(autonomy.status))
+  return reject(autonomy.status,kind);
+ if(autonomous.size){
+  if(!previousPhase10Stages||
+     keys.some(k=>!partition(previousPhase10Stages[k])))
+   return reject('PREVIOUS_AUTONOMOUS_WITNESS_MISSING',kind);
+  const priorAutonomy=verifyPrivateAutonomousGroupsV4({
+   cp:previous,physical:observed[0],det:previousDetachment,
+   stages:previousPhase10Stages,absent:previousReached
+  });
+  if(priorAutonomy.status!=='VERIFIED')
+   return reject('PREVIOUS_AUTONOMOUS_WITNESS_UNVERIFIED',kind);
+  // The protected autonomous group must represent exactly the same riders
+  // and group identity across the interval, not merely share a label.
+  const normalized=x=>x.groups.map(({row})=>({
+   key:key(row.riderIds),code:row.groupCode,
+   label:row.displayCode
+  })).sort((a,b)=>a.key.localeCompare(b.key));
+  if(JSON.stringify(normalized(autonomy))!==
+     JSON.stringify(normalized(priorAutonomy)))
+   return reject('AUTONOMOUS_GROUP_CHANGED',kind);
+ }else if(keys.slice(2).some(k=>!same(partition(stages[k]),afterDetach)))
+  return reject('PHASE10_SOURCE_CHANGED',kind);
+ const physicalSurvivors=partition(physical.rows.map(r=>r.group),
+  new Set([...reached,...autonomous]));
+ const physicalPrevious=partition(observed[0].rows.map(r=>r.group),
+  new Set([...previousReached,...previousAutonomous]));
  if(!physicalSurvivors||!physicalPrevious||!physicalSurvivors.rows.length)
   return reject('PHYSICAL_GROUP_INVALID',kind);
- if(!same(before,physicalPrevious))
+ const previousRoad=partition(previous.groups,
+  new Set([...previousReached,...previousAutonomous]));
+ if(!same(previousRoad,physicalPrevious))
   return reject('PREVIOUS_SURVIVORS_NOT_PHYSICAL',kind);
- if(same(currentPartition,physicalSurvivors))
-  return reject('ALREADY_PHYSICAL',kind);
- // Require stale source or stale survivor presentation, not a true road change.
- if(same(partition(original.groups,reached),physicalSurvivors))
-  return reject('SOURCE_NOT_STALE',kind);
- if(!eq(currentPartition.ids,physicalSurvivors.ids))
+ const expectedActive=[...physicalSurvivors.ids,...autonomous].sort();
+ if(!eq(currentPartition.ids,expectedActive))
   return reject('RIDER_SET_MISMATCH',kind);
- // If the affected rider did not change group physically, do not rewrite
- // an unrelated checkpoint. All other groups are also checked above.
- const beforeRider=before.rows.find(r=>r.group.riderIds.includes(failedRiderId));
- const physicalRider=physicalSurvivors.rows.find(r=>r.group.riderIds.includes(failedRiderId));
+ const finalGroups=partition([...physicalSurvivors.rows.map(r=>r.group),
+  ...autonomy.groups.map(r=>r.row)]);
+ if(!finalGroups||!same(finalGroups,currentPartition)&&
+   !eq(finalGroups.ids,currentPartition.ids))
+  return reject('RIDER_SET_MISMATCH',kind);
+ if(same(currentPartition,finalGroups))
+  return reject('ALREADY_PHYSICAL',kind);
+ // Source road groups must be stale independently of any verified incident
+ // detachment; never alter a physically correct source merely for labels.
+ const sourceRoad=partition(original.groups,new Set([...reached,...autonomous]));
+ if(same(sourceRoad,physicalSurvivors))
+  return reject('SOURCE_NOT_STALE',kind);
+ if(autonomous.has(failedRiderId)||reached.has(failedRiderId))
+  return reject('AFFECTED_RIDER_UNVERIFIED',kind);
+ const beforeRider=previousRoad.rows.find(r=>
+  r.group.riderIds.includes(failedRiderId));
+ const physicalRider=physicalSurvivors.rows.find(r=>
+  r.group.riderIds.includes(failedRiderId));
  const currentRider=currentPartition.rows.find(r=>
   r.group.riderIds.includes(failedRiderId));
  if(!beforeRider||!physicalRider||!currentRider||
-   beforeRider.key!==physicalRider.key||currentRider.key===physicalRider.key)
+    beforeRider.key!==physicalRider.key||
+    currentRider.key===physicalRider.key)
   return reject('AFFECTED_RIDER_UNVERIFIED',kind);
  const states=new Map(current.riderStates.map(s=>[s.riderId,s]));
  if(states.size!==current.riderStates.length||
   !eq([...states.keys()].sort(),physical.ids)||
   [...reached].some(id=>states.get(id)?.status!=='dnf')||
-  [...physicalSurvivors.ids].some(id=>states.get(id)?.status!=='racing'))
+  [...physicalSurvivors.ids,...autonomous].some(id=>states.get(id)?.status!=='racing'))
   return reject('RIDER_STATE_UNSAFE',kind);
  const groups=[],gaps=[],assigned=new Map(),codes=new Set();
  for(const {group} of physicalSurvivors.rows){
@@ -211,6 +261,25 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
   for(const id of rebuilt.riderIds)assigned.set(id,{group:rebuilt,gap});
  }
  if(assigned.size!==physicalSurvivors.ids.length)
+  return reject('PHYSICAL_GROUP_INVALID',kind);
+ for(const protectedGroup of autonomy.groups){
+  const row=protectedGroup.row,gap=protectedGroup.gap;
+  if(typeof row?.displayCode!=='string'||!row.displayCode||
+     typeof row?.groupCode!=='string'||!row.groupCode||
+     codes.has(row.displayCode)||!Number.isFinite(gap?.gapSeconds)||
+     gap.gapSeconds<0||
+     gap.displayCode!==row.displayCode||
+     gap.groupCode!==row.groupCode)
+   return reject('AUTONOMOUS_GAP_UNVERIFIED',kind);
+  codes.add(row.displayCode);
+  groups.push({...row,riderIds:[...row.riderIds]});
+  gaps.push({...gap});
+  for(const id of row.riderIds){
+   if(assigned.has(id))return reject('AUTONOMOUS_IDENTITY_UNSAFE',kind);
+   assigned.set(id,{group:row,gap});
+  }
+ }
+ if(assigned.size!==expectedActive.length)
   return reject('PHYSICAL_GROUP_INVALID',kind);
  const riderStates=current.riderStates.map(s=>{
   const entry=assigned.get(s.riderId);
