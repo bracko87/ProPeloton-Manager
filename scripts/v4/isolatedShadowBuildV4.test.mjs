@@ -55,5 +55,47 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
   assert.equal(report.productionEnabled,false)
   assert.equal(report.researchOnly,true)
   assert.doesNotMatch(JSON.stringify(report),/private-stage-123/)
+  // Execute the ACTUAL calibrated physical solver on a complete public
+  // synthetic locked stage, with one human team and one AI team. No database.
+  const fixtureBundle=join(folder,'synthetic-envelope.mjs')
+  await build({
+   entryPoints:[resolve(root,'scripts/v4/syntheticLockedRaceV4.ts')],
+   outfile:fixtureBundle,bundle:true,platform:'node',format:'esm',
+   target:'node20',logLevel:'silent'
+  })
+  const fixture=spawnSync(process.execPath,[fixtureBundle],{
+   cwd:root,encoding:'utf8',timeout:30000,
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',
+    TMPDIR:process.env.TMPDIR??'',TEMP:process.env.TEMP??'',
+    TMP:process.env.TMP??'',SYSTEMROOT:process.env.SYSTEMROOT??''}
+  })
+  assert.equal(fixture.status,0,'synthetic fixture must build without external inputs')
+  const envelope=JSON.parse(fixture.stdout)
+  assert.equal(envelope.input.stage.stageId,'stage-1')
+  assert.equal(envelope.options.teamControl.filter(x=>x.kind==='ai').length,1)
+  const live=spawnSync(process.execPath,[output],{
+   cwd:root,encoding:'utf8',timeout:180000,
+   input:fixture.stdout,maxBuffer:512*1024,
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',
+    TMPDIR:process.env.TMPDIR??'',TEMP:process.env.TEMP??'',
+    TMP:process.env.TMP??'',SYSTEMROOT:process.env.SYSTEMROOT??''}
+  })
+  assert([0,1].includes(live.status))
+  assert.equal(live.stderr,'')
+  const liveLines=live.stdout.trim().split(/\\r?\\n/)
+  assert.equal(liveLines.length,1)
+  assert(liveLines[0].startsWith('V4_ISOLATED_SHADOW_REPORT '))
+  const syntheticReport=JSON.parse(
+   liveLines[0].slice('V4_ISOLATED_SHADOW_REPORT '.length))
+  assert(['SHADOW_STRICT_REPLAY_PASS','SHADOW_STRICT_REPLAY_BLOCKED']
+   .includes(syntheticReport.status),
+   'synthetic stage must reach actual calibrated physics and strict gate')
+  assert.equal(syntheticReport.officialWrites,0)
+  assert.equal(syntheticReport.productionEnabled,false)
+  assert.equal(syntheticReport.researchOnly,true)
+  assert.equal(syntheticReport.aiTeams,1)
+  assert.equal(syntheticReport.humanTeams,1)
+  assert.doesNotMatch(live.stdout,/rider-1|stage-1|race-1/)
+  assert.equal(live.status,syntheticReport.status==='SHADOW_STRICT_REPLAY_PASS'?0:1)
  }finally{rmSync(folder,{recursive:true,force:true})}
 })
