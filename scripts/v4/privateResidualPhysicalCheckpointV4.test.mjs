@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {buildPrivateResidualPhysicalCheckpointV4 as build} from './privateResidualPhysicalCheckpointV4.mjs';
+import {buildPrivateResidualPhysicalCheckpointV4 as build, buildPrivateResidualPhysicalPairV4} from './privateResidualPhysicalCheckpointV4.mjs';
 const physical=[
  {groupCode:'peloton',displayCode:'P',riderIds:['a'],gapSeconds:0},
  {groupCode:'chase1',displayCode:'C1',riderIds:['b','c'],gapSeconds:12},
@@ -172,4 +172,82 @@ test('rejects unmatched commentary and invalid unnarrated incidents',()=>{
  const duplicate=build({...args,timeline:{checkpoints:[
   timeline.checkpoints[0],broken,next]}});
  assert.equal(duplicate.reason,'INCIDENT_LEDGER_INVALID');
+});
+
+test('repairs two adjacent stale C-to-C snapshots using physical evidence without publishing virtual checkpoints',()=>{
+ const secondGroups=[physical[0],
+   {...physical[1],riderIds:['b','d']},
+   {...physical[2],riderIds:['c']}];
+ const nextWrong={...next,groups:secondGroups,
+   gaps:secondGroups.map(g=>({...g,gapSeconds:25}))};
+ const original={checkpoints:[timeline.checkpoints[0],checkpoint,nextWrong]};
+ const result=buildPrivateResidualPhysicalPairV4({
+   timeline:original,checkpointId:'stale',residualCheckpointId:'residual',
+   physicalGroupsAtKm:()=>physical
+ });
+ assert.equal(result.status,'RESIDUAL_PHYSICAL_PAIR_CREATED');
+ assert.equal(result.officialWrites,0);
+ assert.equal(result.timeline.checkpoints.length,3);
+ assert.deepEqual(result.timeline.checkpoints.map(c=>c.checkpointId),
+   ['start','stale','residual']);
+ assert.deepEqual(result.timeline.checkpoints[1].groups.map(g=>g.riderIds),
+   physical.map(g=>g.riderIds));
+ assert.deepEqual(result.timeline.checkpoints[2].groups.map(g=>g.riderIds),
+   physical.map(g=>g.riderIds));
+ assert.deepEqual(original.checkpoints[1].groups[2].riderIds,['c','d']);
+ assert.deepEqual(original.checkpoints[2].groups[1].riderIds,['b','d']);
+ assert.equal(result.timeline.checkpoints[1].commentary[0].commentaryId,'source-commentary');
+ assert.deepEqual(result.timeline.checkpoints[2].commentary,nextWrong.commentary);
+});
+test('two-checkpoint recovery rejects real movement, causal events, rider changes and distance beyond bounds',()=>{
+ const secondGroups=[physical[0],
+  {...physical[1],riderIds:['b','d']},
+  {...physical[2],riderIds:['c']}];
+ const badNext={...next,groups:secondGroups};
+ const source={checkpoints:[timeline.checkpoints[0],checkpoint,badNext]};
+ const common={timeline:source,checkpointId:'stale',
+    residualCheckpointId:'residual',physicalGroupsAtKm:()=>physical};
+ assert.equal(buildPrivateResidualPhysicalPairV4(common).status,
+   'RESIDUAL_PHYSICAL_PAIR_CREATED');
+ assert.equal(buildPrivateResidualPhysicalPairV4({...common,
+   physicalGroupsAtKm:km=>km<91?physical:stale}).status,'PAIR_PHYSICAL_MOVEMENT');
+ assert.equal(buildPrivateResidualPhysicalPairV4({...common,
+   timeline:{checkpoints:[source.checkpoints[0],checkpoint,
+    {...badNext,commentary:[{eventType:'group_merge'}]}]}}).status,'PAIR_SECOND_REJECTED');
+ assert.equal(buildPrivateResidualPhysicalPairV4({...common,
+   timeline:{checkpoints:[source.checkpoints[0],checkpoint,
+    {...badNext,riderStates:states.map(s=>s.riderId==='b'?{...s,status:'dnf'}:s)}]}})
+   .status,'PAIR_SECOND_REJECTED');
+ assert.equal(buildPrivateResidualPhysicalPairV4({...common,
+   timeline:{checkpoints:[source.checkpoints[0],checkpoint,
+    {...badNext,raceProgress:{kmFromStart:105}}]}}).status,'PAIR_DISTANCE_UNSAFE');
+ assert.equal(buildPrivateResidualPhysicalPairV4({...common,
+   timeline:{checkpoints:[source.checkpoints[0],checkpoint,next]}}).status,
+   'PAIR_NOT_TWO_STALE_MEMBERSHIPS');
+});
+test('two-checkpoint recovery retains source incident and rejects unsupported second commentary',()=>{
+ const g=[physical[0],{...physical[1],riderIds:['b','d']},
+  {...physical[2],riderIds:['c']}];
+ const incident={incidentId:'evt-1',riderIds:['b']};
+ const recorded={...checkpoint,
+  incidents:[incident,{incidentId:'evt-2',riderIds:['c']}],
+  commentary:[...checkpoint.commentary,{eventType:'incident',
+   commentaryId:'commentary:evt-1',riderIds:['b']}]};
+ const current={...next,groups:g,
+  incidents:[incident],
+  commentary:[...next.commentary,{eventType:'incident',
+   commentaryId:'commentary:evt-1',riderIds:['b']}]};
+ const common={timeline:{checkpoints:[timeline.checkpoints[0],recorded,current]},
+  checkpointId:'stale',residualCheckpointId:'residual',physicalGroupsAtKm:()=>physical};
+ const success=buildPrivateResidualPhysicalPairV4(common);
+ assert.equal(success.status,'RESIDUAL_PHYSICAL_PAIR_CREATED');
+ assert.equal(success.incidentProvenanceRelation,'LEDGER_EXTRAS_VERIFIED');
+ assert.deepEqual(success.timeline.checkpoints[1].incidents,recorded.incidents);
+ assert.deepEqual(success.timeline.checkpoints[2].incidents,current.incidents);
+ const unsafe=buildPrivateResidualPhysicalPairV4({...common,timeline:{
+   checkpoints:[timeline.checkpoints[0],recorded,
+    {...current,commentary:[...current.commentary,{eventType:'incident',
+      commentaryId:'commentary:missing',riderIds:['c']}]}]}});
+ assert.equal(unsafe.status,'PAIR_SECOND_REJECTED');
+ assert.equal(unsafe.reason,'CAUSAL_OR_INCIDENT_UNSAFE');
 });
