@@ -82,7 +82,7 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
   })
   assert([0,1].includes(live.status))
   assert.equal(live.stderr,'')
-  const liveLines=live.stdout.trim().split(/\\r?\\n/)
+  const liveLines=live.stdout.trim().split(/\r?\n/)
   assert.equal(liveLines.length,1)
   assert(liveLines[0].startsWith('V4_ISOLATED_SHADOW_REPORT '))
   const syntheticReport=JSON.parse(
