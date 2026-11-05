@@ -38,8 +38,9 @@ export function buildPrivateResidualPhysicalCheckpointV4({
  if(!Number.isFinite(km)||km<=0||!Number.isFinite(kmNext)||kmNext<km)
   return {status:'INVALID_DISTANCE'};
  // Keep every recorded event, incident, and rider attribute unchanged.
- // A recorded incident may coexist with a stale group presentation, but it
- // must have exactly matching, independently recorded incident commentary.
+ // The incident ledger is the source of truth: Phase10 may publish only a
+ // subset as commentary. Never accept commentary lacking source incident
+ // evidence; any unnarrated ledger rider must still be safely racing.
  const unsafe=reason=>({status:'CAUSAL_OR_INCIDENT_UNSAFE',reason});
  if(cp.finalResultsVisible||next.finalResultsVisible)
   return unsafe('FINISH_VISIBLE');
@@ -56,14 +57,14 @@ export function buildPrivateResidualPhysicalCheckpointV4({
  if(cp.incidents!==undefined&&!Array.isArray(cp.incidents))
   return unsafe('INCIDENT_LEDGER_INVALID');
  const incidents=cp.incidents??[];
- if(incidentEvents.length!==incidents.length)
+ if(incidentEvents.length>incidents.length)
   return {...unsafe('INCIDENT_PROVENANCE_MISSING'),
     detail:!incidents.length?'COMMENTARY_WITHOUT_LEDGER':
-      !incidentEvents.length?'LEDGER_WITHOUT_COMMENTARY':'COUNT_MISMATCH'};
+      'COMMENTARY_EXCEEDS_LEDGER'};
  if(incidents.length){
   if(new Set(incidents.map(row=>row?.incidentId)).size!==incidents.length)
    return unsafe('INCIDENT_LEDGER_INVALID');
-  const seen=new Set();
+  const seen=new Set(),matchedCommentaryIds=new Set();
   for(const incident of incidents){
    if(typeof incident?.incidentId!=='string'||!incident.incidentId||
       seen.has(incident.incidentId)||!Array.isArray(incident.riderIds)||
@@ -74,14 +75,20 @@ export function buildPrivateResidualPhysicalCheckpointV4({
    seen.add(incident.incidentId);
    const mentions=incidentEvents.filter(c=>
      c.commentaryId==='commentary:'+incident.incidentId);
-   if(mentions.length!==1)
+   if(mentions.length>1)
     return {...unsafe('INCIDENT_PROVENANCE_MISSING'),
-      detail:mentions.length?'DUPLICATE_COMMENTARY':'INCIDENT_ID_LINK_MISSING'};
-   if(!Array.isArray(mentions[0].riderIds)||
-      !eq([...mentions[0].riderIds].sort(),[...incident.riderIds].sort()))
-    return {...unsafe('INCIDENT_PROVENANCE_MISSING'),
-      detail:'INCIDENT_RIDER_SET_MISMATCH'};
+      detail:'DUPLICATE_COMMENTARY'};
+   if(mentions.length===1){
+    matchedCommentaryIds.add(incident.incidentId);
+    if(!Array.isArray(mentions[0].riderIds)||
+       !eq([...mentions[0].riderIds].sort(),[...incident.riderIds].sort()))
+     return {...unsafe('INCIDENT_PROVENANCE_MISSING'),
+       detail:'INCIDENT_RIDER_SET_MISMATCH'};
+   }
   }
+  if(matchedCommentaryIds.size!==incidentEvents.length)
+   return {...unsafe('INCIDENT_PROVENANCE_MISSING'),
+     detail:'INCIDENT_ID_LINK_MISSING'};
  }
  // Subsequent physical bracketing and 'racing'-only state guards ensure
  // this incident did not detach riders, induce a catch, or change membership.
@@ -111,6 +118,10 @@ export function buildPrivateResidualPhysicalCheckpointV4({
  }
  if(!eq([...stateIds].sort(),at.ids))
   return {status:'RIDER_STATE_UNSAFE'};
+ // Unnarrated incidents can be retained only when every recorded participant
+ // is present and still racing in the independently stable physical partition.
+ if(incidents.some(incident=>incident.riderIds.some(id=>!stateIds.has(id))))
+  return {...unsafe('INCIDENT_LEDGER_INVALID'),detail:'INCIDENT_RIDER_NOT_ACTIVE'};
  const physicalCodes=new Set(),groupRows=[],gapRows=[];
  for(const raw of at.rows){
   if(typeof raw.groupCode!=='string'||!raw.groupCode||
@@ -144,5 +155,7 @@ export function buildPrivateResidualPhysicalCheckpointV4({
   {...row,groups:groupRows,gaps:gapRows,riderStates}:row);
  return {status:'RESIDUAL_PHYSICAL_CHECKPOINT_CREATED',
   timeline:{...timeline,checkpoints:repaired},
+  incidentProvenanceRelation:incidents.length>incidentEvents.length?
+    'LEDGER_EXTRAS_VERIFIED':'EXACT',
   researchOnly:true,officialWrites:0};
 }
