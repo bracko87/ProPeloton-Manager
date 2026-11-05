@@ -212,7 +212,48 @@ test('autonomous drift reports earliest stage and mismatch kind without any ride
   ...base,AFTER_FINISH_COMMIT:base.AFTER_FINISH_COMMIT.map(g=>
    g.displayCode==='C3'?{...g,displayCode:'C5'}:g)
  }});
- assert.equal(renamedDisplay.status,'AUTONOMOUS_GROUP_NOT_STABLE');
- assert.equal(renamedDisplay.stage,'AFTER_FINISH_COMMIT');
- assert.equal(renamedDisplay.detail,'DISPLAY_CODE_CHANGED');
+ assert.equal(renamedDisplay.status,'DNF_SURVIVOR_PAIR_CREATED');
+ assert.equal(renamedDisplay.researchOnly,true);
+ assert.equal(renamedDisplay.officialWrites,0);
+});
+
+test('temporary autonomous display renumbering preserves final published group identity',()=>{
+ const original=autonomousArg.firstPhase10Stages;
+ const draft=original.AFTER_AUTONOMOUS_GROUPS.map(g=>g.displayCode==='C3'?
+  {...g,displayCode:'C5'}:g);
+ const phase10={...original,AFTER_AUTONOMOUS_GROUPS:draft};
+ const repaired=trial({...autonomousArg,firstPhase10Stages:phase10});
+ assert.equal(repaired.status,'DNF_SURVIVOR_PAIR_CREATED');
+ assert.equal(repaired.first,'SURVIVOR_RECONSTRUCTED');
+ assert.deepEqual(repaired.timeline.checkpoints[1].groups.find(g=>
+  g.groupCode==='autonomous3').riderIds,['d']);
+ assert.equal(repaired.timeline.checkpoints[1].groups.find(g=>
+  g.groupCode==='autonomous3').displayCode,'C3');
+ assert.equal(repaired.timeline.checkpoints[1].gaps.find(g=>
+  g.groupCode==='autonomous3').gapSeconds,76);
+ assert.equal(phase10.AFTER_AUTONOMOUS_GROUPS[draft.length-1].displayCode,'C5');
+ assert.deepEqual(repaired.timeline.checkpoints[2],
+  autonomousArg.timeline.checkpoints[2]);
+});
+test('autonomous intermediate display label collision is never treated as harmless renumbering',()=>{
+ const original=autonomousArg.firstPhase10Stages;
+ const draft=original.AFTER_AUTONOMOUS_GROUPS.map(g=>g.displayCode==='C3'?
+  {...g,displayCode:'C1'}:g);
+ const result=trial({...autonomousArg,firstPhase10Stages:{
+  ...original,AFTER_AUTONOMOUS_GROUPS:draft
+ }});
+ assert.equal(result.status,'AUTONOMOUS_STAGE_CODE_COLLISION');
+ assert.equal(result.stage,'AFTER_AUTONOMOUS_GROUPS');
+ assert.equal(result.timeline,undefined);
+});
+test('published autonomous display name must agree with final normalized Phase10 witness',()=>{
+ const original=autonomousArg.firstPhase10Stages;
+ const result=trial({...autonomousArg,firstPhase10Stages:{
+  ...original,AFTER_DISPLAY_NORMALIZATION:
+    original.AFTER_DISPLAY_NORMALIZATION.map(g=>g.displayCode==='C3'?
+      {...g,displayCode:'C5'}:g)
+ }});
+ assert.equal(result.status,'AUTONOMOUS_GROUP_NOT_STABLE');
+ assert.equal(result.stage,'AFTER_DISPLAY_NORMALIZATION');
+ assert.equal(result.detail,'DISPLAY_CODE_CHANGED');
 });
