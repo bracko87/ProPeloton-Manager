@@ -469,3 +469,16 @@ test('paired residual candidate records only allowlisted strict blocking issue c
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('baseSourceResidualPairStrictIssues'));
 });
+
+test('residual DNF survivor exception uses recorded Phase10 source, not guessed rider removal',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("const nextDnf=privateStore.__ppmV4Phase10DetachEvidence?.get(residualId)"));
+ assert.ok(patched.includes('nextReachedDnfRiderIds:nextDnf?.dnfRiderIds'));
+ assert.ok(patched.includes("audit.baseSourceResidualPhysicalDetail=stableResidual.detail??'NONE'"));
+ assert.ok(patched.includes("audit.baseSourceResidualNextDnfAlignment=stableResidual.nextDnfAlignment??'NONE'"));
+ assert.ok(patched.includes("candidates.push({mode:'RESIDUAL_PHYSICAL',timeline:stableResidual.timeline})"));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('nextReachedDnfRiderIds'));
+});
