@@ -112,12 +112,32 @@ function protectedAutonomousGroups({
       detail:matching.length>1?'DUPLICATE_MEMBERSHIP':
         partial?'MEMBERSHIP_CHANGED':'AUTONOMOUS_RIDERS_MISSING'};
    }
-   const groupCodeChanged=matching[0].groupCode!==row.groupCode;
-   const displayCodeChanged=matching[0].displayCode!==row.displayCode;
-   if(groupCodeChanged||displayCodeChanged)
+   // Physical lineage is determined by groupCode and exact members.
+   // Phase10 may assign a temporary displayCode at creation and renumber
+   // it later. This is a label change, NOT a physical group transition.
+   // Preserve the final published code; never import an intermediate code.
+   if(matching[0].groupCode!==row.groupCode)
     return {status:'AUTONOMOUS_GROUP_NOT_STABLE',stage:stageKey,
-      detail:groupCodeChanged&&displayCodeChanged?'BOTH_CODES_CHANGED':
-        groupCodeChanged?'GROUP_CODE_CHANGED':'DISPLAY_CODE_CHANGED'};
+      detail:matching[0].displayCode!==row.displayCode?
+        'BOTH_CODES_CHANGED':'GROUP_CODE_CHANGED'};
+   if(typeof matching[0].displayCode!=='string'||!matching[0].displayCode)
+    return {status:'AUTONOMOUS_GROUP_NOT_STABLE',stage:stageKey,
+      detail:'DISPLAY_CODE_INVALID'};
+   // Renumbering is only demonstrable if each intermediate label denotes
+   // exactly one group. Reject ambiguous duplicate group/label assignments.
+   const codes=new Set(),identities=new Set();
+   for(const stagedGroup of stage){
+    if(typeof stagedGroup?.displayCode!=='string'||!stagedGroup.displayCode||
+       typeof stagedGroup?.groupCode!=='string'||!stagedGroup.groupCode||
+       codes.has(stagedGroup.displayCode)||identities.has(stagedGroup.groupCode))
+     return {status:'AUTONOMOUS_STAGE_CODE_COLLISION',stage:stageKey};
+    codes.add(stagedGroup.displayCode);
+    identities.add(stagedGroup.groupCode);
+   }
+   if(stageKey==='AFTER_DISPLAY_NORMALIZATION'&&
+      matching[0].displayCode!==row.displayCode)
+    return {status:'AUTONOMOUS_GROUP_NOT_STABLE',stage:stageKey,
+      detail:'DISPLAY_CODE_CHANGED'};
   }
   const matchingGaps=cp.gaps.filter(g=>g.groupCode===row.groupCode&&
     g.displayCode===row.displayCode&&Number.isFinite(g.gapSeconds)&&
