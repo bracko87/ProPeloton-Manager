@@ -574,6 +574,8 @@ test('original event trial requires stable real source, no Phase10 detach and un
  assert.ok(patched.includes('phase10Stages:sourceStages,'));
  assert.ok(patched.includes('detachment:observedDetachment,'));
  assert.ok(patched.includes('previousDetachment,'));
+ assert.ok(patched.includes('previousPhase10Stages,'));
+ assert.ok(patched.includes('__ppmV4Phase10GroupStages?.get(previousSourceId)'));
  assert.ok(patched.includes('?.get(previousSourceId):null'));
  assert.ok(patched.includes("originalEvent.status==='ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED'"));
  assert.ok(patched.includes("candidates.push({mode:'DNF_PAIR_PLUS_ORIGINAL_EVENT'"));
