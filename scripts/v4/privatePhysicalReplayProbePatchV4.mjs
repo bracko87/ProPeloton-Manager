@@ -591,6 +591,9 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualDnfPairSecond='NONE'
                   audit.baseSourceResidualDnfPairStrictIssues=[]
                   audit.baseSourceResidualDnfPairStrictResidual=null
+                  audit.baseSourceResidualPrePairExactPrevious='NOT_RUN'
+                  audit.baseSourceResidualPrePairExactCurrent='NOT_RUN'
+                  audit.baseSourceResidualPrePairExactCombined='NOT_RUN'
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -778,6 +781,89 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                               baselineIssue:residualIssue,
                               physicalGroupsAtKm:audit.physicalGroupsAtKm
                             })
+                          // This independently validated pair can uncover an
+                          // EARLIER inherited exact-event checkpoint that
+                          // copied a stale base membership. Never alter the
+                          // strict gate or apply a generic group rewrite.
+                          // Use the existing exact-event builder: it requires
+                          // source provenance, a physically aligned following
+                          // checkpoint, recorded DNFs and precise physical gaps.
+                          const diagnostic=audit.baseSourceResidualDnfPairStrictResidual
+                          if(!residualPolicy.publishable&&
+                             diagnostic.status==='CLASSIFIED'&&
+                             diagnostic.position==='BEFORE_PAIR'&&
+                             diagnostic.transfer==='P_TO_C'&&
+                             diagnostic.kinds==='EVENT_TO_EVENT'&&
+                             diagnostic.physicalMembership==='UNCHANGED'&&
+                             diagnostic.publishedMembership==='CHANGED'){
+                            const firstBlock=residualPolicy.blockingIssues.find(issue=>
+                              issue.startsWith('post_catch_group_transfer_without_physical_transition:'))
+                            const tokens=firstBlock?.split(':')??[]
+                            const atId=tokens.slice(3).join(':').split(':v4_private_phase=')[0]
+                            const at=candidate.timeline.checkpoints.findIndex(cp=>
+                              cp.checkpointId===atId)
+                            const created=[]
+                            if(at>0){
+                              for(const [name,position] of [
+                                ['Previous',at-1],['Current',at]
+                              ] as const){
+                                const eventCp=candidate.timeline.checkpoints[position]
+                                const eventStages=(globalThis as typeof globalThis & {
+                                  __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+                                }).__ppmV4Phase10GroupStages?.get(eventCp.checkpointId)
+                                const eventDnf=privateStore.__ppmV4Phase10DetachEvidence
+                                  ?.get(eventCp.checkpointId)
+                                const origin=classifyPrivatePhase10InputProvenanceV4({
+                                  checkpoint:eventCp,phase10Stages:eventStages,
+                                  baseTimeline:baseReplayTimeline,
+                                  physicalGroupsAtKm:audit.physicalGroupsAtKm
+                                })
+                                const exact=buildPrivateExactEventPhysicalCandidateV4({
+                                  timeline:candidate.timeline,
+                                  checkpointId:eventCp.checkpointId,
+                                  physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                                  baseTimeline:baseReplayTimeline,
+                                  provenance:origin,
+                                  reachedDnfRiderIds:eventDnf?.dnfRiderIds??[]
+                                })
+                                audit['baseSourceResidualPrePairExact'+name]=exact.status
+                                if(exact.status==='EXACT_EVENT_CANDIDATE_CREATED'){
+                                  created.push({position,timeline:exact.timeline})
+                                  candidates.push({mode:'DNF_PAIR_PLUS_EXACT',
+                                    timeline:exact.timeline})
+                                }
+                              }
+                              if(created.length===2){
+                                const first=created[0]
+                                const secondCp=candidate.timeline.checkpoints[created[1].position]
+                                const secondStages=(globalThis as typeof globalThis & {
+                                  __ppmV4Phase10GroupStages?:Map<string,Record<string,unknown>>
+                                }).__ppmV4Phase10GroupStages?.get(secondCp.checkpointId)
+                                const secondDnf=privateStore.__ppmV4Phase10DetachEvidence
+                                  ?.get(secondCp.checkpointId)
+                                const secondOrigin=classifyPrivatePhase10InputProvenanceV4({
+                                  checkpoint:secondCp,phase10Stages:secondStages,
+                                  baseTimeline:baseReplayTimeline,
+                                  physicalGroupsAtKm:audit.physicalGroupsAtKm
+                                })
+                                const combination=buildPrivateExactEventPhysicalCandidateV4({
+                                  timeline:first.timeline,checkpointId:secondCp.checkpointId,
+                                  physicalGroupsAtKm:audit.physicalGroupsAtKm,
+                                  baseTimeline:baseReplayTimeline,
+                                  provenance:secondOrigin,
+                                  reachedDnfRiderIds:secondDnf?.dnfRiderIds??[]
+                                })
+                                audit.baseSourceResidualPrePairExactCombined=combination.status
+                                if(combination.status==='EXACT_EVENT_CANDIDATE_CREATED')
+                                  candidates.push({mode:'DNF_PAIR_PLUS_EXACT',
+                                    timeline:combination.timeline})
+                              }
+                            }
+                          }
+                        }
+                        if(candidate.mode==='DNF_PAIR_PLUS_EXACT'){
+                          audit.baseSourceResidualPrePairExactCombined=
+                            residualPolicy.publishable?'STRICT_PASS':'STRICT_BLOCKED'
                         }
                         if(residualPolicy.publishable){
                           replayTimeline=candidate.timeline
