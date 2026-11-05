@@ -145,3 +145,57 @@ test('covered-attack source and displayed narration must agree exactly',()=>{
   baseTimeline:{checkpoints:[previous,sourceCp]}});
  assert.equal(result.status,'ATTACK_SOURCE_UNVERIFIED')
 });
+
+test('source-witnessed reached DNF preserves failed rider while repairing covered attack survivor',()=>{
+ const physicalWithDnf=[
+  {...physical[0],riderIds:['a','b','d']},
+  {...physical[1],riderIds:['c']}
+ ];
+ const staleWithDnf=[
+  {...physicalWithDnf[0],riderIds:['a','d']},
+  {...physicalWithDnf[1],riderIds:['b','c']}
+ ];
+ const staleSurvivors=[
+  {...staleWithDnf[0],riderIds:['a']},
+  {...staleWithDnf[1],riderIds:['b','c']}
+ ];
+ const previousDnf={...previous,groups:groups(physical),
+  gaps:gaps(physical),riderStates:[
+   ...states(physical),{riderId:'d',status:'dnf',energy:17,displayCode:'P',
+    groupCode:'peloton',gapSeconds:0}
+  ]};
+ const covered={...source,eventType:'attack',title:'Attack is covered',
+  riderIds:['c'],teamIds:['team-c']};
+ const cp={...current,commentary:[covered],
+  groups:groups(staleSurvivors),gaps:gaps(staleSurvivors),
+  riderStates:[...states(staleSurvivors),{riderId:'d',
+   status:'dnf',energy:17,displayCode:'P',groupCode:'peloton',
+   gapSeconds:0}]};
+ const original={...cp,groups:groups(staleWithDnf),gaps:gaps(staleWithDnf)};
+ const phases=Object.fromEntries(['INITIAL','AFTER_DETACHMENT',
+  'AFTER_AUTONOMOUS_GROUPS','AFTER_CONSOLIDATION',
+  'AFTER_FINISH_COMMIT','AFTER_DISPLAY_NORMALIZATION'].map(k=>
+   [k,groups(k==='INITIAL'?staleWithDnf:staleSurvivors)]));
+ const input={...args,timeline:{checkpoints:[previousDnf,cp]},
+  baseTimeline:{checkpoints:[previousDnf,original]},
+  phase10Stages:phases,detachment:{dnfRiderIds:['d'],autonomousRiderIds:[]},
+  previousDetachment:{dnfRiderIds:['d'],autonomousRiderIds:[]},
+  physicalGroupsAtKm:()=>groups(physicalWithDnf)};
+ const result=trial(input);
+ assert.equal(result.status,'ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED')
+ const repaired=result.timeline.checkpoints[1];
+ assert.deepEqual(repaired.groups.map(g=>g.riderIds),[['a','b'],['c']])
+ assert.equal(repaired.riderStates.find(s=>s.riderId==='d').status,'dnf')
+ assert.equal(repaired.riderStates.find(s=>s.riderId==='d').energy,17)
+ assert.deepEqual(repaired.commentary,[covered])
+ assert.deepEqual(repaired.incidents,[])
+ assert.deepEqual(cp.groups,staleSurvivors)
+ assert.equal(trial({...input,previousDetachment:null}).status,
+  'PREVIOUS_DETACHMENT_UNAVAILABLE')
+ assert.equal(trial({...input,previousDetachment:{dnfRiderIds:[],
+  autonomousRiderIds:[]}}).status,'DNF_WINDOW_CHANGED')
+ assert.equal(trial({...input,detachment:{dnfRiderIds:['d'],
+  autonomousRiderIds:['c']}}).status,'PHASE10_AUTONOMOUS_PRESENT')
+ assert.equal(trial({...input,phase10Stages:{...phases,
+  AFTER_DETACHMENT:groups(staleWithDnf)}}).status,'DNF_SOURCE_UNVERIFIED')
+});
