@@ -48,7 +48,16 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
  const previous=cps[i-1],current=cps[i];
  const original=baseTimeline.checkpoints.find(cp=>
   cp.checkpointId===checkpointId);
- const kind=eventClass(original?.commentary?.[0]?.eventType);
+ const sourceEvent=original?.commentary?.[0];
+ const coveredAttack=sourceEvent?.eventType==='attack'&&
+  ['Attack is covered','Reactive counterattack is covered']
+   .includes(sourceEvent.title)&&
+  Array.isArray(sourceEvent.riderIds)&&sourceEvent.riderIds.length===1&&
+  typeof sourceEvent.riderIds[0]==='string'&&
+  sourceEvent.riderIds[0].length>0;
+ const kind=coveredAttack?'ATTACK_COVERED':
+  sourceEvent?.eventType==='attack'?'ATTACK_OTHER':
+  eventClass(sourceEvent?.eventType);
  if(!original||current.checkpointId.includes(':phase10-exact:')||
     previous.finalResultsVisible||current.finalResultsVisible||
     current.checkpointKind!=='event'||original.checkpointKind!=='event'||
@@ -78,12 +87,25 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
  if(!same(before,observed[0]))
   return reject('PREVIOUS_NOT_PHYSICAL',kind);
  const originalEvent=original.commentary?.[0];
+ // "Covered" means the attack occurred without establishing a lasting
+ // physical group. Never erase its commentary/energy or alter its actor.
+ // Successful/unclassified attacks remain prohibited.
  if(!Array.isArray(original.commentary)||original.commentary.length!==1||
-    !passive.has(originalEvent?.eventType))
-  return reject('CAUSAL_EVENT_UNSAFE',kind);
+    (!passive.has(originalEvent?.eventType)&&!coveredAttack))
+  return reject(sourceEvent?.eventType==='attack'?
+    'ATTACK_NOT_COVERED':'CAUSAL_EVENT_UNSAFE',kind);
  if(current.commentary[0]?.eventType!==originalEvent.eventType||
-    current.commentary[0]?.commentaryId!==originalEvent.commentaryId)
-  return reject('EVENT_SOURCE_UNVERIFIED',kind);
+    current.commentary[0]?.commentaryId!==originalEvent.commentaryId||
+    (coveredAttack&&(
+      current.commentary[0].title!==originalEvent.title||
+      current.commentary[0].description!==originalEvent.description||
+      !Array.isArray(current.commentary[0].riderIds)||
+      !eq([...current.commentary[0].riderIds].sort(),
+       [...originalEvent.riderIds].sort())||
+      originalEvent.riderIds.includes(failedRiderId)
+    )))
+  return reject(coveredAttack?'ATTACK_SOURCE_UNVERIFIED':
+    'EVENT_SOURCE_UNVERIFIED',kind);
  // Phase10 incident comments may be appended but can never masquerade as
  // a physical group merge/split. Require an exact incident ledger match.
  const byIncident=new Map(current.incidents.map(e=>[e.incidentId,e]));
