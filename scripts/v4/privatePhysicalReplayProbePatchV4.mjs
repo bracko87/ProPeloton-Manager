@@ -598,6 +598,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualOriginalEventStatus='NOT_RUN'
                   audit.baseSourceResidualOriginalEventKind='UNKNOWN'
                   audit.baseSourceResidualOriginalEventStrict='NOT_RUN'
+                  audit.baseSourceResidualOriginalEventStrictIssues=[]
+                  audit.baseSourceResidualOriginalEventPreviousRestoration='NOT_RUN'
                   audit.baseSourceResidualOriginalEventPreviousReason='NOT_RUN'
                   audit.baseSourceResidualOriginalEventPreviousStage='NONE'
                   audit.baseSourceResidualOriginalEventPreviousDetail='NONE'
@@ -844,6 +846,10 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                             })
                             audit.baseSourceResidualOriginalEventStatus=originalEvent.status
                             audit.baseSourceResidualOriginalEventKind=originalEvent.eventKind??'UNKNOWN'
+                            audit.baseSourceResidualOriginalEventPreviousRestoration=
+                              originalEvent.status!=='ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED'?
+                                'NOT_ELIGIBLE':
+                                originalEvent.restoredPreviousAutonomous?'RESTORED':'NOT_REQUIRED'
                             audit.baseSourceResidualOriginalEventPreviousReason=
                               originalEvent.previousAutonomyReason??'NOT_RUN'
                             audit.baseSourceResidualOriginalEventPreviousStage=
@@ -938,6 +944,12 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                         if(candidate.mode==='DNF_PAIR_PLUS_ORIGINAL_EVENT'){
                           audit.baseSourceResidualOriginalEventStrict=
                             residualPolicy.publishable?'STRICT_PASS':'STRICT_BLOCKED'
+                          audit.baseSourceResidualOriginalEventStrictIssues=[
+                            ...new Set(residualPolicy.blockingIssues.map(issue=>{
+                              const code=issue.split(':')[0]
+                              return knownStrictIssueCodes.has(code)?code:'OTHER'
+                            }))
+                          ].sort()
                         }
                         if(residualPolicy.publishable){
                           replayTimeline=candidate.timeline
