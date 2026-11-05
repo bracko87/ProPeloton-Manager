@@ -188,3 +188,31 @@ test('autonomous membership requires matching Phase10 creation, stable lineage a
   source.checkpoints[0],badGaps,autonomousArg.timeline.checkpoints[2]]}})
   .status,'AUTONOMOUS_GAP_UNVERIFIED');
 });
+
+test('autonomous drift reports earliest stage and mismatch kind without any rider identity',()=>{
+ const base=autonomousArg.firstPhase10Stages;
+ const alter=(stage,patch)=>{
+  const changed=stage.map(g=>g.displayCode==='C3'?{...g,...patch}:g);
+  return {...base,[patch.phaseKey??'AFTER_CONSOLIDATION']:changed};
+ };
+ const changedCode=trial({...autonomousArg,firstPhase10Stages:{
+  ...base,AFTER_CONSOLIDATION:base.AFTER_CONSOLIDATION.map(g=>
+   g.displayCode==='C3'?{...g,groupCode:'relabelled'}:g)
+ }});
+ assert.equal(changedCode.status,'AUTONOMOUS_GROUP_NOT_STABLE');
+ assert.equal(changedCode.stage,'AFTER_CONSOLIDATION');
+ assert.equal(changedCode.detail,'GROUP_CODE_CHANGED');
+ assert.equal(changedCode.riderIds,undefined);
+ const mixedMembers=trial({...autonomousArg,firstPhase10Stages:{
+  ...base,AFTER_AUTONOMOUS_GROUPS:base.AFTER_AUTONOMOUS_GROUPS.map(g=>
+   g.displayCode==='C3'?{...g,riderIds:['d','c']}:g)
+ }});
+ assert.equal(mixedMembers.status,'AUTONOMOUS_PHASE10_SET_UNSAFE');
+ const renamedDisplay=trial({...autonomousArg,firstPhase10Stages:{
+  ...base,AFTER_FINISH_COMMIT:base.AFTER_FINISH_COMMIT.map(g=>
+   g.displayCode==='C3'?{...g,displayCode:'C5'}:g)
+ }});
+ assert.equal(renamedDisplay.status,'AUTONOMOUS_GROUP_NOT_STABLE');
+ assert.equal(renamedDisplay.stage,'AFTER_FINISH_COMMIT');
+ assert.equal(renamedDisplay.detail,'DISPLAY_CODE_CHANGED');
+});
