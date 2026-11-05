@@ -598,6 +598,11 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualOriginalEventStatus='NOT_RUN'
                   audit.baseSourceResidualOriginalEventKind='UNKNOWN'
                   audit.baseSourceResidualOriginalEventStrict='NOT_RUN'
+                  audit.baseSourceResidualOriginalEventPreviousReason='NOT_RUN'
+                  audit.baseSourceResidualOriginalEventPreviousStage='NONE'
+                  audit.baseSourceResidualOriginalEventPreviousDetail='NONE'
+                  audit.baseSourceResidualOriginalEventPreviousPresentation='UNAVAILABLE'
+                  audit.baseSourceResidualOriginalEventPreviousGroup='UNAVAILABLE'
                   if(!baseSourcePolicy.publishable&&
                      baseSourcePolicy.blockingIssues.length>0&&
                      baseSourcePolicy.blockingIssues.every(issue=>
@@ -838,6 +843,16 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                             })
                             audit.baseSourceResidualOriginalEventStatus=originalEvent.status
                             audit.baseSourceResidualOriginalEventKind=originalEvent.eventKind??'UNKNOWN'
+                            audit.baseSourceResidualOriginalEventPreviousReason=
+                              originalEvent.previousAutonomyReason??'NOT_RUN'
+                            audit.baseSourceResidualOriginalEventPreviousStage=
+                              originalEvent.previousAutonomyStage??'NONE'
+                            audit.baseSourceResidualOriginalEventPreviousDetail=
+                              originalEvent.previousAutonomyDetail??'NONE'
+                            audit.baseSourceResidualOriginalEventPreviousPresentation=
+                              originalEvent.previousAutonomyPresentation??'UNAVAILABLE'
+                            audit.baseSourceResidualOriginalEventPreviousGroup=
+                              originalEvent.previousAutonomousGroup??'UNAVAILABLE'
                             if(originalEvent.status==='ORIGINAL_EVENT_PHYSICAL_HANDOFF_CREATED'){
                               candidates.push({mode:'DNF_PAIR_PLUS_ORIGINAL_EVENT',
                                 timeline:originalEvent.timeline})
