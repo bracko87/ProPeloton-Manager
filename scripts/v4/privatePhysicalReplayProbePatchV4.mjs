@@ -835,6 +835,7 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                             const originalEvent=buildPrivateOriginalEventPhysicalHandoffV4({
                               timeline:candidate.timeline,checkpointId:sourceId,
                               baseTimeline:baseReplayTimeline,
+                              sourcePhase10Timeline:replayTimeline,
                               physicalGroupsAtKm:audit.physicalGroupsAtKm,
                               phase10Stages:sourceStages,previousPhase10Stages,
                               detachment:observedDetachment,
