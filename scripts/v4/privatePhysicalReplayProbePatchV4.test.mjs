@@ -535,3 +535,15 @@ test('autonomous group source drift categories stay private and keep strict publ
  assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
  assert.ok(!source.includes('audit.baseSourceResidualDnfPairStage'));
 });
+
+test('DNF survivor pair strict residual audit classifies position without leaking issue contents',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes('classifyPrivateDnfPairStrictResidualV4({'));
+ assert.ok(patched.includes('timeline:candidate.timeline,'));
+ assert.ok(patched.includes('blockingIssues:residualPolicy.blockingIssues,'));
+ assert.ok(patched.includes('firstId:staleId,secondId:residualId,'));
+ assert.ok(patched.includes('baselineIssue:residualIssue,'));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(!source.includes('classifyPrivateDnfPairStrictResidualV4'));
+});
