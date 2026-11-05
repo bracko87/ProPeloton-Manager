@@ -53,7 +53,9 @@ function checkCore(e) {
      !isObj(v.source_hashes)||!Object.keys(v.source_hashes).length||
      dateMs(v.stage_start_game_ts)!==start||
      dateMs(v.lock_game_ts)!==cutoff||
-     !(dateMs(v.built_at_game_ts)>=cutoff&&dateMs(v.built_at_game_ts)<start))
+     !(dateMs(v.built_at_game_ts)>=cutoff&&dateMs(v.built_at_game_ts)<start)||
+     (e.completeLockSnapshot?.sourceKind==='read_only_lock_window_capture'&&
+      dateMs(v.built_at_game_ts)>dateMs(e.completeLockSnapshot.snapshotGameTs)))
    return null
   planClubs.add(v.club_id)
  }
