@@ -69,7 +69,8 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
     TMPDIR:process.env.TMPDIR??'',TEMP:process.env.TEMP??'',
     TMP:process.env.TMP??'',SYSTEMROOT:process.env.SYSTEMROOT??''}
   })
-  assert.equal(fixture.status,0,'synthetic fixture must build without external inputs')
+  assert.equal(fixture.status,0,'synthetic public fixture runtime failed: '+
+   String(fixture.stderr??'').slice(0,1200))
   const envelope=JSON.parse(fixture.stdout)
   assert.equal(envelope.input.stage.stageId,'stage-1')
   assert.equal(envelope.options.teamControl.filter(x=>x.kind==='ai').length,1)
