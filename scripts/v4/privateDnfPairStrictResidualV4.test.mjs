@@ -35,9 +35,14 @@ test('locates the first repaired checkpoint without exporting group or rider IDs
  assert.equal(res.physicalMembership,'UNCHANGED')
  assert.equal(res.publishedMembership,'CHANGED')
  assert.equal(res.kinds,'BASE_TO_EVENT')
+ assert.equal(res.previousPhysicalParity,'MATCH')
+ assert.equal(res.currentPhysicalParity,'DIFFERS')
+ assert.equal(res.previousOrigin,'ORIGINAL')
+ assert.equal(res.currentOrigin,'PHASE10_EXACT')
  assert.deepEqual(Object.keys(res).sort(),[
   'status','position','rider','transfer','physicalMembership',
-  'publishedMembership','kinds'].sort())
+  'publishedMembership','kinds','previousPhysicalParity',
+  'currentPhysicalParity','previousOrigin','currentOrigin'].sort())
  assert.ok(!JSON.stringify(res).includes(rider))
  assert.ok(!JSON.stringify(res).includes(cps[2].checkpointId))
 })
