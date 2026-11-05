@@ -195,7 +195,7 @@ test('source-witnessed reached DNF preserves failed rider while repairing covere
  assert.equal(trial({...input,previousDetachment:{dnfRiderIds:[],
   autonomousRiderIds:[]}}).status,'DNF_WINDOW_CHANGED')
  assert.equal(trial({...input,detachment:{dnfRiderIds:['d'],
-  autonomousRiderIds:['c']}}).status,'PHASE10_AUTONOMOUS_PRESENT')
+  autonomousRiderIds:['c']}}).status,'AUTONOMOUS_WINDOW_CHANGED')
  assert.equal(trial({...input,phase10Stages:{...phases,
   AFTER_DETACHMENT:groups(staleWithDnf)}}).status,'DNF_SOURCE_UNVERIFIED')
 });
