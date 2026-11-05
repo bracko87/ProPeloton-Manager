@@ -91,3 +91,52 @@ must also have owner-only filesystem permissions.
   publication read-back before any owner-approved pilot stage.
 
 No automatic V4 activation, no SQL changes, no worker deployments.
+
+
+## Real-data readiness audit and fail-closed source gate (5 Nov 2026)
+
+The live ProPeloton Supabase project was queried using read-only metadata
+inspection. No functions that perform race processing were called and no
+production rows were changed.
+
+- 51 previously locked plan rows, covering 13 distinct stages in 8 races.
+- All 51 mark the plan payload immutable, carry matching 32-character
+  snapshot-hash references, match their stage/race identities, and show a
+  stage-start minus three-hour lock timestamp.
+- Those plan snapshots were built between in-game 5 Jan and 16 Feb 2000;
+  18 were built at cutoff, 33 within two game minutes after cutoff.
+- None of the 13 stages has a matching completed, full structured input in
+  public.race_stage_simulation_runs. Most existing run inputs are absent or
+  compacted. The old per-team locked plans are NOT sufficient to reconstruct
+  the full original race input or prove a full-stage immutable input was
+  captured at lock time.
+- The hard_rejections field in these payloads is a list of forbidden source
+  classes, NOT a list of observed failures; it must not be counted as seven
+  actual rejections.
+
+New research-only files:
+
+- scripts/v4/realLockedStageEvidenceV4.mjs
+- scripts/v4/realLockedStageEvidenceV4.test.mjs
+
+The pure adapter validates real-style locked plan evidence, authoritative
+entry-to-team ownership, and an independently sourced **immutable full-stage
+input lock record**. It never accesses the network or database, prints raw
+rider details, invokes the engine, or writes race state. It explicitly rejects
+ordinary completed simulation snapshots presented as lock evidence. A positive
+classification is only V4_REAL_INPUT_CANDIDATE_ONLY: NOT a strict replay pass,
+not realism approval, and not live release authorization.
+
+A future trusted read-only export process must establish that the full-stage
+input really was persistently captured at the authoritative lock and verify
+the associated source evidence and input hash before calling this adapter.
+Caller-supplied JSON flags alone are not database proof. If eligible, the
+private in-memory envelope can be passed to the existing calibrated offline
+runner, but **no eligible real input was available from the inspected sources
+in this audit**.
+
+Next actions: identify/build the authoritative full-stage lock export source
+without altering current race workers, then execute one private real-input
+shadow test, extend to representative terrain types, and only after strict
+replay/realism validation consider an allowlisted pilot. Production remains
+unchanged and V4 remains disabled.
