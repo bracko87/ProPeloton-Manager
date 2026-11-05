@@ -74,6 +74,11 @@ if(!line){
    originalEventStatus:positive(probe.baseSourceResidualOriginalEventStatus),
    originalEventKind:positive(probe.baseSourceResidualOriginalEventKind),
    originalEventStrict:positive(probe.baseSourceResidualOriginalEventStrict),
+   precedingAutonomousReason:positive(probe.baseSourceResidualOriginalEventPreviousReason),
+   precedingAutonomousStage:positive(probe.baseSourceResidualOriginalEventPreviousStage),
+   precedingAutonomousDetail:positive(probe.baseSourceResidualOriginalEventPreviousDetail),
+   precedingAutonomousPresentation:positive(probe.baseSourceResidualOriginalEventPreviousPresentation),
+   precedingAutonomousGroup:positive(probe.baseSourceResidualOriginalEventPreviousGroup),
    repairStatus:positive(probe.baseSourceResidualRepair),
    officialWrites:summary.officialWrites
   }
