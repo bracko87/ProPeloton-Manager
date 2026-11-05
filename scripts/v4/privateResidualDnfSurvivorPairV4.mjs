@@ -125,14 +125,17 @@ function protectedAutonomousGroups({
       detail:'DISPLAY_CODE_INVALID'};
    // Renumbering is only demonstrable if each intermediate label denotes
    // exactly one group. Reject ambiguous duplicate group/label assignments.
-   const codes=new Set(),identities=new Set();
+   // groupCode describes a class, not a unique identity: multiple
+   // independent autonomous groups legitimately use 'dropped_group'.
+   // The transient stage identity is its unique displayCode plus witnessed
+   // rider membership. Never infer a collision from repeated groupCode.
+   const codes=new Set();
    for(const stagedGroup of stage){
     if(typeof stagedGroup?.displayCode!=='string'||!stagedGroup.displayCode||
        typeof stagedGroup?.groupCode!=='string'||!stagedGroup.groupCode||
-       codes.has(stagedGroup.displayCode)||identities.has(stagedGroup.groupCode))
+       codes.has(stagedGroup.displayCode))
      return {status:'AUTONOMOUS_STAGE_CODE_COLLISION',stage:stageKey};
     codes.add(stagedGroup.displayCode);
-    identities.add(stagedGroup.groupCode);
    }
    if(stageKey==='AFTER_DISPLAY_NORMALIZATION'&&
       matching[0].displayCode!==row.displayCode)
