@@ -584,6 +584,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                   audit.baseSourceResidualOriginFirst=null
                   audit.baseSourceResidualOriginSecond=null
                   audit.baseSourceResidualDnfPairStatus='NOT_RUN'
+                  audit.baseSourceResidualDnfPairStage='NONE'
+                  audit.baseSourceResidualDnfPairDetail='NONE'
                   audit.baseSourceResidualDnfPairFirst='NONE'
                   audit.baseSourceResidualDnfPairSecond='NONE'
                   audit.baseSourceResidualDnfPairStrictIssues=[]
@@ -732,6 +734,8 @@ import {classifyPhase10DetachmentEvidenceV4} from '../../scripts/v4/privatePhase
                           secondPhase10Stages:laterStages
                         })
                         audit.baseSourceResidualDnfPairStatus=survivorPair.status
+                        audit.baseSourceResidualDnfPairStage=survivorPair.stage??'NONE'
+                        audit.baseSourceResidualDnfPairDetail=survivorPair.detail??'NONE'
                         audit.baseSourceResidualDnfPairFirst=survivorPair.first??'NONE'
                         audit.baseSourceResidualDnfPairSecond=survivorPair.second??'NONE'
                         if(survivorPair.status==='DNF_SURVIVOR_PAIR_CREATED')
