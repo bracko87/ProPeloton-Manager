@@ -179,11 +179,12 @@ export function buildPrivateOriginalEventPhysicalHandoffV4({
  if(!['NONE','VERIFIED'].includes(autonomy.status))
   return reject(autonomy.status,kind);
  let restorePriorFromSource=false;
+ let priorAutonomy={status:'NONE',groups:[]};
  if(autonomous.size){
   if(!previousPhase10Stages||
      keys.some(k=>!partition(previousPhase10Stages[k])))
    return reject('PREVIOUS_AUTONOMOUS_WITNESS_MISSING',kind);
-  let priorAutonomy=verifyPrivateAutonomousGroupsV4({
+  priorAutonomy=verifyPrivateAutonomousGroupsV4({
    cp:previous,physical:observed[0],det:previousDetachment,
    stages:previousPhase10Stages,absent:previousReached
   });
