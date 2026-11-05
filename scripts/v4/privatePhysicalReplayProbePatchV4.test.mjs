@@ -434,3 +434,13 @@ test('provenance detail is a fixed research-only category',()=>{
  assert.ok(patched.includes('if(residualPolicy.publishable){'));
  assert.ok(!source.includes('baseSourceResidualProvenanceDetail'));
 });
+
+test('ledger-only incident relation is aggregated privately and never bypasses strict replay',()=>{
+ const source=readFileSync(new URL('../../src/universal-race-engine/runRaceEngine.ts',import.meta.url),'utf8');
+ const patched=patchPhysicalReplayProbeSourceV4(source);
+ assert.ok(patched.includes("audit.baseSourceResidualIncidentRelation='NONE'"));
+ assert.ok(patched.includes("audit.baseSourceResidualIncidentRelation=stableResidual.incidentProvenanceRelation??'NONE'"));
+ assert.ok(patched.includes('classifyUniversalReplaySynchronizationForPublication(residualSync)'));
+ assert.ok(patched.includes('if(residualPolicy.publishable){'));
+ assert.ok(!source.includes('baseSourceResidualIncidentRelation'));
+});
