@@ -79,7 +79,7 @@ test('refuses physical movement and unrelated or missing rider evidence',()=>{
 test('refuses Phase10 incident detachments, identity drift and altered states',()=>{
  assert.equal(trial({...args,detachment:{
   dnfRiderIds:['c'],autonomousRiderIds:[]}}).status,
-  'PHASE10_DETACHMENT_PRESENT')
+  'PREVIOUS_DETACHMENT_UNAVAILABLE')
  assert.equal(trial({...args,phase10Stages:{
   ...args.phase10Stages,AFTER_AUTONOMOUS_GROUPS:groups(physical)
  }}).status,'PHASE10_SOURCE_CHANGED')
