@@ -35,7 +35,7 @@ function iso(x){
 // Fixed query list. No volatile production payload or eligible-jersey RPC.
 // Reject role changes and a STABLE -> VOLATILE function change before reading.
 export const V4_CAPTURE_QUERIES=Object.freeze({
- identity:"SELECT session_user AS login_user,current_user AS active_user,current_setting('transaction_read_only') AS transaction_read_only,r.rolsuper,r.rolbypassrls,r.rolcreatedb,r.rolcreaterole,has_table_privilege(current_user,'public.race_stage_simulation_runs','INSERT') AS can_insert_results,has_table_privilege(current_user,'public.race_stage_plans','UPDATE') AS can_update_plans,has_table_privilege(current_user,'public.race_stage_authoritative_runs','INSERT') AS can_publish FROM pg_roles r WHERE r.rolname=current_user",
+ identity:"SELECT session_user AS login_user,current_user AS active_user,current_setting('transaction_read_only') AS transaction_read_only,r.rolsuper,r.rolbypassrls,r.rolcreatedb,r.rolcreaterole,r.rolcanlogin,(SELECT count(*)::int FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.provolatile='v' AND p.prosecdef=true AND has_function_privilege(current_user,p.oid,'EXECUTE')) AS callable_volatile_definer_count,has_table_privilege(current_user,'public.race_stage_simulation_runs','INSERT') AS can_insert_results,has_table_privilege(current_user,'public.race_stage_plans','UPDATE') AS can_update_plans,has_table_privilege(current_user,'public.race_stage_authoritative_runs','INSERT') AS can_publish FROM pg_roles r WHERE r.rolname=current_user",
  clock:"SELECT make_timestamptz(1999+season_number,month_number,day_number,coalesce(hour_number,0),coalesce(minute_number,0),0,'UTC') AS game_now FROM public.game_state WHERE id=true",
  stable:"SELECT p.proname,p.provolatile FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname=ANY($1::text[])",
  stage:"SELECT to_jsonb(s) AS value FROM public.race_stages s WHERE s.id=$1::uuid",
@@ -96,7 +96,8 @@ function stageStart(stage) {
 }
 function assertRole(x) {
  if(x?.login_user!==reader||x?.active_user!==reader||
-    x.transaction_read_only!=='on'||x.rolsuper!==false||
+    x.transaction_read_only!=='on'||x.rolcanlogin!==true||
+    x.callable_volatile_definer_count!==0||x.rolsuper!==false||
     x.rolbypassrls!==false||x.rolcreatedb!==false||
     x.rolcreaterole!==false||x.can_insert_results!==false||
     x.can_update_plans!==false||x.can_publish!==false)
