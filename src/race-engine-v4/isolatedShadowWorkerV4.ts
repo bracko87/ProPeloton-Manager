@@ -7,7 +7,7 @@
  * publication, official results, rider data, stage IDs or full issues.
  */
 import {readFileSync} from 'node:fs'
-import {classifyV4SafeExecutionFailure}
+import {classifyV4SafeExecutionFailure,classifyV4PhysicsFailure}
  from '../../scripts/v4/isolatedShadowExecutionFailureV4.mjs'
 import {prepareV4ShadowRace} from './templateFirstPlannerV4.ts'
 import {
@@ -57,9 +57,12 @@ function execute():void{
       phase='REPLAY_GATE'
       report=classifyV4IsolatedShadow({plan})
     }
-  }catch{
-    // Never leak input, rider or stage data, exception texts or stack traces.
-    report=failure(classifyV4SafeExecutionFailure(phase))
+  }catch(error){
+    // Only fixed categorical codes leave this worker. The caught exception,
+    // its raw message, stack, private fields and rider data are never emitted.
+    const code=phase==='PHYSICS'?classifyV4PhysicsFailure(error):
+      classifyV4SafeExecutionFailure(phase)
+    report=failure(code)
   }
   process.stdout.write('V4_ISOLATED_SHADOW_REPORT '+JSON.stringify(report)+'\n')
   if(report.status!=='SHADOW_STRICT_REPLAY_PASS')process.exitCode=1
