@@ -18,6 +18,7 @@ import {fileURLToPath} from 'node:url'
 import {spawnSync} from 'node:child_process'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {V4_ISOLATED_SHADOW_CONTRACT} from './isolatedShadowGateV4.mjs'
+import {V4_SAFE_PHYSICS_FAILURE_STATUSES} from './isolatedShadowExecutionFailureV4.mjs'
 
 const repo=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 const enginePath=resolve(repo,'src/universal-race-engine/runRaceEngine.ts')
@@ -29,7 +30,7 @@ const allowedStatuses=new Set([
  'SHADOW_PLAN_REJECTED','SHADOW_STAGE_NOT_ELIGIBLE',
  'SHADOW_ENGINE_CONTRACT_REJECTED','SHADOW_EXECUTION_REJECTED',
  'SHADOW_AI_PREPARATION_REJECTED','SHADOW_PHYSICS_EXECUTION_REJECTED',
- 'SHADOW_REPLAY_GATE_REJECTED'
+ 'SHADOW_REPLAY_GATE_REJECTED',...V4_SAFE_PHYSICS_FAILURE_STATUSES
 ])
 function validateLocalPath(raw){
  if(typeof raw!=='string'||!isAbsolute(raw))throw Error('PRIVATE_INPUT_PATH_REJECTED')
