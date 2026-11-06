@@ -18,8 +18,11 @@ import {comparePrivateV4WithOfficial}
  from '../../scripts/v4/privateRealVsOfficialCompareV4.mjs'
 import {summarizeControlledFourWayV4}
  from '../../scripts/v4/privateControlledFourWayDiagnosticsV4.mjs'
+import {isV4FourWaySafePhase}
+ from '../../scripts/v4/privateControlledFourWaySafeFailuresV4.mjs'
 
 function main(){
+ let phase='INPUT'
  try{
   const bytes=readFileSync(0)
   if(bytes.length<30||bytes.length>18*1024*1024)throw Error('BAD_SIZE')
@@ -32,6 +35,7 @@ function main(){
      !Array.isArray(options.teamControl)||
      !Array.isArray(reference.officialRows)||reference.officialRows.length!==108)
    throw Error('BAD_ENVELOPE')
+  phase='PLAN'
   const planned=prepareV4ShadowRace(input,options)
   if(planned.status!=='ai_prepared'||planned.aiTeams!==18||
      planned.humanTeams!==0||planned.combinedInput.riders.length!==108||
@@ -48,10 +52,23 @@ function main(){
    return result
   }
   const original=input,alternative=planned.combinedInput
-  const baselineOriginal=validate(runBaseline(structuredClone(original)),original)
-  const baselineV4Tactics=validate(runBaseline(structuredClone(alternative)),alternative)
-  const v4Original=validate(runCalibratedV4(structuredClone(original)),original)
-  const v4V4Tactics=validate(runCalibratedV4(structuredClone(alternative)),alternative)
+  phase='BASELINE_ORIGINAL_EXECUTION'
+  const baseOriginalRaw=runBaseline(structuredClone(original))
+  phase='BASELINE_ORIGINAL_REPLAY'
+  const baselineOriginal=validate(baseOriginalRaw,original)
+  phase='BASELINE_V4_TACTICS_EXECUTION'
+  const baseAlternativeRaw=runBaseline(structuredClone(alternative))
+  phase='BASELINE_V4_TACTICS_REPLAY'
+  const baselineV4Tactics=validate(baseAlternativeRaw,alternative)
+  phase='V4_ORIGINAL_EXECUTION'
+  const v4OriginalRaw=runCalibratedV4(structuredClone(original))
+  phase='V4_ORIGINAL_REPLAY'
+  const v4Original=validate(v4OriginalRaw,original)
+  phase='V4_V4_TACTICS_EXECUTION'
+  const v4AlternativeRaw=runCalibratedV4(structuredClone(alternative))
+  phase='V4_V4_TACTICS_REPLAY'
+  const v4V4Tactics=validate(v4AlternativeRaw,alternative)
+  phase='AGGREGATION'
   const report=summarizeControlledFourWayV4({
    reference,planned,baselineOriginal,baselineV4Tactics,
    v4Original,v4V4Tactics,compareWithOfficial:comparePrivateV4WithOfficial
@@ -59,7 +76,8 @@ function main(){
   process.stdout.write('V4_FOUR_WAY_REPORT '+JSON.stringify(report)+'\n')
  }catch{
   // No private exception message may reach stdout/stderr.
-  process.stdout.write('V4_FOUR_WAY_REJECTED\n')
+  process.stdout.write('V4_FOUR_WAY_REJECTED '+
+   (isV4FourWaySafePhase(phase)?phase:'INPUT')+'\n')
   process.exitCode=1
  }
 }
