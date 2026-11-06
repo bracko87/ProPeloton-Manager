@@ -24,7 +24,7 @@ for(const guard of [
 }
 assert.equal((sql.match(/CREATE OR REPLACE FUNCTION public\.race_engine_get_stage_phase_commands_v1\(/g)||[]).length, 1)
 assert.ok(sql.trimEnd().endsWith('$function$;'))
-assert.ok(!sql.includes('random()'), 'Using PostgreSQL random() would break deterministic replay')
+assert.ok(!sql.replace(/--[^\n]*/g, '').includes('random()'), 'Using PostgreSQL random() would break deterministic replay')
 assert.ok(!sql.includes('UPDATE public.race_stage_results'))
 assert.ok(!sql.includes('DELETE FROM public.race_stage'))
 console.log('PASS: AI-only, human-ownership, eligibility, old-stage and replay protections')
