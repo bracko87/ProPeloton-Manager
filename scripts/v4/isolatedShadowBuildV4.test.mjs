@@ -6,11 +6,21 @@ import {tmpdir} from 'node:os'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {classifyV4SafeExecutionFailure} from './isolatedShadowExecutionFailureV4.mjs'
 import {isValidV4PhysicalPatch} from './runIsolatedShadowV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
 const engine=resolve(root,'src/universal-race-engine/runRaceEngine.ts')
 const worker=resolve(root,'src/race-engine-v4/isolatedShadowWorkerV4.ts')
+test('private worker exceptions are reported only as fixed categorical stages',()=>{
+ assert.equal(classifyV4SafeExecutionFailure('INPUT'),'SHADOW_EXECUTION_REJECTED')
+ assert.equal(classifyV4SafeExecutionFailure('PREPARATION'),'SHADOW_AI_PREPARATION_REJECTED')
+ assert.equal(classifyV4SafeExecutionFailure('PHYSICS'),'SHADOW_PHYSICS_EXECUTION_REJECTED')
+ assert.equal(classifyV4SafeExecutionFailure('REPLAY_GATE'),'SHADOW_REPLAY_GATE_REJECTED')
+ assert.equal(classifyV4SafeExecutionFailure('private-rider-name'),'SHADOW_EXECUTION_REJECTED')
+ assert.equal(classifyV4SafeExecutionFailure(null),'SHADOW_EXECUTION_REJECTED')
+})
+
 test('isolated V4 physical worker compiles and rejects unverified inputs without data leakage',
  async()=>{
  const original=readFileSync(engine,'utf8')
@@ -88,6 +98,25 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
   const envelope=JSON.parse(fixture.stdout)
   assert.equal(envelope.input.stage.stageId,'stage-1')
   assert.equal(envelope.options.teamControl.filter(x=>x.kind==='ai').length,1)
+  // The real captured race previously returned only SHADOW_EXECUTION_REJECTED.
+  // A deliberately mismatched synthetic lock must now report the exact
+  // static rejection phase, without exposing any private identifiers.
+  const badPlanEnvelope=structuredClone(envelope)
+  badPlanEnvelope.options.lock.stageId='private-stage-do-not-leak'
+  const badPlan=spawnSync(process.execPath,[output],{
+   cwd:root,encoding:'utf8',timeout:30000,
+   input:JSON.stringify(badPlanEnvelope),maxBuffer:512*1024,
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',
+    TMPDIR:process.env.TMPDIR??'',TEMP:process.env.TEMP??'',
+    TMP:process.env.TMP??'',SYSTEMROOT:process.env.SYSTEMROOT??''}
+  })
+  assert.equal(badPlan.status,1)
+  assert.equal(badPlan.stderr,'')
+  assert.doesNotMatch(badPlan.stdout,/private-stage-do-not-leak/)
+  const badPlanReport=JSON.parse(badPlan.stdout.trim().slice('V4_ISOLATED_SHADOW_REPORT '.length))
+  assert.equal(badPlanReport.status,'SHADOW_AI_PREPARATION_REJECTED')
+  assert.equal(badPlanReport.officialWrites,0)
+  assert.equal(badPlanReport.productionEnabled,false)
   const live=spawnSync(process.execPath,[output],{
    cwd:root,encoding:'utf8',timeout:180000,
    input:fixture.stdout,maxBuffer:512*1024,
