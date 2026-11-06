@@ -57,6 +57,8 @@ jobs:
           node --check scripts/v4/runPrivateControlledFourWayV4.mjs
           node --test scripts/v4/privateControlledFourWayDiagnosticsV4.test.mjs
           node --test scripts/v4/privateControlledFourWayBuildV4.test.mjs
+      - name: Verify sanitized physical chase and escape cooperation telemetry
+        run: node --test scripts/v4/privateChaseCooperationTelemetryV4.test.mjs
       - name: Verify truthful partial comparison with one blocked arm
         run: node --test scripts/v4/privateControlledFourWayPartialV4.test.mjs
       - name: Verify positive historical-shaped private four-way path with synthetic data
