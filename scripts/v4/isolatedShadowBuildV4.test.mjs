@@ -6,7 +6,8 @@ import {tmpdir} from 'node:os'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
-import {classifyV4SafeExecutionFailure} from './isolatedShadowExecutionFailureV4.mjs'
+import {classifyV4SafeExecutionFailure,classifyV4PhysicsFailure,
+ V4_SAFE_PHYSICS_FAILURE_STATUSES} from './isolatedShadowExecutionFailureV4.mjs'
 import {isValidV4PhysicalPatch} from './runIsolatedShadowV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
@@ -21,6 +22,23 @@ test('private worker exceptions are reported only as fixed categorical stages',(
  assert.equal(classifyV4SafeExecutionFailure(null),'SHADOW_EXECUTION_REJECTED')
 })
 
+test('physics rejection classification is fixed and never exposes raw messages or fields',()=>{
+ const error={name:'UniversalRaceEngineValidationError',errors:[
+  {field:'stagePlans[0].riders[23].commands.phase3',message:'private-rider-name'}
+ ]}
+ assert.equal(classifyV4PhysicsFailure(error),'SHADOW_PHYSICS_INPUT_STAGE_PLANS_REJECTED')
+ assert.equal(classifyV4PhysicsFailure({name:'UniversalRaceEngineValidationError',errors:[
+  {field:'riders[0].availabilityStatus'},{field:'stagePlans[5].teamTactic'}
+ ]}),'SHADOW_PHYSICS_INPUT_MIXED_REJECTED')
+ assert.equal(classifyV4PhysicsFailure(new Error('Phase 5 grouping must preserve the authoritative Phase 4 winner.')),
+  'SHADOW_PHYSICS_PHASE5_REJECTED')
+ assert.equal(classifyV4PhysicsFailure(new Error('Universal replay synchronization failed: private-rider-1')),
+  'SHADOW_PHYSICS_REPLAY_SYNC_REJECTED')
+ assert.equal(classifyV4PhysicsFailure(new Error('something unpredictable private-secret')),
+  'SHADOW_PHYSICS_OTHER_REJECTED')
+ for(const code of V4_SAFE_PHYSICS_FAILURE_STATUSES)
+  assert.doesNotMatch(code,/private|rider-name|\\b[0-9a-f]{8}-[0-9a-f]{4}/i)
+})
 test('isolated V4 physical worker compiles and rejects unverified inputs without data leakage',
  async()=>{
  const original=readFileSync(engine,'utf8')
@@ -117,6 +135,25 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
   assert.equal(badPlanReport.status,'SHADOW_AI_PREPARATION_REJECTED')
   assert.equal(badPlanReport.officialWrites,0)
   assert.equal(badPlanReport.productionEnabled,false)
+  // Synthetic input reaches AI planning but is deliberately rejected by
+  // engine input validation. Report only the fixed input-category code.
+  const invalidPhysicsEnvelope=structuredClone(envelope)
+  invalidPhysicsEnvelope.input.engine.engineKey='PRIVATE-SECRET-NEVER-PRINT'
+  const invalidPhysics=spawnSync(process.execPath,[output],{
+   cwd:root,encoding:'utf8',timeout:30000,
+   input:JSON.stringify(invalidPhysicsEnvelope),maxBuffer:512*1024,
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',
+    TMPDIR:process.env.TMPDIR??'',TEMP:process.env.TEMP??'',
+    TMP:process.env.TMP??'',SYSTEMROOT:process.env.SYSTEMROOT??''}
+  })
+  assert.equal(invalidPhysics.status,1)
+  assert.equal(invalidPhysics.stderr,'')
+  assert.doesNotMatch(invalidPhysics.stdout,/PRIVATE-SECRET-NEVER-PRINT/)
+  const rejectedPhysicsReport=JSON.parse(
+   invalidPhysics.stdout.trim().slice('V4_ISOLATED_SHADOW_REPORT '.length))
+  assert.equal(rejectedPhysicsReport.status,'SHADOW_PHYSICS_INPUT_ENGINE_REJECTED')
+  assert.equal(rejectedPhysicsReport.officialWrites,0)
+  assert.equal(rejectedPhysicsReport.productionEnabled,false)
   const live=spawnSync(process.execPath,[output],{
    cwd:root,encoding:'utf8',timeout:180000,
    input:fixture.stdout,maxBuffer:512*1024,
