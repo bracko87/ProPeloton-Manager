@@ -2,6 +2,7 @@
 import {patchV4FinishTransitionSource} from './finishTransitionResearchPatchV4.mjs'
 import {patchV4MountainCarriedBridgeSource} from './mountainBridgeCarryResearchPatchV4.mjs'
 import {patchV4MountainBridgeCatchSource} from './mountainBridgeCatchResearchPatchV4.mjs'
+import {patchV4PhysicalBridgeContactReplaySource} from './phase2BridgeContactResearchPatchV4.mjs'
 
 const needle=(lines)=>lines.join('\n')
 const bridgeNeedle="  const authoritativeBridgeGroups = phase4.bridgeGroups\n    .slice()\n    .sort("
@@ -80,7 +81,8 @@ export function patchV4CalibratedPhysicalSource(original,config){
  if(config.energy)source=exact(source,energyNeedle,energyReplacement)
  return "import { reconcileV4ReplayBridgeMergeTargets } from '../race-engine-v4/bridgeHandoffV4.ts'\n"+
   "import {calculateV4Phase3PaceEnergySurcharge} from '../race-engine-v4/phase3PaceEnergyV4.ts'\n"+
-  patchV4MountainBridgeCatchSource(
-   patchV4MountainCarriedBridgeSource(
-    patchV4FinishTransitionSource(source)))
+  patchV4PhysicalBridgeContactReplaySource(
+   patchV4MountainBridgeCatchSource(
+    patchV4MountainCarriedBridgeSource(
+     patchV4FinishTransitionSource(source))))
 }

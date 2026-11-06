@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {patchV4PhysicalBridgeContactReplaySource} from './phase2BridgeContactResearchPatchV4.mjs'
 import {classifyV4SafeExecutionFailure,classifyV4PhysicsFailure,
  classifyV4ReplaySynchronizationFailure,V4_SAFE_REPLAY_ISSUE_STATUSES,
  V4_SAFE_PHYSICS_FAILURE_STATUSES} from './isolatedShadowExecutionFailureV4.mjs'
@@ -60,6 +61,24 @@ test('replay rejection exposes only an engine-owned issue prefix',()=>{
   assert.doesNotMatch(code,/checkpoint-123|rider-private-secret|rider-secret/)
  }
 })
+test('bridge merge diagnostic includes only the fixed failing phase',()=>{
+ const prefix='Universal replay synchronization failed: bridge_merge_invalid:'
+ const tests=[
+  ['phase-2-secondary-front-merge','PHASE2'],
+  ['phase-3-front-merge-private-lineage','PHASE3'],
+  ['bridge-merge-2','PHASE4']
+ ]
+ for(const [suffix,phase] of tests){
+  const result=classifyV4ReplaySynchronizationFailure(
+   prefix+'private-stage-id|replay|'+suffix)
+  assert.equal(result,'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_'+phase+'_REJECTED')
+  assert(V4_SAFE_PHYSICS_FAILURE_STATUSES.includes(result))
+  assert.doesNotMatch(result,/private|lineage|rider|stage-id/)
+ }
+ assert.equal(classifyV4ReplaySynchronizationFailure(
+  prefix+'private-stage-id|replay|unrecognized-checkpoint'),
+  'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_REJECTED')
+})
 test('isolated V4 physical worker compiles and rejects unverified inputs without data leakage',
  async()=>{
  const original=readFileSync(engine,'utf8')
@@ -68,6 +87,17 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
  })
  assert.notEqual(patch,original)
  assert.match(patch,/calculateV4Phase3PaceEnergySurcharge/)
+ // Isolated-only physical bridge replay must emit a verified, ordered
+ // contact checkpoint before the existing Phase-2 merge.
+ assert.match(patch,/phase-2-secondary-front-contact/)
+ assert.match(patch,/v4Phase2BridgeContactVerified/)
+ assert.match(patch,/sortOrder: 364/)
+ assert.match(patch,/checkpointIdSuffix: 'phase-2-secondary-front-merge'/)
+ assert.match(patch,/authoritativeBridgeGroups\.forEach\(\(bridgeGroup, bridgeIndex\)/)
+ assert.doesNotMatch(patch,/phase4\.bridgeGroups\.forEach\(\(bridgeGroup, bridgeIndex\)/)
+ // Fail closed on source drift; never silently omit the physical witness.
+ assert.throws(()=>patchV4PhysicalBridgeContactReplaySource('unrelated source'))
+
  assert.equal(readFileSync(engine,'utf8'),original)
  // A Windows git checkout can be CRLF. The V4 transform converts it to
  // LF, so physical patch validation must compare like-for-like lengths.
