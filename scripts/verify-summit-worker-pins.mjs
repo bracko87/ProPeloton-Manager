@@ -6,7 +6,8 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 
 const ROOT = process.cwd()
-const RELEASE_SHA = 'e00c4e694c0629efa5b06497dd514b505b166934'
+const RELEASE_SHA = '878aa8ae0db95d97fa5385513d2c1394e3a791a2'
+const CLOCK_SHA = '92de26698126e646f6ecc4ae74455bfc831e66c2'
 // Stage selection was independently released and deliberately pins its own reviewed SHA.
 const SELECTOR_SHA = '7bb8cffa1631077d893f60ae0d10bbde3803b751'
 const prefix = 'https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/'
@@ -39,7 +40,7 @@ for (const [name, requiredPrimaryModules] of workers) {
     join(ROOT, 'supabase/functions', name, 'index.ts'), 'utf8',
   )
   assert.ok(
-    source.includes(`const SOURCE_COMMIT = "${RELEASE_SHA}"`),
+    source.includes(`const SOURCE_COMMIT = "${name === 'universal-race-stage-runner' || name === 'universal-race-stage-pass2-resume' ? CLOCK_SHA : RELEASE_SHA}"`),
     `${name}: source metadata does not match the summit release`,
   )
   for (const moduleName of requiredPrimaryModules) {
@@ -53,7 +54,9 @@ for (const [name, requiredPrimaryModules] of workers) {
           ? 'buildProductionUniversalRaceOutput'
           : 'runRaceEngine'
     const lines = source.split('\n')
-    const primarySha = moduleName === 'runSelectedRaceEngineV1.ts' ? SELECTOR_SHA : RELEASE_SHA
+    const primarySha = moduleName === 'runSelectedRaceEngineV1.ts'
+      ? (name === 'universal-race-stage-safe-resume' ? RELEASE_SHA : SELECTOR_SHA)
+      : RELEASE_SHA
     const primaryUrl = `${prefix}${primarySha}/src/universal-race-engine/${moduleName}`
     assert.ok(
       lines.some((line) => line.includes(primaryUrl)) &&
@@ -62,7 +65,11 @@ for (const [name, requiredPrimaryModules] of workers) {
     )
   }
   if (name === 'universal-race-stage-safe-resume') {
-    assert.ok(source.includes('selectCompleteRaceEngineLaneV1'), 'Safe Resume must dispatch the complete three-way stage selector')
+    assert.ok(source.includes('selectMountainEngineLaneV1') && source.includes('isBreakawayOfficialPilotStageV1'), 'Safe Resume must dispatch the complete three-way stage selector')
+    assert.ok(source.includes(`const PROSPECTIVE_CLOCK_SOURCE_COMMIT = "${CLOCK_SHA}";`), 'Safe Resume must select new clock prospectively')
+    for (const file of ['runRaceEngine.ts', 'runMountainExperimentalEngineV1.ts', 'runBreakawayExperimentalEngineV1.ts']) {
+      assert.ok(source.includes(`${prefix}${CLOCK_SHA}/src/universal-race-engine/${file}`), 'Safe Resume missing new clock source: '+file)
+    }
   }
   if (name === 'universal-race-stage-pass2-resume') {
     assert.ok(source.includes('7e4299371f452e5d1d0a706e48fb083340362d11'), 'legacy fallback engine changed')
@@ -71,7 +78,12 @@ for (const [name, requiredPrimaryModules] of workers) {
   if (name === 'universal-race-stage-runner') {
     assert.ok(source.includes('90fc6ce06197f4537b6088d30252b60025f39253'), 'legacy fallback changed')
   }
-  console.log(`PASS ${name}: pinned primary engine source ${RELEASE_SHA}`)
+  if (name === 'universal-race-stage-runner' || name === 'universal-race-stage-pass2-resume') {
+    for (const file of ['runRaceEngine.ts', 'runMountainExperimentalEngineV1.ts', 'runBreakawayExperimentalEngineV1.ts']) {
+      assert.ok(source.includes(`${prefix}${CLOCK_SHA}/src/universal-race-engine/${file}`), `${name}: missing new V1 absolute clock in ${file}`)
+    }
+  }
+  console.log(`PASS ${name}: pinned primary provenance and prospective clock source`)
 }
 
 const inputBuilder = readFileSync(
