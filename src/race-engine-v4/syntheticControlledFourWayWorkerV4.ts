@@ -26,7 +26,7 @@ function main(){
    rider.commands={phase1:'follow_team_plan',phase2:'follow_team_plan',
     phase3:'follow_team_plan',phase4:'follow_team_plan'}
    // Four opening attackers; independent chasing teams and sprinters.
-   if(t<4&&i===4)rider.commands.phase1='join_breakaway'
+   if(t<4&&i===4)rider.commands.phase1='attack'
    if(t>=4&&t<8&&i===2){
     rider.commands.phase2='chase_breakaway'
     rider.commands.phase3='chase_breakaway'
