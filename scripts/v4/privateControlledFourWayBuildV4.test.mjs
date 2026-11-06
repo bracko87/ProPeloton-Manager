@@ -20,7 +20,7 @@ test('the dual offline engine bundle builds; invalid private input fails closed'
  }
  await assert.rejects(
   runPrivateControlledFourWayV4(envelope),
-  /V4_FOUR_WAY_INPUT_REJECTED/
+  /V4_FOUR_WAY_PLAN_REJECTED/
  )
  assert.equal(readFileSync(engine,'utf8'),original,
   'The default engine source must remain byte-for-byte unchanged')
