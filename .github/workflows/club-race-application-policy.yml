@@ -1,0 +1,31 @@
+name: Club race application eligibility
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/lib/raceClubApplicationPolicy.ts'
+      - 'src/lib/raceClubApplicationPolicy.test.ts'
+      - 'src/pages/dashboard/RaceDetailPage.tsx'
+      - 'src/pages/dashboard/CalendarPage.tsx'
+      - 'scripts/sql/club_application_national_event_guard_v1.sql'
+      - '.github/workflows/club-race-application-policy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Verify national/event category eligibility policy
+        run: npx --yes vitest@3.2.4 run src/lib/raceClubApplicationPolicy.test.ts --reporter=dot
+      - name: Verify client production compilation
+        run: node scripts/build.mjs --production
