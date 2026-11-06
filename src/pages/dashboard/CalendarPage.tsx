@@ -5,6 +5,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import { supabase } from '../../lib/supabase'
+import { isClubApplicationRestrictedRace } from '../../lib/raceClubApplicationPolicy'
 import TutorialOverlay from '../../components/tutorial/TutorialOverlay'
 import TutorialTargetFrame from '../../components/tutorial/TutorialTargetFrame'
 import PremiumSeasonPlannerPanel from './calendar/PremiumSeasonPlannerPanel'
@@ -840,6 +841,7 @@ function getEffectiveRaceCalendarStatus(race: RaceCalendarItem): RaceApplication
   if (raceStatus === 'active') return 'race_active'
   if (raceStatus === 'completed' || raceStatus === 'archived') return 'race_finished'
   if (raceStatus === 'cancelled') return 'race_cancelled'
+  if (isClubApplicationRestrictedRace(race)) return 'closed'
 
   return race.existing_application_status ?? race.applications_status
 }
@@ -853,6 +855,7 @@ function getBaseRaceCalendarStatus(race: RaceCalendarItem): RaceApplicationStatu
   if (raceStatus === 'active') return 'race_active'
   if (raceStatus === 'completed' || raceStatus === 'archived') return 'race_finished'
   if (raceStatus === 'cancelled') return 'race_cancelled'
+  if (isClubApplicationRestrictedRace(race)) return 'closed'
 
   return race.applications_status
 }
@@ -2805,11 +2808,13 @@ export default function CalendarPage(): JSX.Element {
                         ) : null}
 
                         <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRaceApplicationBadgeClass(
-                            effectiveRaceStatus
-                          )}`}
+                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${isClubApplicationRestrictedRace(race)
+                            ? 'bg-slate-100 text-slate-700'
+                            : getRaceApplicationBadgeClass(effectiveRaceStatus)}`}
                         >
-                          {getRaceApplicationBadgeLabel(effectiveRaceStatus, t)}
+                          {isClubApplicationRestrictedRace(race)
+                            ? 'Club entry unavailable'
+                            : getRaceApplicationBadgeLabel(effectiveRaceStatus, t)}
                         </span>
 
                         {race.category ? (
