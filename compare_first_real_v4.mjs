@@ -17,6 +17,8 @@ import {compilePrivateV4ProductionInput}
  from './scripts/v4/privateReadOnlyLockedCaptureV4.mjs'
 import {runPrivateRealVsOfficialV4}
  from './scripts/v4/runPrivateRealVsOfficialV4.mjs'
+import {runPrivateControlledFourWayV4}
+ from './scripts/v4/runPrivateControlledFourWayV4.mjs'
 
 const ref='okuravitxocyevkexfgi'
 const stageId='c7800ffd-f417-4feb-8a66-b928551daa4d'
@@ -145,8 +147,37 @@ SELECT jsonb_build_object(
 ) AS private_official_reference,
  current_user='postgres' AND session_user='postgres' AS identity_ok
 FROM sim s`
+/**
+ * Historical trajectory peak, computed independently from saved calibration.
+ * The archived summary's "maximum" omits some intermediate phase samples.
+ * Fixed SELECT only, inside the already-open read-only transaction.
+ */
+const officialTrajectoryPeakSQL=String.raw`WITH sim AS (
+ SELECT result_summary_json->'output_snapshot'->'universalResult'->'roadRaceResolution' AS r
+ FROM public.race_stage_simulation_runs
+ WHERE stage_id=$1::uuid AND status='completed'
+), gaps AS (
+ SELECT (v->>'gapSeconds')::double precision AS gap FROM sim,
+  LATERAL jsonb_array_elements(coalesce(r->'phase1Opening'->'physicalGapTrajectory','[]'::jsonb)) v
+ UNION ALL
+ SELECT (v->>'gapSeconds')::double precision AS gap FROM sim,
+  LATERAL jsonb_array_elements(coalesce(r->'phase2Development'->'physicalGapTrajectory','[]'::jsonb)) v
+ UNION ALL
+ SELECT (v->>'gapSeconds')::double precision AS gap FROM sim,
+  LATERAL jsonb_array_elements(coalesce(r->'phase3Decisive'->'physicalGapTrajectory','[]'::jsonb)) v
+ UNION ALL
+ SELECT (v->>'startGapSeconds')::double precision AS gap FROM sim,
+  LATERAL jsonb_array_elements(coalesce(r->'phase4Finish'->'chaseSteps','[]'::jsonb)) v
+ UNION ALL
+ SELECT (v->>'endGapSeconds')::double precision AS gap FROM sim,
+  LATERAL jsonb_array_elements(coalesce(r->'phase4Finish'->'chaseSteps','[]'::jsonb)) v
+), valid AS (
+ SELECT gap FROM gaps WHERE gap IS NOT NULL AND gap>=0 AND isfinite(gap)
+)
+SELECT max(gap) AS peak_seconds,count(*)::int AS sample_count FROM valid`
 async function main(){
- if(process.argv.length!==2)throw Error('NO_ARGUMENTS')
+ const fourWay=process.argv.length===3&&process.argv[2]==='--four-way'
+ if(!fourWay&&process.argv.length!==2)throw Error('NO_ARGUMENTS')
  const host=(process.env.PPM_V4_RESEARCH_ADMIN_DB_HOST||await askHost()).trim().toLowerCase()
  const isDirect=host==='db.'+ref+'.supabase.co'
  const isPooler=/^aws-\d+-[a-z0-9-]+\.pooler\.supabase\.com$/.test(host)
@@ -178,6 +209,17 @@ async function main(){
      reference.engineVersion!=='race_engine_ts_v1'||
      !Array.isArray(reference.officialRows)||reference.officialRows.length!==108)
    throw Error('OFFICIAL_REFERENCE_INVALID')
+  if(fourWay){
+   const peak=await client.query(officialTrajectoryPeakSQL,[stageId])
+   const value=peak.rows[0]
+   if(peak.rows.length!==1||!Number.isFinite(Number(value.peak_seconds))||
+      !(Number(value.sample_count)>0))throw Error('OFFICIAL_TRAJECTORY_MISSING')
+   reference.savedRaceSummary={
+    ...reference.savedRaceSummary,
+    observedPeakBreakawayGapSeconds:Number(value.peak_seconds),
+    observedPeakSampleCount:Number(value.sample_count)
+   }
+  }
   await client.query('ROLLBACK');started=false
  }finally{
   if(started)try{await client.query('ROLLBACK')}catch{}
@@ -201,10 +243,12 @@ async function main(){
    lockCutoffGameTs:proof.cutoff,snapshotGameTs:proof.captured},
   teamControl,gameDate:proof.start.slice(0,10)
  }
- step('COMPARE_V4_WITH_OFFICIAL')
- const report=await runPrivateRealVsOfficialV4({input,options,reference})
+ step(fourWay?'COMPARE_CONTROLLED_FOUR_WAY':'COMPARE_V4_WITH_OFFICIAL')
+ const envelope={input,options,reference}
+ const report=fourWay?await runPrivateControlledFourWayV4(envelope):
+  await runPrivateRealVsOfficialV4(envelope)
  step('COMPARISON_COMPLETE')
- console.log('V4_VS_OFFICIAL '+JSON.stringify(report))
+ console.log((fourWay?'V4_CONTROLLED_FOUR_WAY ':'V4_VS_OFFICIAL ')+JSON.stringify(report))
 }
 try{await main()}catch{
  console.error('V4_COMPARE_FAILED_AT '+stage)
