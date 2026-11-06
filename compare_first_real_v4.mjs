@@ -172,7 +172,7 @@ const officialTrajectoryPeakSQL=String.raw`WITH sim AS (
  SELECT (v->>'endGapSeconds')::double precision AS gap FROM sim,
   LATERAL jsonb_array_elements(coalesce(r->'phase4Finish'->'chaseSteps','[]'::jsonb)) v
 ), valid AS (
- SELECT gap FROM gaps WHERE gap IS NOT NULL AND gap>=0 AND isfinite(gap)
+ SELECT gap FROM gaps WHERE gap IS NOT NULL AND gap>=0 AND gap<100000000
 )
 SELECT max(gap) AS peak_seconds,count(*)::int AS sample_count FROM valid`
 async function main(){
