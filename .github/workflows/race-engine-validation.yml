@@ -61,6 +61,9 @@ jobs:
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
 
+      - name: Validate V1 terrain-aware road-stage absolute times
+        run: npx --yes vitest@3.2.4 run src/universal-race-engine/roadStageWinningTimeV1.test.ts --reporter=dot
+
       - name: Compile isolated mountain experimental solver
         run: npx esbuild src/universal-race-engine/runMountainExperimentalEngineV1.ts --bundle --platform=node --format=esm --outfile=/tmp/runMountainExperimentalEngineV1.mjs
 
