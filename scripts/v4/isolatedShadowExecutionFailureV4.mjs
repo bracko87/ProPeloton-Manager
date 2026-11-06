@@ -115,7 +115,7 @@ export function classifyV4ReplaySynchronizationFailure(message){
      return 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE2_REJECTED'
     if(suffix.startsWith('phase-3-front-merge-'))
      return 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE3_REJECTED'
-    if(/^bridge-merge-\\d+$/.test(suffix))
+    if(/^bridge-merge-[0-9]+$/.test(suffix))
      return 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE4_REJECTED'
    }
    return 'SHADOW_PHYSICS_REPLAY_'+prefix.toUpperCase()+'_REJECTED'
