@@ -11,6 +11,7 @@ import {fileURLToPath} from 'node:url'
 import {spawnSync} from 'node:child_process'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {isValidV4PhysicalPatch} from './runIsolatedShadowV4.mjs'
+import {isV4FourWaySafePhase} from './privateControlledFourWaySafeFailuresV4.mjs'
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 const engine=resolve(root,'src/universal-race-engine/runRaceEngine.ts')
@@ -131,6 +132,12 @@ export async function runPrivateControlledFourWayV4(envelope,
   })
   const prefix='V4_FOUR_WAY_REPORT '
   const lines=String(child.stdout??'').trim().split(/\r?\n/)
+  if(child.status!==0 && !child.error && !child.stderr &&
+     lines.length===1 && lines[0].startsWith('V4_FOUR_WAY_REJECTED ')){
+   const safePhase=lines[0].slice('V4_FOUR_WAY_REJECTED '.length)
+   if(isV4FourWaySafePhase(safePhase))
+    throw Error('V4_FOUR_WAY_'+safePhase+'_REJECTED')
+  }
   if(child.error||child.status!==0||lines.length!==1||child.stderr||
      !lines[0].startsWith(prefix))
    throw Error('V4_FOUR_WAY_WORKER_REJECTED')
