@@ -28,7 +28,11 @@ import {
   saveTutorialProgress,
 } from "../../lib/tutorialProgress";
 import { supabase } from "../../lib/supabase";
-import RaceDetailPage from "./RaceDetailPage";
+import RaceDetailPage, {
+  StageProfileChart,
+  getDisplayOnlyStageProfilePoints,
+  getDisplayOnlyProfileMinimumVerticalSpan,
+} from "./RaceDetailPage";
 import PremiumRaceStrategyPanel from "./race-preparation/PremiumRaceStrategyPanel";
 import UnifiedNationalRacePreparationPanel from "./race-preparation/UnifiedNationalRacePreparationPanel";
 import {
@@ -9003,6 +9007,7 @@ function StageWeatherMiniCard({
 }
 
 function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
+  const { t: raceDetailText } = useTranslation("raceDetail");
   const [profile, setProfile] = useState<JsonRecord | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -9013,6 +9018,8 @@ function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
   useEffect(() => {
     if (!stageId) {
       setProfile(null);
+      setLoading(false);
+      setErrorMessage(null);
       return;
     }
 
@@ -9024,10 +9031,7 @@ function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
 
       try {
         const result = await loadRaceStageProfileDetail(stageId);
-
-        if (!cancelled) {
-          setProfile(result);
-        }
+        if (!cancelled) setProfile(result);
       } catch (error) {
         if (!cancelled) {
           setProfile(null);
@@ -9038,91 +9042,235 @@ function SelectedStagePlanProfileCard({ stage }: { stage: JsonRecord }) {
           );
         }
       } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     }
 
     void loadProfile();
-
     return () => {
       cancelled = true;
     };
   }, [stageId]);
 
   const profileData = profile?.has_profile ? profile : null;
+  const terrainType = String(
+    profileData?.terrain_type ?? stage.terrain_type ?? "",
+  ).trim();
+  const distanceKm =
+    toFiniteNumberValue(profileData?.distance_km) ??
+    toFiniteNumberValue(stage.distance_km) ??
+    0;
+  const profilePoints = profileData
+    ? normalizeProfilePoints(profileData, stage).map((point) => ({
+        km: point.km,
+        elevation: point.elevation_m,
+      }))
+    : [];
+  // This is the exact same display-only profile shaping as the Race Page.
+  // Neither the profile input nor engine/replay elevation data is modified.
+  const chartPoints = getDisplayOnlyStageProfilePoints(
+    stageId,
+    profilePoints,
+    terrainType,
+  );
+  const routeMarkers = profileData
+    ? normalizeStagePlanRacePageMarkers(profileData, stage, distanceKm)
+    : [];
+  const mountainClimbs = (
+    Array.isArray(profileData?.mountain_climbs)
+      ? profileData.mountain_climbs
+      : []
+  ).map((value) => {
+    const climb = asRecord(value);
+    return {
+      km: toFiniteNumberValue(climb.km) ?? 0,
+      category: String(climb.category ?? climb.kom_category ?? ""),
+      name: String(climb.name ?? ""),
+    };
+  });
+  const stagePoints = profileData ? getStagePlanRacePagePoints(profileData) : [];
+  const terrainSplit = asRecord(profileData?.terrain_split);
+  const profileTitle =
+    String(profileData?.stage_title ?? "").trim() ||
+    getStageDisplayName(stage, stageNumber);
+  const routeLabel =
+    String(profileData?.route_label ?? "").trim() || getStageRoute(stage);
+  const summary = String(profileData?.stage_summary ?? "").trim();
+  const elevationGain = toFiniteNumberValue(profileData?.elevation_gain_m);
+  const metricValue = (
+    value: string | null,
+    fallback: string = "—",
+  ): string => value && value.trim() ? value : fallback;
 
   return (
-    <div className="mt-5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-      <div className="grid gap-5 xl:grid-cols-[0.58fr_1.42fr]">
-        <div className="min-w-0">
-          <div className="text-xs uppercase tracking-wide text-slate-500">
-            {racePrepText("screen.selectedStageProfile")}
-          </div>
-
-          <h3 className="mt-1 text-lg font-semibold text-slate-900">
-            {racePrepText("common.stage")} {stageNumber}: {getStageDisplayName(stage, stageNumber)}
-          </h3>
-
-          <div className="mt-4 grid gap-2">
-            <CompactStageInfo
-              label={racePrepText("screen.date")}
-              value={formatFullStageDateTime(stage)}
-            />
-            <CompactStageInfo label={racePrepText("screen.route")} value={getStageRoute(stage)} />
-            <CompactStageInfo
-              label={racePrepText("screen.profile")}
-              value={
-                profileData?.profile_type
-                  ? titleFromSnake(String(profileData.profile_type))
-                  : getStageProfileLabel(stage)
-              }
-            />
-            <CompactStageInfo
-              label={racePrepText("screen.distance")}
-              value={
-                profileData?.distance_km
-                  ? `${Number(profileData.distance_km).toFixed(
-                      Number(profileData.distance_km) % 1 === 0 ? 0 : 1,
-                    )} km`
-                  : getStageDistance(stage) || "—"
-              }
-            />
-          </div>
-
-          <StageWeatherMiniCard profile={profile} stage={stage} />
+    <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px]">
+      <section className="min-w-0 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <div className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+          {raceDetailText("stage.profile")}
         </div>
 
-        <div className="rounded-2xl bg-white p-4">
+        <div className="mt-4 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+          <div className="min-w-0 flex-1">
+            <h3 className="text-xl font-semibold text-slate-950">{profileTitle}</h3>
+            <p className="mt-1 text-sm text-slate-600">{routeLabel}</p>
+            {summary ? (
+              <p className="mt-3 text-sm leading-6 text-slate-600">
+                {summary}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="grid min-w-[250px] grid-cols-2 gap-x-8 gap-y-3 xl:pt-1">
+            <div>
+              <div className="text-xs text-slate-500">{raceDetailText("stage.distance")}</div>
+              <div className="mt-1 font-semibold text-slate-950">
+                {distanceKm > 0
+                  ? (Number.isInteger(distanceKm)
+                      ? String(distanceKm)
+                      : distanceKm.toFixed(1)) + " km"
+                  : "—"}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">{raceDetailText("stage.terrain")}</div>
+              <div className="mt-1 font-semibold text-slate-950">
+                {metricValue(terrainType ? titleFromSnake(terrainType) : null)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">{raceDetailText("stage.profileLabel")}</div>
+              <div className="mt-1 font-semibold text-slate-950">
+                {profileData?.profile_type
+                  ? titleFromSnake(String(profileData.profile_type))
+                  : getStageProfileLabel(stage)}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs text-slate-500">{raceDetailText("stage.elevation")}</div>
+              <div className="mt-1 font-semibold text-slate-950">
+                {elevationGain === null
+                  ? "—"
+                  : Math.round(elevationGain).toLocaleString("de-DE") + " m"}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4">
           {loading ? (
-            <div className="flex min-h-[360px] items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-500">
+            <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-500">
               Loading stage profile…
             </div>
           ) : errorMessage ? (
-            <div className="flex min-h-[360px] items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm text-rose-700">
+            <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-rose-200 bg-rose-50 px-4 text-sm text-rose-700">
               {errorMessage}
             </div>
-          ) : profileData ? (
-            <StagePlanProfileChart profile={profileData} stage={stage} />
+          ) : profileData && chartPoints.length >= 2 && distanceKm > 0 ? (
+            <StageProfileChart
+              points={chartPoints}
+              markers={routeMarkers}
+              distanceKm={distanceKm}
+              terrainType={terrainType}
+              mountainClimbs={mountainClimbs}
+              minimumVerticalSpanOverride={
+                getDisplayOnlyProfileMinimumVerticalSpan(terrainType)
+              }
+            />
           ) : (
-            <div className="flex min-h-[360px] items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-500">
+            <div className="flex min-h-[320px] items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-500">
               Stage profile data is not available from the backend yet.
             </div>
           )}
         </div>
-      </div>
-    </div>
-  );
-}
 
-function CompactStageInfo({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-xl bg-white/70 px-3 py-2">
-      <div className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-        {label}
-      </div>
-      <div className="mt-0.5 text-sm font-semibold text-slate-900">{value}</div>
+        {stagePoints.length > 0 ? (
+          <section className="mt-6">
+            <h4 className="text-lg font-semibold text-slate-900">
+              {raceDetailText("stage.points")}
+            </h4>
+            <div className="mt-4 space-y-3">
+              {stagePoints.map((point, index) => (
+                <div
+                  key={point.kind + "-" + String(point.km) + "-" + String(index)}
+                  className={
+                    point.kind === "sprint"
+                      ? "rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-3"
+                      : "rounded-2xl border border-rose-200 bg-rose-50/60 px-4 py-3"
+                  }
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <div className="text-sm font-semibold text-slate-900">
+                        {point.label}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        km {Number.isInteger(point.km)
+                          ? point.km
+                          : point.km.toFixed(1)}
+                      </div>
+                    </div>
+                    <div className="text-right text-xs text-slate-600">
+                      {point.points ? (
+                        <div>Points: {point.points}</div>
+                      ) : null}
+                      {point.bonuses ? (
+                        <div className="mt-1">Time bonuses: {point.bonuses}</div>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </section>
+
+      <aside className="min-w-0 space-y-4">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            {racePrepText("screen.date")}
+          </div>
+          <div className="mt-2 text-sm font-semibold text-slate-900">
+            {formatFullStageDateTime(stage)}
+          </div>
+        </div>
+
+        {profileData && Object.keys(terrainSplit).length > 0 ? (
+          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Terrain Split
+            </div>
+            <div className="mt-4 space-y-3">
+              {([
+                ["flat", "Flat"],
+                ["hilly", "Hilly"],
+                ["mountain", "Mountain"],
+                ["cobbled", "Cobbled"],
+              ] as const).map(([key, label]) => {
+                const percent = Math.max(0, Math.min(100,
+                  toFiniteNumberValue(terrainSplit[key]) ?? 0,
+                ));
+                return (
+                  <div key={key}>
+                    <div className="flex justify-between text-xs text-slate-600">
+                      <span>{label}</span>
+                      <span>{Math.round(percent)}%</span>
+                    </div>
+                    <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-slate-800"
+                        style={{ width: String(percent) + "%" }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
+
+        <StageWeatherMiniCard profile={profile} stage={stage} />
+      </aside>
     </div>
   );
 }
@@ -9132,340 +9280,103 @@ type StagePlanProfilePoint = {
   elevation_m: number;
 };
 
-type StagePlanProfileMarker = {
-  km: number;
-  type: string;
-  label: string;
-};
-
-function toFiniteNumberValue(value: unknown): number | null {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-}
-
-function normalizeProfilePoints(profile: JsonRecord, stage: JsonRecord) {
-  const direct = Array.isArray(profile.profile_points)
-    ? profile.profile_points
-    : [];
-
-  const metadata = asRecord(stage.metadata);
-  const routeProfile = asRecord(metadata.route_profile_v1);
-  const fallback = Array.isArray(routeProfile.profile_points)
-    ? routeProfile.profile_points
-    : [];
-
-  const source = direct.length > 0 ? direct : fallback;
-
-  return source
-    .map((raw): StagePlanProfilePoint | null => {
-      const point = asRecord(raw);
-      const km = toFiniteNumberValue(point.km);
-      const elevation = toFiniteNumberValue(point.elevation_m);
-
-      if (km === null || elevation === null) return null;
-
-      return {
-        km,
-        elevation_m: elevation,
-      };
-    })
-    .filter((point): point is StagePlanProfilePoint => point !== null)
-    .sort((a, b) => a.km - b.km);
-}
-
-function isStagePlanTacticalMarkerType(type: string): boolean {
-  const normalized = type.toUpperCase();
-
-  return (
-    normalized === "START" ||
-    normalized === "FINISH" ||
-    normalized === "KOM" ||
-    normalized === "MOUNTAIN" ||
-    normalized === "INTERMEDIATE_SPRINT" ||
-    normalized === "BONUS_SPRINT" ||
-    normalized === "SPRINT"
-  );
-}
-
-function normalizeProfileMarkers(
+/**
+ * Stage Plans uses the same backend markers and profile renderer as the Race Page.
+ * Normalization is kept here only because the race-preparation API exposes JSON.
+ */
+function normalizeStagePlanRacePageMarkers(
   profile: JsonRecord,
   stage: JsonRecord,
   distanceKm: number,
 ) {
   const direct = Array.isArray(profile.route_markers)
     ? profile.route_markers
-    : [];
+    : Array.isArray(stage.points)
+      ? stage.points
+      : [];
 
-  const stagePoints = Array.isArray(stage.points) ? stage.points : [];
-
-  const fromProfile = direct
-    .map((raw): StagePlanProfileMarker | null => {
+  const markers = direct
+    .map((raw) => {
       const marker = asRecord(raw);
-      const km = toFiniteNumberValue(marker.km);
-
+      const km = toFiniteNumberValue(marker.km ?? marker.km_from_start);
       if (km === null) return null;
-
+      const originalType = String(marker.type ?? marker.point_type ?? "").toLowerCase();
+      const type =
+        originalType === "intermediate_sprint" ||
+        originalType === "bonus_sprint"
+          ? "sprint"
+          : originalType === "mountain" ? "kom" : originalType;
       return {
         km,
-        type: String(marker.type ?? marker.point_type ?? ""),
-        label: getStagePlanMarkerLabel(marker),
+        type,
+        label: String(marker.label ?? marker.name ?? type),
+        category: String(
+          marker.category ?? marker.kom_category ?? marker.climb_category ?? "",
+        ).trim() || null,
       };
     })
-    .filter((marker): marker is StagePlanProfileMarker => marker !== null)
-    .filter((marker) => isStagePlanTacticalMarkerType(marker.type));
+    .filter((marker): marker is NonNullable<typeof marker> => marker !== null)
+    .sort((a, b) => a.km - b.km);
 
-  const fromStagePoints = stagePoints
-    .map((raw): StagePlanProfileMarker | null => {
-      const point = asRecord(raw);
-      const km = toFiniteNumberValue(point.km_from_start);
-
-      if (km === null) return null;
-
-      return {
-        km,
-        type: String(point.point_type ?? ""),
-        label: getStagePlanMarkerLabel(point),
-      };
-    })
-    .filter((marker): marker is StagePlanProfileMarker => marker !== null)
-    .filter((marker) => isStagePlanTacticalMarkerType(marker.type));
-
-  const merged = fromProfile.length > 0 ? fromProfile : fromStagePoints;
-
-  const hasStart = merged.some((marker) => marker.km <= 0.5);
-  const hasFinish = merged.some(
-    (marker) => Math.abs(marker.km - distanceKm) <= 0.5,
-  );
-
-  return [
-    ...(hasStart
-      ? []
-      : [{ km: 0, type: "START", label: "Start" } as StagePlanProfileMarker]),
-    ...merged,
-    ...(hasFinish
-      ? []
-      : [
-          {
-            km: distanceKm,
-            type: "FINISH",
-            label: "Finish",
-          } as StagePlanProfileMarker,
-        ]),
-  ].sort((a, b) => a.km - b.km);
+  if (!markers.some((marker) => marker.type === "start")) {
+    markers.unshift({ km: 0, type: "start", label: "Start", category: null });
+  }
+  if (!markers.some((marker) => marker.type === "finish")) {
+    markers.push({
+      km: distanceKm,
+      type: "finish",
+      label: "Finish",
+      category: null,
+    });
+  }
+  return markers;
 }
 
-function getStagePlanMarkerLabel(marker: JsonRecord) {
-  const type = String(marker.type ?? marker.point_type ?? "").toUpperCase();
+type StagePlanRacePagePoint = {
+  kind: "sprint" | "kom";
+  label: string;
+  km: number;
+  points: string;
+  bonuses: string;
+};
 
-  if (type === "START") return "Start";
-  if (type === "FINISH") return "Finish";
-  if (
-    type === "INTERMEDIATE_SPRINT" ||
-    type === "BONUS_SPRINT" ||
-    type === "SPRINT"
-  ) {
-    return "Sprint";
-  }
+function getStagePlanRacePagePoints(profile: JsonRecord): StagePlanRacePagePoint[] {
+  const asScoreList = (value: unknown) =>
+    Array.isArray(value) ? value.map((item) => String(item)).join(" / ") : "";
 
-  if (type === "KOM" || type === "MOUNTAIN") {
-    const category = String(
-      marker.category ?? marker.kom_category ?? "",
-    ).trim();
-    return category ? `Cat ${category}` : "KOM";
-  }
+  const sprints = (
+    Array.isArray(profile.intermediate_sprints)
+      ? profile.intermediate_sprints
+      : []
+  ).flatMap((raw, index): StagePlanRacePagePoint[] => {
+    const point = asRecord(raw);
+    const km = toFiniteNumberValue(point.km);
+    if (km === null) return [];
+    return [{
+      kind: "sprint",
+      label: "Sprint " + String(point.number ?? index + 1),
+      km,
+      points: asScoreList(point.points_scheme),
+      bonuses: asScoreList(point.time_bonus_seconds),
+    }];
+  });
 
-  return "Point";
-}
+  const climbs = (
+    Array.isArray(profile.mountain_climbs) ? profile.mountain_climbs : []
+  ).flatMap((raw): StagePlanRacePagePoint[] => {
+    const climb = asRecord(raw);
+    const km = toFiniteNumberValue(climb.km);
+    if (km === null) return [];
+    return [{
+      kind: "kom",
+      label: String(climb.category ?? "KOM"),
+      km,
+      points: asScoreList(climb.points_scheme),
+      bonuses: asScoreList(climb.time_bonus_seconds),
+    }];
+  });
 
-function getMarkerColor(type: string) {
-  const normalized = type.toUpperCase();
-
-  if (normalized === "START") return "#64748b";
-  if (normalized === "FINISH") return "#2563eb";
-  if (normalized === "KOM" || normalized === "MOUNTAIN") return "#ef4444";
-  if (
-    normalized === "INTERMEDIATE_SPRINT" ||
-    normalized === "BONUS_SPRINT" ||
-    normalized === "SPRINT"
-  ) {
-    return "#22c55e";
-  }
-
-  return "#475569";
-}
-
-function StagePlanProfileChart({
-  profile,
-  stage,
-}: {
-  profile: JsonRecord;
-  stage: JsonRecord;
-}) {
-  const points = normalizeProfilePoints(profile, stage);
-  const distanceKm =
-    toFiniteNumberValue(profile.distance_km) ??
-    toFiniteNumberValue(stage.distance_km) ??
-    Math.max(...points.map((point) => point.km), 1);
-
-  if (points.length < 2) {
-    return (
-      <div className="flex min-h-[360px] items-center justify-center rounded-xl border border-dashed border-slate-300 text-sm text-slate-500">
-        Stage profile points are missing.
-      </div>
-    );
-  }
-
-  const width = 920;
-  const height = 360;
-  const padding = {
-    top: 38,
-    right: 24,
-    bottom: 54,
-    left: 58,
-  };
-
-  const innerWidth = width - padding.left - padding.right;
-  const innerHeight = height - padding.top - padding.bottom;
-
-  const maxElevationRaw = Math.max(...points.map((point) => point.elevation_m));
-  const maxElevation = Math.max(
-    500,
-    Math.ceil((maxElevationRaw * 1.12) / 100) * 100,
-  );
-
-  const xForKm = (km: number) =>
-    padding.left +
-    (Math.max(0, Math.min(distanceKm, km)) / distanceKm) * innerWidth;
-
-  const yForElevation = (elevation: number) =>
-    padding.top +
-    innerHeight -
-    (Math.max(0, elevation) / maxElevation) * innerHeight;
-
-  const coordinates = points.map((point) => ({
-    x: xForKm(point.km),
-    y: yForElevation(point.elevation_m),
-    ...point,
-  }));
-
-  const linePath = coordinates.reduce((path, point, index) => {
-    if (index === 0) return `M ${point.x} ${point.y}`;
-
-    const previous = coordinates[index - 1];
-    const controlX = (previous.x + point.x) / 2;
-
-    return `${path} C ${controlX} ${previous.y}, ${controlX} ${point.y}, ${point.x} ${point.y}`;
-  }, "");
-
-  const areaPath = `${linePath} L ${
-    coordinates[coordinates.length - 1].x
-  } ${height - padding.bottom} L ${coordinates[0].x} ${
-    height - padding.bottom
-  } Z`;
-
-  const markers = normalizeProfileMarkers(profile, stage, distanceKm);
-  const elevationTicks = [0, 0.25, 0.5, 0.75, 1].map(
-    (ratio) => Math.round((maxElevation * ratio) / 100) * 100,
-  );
-
-  return (
-    <div className="w-full overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <svg
-        viewBox={`0 0 ${width} ${height}`}
-        className="h-[360px] w-full"
-        role="img"
-        aria-label="Stage profile chart"
-      >
-        <rect width={width} height={height} fill="#ffffff" />
-
-        {elevationTicks.map((tick) => {
-          const y = yForElevation(tick);
-
-          return (
-            <g key={tick}>
-              <line
-                x1={padding.left}
-                x2={width - padding.right}
-                y1={y}
-                y2={y}
-                stroke="#e2e8f0"
-                strokeWidth="1"
-              />
-              <text
-                x={padding.left - 10}
-                y={y + 4}
-                textAnchor="end"
-                fontSize="12"
-                fill="#64748b"
-              >
-                {tick} m
-              </text>
-            </g>
-          );
-        })}
-
-        <path d={areaPath} fill="#fde68a" opacity="0.9" />
-        <path
-          d={linePath}
-          fill="none"
-          stroke="#334155"
-          strokeWidth="3"
-          strokeLinecap="round"
-        />
-
-        {markers.map((marker, index) => {
-          const x = xForKm(marker.km);
-          const color = getMarkerColor(marker.type);
-
-          return (
-            <g key={`${marker.type}-${marker.km}-${index}`}>
-              <line
-                x1={x}
-                x2={x}
-                y1={padding.top}
-                y2={height - padding.bottom}
-                stroke={color}
-                strokeWidth="2"
-                strokeDasharray="4 4"
-                opacity="0.75"
-              />
-
-              <rect
-                x={x - 34}
-                y={14}
-                width="68"
-                height="22"
-                rx="11"
-                fill={color}
-              />
-
-              <text
-                x={x}
-                y={29}
-                textAnchor="middle"
-                fontSize="11"
-                fontWeight="700"
-                fill="#ffffff"
-              >
-                {marker.label}
-              </text>
-
-              <text
-                x={x}
-                y={height - 18}
-                textAnchor="middle"
-                fontSize="12"
-                fontWeight="700"
-                fill="#334155"
-              >
-                {marker.km.toFixed(marker.km % 1 === 0 ? 0 : 1)} km
-              </text>
-            </g>
-          );
-        })}
-      </svg>
-    </div>
-  );
+  return [...sprints, ...climbs].sort((a, b) => a.km - b.km);
 }
 
 function StageCardsScroller({
