@@ -36,10 +36,11 @@ for (const method of [
   'resolveRoadPhase1Opening','resolveRoadPhase2Development',
   'resolveRoadPhase3Decisive','resolveRoadPhase4Finish',
   'buildUniversalPhase5GroupingSummary','resolveUniversalFinishResolution',
-  'buildUniversalReplayTimeline','resolveUniversalPhase10Incidents',
+  'reconcileReplayTimelineIntermediatePointsV1','resolveUniversalPhase10Incidents',
   'buildUniversalReplaySynchronizationSummary',
 ]) assert.ok(safe.includes(`selectedCore.${method}(`), method)
 assert.match(safe, /primarySourceCommit:effectiveSourceCommit/)
+assert.match(safe, /replayCore\.buildUniversalReplayTimeline\(/)
 
 const safeStep = safe.slice(safe.indexOf('async function executeStep('))
 const stepZeroStart = safeStep.indexOf('if(step===0){', safeStep.indexOf('let engineLaneV1:'))
