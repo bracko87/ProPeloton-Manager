@@ -69,6 +69,16 @@ export function compactRaceDiagnosticsV4(result){
  const count=x=>[...classification.values()].filter(v=>status(v)===x).length
  const p1=r.phase1Opening,p2=r.phase2Development,p3=r.phase3Decisive,p4=r.phase4Finish
  const phaseEnd=p=>p?num(p.physicalEndGapSeconds??p.endGapSeconds):null
+ const phase2Response=p2?.pelotonResponse??null
+ const phase2Cooperation=p2?.breakawayCooperation??null
+ // The V4-only pace witnesses are internal samples; collect only aggregate
+ // means, never private rider/team IDs, point gates or raw replay states.
+ const phase3PaceWitnesses=Array.isArray(p3?.physicalGapTrajectory)?
+  p3.physicalGapTrajectory.map(x=>x?.v4ResearchPace).filter(x=>
+   x&&finite(x.pelotonPaceKmh)&&finite(x.escapePaceKmh)):[]
+ const phase3MeanPace=key=>phase3PaceWitnesses.length?
+  round(phase3PaceWitnesses.reduce((sum,x)=>sum+x[key],0)/
+   phase3PaceWitnesses.length):null
  const finishers=[...classification.values()].filter(x=>status(x)==='finished')
  const winner=finishers.find(x=>rank(x)===1)
  if(!winner||!finite(winner.officialTimeSeconds))throw Error('DIAGNOSTIC_WINNER_INVALID')
@@ -83,6 +93,23 @@ export function compactRaceDiagnosticsV4(result){
   phase2EndGapSeconds:phaseEnd(p2),
   phase3EndGapSeconds:phaseEnd(p3),
   phase4EndGapSeconds:phaseEnd(p4),
+  // Phase 2 is where the historical AI breakaway nearly disappears. The
+  // response is the recorded phase-end model summary, NOT a full-phase mean.
+  phase2ChasingTeamCount:Array.isArray(phase2Response?.chasingTeamIds)?
+   phase2Response.chasingTeamIds.length:null,
+  phase2ControllingTeamCount:Array.isArray(phase2Response?.controllingTeamIds)?
+   phase2Response.controllingTeamIds.length:null,
+  phase2AvailableChaseAssets:num(phase2Response?.availableChaseAssets),
+  phase2ChaseInterestScore:num(phase2Response?.chaseInterestScore),
+  phase2SelectedResponseMultiplier:num(phase2Response?.selectedResponseMultiplier),
+  phase2BaselinePelotonPaceKmh:num(phase2Response?.baselinePelotonPaceKmh),
+  phase2EffectivePelotonPaceKmh:num(phase2Response?.effectivePelotonPaceKmh),
+  phase2ProjectedEscapePaceKmh:num(phase2Cooperation?.projectedEscapePaceKmh),
+  phase2CooperationScore:num(phase2Cooperation?.cooperationScore),
+  phase2CooperationSpeedMultiplier:num(phase2Cooperation?.cooperationSpeedMultiplier),
+  phase3V4PaceSampleCount:phase3PaceWitnesses.length,
+  phase3V4MeanPelotonPaceKmh:phase3MeanPace('pelotonPaceKmh'),
+  phase3V4MeanEscapePaceKmh:phase3MeanPace('escapePaceKmh'),
   phase3ChasingTeamCount:Array.isArray(p3?.physicalChasingTeamIds)?
     p3.physicalChasingTeamIds.length:null,
   openingBreakawaySize:Array.isArray(p1?.breakawayRiderIds)?
