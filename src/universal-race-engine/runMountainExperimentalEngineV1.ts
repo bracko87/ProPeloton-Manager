@@ -1,3 +1,4 @@
+import { calculateUniversalRoadStageWinnerTimeSecondsV1 } from './roadStageWinningTimeV1.ts'
 import { mountainOpeningBreakawayPhysicallyActiveV1 } from './mountainOpeningBreakawayV1.ts'
 import { calculateSummitFinishSelectivityV1 } from './summitFinishSelectivityV1.ts'
 import { isFinalSummitApproachV1, getFinalSummitPhysicalGapSecondsV1 } from './summitFinishPhysicalHandoffV1.ts'
@@ -14890,23 +14891,6 @@ function getPhase4FinishModel(
   }
 }
 
-function getPhase4BaseFinishPaceKmh(stage: UniversalStageInput): number {
-  switch (stage.finishType) {
-    case 'summit_finish':
-      return 32
-    case 'uphill_finish':
-      return 35
-    case 'cobbled_finish':
-      return 37
-    case 'flat_finish':
-      return 42
-    case 'time_trial_finish':
-    case 'team_time_trial_finish':
-    case 'prologue_finish':
-      return 40
-  }
-}
-
 function scoreRoadFinishRider(
   input: UniversalRaceEngineInput,
   rider: UniversalRiderInput,
@@ -19524,8 +19508,11 @@ export function resolveRoadPhase4Finish(
     provisionalRiderStates,
   )
 
-  const winnerBaseTimeSeconds = Math.round(
-    (input.stage.distanceKm / getPhase4BaseFinishPaceKmh(input.stage)) * 3600,
+  // Keep V1 experimental lanes on the identical absolute race clock as
+  // baseline; only their supported sporting/replay differences may remain.
+  const winnerBaseTimeSeconds = calculateUniversalRoadStageWinnerTimeSecondsV1(
+    input.stage,
+    input.weather,
   )
   const groupCodes: readonly UniversalRoadFinalGroupCode[] = [
     'winning_group',
