@@ -12,6 +12,7 @@ import {spawnSync} from 'node:child_process'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {isValidV4PhysicalPatch} from './runIsolatedShadowV4.mjs'
 import {isV4FourWaySafePhase} from './privateControlledFourWaySafeFailuresV4.mjs'
+import {V4_SAFE_PHYSICS_FAILURE_STATUSES} from './isolatedShadowExecutionFailureV4.mjs'
 
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'../..')
 const engine=resolve(root,'src/universal-race-engine/runRaceEngine.ts')
@@ -43,13 +44,16 @@ const pairFields=['sameWinner','statusChangedRiders','rankChangedRiders',
  'meanAbsoluteGapChangeSeconds','maximumAbsoluteGapChangeSeconds',
  'meanAbsoluteFinishEnergyDelta','maximumAbsoluteFinishEnergyDelta']
 function verifyReport(o){
- if(!keys(o,['contract','status','researchOnly','officialWrites',
+ const partial=o?.status==='V4_CONTROLLED_PARTIAL_DIAGNOSTIC'
+ const expected=['contract','status','researchOnly','officialWrites',
   'productionEnabled','productionParityVerified','originalProductionLockVerified',
   'ridersCompared','sharedReconstructedInputAndSeed','comparisonScope',
   'aiTeams','humanTeams','plannedAIIntents','archivedOfficial','cases',
-  'isolatedEffects'])||
+  'isolatedEffects',...(partial?['completedArms','completeFourWay',
+    'safeFailures','prefixProbes']:[])]
+ if(!keys(o,expected)||
   o.contract!=='ppm.v4.private-controlled-four-way.v1'||
-  o.status!=='V4_CONTROLLED_FOUR_WAY_COMPLETE'||
+  !['V4_CONTROLLED_FOUR_WAY_COMPLETE','V4_CONTROLLED_PARTIAL_DIAGNOSTIC'].includes(o.status)||
   o.researchOnly!==true||o.officialWrites!==0||
   o.productionEnabled!==false||o.productionParityVerified!==false||
   o.originalProductionLockVerified!==false||o.ridersCompared!==108||
@@ -63,18 +67,56 @@ function verifyReport(o){
   !primitives(o.archivedOfficial,['finishers','dnf','calibrationReportedPeakSeconds',
     'observedBreakawayPeakSeconds','observedSampleCount']))
   throw Error('V4_FOUR_WAY_REPORT_REJECTED')
+ const safeCodes=new Set(V4_SAFE_PHYSICS_FAILURE_STATUSES)
+ if(partial){
+  if(o.completeFourWay!==false||!Number.isSafeInteger(o.completedArms)||
+     o.completedArms<1||o.completedArms>=4||
+     !keys(o.safeFailures,cases)||
+     !Array.isArray(o.prefixProbes)||o.prefixProbes.length!==4||
+     !o.prefixProbes.every((p,i)=>
+      keys(p,['throughPhase','status','reason'])&&p.throughPhase===i+1&&
+      ['PASS','EXECUTION_REJECTED','REPLAY_REJECTED','NOT_RUN'].includes(p.status)&&
+      (p.status==='PASS'||p.status==='NOT_RUN'?
+       p.reason===null:safeCodes.has(p.reason))))
+    throw Error('V4_FOUR_WAY_REPORT_REJECTED')
+  if(!o.cases.baselineOriginal)throw Error('V4_FOUR_WAY_REPORT_REJECTED')
+ }
+ let successfulCases=0
  for(const name of cases){
   const m=o.cases[name]
+  const failure=partial?o.safeFailures[name]:null
+  if(partial && (
+      (m===null)===(failure===null)||
+      (failure!==null&&!safeCodes.has(failure))))
+   throw Error('V4_FOUR_WAY_CASE_REJECTED')
+  if(partial&&m===null)continue
+  successfulCases++
   if(!keys(m,[...caseFields,'vsArchivedOfficial'])||
     !primitives(Object.fromEntries(caseFields.map(k=>[k,m?.[k]])),caseFields)||
     !keys(m.vsArchivedOfficial,officialFields)||
     !primitives(m.vsArchivedOfficial,officialFields))
    throw Error('V4_FOUR_WAY_CASE_REJECTED')
  }
+ if(partial && successfulCases!==o.completedArms)
+  throw Error('V4_FOUR_WAY_REPORT_REJECTED')
  for(const name of effects){
-  if(!keys(o.isolatedEffects[name],pairFields)||
-     !primitives(o.isolatedEffects[name],pairFields))
+  const e=o.isolatedEffects[name]
+  if(partial&&e===null)continue
+  if(!keys(e,pairFields)||!primitives(e,pairFields))
    throw Error('V4_FOUR_WAY_EFFECT_REJECTED')
+ }
+ // Unavailable effects must correspond to unavailable case arms, never
+ // silently suppress an otherwise measurable controlled pair.
+ if(partial){
+  const pairs={
+   aiTacticsOnBaseline:['baselineOriginal','baselineV4Tactics'],
+   v4PhysicsWithOriginalTactics:['baselineOriginal','v4Original'],
+   v4PhysicsWithAiTactics:['baselineV4Tactics','v4V4Tactics'],
+   aiTacticsOnV4Physics:['v4Original','v4V4Tactics']
+  }
+  for(const [name,[left,right]] of Object.entries(pairs))
+   if((o.isolatedEffects[name]===null)===(o.cases[left]!==null&&o.cases[right]!==null))
+    throw Error('V4_FOUR_WAY_EFFECT_REJECTED')
  }
  return o
 }

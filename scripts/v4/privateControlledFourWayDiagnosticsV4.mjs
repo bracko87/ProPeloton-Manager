@@ -172,3 +172,80 @@ export function summarizeControlledFourWayV4({reference,planned,baselineOriginal
   }
  }
 }
+
+/**
+ * A rejected original-engine arm is valid research evidence, not a reason to
+ * erase all successful controlled runs. Missing arms are explicitly null and
+ * NO causal interaction is inferred from an unavailable pair.
+ * The result is never labeled a completed four-way experiment.
+ */
+export function summarizeControlledPartialFourWayV4({
+ reference,planned,caseResults,failures,prefixProbes,compareWithOfficial
+}){
+ const names=['baselineOriginal','baselineV4Tactics','v4Original','v4V4Tactics']
+ const pairs={
+  aiTacticsOnBaseline:['baselineOriginal','baselineV4Tactics'],
+  v4PhysicsWithOriginalTactics:['baselineOriginal','v4Original'],
+  v4PhysicsWithAiTactics:['baselineV4Tactics','v4V4Tactics'],
+  aiTacticsOnV4Physics:['v4Original','v4V4Tactics']
+ }
+ if(!reference||!planned||!Array.isArray(planned.intents)||
+    typeof compareWithOfficial!=='function'||!caseResults||!failures||
+    Object.keys(caseResults).some(k=>!names.includes(k))||
+    Object.keys(failures).some(k=>!names.includes(k))||
+    !caseResults.baselineOriginal||!Array.isArray(prefixProbes)||
+    prefixProbes.length!==4)
+  throw Error('PARTIAL_FOUR_WAY_INPUT_REJECTED')
+ const metrics={},safeFailures={},effects={}
+ let completed=0
+ for(const name of names){
+  const result=caseResults[name]??null
+  const failure=failures[name]??null
+  if((result===null)===(failure===null)||
+    (failure!==null&&(typeof failure!=='string'||
+      !/^SHADOW_PHYSICS_[A-Z0-9_]+_REJECTED$/.test(failure))))
+   throw Error('PARTIAL_FOUR_WAY_FAILURE_REJECTED')
+  safeFailures[name]=failure
+  if(result===null){metrics[name]=null;continue}
+  const official=compareWithOfficial(reference,result)
+  if(official?.status!=='V4_HISTORICAL_OUTCOMES_COMPARED'||
+     official.officialArchivedResultVerified!==true)
+   throw Error('PARTIAL_FOUR_WAY_OFFICIAL_VERIFICATION_REJECTED')
+  metrics[name]={...compactRaceDiagnosticsV4(result),
+   vsArchivedOfficial:official.differences}
+  completed++
+ }
+ if(completed>=4||completed<1||
+    !prefixProbes.every((row,i)=>row&&row.throughPhase===i+1&&
+     ['PASS','EXECUTION_REJECTED','REPLAY_REJECTED','NOT_RUN'].includes(row.status)&&
+     (row.reason===null||typeof row.reason==='string'&&
+      /^SHADOW_PHYSICS_[A-Z0-9_]+_REJECTED$/.test(row.reason))))
+  throw Error('PARTIAL_FOUR_WAY_PROBES_REJECTED')
+ for(const [name,[left,right]] of Object.entries(pairs)){
+  effects[name]=caseResults[left]&&caseResults[right]?
+   pairedRaceDifferencesV4(caseResults[left],caseResults[right]):null
+ }
+ const saved=reference.savedRaceSummary
+ if(!saved||!finite(saved.observedPeakBreakawayGapSeconds))
+  throw Error('PARTIAL_FOUR_WAY_OFFICIAL_PEAK_MISSING')
+ return {
+  contract:'ppm.v4.private-controlled-four-way.v1',
+  status:'V4_CONTROLLED_PARTIAL_DIAGNOSTIC',
+  researchOnly:true,officialWrites:0,productionEnabled:false,
+  productionParityVerified:false,originalProductionLockVerified:false,
+  ridersCompared:108,sharedReconstructedInputAndSeed:true,
+  comparisonScope:'factorial_same_reconstructed_input_and_seed_not_original_production_lock',
+  aiTeams:planned.aiTeams,humanTeams:planned.humanTeams,
+  plannedAIIntents:planned.intents.length,
+  archivedOfficial:{
+   finishers:reference.officialRows.filter(x=>status(x)==='finished').length,
+   dnf:reference.officialRows.filter(x=>status(x)==='dnf').length,
+   calibrationReportedPeakSeconds:num(saved.peakBreakawayGapSeconds),
+   observedBreakawayPeakSeconds:num(saved.observedPeakBreakawayGapSeconds),
+   observedSampleCount:num(saved.observedPeakSampleCount)
+  },
+  cases:metrics,isolatedEffects:effects,
+  completedArms:completed,completeFourWay:false,
+  safeFailures,prefixProbes
+ }
+}
