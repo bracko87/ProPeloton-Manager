@@ -7,6 +7,7 @@ import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
 import {classifyV4SafeExecutionFailure,classifyV4PhysicsFailure,
+ classifyV4ReplaySynchronizationFailure,V4_SAFE_REPLAY_ISSUE_STATUSES,
  V4_SAFE_PHYSICS_FAILURE_STATUSES} from './isolatedShadowExecutionFailureV4.mjs'
 import {isValidV4PhysicalPatch} from './runIsolatedShadowV4.mjs'
 
@@ -38,6 +39,26 @@ test('physics rejection classification is fixed and never exposes raw messages o
   'SHADOW_PHYSICS_OTHER_REJECTED')
  for(const code of V4_SAFE_PHYSICS_FAILURE_STATUSES)
   assert.doesNotMatch(code,/private|rider-name|\\b[0-9a-f]{8}-[0-9a-f]{4}/i)
+})
+test('replay rejection exposes only an engine-owned issue prefix',()=>{
+ const message='Universal replay synchronization failed: '+
+  'bridge_progress_invalid:checkpoint-123:rider-private-secret:reason=gap, '+
+  'same_kilometre_physical_state_mismatch:checkpoint-123'
+ assert.equal(classifyV4ReplaySynchronizationFailure(message),
+  'SHADOW_PHYSICS_REPLAY_BRIDGE_PROGRESS_INVALID_REJECTED')
+ assert.equal(classifyV4PhysicsFailure(new Error(message)),
+  'SHADOW_PHYSICS_REPLAY_BRIDGE_PROGRESS_INVALID_REJECTED')
+ assert.equal(classifyV4PhysicsFailure(new Error(
+  'Universal replay synchronization failed: post_catch_group_transfer_without_physical_transition:rider-secret:K->P')),
+  'SHADOW_PHYSICS_REPLAY_POST_CATCH_GROUP_TRANSFER_WITHOUT_PHYSICAL_TRANSITION_REJECTED')
+ assert.equal(classifyV4PhysicsFailure(new Error(
+  'Universal replay synchronization failed: unknown-private-rider-issue')),
+  'SHADOW_PHYSICS_REPLAY_SYNC_REJECTED')
+ assert(V4_SAFE_REPLAY_ISSUE_STATUSES.length>50)
+ for(const code of V4_SAFE_REPLAY_ISSUE_STATUSES){
+  assert(V4_SAFE_PHYSICS_FAILURE_STATUSES.includes(code))
+  assert.doesNotMatch(code,/checkpoint-123|rider-private-secret|rider-secret/)
+ }
 })
 test('isolated V4 physical worker compiles and rejects unverified inputs without data leakage',
  async()=>{
