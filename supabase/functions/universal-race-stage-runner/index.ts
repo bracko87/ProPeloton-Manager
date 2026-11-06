@@ -1,18 +1,22 @@
 /// <reference lib="deno.ns" />
 import { runSelectedRaceEngineV1, selectCompleteRaceEngineLaneV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/runSelectedRaceEngineV1.ts";
+import { runRaceEngine as runCorrectedMountainPilotRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
+import { runRaceEngine as runCorrectedFlatBaselineRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/runRaceEngine.ts";
+import { runRaceEngine as runBreakawayPilotRaceEngine } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
+import { isBreakawayOfficialPilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/breakawayOfficialPilotV1.ts";
 import { MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1, isMountainEnginePilotStageV1 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/mountainEnginePilotV1.ts";
 import { createClient, type SupabaseClient } from "npm:@supabase/supabase-js@2.57.4";
 import {
   classifyUniversalReplaySynchronizationForPublication,
   isUniversalPhase78IssueNonBlocking,
   type UniversalRaceEngineResult,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/runRaceEngine.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runRaceEngine.ts";
 import {
   buildScenarioProductionUniversalRaceEngineInput as buildProductionUniversalRaceEngineInput,
   getRoadScenarioAuditV1,
   type ScenarioProductionUniversalRaceSources as ProductionUniversalRaceSources,
-} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
-import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e00c4e694c0629efa5b06497dd514b505b166934/src/universal-race-engine/buildProductionRaceOutput.ts";
+} from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/buildProductionRaceInputScenarioV1.ts";
+import { buildProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 // Accepted V5.2 is kept as the emergency sporting fallback only. It is used
 // only after a failed/orphaned primary attempt or at the mandatory T-15 deadline.
@@ -21,7 +25,9 @@ import { buildProductionUniversalRaceEngineInput as buildFallbackProductionUnive
 import { buildProductionUniversalRaceOutput as buildFallbackProductionUniversalRaceOutput } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/90fc6ce06197f4537b6088d30252b60025f39253/src/universal-race-engine/buildProductionRaceOutput.ts";
 
 const FUNCTION_CONTRACT = "phase11b_universal_production_lifecycle_supabase_v2";
-const SOURCE_COMMIT = "e00c4e694c0629efa5b06497dd514b505b166934";
+const SOURCE_COMMIT = "92de26698126e646f6ecc4ae74455bfc831e66c2";
+const FLAT_BASELINE_SOURCE_COMMIT = "92de26698126e646f6ecc4ae74455bfc831e66c2";
+const MOUNTAIN_PILOT_SOURCE_COMMIT = "92de26698126e646f6ecc4ae74455bfc831e66c2";
 const MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS = new Set(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1);
 const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3", "7f69e552-b116-453c-bf55-16ef655ea021"]);
 const FALLBACK_SOURCE_COMMIT = "90fc6ce06197f4537b6088d30252b60025f39253";
@@ -472,15 +478,26 @@ await heartbeat(supabase, stageId, simulationRunId, "scenario_reserved", {
       input = buildProductionInputWithTimeTrialRules(currentBaseInput, timeTrialRule);
       await heartbeat(supabase, stageId, simulationRunId, "primary_engine_started", {
         rider_count: Array.isArray(input?.riders) ? input.riders.length : null,
-        selected_engine_lane: selectCompleteRaceEngineLaneV1(input.stage),
-        selected_engine_source_commit: SOURCE_COMMIT,
+        selected_engine_lane: isBreakawayOfficialPilotStageV1(input.stage)
+          ? "experimental_breakaway_v1" : MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId)
+          ? "experimental_mountain_v1" : "existing_production_selector",
+        selected_engine_source_commit: isBreakawayOfficialPilotStageV1(input.stage)
+          ? SOURCE_COMMIT : selectCompleteRaceEngineLaneV1(input.stage) === "baseline_universal"
+          ? FLAT_BASELINE_SOURCE_COMMIT : selectCompleteRaceEngineLaneV1(input.stage) === "experimental_mountain_v1"
+          ? MOUNTAIN_PILOT_SOURCE_COMMIT : SOURCE_COMMIT,
       });
       try {
         if (MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) && !isMountainEnginePilotStageV1(input.stage)) {
-          throw new Error("Mandatory October Mountain V2 stage eligibility mismatch.");
+          throw new Error("Mandatory October Mountain V2 pilot stage eligibility mismatch.");
         }
-        const rawResult = runSelectedRaceEngineV1(input);
-        if (selectCompleteRaceEngineLaneV1(input.stage) === "experimental_breakaway_v1" &&
+        const rawResult = isBreakawayOfficialPilotStageV1(input.stage)
+          ? runBreakawayPilotRaceEngine(input)
+          : selectCompleteRaceEngineLaneV1(input.stage) === "baseline_universal"
+          ? runCorrectedFlatBaselineRaceEngine(input)
+          : selectCompleteRaceEngineLaneV1(input.stage) === "experimental_mountain_v1"
+          ? runCorrectedMountainPilotRaceEngine(input)
+          : runSelectedRaceEngineV1(input);
+        if (isBreakawayOfficialPilotStageV1(input.stage) &&
             (!rawResult.replaySynchronization.synchronized || !rawResult.phase78Acceptance.passed)) {
           throw new Error("Breakaway V1 replay synchronization failed: refusing degraded official publication.");
         }
@@ -544,8 +561,13 @@ fallbackReason || "primary_not_official",
         calculationSurvivalModel: "race_calculation_survival_v1",
         fallbackUsed: useFallback,
         fallbackReason: fallbackReason || null,
-        primarySourceCommit: !useFallback && MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "726682eaf58385c4d60a9b664d2b9696b8cfc1a0" : SOURCE_COMMIT,
-        selectedEngineLaneV1: !useFallback ? selectCompleteRaceEngineLaneV1(input.stage) : null,
+        primarySourceCommit: !useFallback && input && !isBreakawayOfficialPilotStageV1(input.stage) &&
+          selectCompleteRaceEngineLaneV1(input.stage) === "baseline_universal"
+          ? FLAT_BASELINE_SOURCE_COMMIT : selectCompleteRaceEngineLaneV1(input.stage) === "experimental_mountain_v1"
+          ? MOUNTAIN_PILOT_SOURCE_COMMIT : SOURCE_COMMIT,
+        selectedEngineLaneV1: !useFallback && input && isBreakawayOfficialPilotStageV1(input.stage)
+          ? "experimental_breakaway_v1" : !useFallback && MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId)
+          ? "experimental_mountain_v1" : null,
         engineLaneV1: !useFallback && MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "experimental_mountain_v1" : null,
         routingSourceCommit: MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS.has(stageId) ? "7bb8cffa1631077d893f60ae0d10bbde3803b751" : null,
         fallbackSourceCommit: useFallback ? FALLBACK_SOURCE_COMMIT : null,
@@ -700,6 +722,7 @@ async function runLifecycleTick(supabase: SupabaseClient): Promise<JsonObject> {
     status: "completed",
     contract: FUNCTION_CONTRACT,
     source_commit: SOURCE_COMMIT,
+    baseline_source_commit: FLAT_BASELINE_SOURCE_COMMIT,
     fallback_source_commit: FALLBACK_SOURCE_COMMIT,
     worker_build: WORKER_BUILD,
     before,
@@ -720,6 +743,7 @@ Deno.serve(async (request: Request) => {
     status: "ok",
     contract: FUNCTION_CONTRACT,
     source_commit: SOURCE_COMMIT,
+    baseline_source_commit: FLAT_BASELINE_SOURCE_COMMIT,
     fallback_source_commit: FALLBACK_SOURCE_COMMIT,
     worker_build: WORKER_BUILD,
     scheduler: "supabase_cron",
