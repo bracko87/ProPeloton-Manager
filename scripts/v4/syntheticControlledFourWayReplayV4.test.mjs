@@ -69,6 +69,11 @@ test('public hilly 108-rider 2x2 comparison uses separate physics and shared inp
   assert.equal(report.officialWrites,0)
   assert.equal(report.sameSeed,true)
   assert.equal(report.sameRiderSet,true)
+  for(const scenario of Object.values(report.cases)){
+   assert.equal(scenario.status,'STRICT_REPLAY_PASS')
+   assert(scenario.openingBreakawaySize>0,
+    'Both tactics variants must contain a genuine breakaway')
+  }
   assert(report.plannedAIIntents>0)
   assert.deepEqual(Object.keys(report.cases),[
    'baselineOriginal','baselineV4Tactics','v4Original','v4V4Tactics'])
