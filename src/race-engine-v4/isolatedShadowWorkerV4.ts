@@ -36,7 +36,13 @@ function execute():void{
       input:LocalEnvelope[0],options:LocalEnvelope[1]
     }
     if(!envelope||typeof envelope!=='object'||!envelope.input||
-       !envelope.options)throw Error('PRIVATE_ENVELOPE_REJECTED')
+       !envelope.input.race||!envelope.input.stage||
+       !Array.isArray(envelope.input.teams)||
+       !Array.isArray(envelope.input.riders)||
+       !Array.isArray(envelope.input.stagePlans)||
+       !envelope.options||!envelope.options.lock||
+       !Array.isArray(envelope.options.teamControl))
+      throw Error('PRIVATE_ENVELOPE_REJECTED')
     phase='PREPARATION'
     const plan=prepareV4ShadowRace(envelope.input,envelope.options)
     if(plan.status==='ai_prepared'){
