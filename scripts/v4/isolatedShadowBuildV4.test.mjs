@@ -262,3 +262,68 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
   }))
  }finally{rmSync(folder,{recursive:true,force:true})}
 })
+
+
+test('108-rider hilly AI race uses the same isolated physical replay safeguards',async()=>{
+ const folder=mkdtempSync(join(tmpdir(),'ppm-v4-hilly-108-regression-'))
+ try{
+  const patch=patchV4CalibratedPhysicalSource(readFileSync(engine,'utf8'),{
+   peloton:true,cooperation:true,energy:true
+  })
+  const workerOutput=join(folder,'worker.mjs')
+  let patchedCount=0
+  await build({entryPoints:[worker],outfile:workerOutput,bundle:true,
+   platform:'node',format:'esm',target:'node20',logLevel:'silent',
+   plugins:[{name:'v4-108-research-source',setup(api){
+    api.onLoad({filter:/[\\/]src[\\/]universal-race-engine[\\/]runRaceEngine\.ts$/},args=>{
+     assert.equal(resolve(args.path),engine)
+     patchedCount++
+     return {contents:patch,loader:'ts',
+      resolveDir:resolve(root,'src/universal-race-engine')}
+    })
+   }}]
+  })
+  assert.equal(patchedCount,1)
+  const fixtureOutput=join(folder,'hilly-108-fixture.mjs')
+  await build({
+   entryPoints:[resolve(root,'scripts/v4/syntheticHilly108LockedRaceV4.ts')],
+   outfile:fixtureOutput,bundle:true,platform:'node',
+   format:'esm',target:'node20',logLevel:'silent'
+  })
+  const fixture=spawnSync(process.execPath,[fixtureOutput],{
+   cwd:root,encoding:'utf8',timeout:30000,maxBuffer:4*1024*1024,
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',
+    TEMP:process.env.TEMP??'',TMP:process.env.TMP??'',
+    TMPDIR:process.env.TMPDIR??'',SYSTEMROOT:process.env.SYSTEMROOT??''}
+  })
+  assert.equal(fixture.status,0,'108-rider synthetic fixture failed')
+  const envelope=JSON.parse(fixture.stdout)
+  assert.equal(envelope.input.riders.length,108)
+  assert.equal(envelope.options.teamControl.filter(x=>x.kind==='ai').length,18)
+  const run=spawnSync(process.execPath,[workerOutput],{
+   cwd:root,encoding:'utf8',timeout:180000,maxBuffer:512*1024,
+   input:fixture.stdout,
+   env:{PATH:process.env.PATH??'',HOME:process.env.HOME??'',
+    TEMP:process.env.TEMP??'',TMP:process.env.TMP??'',
+    TMPDIR:process.env.TMPDIR??'',SYSTEMROOT:process.env.SYSTEMROOT??''}
+  })
+  assert([0,1].includes(run.status))
+  assert.equal(run.stderr,'')
+  const lines=run.stdout.trim().split(/\r?\n/)
+  assert.equal(lines.length,1)
+  assert(lines[0].startsWith('V4_ISOLATED_SHADOW_REPORT '))
+  const report=JSON.parse(lines[0].slice('V4_ISOLATED_SHADOW_REPORT '.length))
+  console.log('V4_SYNTHETIC_HILLY_108_SHADOW '+JSON.stringify({
+   status:report.status,replayQuality:report.replayQuality,
+   aiTeams:report.aiTeams,officialWrites:report.officialWrites
+  }))
+  assert.equal(report.aiTeams,18)
+  assert.equal(report.humanTeams,0)
+  assert.equal(report.officialWrites,0)
+  assert.equal(report.productionEnabled,false)
+  assert.equal(report.status,'SHADOW_STRICT_REPLAY_PASS',
+   'Full synthetic hilly 108-rider case must synchronize without bypass')
+  assert.equal(report.replayQuality,'full')
+  assert.equal(run.status,0)
+ }finally{rmSync(folder,{recursive:true,force:true})}
+})
