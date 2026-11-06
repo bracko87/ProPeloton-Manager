@@ -93,8 +93,7 @@ test('four-way aggregate includes only summaries and conditional effects',()=>{
 test('reject corrupted rider set before emitting any private report',()=>{
  const a=fixture(),b=structuredClone(a)
  b.finishResolution.classification[3].riderId='PRIVATE-DUPLICATE'
- const out=pairedRaceDifferencesV4(a,b)
- assert.equal(out.statusChangedRiders,0)
+ assert.throws(()=>pairedRaceDifferencesV4(a,b),/PAIR_RIDER_SET_MISMATCH/)
  b.finishResolution.classification[4].riderId='PRIVATE-DUPLICATE'
  assert.throws(()=>pairedRaceDifferencesV4(a,b),/PAIR_RIGHT_RIDER_SET_INVALID/)
 })
