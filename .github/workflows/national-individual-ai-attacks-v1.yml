@@ -1,0 +1,24 @@
+name: National rider AI attack orders (V1)
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'scripts/sql/national_individual_ai_opening_attacks_v1.sql'
+      - 'scripts/verify-national-ai-opening-attacks-v1.mjs'
+      - '.github/workflows/national-individual-ai-attacks-v1.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Verify AI-only draw, human commands and deterministic replay safeguards
+        run: node scripts/verify-national-ai-opening-attacks-v1.mjs
