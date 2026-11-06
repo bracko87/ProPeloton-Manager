@@ -9280,6 +9280,41 @@ type StagePlanProfilePoint = {
   elevation_m: number;
 };
 
+function toFiniteNumberValue(value: unknown): number | null {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeProfilePoints(profile: JsonRecord, stage: JsonRecord) {
+  const direct = Array.isArray(profile.profile_points)
+    ? profile.profile_points
+    : [];
+
+  const metadata = asRecord(stage.metadata);
+  const routeProfile = asRecord(metadata.route_profile_v1);
+  const fallback = Array.isArray(routeProfile.profile_points)
+    ? routeProfile.profile_points
+    : [];
+
+  const source = direct.length > 0 ? direct : fallback;
+
+  return source
+    .map((raw): StagePlanProfilePoint | null => {
+      const point = asRecord(raw);
+      const km = toFiniteNumberValue(point.km);
+      const elevation = toFiniteNumberValue(point.elevation_m);
+
+      if (km === null || elevation === null) return null;
+
+      return {
+        km,
+        elevation_m: elevation,
+      };
+    })
+    .filter((point): point is StagePlanProfilePoint => point !== null)
+    .sort((a, b) => a.km - b.km);
+}
+
 /**
  * Stage Plans uses the same backend markers and profile renderer as the Race Page.
  * Normalization is kept here only because the race-preparation API exposes JSON.
