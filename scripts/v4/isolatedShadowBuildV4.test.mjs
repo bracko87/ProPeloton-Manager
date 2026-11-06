@@ -61,6 +61,24 @@ test('replay rejection exposes only an engine-owned issue prefix',()=>{
   assert.doesNotMatch(code,/checkpoint-123|rider-private-secret|rider-secret/)
  }
 })
+test('bridge merge diagnostic includes only the fixed failing phase',()=>{
+ const prefix='Universal replay synchronization failed: bridge_merge_invalid:'
+ const tests=[
+  ['phase-2-secondary-front-merge','PHASE2'],
+  ['phase-3-front-merge-private-lineage','PHASE3'],
+  ['bridge-merge-2','PHASE4']
+ ]
+ for(const [suffix,phase] of tests){
+  const result=classifyV4ReplaySynchronizationFailure(
+   prefix+'private-stage-id|replay|'+suffix)
+  assert.equal(result,'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_'+phase+'_REJECTED')
+  assert(V4_SAFE_PHYSICS_FAILURE_STATUSES.includes(result))
+  assert.doesNotMatch(result,/private|lineage|rider|stage-id/)
+ }
+ assert.equal(classifyV4ReplaySynchronizationFailure(
+  prefix+'private-stage-id|replay|unrecognized-checkpoint'),
+  'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_REJECTED')
+})
 test('isolated V4 physical worker compiles and rejects unverified inputs without data leakage',
  async()=>{
  const original=readFileSync(engine,'utf8')
