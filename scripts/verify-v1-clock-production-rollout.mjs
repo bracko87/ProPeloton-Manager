@@ -15,7 +15,9 @@ for (const [name, source] of [['runner', runner], ['pass2', pass2]]) {
   assert.ok(source.includes(`const SOURCE_COMMIT = "${sha}";`))
   assert.ok(source.includes(`const FLAT_BASELINE_SOURCE_COMMIT = "${sha}";`))
   assert.ok(source.includes(`const MOUNTAIN_PILOT_SOURCE_COMMIT = "${sha}";`))
-  assert.match(source, /Mandatory Breakaway V1 pilot cannot publish baseline fallback/)
+  assert.match(source, name === 'runner'
+    ? /Mandatory Breakaway V1 pilot cannot publish baseline fallback/
+    : /Mandatory Breakaway V1 pilot cannot use sporting fallback/)
   assert.match(source, /Breakaway V1 replay synchronization failed: refusing degraded official publication/)
   assert.ok(source.includes('7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/runSelectedRaceEngineV1.ts'))
   console.log('PASS', name, 'prospective clock-fix engine pin and fallback guard')
