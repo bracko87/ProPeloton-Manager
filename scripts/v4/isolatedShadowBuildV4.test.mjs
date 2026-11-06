@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {patchV4PhysicalBridgeContactReplaySource} from './phase2BridgeContactResearchPatchV4.mjs'
 import {classifyV4SafeExecutionFailure,classifyV4PhysicsFailure,
  classifyV4ReplaySynchronizationFailure,V4_SAFE_REPLAY_ISSUE_STATUSES,
  V4_SAFE_PHYSICS_FAILURE_STATUSES} from './isolatedShadowExecutionFailureV4.mjs'
@@ -68,6 +69,17 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
  })
  assert.notEqual(patch,original)
  assert.match(patch,/calculateV4Phase3PaceEnergySurcharge/)
+ // Isolated-only physical bridge replay must emit a verified, ordered
+ // contact checkpoint before the existing Phase-2 merge.
+ assert.match(patch,/phase-2-secondary-front-contact/)
+ assert.match(patch,/v4Phase2BridgeContactVerified/)
+ assert.match(patch,/sortOrder: 364/)
+ assert.match(patch,/checkpointIdSuffix: 'phase-2-secondary-front-merge'/)
+ assert.match(patch,/authoritativeBridgeGroups\.forEach\(\(bridgeGroup, bridgeIndex\)/)
+ assert.doesNotMatch(patch,/phase4\.bridgeGroups\.forEach\(\(bridgeGroup, bridgeIndex\)/)
+ // Fail closed on source drift; never silently omit the physical witness.
+ assert.throws(()=>patchV4PhysicalBridgeContactReplaySource('unrelated source'))
+
  assert.equal(readFileSync(engine,'utf8'),original)
  // A Windows git checkout can be CRLF. The V4 transform converts it to
  // LF, so physical patch validation must compare like-for-like lengths.
