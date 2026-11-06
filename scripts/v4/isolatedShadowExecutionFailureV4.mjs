@@ -28,6 +28,87 @@ const inputDomains=Object.freeze([
  ['preStageStandings','STANDINGS'],['weather','WEATHER'],
  ['incidentModel','INCIDENT_MODEL']
 ])
+// Exact fixed issue prefixes emitted by buildUniversalReplaySynchronizationSummary.
+// These are non-sensitive source-owned constants, not private rider/checkpoint values.
+const replayIssuePrefixes=Object.freeze([
+ "active_commands_mismatch",
+ "base_checkpoint_count_mismatch",
+ "base_checkpoint_count_must_equal_five",
+ "bridge_attack_invalid",
+ "bridge_group_disappears_without_merge",
+ "bridge_group_without_peloton",
+ "bridge_merge_invalid",
+ "bridge_progress_invalid",
+ "chase_emergency_rail_prolonged_saturation",
+ "checkpoint_commentary_missing",
+ "checkpoint_index_mismatch",
+ "checkpoint_progress_invalid",
+ "checkpoint_rider_identity_mismatch",
+ "checkpoint_rider_states_incomplete",
+ "commentary_decimal_seconds",
+ "commentary_exposes_internal_phase",
+ "commentary_reference_invalid",
+ "duplicate_checkpoint_id",
+ "duplicate_commentary_id",
+ "duplicate_group_display_code",
+ "duplicate_group_rider_membership",
+ "duplicate_physical_group_gap",
+ "event_checkpoint_count_mismatch",
+ "final_checkpoint_identity_mismatch",
+ "final_group_membership_mismatch",
+ "final_replay_timestamp_mismatch",
+ "final_results_visibility_checkpoint_count_mismatch",
+ "final_rider_result_mismatch",
+ "final_road_groups_or_gaps_mismatch",
+ "finish_commentary_winner_mismatch",
+ "finish_replay_timestamp_mismatch",
+ "finish_winner_mismatch",
+ "front_group_transfer_without_physical_transition",
+ "gap_change_not_distance_bounded",
+ "group_gap_cardinality_mismatch",
+ "group_gap_identity_mismatch",
+ "incident_commentary_count_mismatch",
+ "incident_id_set_mismatch",
+ "incident_reference_invalid",
+ "intermediate_results_mismatch",
+ "official_result_leak",
+ "opening_breakaway_formation_missing_physical_group",
+ "opening_breakaway_lineage_changed",
+ "opening_breakaway_lineage_changed_without_bridge_merge",
+ "opening_breakaway_reappears",
+ "playback_recalculates_race",
+ "post_catch_breakaway_or_chase_reappears",
+ "post_catch_group_transfer_without_physical_transition",
+ "pre_finish_status_mismatch",
+ "rider_group_gap_mismatch",
+ "rider_state_missing_group",
+ "same_kilometre_physical_state_mismatch",
+ "successful_attack_without_physical_group",
+ "team_state_count_mismatch",
+ "team_states_incomplete",
+ "timeline_inactive",
+ "timeline_not_complete_before_playback",
+ "unknown_group_rider"
+])
+export const V4_SAFE_REPLAY_ISSUE_STATUSES=Object.freeze(
+ replayIssuePrefixes.map(x=>'SHADOW_PHYSICS_REPLAY_'+x.toUpperCase()+'_REJECTED')
+)
+const replayIssueCodes=new Set(replayIssuePrefixes)
+export function classifyV4ReplaySynchronizationFailure(message){
+ if(typeof message!=='string'||
+   !message.startsWith('Universal replay synchronization failed: '))
+  return 'SHADOW_PHYSICS_REPLAY_SYNC_REJECTED'
+ // Keep only the first known exact issue prefix. Never export the suffix,
+ // which may contain rider IDs, checkpoint IDs or physical gap values.
+ const raw=message.slice('Universal replay synchronization failed: '.length)
+ for(const issue of raw.split(', ')){
+  const prefix=issue.split(':',1)[0]
+  if(replayIssueCodes.has(prefix))
+   return 'SHADOW_PHYSICS_REPLAY_'+prefix.toUpperCase()+'_REJECTED'
+ }
+ return 'SHADOW_PHYSICS_REPLAY_SYNC_REJECTED'
+}
+
 const physicsCategories=Object.freeze([
  'INPUT_ENGINE','INPUT_RACE','INPUT_STAGE_PLANS','INPUT_STAGE',
  'INPUT_POINTS','INPUT_TEAMS','INPUT_RIDERS','INPUT_LEADERS',
@@ -36,9 +117,10 @@ const physicsCategories=Object.freeze([
  'PHASE4','PHASE5','PHASE6','PHASE9','PHASE10',
  'REPLAY_SYNC','POST_STAGE','OTHER'
 ])
-export const V4_SAFE_PHYSICS_FAILURE_STATUSES=Object.freeze(
- physicsCategories.map(x=>'SHADOW_PHYSICS_'+x+'_REJECTED')
-)
+export const V4_SAFE_PHYSICS_FAILURE_STATUSES=Object.freeze([
+ ...physicsCategories.map(x=>'SHADOW_PHYSICS_'+x+'_REJECTED'),
+ ...V4_SAFE_REPLAY_ISSUE_STATUSES
+])
 const recognized=new Set(V4_SAFE_PHYSICS_FAILURE_STATUSES)
 const status=c=>{
  const value='SHADOW_PHYSICS_'+c+'_REJECTED'
@@ -64,7 +146,7 @@ export function classifyV4PhysicsFailure(error){
  // These are fixed source-owned error prefixes, not arbitrary error text.
  const m=typeof error?.message==='string'?error.message:''
  if(m.startsWith('Universal replay synchronization failed:'))
-  return status('REPLAY_SYNC')
+  return classifyV4ReplaySynchronizationFailure(m)
  if(m.startsWith('Phase 9 acceptance audit failed:'))return status('PHASE9')
  if(m.startsWith('Phase 7 + 8 acceptance audit failed:'))
   return status('POST_STAGE')
