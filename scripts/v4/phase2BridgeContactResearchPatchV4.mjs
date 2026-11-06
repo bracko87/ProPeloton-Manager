@@ -118,6 +118,43 @@ export function patchV4PhysicalBridgeContactReplaySource(original){
     eventDefinitions.push({
       checkpointIdSuffix: 'phase-2-secondary-front-merge',`;
  source=exactlyOnce(source,old,replacement)
+ // The Phase-2 event must describe the riders who actually moved into B1
+ // at the physical merge, not every historic attacker in the F launch wave.
+ const mergeOriginal=String.raw`        riderIds: [...phase2.secondaryFrontRiderIdsAtLaunch],
+        teamIds: Array.from(
+          new Set(
+            phase2.secondaryFrontRiderIdsAtLaunch
+              .map((riderId) => riderById.get(riderId)?.teamId)
+              .filter((teamId): teamId is string => Boolean(teamId)),
+          ),
+        ).sort(),
+      })
+  }
+
+  if (phase2.secondaryFrontCatchKm !== null) {`
+ const mergeFixed=String.raw`        riderIds: v4Phase2BridgeContactVerified
+          ? v4Phase2ActualMergedRiderIds
+          : [...phase2.secondaryFrontRiderIdsAtLaunch],
+        teamIds: Array.from(
+          new Set(
+            (v4Phase2BridgeContactVerified
+              ? v4Phase2ActualMergedRiderIds
+              : phase2.secondaryFrontRiderIdsAtLaunch)
+              .map((riderId) => riderById.get(riderId)?.teamId)
+              .filter((teamId): teamId is string => Boolean(teamId)),
+          ),
+        ).sort(),
+        physicalLineageId: v4Phase2BridgeContactVerified
+          ? 'v4-phase2-secondary-front' : null,
+        physicalSourceDisplayCode: v4Phase2BridgeContactVerified
+          ? 'F1' : null,
+        physicalMergeTargetDisplayCode: v4Phase2BridgeContactVerified
+          ? 'B1' : null,
+      })
+  }
+
+  if (phase2.secondaryFrontCatchKm !== null) {`
+ source=exactlyOnce(source,mergeOriginal,mergeFixed)
  // The authoritative list is already checked by
  // reconcileV4ReplayBridgeMergeTargets in calibratedPhysicalTransformV4.
  source=exactlyOnce(
