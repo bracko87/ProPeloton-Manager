@@ -1,0 +1,39 @@
+name: V1 clock-only production worker rollout validation
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'supabase/functions/universal-race-stage-runner/index.ts'
+      - 'supabase/functions/universal-race-stage-pass2-resume/index.ts'
+      - 'supabase/functions/universal-race-stage-safe-resume/index.ts'
+      - 'scripts/verify-v1-clock-production-rollout.mjs'
+      - '.github/workflows/v1-clock-production-rollout-validation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+      - run: npm ci
+      - name: Verify immutable source pins and historical recovery compatibility
+        run: node scripts/verify-v1-clock-production-rollout.mjs
+      - name: Compile all three patched worker entrypoints
+        run: |
+          for slug in universal-race-stage-runner universal-race-stage-pass2-resume universal-race-stage-safe-resume; do
+            npx esbuild "supabase/functions/${slug}/index.ts" --bundle --platform=neutral --format=esm --external:'https://*' --external:'npm:*' --external:'jsr:*' --outfile="/tmp/${slug}.mjs"
+          done
+      - name: Regression test V1 clock model and baseline/experimental equivalence
+        run: >-
+          npx --yes vitest@3.2.4 run
+          src/universal-race-engine/roadStageWinningTimeV1.test.ts
+          src/universal-race-engine/runSelectedRaceEngineV1.test.ts
+          --reporter=dot
