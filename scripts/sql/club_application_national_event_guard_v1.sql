@@ -209,7 +209,7 @@ begin
     'message', 'Application submitted.'
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.submit_race_application_v1(p_race_id uuid, p_club_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -260,7 +260,7 @@ begin
 
   return public.submit_race_application_pre_uwt_policy_v1(p_race_id,v_club_id);
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.submit_race_application_pre_uwt_policy_v1(p_race_id uuid, p_club_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -355,7 +355,7 @@ begin
     'message','Race application submitted.'
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.quote_race_application_v1(p_race_id uuid, p_club_id uuid DEFAULT NULL::uuid)
  RETURNS jsonb
@@ -418,5 +418,5 @@ begin
 
   return v_payload;
 end;
-$function$
+$function$;
 
