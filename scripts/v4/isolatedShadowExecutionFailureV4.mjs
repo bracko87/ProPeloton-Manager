@@ -90,9 +90,12 @@ const replayIssuePrefixes=Object.freeze([
  "timeline_not_complete_before_playback",
  "unknown_group_rider"
 ])
-export const V4_SAFE_REPLAY_ISSUE_STATUSES=Object.freeze(
- replayIssuePrefixes.map(x=>'SHADOW_PHYSICS_REPLAY_'+x.toUpperCase()+'_REJECTED')
-)
+export const V4_SAFE_REPLAY_ISSUE_STATUSES=Object.freeze([
+ ...replayIssuePrefixes.map(x=>'SHADOW_PHYSICS_REPLAY_'+x.toUpperCase()+'_REJECTED'),
+ 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE2_REJECTED',
+ 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE3_REJECTED',
+ 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE4_REJECTED'
+])
 const replayIssueCodes=new Set(replayIssuePrefixes)
 export function classifyV4ReplaySynchronizationFailure(message){
  if(typeof message!=='string'||
@@ -103,8 +106,20 @@ export function classifyV4ReplaySynchronizationFailure(message){
  const raw=message.slice('Universal replay synchronization failed: '.length)
  for(const issue of raw.split(', ')){
   const prefix=issue.split(':',1)[0]
-  if(replayIssueCodes.has(prefix))
+  if(replayIssueCodes.has(prefix)){
+   if(prefix==='bridge_merge_invalid'){
+    // Stage/rider/checkpoint IDs stay private. A fixed suffix identifies the
+    // existing replay constructor that emitted the blocked merge.
+    const suffix=issue.split('|replay|')[1]??''
+    if(suffix==='phase-2-secondary-front-merge')
+     return 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE2_REJECTED'
+    if(suffix.startsWith('phase-3-front-merge-'))
+     return 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE3_REJECTED'
+    if(/^bridge-merge-\\d+$/.test(suffix))
+     return 'SHADOW_PHYSICS_REPLAY_BRIDGE_MERGE_INVALID_PHASE4_REJECTED'
+   }
    return 'SHADOW_PHYSICS_REPLAY_'+prefix.toUpperCase()+'_REJECTED'
+  }
  }
  return 'SHADOW_PHYSICS_REPLAY_SYNC_REJECTED'
 }
