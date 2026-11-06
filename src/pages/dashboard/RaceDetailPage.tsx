@@ -23,6 +23,7 @@ import {
   useSearchParams,
 } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import { isClubApplicationRestrictedRace } from '../../lib/raceClubApplicationPolicy'
 import { WorldChampionshipExpectedField } from './WorldChampionshipExpectedField'
 import i18n from '@/i18n'
 import {
@@ -4000,7 +4001,7 @@ function RaceEntryHeaderSummary({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {bottomRowItems.map((item) => (
+        {(race && isClubApplicationRestrictedRace(race) ? bottomRowItems.slice(2) : bottomRowItems).map((item) => (
           <div
             key={item.label}
             className="rounded-full border border-slate-200 bg-white px-3 py-2 text-xs shadow-sm"
@@ -19257,6 +19258,7 @@ export default function RaceDetailPage({
   }, [currentGameDate, currentDayNumber])
 
   const applicationsStatus = race?.applications_status ?? entry?.applications_status ?? null
+  const clubApplicationRestricted = isClubApplicationRestrictedRace(race)
 
   const normalizedRaceStatus = race?.status?.toLowerCase() ?? null
   const startlistLocked = isRaceStartlistLocked(normalizedRaceStatus)
@@ -19266,6 +19268,9 @@ export default function RaceDetailPage({
     raceEntryStatus ?? race?.existing_application_status ?? entry?.existing_application_status ?? null
 
   const raceDetailStatus = useMemo(() => {
+    if (clubApplicationRestricted && normalizedRaceStatus === 'scheduled' && applicationsStatus === 'open') {
+      return 'Club entry unavailable'
+    }
     return (
       getRaceWeatherCancellationDisplayStatus(race) ??
       getRaceDetailStatusLabel(
@@ -19274,9 +19279,9 @@ export default function RaceDetailPage({
         effectiveTeamEntryStatus
       )
     )
-  }, [race, applicationsStatus, normalizedRaceStatus, effectiveTeamEntryStatus])
+  }, [race, applicationsStatus, normalizedRaceStatus, effectiveTeamEntryStatus, clubApplicationRestricted])
 
-  const canApplyForRaceButton = canApplyForRace(
+  const canApplyForRaceButton = !clubApplicationRestricted && canApplyForRace(
     applicationsStatus,
     effectiveTeamEntryStatus,
     normalizedRaceStatus
@@ -19438,7 +19443,7 @@ export default function RaceDetailPage({
   }
 
   async function handleApplyForRace(): Promise<void> {
-    if (!race?.id || applicationActionInProgress) return
+    if (!race?.id || clubApplicationRestricted || applicationActionInProgress) return
 
     setApplicationActionError(null)
     setApplicationActionMessage(null)
@@ -19447,7 +19452,7 @@ export default function RaceDetailPage({
   }
 
   async function handleConfirmApplyForRace(): Promise<void> {
-    if (!race?.id || applicationActionInProgress) return
+    if (!race?.id || clubApplicationRestricted || applicationActionInProgress) return
 
     setApplicationActionLoading('apply')
     setApplicationActionError(null)
@@ -20084,7 +20089,11 @@ export default function RaceDetailPage({
             ) : null}
 
             <div className="mt-5 flex flex-wrap gap-2">
-              {startlistLocked ? (
+              {clubApplicationRestricted ? (
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700">
+                  Individual / national-team event — club applications are not allowed.
+                </span>
+              ) : startlistLocked ? (
                 <span className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-semibold text-slate-600">
                   {t('summary.startlistLocked')}
                 </span>
