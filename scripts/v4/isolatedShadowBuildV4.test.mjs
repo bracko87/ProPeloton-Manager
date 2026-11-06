@@ -6,6 +6,7 @@ import {tmpdir} from 'node:os'
 import {spawnSync} from 'node:child_process'
 import {build} from 'esbuild'
 import {patchV4CalibratedPhysicalSource} from './calibratedPhysicalTransformV4.mjs'
+import {isValidV4PhysicalPatch} from './runIsolatedShadowV4.mjs'
 
 const root=resolve(import.meta.dirname,'../..')
 const engine=resolve(root,'src/universal-race-engine/runRaceEngine.ts')
@@ -19,6 +20,19 @@ test('isolated V4 physical worker compiles and rejects unverified inputs without
  assert.notEqual(patch,original)
  assert.match(patch,/calculateV4Phase3PaceEnergySurcharge/)
  assert.equal(readFileSync(engine,'utf8'),original)
+ // A Windows git checkout can be CRLF. The V4 transform converts it to
+ // LF, so physical patch validation must compare like-for-like lengths.
+ const winSource=original.replace(/\r\n?/g,'\n').replace(/\n/g,'\r\n')
+ const winPatch=patchV4CalibratedPhysicalSource(winSource,{
+  peloton:true,cooperation:true,energy:true
+ })
+ assert.equal(winPatch,patch,'CRLF and LF sources produce identical V4 physics')
+ assert.equal(isValidV4PhysicalPatch(original,patch),true)
+ assert.equal(isValidV4PhysicalPatch(winSource,winPatch),true,
+  'CRLF checkout must not reject a valid physical patch')
+ assert.equal(isValidV4PhysicalPatch(winSource,original),false,
+  'unpatched source must still fail closed')
+
  const folder=mkdtempSync(join(tmpdir(),'ppm-v4-shadow-build-test-'))
  try{
   const output=join(folder,'shadow.mjs')
