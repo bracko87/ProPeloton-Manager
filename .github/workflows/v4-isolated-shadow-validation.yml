@@ -44,6 +44,13 @@ jobs:
         run: node --test scripts/v4/singleStageResearchCaptureWatchV4.test.mjs
       - name: Compile isolated calibrated V4 physical executable and reject invalid envelope
         run: node --test scripts/v4/isolatedShadowBuildV4.test.mjs
+      - name: Validate private real-stage vs official comparison and CMD entrypoint
+        run: |
+          node --check compare_first_real_v4.mjs
+          node --check scripts/v4/privateRealVsOfficialCompareV4.mjs
+          node --check scripts/v4/runPrivateRealVsOfficialV4.mjs
+          node --test scripts/v4/privateRealVsOfficialCompareV4.test.mjs
+          npx esbuild src/race-engine-v4/privateRealVsOfficialWorkerV4.ts --bundle --platform=node --format=esm --target=node20 --outfile=/tmp/v4-private-official-compare-worker.mjs
       - name: Check independent template planner (no simulation writes)
         run: npx esbuild src/race-engine-v4/templateFirstPlannerV4.test.ts --bundle --platform=node --format=esm --outfile=/tmp/v4-template-first-test.mjs && node /tmp/v4-template-first-test.mjs
       - name: Assert unchanged production worker source and stage routing
