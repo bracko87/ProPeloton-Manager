@@ -244,7 +244,6 @@ export default function HomePage(): JSX.Element {
   const [gameTimeText, setGameTimeText] = useState(() => t('status.loadingGameTime'))
   const [raceDays, setRaceDays] = useState<HomepageRaceDaysData | null>(null)
   const [raceDaysLoading, setRaceDaysLoading] = useState(false)
-  const [isBetaNoticeOpen, setIsBetaNoticeOpen] = useState(true)
 
   const [reviews, setReviews] = useState<PublicHomepageReview[]>([])
   const [reviewsLoading, setReviewsLoading] = useState(false)
@@ -794,59 +793,6 @@ export default function HomePage(): JSX.Element {
           </nav>
         </div>
       </header>
-
-      {isBetaNoticeOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4 py-8 backdrop-blur-sm"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="beta-notice-title"
-        >
-          <div className="w-full max-w-xl rounded-2xl border border-yellow-400/35 bg-[#101b31] p-6 shadow-2xl sm:p-8">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="inline-flex rounded-full border border-yellow-400/40 bg-yellow-400/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-yellow-300">
-                  {t('beta.badge')}
-                </div>
-                <h2 id="beta-notice-title" className="mt-4 text-2xl font-bold text-white sm:text-3xl">
-                  {t('beta.title')}
-                </h2>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsBetaNoticeOpen(false)}
-                className="rounded-md border border-white/15 px-3 py-2 text-sm font-semibold text-white/75 hover:border-white/30 hover:text-white"
-                aria-label={t('beta.closeLabel')}
-              >
-                {t('beta.close')}
-              </button>
-            </div>
-
-            <p className="mt-4 text-sm leading-7 text-white/75 sm:text-base">
-              {t('beta.body')}
-            </p>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-              <a
-                href={SOCIAL_LINKS.discord}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-flex items-center justify-center rounded-md bg-yellow-400 px-5 py-3 text-sm font-bold text-black hover:bg-yellow-300"
-              >
-                {t('beta.discord')}
-              </a>
-              <button
-                type="button"
-                onClick={() => setIsBetaNoticeOpen(false)}
-                className="inline-flex items-center justify-center rounded-md border border-white/15 bg-white/5 px-5 py-3 text-sm font-semibold text-white hover:border-white/30 hover:bg-white/10"
-              >
-                {t('beta.continue')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {checkingClub && (
         <div className="border-b border-blue-700 bg-blue-950 py-2 text-center text-sm text-blue-100">
