@@ -114,6 +114,96 @@ function hasReplayStageIdInBrowserUrl(): boolean {
 
 const browserFetch = globalThis.fetch.bind(globalThis)
 
+// Retry reads during brief PostgREST/connection restarts. State-changing
+// actions (race simulation, payments, bookings, etc.) are never retried.
+const RETRYABLE_RACE_READ_RPCS = new Set([
+  'get_race_release_detail_v1',
+  'get_current_game_date_date',
+  'get_current_game_date_parts',
+  'get_my_primary_club_id',
+  'get_my_club_id',
+  'get_race_favorites_v1',
+  'get_race_rewards_overview_v1',
+  'get_race_rewards_totals_v1',
+  'get_race_results_view_v1',
+  'get_full_race_standings_v1',
+  'get_race_stage_live_state_v1',
+  'get_authorized_race_stage_replay_payload_v1',
+  'get_universal_race_stage_replay_payload_v1',
+  'get_universal_race_stage_replay_availability_v1',
+])
+const TRANSIENT_READ_HTTP_STATUS = new Set([408, 429, 502, 503, 504])
+const READ_RETRY_DELAYS_MS = [400, 900, 1800, 3600]
+const SUPABASE_ORIGIN = new URL(SUPABASE_URL).origin
+
+function isRetrySafeSupabaseRead(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): boolean {
+  const request = input instanceof Request ? input : null
+  const method = String(init?.method ?? request?.method ?? 'GET').toUpperCase()
+  let url: URL
+  try {
+    url = new URL(request?.url ?? String(input))
+  } catch {
+    return false
+  }
+
+  if (url.origin !== SUPABASE_ORIGIN) return false
+  if (method === 'GET' || method === 'HEAD') return true
+  if (method !== 'POST') return false
+
+  const prefix = '/rest/v1/rpc/'
+  const index = url.pathname.lastIndexOf(prefix)
+  if (index < 0) return false
+  return RETRYABLE_RACE_READ_RPCS.has(url.pathname.slice(index + prefix.length))
+}
+
+function waitForReadRetry(
+  delayMs: number,
+  signal?: AbortSignal | null
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new DOMException('Request aborted', 'AbortError'))
+      return
+    }
+    const onAbort = () => {
+      clearTimeout(timer)
+      signal?.removeEventListener('abort', onAbort)
+      reject(new DOMException('Request aborted', 'AbortError'))
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, delayMs)
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
+}
+
+async function fetchWithReadRetry(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> {
+  if (!isRetrySafeSupabaseRead(input, init)) return browserFetch(input, init)
+  const request = input instanceof Request ? input : null
+  const signal = init?.signal ?? request?.signal
+
+  for (let attempt = 0; attempt <= READ_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      const response = await browserFetch(request ? request.clone() : input, init)
+      if (
+        !TRANSIENT_READ_HTTP_STATUS.has(response.status) ||
+        attempt === READ_RETRY_DELAYS_MS.length
+      ) return response
+    } catch (error) {
+      if (signal?.aborted || attempt === READ_RETRY_DELAYS_MS.length) throw error
+    }
+    await waitForReadRetry(READ_RETRY_DELAYS_MS[attempt], signal)
+  }
+  throw new Error('Supabase read retry exhausted')
+}
+
 /**
  * raceIdentityAwareFetch
  *
@@ -144,7 +234,7 @@ function raceIdentityAwareFetch(
   try {
     url = new URL(request?.url ?? String(input))
   } catch {
-    return browserFetch(input, init)
+    return fetchWithReadRetry(input, init)
   }
 
   const isFullReplayPayloadRpc =
@@ -164,18 +254,18 @@ function raceIdentityAwareFetch(
       ? new Request(url.toString(), request)
       : url
 
-    return browserFetch(rewrittenInput, init)
+    return fetchWithReadRetry(rewrittenInput, init)
   }
 
   if (method !== 'GET') {
-    return browserFetch(input, init)
+    return fetchWithReadRetry(input, init)
   }
 
   const isRidersEndpoint = url.pathname.endsWith('/rest/v1/riders')
   const selectValue = url.searchParams.get('select')
 
   if (!isRidersEndpoint || !isRaceRiderIdentitySelect(selectValue)) {
-    return browserFetch(input, init)
+    return fetchWithReadRetry(input, init)
   }
 
   url.pathname = url.pathname.replace(
@@ -187,7 +277,7 @@ function raceIdentityAwareFetch(
     ? new Request(url.toString(), request)
     : url
 
-  return browserFetch(rewrittenInput, init)
+  return fetchWithReadRetry(rewrittenInput, init)
 }
 
 /**
