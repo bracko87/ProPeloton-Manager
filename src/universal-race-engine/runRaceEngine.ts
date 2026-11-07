@@ -28550,16 +28550,26 @@ export function buildUniversalReplayTimeline(
     }
     const detachments: LowReserveDetach[] = []
 
+    // The green energy bar is a percentage of the rider's starting reserve.
+    // A 32-energy rider at 1 energy has only 3.125% of that reserve left.
+    // Zero reserve must also force contact loss, never bypass this rule.
+    const lowReserveThresholdFor = (riderId: string): number =>
+      Math.max(
+        0.000001,
+        (readinessByRiderId.get(riderId)?.fatigueBalance.startEnergy ?? 100) * 0.05,
+      )
+
     const crossingKmFor = (riderId: string): number | null => {
       const startEnergy = endpoints.start.get(riderId)
       const endEnergy = endpoints.end.get(riderId)
       if (startEnergy === undefined || endEnergy === undefined) return null
-      if (startEnergy < 5 - 0.000001) return endpoints.startKm
-      if (endEnergy >= 5 - 0.000001 || startEnergy <= endEnergy + 0.000001) {
+      const threshold = lowReserveThresholdFor(riderId)
+      if (startEnergy <= threshold + 0.000001) return endpoints.startKm
+      if (endEnergy > threshold + 0.000001 || startEnergy <= endEnergy + 0.000001) {
         return null
       }
       const fraction = clamp(
-        (startEnergy - 5) / Math.max(0.000001, startEnergy - endEnergy),
+        (startEnergy - threshold) / Math.max(0.000001, startEnergy - endEnergy),
         0,
         1,
       )
@@ -28584,8 +28594,7 @@ export function buildUniversalReplayTimeline(
         const reserve = liveEnergy.get(riderId)
         if (
           reserve === undefined ||
-          reserve <= 0.000001 ||
-          reserve >= 5 - 0.000001
+          reserve > lowReserveThresholdFor(riderId) + 0.000001
         ) {
           return
         }
@@ -28679,6 +28688,15 @@ export function buildUniversalReplayTimeline(
       .filter((value) => Number.isFinite(value))
     const chaseCodeBase =
       existingChaseNumbers.length > 0 ? Math.max(...existingChaseNumbers) : 0
+    const existingFrontNumbers = retainedGroups
+      .map((group) => /^B(\d+)$/.exec(group.displayCode)?.[1])
+      .filter((value): value is string => Boolean(value))
+      .map(Number)
+      .filter(Number.isFinite)
+    // B1 is the original breakaway. The first trailing breakaway group is B2.
+    const frontCodeBase = Math.max(1, ...existingFrontNumbers)
+    let trailingFrontCount = 0
+    let trailingPelotonCount = 0
     const template = peloton ?? sourceGroups[0]
     if (!template) return retainedGroups
 
@@ -28688,17 +28706,22 @@ export function buildUniversalReplayTimeline(
           average(cluster.map((row) => row.gapSeconds)),
           6,
         )
+        const aheadOfPeloton =
+          peloton !== null &&
+          gapSeconds < pelotonGapSeconds - 0.000001
+        const displayCode = aheadOfPeloton
+          ? `B${frontCodeBase + ++trailingFrontCount}`
+          : `C${chaseCodeBase + ++trailingPelotonCount}`
         return {
           ...template,
           phaseNumber,
           groupOrder: retainedGroups.length + index + 1,
           groupCode: 'chasing_group',
-          displayCode: `C${chaseCodeBase + index + 1}`,
-          physicalPosition:
-            peloton && gapSeconds < pelotonGapSeconds - 0.000001
-              ? 'ahead_of_peloton'
-              : 'behind_peloton',
-          colorKey: 'chasing_orange',
+          displayCode,
+          physicalPosition: aheadOfPeloton
+            ? 'ahead_of_peloton'
+            : 'behind_peloton',
+          colorKey: aheadOfPeloton ? 'breakaway_red' : 'chasing_orange',
           riderIds: cluster.map((row) => row.riderId).sort(),
           gapSeconds,
           officialTimeSeconds: null,
