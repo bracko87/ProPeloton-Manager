@@ -248,6 +248,12 @@ for (const relativePath of premiumSourceFiles) {
 // identifiers (e.g. {{coins}}, not {{Coins}}). Check affected UI surfaces
 // in every locale, and reject any poisoned interpolation across the site.
 const guardedTranslations = {
+  finance: [
+    'overview.season',
+    'overview.seasonPeriod',
+    'overview.seasonUnavailable',
+    'overview.sponsorsSeason',
+  ],
   proPackages: [
     'premium.quarterlySummary',
     'premium.quarterlySummaryCoins',
