@@ -742,9 +742,9 @@ export function OverviewTab({
   const periodLabel = useMemo(() => {
     if (granularity === 'daily') return t('overview.today')
     if (granularity === 'weekly') return t('overview.thisWeek')
-    if (granularity === 'season') return t('overview.seasonPeriod', { number: seasonOverview?.season_number ?? 1 })
+    if (granularity === 'season') return t('overview.seasonPeriod')
     return t('overview.thisMonth')
-  }, [granularity, seasonOverview?.season_number, t])
+  }, [granularity, t])
 
   const rawDailyPoints = useMemo(
     () =>
