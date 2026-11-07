@@ -538,8 +538,15 @@ export default function FinancePage(): JSX.Element {
         }),
       ])
 
-      if (!seasonRes.error && seasonRes.data && typeof seasonRes.data === 'object' && !Array.isArray(seasonRes.data)) {
-        setSeasonOverview(seasonRes.data as SeasonOverview)
+      const seasonPayload = seasonRes.data as unknown as Partial<SeasonOverview> | null
+      if (
+        !seasonRes.error &&
+        seasonPayload &&
+        Number.isInteger(seasonPayload.season_number) &&
+        Array.isArray(seasonPayload.monthly) &&
+        Array.isArray(seasonPayload.breakdown)
+      ) {
+        setSeasonOverview(seasonPayload as SeasonOverview)
         setSeasonError(null)
       } else {
         setSeasonOverview(null)
