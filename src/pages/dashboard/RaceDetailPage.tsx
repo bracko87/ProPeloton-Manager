@@ -6827,6 +6827,7 @@ function RaceParticipantsGrid({
   teams,
   loading,
   error,
+  onRetryParticipants,
   favorites,
   favoritesLoading,
   favoritesError,
@@ -6837,6 +6838,7 @@ function RaceParticipantsGrid({
   teams: RaceParticipantTeam[]
   loading: boolean
   error: string | null
+  onRetryParticipants: () => void
   favorites: RaceFavoriteRow[]
   favoritesLoading: boolean
   favoritesError: string | null
@@ -6856,7 +6858,16 @@ function RaceParticipantsGrid({
   if (error) {
     return (
       <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-        {t('participants.loadError', { error })}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span>Teams and riders are temporarily unavailable.</span>
+          <button
+            type="button"
+            onClick={onRetryParticipants}
+            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 font-semibold text-red-900 hover:bg-red-100"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     )
   }
@@ -7260,6 +7271,7 @@ function RaceResultsHub({
   participantTeams,
   participantsLoading,
   participantsError,
+  onRetryParticipants,
   currentClubId,
   viewerClubFamilyIds,
   teamEntryStatus,
@@ -7274,6 +7286,7 @@ function RaceResultsHub({
   participantTeams: RaceParticipantTeam[]
   participantsLoading: boolean
   participantsError: string | null
+  onRetryParticipants: () => void
   currentClubId?: string | null
   viewerClubFamilyIds?: string[]
   teamEntryStatus?: string | null
@@ -8170,6 +8183,7 @@ function RaceResultsHub({
                 teams={participantTeams}
                 loading={participantsLoading}
                 error={participantsError}
+                onRetryParticipants={onRetryParticipants}
                 favorites={raceFavorites}
                 favoritesLoading={raceFavoritesLoading}
                 favoritesError={raceFavoritesError}
@@ -18407,6 +18421,7 @@ export default function RaceDetailPage({
   )
   const [participantsLoading, setParticipantsLoading] = useState(false)
   const [participantsError, setParticipantsError] = useState<string | null>(null)
+  const [participantsRetryKey, setParticipantsRetryKey] = useState(0)
   const [applicationActionLoading, setApplicationActionLoading] = useState<
     'apply' | 'cancel' | null
   >(null)
@@ -19130,12 +19145,12 @@ export default function RaceDetailPage({
       }
     }
 
-    loadParticipants()
+    void loadParticipants()
 
     return () => {
       cancelled = true
     }
-  }, [raceId])
+  }, [raceId, participantsRetryKey])
 
 
   useEffect(() => {
@@ -20276,6 +20291,7 @@ export default function RaceDetailPage({
               participantTeams={participantTeams}
               participantsLoading={participantsLoading}
               participantsError={participantsError}
+              onRetryParticipants={() => setParticipantsRetryKey((value) => value + 1)}
               currentClubId={resolvedViewerClubId}
               viewerClubFamilyIds={viewerClubFamilyIds}
               teamEntryStatus={effectiveTeamEntryStatus}
