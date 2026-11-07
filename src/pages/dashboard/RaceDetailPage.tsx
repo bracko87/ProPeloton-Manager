@@ -15082,15 +15082,6 @@ function UniversalRaceReplayPage({
   const resultsVisible =
     officialLifecycleResultsVisible &&
     currentFrame?.finalResultsVisible === true
-  const replayWinnerName =
-    resultsVisible
-      ? input?.riders.find(
-          (rider) =>
-            rider.riderId === result?.finishResolution.winnerRiderId
-        )?.snapshot.displayName ??
-        result?.finishResolution.winnerRiderId ??
-        '—'
-      : 'Hidden until finish'
   const winnerOfficialTimeSeconds =
     result?.finishResolution.classification.find(
       (row) => row.status === 'finished' && row.rank === 1
