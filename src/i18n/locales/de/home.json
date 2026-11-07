@@ -2,7 +2,7 @@
   "header": {
     "signIn": "Anmelden",
     "startPlaying": "Spielen",
-    "registrationUnavailable": "Vorübergehend nicht verfügbar, solange sich das Spiel in Entwicklung befindet"
+    "registrationUnavailable": "Neue Registrierungen sind bis zum Start vorübergehend pausiert."
   },
   "beta": {
     "badge": "Beta-Version",
@@ -158,6 +158,6 @@
     "homepageDataUnavailable": "Live-Daten der Startseite sind vorübergehend nicht verfügbar.",
     "homepageDataUnexpected": "Die Live-Daten der Startseite wurden in einem unerwarteten Format zurückgegeben.",
     "clubStatusError": "Sie sind angemeldet, aber wir konnten den Status Ihres Clubs nicht laden. Bitte aktualisieren Sie die Seite oder versuchen Sie es erneut.",
-    "clubCreationDisabled": "Die Erstellung neuer Clubs ist vorübergehend deaktiviert, solange sich ProPeloton Manager noch in Entwicklung befindet. Bestehende Manager können sich weiterhin anmelden."
+    "clubCreationDisabled": "Die Erstellung neuer Clubs ist bis zum Start vorübergehend pausiert. Bestehende Manager können sich weiterhin anmelden."
   }
 }
