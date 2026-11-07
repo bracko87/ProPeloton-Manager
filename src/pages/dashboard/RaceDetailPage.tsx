@@ -23,6 +23,7 @@ import {
   useSearchParams,
 } from 'react-router'
 import { supabase } from '../../lib/supabase'
+import { getClubDisplayName, useClubDisplayIdentities } from '../../lib/clubDisplayIdentity'
 import { isClubApplicationRestrictedRace } from '../../lib/raceClubApplicationPolicy'
 import { WorldChampionshipExpectedField } from './WorldChampionshipExpectedField'
 import i18n from '@/i18n'
@@ -15102,6 +15103,14 @@ function UniversalRaceReplayPage({
       ),
     [input]
   )
+  // Naming rights are the season's public club identity; the engine's
+  // original-name snapshots remain unchanged for deterministic replay data.
+  const replayClubIds = useMemo(
+    () => input?.teams.map((team) => team.teamId) ?? [],
+    [input]
+  )
+  const { identityByClubId: replayClubIdentities } =
+    useClubDisplayIdentities(replayClubIds)
   const participantRiderLookup = useMemo(
     () => getUniversalParticipantRiderLookup(participantTeams),
     [participantTeams]
@@ -16117,7 +16126,10 @@ function UniversalRaceReplayPage({
           (participantRider
             ? getRaceParticipantRiderDisplayName(participantRider)
             : rider.snapshot.displayName ?? rider.riderId),
-        teamName: team?.snapshot.teamName ?? rider.teamId,
+        teamName: getClubDisplayName(
+          replayClubIdentities[rider.teamId],
+          team?.snapshot.teamName ?? rider.teamId
+        ),
         countryCode:
           currentIdentity?.country_code?.trim() ||
           participantRider?.country_code ||
@@ -16178,6 +16190,7 @@ function UniversalRaceReplayPage({
     preStageStandingByRiderId,
     readinessByRiderId,
     replayRiderIdentityById,
+    replayClubIdentities,
     resultsVisible,
     teamInputById,
   ])
@@ -17056,24 +17069,6 @@ function UniversalRaceReplayPage({
             </div>
           ) : null}
 
-
-          {result && resultsVisible ? (
-            <section className="rounded-2xl border border-slate-200 bg-white p-4 text-sm text-slate-700">
-              <h3 className="font-semibold">Phase 7 + Phase 8 acceptance audit</h3>
-              <p>Phase 8 rider updates from the same final race result</p>
-              <button type="button" onClick={downloadPhase78AcceptanceReport} className="mt-2 rounded-lg border border-slate-300 px-3 py-2 hover:bg-slate-50">
-                Download Phase 7 + Phase 8 JSON report
-              </button>
-              <h3 className="mt-4 font-semibold">Phase 9 weather, preparation and resource audit</h3>
-              <p>Equipment, asset and supply usage calculated for this race</p>
-              <p>Rider effects from weather and preparation in the same race result</p>
-              <button type="button" onClick={downloadPhase9AcceptanceReport} className="mt-2 rounded-lg border border-slate-300 px-3 py-2 hover:bg-slate-50">
-                Download Phase 9 JSON report
-              </button>
-            </section>
-          ) : result ? (
-            <p className="text-xs text-slate-500">Report unlocks at finish · Phase 9 report unlocks at finish</p>
-          ) : null}
 
           {result &&
           !result.intermediatePointFinalization.synchronization.synchronized ? (
