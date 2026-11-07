@@ -2,7 +2,7 @@
   "header": {
     "signIn": "Sign In",
     "startPlaying": "Start Playing",
-    "registrationUnavailable": "Temporarily unavailable while the game is in development"
+    "registrationUnavailable": "New registrations are currently paused ahead of launch."
   },
   "beta": {
     "badge": "Beta version",
@@ -158,6 +158,6 @@
     "homepageDataUnavailable": "Live homepage data is temporarily unavailable.",
     "homepageDataUnexpected": "Live homepage data returned an unexpected format.",
     "clubStatusError": "You are signed in, but we could not load your club status. Please refresh or try again.",
-    "clubCreationDisabled": "New club creation is temporarily disabled while ProPeloton Manager is still in development. Existing managers can continue to sign in."
+    "clubCreationDisabled": "New club creation is currently paused ahead of launch. Existing managers can continue to sign in."
   }
 }

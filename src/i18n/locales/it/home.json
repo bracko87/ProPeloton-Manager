@@ -2,7 +2,7 @@
   "header": {
     "signIn": "Accedi",
     "startPlaying": "Inizia a giocare",
-    "registrationUnavailable": "Temporaneamente non disponibile mentre il gioco è in sviluppo"
+    "registrationUnavailable": "Le nuove registrazioni sono temporaneamente sospese prima del lancio."
   },
   "beta": {
     "badge": "Versione beta",
@@ -158,6 +158,6 @@
     "homepageDataUnavailable": "I dati in tempo reale della homepage sono temporaneamente non disponibili.",
     "homepageDataUnexpected": "I dati in tempo reale della homepage hanno restituito un formato inatteso.",
     "clubStatusError": "Hai effettuato l'accesso, ma non siamo riusciti a caricare lo stato del tuo club. Aggiorna la pagina o riprova.",
-    "clubCreationDisabled": "La creazione di nuovi club è temporaneamente disattivata mentre ProPeloton Manager è ancora in sviluppo. I manager esistenti possono continuare ad accedere."
+    "clubCreationDisabled": "La creazione di nuovi club è temporaneamente sospesa prima del lancio. I manager esistenti possono continuare ad accedere."
   }
 }
