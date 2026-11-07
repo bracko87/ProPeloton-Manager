@@ -2,7 +2,7 @@
   "header": {
     "signIn": "Prijava",
     "startPlaying": "Počni da igraš",
-    "registrationUnavailable": "Privremeno nedostupno dok je igra još u razvoju"
+    "registrationUnavailable": "Nove registracije su privremeno pauzirane do objavljivanja igre."
   },
   "beta": {
     "badge": "Beta verzija",
@@ -158,6 +158,6 @@
     "homepageDataUnavailable": "Podaci sa početne strane trenutno nisu dostupni.",
     "homepageDataUnexpected": "Podaci sa početne strane vraćeni su u neočekivanom formatu.",
     "clubStatusError": "Prijavljeni ste, ali nismo uspeli da učitamo status vašeg kluba. Osvežite stranicu ili pokušajte ponovo.",
-    "clubCreationDisabled": "Kreiranje novih klubova je privremeno onemogućeno dok je ProPeloton Manager još u razvoju. Postojeći menadžeri mogu i dalje da se prijave."
+    "clubCreationDisabled": "Kreiranje novih klubova je privremeno pauzirano do objavljivanja igre. Postojeći menadžeri mogu i dalje da se prijave."
   }
 }
