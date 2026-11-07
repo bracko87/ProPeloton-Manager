@@ -28,7 +28,7 @@ import {
 } from '../../lib/tutorialProgress'
 import { supabase } from './finance/supabase'
 import { ErrorBoundary } from './finance/ErrorBoundary'
-import { OverviewTab } from './finance/OverviewTab'
+import { OverviewTab, type SeasonOverview } from './finance/OverviewTab'
 import { SponsorsTab } from './finance/SponsorsTab'
 import { TransactionsTab } from './finance/TransactionsTab'
 import { TaxTab } from './finance/TaxTab'
@@ -337,6 +337,8 @@ export default function FinancePage(): JSX.Element {
   const [summary, setSummary] = useState<RestartSafeSummary | null>(null)
   const [cashflowDaily, setCashflowDaily] = useState<CashflowPoint[]>([])
   const [statement, setStatement] = useState<StatementRow[]>([])
+  const [seasonOverview, setSeasonOverview] = useState<SeasonOverview | null>(null)
+  const [seasonError, setSeasonError] = useState<string | null>(null)
 
   const [tutorialLoading, setTutorialLoading] = useState(true)
   const [tutorialMode, setTutorialMode] = useState<'closed' | 'invite' | 'steps'>(
@@ -427,6 +429,8 @@ export default function FinancePage(): JSX.Element {
     setSummary(null)
     setCashflowDaily([])
     setStatement([])
+    setSeasonOverview(null)
+    setSeasonError(null)
   }
 
   async function resolveMainClubId(): Promise<string | null> {
@@ -523,11 +527,24 @@ export default function FinancePage(): JSX.Element {
         Restart-safe transaction statement.
         v2 filters immutable ledger rows before latest restart.
       */
-      const txRes = await supabase.rpc('finance_get_club_statement_v2', {
-        p_club_id: myClubId,
-        p_limit: 500,
-        p_before: null,
-      })
+      const [txRes, seasonRes] = await Promise.all([
+        supabase.rpc('finance_get_club_statement_v2', {
+          p_club_id: myClubId,
+          p_limit: 500,
+          p_before: null,
+        }),
+        supabase.rpc('finance_get_club_season_overview_v1', {
+          p_club_id: myClubId,
+        }),
+      ])
+
+      if (!seasonRes.error && seasonRes.data && typeof seasonRes.data === 'object' && !Array.isArray(seasonRes.data)) {
+        setSeasonOverview(seasonRes.data as SeasonOverview)
+        setSeasonError(null)
+      } else {
+        setSeasonOverview(null)
+        setSeasonError(t('overview.seasonUnavailable'))
+      }
 
       if (!txRes.error) {
         setStatement((txRes.data ?? []) as StatementRow[])
@@ -682,6 +699,8 @@ export default function FinancePage(): JSX.Element {
                 cashflowDaily={cashflowDaily}
                 currency={currency}
                 transactions={overviewTransactions}
+                seasonOverview={seasonOverview}
+                seasonError={seasonError}
               />
               {clubId && summary ? (
                 <PremiumFinancialSimulator
