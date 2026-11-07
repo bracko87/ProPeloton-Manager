@@ -17058,18 +17058,6 @@ function UniversalRaceReplayPage({
         </div>
 
         <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4 sm:p-5">
-          {result && resultsVisible ? (
-            <div className="rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
-              <div className="font-semibold">
-                Replay complete · {input?.stage.terrainType ? `${humanizeCode(input.stage.terrainType)} · ` : ''}{humanizeCode(result.finishResolution.finishMode)} finish
-              </div>
-              <div className="mt-1 text-xs leading-5 text-emerald-800">
-                Winner: {replayWinnerName} · Model: {result.finishResolution.modelVersion} · Classification rows: {result.finishResolution.classification.length}
-              </div>
-            </div>
-          ) : null}
-
-
           {result &&
           !result.intermediatePointFinalization.synchronization.synchronized ? (
             <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
