@@ -15,7 +15,21 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Donut } from './charts'
 
-type Granularity = 'daily' | 'weekly' | 'monthly'
+type Granularity = 'daily' | 'weekly' | 'monthly' | 'season'
+
+export type SeasonOverview = {
+  season_number: number
+  current_month: number
+  income: number | string
+  expenses: number | string
+  net: number | string
+  sponsor_income: number | string
+  debt_cash_inflow: number | string
+  debt_principal_repaid: number | string
+  debt_interest_paid: number | string
+  monthly: { month: number; income: number | string; expenses: number | string; net: number | string }[]
+  breakdown: { type: string; name: string; income: number | string; expenses: number | string }[]
+}
 
 type ClubFinanceSummary = {
   current_balance: string | number
@@ -703,6 +717,8 @@ export function OverviewTab({
   topIncomeBreakdown,
   topExpenseBreakdown,
   transactions,
+  seasonOverview,
+  seasonError,
 }: {
   summary: ClubFinanceSummary | null
   cashflowDaily: CashflowPoint[]
@@ -711,6 +727,8 @@ export function OverviewTab({
   topIncomeBreakdown?: BreakdownItem[]
   topExpenseBreakdown?: BreakdownItem[]
   transactions?: Transaction[]
+  seasonOverview?: SeasonOverview | null
+  seasonError?: string | null
 }): JSX.Element {
   const { t } = useTranslation('finance')
   const localizeShortLabel = (label: string) => {
@@ -724,8 +742,9 @@ export function OverviewTab({
   const periodLabel = useMemo(() => {
     if (granularity === 'daily') return t('overview.today')
     if (granularity === 'weekly') return t('overview.thisWeek')
+    if (granularity === 'season') return t('overview.seasonPeriod', { number: seasonOverview?.season_number ?? 1 })
     return t('overview.thisMonth')
-  }, [granularity, t])
+  }, [granularity, seasonOverview?.season_number, t])
 
   const rawDailyPoints = useMemo(
     () =>
@@ -841,10 +860,20 @@ export function OverviewTab({
     return Array.from(map.values()).sort((a, b) => (a.date < b.date ? -1 : 1))
   }, [transactions, rawDailyPoints])
 
-  const grouped = useMemo(
-    () => groupSeries(operatingDailyPoints, granularity),
-    [operatingDailyPoints, granularity]
-  )
+  const grouped = useMemo(() => {
+    if (granularity === 'season' && seasonOverview) {
+      return (seasonOverview.monthly ?? [])
+        .slice()
+        .sort((a, b) => a.month - b.month)
+        .map(p => ({
+          label: new Date(Date.UTC(2000, p.month - 1, 1)).toLocaleString('en-US', { month: 'short' }),
+          income: toNumber(p.income),
+          expenses: toNumber(p.expenses),
+          net: toNumber(p.net),
+        }))
+    }
+    return groupSeries(operatingDailyPoints, granularity === 'season' ? 'monthly' : granularity)
+  }, [operatingDailyPoints, granularity, seasonOverview])
 
   const periodWindow = useMemo(() => {
     if (granularity === 'daily') return operatingDailyPoints.slice(-1)
@@ -853,6 +882,14 @@ export function OverviewTab({
   }, [operatingDailyPoints, granularity])
 
   const periodTotals = useMemo(() => {
+    if (granularity === 'season' && seasonOverview) {
+      return {
+        income: toNumber(seasonOverview.income),
+        expenses: toNumber(seasonOverview.expenses),
+        net: toNumber(seasonOverview.net),
+        label: periodLabel,
+      }
+    }
     if (hasTransactions) {
       const income = periodRows
         .filter(row => shouldCountAsOperatingIncome(txType(row), txSignedAmount(row)))
@@ -900,9 +937,16 @@ export function OverviewTab({
       net: last30.reduce((s, p) => s + p.net, 0),
       label: periodLabel,
     }
-  }, [hasTransactions, periodRows, operatingDailyPoints, granularity, periodLabel])
+  }, [hasTransactions, periodRows, operatingDailyPoints, granularity, periodLabel, seasonOverview])
 
   const debtMovement = useMemo(() => {
+    if (granularity === 'season' && seasonOverview) {
+      return {
+        debtCashInflow: toNumber(seasonOverview.debt_cash_inflow),
+        debtPrincipalRepaid: toNumber(seasonOverview.debt_principal_repaid),
+        debtInterestPaid: toNumber(seasonOverview.debt_interest_paid),
+      }
+    }
     const debtCashInflow = periodRows
       .filter(row => isDebtCashInflow(txType(row)))
       .reduce((sum, row) => sum + Math.max(txSignedAmount(row), 0), 0)
@@ -920,7 +964,7 @@ export function OverviewTab({
       debtPrincipalRepaid,
       debtInterestPaid,
     }
-  }, [periodRows])
+  }, [periodRows, granularity, seasonOverview])
 
   const hasDebtMovement =
     debtMovement.debtCashInflow > 0 ||
@@ -960,6 +1004,16 @@ export function OverviewTab({
   }, [periodRows, t])
 
   const topIncomeItems = useMemo(() => {
+    if (granularity === 'season' && seasonOverview) {
+      return aggregateBreakdown(
+        (seasonOverview.breakdown ?? []).map(item => ({
+          label: item.name || item.type,
+          type: item.type,
+          value: toNumber(item.income),
+        })),
+        formatTransactionShortLabel, 5,
+      ).map(item => ({ ...item, label: localizeShortLabel(item.label) }))
+    }
     if (topIncomeBreakdown && topIncomeBreakdown.length > 0) {
       const filtered = topIncomeBreakdown
         .map(x => {
@@ -995,9 +1049,19 @@ export function OverviewTab({
       .slice(0, 5)
 
     return sorted.map((x, idx) => ({ label: t('overview.incomeIndex', { number: idx + 1 }), value: x.value }))
-  }, [topIncomeBreakdown, topFromTransactions.incomes, periodWindow, t])
+  }, [topIncomeBreakdown, topFromTransactions.incomes, periodWindow, t, granularity, seasonOverview])
 
   const topExpenseItems = useMemo(() => {
+    if (granularity === 'season' && seasonOverview) {
+      return aggregateBreakdown(
+        (seasonOverview.breakdown ?? []).map(item => ({
+          label: item.name || item.type,
+          type: item.type,
+          value: toNumber(item.expenses),
+        })),
+        formatTransactionShortLabel, 5,
+      ).map(item => ({ ...item, label: localizeShortLabel(item.label) }))
+    }
     if (topExpenseBreakdown && topExpenseBreakdown.length > 0) {
       const filtered = topExpenseBreakdown
         .map(x => {
@@ -1034,7 +1098,7 @@ export function OverviewTab({
       .slice(0, 5)
 
     return sorted.map((x, idx) => ({ label: t('overview.costIndex', { number: idx + 1 }), value: x.value }))
-  }, [topExpenseBreakdown, topFromTransactions.expenses, periodWindow, t])
+  }, [topExpenseBreakdown, topFromTransactions.expenses, periodWindow, t, granularity, seasonOverview])
 
   const incomePalette = ['#16a34a', '#22c55e', '#4ade80', '#86efac', '#bbf7d0']
   const expensePalette = ['#dc2626', '#ef4444', '#f97316', '#fb7185', '#fca5a5']
@@ -1054,7 +1118,9 @@ export function OverviewTab({
           <div className="text-sm text-gray-500">{t('overview.incomePeriod', { period: periodTotals.label })}</div>
           <div className="text-2xl font-bold mt-2">{formatMoney(periodTotals.income, currency)}</div>
           <div className="text-xs text-gray-500 mt-1">
-            {t('overview.sponsorsMonth', { amount: formatMoney(sponsorMonthly, currency) })}
+            {granularity === 'season' && seasonOverview
+              ? t('overview.sponsorsSeason', { amount: formatMoney(toNumber(seasonOverview.sponsor_income), currency) })
+              : t('overview.sponsorsMonth', { amount: formatMoney(sponsorMonthly, currency) })}
           </div>
         </div>
 
@@ -1114,7 +1180,7 @@ export function OverviewTab({
             <div className="text-sm text-gray-500">{t('overview.chooseAggregation')}</div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <button
               className={`px-3 py-2 rounded text-sm shadow ${
                 granularity === 'daily' ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100'
@@ -1143,6 +1209,18 @@ export function OverviewTab({
               type="button"
             >
               {t('overview.monthly')}
+            </button>
+            <button
+              className={`px-3 py-2 rounded text-sm shadow ${
+                granularity === 'season' ? 'bg-gray-900 text-white' : 'bg-white hover:bg-gray-100'
+              } disabled:cursor-not-allowed disabled:opacity-50`}
+              onClick={() => setGranularity('season')}
+              type="button"
+              disabled={!seasonOverview}
+              title={!seasonOverview ? (seasonError || t('overview.seasonUnavailable')) : undefined}
+              aria-pressed={granularity === 'season'}
+            >
+              {t('overview.season')}
             </button>
           </div>
         </div>
