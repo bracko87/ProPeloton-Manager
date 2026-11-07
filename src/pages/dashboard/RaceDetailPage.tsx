@@ -996,6 +996,55 @@ function getParticipantTeamName(team: RaceParticipantTeam): string {
   return team.club_name?.trim() || team.team_name_snapshot?.trim() || 'Team'
 }
 
+// Public storage can temporarily return 503 while PostgreSQL restarts. An
+// image tag does not use the Supabase client fetch retry, so retry its original
+// asset before falling back to a generic logo/jersey.
+function useResilientRaceAsset(preferredUrl: string, fallbackUrl: string) {
+  const [imageUrl, setImageUrl] = useState(preferredUrl)
+  const retryCountRef = useRef(0)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    retryCountRef.current = 0
+    setImageUrl(preferredUrl)
+    return () => {
+      if (retryTimerRef.current !== null) {
+        clearTimeout(retryTimerRef.current)
+        retryTimerRef.current = null
+      }
+    }
+  }, [preferredUrl])
+
+  function handleError() {
+    if (!imageUrl || imageUrl === fallbackUrl || preferredUrl === fallbackUrl) {
+      setImageUrl('')
+      return
+    }
+
+    const delaysMs = [2000, 5000, 10000, 20000]
+    const attempt = retryCountRef.current
+    if (attempt < delaysMs.length && /^https:\/\//i.test(preferredUrl)) {
+      retryCountRef.current = attempt + 1
+      if (retryTimerRef.current !== null) clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = setTimeout(() => {
+        try {
+          const url = new URL(preferredUrl)
+          url.searchParams.set('ppm_retry', String(attempt + 1))
+          setImageUrl(url.toString())
+        } catch {
+          setImageUrl(fallbackUrl)
+        }
+        retryTimerRef.current = null
+      }, delaysMs[attempt])
+      return
+    }
+
+    setImageUrl(fallbackUrl)
+  }
+
+  return { imageUrl, handleError }
+}
+
 function TeamLogo({
   team,
   className = 'h-12 w-12',
@@ -1005,11 +1054,8 @@ function TeamLogo({
 }) {
   const teamName = getParticipantTeamName(team)
   const preferredLogoUrl = normalizeTeamLogoUrl(team.logo_url_snapshot) || DEFAULT_TEAM_LOGO_URL
-  const [logoUrl, setLogoUrl] = useState(preferredLogoUrl)
-
-  useEffect(() => {
-    setLogoUrl(preferredLogoUrl)
-  }, [preferredLogoUrl])
+  const { imageUrl: logoUrl, handleError: onLogoError } =
+    useResilientRaceAsset(preferredLogoUrl, DEFAULT_TEAM_LOGO_URL)
 
   return (
     <div
@@ -1022,13 +1068,7 @@ function TeamLogo({
           className="h-full w-full rounded-xl object-contain"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={() => {
-            setLogoUrl((current) =>
-              current !== DEFAULT_TEAM_LOGO_URL
-                ? DEFAULT_TEAM_LOGO_URL
-                : ''
-            )
-          }}
+          onError={onLogoError}
         />
       ) : (
         <span>{getTeamInitials(teamName)}</span>
@@ -1047,11 +1087,8 @@ function TeamJerseyImage({
   const teamName = getParticipantTeamName(team)
   const preferredJerseyUrl =
     normalizeTeamLogoUrl(team.jersey_url_snapshot) || DEFAULT_TEAM_JERSEY_URL
-  const [jerseyUrl, setJerseyUrl] = useState(preferredJerseyUrl)
-
-  useEffect(() => {
-    setJerseyUrl(preferredJerseyUrl)
-  }, [preferredJerseyUrl])
+  const { imageUrl: jerseyUrl, handleError: onJerseyError } =
+    useResilientRaceAsset(preferredJerseyUrl, DEFAULT_TEAM_JERSEY_URL)
 
   return (
     <div
@@ -1064,13 +1101,7 @@ function TeamJerseyImage({
           className="h-full w-full scale-[1.12] object-contain"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={() => {
-            setJerseyUrl((current) =>
-              current !== DEFAULT_TEAM_JERSEY_URL
-                ? DEFAULT_TEAM_JERSEY_URL
-                : ''
-            )
-          }}
+          onError={onJerseyError}
         />
       ) : (
         <span>{getTeamInitials(teamName)}</span>
