@@ -79,6 +79,8 @@ const esbuildOpts = {
   sourcemap: isProd ? false : 'linked',
   minify: isProd,
   treeShaking: true,
+  // Compile-time guard: internal shadow-result injection never reaches public builds.
+  define: { __PPM_PUBLIC_PRODUCTION__: String(isProd) },
   jsx: 'automatic',
   loader: {
     '.html': 'copy',
