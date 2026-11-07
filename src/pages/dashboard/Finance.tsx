@@ -542,6 +542,7 @@ export default function FinancePage(): JSX.Element {
       if (
         !seasonRes.error &&
         seasonPayload &&
+        typeof seasonPayload.season_number === 'number' &&
         Number.isInteger(seasonPayload.season_number) &&
         Array.isArray(seasonPayload.monthly) &&
         Array.isArray(seasonPayload.breakdown)
