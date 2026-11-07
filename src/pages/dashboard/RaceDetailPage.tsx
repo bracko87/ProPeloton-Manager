@@ -100,6 +100,8 @@ import {
 } from '../../race-simulator-v2/fixtures/rioCanonicalRoadStages'
 
 
+declare const __PPM_PUBLIC_PRODUCTION__: boolean
+
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[]
 type JsonObject = { [key: string]: JsonValue }
 
@@ -994,6 +996,55 @@ function getParticipantTeamName(team: RaceParticipantTeam): string {
   return team.club_name?.trim() || team.team_name_snapshot?.trim() || 'Team'
 }
 
+// Public storage can temporarily return 503 while PostgreSQL restarts. An
+// image tag does not use the Supabase client fetch retry, so retry its original
+// asset before falling back to a generic logo/jersey.
+function useResilientRaceAsset(preferredUrl: string, fallbackUrl: string) {
+  const [imageUrl, setImageUrl] = useState(preferredUrl)
+  const retryCountRef = useRef(0)
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    retryCountRef.current = 0
+    setImageUrl(preferredUrl)
+    return () => {
+      if (retryTimerRef.current !== null) {
+        clearTimeout(retryTimerRef.current)
+        retryTimerRef.current = null
+      }
+    }
+  }, [preferredUrl])
+
+  function handleError() {
+    if (!imageUrl || imageUrl === fallbackUrl || preferredUrl === fallbackUrl) {
+      setImageUrl('')
+      return
+    }
+
+    const delaysMs = [2000, 5000, 10000, 20000]
+    const attempt = retryCountRef.current
+    if (attempt < delaysMs.length && /^https:\/\//i.test(preferredUrl)) {
+      retryCountRef.current = attempt + 1
+      if (retryTimerRef.current !== null) clearTimeout(retryTimerRef.current)
+      retryTimerRef.current = setTimeout(() => {
+        try {
+          const url = new URL(preferredUrl)
+          url.searchParams.set('ppm_retry', String(attempt + 1))
+          setImageUrl(url.toString())
+        } catch {
+          setImageUrl(fallbackUrl)
+        }
+        retryTimerRef.current = null
+      }, delaysMs[attempt])
+      return
+    }
+
+    setImageUrl(fallbackUrl)
+  }
+
+  return { imageUrl, handleError }
+}
+
 function TeamLogo({
   team,
   className = 'h-12 w-12',
@@ -1002,12 +1053,9 @@ function TeamLogo({
   className?: string
 }) {
   const teamName = getParticipantTeamName(team)
-  const preferredLogoUrl = team.logo_url_snapshot?.trim() || DEFAULT_TEAM_LOGO_URL
-  const [logoUrl, setLogoUrl] = useState(preferredLogoUrl)
-
-  useEffect(() => {
-    setLogoUrl(preferredLogoUrl)
-  }, [preferredLogoUrl])
+  const preferredLogoUrl = normalizeTeamLogoUrl(team.logo_url_snapshot) || DEFAULT_TEAM_LOGO_URL
+  const { imageUrl: logoUrl, handleError: onLogoError } =
+    useResilientRaceAsset(preferredLogoUrl, DEFAULT_TEAM_LOGO_URL)
 
   return (
     <div
@@ -1020,13 +1068,7 @@ function TeamLogo({
           className="h-full w-full rounded-xl object-contain"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={() => {
-            setLogoUrl((current) =>
-              current !== DEFAULT_TEAM_LOGO_URL
-                ? DEFAULT_TEAM_LOGO_URL
-                : ''
-            )
-          }}
+          onError={onLogoError}
         />
       ) : (
         <span>{getTeamInitials(teamName)}</span>
@@ -1044,12 +1086,9 @@ function TeamJerseyImage({
 }) {
   const teamName = getParticipantTeamName(team)
   const preferredJerseyUrl =
-    team.jersey_url_snapshot?.trim() || DEFAULT_TEAM_JERSEY_URL
-  const [jerseyUrl, setJerseyUrl] = useState(preferredJerseyUrl)
-
-  useEffect(() => {
-    setJerseyUrl(preferredJerseyUrl)
-  }, [preferredJerseyUrl])
+    normalizeTeamLogoUrl(team.jersey_url_snapshot) || DEFAULT_TEAM_JERSEY_URL
+  const { imageUrl: jerseyUrl, handleError: onJerseyError } =
+    useResilientRaceAsset(preferredJerseyUrl, DEFAULT_TEAM_JERSEY_URL)
 
   return (
     <div
@@ -1062,13 +1101,7 @@ function TeamJerseyImage({
           className="h-full w-full scale-[1.12] object-contain"
           loading="lazy"
           referrerPolicy="no-referrer"
-          onError={() => {
-            setJerseyUrl((current) =>
-              current !== DEFAULT_TEAM_JERSEY_URL
-                ? DEFAULT_TEAM_JERSEY_URL
-                : ''
-            )
-          }}
+          onError={onJerseyError}
         />
       ) : (
         <span>{getTeamInitials(teamName)}</span>
@@ -4932,7 +4965,12 @@ function normalizeTeamLogoUrl(value?: string | null): string | null {
   const rawValue = value?.trim()
   if (!rawValue) return null
 
-  if (/^(https?:\/\/|data:image\/|blob:)/i.test(rawValue)) return rawValue
+  // HTTPS pages cannot display legacy HTTP image URLs reliably.
+  // Prefer secure delivery and use the existing onError fallback if unavailable.
+  if (/^http:\/\//i.test(rawValue)) {
+    return `https://${rawValue.slice('http://'.length)}`
+  }
+  if (/^(https:\/\/|data:image\/|blob:)/i.test(rawValue)) return rawValue
   if (rawValue.startsWith('//')) return `https:${rawValue}`
 
   const storageMatch = rawValue.match(
@@ -6387,12 +6425,14 @@ function RaceFavoritesBox({
   error,
   displayStartNumberByRiderId,
   onOpenRiderProfile,
+  onRetry,
 }: {
   favorites: RaceFavoriteRow[]
   loading: boolean
   error: string | null
   displayStartNumberByRiderId: Map<string, number>
   onOpenRiderProfile: (riderId: string) => void
+  onRetry: () => void
 }) {
   const { t } = useTranslation('raceDetail')
   if (loading) {
@@ -6411,7 +6451,16 @@ function RaceFavoritesBox({
   if (error) {
     return (
       <section className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 shadow-sm">
-        Top 5 favorites are not available yet: {error}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span>Race favorites are temporarily unavailable.</span>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 font-semibold text-amber-900 hover:bg-amber-100"
+          >
+            Try again
+          </button>
+        </div>
       </section>
     )
   }
@@ -6778,18 +6827,22 @@ function RaceParticipantsGrid({
   teams,
   loading,
   error,
+  onRetryParticipants,
   favorites,
   favoritesLoading,
   favoritesError,
+  onRetryFavorites,
   onOpenTeamProfile,
   onOpenRiderProfile,
 }: {
   teams: RaceParticipantTeam[]
   loading: boolean
   error: string | null
+  onRetryParticipants: () => void
   favorites: RaceFavoriteRow[]
   favoritesLoading: boolean
   favoritesError: string | null
+  onRetryFavorites: () => void
   onOpenTeamProfile: (teamId: string) => void
   onOpenRiderProfile: (riderId: string) => void
 }) {
@@ -6805,7 +6858,16 @@ function RaceParticipantsGrid({
   if (error) {
     return (
       <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-700">
-        {t('participants.loadError', { error })}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span>Teams and riders are temporarily unavailable.</span>
+          <button
+            type="button"
+            onClick={onRetryParticipants}
+            className="rounded-lg border border-red-300 bg-white px-3 py-1.5 font-semibold text-red-900 hover:bg-red-100"
+          >
+            Try again
+          </button>
+        </div>
       </div>
     )
   }
@@ -6840,6 +6902,7 @@ function RaceParticipantsGrid({
         favorites={favorites}
         loading={favoritesLoading}
         error={favoritesError}
+        onRetry={onRetryFavorites}
         displayStartNumberByRiderId={displayStartNumberByRiderId}
         onOpenRiderProfile={onOpenRiderProfile}
       />
@@ -7208,6 +7271,7 @@ function RaceResultsHub({
   participantTeams,
   participantsLoading,
   participantsError,
+  onRetryParticipants,
   currentClubId,
   viewerClubFamilyIds,
   teamEntryStatus,
@@ -7216,13 +7280,13 @@ function RaceResultsHub({
   restoreRaceInformationOpen = false,
   restoreRaceInformationTab,
   stageResultsOverride = null,
-  engineTestModeLabel = null,
 }: {
   race: Race
   stages: RaceStage[]
   participantTeams: RaceParticipantTeam[]
   participantsLoading: boolean
   participantsError: string | null
+  onRetryParticipants: () => void
   currentClubId?: string | null
   viewerClubFamilyIds?: string[]
   teamEntryStatus?: string | null
@@ -7231,7 +7295,6 @@ function RaceResultsHub({
   restoreRaceInformationOpen?: boolean
   restoreRaceInformationTab?: RaceInfoTab
   stageResultsOverride?: RaceStageResultsOverride | null
-  engineTestModeLabel?: string | null
 }) {
   const { t } = useTranslation('raceDetail')
   const ncClubKits = useNationalChampionshipClubKits(race.id, isNationalChampionshipRace(race))
@@ -7267,6 +7330,7 @@ function RaceResultsHub({
   const [raceFavorites, setRaceFavorites] = useState<RaceFavoriteRow[]>([])
   const [raceFavoritesLoading, setRaceFavoritesLoading] = useState(false)
   const [raceFavoritesError, setRaceFavoritesError] = useState<string | null>(null)
+  const [raceFavoritesRetryKey, setRaceFavoritesRetryKey] = useState(0)
 
   const publishedStageIds =
     usePublishedRaceStageIds(stages)
@@ -7453,7 +7517,7 @@ function RaceResultsHub({
     return () => {
       cancelled = true
     }
-  }, [race.id])
+  }, [race.id, raceFavoritesRetryKey])
 
   useEffect(() => {
     if (
@@ -8119,9 +8183,11 @@ function RaceResultsHub({
                 teams={participantTeams}
                 loading={participantsLoading}
                 error={participantsError}
+                onRetryParticipants={onRetryParticipants}
                 favorites={raceFavorites}
                 favoritesLoading={raceFavoritesLoading}
                 favoritesError={raceFavoritesError}
+                onRetryFavorites={() => setRaceFavoritesRetryKey((value) => value + 1)}
                 onOpenTeamProfile={openTeamProfileFromRaceInfo}
                 onOpenRiderProfile={openRiderProfileFromRaceInfo}
               />
@@ -8285,14 +8351,8 @@ function RaceResultsHub({
             description={t('rewards.description')}
             defaultOpen={false}
           >
-            {engineTestModeLabel ? (
-              <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                <div className="font-semibold">{t('rewards.shadowTitle')}</div>
-                <div className="mt-1 text-xs leading-5 text-amber-800">
-                  {t('rewards.shadowDescription')}
-                </div>
-              </div>
-            ) : null}
+            {/* This panel always loads OFFICIAL persisted race awards, even when
+                an internal race replay comparison is active. Do not label it preview. */}
             <RaceRewardsTotalsPanel
               raceId={race.id}
               viewerTeamId={viewerTeamId}
@@ -18080,7 +18140,6 @@ export default function RaceDetailPage({
   replayStageIdOverride = null,
   onCloseReplayOverride,
   stageResultsOverride = null,
-  engineTestModeLabel = null,
 }: RaceDetailPageProps) {
   const { t, i18n } = useTranslation('raceDetail')
   void i18n
@@ -18362,6 +18421,7 @@ export default function RaceDetailPage({
   )
   const [participantsLoading, setParticipantsLoading] = useState(false)
   const [participantsError, setParticipantsError] = useState<string | null>(null)
+  const [participantsRetryKey, setParticipantsRetryKey] = useState(0)
   const [applicationActionLoading, setApplicationActionLoading] = useState<
     'apply' | 'cancel' | null
   >(null)
@@ -18383,13 +18443,12 @@ export default function RaceDetailPage({
   const [universalShadowResultsPreview, setUniversalShadowResultsPreview] =
     useState<RaceStageResultsOverride | null>(null)
 
+  // Internal preview results may never replace official persisted stage standings
+  // in a public production build. The normal live replay remains available.
   const effectiveStageResultsOverride =
-    stageResultsOverride ?? universalShadowResultsPreview
-  const effectiveEngineTestModeLabel =
-    engineTestModeLabel ??
-    (universalShadowResultsPreview
-      ? t('replay.title')
-      : null)
+    __PPM_PUBLIC_PRODUCTION__
+      ? null
+      : (stageResultsOverride ?? universalShadowResultsPreview)
 
   const replayStageIdFromUrl =
     replayStageIdOverride ?? searchParams.get('replayStageId')
@@ -19086,12 +19145,12 @@ export default function RaceDetailPage({
       }
     }
 
-    loadParticipants()
+    void loadParticipants()
 
     return () => {
       cancelled = true
     }
-  }, [raceId])
+  }, [raceId, participantsRetryKey])
 
 
   useEffect(() => {
@@ -20232,6 +20291,7 @@ export default function RaceDetailPage({
               participantTeams={participantTeams}
               participantsLoading={participantsLoading}
               participantsError={participantsError}
+              onRetryParticipants={() => setParticipantsRetryKey((value) => value + 1)}
               currentClubId={resolvedViewerClubId}
               viewerClubFamilyIds={viewerClubFamilyIds}
               teamEntryStatus={effectiveTeamEntryStatus}
@@ -20240,7 +20300,6 @@ export default function RaceDetailPage({
               onOpenTeamProfile={handleOpenTeamProfile}
               onOpenRiderProfile={handleOpenRiderProfile}
               stageResultsOverride={effectiveStageResultsOverride}
-              engineTestModeLabel={effectiveEngineTestModeLabel}
             />
           ) : null}
         </div>
