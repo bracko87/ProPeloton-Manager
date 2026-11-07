@@ -100,6 +100,8 @@ import {
 } from '../../race-simulator-v2/fixtures/rioCanonicalRoadStages'
 
 
+declare const __PPM_PUBLIC_PRODUCTION__: boolean
+
 type JsonValue = string | number | boolean | null | JsonObject | JsonValue[]
 type JsonObject = { [key: string]: JsonValue }
 
@@ -7235,7 +7237,6 @@ function RaceResultsHub({
   restoreRaceInformationOpen = false,
   restoreRaceInformationTab,
   stageResultsOverride = null,
-  engineTestModeLabel = null,
 }: {
   race: Race
   stages: RaceStage[]
@@ -7250,7 +7251,6 @@ function RaceResultsHub({
   restoreRaceInformationOpen?: boolean
   restoreRaceInformationTab?: RaceInfoTab
   stageResultsOverride?: RaceStageResultsOverride | null
-  engineTestModeLabel?: string | null
 }) {
   const { t } = useTranslation('raceDetail')
   const ncClubKits = useNationalChampionshipClubKits(race.id, isNationalChampionshipRace(race))
@@ -18095,7 +18095,6 @@ export default function RaceDetailPage({
   replayStageIdOverride = null,
   onCloseReplayOverride,
   stageResultsOverride = null,
-  engineTestModeLabel = null,
 }: RaceDetailPageProps) {
   const { t, i18n } = useTranslation('raceDetail')
   void i18n
@@ -18398,13 +18397,12 @@ export default function RaceDetailPage({
   const [universalShadowResultsPreview, setUniversalShadowResultsPreview] =
     useState<RaceStageResultsOverride | null>(null)
 
+  // Internal preview results may never replace official persisted stage standings
+  // in a public production build. The normal live replay remains available.
   const effectiveStageResultsOverride =
-    stageResultsOverride ?? universalShadowResultsPreview
-  const effectiveEngineTestModeLabel =
-    engineTestModeLabel ??
-    (universalShadowResultsPreview
-      ? t('replay.title')
-      : null)
+    __PPM_PUBLIC_PRODUCTION__
+      ? null
+      : (stageResultsOverride ?? universalShadowResultsPreview)
 
   const replayStageIdFromUrl =
     replayStageIdOverride ?? searchParams.get('replayStageId')
@@ -20255,7 +20253,6 @@ export default function RaceDetailPage({
               onOpenTeamProfile={handleOpenTeamProfile}
               onOpenRiderProfile={handleOpenRiderProfile}
               stageResultsOverride={effectiveStageResultsOverride}
-              engineTestModeLabel={effectiveEngineTestModeLabel}
             />
           ) : null}
         </div>
