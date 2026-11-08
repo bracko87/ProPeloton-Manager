@@ -1,7 +1,7 @@
 
 /// <reference lib="deno.ns" />
 // Prospective-only winner clock. Historical source pins remain for in-flight races.
-import * as clockFixedFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/runRaceEngine.ts";
+import * as clockFixedFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e532c5b8934746bd4efae9cf50090c0c654a26ac/src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts";
 import * as clockFixedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
 import * as clockFixedBreakawayCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
 import * as acceptedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/878aa8ae0db95d97fa5385513d2c1394e3a791a2/src/universal-race-engine/runRaceEngine.ts";
@@ -10,7 +10,6 @@ import * as correctedFlatBaselineCore from "https://raw.githubusercontent.com/br
 import * as previousFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/a9ad36c6f9eb9c5864cec8827f8eb57669bf0d72/src/universal-race-engine/runRaceEngine.ts";
 import * as historicalFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2/src/universal-race-engine/runRaceEngine.ts";
 import * as venetoLegacyReplayOptimizedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/643039a7e78b814c62499eb3a84ed38b2d138e73/src/universal-race-engine/runVenetoLegacyReplayOptimizedV1.ts";
-import * as pinnedReplayCpuOptimizedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e532c5b8934746bd4efae9cf50090c0c654a26ac/src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts";
 import * as calibratedBreakawayCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
 import * as optimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ef5f0d4f2a91be80834140fbda977b5da614908b/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
 import * as previousOptimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
@@ -736,14 +735,8 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     const venetoLegacyReplayRecovery=stageId==="0399e35d-d00c-4411-8957-edd7ef87a574" &&
       engineLaneV1==="baseline_universal" &&
       text(checkpoint.selectedEngineSourceCommit)==="fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2";
-    // Replay-only CPU optimization for pre-existing 92de266 baseline runs.
-    // Physical phases, frozen input, winner, ranks and gaps are NOT switched.
-    const cpuOptimizedPinnedReplay = !venetoLegacyReplayRecovery &&
-      engineLaneV1 === "baseline_universal" &&
-      text(checkpoint.selectedEngineSourceCommit) === PROSPECTIVE_CLOCK_SOURCE_COMMIT;
-    const replayCore=venetoLegacyReplayRecovery
-      ? venetoLegacyReplayOptimizedCore
-      : cpuOptimizedPinnedReplay ? pinnedReplayCpuOptimizedCore : selectedCore;
+    // The pinned baseline module itself is replay-optimized; no extra copy is loaded.
+    const replayCore=venetoLegacyReplayRecovery?venetoLegacyReplayOptimizedCore:selectedCore;
     const builtBaseReplayTimeline=replayCore.buildUniversalReplayTimeline(
       calculationInput,
       checkpoint.riderReadiness as any,
