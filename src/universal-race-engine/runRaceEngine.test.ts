@@ -12794,6 +12794,44 @@ describe('Phase 8 complete fatigue, effort, risk and persistence handoff', () =>
     expect(protectedUpdate.effort.effortCategory).toBe('protected')
   })
 
+  it('charges a successful opening breakaway extra live energy and persistent next-stage recovery debt', () => {
+    const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
+    const phase1 = result.roadRaceResolution.phase1Opening!
+    const breakout = phase1.attackAttempts.find((attempt) => attempt.acceptedEscapeLaunch)
+    expect(breakout).toBeDefined()
+    const riderId = breakout!.riderId
+    const phaseEnergy = phase1.riderEnergy.find((row) => row.riderId === riderId)!
+    const update = result.postStageUpdate.riderUpdates.find((row) => row.riderId === riderId)!
+
+    // The green bar pays for time exposed after a successful launch, in addition
+    // to the baseline phase cost and the original attack effort.
+    expect(phaseEnergy.totalOpeningEnergyCost).toBeGreaterThan(
+      phaseEnergy.baselineOpeningEnergyCost + phaseEnergy.attackEnergyCost,
+    )
+    expect(update.breakawayExposureKm).toBeGreaterThan(0)
+    expect(update.breakawayRecoveryDebtLoad).toBeGreaterThan(0)
+    expect(update.breakawayRecoveryDebtLoad).toBeLessThanOrEqual(10)
+    expect(update.breakawayRecoveryDebtLoad).toBeCloseTo(
+      Math.min(10, update.breakawayExposureKm / result.roadRaceResolution.phase1Opening!.phaseBoundary.endKm * 4 * 10),
+      5,
+    )
+    expect(update.grossFatigueGain).toBeCloseTo(
+      update.totalEnergySpent * 0.16 +
+        update.distanceLoad +
+        update.difficultyLoad +
+        update.finishStatusLoad +
+        update.incidentFatigueLoad +
+        update.exhaustionDebtLoad +
+        update.breakawayRecoveryDebtLoad,
+      5,
+    )
+    const sheltered = result.postStageUpdate.riderUpdates.find(
+      (row) => row.breakawayExposureKm === 0 && row.riderId !== riderId,
+    )
+    expect(sheltered).toBeDefined()
+    expect(sheltered!.breakawayRecoveryDebtLoad).toBe(0)
+  })
+
   it('records attack, chase, breakaway and point-battle effort from calculated outputs', () => {
     const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
     const breakawayIds =
