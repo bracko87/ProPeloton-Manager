@@ -12795,7 +12795,8 @@ describe('Phase 8 complete fatigue, effort, risk and persistence handoff', () =>
   })
 
   it('charges a successful opening breakaway extra live energy and persistent next-stage recovery debt', () => {
-    const result = runRaceEngine(createSuccessfulOpeningEscapeInput())
+    const input = createSuccessfulOpeningEscapeInput()
+    const result = runRaceEngine(input)
     const phase1 = result.roadRaceResolution.phase1Opening!
     const breakout = phase1.attackAttempts.find((attempt) => attempt.acceptedEscapeLaunch)
     expect(breakout).toBeDefined()
@@ -12812,7 +12813,7 @@ describe('Phase 8 complete fatigue, effort, risk and persistence handoff', () =>
     expect(update.breakawayRecoveryDebtLoad).toBeGreaterThan(0)
     expect(update.breakawayRecoveryDebtLoad).toBeLessThanOrEqual(10)
     expect(update.breakawayRecoveryDebtLoad).toBeCloseTo(
-      Math.min(10, update.breakawayExposureKm / result.roadRaceResolution.phase1Opening!.phaseBoundary.endKm * 4 * 10),
+      Math.min(10, update.breakawayExposureKm / input.stage.distanceKm * 10),
       5,
     )
     expect(update.grossFatigueGain).toBeCloseTo(
