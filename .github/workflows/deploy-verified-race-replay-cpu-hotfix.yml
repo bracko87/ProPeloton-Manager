@@ -9,6 +9,8 @@ on:
       - 'scripts/verify-summit-worker-pins.mjs'
       - 'scripts/verify-breakaway-tier-pilot-v1.mjs'
       - 'src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts'
+      - 'src/universal-race-engine/applyUniversalBreakawayRecoveryV2.mjs'
+      - 'scripts/verify-universal-breakaway-recovery-v2.mjs'
   workflow_dispatch:
 
 permissions:
@@ -45,6 +47,7 @@ jobs:
           set -euo pipefail
           node scripts/verify-pinned-replay-cpu-fork.mjs
           node scripts/verify-breakaway-tier-pilot-v1.mjs
+          node scripts/verify-universal-breakaway-recovery-v2.mjs
           node scripts/verify-v1-clock-production-rollout.mjs
           node scripts/verify-summit-worker-pins.mjs
 
@@ -58,4 +61,4 @@ jobs:
           set -euo pipefail
           supabase --version
           supabase functions deploy universal-race-stage-safe-resume --remote="$PROJECT_REF" --no-verify-jwt --yes
-          echo "One race worker deployed. Verify live source pin and Angola Stage 1 run eligibility before declaring the tier canary active."
+          echo "One race worker deployed. Verify live universal breakaway recovery V2 helper and policy activation before declaring completion."
