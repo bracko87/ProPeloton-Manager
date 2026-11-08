@@ -1,6 +1,7 @@
 
 /// <reference lib="deno.ns" />
 // Prospective-only winner clock. Historical source pins remain for in-flight races.
+import { BREAKAWAY_RECOVERY_POLICY_V2, applyUniversalBreakawayRecoveryV2 } from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ed919bdf870f3c8a081eba9b5e36806d284b289c/src/universal-race-engine/applyUniversalBreakawayRecoveryV2.mjs";
 import * as clockFixedFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/70553d2334f057f796d50a2bfa6ad5fec4da3da2/src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts";
 import * as clockFixedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
 import * as clockFixedBreakawayCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
@@ -77,9 +78,9 @@ const HISTORICAL_FLAT_BASELINE_SOURCE_COMMIT = "fa93be2b6e4d8aeb4200caa3dcf82a1b
 const MANDATORY_OCTOBER_MOUNTAIN_PILOT_IDS = new Set(MOUNTAIN_ENGINE_OCTOBER_PILOT_STAGE_IDS_V1);
 const MANDATORY_BREAKAWAY_PILOT_IDS = new Set(["5523cf76-8fd4-4a12-ab28-7f285c9829ff", "335708f7-d56a-4816-9068-38399e8f74e3", "7f69e552-b116-453c-bf55-16ef655ea021"]);
 const PREVIOUS_SOURCE_COMMIT = "16d240ccd8a2d4351f8abae014d6cedd10c1b24c";
-const BREAKAWAY_RECOVERY_TIER_PILOT_STAGE_ID = "cc502605-4cd0-4e7f-aeed-5bdfa2417fdb";
-const BREAKAWAY_RECOVERY_TIER_PILOT_SOURCE_COMMIT = "70553d2334f057f796d50a2bfa6ad5fec4da3da2";
-const BREAKAWAY_RECOVERY_TIER_POLICY = "breakaway_recovery_physical_20_50_100km_v1";
+// All newly calculated stages, every category/lane, use the same post-stage
+// physical breakaway recovery policy. An in-flight checkpoint never changes.
+const BREAKAWAY_RECOVERY_V2_HELPER_COMMIT = "ed919bdf870f3c8a081eba9b5e36806d284b289c";
 
 function object(value: unknown): JsonObject {
   return value && typeof value === "object" && !Array.isArray(value) ? value as JsonObject : {};
@@ -618,9 +619,6 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     selectedCore=engineLaneV1 === "experimental_breakaway_v1"
       ? clockFixedBreakawayCore : engineLaneV1 === "experimental_mountain_v1"
       ? clockFixedMountainCore : clockFixedFlatBaselineCore;
-    if(stageId===BREAKAWAY_RECOVERY_TIER_PILOT_STAGE_ID && engineLaneV1!=="baseline_universal"){
-      throw new Error("Angola recovery-tier canary requires the reviewed baseline sporting lane.");
-    }
     phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);
     calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);
   } else {
@@ -697,6 +695,9 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       calculationInput,
       phase9Modifiers,
       scenarioPreserved,
+      // The checkpoint is the activation boundary: only newly claimed runs
+      // receive this flag. Pre-deployment resumed checkpoints stay frozen.
+      breakawayRecoveryPolicyVersion:BREAKAWAY_RECOVERY_POLICY_V2,
       selectedEngineLaneV1:engineLaneV1,
       selectedEngineSourceCommit:effectiveSourceCommit,
       stageClassification,
@@ -1239,7 +1240,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       throw new Error(`Universal replay synchronization failed: ${hardReplayBlockingIssues.join(", ")}`);
     }
     console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_post",stageId,step}));
-    const postStageUpdate=selectedCore.buildUniversalPostStageUpdateSummary(
+    let postStageUpdate=selectedCore.buildUniversalPostStageUpdateSummary(
       calculationInput,
       checkpoint.difficulty as any,
       checkpoint.riderReadiness as any,
@@ -1251,27 +1252,31 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       replayTimeline as any,
       replaySynchronization,
     );
-    // Validate the exact physical-distance exposure and tier formula before official submission.
-    if(stageId===BREAKAWAY_RECOVERY_TIER_PILOT_STAGE_ID){
-      const updates=Array.isArray((postStageUpdate as any)?.riderUpdates)
-        ? (postStageUpdate as any).riderUpdates : [];
+    const universalBreakawayRecoveryEnabled =
+      text(checkpoint.breakawayRecoveryPolicyVersion) === BREAKAWAY_RECOVERY_POLICY_V2;
+    if(universalBreakawayRecoveryEnabled){
+      postStageUpdate=applyUniversalBreakawayRecoveryV2(
+        postStageUpdate,
+        checkpoint.roadRaceResolution,
+        finite(calculationInput.stage?.distanceKm),
+      ) as typeof postStageUpdate;
+      const updates=(postStageUpdate as any).riderUpdates as any[];
       if(updates.length!==(Array.isArray(calculationInput?.riders)?calculationInput.riders.length:0))
-        throw new Error("Angola recovery pilot missing rider-level post-stage audit rows.");
+        throw new Error("Universal breakaway recovery missing per-rider post-stage audit rows.");
       const invalid=updates.filter((row:any)=>{
-        if(typeof row?.breakawayExposureKm!=="number"||typeof row?.breakawayRecoveryDebtLoad!=="number")return true;
-        const km=Number(row.breakawayExposureKm),debt=Number(row.breakawayRecoveryDebtLoad);
+        const km=Number(row?.breakawayExposureKm),debt=Number(row?.breakawayRecoveryDebtLoad);
         if(!Number.isFinite(km)||!Number.isFinite(debt)||km<0||km>finite(calculationInput.stage?.distanceKm,0)+0.000001)return true;
         const expected=Math.min(30,Math.max(0,km-20))*0.15+
           Math.min(50,Math.max(0,km-50))*0.28+
           Math.max(0,km-100)*0.45;
         return Math.abs(debt-expected)>0.000002;
       });
-      if(invalid.length)throw new Error("Angola breakaway-tier incorrect distance/debt: "+invalid.length);
+      if(invalid.length)throw new Error("Universal breakaway recovery mismatch: "+invalid.length+" riders.");
       console.log(JSON.stringify({
-        event:"angola_breakaway_tier_canary_verified",stageId,engineFork:BREAKAWAY_RECOVERY_TIER_PILOT_SOURCE_COMMIT,
-        riders:updates.length,above20:updates.filter((r:any)=>finite(r.breakawayExposureKm)>20).length,
-        above50:updates.filter((r:any)=>finite(r.breakawayExposureKm)>50).length,
-        above100:updates.filter((r:any)=>finite(r.breakawayExposureKm)>100).length,
+        event:"universal_breakaway_recovery_v2_verified",stageId,
+        engineLaneV1,policy:BREAKAWAY_RECOVERY_POLICY_V2,
+        riders:updates.length,
+        evidence:(postStageUpdate as any).breakawayRecoveryEvidence,
       }));
     }
     await heartbeat(supabase,stageId,runId,"step10_post_stage_ready",{});
@@ -1336,6 +1341,24 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     await heartbeat(supabase,stageId,runId,"step10_preparing_output",{});
     console.log(JSON.stringify({event:"safe_step10_profile",phase:"begin_output",stageId,step}));
     let output=buildOutputWithReplayProgressGuarantee(input,result);
+    // Persist the actual exposure in the official rider-state manifest too.
+    // Stages whose checkpoint predates this policy retain their old rows.
+    if(universalBreakawayRecoveryEnabled){
+      const byRider=new Map(
+        ((postStageUpdate as any).riderUpdates as any[]).map((r:any)=>[r.riderId,r]),
+      );
+      const manifest=object((output as any).applicationManifest);
+      if(!Array.isArray(manifest.riderStateRows))throw new Error("Missing canonical manifest for breakaway exposure");
+      (output as any).applicationManifest={
+        ...manifest,
+        riderStateRows:manifest.riderStateRows.map((row:any)=>{
+          const update=byRider.get(row.riderId) as any;
+          if(!update)throw new Error("Manifest missing breakaway rider "+row.riderId);
+          return {...row,breakawayKm:update.breakawayExposureKm,
+            breakawayRecoveryDebtLoad:update.breakawayRecoveryDebtLoad};
+        }),
+      };
+    }
     await heartbeat(supabase,stageId,runId,"step10_output_ready",{});
     output=addFinishRankAlias(output);
     output={
@@ -1348,9 +1371,9 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         engineLaneV1,
         recoveryPolicy:"checkpointed_safe_mode_v2",
         scenarioPreserved:scenarioPreserved,
-        ...(stageId===BREAKAWAY_RECOVERY_TIER_PILOT_STAGE_ID ? {
-          breakawayRecoveryTierPolicy:BREAKAWAY_RECOVERY_TIER_POLICY,
-          breakawayRecoveryTierForkSourceCommit:BREAKAWAY_RECOVERY_TIER_PILOT_SOURCE_COMMIT,
+        ...(universalBreakawayRecoveryEnabled ? {
+          breakawayRecoveryTierPolicy:BREAKAWAY_RECOVERY_POLICY_V2,
+          breakawayRecoveryHelperSourceCommit:BREAKAWAY_RECOVERY_V2_HELPER_COMMIT,
           originalSportingPhysicsSourceCommit:PROSPECTIVE_CLOCK_SOURCE_COMMIT,
         } : {}),
       },
@@ -1360,9 +1383,9 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
         sourceCommit:effectiveSourceCommit,
         engineLaneV1,
         totalSteps:11,
-        ...(stageId===BREAKAWAY_RECOVERY_TIER_PILOT_STAGE_ID ? {
-          breakawayRecoveryTierPolicy:BREAKAWAY_RECOVERY_TIER_POLICY,
-          breakawayRecoveryTierForkSourceCommit:BREAKAWAY_RECOVERY_TIER_PILOT_SOURCE_COMMIT,
+        ...(universalBreakawayRecoveryEnabled ? {
+          breakawayRecoveryTierPolicy:BREAKAWAY_RECOVERY_POLICY_V2,
+          breakawayRecoveryHelperSourceCommit:BREAKAWAY_RECOVERY_V2_HELPER_COMMIT,
         } : {}),
       },
     };
