@@ -8838,9 +8838,11 @@ function calculateBreakawayExposureEnergyCost(
 export function calculateBreakawayTierEnergyPenalty(distanceKm: number): number {
   const km = Math.max(0, Number.isFinite(distanceKm) ? distanceKm : 0)
   return deterministicRound(
-    clamp(km - 20, 0, 30) * 0.12 +
-      clamp(km - 50, 0, 50) * 0.25 +
-      Math.max(0, km - 100) * 0.4,
+    // Live energy ramps gently through 50/100 km to avoid instant detachment
+    // at a phase boundary; heavy post-100 km exposure remains punishing.
+    clamp(km - 20, 0, 30) * 0.03 +
+      clamp(km - 50, 0, 50) * 0.06 +
+      Math.max(0, km - 100) * 0.35,
     6,
   )
 }
