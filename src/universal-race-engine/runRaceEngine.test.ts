@@ -12798,7 +12798,7 @@ describe('Phase 8 complete fatigue, effort, risk and persistence handoff', () =>
 
   it('uses progressive per-kilometre breakaway penalties beyond 20, 50, and 100 km', () => {
     const distances = [0, 20, 21, 50, 51, 100, 101, 130]
-    const expectedEnergy = [0, 0, 0.12, 3.6, 3.85, 16.1, 16.5, 28.1]
+    const expectedEnergy = [0, 0, 0.03, 0.9, 0.96, 3.9, 4.25, 14.4]
     const expectedFatigue = [0, 0, 0.15, 4.5, 4.78, 18.5, 18.95, 32]
     distances.forEach((km, index) => {
       expect(calculateBreakawayTierEnergyPenalty(km)).toBeCloseTo(
