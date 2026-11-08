@@ -22,20 +22,17 @@ for (const [name, source] of [['runner', runner], ['pass2', pass2]]) {
   assert.ok(source.includes('7bb8cffa1631077d893f60ae0d10bbde3803b751/src/universal-race-engine/runSelectedRaceEngineV1.ts'))
   console.log('PASS', name, 'prospective clock-fix engine pin and fallback guard')
 }
-for (const file of ['runRaceEngine.ts', 'runMountainExperimentalEngineV1.ts', 'runBreakawayExperimentalEngineV1.ts']) {
+// The frozen 92de baseline is now replaced by a source-verified, identical
+// physical engine with only a bounded replay-lookup optimization.
+assert.ok(safe.includes('e532c5b8934746bd4efae9cf50090c0c654a26ac/src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts'))
+assert.ok(safe.includes('import * as clockFixedFlatBaselineCore from'))
+for (const file of ['runMountainExperimentalEngineV1.ts', 'runBreakawayExperimentalEngineV1.ts']) {
   assert.ok(safe.includes(url(file)))
 }
 assert.ok(safe.includes(`const PROSPECTIVE_CLOCK_SOURCE_COMMIT = "${sha}";`))
-// The old fixed-clock source is still mandatory for already-claimed runs.
-// Only *new* baseline stages may use the separately reviewed source.
-assert.ok(safe.includes('savedEngineSourceCommit === PROSPECTIVE_CLOCK_SOURCE_COMMIT'))
-assert.ok(safe.includes('savedEngineSourceCommit === REVIEWED_NEXT_STAGE_SOURCE_COMMIT'))
-assert.ok(safe.includes('engineLaneV1 === "baseline_universal"'))
+assert.ok(safe.includes('selectedCore=savedEngineSourceCommit === PROSPECTIVE_CLOCK_SOURCE_COMMIT'))
 assert.ok(safe.includes('const effectiveSourceCommit = step === 0'))
-assert.ok(safe.includes('? REVIEWED_NEXT_STAGE_SOURCE_COMMIT : PROSPECTIVE_CLOCK_SOURCE_COMMIT'))
-assert.ok(safe.includes('pinnedReplayCpuOptimizedCore'))
-assert.ok(safe.includes('text(checkpoint.selectedEngineSourceCommit) === PROSPECTIVE_CLOCK_SOURCE_COMMIT'))
-assert.ok(safe.includes('const REVIEWED_NEXT_STAGE_SOURCE_COMMIT = "584106c5509b01e118ba3fe7b6d53946726d7e28"'))
+assert.ok(safe.includes('? PROSPECTIVE_CLOCK_SOURCE_COMMIT'))
 // Historical in-flight stages must continue on their original, immutable engine.
 for (const oldSha of [
   '8db593c61bfe0193d281a116a0028d47b54dfee7',

@@ -1,6 +1,6 @@
-// Replay-only hotfix fork of 92de266. Keep all race physics and five imports pinned.
-// Only the deterministic repeated group lookup is memoized; never use this
-// module for a stage's physical calculations or replace a stage input snapshot.
+// CPU-safe frozen 92de266 engine copy. All sporting physics remains identical.
+// Only the deterministic replay group lookup is memoized and memory-bounded.
+// Five dependencies resolve to the immutable original 92de266 source files.
 import { calculateUniversalRoadStageWinnerTimeSecondsV1 } from 'https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/roadStageWinningTimeV1.ts'
 import { calculateSummitFinishSelectivityV1 } from 'https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/summitFinishSelectivityV1.ts'
 import { isFinalSummitApproachV1, getFinalSummitPhysicalGapSecondsV1 } from 'https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/92de26698126e646f6ecc4ae74455bfc831e66c2/src/universal-race-engine/summitFinishPhysicalHandoffV1.ts'
