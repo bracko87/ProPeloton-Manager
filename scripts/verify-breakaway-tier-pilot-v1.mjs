@@ -4,7 +4,7 @@ import { runInNewContext } from 'node:vm'
 import { createHash } from 'node:crypto'
 
 // This is the exact blob SHA of the source deployed in production worker v80.
-const FROZEN_DEPLOYED_CPU_BASE_BLOB = 'd10a04220e4cec902dcf3139c64f589d7ea73adac'
+const FROZEN_DEPLOYED_CPU_BASE_BLOB = 'd10a0420e4cec902dcf3139c64f589d7ea73adac'
 const pilot = readFileSync('src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts', 'utf8')
 const header = [
   '// Tour of Angola Stage 1 prospective breakaway recovery-debt canary.',
