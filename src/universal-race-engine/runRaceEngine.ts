@@ -30681,10 +30681,27 @@ export function buildUniversalReplayTimeline(
   // Inspect the actual road-group model instead of inventing a split at the
   // next routine chase checkpoint. A binary search locates the first point
   // where the rider's authoritative group has changed.
-  const physicalChaseDropGroupsAt = (km: number) => groupsAtKm(km)
-  const groupOfRiderAt = (riderId: string, km: number): string | null =>
-    physicalChaseDropGroupsAt(km).find((g) => g.riderIds.includes(riderId))
-      ?.displayCode ?? null
+  // Physically authoritative groups are deterministic at each kilometre.
+  // Bounded memoization avoids rebuilding the same field once per rider.
+  const physicalGroupCodesByKm = new Map<number, ReadonlyMap<string, string>>()
+  const groupOfRiderAt = (riderId: string, km: number): string | null => {
+    let codes = physicalGroupCodesByKm.get(km)
+    if (!codes) {
+      const byRider = new Map<string, string>()
+      for (const group of groupsAtKm(km)) {
+        for (const id of group.riderIds) {
+          if (!byRider.has(id)) byRider.set(id, group.displayCode)
+        }
+      }
+      if (physicalGroupCodesByKm.size >= 512) {
+        const oldestKm = physicalGroupCodesByKm.keys().next().value
+        if (oldestKm !== undefined) physicalGroupCodesByKm.delete(oldestKm)
+      }
+      physicalGroupCodesByKm.set(km, byRider)
+      codes = byRider
+    }
+    return codes.get(riderId) ?? null
+  }
   const physicalDropProbeKms = Array.from(new Set([
     phase4.phaseBoundary.startKm,
     ...eventDefinitions.map((d) => d.kmFromStart)
