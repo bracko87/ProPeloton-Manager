@@ -1,0 +1,31 @@
+name: Verify isolated breakaway recovery canary
+on:
+  pull_request:
+    paths:
+      - 'src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts'
+      - 'src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts'
+      - 'scripts/verify-breakaway-tier-pilot-v1.mjs'
+      - '.github/workflows/verify-breakaway-tier-pilot-v1.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts'
+      - 'src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts'
+      - 'scripts/verify-breakaway-tier-pilot-v1.mjs'
+      - '.github/workflows/verify-breakaway-tier-pilot-v1.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-sporting-physics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Verify frozen replay source retained
+        run: node scripts/verify-pinned-replay-cpu-fork.mjs
+      - name: Verify Angola post-stage tier canary and 20/50/100km cases
+        run: node scripts/verify-breakaway-tier-pilot-v1.mjs
