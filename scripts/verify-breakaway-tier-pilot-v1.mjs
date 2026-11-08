@@ -1,8 +1,10 @@
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
+import { createHash } from 'node:crypto'
 
-const base = readFileSync('src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts', 'utf8')
+// This is the exact blob SHA of the source deployed in production worker v80.
+const FROZEN_DEPLOYED_CPU_BASE_BLOB = 'd10a04220e4cec902dcf3139c64f589d7ea73adac'
 const pilot = readFileSync('src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts', 'utf8')
 const header = [
   '// Tour of Angola Stage 1 prospective breakaway recovery-debt canary.',
@@ -77,6 +79,11 @@ replaceExactly(
   '',
   'canary rider output audit fields',
 )
-assert.equal(normalized, base, 'Any change outside guarded post-stage recovery invalidates the frozen sporting physics')
+const bytes = Buffer.from(normalized, 'utf8')
+const frozenSha = createHash('sha1')
+  .update(Buffer.from('blob ' + bytes.byteLength + '\0'))
+  .update(bytes)
+  .digest('hex')
+assert.equal(frozenSha, FROZEN_DEPLOYED_CPU_BASE_BLOB, 'Canary must match the exact already-deployed CPU source after removing intended post-stage changes')
 console.log('PASS canary unchanged physical engine / replay; only Angola Stage 1 post-stage tier debt added')
 console.log('PASS 20/50/100+km tier formula: 20=0; 50=4.5; 100=18.5; 126=30.2 extra fatigue load')
