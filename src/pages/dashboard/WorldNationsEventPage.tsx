@@ -254,10 +254,12 @@ function formatRaceTime(seconds?: number | null): string {
   return `${hours}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
 }
 
-function formatGap(seconds?: number | null): string {
+function formatGap(seconds?: number | null, rank?: number | null): string {
   if (seconds == null || !Number.isFinite(Number(seconds))) return '—'
   const total = Math.max(0, Math.round(Number(seconds)))
-  if (total === 0) return 'Leader'
+  // Multiple riders may share the winner's official time. Only the
+  // actual winner is 'Leader'; all other zero-gap riders are 'Same time'.
+  if (total === 0) return rank != null && rank > 1 ? 'Same time' : 'Leader'
   if (total < 60) return `+${total}s`
   const minutes = Math.floor(total / 60)
   const secs = total % 60
@@ -444,7 +446,7 @@ function NationsStageResultTable({
                     </div>
                   </td>
                   <td className="px-3 py-3 text-right font-semibold text-slate-900">{formatRaceTime(result.elapsed_seconds)}</td>
-                  <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
+                  <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds, result.rank)}</td>
                 </tr>
               ))
             : displayedRiders.map((result, index) => {
@@ -475,7 +477,7 @@ function NationsStageResultTable({
                     <td className="px-3 py-3 text-right font-semibold text-slate-900">
                       {result.elapsed_seconds == null ? (result.status?.toUpperCase() ?? '—') : formatRaceTime(result.elapsed_seconds)}
                     </td>
-                    <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds)}</td>
+                    <td className="px-3 py-3 text-right text-slate-500">{formatGap(result.gap_seconds, result.rank)}</td>
                   </tr>
                 )
               })}
