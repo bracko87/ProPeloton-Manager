@@ -4,6 +4,11 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/deploy-verified-race-replay-cpu-hotfix.yml'
+      - 'supabase/functions/universal-race-stage-safe-resume/index.ts'
+      - 'scripts/verify-v1-clock-production-rollout.mjs'
+      - 'scripts/verify-summit-worker-pins.mjs'
+      - 'scripts/verify-breakaway-tier-pilot-v1.mjs'
+      - 'src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts'
   workflow_dispatch:
 
 permissions:
@@ -39,6 +44,7 @@ jobs:
         run: |
           set -euo pipefail
           node scripts/verify-pinned-replay-cpu-fork.mjs
+          node scripts/verify-breakaway-tier-pilot-v1.mjs
           node scripts/verify-v1-clock-production-rollout.mjs
           node scripts/verify-summit-worker-pins.mjs
 
@@ -52,4 +58,4 @@ jobs:
           set -euo pipefail
           supabase --version
           supabase functions deploy universal-race-stage-safe-resume --remote="$PROJECT_REF" --no-verify-jwt --yes
-          echo "Race replay worker deployment command succeeded. Verify live version and source separately before reopening the quarantined Stage 2."
+          echo "One race worker deployed. Verify live source pin and Angola Stage 1 run eligibility before declaring the tier canary active."
