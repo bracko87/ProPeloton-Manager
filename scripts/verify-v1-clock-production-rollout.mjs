@@ -24,7 +24,7 @@ for (const [name, source] of [['runner', runner], ['pass2', pass2]]) {
 }
 // The frozen 92de baseline is now replaced by a source-verified, identical
 // physical engine with only a bounded replay-lookup optimization.
-assert.ok(safe.includes('e532c5b8934746bd4efae9cf50090c0c654a26ac/src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts'))
+assert.ok(safe.includes('70553d2334f057f796d50a2bfa6ad5fec4da3da2/src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts'))
 assert.ok(safe.includes('import * as clockFixedFlatBaselineCore from'))
 for (const file of ['runMountainExperimentalEngineV1.ts', 'runBreakawayExperimentalEngineV1.ts']) {
   assert.ok(safe.includes(url(file)))
