@@ -31,7 +31,9 @@ assert.match(safe, /selectedEngineLaneV1:engineLaneV1/)
 assert.match(safe, /selectedEngineSourceCommit:effectiveSourceCommit/)
 assert.match(safe, /const savedLane=text\(checkpoint.selectedEngineLaneV1\)/)
 assert.match(safe, /const savedEngineSourceCommit=text\(checkpoint.selectedEngineSourceCommit\)/)
-assert.match(safe, /selectedCore=savedEngineSourceCommit === PROSPECTIVE_CLOCK_SOURCE_COMMIT/)
+assert.match(safe, /savedEngineSourceCommit === PROSPECTIVE_CLOCK_SOURCE_COMMIT/)
+assert.match(safe, /savedEngineSourceCommit === REVIEWED_NEXT_STAGE_SOURCE_COMMIT/)
+assert.match(safe, /engineLaneV1 === "baseline_universal"/)
 for (const method of [
   'resolveRoadPhase1Opening','resolveRoadPhase2Development',
   'resolveRoadPhase3Decisive','resolveRoadPhase4Finish',
