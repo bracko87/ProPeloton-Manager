@@ -61,6 +61,9 @@ jobs:
       - name: Compile race engine
         run: npx esbuild src/universal-race-engine/runRaceEngine.ts --bundle --platform=node --format=esm --outfile=/tmp/runRaceEngine.mjs
 
+      - name: Compile frozen replay-only CPU optimization fork
+        run: npx esbuild src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts --bundle --platform=neutral --format=esm --external:'https://*' --outfile=/tmp/runRaceEngineReplayCpuOptimizedV1.mjs
+
       - name: Validate V1 terrain-aware road-stage absolute times
         run: npx --yes vitest@3.2.4 run src/universal-race-engine/roadStageWinningTimeV1.test.ts --reporter=dot
 
