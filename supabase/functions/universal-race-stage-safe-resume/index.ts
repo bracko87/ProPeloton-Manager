@@ -10,8 +10,7 @@ import * as correctedFlatBaselineCore from "https://raw.githubusercontent.com/br
 import * as previousFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/a9ad36c6f9eb9c5864cec8827f8eb57669bf0d72/src/universal-race-engine/runRaceEngine.ts";
 import * as historicalFlatBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/fa93be2b6e4d8aeb4200caa3dcf82a1b4dcb8cf2/src/universal-race-engine/runRaceEngine.ts";
 import * as venetoLegacyReplayOptimizedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/643039a7e78b814c62499eb3a84ed38b2d138e73/src/universal-race-engine/runVenetoLegacyReplayOptimizedV1.ts";
-import * as pinnedReplayCpuOptimizedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/584106c5509b01e118ba3fe7b6d53946726d7e28/src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts";
-import * as reviewedNextStageBaselineCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/584106c5509b01e118ba3fe7b6d53946726d7e28/src/universal-race-engine/runRaceEngine.ts";
+import * as pinnedReplayCpuOptimizedCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/e532c5b8934746bd4efae9cf50090c0c654a26ac/src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts";
 import * as calibratedBreakawayCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runBreakawayExperimentalEngineV1.ts";
 import * as optimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/ef5f0d4f2a91be80834140fbda977b5da614908b/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
 import * as previousOptimizedMountainCore from "https://raw.githubusercontent.com/bracko87/ProPeloton-Manager/726682eaf58385c4d60a9b664d2b9696b8cfc1a0/src/universal-race-engine/runMountainExperimentalEngineV1.ts";
@@ -70,7 +69,6 @@ type JsonObject = Record<string, unknown>;
 const CONTRACT = "universal_race_checkpointed_safe_mode_v2";
 const SOURCE_COMMIT = "878aa8ae0db95d97fa5385513d2c1394e3a791a2";
 const PROSPECTIVE_CLOCK_SOURCE_COMMIT = "92de26698126e646f6ecc4ae74455bfc831e66c2";
-const REVIEWED_NEXT_STAGE_SOURCE_COMMIT = "584106c5509b01e118ba3fe7b6d53946726d7e28";
 const OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "ef5f0d4f2a91be80834140fbda977b5da614908b";
 const PREVIOUS_OPTIMIZED_MOUNTAIN_SOURCE_COMMIT = "726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
 const CALIBRATED_ROAD_SOURCE_COMMIT = "726682eaf58385c4d60a9b664d2b9696b8cfc1a0";
@@ -617,7 +615,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       ? "experimental_breakaway_v1" : selectMountainEngineLaneV1(input.stage);
     selectedCore=engineLaneV1 === "experimental_breakaway_v1"
       ? clockFixedBreakawayCore : engineLaneV1 === "experimental_mountain_v1"
-      ? clockFixedMountainCore : reviewedNextStageBaselineCore;
+      ? clockFixedMountainCore : clockFixedFlatBaselineCore;
     phase9Modifiers=selectedCore.buildUniversalPhase9ModifierSummary(input);
     calculationInput=selectedCore.applyUniversalPhase9ModifiersToInput(input,phase9Modifiers);
   } else {
@@ -637,10 +635,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
       ? "experimental_mountain_v1" : "baseline_universal";
     // Resume the *checkpoint's* pinned engine, never a later production default.
     const savedEngineSourceCommit=text(checkpoint.selectedEngineSourceCommit);
-    selectedCore = savedEngineSourceCommit === REVIEWED_NEXT_STAGE_SOURCE_COMMIT &&
-      engineLaneV1 === "baseline_universal"
-      ? reviewedNextStageBaselineCore
-      : savedEngineSourceCommit === PROSPECTIVE_CLOCK_SOURCE_COMMIT
+    selectedCore=savedEngineSourceCommit === PROSPECTIVE_CLOCK_SOURCE_COMMIT
       ? (engineLaneV1 === "experimental_breakaway_v1"
           ? clockFixedBreakawayCore : engineLaneV1 === "experimental_mountain_v1"
           ? clockFixedMountainCore : clockFixedFlatBaselineCore)
@@ -675,8 +670,7 @@ async function executeStep(supabase: SupabaseClient, claim: JsonObject): Promise
     throw new Error("Breakaway V1 checkpoint stage/source mismatch.");
   }
   const effectiveSourceCommit = step === 0
-    ? (engineLaneV1 === "baseline_universal"
-        ? REVIEWED_NEXT_STAGE_SOURCE_COMMIT : PROSPECTIVE_CLOCK_SOURCE_COMMIT)
+    ? PROSPECTIVE_CLOCK_SOURCE_COMMIT
     : text(checkpoint.selectedEngineSourceCommit) || PREVIOUS_SOURCE_COMMIT;
   let next: JsonObject={...checkpoint};
 
