@@ -13131,6 +13131,7 @@ export function resolveRoadPhase3Decisive(
     }
   }
 
+  const phase1 = phase2Resolution.phase1Opening
   const phase2 = phase2Resolution.phase2Development
   const phaseBoundary = roadCommandResolution.phaseBoundaries.find(
     (phase) => phase.phaseNumber === 3,
@@ -15726,6 +15727,8 @@ export function resolveRoadPhase4Finish(
     }
   }
 
+  const phase1 = phase3Resolution.phase1Opening
+  const phase2 = phase3Resolution.phase2Development
   const phase3 = phase3Resolution.phase3Decisive
   const phaseBoundary = roadCommandResolution.phaseBoundaries.find(
     (phase) => phase.phaseNumber === 4,
