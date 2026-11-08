@@ -768,7 +768,9 @@ describe('full sporting breakaway pilot Bačka 96-rider real profile, anonymous 
     expect(normal.roadRaceResolution.phase1Opening?.breakawayRiderIds.length).toBeGreaterThan(0)
     expect(normal.roadRaceResolution.phase2Development?.endGapSeconds).toBeGreaterThan(30)
     expect(normal.roadRaceResolution.phase3Decisive?.physicalChasingTeamIds).toEqual([])
-    expect(normal.roadRaceResolution.phase3Decisive?.physicalEndGapSeconds).toBeGreaterThan(30)
+    // With progressive breakaway energy debt, the unopposed escape may lose
+    // some of its former 30s lead yet must remain physically ahead of P.
+    expect(normal.roadRaceResolution.phase3Decisive?.physicalEndGapSeconds).toBeGreaterThan(20)
     const chased=runSelectedRaceEngineV1({...input,stagePlans:plans(true)})
     expect(chased.validationPassed).toBe(true)
     expect(chased.replaySynchronization.synchronized).toBe(true)
