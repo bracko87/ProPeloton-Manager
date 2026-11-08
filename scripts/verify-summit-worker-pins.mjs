@@ -69,7 +69,7 @@ for (const [name, requiredPrimaryModules] of workers) {
     assert.ok(source.includes(`const PROSPECTIVE_CLOCK_SOURCE_COMMIT = "${CLOCK_SHA}";`), 'Safe Resume must select new clock prospectively')
     // One imported baseline is a source-verified 92de copy, replacing a
     // duplicate large module. Exactly one safe replay lookup is optimized.
-    assert.ok(source.includes(`${prefix}e532c5b8934746bd4efae9cf50090c0c654a26ac/src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts`), 'Missing frozen physics-equivalent CPU-optimized baseline')
+    assert.ok(source.includes(`${prefix}70553d2334f057f796d50a2bfa6ad5fec4da3da2/src/universal-race-engine/runRaceEngineReplayCpuOptimizedBreakawayTierPilotV1.ts`), 'Missing frozen physics-equivalent CPU-optimized baseline')
     for (const file of ['runMountainExperimentalEngineV1.ts', 'runBreakawayExperimentalEngineV1.ts']) {
       assert.ok(source.includes(`${prefix}${CLOCK_SHA}/src/universal-race-engine/${file}`), 'Safe Resume missing new clock source: '+file)
     }
