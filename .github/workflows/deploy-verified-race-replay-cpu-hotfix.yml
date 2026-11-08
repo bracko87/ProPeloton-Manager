@@ -1,0 +1,55 @@
+name: Deploy verified race replay CPU hotfix (single function)
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deploy-verified-race-replay-cpu-hotfix.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: propeloton-production-race-replay-hotfix
+  cancel-in-progress: false
+
+jobs:
+  deploy-one-function:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      PROJECT_REF: okuravitxocyevkexfgi
+
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Require Supabase deployment credential (do not print it)
+        shell: bash
+        run: |
+          if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
+            echo "::error::GitHub Actions secret SUPABASE_ACCESS_TOKEN is missing. No production deployment attempted."
+            exit 1
+          fi
+
+      - name: Verify frozen sporting physics and worker pins
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/verify-pinned-replay-cpu-fork.mjs
+          node scripts/verify-v1-clock-production-rollout.mjs
+          node scripts/verify-summit-worker-pins.mjs
+
+      - uses: supabase/setup-cli@3c2f5e2ae34c34e428e8e206e2c4d21fa2d20fbf # v2.1.1
+        with:
+          version: latest
+
+      - name: Deploy ONLY universal-race-stage-safe-resume
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase --version
+          supabase functions deploy universal-race-stage-safe-resume --project-ref "$PROJECT_REF" --no-verify-jwt
+          echo "Race replay worker deployment command succeeded. Verify live version and source separately before reopening the quarantined Stage 2."
