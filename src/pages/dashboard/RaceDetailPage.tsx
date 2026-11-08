@@ -3235,6 +3235,13 @@ function isRoadReplayParticipatingStatus(value?: string | null): boolean {
   return !ROAD_REPLAY_NON_PARTICIPATING_STATUSES.has(normalized)
 }
 
+function isRoadReplayWithdrawnStatus(value?: string | null): boolean {
+  const normalized = String(value ?? '').trim().toLowerCase()
+  return normalized === 'dnf' || normalized === 'did_not_finish' ||
+    normalized === 'did-not-finish' || normalized === 'withdrawn' ||
+    normalized === 'retired' || normalized === 'abandoned'
+}
+
 function isDnsLikeStatus(value?: string | null): boolean {
   const normalized = String(value ?? '').trim().toLowerCase()
   return normalized === 'dns' || normalized === 'did_not_start' || normalized === 'did-not-start'
@@ -14236,6 +14243,8 @@ function getUniversalReplayGroupBadgeClass(
   displayCode: string,
   colorKey: string
 ): string {
+  if (displayCode === 'DNF') return 'bg-rose-700'
+
   if (colorKey === 'peloton_blue' || displayCode === 'P') {
     return 'bg-blue-600'
   }
@@ -16121,8 +16130,11 @@ function UniversalRaceReplayPage({
       const currentState = currentStateByRiderId.get(rider.riderId)
       const nextState = nextStateByRiderId.get(rider.riderId) ?? currentState
       const groupCode = currentState?.groupCode ?? 'main_peloton'
-      const displayCode = currentState?.displayCode ??
-        (currentState?.status === 'dns' ? 'DNS' : 'P')
+      // A rider who has abandoned is no longer in a physical road group.
+      const displayCode = isRoadReplayWithdrawnStatus(currentState?.status)
+        ? 'DNF'
+        : currentState?.displayCode ??
+          (currentState?.status === 'dns' ? 'DNS' : 'P')
       const group = currentState?.displayCode
         ? groupByDisplayCode.get(currentState.displayCode) ?? null
         : null
@@ -16190,9 +16202,11 @@ function UniversalRaceReplayPage({
         displayCode,
         colorKey: group?.colorKey ?? 'peloton_blue',
         groupLabel:
-          displayCode === 'P'
-            ? 'Peloton'
-            : roadGroupRaceLabelByDisplayCode.get(displayCode) ?? displayCode,
+          displayCode === 'DNF'
+            ? 'Abandoned'
+            : displayCode === 'P'
+              ? 'Peloton'
+              : roadGroupRaceLabelByDisplayCode.get(displayCode) ?? displayCode,
         groupOrder:
           (currentState?.displayCode
             ? groupOrderByDisplayCode.get(currentState.displayCode)
@@ -16250,13 +16264,19 @@ function UniversalRaceReplayPage({
     const participatingRows = visibleRiderRows.filter((row) =>
       isRoadReplayParticipatingStatus(row.status)
     )
+    // DNF riders stay visible for the viewer, but never occupy a racing
+    // position or a B/F/P/C physical group after their withdrawal.
+    const withdrawnRows = visibleRiderRows
+      .filter((row) => isRoadReplayWithdrawnStatus(row.status))
+      .map((row) => ({ ...row, position: null }))
 
-    if (resultsVisible) return participatingRows
-
-    return participatingRows.map((row, index) => ({
-      ...row,
-      position: index + 1,
-    }))
+    const rankedRiders = resultsVisible
+      ? participatingRows
+      : participatingRows.map((row, index) => ({
+          ...row,
+          position: index + 1,
+        }))
+    return [...rankedRiders, ...withdrawnRows]
   }, [resultsVisible, visibleRiderRows])
 
   const timeTrialReplayContext = useMemo(() => {
@@ -17673,7 +17693,9 @@ function UniversalRaceReplayPage({
                               <div className="border-l border-slate-200 px-2 text-right font-semibold text-slate-600">
                                 {replayProgress <= 0
                                   ? '—'
-                                  : resultsVisible
+                                  : isRoadReplayWithdrawnStatus(row.status)
+                                    ? 'DNF'
+                                    : resultsVisible
                                     ? row.status !== 'finished'
                                       ? row.status.toUpperCase()
                                       : row.position === 1
