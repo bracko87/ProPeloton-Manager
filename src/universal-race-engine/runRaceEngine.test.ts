@@ -41,6 +41,8 @@ import {
   buildUniversalPostStageUpdateSummary,
   buildTeamTimeTrialSuitabilityRules,
   calculateRoadCommandEffect,
+  calculateBreakawayTierEnergyPenalty,
+  calculateBreakawayTierFatigueDebt,
   classifyUniversalFinishMode,
   assignPhase5PhysicalGroupIdentities,
   buildUniversalRaceCalibrationSummary,
@@ -12794,6 +12796,40 @@ describe('Phase 8 complete fatigue, effort, risk and persistence handoff', () =>
     expect(protectedUpdate.effort.effortCategory).toBe('protected')
   })
 
+  it('uses progressive per-kilometre breakaway penalties beyond 20, 50, and 100 km', () => {
+    const distances = [0, 20, 21, 50, 51, 100, 101, 130]
+    const expectedEnergy = [0, 0, 0.12, 3.6, 3.85, 16.1, 16.5, 28.1]
+    const expectedFatigue = [0, 0, 0.15, 4.5, 4.78, 18.5, 18.95, 32]
+    distances.forEach((km, index) => {
+      expect(calculateBreakawayTierEnergyPenalty(km)).toBeCloseTo(
+        expectedEnergy[index], 6,
+      )
+      expect(calculateBreakawayTierFatigueDebt(km)).toBeCloseTo(
+        expectedFatigue[index], 6,
+      )
+    })
+
+    // Crossing each threshold raises the marginal cost; it does not add a
+    // retroactive charge for kilometres the rider has already completed.
+    expect(
+      calculateBreakawayTierEnergyPenalty(51) -
+      calculateBreakawayTierEnergyPenalty(50),
+    ).toBeGreaterThan(
+      calculateBreakawayTierEnergyPenalty(21) -
+      calculateBreakawayTierEnergyPenalty(20),
+    )
+    expect(
+      calculateBreakawayTierEnergyPenalty(101) -
+      calculateBreakawayTierEnergyPenalty(100),
+    ).toBeGreaterThan(
+      calculateBreakawayTierEnergyPenalty(51) -
+      calculateBreakawayTierEnergyPenalty(50),
+    )
+    expect(calculateBreakawayTierFatigueDebt(130)).toBeGreaterThan(
+      calculateBreakawayTierFatigueDebt(100),
+    )
+  })
+
   it('charges a successful opening breakaway extra live energy and persistent next-stage recovery debt', () => {
     const input = createSuccessfulOpeningEscapeInput()
     const result = runRaceEngine(input)
@@ -12810,12 +12846,14 @@ describe('Phase 8 complete fatigue, effort, risk and persistence handoff', () =>
       phaseEnergy.baselineOpeningEnergyCost + phaseEnergy.attackEnergyCost,
     )
     expect(update.breakawayExposureKm).toBeGreaterThan(0)
-    expect(update.breakawayRecoveryDebtLoad).toBeGreaterThan(0)
-    expect(update.breakawayRecoveryDebtLoad).toBeLessThanOrEqual(10)
-    expect(update.breakawayRecoveryDebtLoad).toBeCloseTo(
-      Math.min(10, update.breakawayExposureKm / input.stage.distanceKm * 10),
-      5,
+    expect(update.breakawayRecoveryDebtLoad).toBe(
+      calculateBreakawayTierFatigueDebt(update.breakawayExposureKm),
     )
+    if (update.breakawayExposureKm > 20) {
+      expect(update.breakawayRecoveryDebtLoad).toBeGreaterThan(0)
+    } else {
+      expect(update.breakawayRecoveryDebtLoad).toBe(0)
+    }
     expect(update.grossFatigueGain).toBeCloseTo(
       update.totalEnergySpent * 0.16 +
         update.distanceLoad +
