@@ -8827,6 +8827,93 @@ function calculateBreakawayExposureEnergyCost(
   )
 }
 
+/**
+ * Progressive cumulative work by physical breakaway distance:
+ * 0-20 km: existing exposed-riding energy cost only;
+ * 20-50 km: moderate additional load;
+ * 50-100 km: strong additional load;
+ * >100 km: very aggressive additional load.
+ * Continuous per-km rates avoid an artificial sudden drain at the threshold.
+ */
+export function calculateBreakawayTierEnergyPenalty(distanceKm: number): number {
+  const km = Math.max(0, Number.isFinite(distanceKm) ? distanceKm : 0)
+  return deterministicRound(
+    clamp(km - 20, 0, 30) * 0.12 +
+      clamp(km - 50, 0, 50) * 0.25 +
+      Math.max(0, km - 100) * 0.4,
+    6,
+  )
+}
+
+export function calculateBreakawayTierFatigueDebt(distanceKm: number): number {
+  const km = Math.max(0, Number.isFinite(distanceKm) ? distanceKm : 0)
+  return deterministicRound(
+    clamp(km - 20, 0, 30) * 0.15 +
+      clamp(km - 50, 0, 50) * 0.28 +
+      Math.max(0, km - 100) * 0.45,
+    6,
+  )
+}
+
+/** Derive the rider's cumulative exposed kilometres from real phase membership
+ * and recorded catch positions, not merely selected attacks or replay badges. */
+function getRiderBreakawayExposureKm(
+  riderId: string,
+  stageDistanceKm: number,
+  phases: {
+    readonly phase1?: UniversalRoadPhase1OpeningResult | null
+    readonly phase2?: UniversalRoadPhase2DevelopmentResult | null
+    readonly phase3?: UniversalRoadPhase3DecisiveResult | null
+    readonly phase4?: UniversalRoadPhase4FinishResult | null
+  },
+): number {
+  const { phase1, phase2, phase3, phase4 } = phases
+  let distance = 0
+  const measuredSegment = (start: number, end: number): void => {
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return
+    distance += Math.max(
+      0, clamp(end, 0, stageDistanceKm) - clamp(start, 0, stageDistanceKm),
+    )
+  }
+  phase1?.attackAttempts
+    .filter((attempt) =>
+      attempt.riderId === riderId && attempt.acceptedEscapeLaunch)
+    .forEach((attempt) => measuredSegment(
+      attempt.attemptKm,
+      Math.min(
+        phase1.phaseBoundary.endKm,
+        phase1.breakawayCatchKm ?? phase1.phaseBoundary.endKm,
+      ),
+    ))
+  if (phase2?.breakawayRiderIdsAtStart.includes(riderId)) {
+    measuredSegment(
+      phase2.phaseBoundary.startKm,
+      Math.min(
+        phase2.phaseBoundary.endKm,
+        phase2.breakawayCatchKm ?? phase2.phaseBoundary.endKm,
+      ),
+    )
+  }
+  if (phase3?.physicalEscapeRiderIdsAtStart.includes(riderId)) {
+    measuredSegment(
+      phase3.phaseBoundary.startKm,
+      Math.min(
+        phase3.phaseBoundary.endKm,
+        phase3.physicalCatchKm ?? phase3.phaseBoundary.endKm,
+      ),
+    )
+  }
+  if (phase4?.escapeRiderIdsAtStart.includes(riderId)) {
+    const catchKm = phase4.breakawayCaught
+      ? (phase4.chaseSteps.find(
+          (step) => step.endGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS,
+        )?.kmEnd ?? phase4.phaseBoundary.startKm)
+      : phase4.phaseBoundary.endKm
+    measuredSegment(phase4.phaseBoundary.startKm, catchKm)
+  }
+  return deterministicRound(Math.min(stageDistanceKm, distance), 6)
+}
+
 function getRoadOpeningSegmentAtKm(
   stage: UniversalStageInput,
   km: number,
@@ -10629,8 +10716,12 @@ export function resolveRoadPhase1Opening(
           input, exposureBaselineCost, Math.max(1, acceptedRiderIds.length),
           exposureStartKm, exposureEndKm,
         )
+        const tieredExposureEnergyCost = calculateBreakawayTierEnergyPenalty(
+          Math.max(0, exposureEndKm - exposureStartKm),
+        )
         const totalOpeningEnergyCost = deterministicRound(
-          baselineOpeningEnergyCost + attackEnergyCost + exposureEnergyCost, 6,
+          baselineOpeningEnergyCost + attackEnergyCost +
+            exposureEnergyCost + tieredExposureEnergyCost, 6,
         )
         const energyAfterPhase = deterministicRound(
           Math.max(
@@ -12485,16 +12576,37 @@ export function resolveRoadPhase2Development(
           objectiveEnergyCostByRiderId.get(row.riderId) ?? 0
         const attackEnergyCost =
           phase2AttackEnergyCostByRiderId.get(row.riderId) ?? 0
-        const breakawayExposureEnergyCost =
-          phase1.breakawayRiderIds.includes(row.riderId)
-            ? calculateBreakawayExposureEnergyCost(
-                input,
-                baselinePhaseEnergyCost,
+        const isPhysicalBreakaway =
+          breakawayActive && phase1.breakawayRiderIds.includes(row.riderId)
+        const exposureEndKm = isPhysicalBreakaway
+          ? Math.min(
+              phaseBoundary.endKm, phase2CatchKm ?? phaseBoundary.endKm,
+            )
+          : phaseBoundary.startKm
+        const exposureKm = Math.max(0, exposureEndKm - phaseBoundary.startKm)
+        const exposureBaselineEnergyCost = exposureKm > 0
+          ? calculateRoadEnergyCostForRange(
+              input, rider, readiness, effectivePhaseEffortMultiplier,
+              phaseBoundary.startKm, exposureEndKm,
+            )
+          : 0
+        const priorBreakawayKm = getRiderBreakawayExposureKm(
+          row.riderId, input.stage.distanceKm, { phase1 },
+        )
+        const tieredExposureEnergyCost = exposureKm > 0
+          ? calculateBreakawayTierEnergyPenalty(priorBreakawayKm + exposureKm) -
+            calculateBreakawayTierEnergyPenalty(priorBreakawayKm)
+          : 0
+        const breakawayExposureEnergyCost = exposureKm > 0
+          ? deterministicRound(
+              calculateBreakawayExposureEnergyCost(
+                input, exposureBaselineEnergyCost,
                 Math.max(1, phase1.breakawayRiderIds.length),
-                phaseBoundary.startKm,
-                phaseBoundary.endKm,
-              )
-            : 0
+                phaseBoundary.startKm, exposureEndKm,
+              ) + tieredExposureEnergyCost,
+              6,
+            )
+          : 0
         const totalPhaseEnergyCost = deterministicRound(
           baselinePhaseEnergyCost +
             objectiveEnergyCost +
@@ -14712,7 +14824,23 @@ export function resolveRoadPhase3Decisive(
     const suitability = suitabilityByRiderId.get(row.riderId)!
     const phase = row.phases.find((entry) => entry.phaseNumber === 3)!
     const startEnergy = phase2EnergyByRiderId.get(row.riderId)?.energyAfterPhase ?? 0
-    const phaseEnergyCost = phaseEnergyCostByRiderId.get(row.riderId) ?? 0
+    const previousBreakawayKm = getRiderBreakawayExposureKm(
+      row.riderId, input.stage.distanceKm, { phase1, phase2 },
+    )
+    const phase3BreakawayKm = physicalEscapeRiderIdsAtLaunch.includes(row.riderId)
+      ? Math.max(0, Math.min(
+          phaseBoundary.endKm, phase3PhysicalCatchKm ?? phaseBoundary.endKm,
+        ) - phaseBoundary.startKm)
+      : 0
+    const phase3TieredEnergyCost = phase3BreakawayKm > 0
+      ? calculateBreakawayTierEnergyPenalty(
+          previousBreakawayKm + phase3BreakawayKm,
+        ) - calculateBreakawayTierEnergyPenalty(previousBreakawayKm)
+      : 0
+    const phaseEnergyCost = deterministicRound(
+      (phaseEnergyCostByRiderId.get(row.riderId) ?? 0) + phase3TieredEnergyCost,
+      6,
+    )
     const attackEnergyCost = attackEnergyCostByRiderId.get(row.riderId) ?? 0
     const objectiveEnergyCost = objectiveEnergyCostByRiderId.get(row.riderId) ?? 0
     const energyAfterPhase = deterministicRound(
@@ -17888,9 +18016,18 @@ export function resolveRoadPhase4Finish(
           phaseBoundary.startKm,
           phase4StepMidKm,
         )
+        const previousBreakawayKm = getRiderBreakawayExposureKm(
+          riderId, input.stage.distanceKm, { phase1, phase2, phase3 },
+        )
+        const tieredExposureEnergyCost =
+          calculateBreakawayTierEnergyPenalty(
+            previousBreakawayKm + Math.max(0, phase4StepMidKm - phaseBoundary.startKm),
+          ) - calculateBreakawayTierEnergyPenalty(previousBreakawayKm)
         return [
           riderId,
-          Math.max(0, startEnergy - baselineSpent - exposureSpent),
+          Math.max(
+            0, startEnergy - baselineSpent - exposureSpent - tieredExposureEnergyCost,
+          ),
         ] as const
       }),
     )
@@ -19203,14 +19340,26 @@ export function resolveRoadPhase4Finish(
             frontExposureEndKm,
           )
         : 0
+    const previousBreakawayKm = getRiderBreakawayExposureKm(
+      row.riderId, input.stage.distanceKm, { phase1, phase2, phase3 },
+    )
+    const tieredExposureEnergyCost =
+      frontExposureEndKm > phaseBoundary.startKm
+        ? calculateBreakawayTierEnergyPenalty(
+            previousBreakawayKm + frontExposureEndKm - phaseBoundary.startKm,
+          ) - calculateBreakawayTierEnergyPenalty(previousBreakawayKm)
+        : 0
     const breakawayExposureEnergyCost =
       frontExposureEndKm > phaseBoundary.startKm
-        ? calculateBreakawayExposureEnergyCost(
-            input,
-            frontExposureBaselineEnergyCost,
-            Math.max(1, escapeRiderIdsAtStart.length),
-            phaseBoundary.startKm,
-            frontExposureEndKm,
+        ? deterministicRound(
+            calculateBreakawayExposureEnergyCost(
+              input,
+              frontExposureBaselineEnergyCost,
+              Math.max(1, escapeRiderIdsAtStart.length),
+              phaseBoundary.startKm,
+              frontExposureEndKm,
+            ) + tieredExposureEnergyCost,
+            6,
           )
         : 0
     const isAutomaticWorker = automaticWorkerSet.has(row.riderId)
@@ -37378,50 +37527,6 @@ export function buildUniversalPostStageUpdateSummary(
   const phase3 = roadRaceResolution.phase3Decisive
   const phase4 = roadRaceResolution.phase4Finish
 
-  // Use actual accepted escape membership and physical catch boundaries.
-  // Do not infer a breakaway from saved attack orders or replay labels.
-  const breakawayExposureKmByRiderId = new Map<string, number>()
-  const addBreakawayExposure = (
-    riderIds: readonly string[], fromKm: number, toKm: number,
-  ): void => {
-    if (!Number.isFinite(fromKm) || !Number.isFinite(toKm)) return
-    const distance = Math.max(
-      0, clamp(toKm, 0, input.stage.distanceKm) -
-        clamp(fromKm, 0, input.stage.distanceKm),
-    )
-    if (distance <= 0) return
-    for (const riderId of new Set(riderIds)) {
-      breakawayExposureKmByRiderId.set(
-        riderId, (breakawayExposureKmByRiderId.get(riderId) ?? 0) + distance,
-      )
-    }
-  }
-  phase1?.attackAttempts
-    .filter((attempt) => attempt.acceptedEscapeLaunch)
-    .forEach((attempt) => addBreakawayExposure(
-      [attempt.riderId], attempt.attemptKm,
-      Math.min(phase1.phaseBoundary.endKm, phase1.breakawayCatchKm ?? phase1.phaseBoundary.endKm),
-    ))
-  if (phase2) addBreakawayExposure(
-    phase2.breakawayRiderIdsAtStart, phase2.phaseBoundary.startKm,
-    Math.min(phase2.phaseBoundary.endKm, phase2.breakawayCatchKm ?? phase2.phaseBoundary.endKm),
-  )
-  if (phase3) addBreakawayExposure(
-    phase3.physicalEscapeRiderIdsAtStart, phase3.phaseBoundary.startKm,
-    Math.min(phase3.phaseBoundary.endKm, phase3.physicalCatchKm ?? phase3.phaseBoundary.endKm),
-  )
-  if (phase4) {
-    const catchKm = phase4.breakawayCaught
-      ? (phase4.chaseSteps.find(
-          (step) => step.endGapSeconds <= PHASE11G_PELOTON_CATCH_TOLERANCE_SECONDS,
-        )?.kmEnd ?? phase4.phaseBoundary.startKm)
-      : phase4.phaseBoundary.endKm
-    addBreakawayExposure(
-      phase4.escapeRiderIdsAtStart, phase4.phaseBoundary.startKm,
-      Math.min(phase4.phaseBoundary.endKm, catchKm),
-    )
-  }
-
   const phase2EnergyByRiderId = new Map(
     (phase2?.riderEnergy ?? []).map((row) => [row.riderId, row] as const),
   )
@@ -37668,17 +37773,15 @@ export function buildUniversalPostStageUpdateSummary(
         eligibleToStart && startEnergy > 0
           ? deterministicRound((totalEnergySpent / startEnergy) * 100, 6)
           : 0
-      const breakawayExposureKm = deterministicRound(
-        Math.min(input.stage.distanceKm,
-          Math.max(0, breakawayExposureKmByRiderId.get(rider.riderId) ?? 0)),
-        6,
+      const breakawayExposureKm = getRiderBreakawayExposureKm(
+        rider.riderId, input.stage.distanceKm,
+        { phase1, phase2, phase3, phase4 },
       )
-      // At most 10 additional fatigue points for a full-stage escape.
-      // Short failed attacks cause proportionately less next-stage debt.
+      // Applies progressively by cumulative actual escape kilometres:
+      // more than 20 km, 50 km, and 100 km have increasingly severe debt.
       const breakawayRecoveryDebtLoad = eligibleToStart
-        ? deterministicRound(Math.min(
-            10, (breakawayExposureKm / Math.max(1, input.stage.distanceKm)) * 10,
-          ), 6) : 0
+        ? calculateBreakawayTierFatigueDebt(breakawayExposureKm)
+        : 0
       const distanceLoad = eligibleToStart
         ? deterministicRound(
             clamp(input.stage.distanceKm / 100, 0, 3) * 1.5,
