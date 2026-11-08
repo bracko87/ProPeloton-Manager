@@ -109,7 +109,7 @@ begin
     and points=70;
   get diagnostics v_rows=row_count;
   if v_rows<>1 then
-    raise exception 'Expected exactly one Alabama World Final correction, got %',v_rows;
+    raise exception 'Expected exactly one Albania World Final correction, got %',v_rows;
   end if;
 end;
 $disqualified_award$;
