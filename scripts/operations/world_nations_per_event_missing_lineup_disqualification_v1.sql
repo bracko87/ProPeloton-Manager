@@ -499,7 +499,7 @@ begin
     'rider_count',v_rider_count
   );
 end;
-$function$
+$function$;
 
 CREATE OR REPLACE FUNCTION public.process_nations_race_runtime_v2()
  RETURNS jsonb
