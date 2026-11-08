@@ -67,7 +67,10 @@ for (const [name, requiredPrimaryModules] of workers) {
   if (name === 'universal-race-stage-safe-resume') {
     assert.ok(source.includes('selectMountainEngineLaneV1') && source.includes('isBreakawayOfficialPilotStageV1'), 'Safe Resume must dispatch the complete three-way stage selector')
     assert.ok(source.includes(`const PROSPECTIVE_CLOCK_SOURCE_COMMIT = "${CLOCK_SHA}";`), 'Safe Resume must select new clock prospectively')
-    for (const file of ['runRaceEngine.ts', 'runMountainExperimentalEngineV1.ts', 'runBreakawayExperimentalEngineV1.ts']) {
+    // One imported baseline is a source-verified 92de copy, replacing a
+    // duplicate large module. Exactly one safe replay lookup is optimized.
+    assert.ok(source.includes(`${prefix}e532c5b8934746bd4efae9cf50090c0c654a26ac/src/universal-race-engine/runRaceEngineReplayCpuOptimizedV1.ts`), 'Missing frozen physics-equivalent CPU-optimized baseline')
+    for (const file of ['runMountainExperimentalEngineV1.ts', 'runBreakawayExperimentalEngineV1.ts']) {
       assert.ok(source.includes(`${prefix}${CLOCK_SHA}/src/universal-race-engine/${file}`), 'Safe Resume missing new clock source: '+file)
     }
   }
