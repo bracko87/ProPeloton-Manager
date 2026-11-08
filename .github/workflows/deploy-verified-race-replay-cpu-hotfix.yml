@@ -51,5 +51,5 @@ jobs:
         run: |
           set -euo pipefail
           supabase --version
-          supabase functions deploy universal-race-stage-safe-resume --project-ref "$PROJECT_REF" --no-verify-jwt
+          supabase functions deploy universal-race-stage-safe-resume --remote="$PROJECT_REF" --no-verify-jwt --yes
           echo "Race replay worker deployment command succeeded. Verify live version and source separately before reopening the quarantined Stage 2."
