@@ -2218,7 +2218,9 @@ export default function TransfersPage() {
         rememberName(row.to_club_id, row.to_club_name)
       }
 
-      const missingClubNames = clubIds.filter((id) => id && !knownClubNames[id])
+      const missingClubNames = clubIds.filter(
+        (id): id is string => typeof id === 'string' && id.length > 0 && !knownClubNames[id]
+      )
       const names = {
         ...knownClubNames,
         ...(await fetchClubNameMap(missingClubNames)),
