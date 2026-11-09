@@ -1271,6 +1271,7 @@ export default function TransfersPage() {
   } | null>(null)
 
   const [riderLoading, setRiderLoading] = useState(false)
+  const [riderError, setRiderError] = useState<string | null>(null)
   const [clubOwnedRiders, setClubOwnedRiders] = useState<ClubOwnedRiderRow[]>([])
   const [marketListings, setMarketListings] = useState<MarketListingRow[]>([])
   const [transferOffers, setTransferOffers] = useState<TransferOfferRow[]>([])
@@ -1567,7 +1568,12 @@ export default function TransfersPage() {
         await loadStaffData(resolvedClub.id, mounted)
 
         if (!mounted) return
-        await loadRiderData(resolvedClub.id, mounted)
+        // Rider market data may take longer than club and staff data. Do not
+        // block the entire Transfers page while the rider market loads.
+        setLoading(false)
+        void loadRiderData(resolvedClub.id, mounted).catch(() => {
+          // loadRiderData reports the error in the rider market itself.
+        })
       } catch (err) {
         const message = err instanceof Error ? err.message : 'Failed to load transfers page.'
         if (!mounted) return
@@ -1644,8 +1650,6 @@ export default function TransfersPage() {
 
     if (clubStaffResult.error) throw clubStaffResult.error
 
-    console.log('staff candidate sample', candidateRows[0])
-
     if (!mounted) return
 
     setStaffCandidates(candidateRows)
@@ -1657,14 +1661,26 @@ export default function TransfersPage() {
     const uniqueIds = Array.from(new Set(ids.filter(Boolean)))
     if (!uniqueIds.length) return {}
 
-    const { data, error } = await supabase.from('clubs').select('id, name').in('id', uniqueIds)
-
-    if (error) throw error
-
+    // One enormous .in() produced an 18 KB URL and delayed Transfers for
+    // roughly 20 seconds in production. Keep each request safely bounded.
+    const batches = chunkArray(uniqueIds, 75)
     const result: Record<string, string> = {}
-    for (const row of data || []) {
-      result[row.id] = row.name || row.id
+
+    for (let offset = 0; offset < batches.length; offset += 4) {
+      const responses = await Promise.all(
+        batches.slice(offset, offset + 4).map((batch) =>
+          supabase.from('clubs').select('id, name').in('id', batch)
+        )
+      )
+
+      for (const { data, error } of responses) {
+        if (error) throw error
+        for (const row of data || []) {
+          result[row.id] = row.name || row.id
+        }
+      }
     }
+
     return result
   }
 
@@ -1751,6 +1767,7 @@ export default function TransfersPage() {
 
   async function loadRiderData(clubIdValue: string, mounted = true) {
     setRiderLoading(true)
+    setRiderError(null)
 
     try {
       const [
@@ -2174,7 +2191,38 @@ export default function TransfersPage() {
         ...historyRows.flatMap((row) => [row.from_club_id, row.to_club_id]),
       ]
 
-      const names = await fetchClubNameMap(clubIds)
+      // Most RPCs already return club names; reuse them instead of looking
+      // up hundreds of market clubs a second time.
+      const knownClubNames: Record<string, string> = {}
+      const rememberName = (id: unknown, name: unknown) => {
+        if (typeof id === 'string' && typeof name === 'string' && name.trim()) {
+          knownClubNames[id] = name
+        }
+      }
+
+      for (const row of marketBase) {
+        rememberName(row.seller_club_id, row.seller_club_name)
+      }
+      for (const row of [
+        ...offersBase,
+        ...mySentOffersDashboardBase,
+        ...myOutgoingOffersBase,
+        ...sellerNegotiationsBase,
+        ...buyerNegotiationsBase,
+      ]) {
+        rememberName(row.seller_club_id, row.seller_club_name)
+        rememberName(row.buyer_club_id, row.buyer_club_name)
+      }
+      for (const row of historyRows) {
+        rememberName(row.from_club_id, row.from_club_name)
+        rememberName(row.to_club_id, row.to_club_name)
+      }
+
+      const missingClubNames = clubIds.filter((id) => id && !knownClubNames[id])
+      const names = {
+        ...knownClubNames,
+        ...(await fetchClubNameMap(missingClubNames)),
+      }
 
       const resolvedMarket = market.map((row) => ({
         ...row,
@@ -2236,6 +2284,9 @@ export default function TransfersPage() {
           ? resolvedFreeAgentNegotiationsRows[0]?.free_agent_id ?? freeAgentsRows[0].free_agent_id
           : null
       })
+    } catch (err) {
+      if (mounted) setRiderError(getErrorMessage(err))
+      throw err
     } finally {
       if (mounted) setRiderLoading(false)
     }
@@ -3120,12 +3171,6 @@ export default function TransfersPage() {
     activeMarketRowCount === 0 ? 0 : (marketPage - 1) * RIDERS_PER_PAGE + 1
   const marketPageEnd = Math.min(marketPage * RIDERS_PER_PAGE, activeMarketRowCount)
 
-  console.log('staffRoleLimits passed to StaffFreeAgentPage:', staffRoleLimits)
-  console.log(
-    'trainer limit passed:',
-    staffRoleLimits.find((row) => row.role_type === 'trainer')
-  )
-
   if (loading) {
     return (
       <div className="w-full">
@@ -3291,6 +3336,25 @@ export default function TransfersPage() {
             setMarketHideOwn(criteria.hide_own !== false)
           }}
         />
+      ) : null}
+
+      {activeTab === 'riders' && riderError ? (
+        <div role="alert" className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <span>Unable to load the rider market: {riderError}</span>
+          <button
+            type="button"
+            disabled={!clubId || riderLoading}
+            onClick={() => {
+              if (!clubId) return
+              void loadRiderData(clubId, true).catch(() => {
+                // The error banner displays the result and allows another retry.
+              })
+            }}
+            className="rounded-md border border-red-200 bg-white px-3 py-1.5 font-medium hover:bg-red-100 disabled:opacity-50"
+          >
+            Retry
+          </button>
+        </div>
       ) : null}
 
       {activeTab === 'riders' ? (
