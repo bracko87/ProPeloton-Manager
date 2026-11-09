@@ -2,7 +2,6 @@
 -- Specific observed failure: S1 2000-11-23 marked processed while no daily tick ran.
 -- Historical 98 false-success days are NOT replayed or relabeled by this migration.
 -- This migration changes only the daily processors, not the sporting race engine.
-begin;
 
 -- Fail closed when the daily tick silently returned or swallowed fatigue errors.
 -- At game date D, the previous in-game day (D-1) must be processed for
@@ -844,4 +843,3 @@ exception when others then
 end;
 $function$;
 
-commit;
