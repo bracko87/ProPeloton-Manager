@@ -275,7 +275,7 @@ begin
     'error', v_error
   );
 end;
-$function$
+$function$;
 
 
 -- Smart retry: verify the original core tick and record completion only after
@@ -523,7 +523,7 @@ begin
     'error', v_error
   );
 end;
-$function$
+$function$;
 
 
 -- Forward path: verify actual rider recovery, not just function return.
@@ -842,6 +842,6 @@ exception when others then
     'error', sqlerrm
   );
 end;
-$function$
+$function$;
 
 commit;
