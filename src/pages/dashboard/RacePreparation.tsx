@@ -2410,6 +2410,10 @@ export default function RacePreparationPage(): JSX.Element {
   const maxRiders = getNumber(entryRules, "max_riders_per_team");
 
   const selectedRiderCount = cleanSelectedRiderIds.length;
+  // Advisory only: fatigue is saved after stages and must never cause an automatic DNS.
+  const highFatigueSelectedCount = selectedRacePlanRiders.filter(
+    (rider) => Number(rider.fatigue ?? 0) >= 90,
+  ).length;
 
   const riderSelectionTooFew = minRiders > 0 && selectedRiderCount < minRiders;
 
@@ -3611,6 +3615,12 @@ export default function RacePreparationPage(): JSX.Element {
                         </div>
                       )}
                     </div>
+
+                    {highFatigueSelectedCount > 0 ? (
+                      <div role="status" className="mb-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+                        {t("racePlan.highFatigueSelectedWarning", { count: highFatigueSelectedCount })}
+                      </div>
+                    ) : null}
 
                     {blockedRiderIds.size > 0 ? (
                       <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
@@ -7215,6 +7225,9 @@ function StagePlansTab({
     useState(false);
 
   const selectedStage = stages[selectedStageIndex] ?? stages[0] ?? null;
+  const highFatigueStageRiderCount = selectedRiders.filter(
+    (rider) => Number(rider.fatigue ?? 0) >= 90,
+  ).length;
   const selectedStageSupplyId = String(asRecord(selectedStage).id ?? "");
   const selectedStageSupplyTeamId = String(
     asRecord(target?.preparation).participating_club_id ??
@@ -8206,6 +8219,12 @@ useEffect(() => {
         {selectedStage && (
           <SelectedStagePlanProfileCard stage={selectedStage} />
         )}
+
+        {highFatigueStageRiderCount > 0 ? (
+          <div role="status" className="mt-3 rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+            {racePrepText("racePlan.highFatigueStageWarning", { count: highFatigueStageRiderCount })}
+          </div>
+        ) : null}
 
         {targetRaceWeatherStatus ? (
           <div className="mt-4">
@@ -13495,6 +13514,13 @@ function RiderSelectionCard({
               {racePrepText("screen.fatigue")}: {String(rider.fatigue ?? "—")} · {racePrepText("screen.availability")}:{" "}
               {localizeRacePrepBackendText(availabilityLabel)}
             </div>
+            {Number(rider.fatigue ?? 0) >= 90 ? (
+              <div role="status" className="mt-2 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs font-semibold text-amber-900">
+                {racePrepText("racePlan.highFatigueRiderWarning", {
+                  fatigue: Math.round(Number(rider.fatigue)),
+                })}
+              </div>
+            ) : null}
             <div className="mt-2 text-[11px] leading-relaxed text-slate-400">
               {racePrepText("screen.startingFreshnessHelp")}
             </div>
