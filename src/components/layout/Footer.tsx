@@ -218,6 +218,9 @@ export default function Footer({
           <Link to="/terms" className="text-sm font-semibold text-black hover:opacity-80">
             {t('navigation:footer.terms')}
           </Link>
+          <Link to="/refund-policy" className="text-sm font-semibold text-black hover:opacity-80">
+            {(t('navigation:footer.terms') === 'Nutzungsbedingungen' || (window?.navigator?.language ?? '').toLowerCase().startsWith('de')) ? 'Erstattungen' : 'Refund policy'}
+          </Link>
           <Link to="/support" className="text-sm font-semibold text-black hover:opacity-80">
             {t('navigation:footer.support')}
           </Link>
