@@ -78,7 +78,7 @@ function formatTime(hour24: number, minute2: number): string {
 export default function Footer({
   refreshIntervalMs = 30000,
 }: GameTimeProps): JSX.Element {
-  const { t } = useTranslation(['navigation', 'calendar'])
+  const { t, i18n } = useTranslation(['navigation', 'calendar'])
   const [gameTime, setGameTime] = useState<GameTimeRow | null>(null)
   const [gameTimeUnavailable, setGameTimeUnavailable] = useState(false)
 
@@ -219,7 +219,7 @@ export default function Footer({
             {t('navigation:footer.terms')}
           </Link>
           <Link to="/refund-policy" className="text-sm font-semibold text-black hover:opacity-80">
-            {(t('navigation:footer.terms') === 'Nutzungsbedingungen' || (window?.navigator?.language ?? '').toLowerCase().startsWith('de')) ? 'Erstattungen' : 'Refund policy'}
+            {(i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('de') ? 'Erstattungen' : 'Refund policy'}
           </Link>
           <Link to="/support" className="text-sm font-semibold text-black hover:opacity-80">
             {t('navigation:footer.support')}
