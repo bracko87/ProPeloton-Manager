@@ -1,0 +1,38 @@
+name: Public homepage game clock build verification
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/hooks/usePublicHomeGameClock.ts'
+      - 'src/components/home/Hero.tsx'
+      - 'src/lib/supabase.ts'
+      - 'supabase/migrations/*public_home_clock_anchor_tennis_style*'
+      - '.github/workflows/public-home-game-clock-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  clock-homepage-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Produce full public website build
+        run: npm run build
+      - name: Confirm anchored clock is included in the shipped website bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          test -s dist/main.js
+          grep -q 'get_public_home_clock_anchor_v1' dist/main.js
+          grep -q 'server-anchored-clock' dist/main.js
+          grep -q 'Public live game clock' dist/main.js
+          echo 'Homepage clock build verified; deployment is a separate step.'
