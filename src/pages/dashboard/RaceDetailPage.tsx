@@ -2859,9 +2859,11 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
     v2Reference.weather_v2_display_only === true
   // Display-only reference never changes stage.weather_snapshot or game engine data.
   const weather = hasV2Reference ? v2Reference : stage.weather_snapshot ?? {}
-  const weatherCondition = normalizeWeatherCondition(
-    weather.weather_condition ?? weather.sky_condition ?? weather.icon_key ?? weather.condition
-  )
+  const weatherCondition =
+    normalizeWeatherCondition(weather.weather_condition) ??
+    normalizeWeatherCondition(weather.sky_condition) ??
+    normalizeWeatherCondition(weather.condition) ??
+    normalizeWeatherCondition(weather.icon_key)
   const conditionLabel = weatherCondition === null
     ? null
     : t(`weather.${weatherCondition === 'partly_cloudy' ? 'partlyCloudy' : weatherCondition === 'heavy_rain' ? 'heavyRain' : weatherCondition}`, {
