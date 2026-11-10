@@ -1,0 +1,56 @@
+name: Weather V2 GeoNames review-only candidate audit
+
+# This workflow ONLY produces a CSV artifact. It never reads database credentials,
+# changes a Supabase project, approves geocodes or modifies a race.
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/weather-v2/locations_queue_20261110.csv
+      - scripts/weather-v2/prepare_geonames_candidates.py
+      - scripts/weather-v2/test_prepare_geonames_candidates.py
+      - .github/workflows/weather-v2-geonames-review.yml
+
+permissions:
+  contents: read
+
+jobs:
+  build-city-review-candidates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Test collision and unmatched city handling
+        run: python -m unittest discover -s scripts/weather-v2 -p 'test_prepare_geonames_candidates.py' -v
+      - name: Download GeoNames CC BY 4.0 cities500 gazetteer
+        run: |
+          curl --fail --location --silent --show-error --retry 3 \
+            --connect-timeout 20 --max-time 120 \
+            -o /tmp/geonames-cities500.zip \
+            https://download.geonames.org/export/dump/cities500.zip
+      - name: Build review-only city candidates (no DB access)
+        run: |
+          python scripts/weather-v2/prepare_geonames_candidates.py \
+            --input scripts/weather-v2/locations_queue_20261110.csv \
+            --geonames-zip /tmp/geonames-cities500.zip \
+            --output geonames-city-candidates-review.csv
+      - name: Upload unapproved city matches for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: weather-v2-unapproved-geonames-candidates
+          path: geonames-city-candidates-review.csv
+          if-no-files-found: error
+          retention-days: 30
+      - name: Record provenance
+        run: |
+          {
+            echo '### Historical city-weather V2 geography preview'
+            echo 'GeoNames gazetteer: https://download.geonames.org/export/dump/cities500.zip'
+            echo 'License: CC BY 4.0 (GeoNames attribution required).'
+            echo 'All generated rows are review-only. None were written to Supabase.'
+          } >> "$GITHUB_STEP_SUMMARY"
