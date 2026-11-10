@@ -807,16 +807,7 @@ export default function HomePage(): JSX.Element {
       )}
 
       <main>
-        <Hero
-          gameTimeLabel={
-            (gameTimeText === t('status.loadingGameTime') ||
-              gameTimeText === t('status.gameTimeUnavailable')) &&
-            homeSnapshot?.game_time_label &&
-            homeSnapshot.game_time_label !== t('status.loadingGameTime')
-              ? homeSnapshot.game_time_label
-              : gameTimeText
-          }
-        />
+        <Hero gameTimeLabel={homeSnapshot?.game_time_label || gameTimeText} />
         <HomepageRaceDays data={raceDays} loading={raceDaysLoading} />
 
         <section className="relative w-full overflow-hidden border-y border-white/15 bg-[#1a1404] py-16">
