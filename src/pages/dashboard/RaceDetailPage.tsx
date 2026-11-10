@@ -2815,8 +2815,7 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
   // Curated profiles use temperature_c, wind_kmh and rain_probability_percent;
   // never show their rain *chance* as millimetres of measured precipitation.
   const avgTemp = asNumber(
-    (weather.avg_temp_c ?? weather.average_temp_c ?? weather.temperature_c ?? weather.temp_c)
-      as number | string | undefined
+    (weather.avg_temp_c ?? weather.average_temp_c ?? weather.temperature_c ?? weather.temp_c) as number | string | undefined
   )
   const minTemp = asNumber(
     (weather.avg_min_temp_c ?? weather.min_temp_c) as number | string | undefined
@@ -2828,12 +2827,10 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
     (weather.avg_wind_kmh ?? weather.wind_kmh) as number | string | undefined
   )
   const rainMm = asNumber(
-    (weather.avg_precip_mm ?? weather.precipitation_mm ?? weather.rain_mm)
-      as number | string | undefined
+    (weather.avg_precip_mm ?? weather.precipitation_mm ?? weather.rain_mm) as number | string | undefined
   )
   const rainChance = asNumber(
-    (weather.rain_probability_percent ?? weather.rain_probability_pct ?? weather.rain_chance_percent)
-      as number | string | undefined
+    (weather.rain_probability_percent ?? weather.rain_probability_pct ?? weather.rain_chance_percent) as number | string | undefined
   )
 
   const avgTempLabel = avgTemp === null ? '—' : `${avgTemp.toFixed(1)}°C`
