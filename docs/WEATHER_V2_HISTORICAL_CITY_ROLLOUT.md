@@ -108,3 +108,19 @@ This verifies the central design point: a sub-5°C winter morning does **not** a
 - Expand to all mapped stage dates and 2016–2025 with batch/rate limiting, source attribution and ingestion audit. A further source decision may improve model spatial resolution from NASA's coarse-grid MERRA2 to ERA5-Land where viable.
 - Build deterministic stage weather **from the same hourly source** for manager display, replay, performance and cancellation, testing local timezone, stage duration, freezing mornings versus afternoons, mountains, route weather, missing data and cloned future cancellation resets.
 - Keep the old race engine isolated until acceptance tests and a controlled production promotion are completed.
+
+## Bulk GeoNames candidate audit (2026-11-10)
+
+A safe, offline matcher is now available:
+- `scripts/weather-v2/prepare_geonames_candidates.py` reads a GeoNames ZIP and name/country queue. It never contacts Supabase, never writes production state, and marks **every candidate as requiring review**.
+- `scripts/weather-v2/test_prepare_geonames_candidates.py` tests duplicated `Miami, US` results in Florida and Texas, unique names and missing places.
+- `scripts/weather-v2/locations_queue_20261110.csv` contains 2,099 still-unverified city/country aliases from the existing game stage database.
+- GitHub Actions `.github/workflows/weather-v2-geonames-review.yml` downloaded GeoNames `cities500.zip` (CC BY 4.0), ran the collision test and generated a review-only CSV artifact **successfully**: https://github.com/bracko87/ProPeloton-Manager/actions/runs/42873680853.
+
+First-run classification of the **2,099 unresolved aliases**:
+- 1,540 have exactly one proposed GeoNames cities500 candidate; **still unverified** against the correct stage region.
+- 175 have multiple possible candidates and require disambiguation.
+- 384 had no matching cities500 record; many are cycling-specific roads, mountain passes, landmarks or smaller settlements. These need a more complete gazetteer and/or manual source.
+- CSV has 2,492 output candidate/placeholder rows; one location may have more than one row.
+
+**Do not equate unique candidate in the cities500 subset with geocoding verification**. Cities500 excludes small settlements and some named endpoints; route-specific proof, latitude/longitude checks and administrative subdivision checks are still required. The artifact is a proposed data-matching queue, not permission to turn on weather cancellations.
