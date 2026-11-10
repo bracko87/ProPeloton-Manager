@@ -64,6 +64,9 @@
     "missedStartlist": "La tua squadra ha perso la Startlist e non partecipa a questa gara."
   },
   "racePlan": {
+    "highFatigueSelectedWarning": "{{count}} corridori selezionati hanno attualmente una fatica di 90 o più. Possono staccarsi, finire molto indietro o ritirarsi per esaurimento.",
+    "highFatigueStageWarning": "{{count}} corridori nel piano di tappa hanno attualmente una fatica di 90 o più. Controlla lo sforzo e valuta un ritmo più prudente.",
+    "highFatigueRiderWarning": "Fatica {{fatigue}}/100: energia iniziale e prestazioni molto ridotte. Valuta di far riposare questo corridore.",
     "notOpen": "Race Plan non è ancora aperto. Si apre su {{date}}.",
     "deadlinePassed": "La scadenza per l'invio del ciclista è passata. Questo Race Plan non può più essere modificato.",
     "ridersTitle": "1. Ciclisti",

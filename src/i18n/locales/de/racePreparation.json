@@ -64,6 +64,9 @@
     "missedStartlist": "Ihr Team hat die Fahrer-Startlist verpasst und nimmt an diesem Rennen nicht teil."
   },
   "racePlan": {
+    "highFatigueSelectedWarning": "{{count}} ausgewählte Fahrer haben aktuell mindestens 90 Ermüdungspunkte. Sie können zurückfallen, mit großem Rückstand ins Ziel kommen oder wegen Erschöpfung aufgeben.",
+    "highFatigueStageWarning": "{{count}} Fahrer im Etappenplan haben aktuell mindestens 90 Ermüdungspunkte. Prüfe ihren Einsatz und wähle möglichst eine energiesparende Fahrweise.",
+    "highFatigueRiderWarning": "Ermüdung {{fatigue}}/100: deutlich weniger Startenergie und geringere Leistung. Erwäge eine Pause für diesen Fahrer.",
     "notOpen": "Der Race Plan ist noch nicht geöffnet. Er öffnet am {{date}}.",
     "deadlinePassed": "Die Frist für die Fahrermeldung ist abgelaufen. Dieser Race Plan kann nicht mehr bearbeitet werden.",
     "ridersTitle": "1. Fahrer",

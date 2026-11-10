@@ -64,6 +64,9 @@
     "missedStartlist": "Votre équipe a raté la startlist du coureur et ne participe pas à cette course."
   },
   "racePlan": {
+    "highFatigueSelectedWarning": "{{count}} coureurs sélectionnés ont actuellement une fatigue de 90 ou plus. Ils peuvent être distancés, finir très loin ou abandonner par épuisement.",
+    "highFatigueStageWarning": "{{count}} coureurs du plan d'étape ont actuellement une fatigue de 90 ou plus. Vérifiez leur effort et envisagez d'économiser de l'énergie.",
+    "highFatigueRiderWarning": "Fatigue {{fatigue}}/100 : énergie de départ et performances fortement réduites. Envisagez de laisser ce coureur se reposer.",
     "notOpen": "Race Plan n'est pas encore ouvert. Il s'ouvre sur {{date}}.",
     "deadlinePassed": "La date limite de soumission des dossiers de Rider est dépassée. Ce Race Plan ne peut plus être modifié.",
     "ridersTitle": "1. Les coureurs",

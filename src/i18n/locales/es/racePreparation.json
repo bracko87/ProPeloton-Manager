@@ -64,6 +64,9 @@
     "missedStartlist": "Tu equipo perdió el plazo de la Startlist y no participa en esta carrera."
   },
   "racePlan": {
+    "highFatigueSelectedWarning": "{{count}} ciclistas seleccionados tienen actualmente 90 puntos de fatiga o más. Pueden perder contacto, terminar muy atrás o abandonar por agotamiento.",
+    "highFatigueStageWarning": "{{count}} ciclistas del plan de etapa tienen actualmente 90 puntos de fatiga o más. Revisa su esfuerzo y considera ahorrar energía.",
+    "highFatigueRiderWarning": "Fatiga {{fatigue}}/100: mucha menos energía inicial y menor rendimiento. Considera dar descanso a este ciclista.",
     "notOpen": "Race Plan no está abierto todavía. Se abre en {{date}}.",
     "deadlinePassed": "El plazo de envío del Rider ha pasado. Este Race Plan ya no puede ser editado.",
     "ridersTitle": "1. ciclista",

@@ -64,6 +64,9 @@
     "missedStartlist": "Vaš tim je propustio Startlist vozača i ne sudjeluje u ovoj utrci."
   },
   "racePlan": {
+    "highFatigueSelectedWarning": "{{count}} odabranih vozača trenutačno ima umor 90 ili više. Mogu zaostati, završiti s velikim zaostatkom ili odustati zbog iscrpljenosti.",
+    "highFatigueStageWarning": "{{count}} vozača u planu etape trenutačno ima umor 90 ili više. Provjerite napor i razmislite o štednji energije.",
+    "highFatigueRiderWarning": "Umor {{fatigue}}/100: znatno manje početne energije i slabiji učinak. Razmislite o odmoru za ovog vozača.",
     "notOpen": "Race Plan još nije otvoren. Otvara se {{date}}.",
     "deadlinePassed": "Rok za slanje vozača je istekao. Ovaj Race Plan se više ne može menjati.",
     "ridersTitle": "1. Vozači",
