@@ -65,5 +65,12 @@ jobs:
             findings.containsLoading = (await page.locator('body').innerText()).includes('Loading game time...')
             console.log('PUBLIC CLOCK DIAGNOSTIC:', JSON.stringify(findings, null, 2))
             await browser.close()
+            const clock = findings.t16?.[0]
+            if (findings.pageErrors.length ||
+                clock?.source !== 'server-anchored-clock' ||
+                !/^Season\\s+\\d+\\s*·.+\\d{2}:\\d{2}/.test(clock?.text ?? '')) {
+              throw new Error('LIVE HOMEPAGE STILL SHOWS STALE CLOCK TEXT')
+            }
+            console.log('LIVE CLOCK DISPLAY: VERIFIED')
           })().catch(e => { console.error('BROWSER DIAGNOSTIC FAILED:', String(e)); process.exitCode = 1 })
           NODE
