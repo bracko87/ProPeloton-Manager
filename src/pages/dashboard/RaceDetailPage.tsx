@@ -1851,7 +1851,11 @@ function formatRiderRole(role?: string | null): string {
 function hasWeather(stage: RaceStage): boolean {
   const weather = stage.weather_snapshot ?? {}
 
-  return Object.keys(weather).length > 0 && weather.source !== 'missing_country_code'
+  return (
+    Object.keys(weather).length > 0 &&
+    weather.source !== 'missing_country_code' &&
+    weather.source !== 'missing_weather_normals'
+  )
 }
 
 
@@ -2807,11 +2811,30 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
   const weather = stage.weather_snapshot ?? {}
   const condition = String(weather.condition ?? '')
 
-  const avgTemp = asNumber(weather.avg_temp_c as number | string | undefined)
-  const minTemp = asNumber(weather.avg_min_temp_c as number | string | undefined)
-  const maxTemp = asNumber(weather.avg_max_temp_c as number | string | undefined)
-  const wind = asNumber(weather.avg_wind_kmh as number | string | undefined)
-  const rain = asNumber(weather.avg_precip_mm as number | string | undefined)
+  // Both generated stage weather and curated stage-profile weather are valid.
+  // Curated profiles use temperature_c, wind_kmh and rain_probability_percent;
+  // never show their rain *chance* as millimetres of measured precipitation.
+  const avgTemp = asNumber(
+    (weather.avg_temp_c ?? weather.average_temp_c ?? weather.temperature_c ?? weather.temp_c)
+      as number | string | undefined
+  )
+  const minTemp = asNumber(
+    (weather.avg_min_temp_c ?? weather.min_temp_c) as number | string | undefined
+  )
+  const maxTemp = asNumber(
+    (weather.avg_max_temp_c ?? weather.max_temp_c) as number | string | undefined
+  )
+  const wind = asNumber(
+    (weather.avg_wind_kmh ?? weather.wind_kmh) as number | string | undefined
+  )
+  const rainMm = asNumber(
+    (weather.avg_precip_mm ?? weather.precipitation_mm ?? weather.rain_mm)
+      as number | string | undefined
+  )
+  const rainChance = asNumber(
+    (weather.rain_probability_percent ?? weather.rain_probability_pct ?? weather.rain_chance_percent)
+      as number | string | undefined
+  )
 
   const avgTempLabel = avgTemp === null ? '—' : `${avgTemp.toFixed(1)}°C`
   const minMaxTempLabel =
@@ -2819,7 +2842,11 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
       ? '—'
       : `${minTemp.toFixed(1)} / ${maxTemp.toFixed(1)}°C`
   const windKmhLabel = wind === null ? '—' : `${wind.toFixed(0)} km/h`
-  const rainMmLabel = rain === null ? '—' : `${rain.toFixed(1)} mm`
+  const rainMmLabel = rainMm !== null
+    ? `${rainMm.toFixed(1)} mm`
+    : rainChance !== null
+      ? `${Math.max(0, Math.min(100, rainChance)).toFixed(0)}% chance`
+      : '—'
 
   if (!hasWeather(stage)) {
     return (
@@ -13962,7 +13989,9 @@ function buildUniversalRaceEngineInput({
         weatherRecord.precipitation_mm ?? weatherRecord.rain_mm
       ),
       rainProbabilityPct: universalOptionalNumber(
-        weatherRecord.rain_probability_pct ?? weatherRecord.rain_probability
+        weatherRecord.rain_probability_pct ??
+        weatherRecord.rain_probability_percent ??
+        weatherRecord.rain_probability
       ),
       crosswindRisk: universalNullableString(weatherRecord.crosswind_risk),
       descentRisk: universalNullableString(weatherRecord.descent_risk),
@@ -16968,14 +16997,21 @@ function UniversalRaceReplayPage({
       weather.avg_wind_kmh ?? weather.wind_kmh
     )
     const rain = universalOptionalNumber(
-      weather.precipitation_mm ?? weather.rain_mm
+      weather.avg_precip_mm ?? weather.precipitation_mm ?? weather.rain_mm
+    )
+    const rainChance = universalOptionalNumber(
+      weather.rain_probability_percent ?? weather.rain_probability_pct
     )
 
     return {
       temperature:
         temperature === null ? '—' : `${temperature.toFixed(1)}°C`,
       wind: wind === null ? '—' : `${wind.toFixed(0)} km/h`,
-      rain: rain === null ? '—' : `${rain.toFixed(1)} mm`,
+      rain: rain !== null
+        ? `${rain.toFixed(1)} mm`
+        : rainChance !== null
+          ? `${Math.max(0, Math.min(100, rainChance)).toFixed(0)}% chance`
+          : '—',
     }
   }, [profile, stage.weather_snapshot])
 
