@@ -2075,8 +2075,51 @@ function StageWeatherRiskNotice({ stage }: { stage: RaceStage }) {
   )
 }
 
+function normalizeWeatherCondition(value: unknown): string | null {
+  if (typeof value !== 'string') return null
+  const code = value.trim().toLowerCase().replace(/[-\s]+/g, '_')
+  switch (code) {
+    case 'sunny':
+    case 'sun':
+    case 'sunny_windy':
+      return 'clear'
+    case 'partly_cloudy':
+    case 'partly_sunny':
+    case 'cloud_sun':
+      return 'partly_cloudy'
+    case 'cloudy':
+    case 'cloud':
+      return 'overcast'
+    case 'mist':
+    case 'misty':
+    case 'fog':
+      return 'foggy'
+    case 'light_rain':
+    case 'showers':
+    case 'rain_showers':
+      return 'rain'
+    case 'light_snow':
+    case 'snowy':
+    case 'snow_showers':
+      return 'snow'
+    case 'heavy_rain':
+    case 'thunderstorm':
+    case 'clear':
+    case 'overcast':
+    case 'foggy':
+    case 'drizzle':
+    case 'rain':
+    case 'snow':
+    case 'sleet':
+      return code
+    default:
+      // Stage titles and geographic narratives are not sky conditions.
+      return null
+  }
+}
+
 function getWeatherIcon(condition: string | null | undefined): string {
-  switch (condition) {
+  switch (normalizeWeatherCondition(condition)) {
     case 'clear':
       return '☀️'
     case 'partly_cloudy':
@@ -2098,7 +2141,8 @@ function getWeatherIcon(condition: string | null | undefined): string {
     case 'sleet':
       return '🌨️'
     default:
-      return '☁️'
+      // Unknown sky condition: thermometer rather than a misleading cloud.
+      return '🌡️'
   }
 }
 
@@ -2815,7 +2859,14 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
     v2Reference.weather_v2_display_only === true
   // Display-only reference never changes stage.weather_snapshot or game engine data.
   const weather = hasV2Reference ? v2Reference : stage.weather_snapshot ?? {}
-  const condition = String(weather.condition ?? '')
+  const weatherCondition = normalizeWeatherCondition(
+    weather.weather_condition ?? weather.sky_condition ?? weather.icon_key ?? weather.condition
+  )
+  const conditionLabel = weatherCondition === null
+    ? null
+    : t(`weather.${weatherCondition === 'partly_cloudy' ? 'partlyCloudy' : weatherCondition === 'heavy_rain' ? 'heavyRain' : weatherCondition}`, {
+        defaultValue: humanizeCode(weatherCondition),
+      })
 
   // Both generated stage weather and curated stage-profile weather are valid.
   // Curated profiles use temperature_c, wind_kmh and rain_probability_percent;
@@ -2839,16 +2890,16 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
     (weather.rain_probability_percent ?? weather.rain_probability_pct ?? weather.rain_chance_percent) as number | string | undefined
   )
 
-  const avgTempLabel = avgTemp === null ? '—' : `${avgTemp.toFixed(1)}°C`
-  const minMaxTempLabel =
-    minTemp === null || maxTemp === null
-      ? '—'
-      : `${minTemp.toFixed(1)} / ${maxTemp.toFixed(1)}°C`
-  const windKmhLabel = wind === null ? '—' : `${wind.toFixed(0)} km/h`
+  const avgTempLabel = avgTemp === null ? '—' : `${Math.round(avgTemp)}°C`
+  const hasMinMax = minTemp !== null && maxTemp !== null
+  const minMaxTempLabel = hasMinMax
+    ? `${Math.round(minTemp)} / ${Math.round(maxTemp)}°C`
+    : null
+  const windKmhLabel = wind === null ? '—' : `${Math.round(wind)} km/h`
   const rainMmLabel = rainMm !== null
     ? `${rainMm.toFixed(1)} mm`
     : rainChance !== null
-      ? `${Math.max(0, Math.min(100, rainChance)).toFixed(0)}% chance`
+      ? `${Math.round(Math.max(0, Math.min(100, rainChance)))}%`
       : '—'
 
   if (!hasV2Reference && !hasWeather(stage)) {
@@ -2868,25 +2919,19 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
             {t('weather.title')}
           </div>
 
-          <div className="mt-3 text-xl font-semibold text-slate-950">
-            {hasV2Reference
-              ? 'Historical local weather'
-              : condition === 'sunny_windy'
-              ? t('weather.sunnyWindy')
-              : condition === 'sunny'
-                ? t('weather.sunny')
-                : condition === 'windy'
-                  ? t('weather.windy')
-                  : t(`weather.${condition === 'partly_cloudy' ? 'partlyCloudy' : condition === 'heavy_rain' ? 'heavyRain' : condition}`, { defaultValue: humanizeCode(condition) })}
-          </div>
+          {(hasV2Reference || conditionLabel) && (
+            <div className="mt-3 text-lg font-semibold text-slate-950">
+              {hasV2Reference ? 'Historical local weather' : conditionLabel}
+            </div>
+          )}
         </div>
 
         <div className="flex h-14 w-14 items-center justify-center text-4xl leading-none">
-          {getWeatherIcon(condition)}
+          {getWeatherIcon(weatherCondition)}
         </div>
       </div>
 
-      <div className="mt-5 grid grid-cols-[1fr_1.25fr_1fr_1fr] gap-x-5 text-xs">
+      <div className={`mt-5 grid ${hasMinMax ? 'grid-cols-4' : 'grid-cols-3'} gap-x-3 text-xs`}>
         <div className="min-w-0">
           <div className="text-slate-500">{t('weather.average')}</div>
           <div className="mt-1 whitespace-nowrap text-[13px] font-semibold text-slate-950">
@@ -2894,12 +2939,14 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
           </div>
         </div>
 
-        <div className="min-w-0">
-          <div className="text-slate-500">{t('weather.minMax')}</div>
-          <div className="mt-1 whitespace-nowrap text-[12px] font-semibold text-slate-950">
-            {minMaxTempLabel}
+        {hasMinMax && (
+          <div className="min-w-0">
+            <div className="text-slate-500">{t('weather.minMax')}</div>
+            <div className="mt-1 whitespace-nowrap text-[12px] font-semibold text-slate-950">
+              {minMaxTempLabel}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="min-w-0">
           <div className="text-slate-500">{t('weather.wind')}</div>
