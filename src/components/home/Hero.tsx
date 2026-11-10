@@ -9,10 +9,11 @@
  * - Keep Start Playing and Sign In as the only primary homepage actions.
  */
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Award } from 'lucide-react'
+import { fetchPublicGameClockLabel } from '../../lib/supabase'
 
 type HeroProps = {
   gameTimeLabel: string
@@ -36,8 +37,59 @@ function formatGameTimeLabel(
 
 export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
   const { t } = useTranslation('home')
+  const [directClock, setDirectClock] = useState<string | null>(null)
+  const [clockRequestFinished, setClockRequestFinished] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    let inFlight = false
+    let currentAbort: AbortController | null = null
+
+    async function refreshPublicClock(): Promise<void> {
+      if (inFlight) return
+      inFlight = true
+      const controller = new AbortController()
+      currentAbort = controller
+      const timeoutId = window.setTimeout(() => controller.abort(), 10_000)
+      try {
+        const label = await fetchPublicGameClockLabel(controller.signal)
+        if (mounted) setDirectClock(label)
+      } catch (error) {
+        if (mounted) console.warn('Public game clock read failed:', error)
+      } finally {
+        window.clearTimeout(timeoutId)
+        if (mounted) setClockRequestFinished(true)
+        if (currentAbort === controller) currentAbort = null
+        inFlight = false
+      }
+    }
+
+    void refreshPublicClock()
+    const intervalId = window.setInterval(() => void refreshPublicClock(), 30_000)
+    return () => {
+      mounted = false
+      currentAbort?.abort()
+      window.clearInterval(intervalId)
+    }
+  }, [])
+
+  // The hero has its own public read so an auth/reviews/stats request cannot
+  // leave the most visible clock on the homepage stuck at "Loading".
+  const parentLabel = gameTimeLabel.trim()
+  const parentLabelReady =
+    parentLabel.length > 0 &&
+    parentLabel !== t('status.loadingGameTime') &&
+    parentLabel !== t('hero.loadingGameTime') &&
+    parentLabel !== t('status.gameTimeUnavailable')
+
+  const clockLabel = directClock ||
+    (parentLabelReady
+      ? parentLabel
+      : clockRequestFinished
+        ? t('status.gameTimeUnavailable')
+        : t('hero.loadingGameTime'))
   const displayGameTime = formatGameTimeLabel(
-    gameTimeLabel,
+    clockLabel,
     t('hero.season'),
     t('hero.loadingGameTime'),
   )
@@ -101,7 +153,12 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
               <div className="text-xs font-semibold uppercase tracking-wide text-yellow-300">
                 {t('hero.gameTime')}
               </div>
-              <div className="mt-1 text-sm font-bold text-white">{displayGameTime}</div>
+              <div
+                className="mt-1 text-sm font-bold text-white"
+                data-clock-source={directClock ? 'public-rpc' : parentLabelReady ? 'homepage-snapshot' : 'pending-or-unavailable'}
+              >
+                {displayGameTime}
+              </div>
             </div>
 
             <div className="rounded-lg border border-white/10 bg-white/5 p-4">
