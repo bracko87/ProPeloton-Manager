@@ -2081,8 +2081,10 @@ function normalizeWeatherCondition(value: unknown): string | null {
   switch (code) {
     case 'sunny':
     case 'sun':
-    case 'sunny_windy':
       return 'clear'
+    case 'sunny_windy':
+    case 'windy':
+      return code
     case 'partly_cloudy':
     case 'partly_sunny':
     case 'cloud_sun':
@@ -2122,6 +2124,10 @@ function getWeatherIcon(condition: string | null | undefined): string {
   switch (normalizeWeatherCondition(condition)) {
     case 'clear':
       return '☀️'
+    case 'sunny_windy':
+      return '🌤️'
+    case 'windy':
+      return '💨'
     case 'partly_cloudy':
       return '⛅'
     case 'overcast':
@@ -2866,7 +2872,13 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
     normalizeWeatherCondition(weather.icon_key)
   const conditionLabel = weatherCondition === null
     ? null
-    : t(`weather.${weatherCondition === 'partly_cloudy' ? 'partlyCloudy' : weatherCondition === 'heavy_rain' ? 'heavyRain' : weatherCondition}`, {
+    : t(`weather.${weatherCondition === 'partly_cloudy'
+      ? 'partlyCloudy'
+      : weatherCondition === 'heavy_rain'
+        ? 'heavyRain'
+        : weatherCondition === 'sunny_windy'
+          ? 'sunnyWindy'
+          : weatherCondition}`, {
         defaultValue: humanizeCode(weatherCondition),
       })
 
