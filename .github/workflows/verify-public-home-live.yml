@@ -1,0 +1,44 @@
+name: Verify public homepage production clock release
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-public-home-live.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - name: Read public HTTP headers and actual deployed HTML
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "### DNS:"
+          getent ahostsv4 propelotonmanager.com | head -n 3 || true
+          echo "### HTTP HEADERS:"
+          curl --fail --location --max-time 25 --silent --show-error \
+            --dump-header /tmp/ppm-home-headers \
+            --output /tmp/ppm-home.html \
+            "https://propelotonmanager.com/?deployment_audit=${GITHUB_RUN_ID}"
+          grep -Ei '^(HTTP/|server:|x-nf-|x-vercel-|cf-|cache-control:|etag:|last-modified:|age:)' /tmp/ppm-home-headers || true
+          echo "HTML bytes: $(wc -c </tmp/ppm-home.html)"
+          echo "Deployed HTML main commit marker?"
+          if grep -q 'ppm-home-clock-deploy' /tmp/ppm-home.html; then echo 'YES: latest source marker present'; else echo 'NO: older HTML served'; fi
+          echo "Current deployed script tags:"
+          grep -Eo '<script[^>]*src="[^"]+"' /tmp/ppm-home.html | tail -n 12 || true
+          echo "### MAIN JAVASCRIPT:"
+          curl --fail --location --max-time 25 --silent --show-error \
+            --dump-header /tmp/ppm-script-headers \
+            --output /tmp/ppm-main.js \
+            "https://propelotonmanager.com/main.js?deployment_audit=${GITHUB_RUN_ID}"
+          grep -Ei '^(HTTP/|server:|x-nf-|x-vercel-|cf-|cache-control:|etag:|last-modified:|age:)' /tmp/ppm-script-headers || true
+          echo "Script bytes: $(wc -c </tmp/ppm-main.js)"
+          if grep -q 'get_public_home_clock_anchor_v1' /tmp/ppm-main.js; then echo 'NEW CLOCK RPC: deployed'; else echo 'NEW CLOCK RPC: NOT deployed'; fi
+          if grep -q 'server-anchored-clock' /tmp/ppm-main.js; then echo 'NEW CLOCK HERO: deployed'; else echo 'NEW CLOCK HERO: NOT deployed'; fi
+          echo "### CHECK NO NON-200 / REDIRECT ERROR:"
+          head -n 1 /tmp/ppm-home-headers
