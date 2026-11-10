@@ -45,6 +45,7 @@ import AboutPage from './pages/About'
 import HowToPlayPage from './pages/HowToPlay'
 import PrivacyPolicyPage from './pages/PrivacyPolicy'
 import TermsPage from './pages/Terms'
+import RefundPolicyPage from './pages/RefundPolicy'
 import SupportPage from './pages/Support'
 
 import ClubDashboard from './pages/dashboard/ClubDashboard'
@@ -445,6 +446,11 @@ export default function App(): JSX.Element {
           <Route
             path="/terms"
             element={<TermsPage />}
+          />
+
+          <Route
+            path="/refund-policy"
+            element={<RefundPolicyPage />}
           />
 
           <Route
