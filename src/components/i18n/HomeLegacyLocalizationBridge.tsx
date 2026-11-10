@@ -24,7 +24,8 @@ const textKeyBySource = new Map<string, string>([
   ['Contact us on Discord', 'beta.discord'],
   ['Continue to website', 'beta.continue'],
   ['Preparing your manager account...', 'status.preparingAccount'],
-  ['Loading game time...', 'status.loadingGameTime'],
+  // The live hero game clock is React-controlled and must never be translated
+  // through this legacy DOM observer: it updates every second.
   ['Game time unavailable', 'status.gameTimeUnavailable'],
   ['Quick Stats', 'stats.title'],
   ['Live snapshot of the ProPeloton world.', 'stats.subtitle'],
@@ -246,6 +247,16 @@ export default function HomeLegacyLocalizationBridge(): JSX.Element | null {
 
         while (node) {
           const textNode = node as Text
+
+          // Live clock text belongs to React. The legacy translation bridge
+          // used to remember its initial "Loading game time..." value and
+          // restore it after every clock tick, hiding a successful RPC.
+          // Skip the entire clock subtree, including already-tagged nodes.
+          if (textNode.parentElement?.closest('[data-clock-source]')) {
+            node = walker.nextNode()
+            continue
+          }
+
           const existingKey = nodeKey.get(textNode)
           const normalized = normalizeText(textNode.nodeValue ?? '')
           const sourceKey = existingKey ?? textKeyBySource.get(normalized)
