@@ -1,0 +1,66 @@
+name: Publish verified Weather V2 display via linked Netlify main build
+
+# The linked Git-based build preserves Netlify functions, redirects, and edge logic.
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/weather-v2-netlify-publish.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: propeloton-weather-v2-netlify-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - name: Require existing Netlify deployment credential
+        shell: bash
+        run: |
+          if [ -z "${NETLIFY_AUTH_TOKEN:-}" ]; then
+            echo "::error::Missing NETLIFY_AUTH_TOKEN GitHub secret. Cannot publish to Netlify."
+            exit 1
+          fi
+      - name: Verify target domain and approved GitHub main source
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${NETLIFY_SITE_ID:-propelotonmanager.com}"
+          curl --fail --silent --show-error --max-time 25 -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" "https://api.netlify.com/api/v1/sites/$TARGET" -o /tmp/ppm-weather-v2-site.json
+          node -e '
+            const fs=require("fs");
+            const s=JSON.parse(fs.readFileSync("/tmp/ppm-weather-v2-site.json","utf8"));
+            const domains=[s.custom_domain,s.url,s.ssl_url].filter(Boolean).map(v=>{try{return new URL(v).hostname.toLowerCase()}catch{return String(v).toLowerCase()}});
+            if(!domains.some(x=>["propelotonmanager.com","www.propelotonmanager.com"].includes(x))) {
+              throw new Error("Netlify project is not propelotonmanager.com; refusing deploy");
+            }
+            const bs=s.build_settings || {};
+            const repo=String(bs.repo_url||"").toLowerCase();
+            if(!repo.includes("github.com/bracko87/propeloton-manager") ||
+               String(bs.repo_branch||"")!=="main") {
+              throw new Error("Netlify source is not approved ProPeloton-Manager main branch");
+            }
+            console.log("Verified linked Netlify site, repository, and main branch");
+          '
+      - name: Trigger linked Netlify production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${NETLIFY_SITE_ID:-propelotonmanager.com}"
+          curl --fail --silent --show-error --max-time 30 -X POST -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" -H "Content-Type: application/json" "https://api.netlify.com/api/v1/sites/$TARGET/builds" -o /tmp/ppm-weather-v2-build.json
+          node -e '
+            const fs=require("fs");
+            const b=JSON.parse(fs.readFileSync("/tmp/ppm-weather-v2-build.json","utf8"));
+            if(!b.id && !b.deploy_id)throw new Error("No build/deploy ID returned");
+            console.log("Netlify build request accepted:",b.id||b.deploy_id);
+            console.log("Build acceptance is not confirmation of production publication");
+          '
