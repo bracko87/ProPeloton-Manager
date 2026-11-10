@@ -73,11 +73,21 @@ BEGIN
     RAISE EXCEPTION 'Expected 7 World Road Championship selection predicates, found %',v_matches;
   END IF;
 
-  v_definition := replace(
-    v_definition,
-    v_predicate,
-    v_predicate || E'\n      AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)'
-  );
-  EXECUTE v_definition;
+  -- Idempotent when applied by the repository migration runner after the
+  -- corresponding live hotfix. Do not append the same predicate twice.
+  IF (length(v_definition)-length(replace(v_definition,
+      'AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)','')))
+      /length('AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)') = 7 THEN
+    RAISE NOTICE 'World Road Championship event-date selection already installed';
+  ELSIF strpos(v_definition,'AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)') > 0 THEN
+    RAISE EXCEPTION 'Partial World Road Championship event-date guard installation';
+  ELSE
+    v_definition := replace(
+      v_definition,
+      v_predicate,
+      v_predicate || E'\n      AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)'
+    );
+    EXECUTE v_definition;
+  END IF;
 END;
 $migration$;
