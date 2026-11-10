@@ -383,7 +383,9 @@ export default function HomePage(): JSX.Element {
       isMounted = false
       window.clearInterval(intervalId)
     }
-  }, [locale, t])
+  // Language changes are reflected by locale; avoid restarting this
+  // pending RPC on unrelated translation-function identity changes.
+  }, [locale])
 
   useEffect(() => {
     let isMounted = true
@@ -419,7 +421,9 @@ export default function HomePage(): JSX.Element {
       isMounted = false
       window.clearInterval(intervalId)
     }
-  }, [t])
+  // The homepage snapshot is public; do not discard successful reads
+  // on unrelated React rerenders or translation-function churn.
+  }, [locale])
 
   useEffect(() => {
     let isMounted = true
