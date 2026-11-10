@@ -1,0 +1,60 @@
+name: Homepage live game-time DOM regression
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/components/i18n/HomeLegacyLocalizationBridge.tsx'
+      - 'src/components/home/Hero.tsx'
+      - 'src/hooks/usePublicHomeGameClock.ts'
+      - '.github/workflows/home-clock-dom-regression.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build production frontend
+        run: npm ci && npm run build
+      - name: Install headless browser for DOM test
+        run: |
+          npm install --no-save --package-lock=false playwright@1.57.0
+          npx playwright install chromium
+      - name: Check real browser shows server clock, not stale loading text
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m http.server --directory dist 5189 >/tmp/home-clock-http.log 2>&1 &
+          node <<'NODE'
+          const { chromium } = require('playwright')
+          ;(async () => {
+            const browser = await chromium.launch({ headless: true })
+            const page = await browser.newPage({ viewport: { width: 1440, height: 900 } })
+            const errors = []
+            page.on('pageerror', e => errors.push(e.message))
+            await page.goto('http://localhost:5189/', { waitUntil: 'domcontentloaded', timeout: 30000 })
+            await page.waitForFunction(() => {
+              const clock = document.querySelector('[data-clock-source]')
+              const text = clock?.textContent?.trim() ?? ''
+              return clock?.getAttribute('data-clock-source') === 'server-anchored-clock' &&
+                /^Season\s+\d+\s*·.+\d{2}:\d{2}/.test(text)
+            }, { timeout: 16000 }).catch(() => {})
+            const clock = await page.locator('[data-clock-source]').evaluate(e => ({
+              source: e.getAttribute('data-clock-source'),
+              text: e.textContent?.trim(),
+            }))
+            console.log('BRIDGE REGRESSION', JSON.stringify({ clock, errors }))
+            await browser.close()
+            if (errors.length || clock.source !== 'server-anchored-clock' ||
+                !/^Season\s+\d+\s*·.+\d{2}:\d{2}/.test(clock.text ?? '')) {
+              throw new Error('Live game clock never replaced the initial loading text')
+            }
+          })().catch(e => { console.error(String(e)); process.exitCode = 1 })
+          NODE
