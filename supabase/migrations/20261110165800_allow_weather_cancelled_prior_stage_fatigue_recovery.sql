@@ -20,11 +20,17 @@ BEGIN
     RAISE EXCEPTION 'Late-stage fatigue recovery function is missing';
   END IF;
 
-  v_count := (length(v_definition)-length(replace(v_definition,v_old,'')))/length(v_old);
-  IF v_count <> 1 THEN
-    RAISE EXCEPTION 'Expected exactly one prior-stage guard, got %',v_count;
+  -- A subsequent normal migration deployment must not reject a hotfix
+  -- that is already present or silently overwrite a different implementation.
+  IF strpos(v_definition,
+    'Previous stages cancelled by weather have no official results.') > 0 THEN
+    RAISE NOTICE 'Weather-cancelled preceding stage guard already installed';
+  ELSE
+    v_count := (length(v_definition)-length(replace(v_definition,v_old,'')))/length(v_old);
+    IF v_count <> 1 THEN
+      RAISE EXCEPTION 'Expected exactly one prior-stage guard, got %',v_count;
+    END IF;
+    EXECUTE replace(v_definition,v_old,v_new);
   END IF;
-
-  EXECUTE replace(v_definition,v_old,v_new);
 END;
 $migration$;
