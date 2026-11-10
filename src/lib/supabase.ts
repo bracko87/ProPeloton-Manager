@@ -297,4 +297,41 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   }
 })
 
+/**
+ * Browser-independent public game clock read for the homepage hero.
+ * Uses only the existing public anon key and read-only RPC; it deliberately
+ * bypasses Supabase Auth session locking that can delay a marketing page.
+ * Never takes a game timestamp from the user's computer clock.
+ */
+export async function fetchPublicGameClockLabel(signal?: AbortSignal): Promise<string> {
+  const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_current_game_clock_v1`, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_ANON_KEY,
+      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: '{}',
+    cache: 'no-store',
+    signal,
+  })
+
+  if (!response.ok) {
+    throw new Error(`Public game clock HTTP ${response.status}`)
+  }
+
+  const raw: unknown = await response.json()
+  const row = Array.isArray(raw) ? raw[0] : raw
+  const label =
+    row && typeof row === 'object' && 'game_time_label' in row
+      ? (row as { game_time_label?: unknown }).game_time_label
+      : null
+
+  if (typeof label !== 'string' || !/^S\d+\s*·\s*\S/.test(label)) {
+    throw new Error('Public game clock returned an invalid label')
+  }
+
+  return label.trim()
+}
+
 export default supabase
