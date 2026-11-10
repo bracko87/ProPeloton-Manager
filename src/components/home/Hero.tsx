@@ -9,11 +9,11 @@
  * - Keep Start Playing and Sign In as the only primary homepage actions.
  */
 
-import React, { useEffect, useState } from 'react'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import { Award } from 'lucide-react'
-import { fetchPublicGameClockLabel } from '../../lib/supabase'
+import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
 
 type HeroProps = {
   gameTimeLabel: string
@@ -35,46 +35,38 @@ function formatGameTimeLabel(
   return label.replace(/^S(\d+)\s*·/, `${seasonLabel} $1 ·`)
 }
 
+function getHomeClockLocale(language: string): string {
+  if (language.startsWith('sr')) return 'sr-Latn-RS'
+  if (language.startsWith('de')) return 'de-DE'
+  if (language.startsWith('hr')) return 'hr-HR'
+  if (language.startsWith('es')) return 'es-ES'
+  if (language.startsWith('it')) return 'it-IT'
+  if (language.startsWith('fr')) return 'fr-FR'
+  if (language.startsWith('ru')) return 'ru-RU'
+  return 'en-GB'
+}
+
+function formatLiveGameClock(gameEpochMs: number, locale: string, seasonLabel: string): string {
+  const gameDate = new Date(gameEpochMs)
+  if (Number.isNaN(gameDate.getTime())) return ''
+
+  const season = gameDate.getUTCFullYear() - 1999
+  const weekday = new Intl.DateTimeFormat(locale, {
+    weekday: 'long', timeZone: 'UTC',
+  }).format(gameDate)
+  const date = new Intl.DateTimeFormat(locale, {
+    month: 'long', day: 'numeric', timeZone: 'UTC',
+  }).format(gameDate)
+  const time = `${String(gameDate.getUTCHours()).padStart(2, '0')}:${String(gameDate.getUTCMinutes()).padStart(2, '0')}`
+  return `${seasonLabel} ${season} · ${weekday} · ${date} · ${time}`
+}
+
 export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
-  const { t } = useTranslation('home')
-  const [directClock, setDirectClock] = useState<string | null>(null)
-  const [clockRequestFinished, setClockRequestFinished] = useState(false)
+  const { t, i18n } = useTranslation('home')
+  const clock = usePublicHomeGameClock()
+  const language = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase()
+  const locale = getHomeClockLocale(language)
 
-  useEffect(() => {
-    let mounted = true
-    let inFlight = false
-    let currentAbort: AbortController | null = null
-
-    async function refreshPublicClock(): Promise<void> {
-      if (inFlight) return
-      inFlight = true
-      const controller = new AbortController()
-      currentAbort = controller
-      const timeoutId = window.setTimeout(() => controller.abort(), 10_000)
-      try {
-        const label = await fetchPublicGameClockLabel(controller.signal)
-        if (mounted) setDirectClock(label)
-      } catch (error) {
-        if (mounted) console.warn('Public game clock read failed:', error)
-      } finally {
-        window.clearTimeout(timeoutId)
-        if (mounted) setClockRequestFinished(true)
-        if (currentAbort === controller) currentAbort = null
-        inFlight = false
-      }
-    }
-
-    void refreshPublicClock()
-    const intervalId = window.setInterval(() => void refreshPublicClock(), 30_000)
-    return () => {
-      mounted = false
-      currentAbort?.abort()
-      window.clearInterval(intervalId)
-    }
-  }, [])
-
-  // The hero has its own public read so an auth/reviews/stats request cannot
-  // leave the most visible clock on the homepage stuck at "Loading".
   const parentLabel = gameTimeLabel.trim()
   const parentLabelReady =
     parentLabel.length > 0 &&
@@ -82,12 +74,16 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
     parentLabel !== t('hero.loadingGameTime') &&
     parentLabel !== t('status.gameTimeUnavailable')
 
-  const clockLabel = directClock ||
+  const liveLabel = clock.gameEpochMs === null
+    ? null
+    : formatLiveGameClock(clock.gameEpochMs, locale, t('hero.season'))
+
+  const clockLabel = liveLabel ||
     (parentLabelReady
       ? parentLabel
-      : clockRequestFinished
-        ? t('status.gameTimeUnavailable')
-        : t('hero.loadingGameTime'))
+      : clock.loading
+        ? t('hero.loadingGameTime')
+        : t('status.gameTimeUnavailable'))
   const displayGameTime = formatGameTimeLabel(
     clockLabel,
     t('hero.season'),
@@ -155,7 +151,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
               </div>
               <div
                 className="mt-1 text-sm font-bold text-white"
-                data-clock-source={directClock ? 'public-rpc' : parentLabelReady ? 'homepage-snapshot' : 'pending-or-unavailable'}
+                data-clock-source={liveLabel ? 'server-anchored-clock' : parentLabelReady ? 'homepage-snapshot' : clock.loading ? 'pending' : 'unavailable'}
               >
                 {displayGameTime}
               </div>
