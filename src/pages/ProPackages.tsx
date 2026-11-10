@@ -12,6 +12,7 @@
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router'
 import appI18n from '../i18n'
 import { supabase } from '../lib/supabase'
 import EarnCoinsDialog, { useEarnCoinsLabel } from '@/components/rewards/EarnCoinsDialog'
@@ -565,6 +566,7 @@ export default function ProPackagesPage(): JSX.Element {
   const [earnCoinsOpen, setEarnCoinsOpen] = useState(false)
 
   const { t, i18n } = useTranslation('proPackages')
+  const purchasePolicyGerman = (i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('de')
   const stripeReturnHandledRef = useRef(false)
   const [balance, setBalance] = useState(0)
   const [loadingBalance, setLoadingBalance] = useState(true)
@@ -1509,6 +1511,18 @@ export default function ProPackagesPage(): JSX.Element {
         </div>
       ) : null}
 
+      <aside aria-label={purchasePolicyGerman ? 'Premium-Kaufbedingungen' : 'Premium purchase terms'}
+        className="mt-5 rounded-xl border border-yellow-300 bg-yellow-50 px-5 py-4 text-sm leading-6 text-gray-800">
+        <p>
+          {purchasePolicyGerman
+            ? 'Premium wird nach erfolgreicher Zahlung für den gewählten Zeitraum (1, 3 oder 12 Monate) freigeschaltet. Automatische Verlängerungen können für die Zukunft gekündigt werden. Für korrekt bereitgestellte Leistungen bieten wir grundsätzlich keine freiwillige Erstattung an; zwingende Verbraucherrechte bleiben bestehen.'
+            : 'Premium starts after successful payment for your selected billing period (1, 3 or 12 months). You can cancel automatic future renewal. Correctly delivered benefits are generally not eligible for voluntary refunds; mandatory consumer rights remain unaffected.'}{' '}
+          <Link to="/refund-policy" className="font-bold text-blue-700 underline underline-offset-2">
+            {purchasePolicyGerman ? 'Erstattungs- und Kündigungsrichtlinie' : 'Refund & Cancellation Policy'}
+          </Link>
+        </p>
+      </aside>
+
       {/* Section 1 — Premium Membership */}
       <section className="relative z-20 mt-6 overflow-visible rounded-2xl border border-yellow-400 bg-white shadow-sm">
         <div className="grid grid-cols-1 overflow-visible lg:grid-cols-[1.35fr_0.65fr]">
@@ -1942,6 +1956,15 @@ export default function ProPackagesPage(): JSX.Element {
           </div>
         )}
       </section>
+
+      <p className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-5 py-4 text-sm leading-6 text-gray-700">
+        {purchasePolicyGerman
+          ? 'Gekaufte Coins werden nach bestätigter Zahlung gutgeschrieben und bleiben normalerweise bis zur Verwendung verfügbar. Für korrekt bereitgestellte Coins gibt es grundsätzlich keine freiwillige Rückerstattung. Gesetzliche Rechte bleiben unberührt.'
+          : 'Purchased Coins are credited after confirmed payment and normally remain available until spent. Correctly delivered Coins are generally not eligible for voluntary refunds. Statutory rights remain unaffected.'}{' '}
+        <Link to="/refund-policy" className="font-bold text-blue-700 underline underline-offset-2">
+          {purchasePolicyGerman ? 'Erstattungsrichtlinie ansehen' : 'Read the refund policy'}
+        </Link>
+      </p>
 
       {/* Earn free Coins alongside purchasable packages. */}
       <section className="mt-6 rounded-2xl border border-amber-300 bg-amber-50 p-5 shadow-sm sm:p-6">
