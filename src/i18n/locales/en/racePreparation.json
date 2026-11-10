@@ -64,6 +64,9 @@
     "missedStartlist": "Your team missed the rider startlist and is not participating in this race."
   },
   "racePlan": {
+    "highFatigueSelectedWarning": "{{count}} selected riders currently have fatigue of 90 or higher. They may lose contact, finish far behind, or abandon if their live energy runs out.",
+    "highFatigueStageWarning": "{{count}} riders in this stage plan currently have fatigue of 90 or higher. Review their effort and consider conserving energy.",
+    "highFatigueRiderWarning": "Fatigue {{fatigue}}/100: severely reduced starting energy and performance. Consider resting this rider.",
     "notOpen": "Race Plan is not open yet. It opens on {{date}}.",
     "deadlinePassed": "Rider submission deadline has passed. This Race Plan can no longer be edited.",
     "ridersTitle": "1. Riders",
