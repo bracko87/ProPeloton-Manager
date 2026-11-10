@@ -248,6 +248,7 @@ type RaceStage = {
   elevation_gain_m?: number | null
   profile_image_url?: string | null
   weather_snapshot?: JsonObject | null
+  weather_v2_reference?: JsonObject | null
   rules_snapshot?: JsonObject | null
   metadata?: JsonObject | null
   points?: RaceStagePoint[]
@@ -2808,7 +2809,12 @@ function isPrologueOrIndividualTimeTrialStage(
 
 function WeatherCard({ stage }: { stage: RaceStage }) {
   const { t } = useTranslation('raceDetail')
-  const weather = stage.weather_snapshot ?? {}
+  const v2Reference = getRecord(stage.weather_v2_reference)
+  const hasV2Reference =
+    v2Reference.status === 'historical_reference_only' &&
+    v2Reference.weather_v2_display_only === true
+  // Display-only reference never changes stage.weather_snapshot or game engine data.
+  const weather = hasV2Reference ? v2Reference : stage.weather_snapshot ?? {}
   const condition = String(weather.condition ?? '')
 
   // Both generated stage weather and curated stage-profile weather are valid.
@@ -2845,7 +2851,7 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
       ? `${Math.max(0, Math.min(100, rainChance)).toFixed(0)}% chance`
       : '—'
 
-  if (!hasWeather(stage)) {
+  if (!hasV2Reference && !hasWeather(stage)) {
     return (
       <div className="w-full rounded-3xl border border-slate-200 bg-white p-6 text-sm text-slate-600 shadow-sm">
         {t('weather.notGenerated')}
@@ -2863,7 +2869,9 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
           </div>
 
           <div className="mt-3 text-xl font-semibold text-slate-950">
-            {condition === 'sunny_windy'
+            {hasV2Reference
+              ? 'Historical local weather'
+              : condition === 'sunny_windy'
               ? t('weather.sunnyWindy')
               : condition === 'sunny'
                 ? t('weather.sunny')
@@ -2908,11 +2916,22 @@ function WeatherCard({ stage }: { stage: RaceStage }) {
         </div>
       </div>
 
-      <StageWeatherRiskNotice stage={stage} />
-
-      <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
-        {getStageWeatherDecisionText(stage)}
-      </div>
+      {hasV2Reference ? (
+        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
+          Historical reference: {String(weather.historical_date ?? '')} (Season {String(weather.game_season ?? '')}).
+          NASA POWER modelled local-area weather, not a weather-station measurement.
+          Temperature, wind, and rainfall are from an illustrative four-hour local-time sample
+          around the scheduled start. This reference is not yet used for race simulation
+          or cancellation decisions.
+        </div>
+      ) : (
+        <>
+          <StageWeatherRiskNotice stage={stage} />
+          <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs leading-5 text-slate-600">
+            {getStageWeatherDecisionText(stage)}
+          </div>
+        </>
+      )}
     </div>
   )
 }
