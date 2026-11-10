@@ -334,4 +334,68 @@ export async function fetchPublicGameClockLabel(signal?: AbortSignal): Promise<s
   return label.trim()
 }
 
+
+/** Public, read-only source for the Tennis-style live homepage clock. */
+export interface PublicHomeClockAnchor {
+  game_epoch_ms: number
+  server_epoch_ms: number
+  speed_multiplier: number
+  is_paused: boolean
+  game_time_label: string
+}
+
+export async function fetchPublicHomeClockAnchor(
+  signal?: AbortSignal,
+): Promise<PublicHomeClockAnchor> {
+  // Read-only RPC, intentionally independent of a logged-in player's auth
+  // session. The project URL and anon key belong to ProPeloton, not Tennis.
+  const response = await fetch(
+    `${SUPABASE_URL}/rest/v1/rpc/get_public_home_clock_anchor_v1`,
+    {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: '{}',
+      cache: 'no-store',
+      signal,
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(`Public live game clock HTTP ${response.status}`)
+  }
+
+  const raw: unknown = await response.json()
+  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
+    throw new Error('Public live game clock payload is invalid')
+  }
+  const data = raw as Record<string, unknown>
+  const gameMs = Number(data.game_epoch_ms)
+  const serverMs = Number(data.server_epoch_ms)
+  const speed = Number(data.speed_multiplier)
+  const label = data.game_time_label
+  if (
+    !Number.isSafeInteger(gameMs) ||
+    !Number.isSafeInteger(serverMs) ||
+    !Number.isFinite(speed) ||
+    speed < 0 ||
+    speed > 1000 ||
+    typeof label !== 'string' ||
+    !/^S\d+\s*·\s*\S/.test(label)
+  ) {
+    throw new Error('Public live game clock returned invalid values')
+  }
+
+  return {
+    game_epoch_ms: gameMs,
+    server_epoch_ms: serverMs,
+    speed_multiplier: speed,
+    is_paused: data.is_paused === true,
+    game_time_label: label.trim(),
+  }
+}
+
 export default supabase
