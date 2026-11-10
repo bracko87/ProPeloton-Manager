@@ -100,6 +100,9 @@ export default function TermsPage(): JSX.Element {
           </section>
 
           <div className="mt-10 flex flex-wrap gap-3">
+            <Link to="/refund-policy" className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-bold text-slate-950 transition-colors hover:bg-yellow-300">
+              {t('terms.refundPolicyLink', { defaultValue: 'Refund & Cancellation Policy' })}
+            </Link>
             <Link to="/privacy-policy" className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-slate-800">
               {t('common.privacyPolicy')}
             </Link>
