@@ -118,6 +118,7 @@ import {
   useAuth,
 } from './context/AuthProvider'
 import SiteAnalyticsTracker from './components/analytics/SiteAnalyticsTracker'
+import { CyclingSeasonWindowBoundary } from './components/season/CyclingSeasonWindowBoundary'
 import FeatureTutorialHost from './components/tutorial/FeatureTutorialHost'
 import LocaleDateFormattingBridge from './components/i18n/LocaleDateFormattingBridge'
 import { useAppAdmin } from './hooks/useAppAdmin'
@@ -392,6 +393,7 @@ export default function App(): JSX.Element {
   return (
     <AuthProvider>
       <HashRouter>
+        <CyclingSeasonWindowBoundary>
         <SiteAnalyticsTracker />
         <LocaleDateFormattingBridge />
         <FeatureTutorialHost />
@@ -892,6 +894,7 @@ export default function App(): JSX.Element {
             }
           />
         </Routes>
+        </CyclingSeasonWindowBoundary>
       </HashRouter>
     </AuthProvider>
   )
