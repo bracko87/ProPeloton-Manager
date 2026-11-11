@@ -1,0 +1,35 @@
+name: Cycling two-day season transition validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/App.tsx'
+      - 'src/components/season/CyclingSeasonWindowBoundary.tsx'
+      - 'supabase/migrations/20261111143000_cycling_two_day_season_window_v1.sql'
+      - 'tests/cyclingTwoDaySeasonWindow.test.mjs'
+      - '.github/workflows/cycling-two-day-season-window.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cycling-two-day-season-window-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  migration-contract-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - name: Verify season window lock, release checks, and safe 2x resume
+        run: node --test tests/cyclingTwoDaySeasonWindow.test.mjs
+      - name: Verify protected website build
+        run: npm run build
