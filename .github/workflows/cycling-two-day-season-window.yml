@@ -6,6 +6,9 @@ on:
     paths:
       - 'src/App.tsx'
       - 'src/components/season/CyclingSeasonWindowBoundary.tsx'
+      - 'src/components/season/CyclingAdminInspection.tsx'
+      - 'supabase/migrations/20261112122700_cycling_private_migration_inspection_v1.sql'
+      - 'tests/cyclingMigrationInspector.test.mjs'
       - 'supabase/migrations/20261111143000_cycling_two_day_season_window_v1.sql'
       - 'tests/cyclingTwoDaySeasonWindow.test.mjs'
       - '.github/workflows/cycling-two-day-season-window.yml'
@@ -30,6 +33,6 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - name: Verify season window lock, release checks, and safe 2x resume
-        run: node --test tests/cyclingTwoDaySeasonWindow.test.mjs
+        run: node --test tests/cyclingTwoDaySeasonWindow.test.mjs tests/cyclingMigrationInspector.test.mjs
       - name: Verify protected website build
         run: npm run build
