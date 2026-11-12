@@ -1,0 +1,49 @@
+name: Verify live cycling migration dashboard inspection
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-live-cycling-migration-dashboard.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-public-bundle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check current production JS for protected dashboard access
+        shell: bash
+        run: |
+          node <<'NODE'
+          const origin = 'https://propelotonmanager.com'
+          async function get(url) {
+            const response = await fetch(url, {
+              redirect: 'follow',
+              headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
+            })
+            if (!response.ok) throw new Error('Public request failed: ' + response.status + ' ' + url)
+            return response.text()
+          }
+          ;(async () => {
+            const html = await get(origin + '/?verify=' + Date.now())
+            const paths = [...html.matchAll(/<script[^>]*src=["']([^"']+)["']/g)].map(m => m[1])
+            if (paths.length === 0) throw new Error('No production JavaScript assets found')
+            console.log('Public website scripts:', paths.length)
+            let live = false
+            for (const path of paths) {
+              const js = await get(new URL(path, origin).href)
+              if (js.includes('Administrator inspection sign-in') &&
+                  js.includes('Open game dashboard') &&
+                  js.includes('Authorized migration inspection')) {
+                live = true
+              }
+            }
+            if (!live) throw new Error('Private game-dashboard sign-in is NOT in the production JavaScript bundle; website publish is still required.')
+            console.log('VERIFIED: Live production bundle contains protected administrator sign-in and actual-dashboard entry.')
+            console.log('This is a public source check, not a successful authenticated browser session.')
+          })().catch(error => { console.error(error); process.exitCode = 1 })
+          NODE
