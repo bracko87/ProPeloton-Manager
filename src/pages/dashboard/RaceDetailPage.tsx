@@ -26,6 +26,7 @@ import { supabase } from '../../lib/supabase'
 import { getClubDisplayName, useClubDisplayIdentities } from '../../lib/clubDisplayIdentity'
 import { isClubApplicationRestrictedRace } from '../../lib/raceClubApplicationPolicy'
 import { WorldChampionshipExpectedField } from './WorldChampionshipExpectedField'
+import { WorldChampionshipPastWinners } from './WorldChampionshipPastWinners'
 import i18n from '@/i18n'
 import {
   PPM_UNIVERSAL_RACE_ENGINE_KEY,
@@ -20299,7 +20300,12 @@ export default function RaceDetailPage({
             </div>
           </div>
 
-          <div className="flex min-h-[188px] items-center justify-center p-6 xl:self-stretch">
+          <div className="flex min-h-[188px] flex-col items-center justify-center gap-4 p-6 xl:self-stretch">
+            {isWorldRoadChampionshipRace(race) ? (
+              <WorldChampionshipPastWinners
+                seasonNumber={getGameDatePartsFromStoredRaceDate(race.start_date)?.seasonNumber ?? 0}
+              />
+            ) : null}
             {race.logo_url ? (
               <img
                 src={race.logo_url}
