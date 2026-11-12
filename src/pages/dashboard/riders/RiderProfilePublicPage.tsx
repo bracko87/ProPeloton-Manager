@@ -108,11 +108,19 @@ export default function RiderProfilePublicPage() {
         setLoading(true)
         setError(null)
 
+        // Read the active game season; never pin profiles to Season 1.
+        const { data: seasonYearData, error: seasonYearError } =
+          await supabase.rpc('team_ranking_get_current_season_year_v1')
+        const seasonYear = Number(seasonYearData)
+        if (seasonYearError || !Number.isInteger(seasonYear) || seasonYear < 2000) {
+          throw new Error('Current rider season is unavailable. Please try again.')
+        }
+
         const { data, error: riderError } = await supabase
           .from('rider_statistics_page_international_v1')
           .select('*')
           .eq('rider_id', riderId)
-          .eq('season_year', 2000)
+          .eq('season_year', seasonYear)
           .maybeSingle()
 
         if (riderError) throw riderError
