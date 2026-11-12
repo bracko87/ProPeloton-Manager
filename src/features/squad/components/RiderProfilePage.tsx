@@ -3641,7 +3641,18 @@ async function fetchRiderCareerHistoryById(riderId: string): Promise<RiderCareer
   return []
 }
 
+async function getActiveRiderSeasonYear(): Promise<number> {
+  // Do not render last season's UCI points as current-season points after migration.
+  const { data, error } = await supabase.rpc('team_ranking_get_current_season_year_v1')
+  const year = Number(data)
+  if (error || !Number.isInteger(year) || year < 2000 || year > 9999) {
+    throw new Error('Current game season is unavailable; rider points cannot be verified.')
+  }
+  return year
+}
+
 async function fetchRiderSeasonOverviewById(riderId: string): Promise<RiderSeasonOverview> {
+  const seasonYear = await getActiveRiderSeasonYear()
   const normalizeRow = (row: any): RiderSeasonOverview => ({
     points: normalizeNumber(
       row.international_points ?? row.season_points_overall ?? row.points ?? row.season_points ?? row.total_points,
@@ -3656,7 +3667,7 @@ async function fetchRiderSeasonOverviewById(riderId: string): Promise<RiderSeaso
       .from('rider_statistics_page_international_v1')
       .select('international_points, season_points_overall, podiums, jerseys')
       .eq('rider_id', riderId)
-      .eq('season_year', 2000)
+      .eq('season_year', seasonYear)
       .maybeSingle()
     if (!error && data) return normalizeRow(data)
   } catch {
@@ -3666,7 +3677,7 @@ async function fetchRiderSeasonOverviewById(riderId: string): Promise<RiderSeaso
   try {
     const { data, error } = await supabase.rpc('get_rider_international_points_summary_v1', {
       p_rider_id: riderId,
-      p_season_year: 2000,
+      p_season_year: seasonYear,
     })
     if (!error) {
       const row = Array.isArray(data) ? data[0] : data
@@ -3709,6 +3720,7 @@ async function fetchRiderSeasonOverviewById(riderId: string): Promise<RiderSeaso
 }
 
 async function fetchRiderSeasonStatsById(riderId: string): Promise<RiderSeasonStatsBox> {
+  const seasonYear = await getActiveRiderSeasonYear()
   const normalizeRow = (row: any): RiderSeasonStatsBox => ({
     races: normalizeNumber(row.races ?? row.races_count ?? row.total_races, 0),
     wins: normalizeNumber(row.wins ?? row.win_count ?? row.victories ?? row.stage_wins, 0),
@@ -3725,7 +3737,7 @@ async function fetchRiderSeasonStatsById(riderId: string): Promise<RiderSeasonSt
       .from('rider_statistics_page_international_v1')
       .select('international_points, season_points_overall, stage_wins, podiums')
       .eq('rider_id', riderId)
-      .eq('season_year', 2000)
+      .eq('season_year', seasonYear)
       .maybeSingle()
     if (!error && data) return { ...normalizeRow(data), races: 0, top10: 0 }
   } catch {
@@ -3735,7 +3747,7 @@ async function fetchRiderSeasonStatsById(riderId: string): Promise<RiderSeasonSt
   try {
     const { data, error } = await supabase.rpc('get_rider_international_points_summary_v1', {
       p_rider_id: riderId,
-      p_season_year: 2000,
+      p_season_year: seasonYear,
     })
     if (!error) {
       const row = Array.isArray(data) ? data[0] : data
