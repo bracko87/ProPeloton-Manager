@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router'
 import { CalendarClock, Clock3, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
@@ -80,12 +80,15 @@ function formatForViewer(iso: string | null) {
 
 export function CyclingSeasonWindowBoundary({ children }: { children: React.ReactNode }): JSX.Element {
   const { i18n } = useTranslation()
+  const navigate = useNavigate()
+  const location = useLocation()
   const t = (i18n.resolvedLanguage ?? i18n.language).toLowerCase().startsWith('de') ? copy.de : copy.en
   const [windowStatus, setWindowStatus] = React.useState<CyclingSeasonWindow | null>(null)
   const [fetchFailed, setFetchFailed] = React.useState(false)
   const [dismissed, setDismissed] = React.useState<string | null>(null)
   const [inspectorReport, setInspectorReport] = React.useState<CyclingMigrationInspectionReport | null>(null)
   const [inspectorLoginOpen, setInspectorLoginOpen] = React.useState(false)
+  const [inspectorDetailsOpen, setInspectorDetailsOpen] = React.useState(false)
   const [inspectorEmail, setInspectorEmail] = React.useState('')
   const [inspectorPassword, setInspectorPassword] = React.useState('')
   const [inspectorError, setInspectorError] = React.useState<string | null>(null)
@@ -118,7 +121,7 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
   React.useEffect(() => {
     // Existing player sessions must never bypass the migration lock.
     // Only an authenticated account approved by the server may see the
-    // independent, read-only inspection screen (never the game routes).
+    // approved game dashboard while the public migration lock remains active.
     if (!windowStatus?.locked) {
       setInspectorReport(null)
       return
@@ -164,7 +167,9 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
         return
       }
       setInspectorReport(inspection.data as CyclingMigrationInspectionReport)
+      setInspectorDetailsOpen(false)
       setInspectorEmail('')
+      navigate('/dashboard/overview', { replace: true })
     } catch {
       setInspectorError('Unable to verify inspection access. Please try again.')
     } finally {
@@ -192,7 +197,9 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
     setInspectorReport(null)
     setInspectorBusy(false)
     setInspectorLoginOpen(false)
+    setInspectorDetailsOpen(false)
     setInspectorError(null)
+    navigate('/', { replace: true })
   }
 
   if (!windowStatus || fetchFailed) {
@@ -205,14 +212,42 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
 
   if (windowStatus.locked) {
     if (inspectorReport?.authorized && inspectorReport.read_only) {
+      // This account has passed the server-side allowlist. It can now inspect
+      // the REAL protected game dashboard instead of a standalone report.
+      // Do not lift the global migration lock or start the game clock.
       return (
-        <CyclingAdminInspection
-          report={inspectorReport}
-          onRefresh={() => void refreshInspection()}
-          onSignOut={() => void signOutInspection()}
-          busy={inspectorBusy}
-          error={inspectorError}
-        />
+        <WindowContext.Provider value={windowStatus}>
+          <div role="status" className="sticky top-0 z-[2100] flex flex-wrap items-center justify-between gap-3 border-b border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+            <span className="flex items-center gap-2 font-semibold">
+              <ShieldCheck size={18} aria-hidden="true" />
+              Authorized migration inspection — game remains paused and closed to players.
+              Review game data without making changes.
+            </span>
+            <span className="flex flex-wrap items-center gap-2">
+              <button type="button" onClick={() => setInspectorDetailsOpen(value => !value)}
+                className="rounded-lg border border-amber-700/40 bg-white px-3 py-1.5 text-xs font-semibold">
+                {inspectorDetailsOpen ? 'Back to game dashboard' : 'Migration verification'}
+              </button>
+              <button type="button" onClick={() => void signOutInspection()} disabled={inspectorBusy}
+                className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+                Sign out
+              </button>
+            </span>
+          </div>
+          {inspectorDetailsOpen ? (
+            <CyclingAdminInspection
+              report={inspectorReport}
+              onRefresh={() => void refreshInspection()}
+              onSignOut={() => void signOutInspection()}
+              busy={inspectorBusy}
+              error={inspectorError}
+            />
+          ) : location.pathname === '/dashboard' || location.pathname.startsWith('/dashboard/') ? (
+            children
+          ) : (
+            <Navigate to="/dashboard/overview" replace />
+          )}
+        </WindowContext.Provider>
       )
     }
     const delayed = windowStatus.delayed ||
@@ -252,7 +287,8 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
               <form onSubmit={e => void signInForInspection(e)} className="mt-4 grid gap-3" aria-label="Authorized migration inspection sign-in">
                 <p className="text-xs leading-5 text-slate-300">
                   Only existing accounts specifically authorized for inspection can sign in.
-                  The game stays closed. This access is read-only.
+                  The game stays closed to other players. You can inspect your normal
+                  game dashboard while the clock remains paused; do not save changes.
                 </p>
                 <label htmlFor="cycling-inspector-email" className="text-xs font-semibold text-slate-200">Account email</label>
                 <input id="cycling-inspector-email" type="email" autoComplete="username" required
@@ -265,7 +301,7 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
                 {inspectorError && <p role="alert" className="text-sm text-amber-200">{inspectorError}</p>}
                 <button type="submit" disabled={inspectorBusy}
                   className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50">
-                  {inspectorBusy ? 'Verifying access…' : 'Open read-only inspection'}
+                  {inspectorBusy ? 'Verifying access…' : 'Open game dashboard'}
                 </button>
               </form>
             )}
