@@ -1,0 +1,69 @@
+name: Publish protected cycling migration inspection
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/cycling-migration-inspector-netlify-publish.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cycling-migration-inspector-production-publish
+  cancel-in-progress: false
+
+jobs:
+  validate-and-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Validate protected migration and inspection permissions
+        run: node --test tests/cyclingTwoDaySeasonWindow.test.mjs tests/cyclingMigrationInspector.test.mjs
+      - name: Build website without changing game state
+        run: npm run build
+      - name: Check deployment credentials
+        run: |
+          if [ -z "${NETLIFY_AUTH_TOKEN:-}" ]; then
+            echo "::error::NETLIFY_AUTH_TOKEN is missing; production remains unchanged."
+            exit 1
+          fi
+      - name: Validate linked Netlify main site
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${NETLIFY_SITE_ID:-propelotonmanager.com}"
+          curl --fail --silent --show-error --max-time 25 -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" "https://api.netlify.com/api/v1/sites/$TARGET" -o /tmp/cycling-inspection-site.json
+          node -e '
+            const fs=require("fs");
+            const s=JSON.parse(fs.readFileSync("/tmp/cycling-inspection-site.json","utf8"));
+            const domains=[s.custom_domain,s.url,s.ssl_url].filter(Boolean).map(v=>{try{return new URL(v).hostname.toLowerCase()}catch{return String(v).toLowerCase()}});
+            if(!domains.some(x=>["propelotonmanager.com","www.propelotonmanager.com"].includes(x))) throw new Error("Unapproved Netlify target");
+            const bs=s.build_settings || {};
+            if(!String(bs.repo_url||"").toLowerCase().includes("github.com/bracko87/propeloton-manager") ||
+              String(bs.repo_branch||"")!=="main") throw new Error("Netlify is not linked to approved main branch");
+            console.log("Verified approved main-branch Netlify project");
+          '
+      - name: Request linked production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${NETLIFY_SITE_ID:-propelotonmanager.com}"
+          curl --fail --silent --show-error --max-time 30 -X POST -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" -H "Content-Type: application/json" "https://api.netlify.com/api/v1/sites/$TARGET/builds" -o /tmp/cycling-inspection-build.json
+          node -e '
+            const fs=require("fs");
+            const b=JSON.parse(fs.readFileSync("/tmp/cycling-inspection-build.json","utf8"));
+            if(!b.id && !b.deploy_id) throw new Error("Build request not accepted");
+            console.log("Netlify accepted linked production build:", b.id||b.deploy_id);
+            console.log("Acceptance alone does not certify the live production page.");
+          '
