@@ -3,6 +3,7 @@ import { Link } from 'react-router'
 import { CalendarClock, Clock3, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
+import { CyclingAdminInspection, type CyclingMigrationInspectionReport } from './CyclingAdminInspection'
 
 type Phase = 'off' | 'migration' | 'delayed' | 'preparation'
 export type CyclingSeasonWindow = {
@@ -83,7 +84,12 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
   const [windowStatus, setWindowStatus] = React.useState<CyclingSeasonWindow | null>(null)
   const [fetchFailed, setFetchFailed] = React.useState(false)
   const [dismissed, setDismissed] = React.useState<string | null>(null)
-  const signedOut = React.useRef(false)
+  const [inspectorReport, setInspectorReport] = React.useState<CyclingMigrationInspectionReport | null>(null)
+  const [inspectorLoginOpen, setInspectorLoginOpen] = React.useState(false)
+  const [inspectorEmail, setInspectorEmail] = React.useState('')
+  const [inspectorPassword, setInspectorPassword] = React.useState('')
+  const [inspectorError, setInspectorError] = React.useState<string | null>(null)
+  const [inspectorBusy, setInspectorBusy] = React.useState(false)
 
   React.useEffect(() => {
     let live = true
@@ -110,12 +116,84 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
   }, [])
 
   React.useEffect(() => {
-    if (!windowStatus?.locked) { signedOut.current = false; return }
-    if (signedOut.current) return
-    signedOut.current = true
-    // A migration lock also clears existing local sessions, not just the login form.
-    void supabase.auth.signOut({ scope: 'local' })
+    // Existing player sessions must never bypass the migration lock.
+    // Only an authenticated account approved by the server may see the
+    // independent, read-only inspection screen (never the game routes).
+    if (!windowStatus?.locked) {
+      setInspectorReport(null)
+      return
+    }
+    let active = true
+    async function checkExistingSession() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!active || !user) return
+      const { data, error } = await supabase.rpc('get_cycling_admin_migration_inspection_v1')
+      if (!active) return
+      if (error || !data || data.authorized !== true) {
+        setInspectorReport(null)
+        await supabase.auth.signOut({ scope: 'local' })
+      } else {
+        setInspectorReport(data as CyclingMigrationInspectionReport)
+      }
+    }
+    void checkExistingSession()
+    return () => { active = false }
   }, [windowStatus?.locked])
+
+  async function signInForInspection(event: React.FormEvent<HTMLFormElement>): Promise<void> {
+    event.preventDefault()
+    if (!inspectorEmail.trim() || !inspectorPassword) {
+      setInspectorError('Enter the email and password of your authorized inspection account.')
+      return
+    }
+    setInspectorBusy(true)
+    setInspectorError(null)
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: inspectorEmail.trim(), password: inspectorPassword,
+      })
+      setInspectorPassword('')
+      if (error || !data?.session) {
+        setInspectorError(error?.message || 'This account cannot sign in during the migration.')
+        return
+      }
+      const inspection = await supabase.rpc('get_cycling_admin_migration_inspection_v1')
+      if (inspection.error || !inspection.data || inspection.data.authorized !== true) {
+        await supabase.auth.signOut({ scope: 'local' })
+        setInspectorError('This account has no migration inspection permission.')
+        return
+      }
+      setInspectorReport(inspection.data as CyclingMigrationInspectionReport)
+      setInspectorEmail('')
+    } catch {
+      setInspectorError('Unable to verify inspection access. Please try again.')
+    } finally {
+      setInspectorBusy(false)
+    }
+  }
+
+  async function refreshInspection(): Promise<void> {
+    setInspectorBusy(true)
+    setInspectorError(null)
+    const { data, error } = await supabase.rpc('get_cycling_admin_migration_inspection_v1')
+    if (error || !data || data.authorized !== true) {
+      setInspectorReport(null)
+      setInspectorError('Inspection access could not be verified. Please sign in again.')
+      await supabase.auth.signOut({ scope: 'local' })
+    } else {
+      setInspectorReport(data as CyclingMigrationInspectionReport)
+    }
+    setInspectorBusy(false)
+  }
+
+  async function signOutInspection(): Promise<void> {
+    setInspectorBusy(true)
+    await supabase.auth.signOut({ scope: 'local' })
+    setInspectorReport(null)
+    setInspectorBusy(false)
+    setInspectorLoginOpen(false)
+    setInspectorError(null)
+  }
 
   if (!windowStatus || fetchFailed) {
     return (
@@ -126,6 +204,17 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
   }
 
   if (windowStatus.locked) {
+    if (inspectorReport?.authorized && inspectorReport.read_only) {
+      return (
+        <CyclingAdminInspection
+          report={inspectorReport}
+          onRefresh={() => void refreshInspection()}
+          onSignOut={() => void signOutInspection()}
+          busy={inspectorBusy}
+          error={inspectorError}
+        />
+      )
+    }
     const delayed = windowStatus.delayed ||
       (windowStatus.migration_reopen_at !== null &&
        Date.now() > Date.parse(windowStatus.migration_reopen_at))
@@ -154,6 +243,33 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
             <ShieldCheck size={17} className="shrink-0 text-yellow-300" aria-hidden="true" />
             {t.preserved}
           </p>
+          <div className="mt-6 border-t border-white/10 pt-5">
+            <button type="button" onClick={() => { setInspectorLoginOpen(v => !v); setInspectorError(null) }}
+              className="text-sm font-semibold text-slate-200 underline underline-offset-4 hover:text-white">
+              Administrator inspection sign-in
+            </button>
+            {inspectorLoginOpen && (
+              <form onSubmit={e => void signInForInspection(e)} className="mt-4 grid gap-3" aria-label="Authorized migration inspection sign-in">
+                <p className="text-xs leading-5 text-slate-300">
+                  Only existing accounts specifically authorized for inspection can sign in.
+                  The game stays closed. This access is read-only.
+                </p>
+                <label htmlFor="cycling-inspector-email" className="text-xs font-semibold text-slate-200">Account email</label>
+                <input id="cycling-inspector-email" type="email" autoComplete="username" required
+                  value={inspectorEmail} onChange={e => setInspectorEmail(e.target.value)}
+                  disabled={inspectorBusy} className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900" />
+                <label htmlFor="cycling-inspector-password" className="text-xs font-semibold text-slate-200">Password</label>
+                <input id="cycling-inspector-password" type="password" autoComplete="current-password" required
+                  value={inspectorPassword} onChange={e => setInspectorPassword(e.target.value)}
+                  disabled={inspectorBusy} className="rounded-lg bg-white px-3 py-2 text-sm text-slate-900" />
+                {inspectorError && <p role="alert" className="text-sm text-amber-200">{inspectorError}</p>}
+                <button type="submit" disabled={inspectorBusy}
+                  className="rounded-lg bg-yellow-400 px-4 py-2 text-sm font-bold text-slate-950 disabled:opacity-50">
+                  {inspectorBusy ? 'Verifying access…' : 'Open read-only inspection'}
+                </button>
+              </form>
+            )}
+          </div>
         </main>
       </div>
     )
