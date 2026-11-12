@@ -140,7 +140,9 @@ export function WorldChampionshipExpectedField({
                 const waitingForChampion = !row.champion_rider_id
                 const pending = !confirmed
                 const status = waitingForChampion
-                  ? t('participants.worldChampionshipWaiting', { defaultValue: 'Qualification ongoing' })
+                  ? row.national_status === 'planned'
+                    ? t('participants.worldChampionshipNotStarted', { defaultValue: 'National championship scheduled — not held yet' })
+                    : t('participants.worldChampionshipWaiting', { defaultValue: 'Qualification ongoing' })
                   : unavailable
                     ? t('participants.worldChampionshipUnavailable', { defaultValue: 'Not confirmed' })
                     : confirmed
