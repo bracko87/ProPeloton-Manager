@@ -12,6 +12,9 @@ on:
       - 'src/pages/dashboard/Finance.tsx'
       - 'src/pages/dashboard/finance/FinanceSeasonHistory.tsx'
       - 'src/pages/dashboard/WorldChampionshipExpectedField.tsx'
+      - 'src/pages/dashboard/WorldChampionshipPastWinners.tsx'
+      - 'src/pages/dashboard/RaceDetailPage.tsx'
+      - 'tests/worldRoadChampionshipPastWinners.test.mjs'
       - 'supabase/migrations/20261112122700_cycling_private_migration_inspection_v1.sql'
       - 'tests/cyclingMigrationInspector.test.mjs'
       - 'tests/cyclingSeason2PostMigrationCorrections.test.mjs'
@@ -42,6 +45,6 @@ jobs:
           cache: 'npm'
       - run: npm ci
       - name: Verify season window lock, release checks, and safe 2x resume
-        run: node --test tests/cyclingTwoDaySeasonWindow.test.mjs tests/cyclingMigrationInspector.test.mjs tests/cyclingSeason2PostMigrationCorrections.test.mjs
+        run: node --test tests/cyclingTwoDaySeasonWindow.test.mjs tests/cyclingMigrationInspector.test.mjs tests/cyclingSeason2PostMigrationCorrections.test.mjs tests/worldRoadChampionshipPastWinners.test.mjs
       - name: Verify protected website build
         run: npm run build
