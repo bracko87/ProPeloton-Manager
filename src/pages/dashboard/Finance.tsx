@@ -29,6 +29,7 @@ import {
 import { supabase } from './finance/supabase'
 import { ErrorBoundary } from './finance/ErrorBoundary'
 import { OverviewTab, type SeasonOverview } from './finance/OverviewTab'
+import { FinanceSeasonHistory } from './finance/FinanceSeasonHistory'
 import { SponsorsTab } from './finance/SponsorsTab'
 import { TransactionsTab } from './finance/TransactionsTab'
 import { TaxTab } from './finance/TaxTab'
@@ -702,6 +703,7 @@ export default function FinancePage(): JSX.Element {
         <div>
           {tab === 'overview' && (
             <ErrorBoundary title={t('page.overviewTabError')}>
+              {clubId && <FinanceSeasonHistory clubId={clubId} currentSeason={seasonOverview?.season_number ?? null} />}
               <OverviewTab
                 summary={summary}
                 cashflowDaily={cashflowDaily}
