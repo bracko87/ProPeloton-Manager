@@ -39,6 +39,8 @@ jobs:
             const indicators = [
               'watchOnlyDescription',
               'Watch only',
+              'Applications not yet open',
+              'border-violet-300 bg-violet-50/80',
             ]
             for (const indicator of indicators) {
               if (!code.includes(indicator)) {
@@ -48,7 +50,7 @@ jobs:
             if (code.includes('Club entry unavailable')) {
               throw new Error('Production still contains old Club entry unavailable string')
             }
-            console.log('VERIFIED: Public production JavaScript contains Watch only and no old club-entry text')
+            console.log('VERIFIED: Public production bundle contains pending application labels and tinted Watch only rows')
             console.log('This is a bundle publication check, not an authenticated visual session')
           })().catch(err => { console.error(err); process.exitCode = 1 })
           NODE
