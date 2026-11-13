@@ -66,7 +66,7 @@
     "stageBadge": "{{race}} · Этап {{stage}}",
     "stageBadgeCanceled": "{{race}} - этап {{stage}} · Отменено (отменено){{reason}})",
     "noRaceTutorial": "Пока нет возможности открыть гонки.",
-    "applicationsNotOpen": "Заявления не открыты",
+    "applicationsNotOpen": "Приём заявок ещё не открыт",
     "openApplications": "Открыто для приложений",
     "applicationsClosed": "Заявления, рассмотрение которых было прекращено",
     "applied": "Применяется",
