@@ -48,3 +48,31 @@ test('Watch only label and explanation are available in all eight supported lang
     assert.ok(data.races.watchOnlyDescription?.trim(),code)
   }
 })
+
+
+test('scheduled and draft races are pending, not incorrectly labelled closed', () => {
+  assert.match(page, /rawStatus === 'scheduled' \|\| rawStatus === 'draft'/)
+  assert.match(page, /return 'not_open'/)
+  assert.match(page, /race\.existing_application_status \?\? getBaseRaceCalendarStatus\(race\)/)
+  assert.match(page, /case 'scheduled':\s+case 'draft':\s+return t\('races\.applicationsNotOpen'\)/)
+  assert.match(page, /case 'closed':\s+return t\('races\.applicationsClosed'\)/)
+  assert.match(page, /case 'not_open':\s+return 'bg-amber-50 text-amber-800/)
+  assert.match(page, /case 'open':\s+return t\('races\.openApplications'\)/)
+})
+
+test('watch-only race has a full-row pale violet treatment and a distinct left accent', () => {
+  assert.match(page, /isWatchOnlyRace\s+\?\s+'border-violet-300 bg-violet-50\/80'/)
+  assert.match(page, /isWatchOnlyRace \? 'bg-violet-500' : 'bg-green-400'/)
+  assert.match(page, /isFocusedRace\s+\?\s+'border-yellow-400 bg-yellow-50/)
+  assert.match(page, /:\s+'border-gray-200'/)
+})
+
+test('pre-opening status is correctly translated in all eight languages', () => {
+  for (const code of ['en','de','es','fr','it','hr','sr-Latn','ru']) {
+    const data = JSON.parse(read('src/i18n/locales/' + code + '/calendarPage.json'))
+    assert.ok(data.races.applicationsNotOpen?.trim(), code)
+    assert.ok(data.races.applicationsClosed?.trim(), code)
+    assert.notEqual(data.races.applicationsNotOpen, data.races.applicationsClosed, code)
+  }
+  assert.equal(JSON.parse(read('src/i18n/locales/en/calendarPage.json')).races.applicationsNotOpen, 'Applications not yet open')
+})
