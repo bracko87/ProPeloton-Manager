@@ -771,7 +771,7 @@ function getRaceApplicationBadgeClass(status?: string | null): string {
     case 'open':
       return 'bg-sky-100 text-sky-700'
     case 'not_open':
-      return 'bg-slate-100 text-slate-600'
+      return 'bg-amber-50 text-amber-800 ring-1 ring-amber-200'
     case 'applied':
       return 'bg-sky-100 text-sky-700'
     case 'accepted':
@@ -2774,7 +2774,7 @@ export default function CalendarPage(): JSX.Element {
                         isFocusedRace
                           ? 'border-yellow-400 bg-yellow-50 ring-2 ring-yellow-300'
                           : isWatchOnlyRace
-                            ? 'border-violet-200 bg-gradient-to-r from-violet-50 via-violet-50/50 to-white'
+                            ? 'border-violet-300 bg-violet-50/80'
                             : 'border-gray-200'
                       }`}
                     >
@@ -2786,7 +2786,7 @@ export default function CalendarPage(): JSX.Element {
 
                         <div
                           aria-hidden="true"
-                          className={`h-14 w-1 shrink-0 rounded-full ${isWatchOnlyRace ? 'bg-violet-400' : 'bg-green-400'}`}
+                          className={`h-14 w-1 shrink-0 rounded-full ${isWatchOnlyRace ? 'bg-violet-500' : 'bg-green-400'}`}
                         />
 
                         <div className="min-w-0">
