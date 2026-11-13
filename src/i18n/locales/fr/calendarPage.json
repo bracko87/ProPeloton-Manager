@@ -58,6 +58,8 @@
     "raceCount": "{{count}} courses dans cette saison",
     "raceCountOne": "{{count}} course dans cette saison",
     "openRace": "Course ouverte",
+    "watchOnly": "À suivre uniquement",
+    "watchOnlyDescription": "Épreuve nationale ou individuelle. Les clubs ne peuvent pas s'inscrire, mais vous pouvez ouvrir et suivre la course.",
     "sponsorGoal": "★ Objectif du promoteur",
     "sponsorObjectiveTarget": "Objectif du promoteur",
     "stage": "Étape",
