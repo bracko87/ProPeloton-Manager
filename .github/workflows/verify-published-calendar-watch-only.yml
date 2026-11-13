@@ -1,0 +1,54 @@
+name: Verify published calendar Watch only tag
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-published-calendar-watch-only.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Confirm live bundle contains Watch only calendar code
+        shell: bash
+        run: |
+          node <<'NODE'
+          const origin = 'https://propelotonmanager.com'
+          const get = async (url) => {
+            const res = await fetch(url, { redirect: 'follow',
+              headers: { 'Cache-Control': 'no-cache', Pragma: 'no-cache' } })
+            if (!res.ok) throw new Error('GET ' + url + ': ' + res.status)
+            return res.text()
+          }
+          ;(async () => {
+            const html = await get(origin + '/?calendar-watch-only-check=' + Date.now())
+            const jsAssets = [...new Set([
+              ...[...html.matchAll(/<script[^>]*src=["']([^"']+\.js[^"']*)["']/g)].map(m => m[1]),
+              ...[...html.matchAll(/<link[^>]*href=["']([^"']+\.js[^"']*)["']/g)].map(m => m[1]),
+            ])]
+            if (!jsAssets.length) throw new Error('Public website JavaScript assets not found')
+            console.log('Found ' + jsAssets.length + ' initial assets')
+            const bundles = await Promise.all(jsAssets.map(p => get(new URL(p,origin).href)))
+            const code = bundles.join('\n')
+            const indicators = [
+              'watchOnlyDescription',
+              'Watch only',
+            ]
+            for (const indicator of indicators) {
+              if (!code.includes(indicator)) {
+                throw new Error('Production has not published new calendar code: missing ' + indicator)
+              }
+            }
+            if (code.includes('Club entry unavailable')) {
+              throw new Error('Production still contains old Club entry unavailable string')
+            }
+            console.log('VERIFIED: Public production JavaScript contains Watch only and no old club-entry text')
+            console.log('This is a bundle publication check, not an authenticated visual session')
+          })().catch(err => { console.error(err); process.exitCode = 1 })
+          NODE
