@@ -1855,7 +1855,8 @@ export default function CalendarPage(): JSX.Element {
       if (
         isPremium &&
         premiumRaceFilters.sponsorTargetsOnly &&
-        !(sponsorObjectiveTargetsByRaceId[race.id]?.length > 0)
+        (isClubApplicationRestrictedRace(race) ||
+          !(sponsorObjectiveTargetsByRaceId[race.id]?.length > 0))
       ) {
         return false
       }
@@ -1871,7 +1872,8 @@ export default function CalendarPage(): JSX.Element {
 
   const premiumCalendarInsights = useMemo(() => {
     const sponsorTargetRaces = activeMonthRaces.filter(
-      race => (sponsorObjectiveTargetsByRaceId[race.id]?.length ?? 0) > 0
+      race => !isClubApplicationRestrictedRace(race) &&
+        (sponsorObjectiveTargetsByRaceId[race.id]?.length ?? 0) > 0
     )
     const acceptedRaces = activeMonthRaces.filter(
       race => race.existing_application_status?.toLowerCase() === 'accepted'
@@ -2746,8 +2748,9 @@ export default function CalendarPage(): JSX.Element {
                 {filteredActiveMonthRaces.map((race) => {
                   const dateBadge = formatCalendarDateBadge(race, t)
                   const effectiveRaceStatus = getEffectiveRaceCalendarStatus(race)
+                  const isWatchOnlyRace = isClubApplicationRestrictedRace(race)
                   const sponsorTargetsForRace = sponsorObjectiveTargetsByRaceId[race.id] ?? []
-                  const hasSponsorObjectiveTarget = sponsorTargetsForRace.length > 0
+                  const hasSponsorObjectiveTarget = !isWatchOnlyRace && sponsorTargetsForRace.length > 0
                   const sponsorTargetTitle = sponsorTargetsForRace
                     .map((target) => `${target.sponsor_name}: ${target.objective_title}`)
                     .join('\n')
@@ -2807,15 +2810,20 @@ export default function CalendarPage(): JSX.Element {
                           </span>
                         ) : null}
 
-                        <span
-                          className={`rounded-full px-2.5 py-1 text-xs font-medium ${isClubApplicationRestrictedRace(race)
-                            ? 'bg-slate-100 text-slate-700'
-                            : getRaceApplicationBadgeClass(effectiveRaceStatus)}`}
-                        >
-                          {isClubApplicationRestrictedRace(race)
-                            ? 'Club entry unavailable'
-                            : getRaceApplicationBadgeLabel(effectiveRaceStatus, t)}
-                        </span>
+                        {isWatchOnlyRace ? (
+                          <span
+                            className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-semibold text-violet-800"
+                            title={t('races.watchOnlyDescription')}
+                          >
+                            {t('races.watchOnly')}
+                          </span>
+                        ) : (
+                          <span
+                            className={`rounded-full px-2.5 py-1 text-xs font-medium ${getRaceApplicationBadgeClass(effectiveRaceStatus)}`}
+                          >
+                            {getRaceApplicationBadgeLabel(effectiveRaceStatus, t)}
+                          </span>
+                        )}
 
                         {race.category ? (
                           <span className="rounded-full bg-purple-100 px-2.5 py-1 text-xs text-purple-700">
