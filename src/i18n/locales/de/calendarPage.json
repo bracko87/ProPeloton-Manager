@@ -58,6 +58,8 @@
     "raceCount": "{{count}} Rennen in dieser Saison",
     "raceCountOne": "{{count}} Rennen in dieser Saison",
     "openRace": "Rennen öffnen",
+    "watchOnly": "Nur ansehen",
+    "watchOnlyDescription": "Nationaler oder individueller Wettbewerb. Vereine können sich nicht anmelden; du kannst das Rennen öffnen und verfolgen.",
     "sponsorGoal": "★ Sponsorenziel",
     "sponsorObjectiveTarget": "Zielvorgabe des Sponsors",
     "stage": "Etappe",
