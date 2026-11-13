@@ -21,7 +21,7 @@ export function isClubApplicationRestrictedRace(
   if (!race) return false
 
   const category = String(race.category ?? '').trim().toUpperCase()
-  if (['NC', 'NCQ', 'WNQ', 'WRC', 'NATIONAL ASSOCIATION'].includes(category)) {
+  if (['NC', 'NCQ', 'WNQ', 'WNF', 'WRC', 'NATIONAL ASSOCIATION'].includes(category)) {
     return true
   }
 
@@ -31,6 +31,8 @@ export function isClubApplicationRestrictedRace(
     isTrue(metadata.national_championship) ||
     isTrue(metadata.world_road_championship) ||
     isTrue(metadata.nations_competition) ||
+    isTrue(metadata.national_team_only) ||
+    isTrue(metadata.national_selection) ||
     Boolean(metadata.world_road_championship_edition_id)
   )
 }
