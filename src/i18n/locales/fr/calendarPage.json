@@ -66,7 +66,7 @@
     "stageBadge": "{{race}} · Étape {{stage}}",
     "stageBadgeCanceled": "{{race}} · Étape {{stage}} · Annulée ({{reason}})",
     "noRaceTutorial": "Aucune course n'est encore disponible pour ouvrir.",
-    "applicationsNotOpen": "Demandes non ouvertes",
+    "applicationsNotOpen": "Inscriptions pas encore ouvertes",
     "openApplications": "Ouvert aux applications",
     "applicationsClosed": "Demandes classées",
     "applied": "Appliquée",
