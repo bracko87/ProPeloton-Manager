@@ -1,0 +1,30 @@
+name: Sponsor goals club-race eligibility
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/sponsor-race-eligibility.yml'
+      - 'tests/clubSponsorNationalRaceExclusion.test.mjs'
+      - 'supabase/migrations/20261113092500_exclude_national_races_from_club_sponsorship_v1.sql'
+      - 'supabase/migrations/20261113093500_exclude_national_races_from_sponsor_progress_v1.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sponsor-club-race-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Check club-only sponsorship target and scoring guards
+        run: node --test tests/clubSponsorNationalRaceExclusion.test.mjs
+      - name: Verify protected website build
+        run: npm run build
