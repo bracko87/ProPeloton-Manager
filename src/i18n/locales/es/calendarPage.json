@@ -58,6 +58,8 @@
     "raceCount": "{{count}} carreras en esta temporada",
     "raceCountOne": "{{count}} carrera en esta temporada",
     "openRace": "Carrera abierta",
+    "watchOnly": "Solo ver",
+    "watchOnlyDescription": "Prueba nacional o individual. Los clubes no pueden inscribirse, pero puedes abrir y seguir la carrera.",
     "sponsorGoal": "Objetivo del patrocinador",
     "sponsorObjectiveTarget": "Objetivo del patrocinador",
     "stage": "Etapa",
