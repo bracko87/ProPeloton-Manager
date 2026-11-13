@@ -34,18 +34,23 @@ jobs:
             ])]
             if (!jsAssets.length) throw new Error('Public website JavaScript assets not found')
             console.log('Found ' + jsAssets.length + ' initial assets')
-            const bundles = await Promise.all(jsAssets.map(p => get(new URL(p,origin).href)))
+            const assetUrls = jsAssets.map(p => new URL(p,origin).href)
+              .filter(url => new URL(url).origin === origin)
+            const bundles = await Promise.all(assetUrls.map(get))
             const code = bundles.join('\n')
+            console.log('Same-origin JS assets: ' + JSON.stringify(assetUrls))
+            console.log('Same-origin JS total bytes: ' + code.length)
             const indicators = [
-              'watchOnlyDescription',
-              'Watch only',
               'Applications not yet open',
               'border-violet-300 bg-violet-50/80',
+              'races.watchOnly',
             ]
-            for (const indicator of indicators) {
-              if (!code.includes(indicator)) {
-                throw new Error('Production has not published new calendar code: missing ' + indicator)
-              }
+            const absent = indicators.filter(indicator => !code.includes(indicator))
+            console.log('New calendar indicator presence: ' + JSON.stringify(
+              indicators.map(indicator => ({indicator,found:code.includes(indicator)}))
+            ))
+            if (absent.length) {
+              throw new Error('New calendar build NOT verified on production; missing ' + absent.join(', '))
             }
             if (code.includes('Club entry unavailable')) {
               throw new Error('Production still contains old Club entry unavailable string')
