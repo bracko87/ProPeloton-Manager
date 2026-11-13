@@ -58,6 +58,8 @@
     "raceCount": "{{count}} races in this season",
     "raceCountOne": "{{count}} race in this season",
     "openRace": "Open Race",
+    "watchOnly": "Watch only",
+    "watchOnlyDescription": "National or individual event. Clubs cannot enter; you can open and follow the race.",
     "sponsorGoal": "★ Sponsor goal",
     "sponsorObjectiveTarget": "Sponsor objective target",
     "stage": "Stage",
