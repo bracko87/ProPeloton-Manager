@@ -58,6 +58,8 @@
     "raceCount": "{{count}} trka u ovoj sezoni",
     "raceCountOne": "{{count}} trka u ovoj sezoni",
     "openRace": "Otvori trku",
+    "watchOnly": "Samo praćenje",
+    "watchOnlyDescription": "Nacionalna ili pojedinačna trka. Klubovi ne mogu da se prijave, ali trku možete otvoriti i pratiti.",
     "sponsorGoal": "★ Cilj sponzora",
     "sponsorObjectiveTarget": "Cilj sponzorskog zadatka",
     "stage": "Etapa",
