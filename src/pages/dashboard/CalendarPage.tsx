@@ -803,6 +803,8 @@ function getRaceApplicationBadgeLabel(
 ): string {
   switch (status?.toLowerCase()) {
     case 'not_open':
+    case 'scheduled':
+    case 'draft':
       return t('races.applicationsNotOpen')
     case 'open':
       return t('races.openApplications')
@@ -828,7 +830,8 @@ function getRaceApplicationBadgeLabel(
     case 'partly_cancelled':
       return t('races.partlyCanceled')
     default:
-      return t('races.applicationsClosed')
+      // Unknown/uninitialized windows must not be reported as already closed.
+      return t('races.applicationsNotOpen')
   }
 }
 
@@ -843,7 +846,7 @@ function getEffectiveRaceCalendarStatus(race: RaceCalendarItem): RaceApplication
   if (raceStatus === 'cancelled') return 'race_cancelled'
   if (isClubApplicationRestrictedRace(race)) return 'closed'
 
-  return race.existing_application_status ?? race.applications_status
+  return race.existing_application_status ?? getBaseRaceCalendarStatus(race)
 }
 
 function getBaseRaceCalendarStatus(race: RaceCalendarItem): RaceApplicationStatus | null {
@@ -856,6 +859,11 @@ function getBaseRaceCalendarStatus(race: RaceCalendarItem): RaceApplicationStatu
   if (raceStatus === 'completed' || raceStatus === 'archived') return 'race_finished'
   if (raceStatus === 'cancelled') return 'race_cancelled'
   if (isClubApplicationRestrictedRace(race)) return 'closed'
+
+  const rawStatus = race.applications_status?.trim().toLowerCase()
+  // 'scheduled' and 'draft' are pre-opening window states, not closed windows.
+  // The database advances them to 'open' on the configured application date.
+  if (!rawStatus || rawStatus === 'scheduled' || rawStatus === 'draft') return 'not_open'
 
   return race.applications_status
 }
@@ -2765,7 +2773,9 @@ export default function CalendarPage(): JSX.Element {
                       className={`flex flex-col gap-3 rounded-md border p-4 md:flex-row md:items-center md:justify-between ${
                         isFocusedRace
                           ? 'border-yellow-400 bg-yellow-50 ring-2 ring-yellow-300'
-                          : 'border-gray-200'
+                          : isWatchOnlyRace
+                            ? 'border-violet-200 bg-gradient-to-r from-violet-50 via-violet-50/50 to-white'
+                            : 'border-gray-200'
                       }`}
                     >
                       <div className="flex min-w-0 items-center gap-3">
@@ -2774,7 +2784,10 @@ export default function CalendarPage(): JSX.Element {
                           {dateBadge.end ? <div>{dateBadge.end}</div> : null}
                         </div>
 
-                        <div className="h-14 w-0.5 shrink-0 rounded-full bg-green-400" />
+                        <div
+                          aria-hidden="true"
+                          className={`h-14 w-1 shrink-0 rounded-full ${isWatchOnlyRace ? 'bg-violet-400' : 'bg-green-400'}`}
+                        />
 
                         <div className="min-w-0">
                           <div className="font-medium text-gray-900">
