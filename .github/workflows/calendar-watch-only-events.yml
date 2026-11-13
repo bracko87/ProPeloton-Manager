@@ -1,0 +1,31 @@
+name: Calendar watch-only national events
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/calendar-watch-only-events.yml'
+      - 'src/pages/dashboard/CalendarPage.tsx'
+      - 'src/lib/raceClubApplicationPolicy.ts'
+      - 'src/i18n/locales/**/calendarPage.json'
+      - 'tests/calendarWatchOnlyNationalEvents.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-calendar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Verify national-event participation badges and translations
+        run: node --test tests/calendarWatchOnlyNationalEvents.test.mjs
+      - name: Production website build and all translation validation
+        run: npm run build
