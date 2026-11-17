@@ -1,0 +1,64 @@
+name: Verify published Season 1 restart maintenance UI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/verify-restart-maintenance-production.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    steps:
+      - name: Check public JS contains the locked restart screen
+        shell: bash
+        run: |
+          node <<'NODE'
+          const origin = 'https://propelotonmanager.com'
+          const maxFiles = 280
+          const maxBytes = 60000000
+          async function get(url) {
+            const r=await fetch(url, {
+              redirect:'follow', headers:{'Cache-Control':'no-cache','Pragma':'no-cache'}
+            })
+            if(!r.ok) throw Error(url + ': HTTP ' + r.status)
+            return r.text()
+          }
+          ;(async()=>{
+            const html=await get(origin+'/?check-reset-ui='+Date.now())
+            const paths=new Set()
+            for(const m of html.matchAll(/<(?:script|link)\b[^>]*(?:src|href)=["']([^"']+\.js(?:\?[^"']*)?)["']/g)) {
+              paths.add(new URL(m[1],origin).href)
+            }
+            if(!paths.size) throw Error('No boot JS in live HTML')
+            const done=new Set(), pending=[...paths]
+            const found={restartTag:false,restartTitle:false,restartField:false}
+            let bytes=0
+            while(pending.length && done.size<maxFiles && bytes<maxBytes) {
+              const url=pending.shift()
+              if(done.has(url) || new URL(url).origin!==origin) continue
+              done.add(url)
+              let body
+              try{body=await get(url)}catch(err){console.log('Fetch failed',url,String(err));continue}
+              bytes+=body.length
+              if(body.includes('SEASON 1 RESTART')) found.restartTag=true
+              if(body.includes('A fresh Season 1 is being prepared')) found.restartTitle=true
+              if(body.includes('restart_locked')) found.restartField=true
+              for(const m of body.matchAll(/["']([^"'\s]{1,250}\.js(?:\?[^"']*)?)["']/g)) {
+                const child=new URL(m[1],url).href
+                if(new URL(child).origin===origin && !done.has(child))pending.push(child)
+              }
+              if(Object.values(found).every(Boolean)) break
+            }
+            console.log('Public assets scanned:',done.size,'total JS chars:',bytes)
+            console.log('Published restart screen markers:',JSON.stringify(found))
+            if(!Object.values(found).every(Boolean))
+              throw Error('Cannot confirm the live site supports restart maintenance. DO NOT lock or wipe the game.')
+            console.log('PASS: Public site has published the dedicated Season 1 restart maintenance UI')
+          })().catch(e=>{console.error(e);process.exitCode=1})
+          NODE
