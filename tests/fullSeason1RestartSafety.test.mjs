@@ -71,3 +71,34 @@ test('reset validator checks checkpointed functions instead of obsolete hashes',
   assert.match(validator,/missing checkpoint blocks validation/i)
   assert.doesNotMatch(validator,/UPDATE public\.game_state|DELETE FROM public\.riders/i)
 })
+
+
+const nationalReset = readFileSync(
+  new URL('../supabase/migrations/20261117114500_preserve_150_national_routes_for_season1_reset_v1.sql',import.meta.url),
+  'utf8'
+)
+
+test('restart only uses national source stages that survive S2 removal', () => {
+  assert.match(nationalReset, /game_world_reset_s1_national_route_baseline_v1/)
+  assert.match(nationalReset, /r1\.start_date<date '2001-01-01'/)
+  assert.match(nationalReset, /r2\.start_date IS NULL AND s2\.stage_date IS NULL/)
+  assert.match(nationalReset, /national_championship_source_stage_eligible_v1/)
+  assert.match(nationalReset, /n<>150 OR valid_n<>150/)
+})
+
+test('restart creates fresh riders for countries with no club and rebuilds all 150 national championships', () => {
+  assert.match(nationalReset, /code IN \('BT','BW'\)/)
+  assert.match(nationalReset, /FOR v_idx IN 1\.\.10 LOOP/)
+  assert.match(nationalReset, /v_rider_countries<>150/)
+  assert.match(nationalReset, /ensure_national_championship_editions_for_season_v1\(1\)/)
+  assert.match(nationalReset, /national_championship_route_preflight_v1\(1\)/)
+  assert.match(nationalReset, /v_edition_count<>150/)
+})
+
+test('national rebuild cannot execute outside a paused fresh Season 1 reset', () => {
+  assert.match(nationalReset, /gs\.season_number=1 AND gs\.day_number=1/)
+  assert.match(nationalReset, /gs\.month_number=1 AND gs\.is_paused AND gc\.is_paused/)
+  assert.match(nationalReset, /Missing backup and player safety guard/)
+  assert.match(nationalReset, /perform private\.game_world_reset_restore_s1_national_world_v1\(\)/)
+  assert.doesNotMatch(nationalReset, /DELETE FROM auth\.users|TRUNCATE TABLE public\.riders/i)
+})
