@@ -144,3 +144,21 @@ test('national championships are built only once when starting the new Season 1'
   assert.doesNotMatch(singleNational,/v_seed:=private\.game_world_reset_seed_national_starters_v1/)
   assert.doesNotMatch(singleNational,/SELECT public\.ensure_national_championship_editions_for_season_v1\(1\) INTO v_created/)
 })
+
+
+const restoreCron = readFileSync(
+  new URL('../supabase/migrations/20261117134500_restore_scheduled_jobs_after_reset_validation_v1.sql',import.meta.url),
+  'utf8'
+)
+
+test('scheduled jobs cannot resume unless the fresh Season 1 is fully validated', () => {
+  assert.match(restoreCron,/r\.status='completed'/)
+  assert.match(restoreCron,/r\.validation_report->>'ok'/)
+  assert.match(restoreCron,/public\.game_world_reset_validate_v2\(\)/)
+  assert.match(restoreCron,/g\.locked=true AND g\.reset_run_id=p_reset_run_id/)
+  assert.match(restoreCron,/gs\.season_number=1 AND gs\.is_paused=true/)
+  assert.match(restoreCron,/cfg\.base_season=1 AND cfg\.is_paused=true/)
+  assert.match(restoreCron,/originally_active=true/)
+  assert.match(restoreCron,/originally_inactive_left_disabled/)
+  assert.match(restoreCron,/REVOKE ALL ON FUNCTION private\.game_world_reset_restore_cron_after_validation_v1\(uuid\)/)
+})
