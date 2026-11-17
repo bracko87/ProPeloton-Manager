@@ -1,6 +1,4 @@
--- Live guarded reset already creates national riders, 150 editions and World Road once.
--- This continuation validates those records, then builds World Nations without repeating
--- rider generation or championship creation. Existing privacy permissions remain intact.
+-- Season 1 reset builder: avoid duplicate nations and do not reject fresh WRC fixtures.
 CREATE OR REPLACE FUNCTION private.game_world_reset_rebuild_national_competitions_v1(p_reset_run_id uuid)
  RETURNS jsonb
  LANGUAGE plpgsql
@@ -26,11 +24,16 @@ BEGIN
      AND g.is_paused AND c.is_paused AND c.base_season=1
  ) THEN RAISE EXCEPTION 'Competition rebuild is restricted to frozen Season 1 world reset'; END IF;
 
+ -- The earlier S1 bootstrap already created a NEW WRC race. Do not mistake
+ -- that freshly generated race for historic test data. Verify that every
+ -- current special S1 race is a pristine planned fixture with no result rows.
  IF EXISTS(
   SELECT 1 FROM public.races r
   WHERE r.start_date>=DATE '2000-01-01' AND r.start_date<DATE '2001-01-01'
     AND r.category IN ('NC','NCQ','WRC','WNF','WNQ')
- ) THEN RAISE EXCEPTION 'Old Season 1 championship fixtures must be cleared before rebuild'; END IF;
+    AND (r.status <> 'scheduled'
+      OR EXISTS(SELECT 1 FROM public.race_stage_results rr WHERE rr.race_id=r.id))
+ ) THEN RAISE EXCEPTION 'A non-pristine historical S1 championship race survived cleanup'; END IF;
 
  IF EXISTS(SELECT 1 FROM public.nations_competition_editions) THEN
    RAISE EXCEPTION 'Old World Nations competition edition must be cleared before rebuild';
