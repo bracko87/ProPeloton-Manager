@@ -15,6 +15,7 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import Hero from '../components/home/Hero'
+import PreReleaseNotice from '../components/PreReleaseNotice'
 import HomepageRaceDays, {
   type HomepageRaceDaysData,
 } from '../components/home/HomepageRaceDays'
@@ -602,169 +603,14 @@ export default function HomePage(): JSX.Element {
     )
   }
 
-  useEffect(() => {
-    const root = document.getElementById('public-homepage')
-    if (!root) return
-
-    const lockedRouteParts = [
-      '/register',
-      '/signup',
-      '/sign-up',
-      '/create-club',
-      '/create-team',
-      '/new-club',
-      '/new-team',
-    ]
-
-    const normalizeText = (value: string): string =>
-      value.replace(/\s+/g, ' ').trim().toLowerCase()
-
-    const translatedLockedLabels = [
-      t('header.startPlaying'),
-      t('cta.createClub'),
-    ].map(normalizeText)
-
-    const legacyLockedLabels = [
-      'start playing',
-      'play now',
-      'register',
-      'register now',
-      'sign up',
-      'sign up now',
-      'create club',
-      'create a club',
-      'create your club',
-      'create team',
-      'create a team',
-      'create your team',
-      'new club',
-      'new team',
-      'get started',
-      'get started now',
-      'build your club',
-      'build your team',
-      'start your club',
-      'start your team',
-      'join the game',
-      'join now',
-      'become a manager',
-    ]
-
-    const lockedLabels = Array.from(
-      new Set([...legacyLockedLabels, ...translatedLockedLabels]),
-    )
-
-    const isLockedAction = (element: Element): boolean => {
-      if (element.getAttribute('data-registration-locked') === 'true') return true
-
-      const label = normalizeText(element.textContent || '')
-      const href =
-        element instanceof HTMLAnchorElement
-          ? normalizeText(element.getAttribute('href') || '')
-          : ''
-
-      const routeIsLocked = lockedRouteParts.some(route => href.includes(route))
-      const labelIsLocked = lockedLabels.some(lockedLabel =>
-        label === lockedLabel ||
-        label.startsWith(`${lockedLabel} `) ||
-        label.endsWith(` ${lockedLabel}`),
-      )
-
-      return routeIsLocked || labelIsLocked
-    }
-
-    const lockAction = (element: Element): void => {
-      if (!isLockedAction(element)) return
-
-      element.setAttribute('data-registration-locked', 'true')
-      element.setAttribute('aria-disabled', 'true')
-      element.setAttribute('title', t('header.registrationUnavailable'))
-
-      if (element instanceof HTMLAnchorElement) {
-        const href = element.getAttribute('href')
-        if (href && !element.getAttribute('data-locked-href')) {
-          element.setAttribute('data-locked-href', href)
-        }
-        element.removeAttribute('href')
-        element.tabIndex = -1
-      }
-
-      if (element instanceof HTMLButtonElement) element.disabled = true
-    }
-
-    const disableRegistrationActions = (): void => {
-      root.querySelectorAll('a, button, [role="button"]').forEach(lockAction)
-    }
-
-    const blockLockedAction = (event: Event): void => {
-      const target = event.target
-      if (!(target instanceof Element)) return
-
-      const actionElement = target.closest('a, button, [role="button"]')
-      if (!actionElement || !isLockedAction(actionElement)) return
-
-      event.preventDefault()
-      event.stopPropagation()
-      event.stopImmediatePropagation?.()
-    }
-
-    const blockLockedKeyboardAction = (event: KeyboardEvent): void => {
-      if (event.key !== 'Enter' && event.key !== ' ') return
-      blockLockedAction(event)
-    }
-
-    disableRegistrationActions()
-    root.addEventListener('pointerdown', blockLockedAction, true)
-    root.addEventListener('click', blockLockedAction, true)
-    root.addEventListener('keydown', blockLockedKeyboardAction, true)
-
-    const observer = new MutationObserver(disableRegistrationActions)
-    observer.observe(root, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ['href'],
-    })
-
-    return () => {
-      observer.disconnect()
-      root.removeEventListener('pointerdown', blockLockedAction, true)
-      root.removeEventListener('click', blockLockedAction, true)
-      root.removeEventListener('keydown', blockLockedKeyboardAction, true)
-    }
-  }, [t, i18n.resolvedLanguage, i18n.language])
-
   const activeReview = reviews[activeReviewIndex]
   const activeRating = normalizeRating(activeReview?.rating)
 
   return (
     <div
       id="public-homepage"
-      className="home-registration-locked min-h-screen bg-[#081224] text-white"
+      className="min-h-screen bg-[#081224] text-white"
     >
-      <style>{`
-        .home-registration-locked [data-registration-locked='true'] {
-          cursor: not-allowed !important;
-          opacity: 0.42 !important;
-          filter: grayscale(1) !important;
-          background-color: #475569 !important;
-          border-color: #64748b !important;
-          color: #cbd5e1 !important;
-          box-shadow: none !important;
-          text-decoration: none !important;
-          transform: none !important;
-        }
-
-        .home-registration-locked [data-registration-locked='true']:hover,
-        .home-registration-locked [data-registration-locked='true']:focus,
-        .home-registration-locked [data-registration-locked='true']:active {
-          background-color: #475569 !important;
-          border-color: #64748b !important;
-          color: #cbd5e1 !important;
-          box-shadow: none !important;
-          transform: none !important;
-        }
-      `}</style>
 
       <header className="border-b border-white/15">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-2">
@@ -784,19 +630,19 @@ export default function HomePage(): JSX.Element {
             >
               {t('header.signIn')}
             </a>
-            <button
-              type="button"
-              disabled
-              aria-disabled="true"
-              title={t('header.registrationUnavailable')}
-              data-registration-locked="true"
-              className="min-h-[44px] min-w-0 cursor-not-allowed rounded-md bg-slate-600 px-2 py-2 text-center text-sm font-bold text-slate-300 sm:px-4"
+            <a
+              href="#/register"
+              className="flex min-h-[44px] min-w-0 items-center justify-center rounded-md bg-yellow-400 px-2 py-2 text-center text-sm font-bold text-black hover:bg-yellow-300 sm:px-4"
             >
               {t('header.startPlaying')}
-            </button>
+            </a>
           </nav>
         </div>
       </header>
+
+      <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">
+        <PreReleaseNotice variant="dark" />
+      </div>
 
       {checkingClub && (
         <div className="border-b border-blue-700 bg-blue-950 py-2 text-center text-sm text-blue-100">
@@ -1154,14 +1000,9 @@ export default function HomePage(): JSX.Element {
                 </a>
               ))}
               <a href="#/login" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">{t('header.signIn')}</a>
-              <span
-                aria-disabled="true"
-                data-registration-locked="true"
-                title={t('header.registrationUnavailable')}
-                className="flex min-h-[44px] cursor-not-allowed items-center break-words text-sm text-white/35"
-              >
+              <a href="#/register" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
                 {t('header.startPlaying')}
-              </span>
+              </a>
             </div>
           </nav>
 
