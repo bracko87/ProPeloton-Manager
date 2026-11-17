@@ -26,6 +26,11 @@ begin
   if not exists (
     select 1 from private.ppm_public_registration_gate_v1 g
     where g.id=true and g.registration_open=true
+      -- Protected game resets temporarily suspend new signups.
+      and not exists (
+        select 1 from private.game_world_reset_maintenance_gate_v1 m
+        where m.id=true and m.locked=true
+      )
       and (
         g.registration_phase='prelaunch_test'
         or (
