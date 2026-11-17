@@ -74,3 +74,27 @@
 - The live read-only national readiness check says `routes_preserved_but_reset_blocked`; the live full reset remains at `preflight` with **zero backup/execution signoffs**. **64 cron jobs are active**, so maintenance/quiescence is not yet in place.
 - Latest committed route and build test: `supabase/migrations/20261117114500_preserve_150_national_routes_for_season1_reset_v1.sql`. GitHub CI run `44067417124` passed.
 - **Do not execute a destructive reset until a restorable pre-reset backup is independently verified and maintenance/worker drain is in effect.** The tools available in this chat do not expose a list of Supabase managed backups, so backup presence cannot be certified from this session.
+
+
+## Updated owner decision — 17 November, 10:48 UTC
+
+The prior references to a **required full backup of completed test seasons** are **superseded** by this decision. Both the old S1 and current S2 outcomes were test data and can be erased. We do not need to preserve their race results, rankings, sponsor progression or simulated finances as history.
+
+The reset still must preserve **actual identities, club ownership, real purchases and entitlements**. A restricted, limited account snapshot was taken for the prepared reset containing:
+- 27 account identifiers and 27 profiles;
+- 11 active owned clubs;
+- 27 coin wallets and 2,355 coin-ledger entries;
+- 3 Premium subscription records and 4 Premium invoice records;
+- 1 welcome trial record.
+
+Snapshot verification checks the actual account rows and expires after 15 minutes; refresh it during the controlled maintenance window. This is **not a database backup**, and does not claim whole-world recoverability.
+
+The internal signoff schema now permits the owner-authorized **test-history-disposable** pathway with an exactly matching protected account snapshot, instead of insisting on a full historical database restore. The previous full-backup path remains available. Both pathways still require player preservation, new Season 1 builder readiness, updated validation, active maintenance lock, a snapshot of scheduled jobs, zero active/in-flight jobs and a signed approval.
+
+Live status at this decision: the scope change is recorded but **NOT signed off**, 64 scheduled cron jobs still active, clock running in S2, and reset remains `preflight`. No historical wipe, freeze or launch has occurred.
+
+The duplicate National Championship builder invocation was fixed: early S1 bootstrap creates the country and route records; the later routine validates them and creates World Nations without repeating generation.
+
+Code:
+- `20261117123000_season1_reset_single_national_rebuild_v1.sql`
+- `20261117125500_disposable_test_history_preserve_accounts_v1.sql`
