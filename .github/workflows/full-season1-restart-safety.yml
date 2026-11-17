@@ -13,6 +13,8 @@ on:
       - 'supabase/migrations/20261117123000_season1_reset_single_national_rebuild_v1.sql'
       - 'supabase/migrations/20261117125500_disposable_test_history_preserve_accounts_v1.sql'
       - 'supabase/migrations/20261117134500_restore_scheduled_jobs_after_reset_validation_v1.sql'
+      - 'supabase/migrations/20261117151000_exclude_national_races_from_sponsor_preview_v1.sql'
+      - 'tests/sponsorVisibilityExcludesNationalRaces.test.mjs'
       - 'supabase/migrations/20261117104000_prepare_s1_150_nation_and_nations_rebuild_v1.sql'
       - 'supabase/migrations/20261117104500_integrate_clean_competition_restart_validation_v1.sql'
       - 'supabase/migrations/20261117105000_prepare_and_require_cron_quiescence_before_full_reset_v1.sql'
@@ -37,6 +39,6 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Check restart security, player slots, validator and fail-closed gates
-        run: node --test tests/fullSeason1RestartSafety.test.mjs tests/season1RestartNationalOperations.test.mjs tests/fullSeason1RestartMaintenanceGate.test.mjs
+        run: node --test tests/fullSeason1RestartSafety.test.mjs tests/season1RestartNationalOperations.test.mjs tests/fullSeason1RestartMaintenanceGate.test.mjs tests/sponsorVisibilityExcludesNationalRaces.test.mjs
       - name: Build protected game website
         run: npm run build
