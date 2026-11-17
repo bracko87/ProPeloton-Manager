@@ -98,3 +98,21 @@ The duplicate National Championship builder invocation was fixed: early S1 boots
 Code:
 - `20261117123000_season1_reset_single_national_rebuild_v1.sql`
 - `20261117125500_disposable_test_history_preserve_accounts_v1.sql`
+
+
+## Controlled live restart attempt — 17 November (after deployment)
+
+The owner deployed the website. Public JavaScript passed the maintenance-screen verification (GitHub Actions run `44074394609`, attempt 2). The full-world maintenance gate was enabled, the S2 game clock was paused, and all 64 previously active cron jobs were disabled (71 total jobs snapshotted, 7 originally inactive). No in-flight cron jobs were found; six old `race_stage_simulation_runs` rows with status `running` were stale September/October test records, not active workers.
+
+Fresh critical account snapshots were captured before each full-reset attempt: 27 auth account IDs, 27 profiles, 27 wallets, 2,355 coin-ledger events, 11 active player-owned clubs, three Premium subscriptions, four Premium payment records, and one welcome trial. The snapshots are private and restricted; they are **not** full database backups.
+
+**Four guarded attempts failed and each returned `world_changes_rolled_back=true`.** The database was checked after each attempt. The main S2 world continued to exist (18,573 riders), as did accounts and payments. Never mark the reset completed merely because `main` code or tests pass.
+
+1. **Former player-created club wrongly converted to AI.** The 499-club reset baseline included five deleted clubs, three formerly player-controlled. Replaced these baseline slots using genuine historical AI teams with valid logos and no owner/inactivity history; preserved 25 WorldTeam, 45 ProTeam, 112 Continental slots, all 11 active owned clubs. Audits in `private.game_world_reset_archived_slot_replacement_v1`.
+2. **Thailand source stage deleted.** A source stage for the Thai national championship referenced the old S1 World Road Championship, deleted by reset cleanup. Replaced it with an eligible S1 Royal Cup Tour of Thailand source that survives reset. Checked all 150 routes for persistence and eligibility.
+3. **151 rider countries, but championship target is 150.** Two candidate ProTeams from Luxembourg introduced a country outside `private.game_world_reset_national_countries_v1`. Replaced them in the reset baseline with eligible genuine AI teams from France and Great Britain, with the correct PRO_WEST division; stored changes in `private.game_world_reset_proteam_country_slot_fix_v1`. Read-only projection now confirms 147 targeted roster countries + 3 missing BT/BW/CF = 150, zero outside. The new seed helper creates unattached riders for each missing country.
+4. **Invalid sponsor goals.** The Season 1 sponsor preview normalizer selected future races, country targets, and categories without consulting `public.sponsor_race_allowed_for_club_objective_v1`. The strict offer trigger correctly rejected National Championship or World Nations objectives. Patched all three preview selection queries to apply the existing allowlist; the offer enforcement trigger remains active. Migration `20261117151000_exclude_national_races_from_sponsor_preview_v1.sql`, new test `tests/sponsorVisibilityExcludesNationalRaces.test.mjs`.
+
+**Current final state of this attempt:** reset run `a673dc49-a37a-4493-b121-db6e8c2fdfa0` status `failed`; Season 2 retained, clock paused, maintenance lock enabled, all cron jobs disabled, original account/payment records preserved, last rollback documented. **Do not start a fifth full-world reset by merely changing the run status.** First expand non-destructive validation of sponsor generation and all subsequent reset phases, preferably in an isolated copy. No public reopening has been performed, consistent with the user's requirement not to open an unverified game.
+
+Original 64 active cron schedules are stored in `private.game_world_reset_cron_snapshot_v1` for later controlled restoration; do not unpause the game or enable jobs until the next chosen phase is explicitly validated.
