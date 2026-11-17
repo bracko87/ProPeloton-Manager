@@ -9,6 +9,7 @@ on:
       - 'supabase/migrations/20261117090000_protect_global_season1_restart_v1.sql'
       - 'supabase/migrations/20261117092000_preserve_player_clubs_in_season1_world_restart_v1.sql'
       - 'supabase/migrations/20261117093000_reset_validation_against_checkpointed_code_v1.sql'
+      - 'supabase/migrations/20261117114500_preserve_150_national_routes_for_season1_reset_v1.sql'
       - 'supabase/migrations/20261117104000_prepare_s1_150_nation_and_nations_rebuild_v1.sql'
       - 'supabase/migrations/20261117104500_integrate_clean_competition_restart_validation_v1.sql'
       - 'supabase/migrations/20261117105000_prepare_and_require_cron_quiescence_before_full_reset_v1.sql'
