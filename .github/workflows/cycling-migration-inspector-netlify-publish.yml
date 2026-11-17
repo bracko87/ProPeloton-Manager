@@ -1,4 +1,4 @@
-name: Publish protected cycling migration inspection
+name: Publish protected Season 1 restart maintenance UI
 
 on:
   workflow_dispatch:
@@ -6,6 +6,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/cycling-migration-inspector-netlify-publish.yml'
+      - 'src/components/season/CyclingSeasonWindowBoundary.tsx'
 
 permissions:
   contents: read
@@ -29,7 +30,7 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Validate protected migration and inspection permissions
-        run: node --test tests/cyclingTwoDaySeasonWindow.test.mjs tests/cyclingMigrationInspector.test.mjs
+        run: node --test tests/cyclingTwoDaySeasonWindow.test.mjs tests/cyclingMigrationInspector.test.mjs tests/fullSeason1RestartSafety.test.mjs tests/fullSeason1RestartMaintenanceGate.test.mjs
       - name: Build website without changing game state
         run: npm run build
       - name: Check deployment credentials
