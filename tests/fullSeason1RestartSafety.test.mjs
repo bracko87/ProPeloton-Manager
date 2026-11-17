@@ -102,3 +102,45 @@ test('national rebuild cannot execute outside a paused fresh Season 1 reset', ()
   assert.match(nationalReset, /perform private\.game_world_reset_restore_s1_national_world_v1\(\)/)
   assert.doesNotMatch(nationalReset, /DELETE FROM auth\.users|TRUNCATE TABLE public\.riders/i)
 })
+
+
+const disposable = readFileSync(
+  new URL('../supabase/migrations/20261117125500_disposable_test_history_preserve_accounts_v1.sql',import.meta.url),
+  'utf8'
+)
+const singleNational = readFileSync(
+  new URL('../supabase/migrations/20261117123000_season1_reset_single_national_rebuild_v1.sql',import.meta.url),
+  'utf8'
+)
+
+test('disposable test history preserves player accounts and genuine purchases', () => {
+  for (const kind of [
+    'account_id','profile','owned_club','wallet','premium_subscription',
+    'premium_invoice','coin_ledger','welcome_trial'
+  ]) assert.ok(disposable.includes("'"+kind+"'"),kind)
+  assert.match(disposable,/private\.game_world_reset_critical_account_snapshot_v1/)
+  assert.match(disposable,/REVOKE ALL ON private\.game_world_reset_critical_account_snapshot_v1/)
+  assert.match(disposable,/critical_account_snapshot_verified/)
+  assert.match(disposable,/test_history_disposable/)
+  assert.match(disposable,/15 minutes/)
+  assert.doesNotMatch(disposable,/TRUNCATE TABLE public\.riders|DELETE FROM auth\.users/i)
+})
+
+test('a limited account snapshot is an alternative to a whole test-history backup only with explicit approval', () => {
+  assert.match(disposable,/s\.backup_verified=true/)
+  assert.match(disposable,/s\.test_history_disposable=true/)
+  assert.match(disposable,/s\.critical_account_snapshot_verified=true/)
+  assert.match(disposable,/private\.game_world_reset_critical_account_snapshot_current_v1\(p_reset_run_id\)/)
+  assert.match(disposable,/s\.signed_off_at IS NOT NULL/)
+  assert.match(disposable,/m\.locked=true/)
+  assert.match(disposable,/cron\.job WHERE active=true/)
+  assert.match(disposable,/cron\.job_run_details/)
+})
+
+test('national championships are built only once when starting the new Season 1', () => {
+  assert.match(singleNational,/completed_in_earlier_s1_bootstrap/)
+  assert.match(singleNational,/Do not regenerate a second time/)
+  assert.match(singleNational,/national_championship_route_preflight_v1\(1\)/)
+  assert.doesNotMatch(singleNational,/v_seed:=private\.game_world_reset_seed_national_starters_v1/)
+  assert.doesNotMatch(singleNational,/SELECT public\.ensure_national_championship_editions_for_season_v1\(1\) INTO v_created/)
+})
