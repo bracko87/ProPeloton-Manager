@@ -33,16 +33,35 @@
 - The old world reset previously completed in August but also has several failed historical attempts. Past success does not establish compatibility with the November schema.
 - Old reset implementation explicitly clears hundreds of thousands of results and rider-linked history; it is destructive and must never be run based on the old `ready_for_reset` flag alone.
 
+## Update: November 17 — latest verified preparation
+
+- All **150** Season 1 schedule-plan calls were checked read-only with estimated fresh starting roster sizes: **150 returned ready** with source stage and date. **22** countries projected to need qualification heats. This does not replace a full post-reset simulation.
+- The reset now retains exactly 150 independent country targets in `private.game_world_reset_national_countries_v1`, including Bhutan (BT) and Botswana (BW). Both have existing hidden routes but no reset baseline clubs, so they receive one fresh national rider each **only** inside paused/frozen S1.
+- New internal helpers `private.game_world_reset_cleanup_national_competitions_v1` and `private.game_world_reset_rebuild_national_competitions_v1` are wired into the existing reset core; old Nations history and NC/NCQ/WRC/WNQ/WNF fixtures are cleared, then all 150 national editions, WRC and fresh Nations schedules are constructed. These helpers have only been negative-tested against live S2; live execution is **not certified** until the backed-up reset run succeeds.
+- Strict final validator now requires 150 S1 route-ready national editions, 150 countries with riders, one ready WRC, a fresh planned Nations edition, and **zero** old Nations points and history.
+- There are **64 active cron jobs**. A guarded private helper will snapshot job IDs and active flags, suspend them only once backup and all signoffs are verified; the core reset fails closed until all cron jobs are suspended and running jobs drained. Not yet executed: 64 jobs remain active.
+- Private restart maintenance gate is installed with `locked=false` (the public season-window RPC now includes `restart_locked`), and new Auth sessions would be blocked during approved maintenance. A React maintenance page has been implemented on `main` with EN/DE copy and no speculative reopening time, **not yet confirmed deployed to Netlify**. Earlier sessions and other direct APIs require separate locking verification.
+- The reset run `a673dc49-a37a-4493-b121-db6e8c2fdfa0` remains `preflight`, with **zero** signoffs. Season 2 is still running, and the database has not been wiped or paused.
+- Source files: `20261117104000_prepare_s1_150_nation_and_nations_rebuild_v1.sql`, `20261117104500_integrate_clean_competition_restart_validation_v1.sql`, `20261117105000_prepare_and_require_cron_quiescence_before_full_reset_v1.sql`, and `20261117110000_prepare_full_s1_restart_maintenance_access_gate_v1.sql`.
+
+### Remaining unverified gates
+
+1. **Restorable backup**: Supabase project backup evidence must be verified and recorded before any destructive reset. Supabase backup availability cannot be read through the connected SQL-only project actions; a database size check or in-database checkpoint is not a backup.
+2. **Production deployment**: publish the actual reset maintenance UI on Netlify from `main` and verify that the production JavaScript includes the new lock.
+3. **Pre-existing JWT/API writes**: auth new-session block and frontend lock do not guarantee that every existing access token and direct gameplay API write is blocked. Verify and address server-side write permissions before activating the gate.
+4. **In-flight and external workers**: ensure edge function dispatches, asynchronous runners and user APIs cannot race the reset; no assumption that suspending cron alone is sufficient.
+5. **Full positive reset test**: execute only after verified backup, then audit all 150/150 editions, Worlds/Nations fixtures, club/finance/entitlements, and complete runtime cleanup; keep game locked until verified and owner confirms reopening.
+
 ## Execution gate checklist
 - [x] Audit existing preflight and reset implementation.
 - [x] Create non-destructive prepared reset record.
 - [x] Restrict privileged full-world reset API calls.
 - [x] Install fail-closed backup and integrity execution guard.
 - [x] Reconcile player-owned clubs into canonical S1 league universe (all 11 owned; 25 WorldTeams).
-- [ ] Implement and test S1 national/WRC championship regeneration.
+- [x] Implement guarded S1 national/WRC/Nations cleanup and regeneration; 150/150 read-only planner checks passed, full live execution intentionally untested pending verified backup.
 - [x] Repair reset validation using preparatory checkpoint hashes; mismatch count 0.
 - [ ] Obtain and verify restorable pre-reset backup.
-- [ ] Implement and test full maintenance/worker quiescence.
+- [x] Implement guarded cron snapshot/suspension, inactive-by-default backend maintenance gate and client maintenance lock page; execution remains blocked and not yet published.
 - [ ] Execute world reset once with all gates passed.
 - [ ] Verify final S1 paused state, financial and entitlement preservation.
 - [ ] Reopen only when owner authorizes launch after test.
