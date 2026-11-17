@@ -5,10 +5,11 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../../lib/supabase'
 import { CyclingAdminInspection, type CyclingMigrationInspectionReport } from './CyclingAdminInspection'
 
-type Phase = 'off' | 'migration' | 'delayed' | 'preparation'
+type Phase = 'off' | 'migration' | 'delayed' | 'preparation' | 'reset_maintenance'
 export type CyclingSeasonWindow = {
   phase: Phase
   locked: boolean
+  restart_locked: boolean
   delayed: boolean
   preparation_active: boolean
   game_clock_paused: boolean
@@ -26,6 +27,10 @@ export function useCyclingSeasonWindow() { return React.useContext(WindowContext
 
 const copy = {
   en: {
+    restartTag: 'SEASON 1 RESTART',
+    restartTitle: 'A fresh Season 1 is being prepared',
+    restartBody: 'ProPeloton Manager is temporarily closed while we restart the game from Season 1, Day 1. Existing accounts and purchased entitlements are preserved. Race results, rankings and other season progress will start fresh. No gameplay is available during the reset.',
+    restartReopen: 'The game will reopen only after the new Season 1 passes verification. An opening date has not yet been confirmed.',
     migrationTag: 'SEASON MIGRATION',
     migrationTitle: 'Season {season} migration in progress',
     migrationBody: 'ProPeloton Manager is temporarily offline while we move to the new season, protect race results and verify your team, riders, rankings and finances. Sign-in and gameplay are unavailable during this window.',
@@ -45,6 +50,10 @@ const copy = {
     preserved: 'Your career and existing progress will remain protected during the transition.',
   },
   de: {
+    restartTag: 'NEUSTART SAISON 1',
+    restartTitle: 'Eine neue Saison 1 wird vorbereitet',
+    restartBody: 'ProPeloton Manager ist vorübergehend geschlossen, während das Spiel auf Saison 1, Tag 1 zurückgesetzt wird. Bestehende Konten und gekaufte Leistungen bleiben erhalten. Rennergebnisse, Ranglisten und der Saisonfortschritt beginnen von vorn. Während des Neustarts kann nicht gespielt werden.',
+    restartReopen: 'Das Spiel wird erst nach erfolgreicher Prüfung der neuen Saison 1 wieder geöffnet. Ein Öffnungstermin steht noch nicht fest.',
     migrationTag: 'SAISONWECHSEL',
     migrationTitle: 'Migration zu Saison {season}',
     migrationBody: 'ProPeloton Manager ist während des Saisonwechsels vorübergehend offline. Rennergebnisse, Teams, Fahrer, Ranglisten und Finanzen werden überprüft. Die Anmeldung und das Spiel sind währenddessen gesperrt.',
@@ -206,6 +215,27 @@ export function CyclingSeasonWindowBoundary({ children }: { children: React.Reac
     return (
       <main role="status" className="min-h-screen bg-[#081224] grid place-items-center px-5 text-white">
         <p className="text-center text-sm text-slate-200">{fetchFailed ? t.unknown : t.checking}</p>
+      </main>
+    )
+  }
+
+  if (windowStatus.restart_locked) {
+    // A full world restart is NOT an ordinary season migration.
+    // Never display game routes or the inspector dashboard during destructive maintenance.
+    return (
+      <main role="status" className="min-h-screen bg-[#081224] px-5 py-12 text-white grid place-items-center">
+        <section className="w-full max-w-2xl rounded-2xl border border-white/10 bg-slate-900 p-7 shadow-2xl md:p-10">
+          <div className="mb-5 inline-flex rounded-lg bg-yellow-400/10 p-3 text-yellow-300">
+            <LockKeyhole size={25} aria-hidden="true" />
+          </div>
+          <div className="text-xs font-bold tracking-widest text-yellow-300">{t.restartTag}</div>
+          <h1 className="mt-3 text-3xl font-bold">{t.restartTitle}</h1>
+          <p className="mt-5 text-sm leading-7 text-slate-200">{t.restartBody}</p>
+          <div className="mt-6 flex gap-3 rounded-xl border border-white/10 bg-slate-950/40 p-4">
+            <ShieldCheck size={20} className="mt-1 shrink-0 text-yellow-300" aria-hidden="true" />
+            <p className="text-sm leading-6 text-slate-200">{t.restartReopen}</p>
+          </div>
+        </section>
       </main>
     )
   }
