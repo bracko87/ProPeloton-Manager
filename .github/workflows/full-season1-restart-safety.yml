@@ -1,0 +1,31 @@
+name: Full Season 1 restart safety validation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/full-season1-restart-safety.yml'
+      - 'tests/fullSeason1RestartSafety.test.mjs'
+      - 'supabase/migrations/20261117090000_protect_global_season1_restart_v1.sql'
+      - 'supabase/migrations/20261117092000_preserve_player_clubs_in_season1_world_restart_v1.sql'
+      - 'supabase/migrations/20261117093000_reset_validation_against_checkpointed_code_v1.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safety-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Check restart security, player slots, validator and fail-closed gates
+        run: node --test tests/fullSeason1RestartSafety.test.mjs
+      - name: Build protected game website
+        run: npm run build
