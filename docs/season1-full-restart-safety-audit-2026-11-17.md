@@ -16,9 +16,10 @@
 
 ## Blocking corrections before destructive execution
 
-1. **Keep every user-owned club**. The old baseline `public.game_world_reset_s1_competition_baseline_v1` has 499 clubs but excludes four live user WorldTeams from Season 1: **Adidas pro Team**, **BK Budva**, **LECO Cycling Team**, **Levsisters**. The old reset would deactivate them. All 11 live player-owned clubs must survive with sensible original Season 1 competitive placements, while preserving league sizes. The S1 final standings include the four missing teams; investigate replacements for stale/deleted AI slots, do not simply append them and create oversized divisions.
+1. **Keep every user-owned club — FIXED IN RESET BASELINE.** The old baseline `public.game_world_reset_s1_competition_baseline_v1` has 499 clubs but excludes four live user WorldTeams from Season 1: **Adidas pro Team**, **BK Budva**, **LECO Cycling Team**, **Levsisters**. The old reset would deactivate them. Reconciled exact AI-to-human replacement pairs using equal old AI deletion time and new owned club creation time, matching final S1 WorldTeam placements. The reset baseline still contains 499 clubs, including 25 WorldTeams, and now includes all 11 live owned clubs. Four replaced AI baseline records are archived in private audit; no live clubs were changed. Still check division counts and seed remaining vacant AI slots during the final world reset.
 2. **National Championships for all countries**. `TRUNCATE public.riders CASCADE` clears `national_championship_editions` and `world_road_championship_editions`. The old core does not rebuild either after regenerating riders. Add an explicit rebuilding phase using the current permanent route eligibility policy, guarantee all 150 countries have valid stages, ensure rider eligibility across the complete national pool, and reject missing/duplicate championships. The old Season 1 calendar's historical `missing_route` statuses must not be recycled as truth.
-3. **Fix stale validator hashes**. `game_world_reset_validate_core_v1` embeds hashes for older `season_transition_engine_execute_v2` and `verify_new_season_fresh_state_v1` functions. Current definitions differ, so the old validator will incorrectly reject even an otherwise good rebuild. Compare against audited function hashes captured at prepare time rather than obsolete hardcoded versions. Keep validation fail-closed if definitions change during the restart.
+   - At present the reset's 499-club roster baseline represents 148 of the 150 national championship countries; **BT (Bhutan) and BW (Botswana)** need fresh eligible riders after the roster wipe. Old BT/BW riders will be truncated with all other progression. Ensure these two countries have valid fresh participants and routes before validating 150 editions.
+3. **Fix stale validator hashes — FIXED AND VERIFIED.** `game_world_reset_validate_core_v1` embeds hashes for older `season_transition_engine_execute_v2` and `verify_new_season_fresh_state_v1` functions. Current definitions differ, so the old validator will incorrectly reject even an otherwise good rebuild. Validator now compares the four transition function definitions with hashes captured in the prepared reset run. The live hash mismatch count is 0. Validation still fails, as expected, on a running Season 2 world, and will be checked after the actual reset.
 4. **Backup and recovery**. Confirm a restorable database backup **taken before the reset** in Supabase Dashboard > Database > Backups (including any point-in-time recovery capability) and record a reference with the prepared run. A generic count report or reset checkpoint is **not a complete database backup**. Do not proceed with the live wipe until verified.
 5. **Operational maintenance gate**. Before freezing, ensure normal players cannot write gameplay data and no race-engine, game-clock or other cron/edge worker can race the reset transaction. Record precisely what is disabled and restore only after validation.
 6. **Complete reset audit**. Check clean Season 1 01:00 paused state; no S1/S2 results, ranking points, fatigue/progression or stale simulation snapshots; 150 valid national championship editions plus valid future world championship; correct world/pro/continental/amateur slots; original accounts and entitlements preserved (including coins/purchases and Premium); fresh finance, sponsored club objectives and 10-player user/15-player AI starting rosters; correct current and previous timeline visibility; no pending future deliveries; job clocks rebased; no foreign-key/trigger fallout.
@@ -27,6 +28,8 @@
 - S1 competition snapshot: 525 club rows, 29 national/technical identities, 496 true sporting clubs, including all 11 currently active user-owned clubs.
 - Legacy reset baseline: 499 club rows, including stale AI clubs and **missing the four player WorldTeams**. Do not assume it is current or complete.
 - Current permanent national-route library: 150 Season 2 national editions report valid routes. After a full rider regeneration, re-run the all-country route and eligibility audit for Season 1 independently.
+- Original reset baseline AI replacement mapping is audited and corrected; see migration `20261117092000_preserve_player_clubs_in_season1_world_restart_v1.sql`.
+- Prepared-run validator has been corrected; see migration `20261117093000_reset_validation_against_checkpointed_code_v1.sql`.
 - The old world reset previously completed in August but also has several failed historical attempts. Past success does not establish compatibility with the November schema.
 - Old reset implementation explicitly clears hundreds of thousands of results and rider-linked history; it is destructive and must never be run based on the old `ready_for_reset` flag alone.
 
@@ -35,9 +38,9 @@
 - [x] Create non-destructive prepared reset record.
 - [x] Restrict privileged full-world reset API calls.
 - [x] Install fail-closed backup and integrity execution guard.
-- [ ] Reconcile player-owned clubs into canonical S1 league universe.
+- [x] Reconcile player-owned clubs into canonical S1 league universe (all 11 owned; 25 WorldTeams).
 - [ ] Implement and test S1 national/WRC championship regeneration.
-- [ ] Repair reset validation using current safe comparison.
+- [x] Repair reset validation using preparatory checkpoint hashes; mismatch count 0.
 - [ ] Obtain and verify restorable pre-reset backup.
 - [ ] Implement and test full maintenance/worker quiescence.
 - [ ] Execute world reset once with all gates passed.
