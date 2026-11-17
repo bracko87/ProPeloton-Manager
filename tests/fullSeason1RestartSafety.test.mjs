@@ -41,3 +41,33 @@ test('new migration does not wipe users, purchases or gameplay history', () => {
   assert.doesNotMatch(sql, /DELETE FROM auth\.users|DELETE FROM public\.clubs/i)
   assert.doesNotMatch(sql, /UPDATE public\.game_state|UPDATE public\.game_clock_config/i)
 })
+
+
+const playerSlots = readFileSync(
+  new URL('../supabase/migrations/20261117092000_preserve_player_clubs_in_season1_world_restart_v1.sql',import.meta.url),
+  'utf8'
+)
+const validator = readFileSync(
+  new URL('../supabase/migrations/20261117093000_reset_validation_against_checkpointed_code_v1.sql',import.meta.url),
+  'utf8'
+)
+
+test('four player-owned WorldTeams replace their exact displaced AI slots', () => {
+  assert.match(playerSlots,/private\.game_world_reset_baseline_player_slot_audit_v1/)
+  assert.match(playerSlots,/new_player_club_id uuid NOT NULL UNIQUE/)
+  assert.match(playerSlots,/current_player\.created_at=old\.deleted_at/)
+  assert.match(playerSlots,/s\.season_number=1 AND s\.club_tier='worldteam'/)
+  assert.match(playerSlots,/v_pairs<>4/)
+  assert.match(playerSlots,/club_tier='worldteam'\)<>25/)
+  assert.match(playerSlots,/public\.game_world_reset_s1_competition_baseline_v1/)
+  assert.doesNotMatch(playerSlots,/DELETE FROM public\.clubs|TRUNCATE public\.clubs/i)
+})
+
+test('reset validator checks checkpointed functions instead of obsolete hashes', () => {
+  assert.match(validator,/transition_function_hashes/)
+  assert.match(validator,/jsonb_array_elements\(checkpoint\.payload\)/)
+  assert.match(validator,/checksum IS DISTINCT FROM actual/)
+  assert.match(validator,/count\(\*\)=4/)
+  assert.match(validator,/missing checkpoint blocks validation/i)
+  assert.doesNotMatch(validator,/UPDATE public\.game_state|DELETE FROM public\.riders/i)
+})
