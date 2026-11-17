@@ -16,7 +16,7 @@ test('reset maintenance gate is created locked off and cannot be activated befor
   assert.match(sql,/s\.player_clubs_preserved=true/)
   assert.match(sql,/s\.reset_validator_updated=true/)
   assert.match(sql,/s\.signed_off_at IS NOT NULL/)
-  assert.match(sql,/r\.status='preflight'/)
+  assert.match(sql,/WHERE id=p_reset_run_id AND status='preflight'/)
 })
 
 test('maintenance public status is separated from old migration and has no fabricated reopening time', () => {
