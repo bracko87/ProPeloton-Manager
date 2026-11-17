@@ -65,3 +65,12 @@
 - [ ] Execute world reset once with all gates passed.
 - [ ] Verify final S1 paused state, financial and entitlement preservation.
 - [ ] Reopen only when owner authorizes launch after test.
+
+
+## Continuation — November 17, 11:43 CET
+- Added a preserved, restart-safe national route map containing exactly **150 country stages**, each independently passing `national_championship_source_stage_eligible_v1`. **109** are Season 1 dated stages and **41** are undated hidden reserve stages. None is attached to a Season 2 race that the reset deletes.
+- Installed `private.game_world_reset_restore_s1_national_world_v1()` into the guarded reset core. It will add **10 fresh unattached riders each** for Bhutan (BT) and Botswana (BW), recreate S1 national championship records, attach persistent route stages, and require a passing 150-country national route preflight. This helper has **not** run on the live game.
+- Existing reset routines also include national race/nations rebuilding, cron quiescence checks, and worker snapshots. Their compatibility must be verified as part of a protected test reset before final acceptance.
+- The live read-only national readiness check says `routes_preserved_but_reset_blocked`; the live full reset remains at `preflight` with **zero backup/execution signoffs**. **64 cron jobs are active**, so maintenance/quiescence is not yet in place.
+- Latest committed route and build test: `supabase/migrations/20261117114500_preserve_150_national_routes_for_season1_reset_v1.sql`. GitHub CI run `44067417124` passed.
+- **Do not execute a destructive reset until a restorable pre-reset backup is independently verified and maintenance/worker drain is in effect.** The tools available in this chat do not expose a list of Supabase managed backups, so backup presence cannot be certified from this session.
