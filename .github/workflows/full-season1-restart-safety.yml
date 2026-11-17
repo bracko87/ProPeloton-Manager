@@ -12,6 +12,7 @@ on:
       - 'supabase/migrations/20261117114500_preserve_150_national_routes_for_season1_reset_v1.sql'
       - 'supabase/migrations/20261117123000_season1_reset_single_national_rebuild_v1.sql'
       - 'supabase/migrations/20261117125500_disposable_test_history_preserve_accounts_v1.sql'
+      - 'supabase/migrations/20261117134500_restore_scheduled_jobs_after_reset_validation_v1.sql'
       - 'supabase/migrations/20261117104000_prepare_s1_150_nation_and_nations_rebuild_v1.sql'
       - 'supabase/migrations/20261117104500_integrate_clean_competition_restart_validation_v1.sql'
       - 'supabase/migrations/20261117105000_prepare_and_require_cron_quiescence_before_full_reset_v1.sql'
