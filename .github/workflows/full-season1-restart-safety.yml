@@ -13,6 +13,9 @@ on:
       - 'supabase/migrations/20261117104500_integrate_clean_competition_restart_validation_v1.sql'
       - 'supabase/migrations/20261117105000_prepare_and_require_cron_quiescence_before_full_reset_v1.sql'
       - 'tests/season1RestartNationalOperations.test.mjs'
+      - 'tests/fullSeason1RestartMaintenanceGate.test.mjs'
+      - 'src/components/season/CyclingSeasonWindowBoundary.tsx'
+      - 'supabase/migrations/20261117110000_prepare_full_s1_restart_maintenance_access_gate_v1.sql'
   workflow_dispatch:
 
 permissions:
@@ -30,6 +33,6 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Check restart security, player slots, validator and fail-closed gates
-        run: node --test tests/fullSeason1RestartSafety.test.mjs tests/season1RestartNationalOperations.test.mjs
+        run: node --test tests/fullSeason1RestartSafety.test.mjs tests/season1RestartNationalOperations.test.mjs tests/fullSeason1RestartMaintenanceGate.test.mjs
       - name: Build protected game website
         run: npm run build
