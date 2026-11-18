@@ -43,7 +43,7 @@ const landing = read('index.html')
 const homepageFallback = landing.match(/<main id="ppm-seo-fallback"[\s\S]*?<\/main>/i)?.[0]
 assert.ok(homepageFallback, 'Homepage needs content readable before React loads')
 const fallbackText = homepageFallback.replace(/<[^>]+>/g, ' ').trim()
-assert.ok(fallbackText.split(/\s+/).length >= 150, 'Homepage text is too short for the game's main features')
+assert.ok(fallbackText.split(/\s+/).length >= 150, "Homepage text is too short for the game\'s main features")
 for (const url of ['/how-to-play/', '/game-guide/', '/demo/', '/about/']) {
   assert.ok(homepageFallback.includes(`href="${url}"`), `Homepage must link to ${url}`)
 }
