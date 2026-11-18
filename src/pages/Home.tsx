@@ -657,7 +657,6 @@ export default function HomePage(): JSX.Element {
 
       <main>
         <Hero gameTimeLabel={homeSnapshot?.game_time_label || gameTimeText} />
-        <HomeVideoShowcase />
         <HomepageRaceDays data={raceDays} loading={raceDaysLoading} />
 
         <section className="relative w-full overflow-hidden border-y border-white/15 bg-[#1a1404] py-16">
@@ -729,6 +728,8 @@ export default function HomePage(): JSX.Element {
             </section>
           </div>
         </section>
+
+        <HomeVideoShowcase />
 
         <section className="bg-slate-50 py-16 text-slate-900">
           <div className="mx-auto max-w-7xl px-6">
