@@ -14,7 +14,6 @@ import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import PreReleaseNotice from '../components/PreReleaseNotice'
 
 type LoginLocationState = {
   passwordResetSuccess?: boolean
@@ -161,9 +160,6 @@ export default function LoginPage(): JSX.Element {
             {t('signInSubtitle')}
           </p>
 
-          <div className="mt-4">
-            <PreReleaseNotice />
-          </div>
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
