@@ -15,7 +15,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import Hero from '../components/home/Hero'
-import PreReleaseNotice from '../components/PreReleaseNotice'
+import PreReleasePopup from '../components/home/PreReleasePopup'
+import HomeVideoShowcase from '../components/home/HomeVideoShowcase'
 import HomepageRaceDays, {
   type HomepageRaceDaysData,
 } from '../components/home/HomepageRaceDays'
@@ -640,9 +641,7 @@ export default function HomePage(): JSX.Element {
         </div>
       </header>
 
-      <div className="mx-auto w-full max-w-7xl px-4 pt-4 sm:px-6">
-        <PreReleaseNotice variant="dark" />
-      </div>
+      <PreReleasePopup />
 
       {checkingClub && (
         <div className="border-b border-blue-700 bg-blue-950 py-2 text-center text-sm text-blue-100">
@@ -658,6 +657,7 @@ export default function HomePage(): JSX.Element {
 
       <main>
         <Hero gameTimeLabel={homeSnapshot?.game_time_label || gameTimeText} />
+        <HomeVideoShowcase />
         <HomepageRaceDays data={raceDays} loading={raceDaysLoading} />
 
         <section className="relative w-full overflow-hidden border-y border-white/15 bg-[#1a1404] py-16">
