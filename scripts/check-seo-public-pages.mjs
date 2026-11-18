@@ -40,6 +40,18 @@ for (const [urlPath, sourcePath] of pages) {
 assert.ok(!read('public/terms/index.html').includes('&lt;ProPeloton Manager'), 'Malformed Terms brand')
 
 const landing = read('index.html')
+const homepageFallback = landing.match(/<main id="ppm-seo-fallback"[\s\S]*?<\/main>/i)?.[0]
+assert.ok(homepageFallback, 'Homepage needs content readable before React loads')
+const fallbackText = homepageFallback.replace(/<[^>]+>/g, ' ').trim()
+assert.ok(fallbackText.split(/\s+/).length >= 150, 'Homepage text is too short for the game's main features')
+for (const url of ['/how-to-play/', '/game-guide/', '/demo/', '/about/']) {
+  assert.ok(homepageFallback.includes(`href="${url}"`), `Homepage must link to ${url}`)
+}
+assert.ok(landing.includes('html.ppm-seo-client #ppm-seo-fallback'), 'Fallback must not flash over the JS game')
+for (const [path,source] of pages) {
+  const desc = read(source).match(/<meta\s+name="description"\s+content="([^"]+)"/i)?.[1]
+  assert.ok(desc && desc.length <= 160, `${path}: missing or overlong SEO description`)
+}
 const jsonLdMatch = landing.match(/<script type="application\/ld\+json">\s*([\s\S]*?)\s*<\/script>/)
 assert.ok(jsonLdMatch, 'Missing structured data')
 const structured = JSON.parse(jsonLdMatch[1])

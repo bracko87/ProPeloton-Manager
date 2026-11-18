@@ -7,11 +7,11 @@
       content="width=device-width, initial-scale=1.0"
     />
 
-    <title>ProPeloton Manager – Online Cycling Management Game</title>
+    <title>ProPeloton Manager | Online Cycling Manager Game</title>
     <meta name="ppm-home-clock-deploy" content="108e27f-main-20261110" />
     <meta
       name="description"
-      content="ProPeloton Manager is an online cycling management game where you build a professional cycling club, develop riders, plan race calendars, prepare tactics and compete against other managers."
+      content="ProPeloton Manager is a browser-based cycling management game. Build your club, develop riders, plan races and tactics, and manage a full season."
     />
     <meta
       name="robots"
@@ -24,7 +24,7 @@
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="ProPeloton Manager" />
-    <meta property="og:title" content="ProPeloton Manager – Online Cycling Management Game" />
+    <meta property="og:title" content="ProPeloton Manager | Online Cycling Manager Game" />
     <meta
       property="og:description"
       content="Build your cycling club, develop riders, plan races, prepare tactics and compete in a persistent online cycling world."
@@ -38,7 +38,7 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:image:alt" content="ProPeloton Manager cycling management game" />
-    <meta name="twitter:title" content="ProPeloton Manager – Online Cycling Management Game" />
+    <meta name="twitter:title" content="ProPeloton Manager | Online Cycling Manager Game" />
     <meta
       name="twitter:description"
       content="Build your cycling club, develop riders, plan races, prepare tactics and compete against other managers."
@@ -183,6 +183,10 @@
         background: #081224;
       }
 
+      html.ppm-seo-client #ppm-seo-fallback {
+        visibility: hidden;
+      }
+
       .seo-noscript {
         min-height: 100vh;
         box-sizing: border-box;
@@ -251,6 +255,8 @@
       }
     </style>
 
+    <script>document.documentElement.classList.add('ppm-seo-client')</script>
+
     <script
       async
       src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4758774858168039"
@@ -259,27 +265,40 @@
   </head>
 
   <body>
-    <div id="app"></div>
-
-    <noscript>
-      <div class="seo-noscript">
+    <div id="app">
+      <!-- Search-readable homepage overview, replaced by the existing React app after startup. -->
+      <main id="ppm-seo-fallback" class="seo-noscript">
         <div class="seo-noscript-inner">
-          <h1>ProPeloton Manager</h1>
-          <p>
-            ProPeloton Manager is an online cycling management game where you create
-            your club, develop riders, plan race calendars, prepare stage tactics,
-            manage finances and compete against other managers.
-          </p>
-          <nav aria-label="Primary site navigation">
+          <h1>ProPeloton Manager — Online Cycling Management Game</h1>
+          <p>ProPeloton Manager is an online cycling manager game played in a web browser. Create a professional cycling club, build your squad and guide riders through a full season of racing. Rather than controlling a bicycle directly, you manage the choices that shape your team's results.</p>
+          <section>
+            <h2>Build your cycling team and develop riders</h2>
+            <p>Choose riders with different strengths, including sprinters, climbers and time-trial specialists. Manage training, form, fatigue and recovery while building a balanced team. Use transfers, staff, equipment and club finances to plan long-term progress.</p>
+          </section>
+          <section>
+            <h2>Plan races, stage tactics and the season</h2>
+            <p>Review the cycling race calendar and apply for suitable competitions. Prepare your squad for different race profiles, assign riders their roles and set tactics for individual stages. Check race results, rankings and sponsorship goals as your season develops.</p>
+          </section>
+          <section>
+            <h2>Explore the game before creating your club</h2>
+            <p>ProPeloton Manager is a persistent browser-based cycling management simulation for players who enjoy strategy and long-term team development. See screenshots and explanations of the real interface in the public demo, or read the beginner guide and detailed game manual.</p>
+          </section>
+          <nav aria-label="ProPeloton Manager game information">
             <a href="/how-to-play/">How to Play</a>
             <a href="/game-guide/">Game Guide</a>
-            <a href="/demo/">Demo</a>
-            <a href="/about/">About</a>
-            <a href="/support/">Support</a>
+            <a href="/demo/">Game Screenshots</a>
+            <a href="/about/">About the Game</a>
+            <a href="/#/register">Create Account</a>
             <a href="/#/login">Sign In</a>
           </nav>
         </div>
-      </div>
+      </main>
+    </div>
+
+    <noscript>
+      <p style="color:#dbe4f0;font-family:Arial,Helvetica,sans-serif;max-width:960px;margin:0 auto;padding:0 24px 32px">
+        JavaScript is required to enter the interactive game. The public guides and screenshots are available through the links above.
+      </p>
     </noscript>
 
     <script data-dev-reload>
