@@ -18,7 +18,6 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
-import PreReleaseNotice from '../components/PreReleaseNotice'
 
 type StatusType = 'success' | 'error' | 'info' | null
 
@@ -436,9 +435,6 @@ export default function RegisterPage(): JSX.Element {
             {t('register.subtitle')}
           </p>
 
-          <div className="mt-4">
-            <PreReleaseNotice />
-          </div>
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
