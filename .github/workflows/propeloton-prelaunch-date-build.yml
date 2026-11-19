@@ -39,8 +39,13 @@ jobs:
           const popup=fs.readFileSync('src/components/home/PreReleasePopup.tsx','utf8');
           const bundle=fs.readFileSync('dist/main.js','utf8');
           for (const [file,content] of [['notice',notice],['login',login],['register',register],['popup',popup],['bundle',bundle]]) {
-            if (/2026-12-01T06:00:00Z|1 December 2026|1\. Dezember 2026|1 de diciembre de 2026/.test(content)) {
-              throw new Error('Outdated December 1 launch date in '+file);
+            const outdated=/2026-12-01T06:00:00Z|1 December 2026|1\. Dezember 2026|1 de diciembre de 2026/g;
+            const matches=[...content.matchAll(outdated)];
+            if(matches.length) {
+              for(const match of matches.slice(0,12)) {
+                console.error('Outdated date context in '+file+': '+content.slice(Math.max(0,match.index-180),match.index+230));
+              }
+              throw new Error('Found '+matches.length+' outdated December 1 launch references in '+file);
             }
           }
           if(!notice.includes("2026-12-10T06:00:00Z")) throw new Error('UTC release constant mismatch');
