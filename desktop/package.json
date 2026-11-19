@@ -1,0 +1,68 @@
+{
+  "name": "propeloton-manager-desktop",
+  "productName": "ProPeloton Manager",
+  "version": "0.1.0",
+  "description": "Windows and Linux desktop preview of the live ProPeloton Manager online cycling game",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "check": "node --check main.cjs && node --check security.cjs && node --test test/*.test.cjs",
+    "dist:win": "electron-builder --win nsis --x64 --publish never",
+    "dist:linux": "electron-builder --linux AppImage --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.3.4",
+    "electron-builder": "26.18.0"
+  },
+  "build": {
+    "appId": "com.nextqueststudio.propelotonmanager",
+    "productName": "ProPeloton Manager",
+    "asar": true,
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.cjs",
+      "security.cjs",
+      "offline.html",
+      "package.json",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "artifactName": "ProPelotonManager-Setup-${version}-${arch}.${ext}",
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ProPeloton Manager",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "category": "Game",
+      "artifactName": "ProPelotonManager-${version}-${arch}.${ext}",
+      "icon": "build/icon.png"
+    }
+  }
+}
