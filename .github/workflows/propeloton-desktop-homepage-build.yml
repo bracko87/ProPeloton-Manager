@@ -1,0 +1,49 @@
+name: ProPeloton desktop homepage build check
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/pages/Home.tsx'
+      - 'src/components/home/HomeDesktopDownloads.tsx'
+      - 'desktop/assets/rpm-original-user-icon.webp.b64'
+      - 'scripts/build.mjs'
+      - '.github/workflows/propeloton-desktop-homepage-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build public site with desktop download panel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install locked website dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build homepage and check translations
+        run: npm run build
+      - name: Verify desktop downloads and creator logo are in bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/main.js
+          node -e '
+          const fs=require("fs");
+          const bundle=fs.readFileSync("dist/main.js","utf8");
+          const required=[
+            "ProPelotonManager-Setup-0.1.0-x64.exe",
+            "ProPelotonManager-0.1.0-x86_64.AppImage",
+            "data:image/webp;base64",
+            "ProPeloton Manager on Desktop",
+            "desktop-downloads"
+          ];
+          for(const value of required) {
+            if(!bundle.includes(value)) throw Error("Missing desktop homepage section: "+value);
+          }
+          console.log("Desktop download section, both URLs and RPM logo embedded in production bundle.");
+          '
