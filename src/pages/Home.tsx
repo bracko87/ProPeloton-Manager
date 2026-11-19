@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import Hero from '../components/home/Hero'
 import PreReleasePopup from '../components/home/PreReleasePopup'
+import { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
 import HomeVideoShowcase from '../components/home/HomeVideoShowcase'
 import HomeDesktopDownloads from '../components/home/HomeDesktopDownloads'
 import HomepageRaceDays, {
@@ -613,7 +614,7 @@ export default function HomePage(): JSX.Element {
       id="public-homepage"
       className="min-h-screen bg-[#081224] text-white"
     >
-      {Date.now() < Date.parse('2026-12-01T06:00:00Z') ? <PreReleasePopup /> : null}
+      {Date.now() < Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC) ? <PreReleasePopup /> : null}
 
       <header className="border-b border-white/15">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-2">
