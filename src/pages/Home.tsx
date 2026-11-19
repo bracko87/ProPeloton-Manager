@@ -17,6 +17,7 @@ import { useNavigate } from 'react-router'
 import Hero from '../components/home/Hero'
 import PreReleasePopup from '../components/home/PreReleasePopup'
 import HomeVideoShowcase from '../components/home/HomeVideoShowcase'
+import HomeDesktopDownloads from '../components/home/HomeDesktopDownloads'
 import HomepageRaceDays, {
   type HomepageRaceDaysData,
 } from '../components/home/HomepageRaceDays'
@@ -730,6 +731,7 @@ export default function HomePage(): JSX.Element {
         </section>
 
         <HomeVideoShowcase />
+        <HomeDesktopDownloads />
 
         <section className="bg-slate-50 py-16 text-slate-900">
           <div className="mx-auto max-w-7xl px-6">
