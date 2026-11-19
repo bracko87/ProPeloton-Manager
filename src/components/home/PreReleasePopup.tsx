@@ -9,7 +9,7 @@ import { CalendarDays, ExternalLink, MessageCircle, ShieldCheck, X } from 'lucid
 import { getPreReleaseNoticeCopy } from '../PreReleaseNotice'
 
 const DISCORD_URL = 'https://discord.gg/BpgqTXsjAW'
-const DISMISSED_KEY = 'ppm-prelaunch-reset-popup-dismissed-v1'
+const DISMISSED_KEY = 'ppm-prelaunch-launch-popup-dismissed-v2'
 
 const COPY: Record<string, { title: string; discord: string; continue: string; close: string }> = {
   en: {
