@@ -1,0 +1,130 @@
+name: ProPeloton Manager desktop preview installers
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'desktop/**'
+      - '.github/workflows/propeloton-desktop-installers.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    name: Windows x64 installer
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Pillow and generate RPM icons
+        run: |
+          python -m pip install Pillow==11.3.0
+          python desktop/scripts/generate_icons.py
+          python desktop/scripts/generate_icons.py --verify
+      - name: Install isolated Electron dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Security tests and syntax checks
+        working-directory: desktop
+        run: npm run check
+      - name: Package Windows installer and shortcuts
+        working-directory: desktop
+        run: npm run dist:win
+      - name: Upload Windows preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProPelotonManager-Windows-Preview
+          path: desktop/release/*.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  linux:
+    name: Linux x64 AppImage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Pillow and generate RPM icons
+        run: |
+          python -m pip install Pillow==11.3.0
+          python desktop/scripts/generate_icons.py
+          python desktop/scripts/generate_icons.py --verify
+      - name: Install isolated Electron dependencies
+        working-directory: desktop
+        run: npm install --no-audit --no-fund
+      - name: Security tests and syntax checks
+        working-directory: desktop
+        run: npm run check
+      - name: Package Linux AppImage
+        working-directory: desktop
+        run: npm run dist:linux
+      - name: Upload Linux preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: ProPelotonManager-Linux-Preview
+          path: desktop/release/*.AppImage
+          if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    name: Publish verified preview installers
+    runs-on: ubuntu-latest
+    needs: [windows, linux]
+    if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      actions: read
+    steps:
+      - name: Download verified installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: ProPelotonManager-*-Preview
+          path: release
+          merge-multiple: true
+      - name: Verify packages and generate checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find release -maxdepth 1 -type f -name '*.exe' | wc -l)" -eq 1
+          test "$(find release -maxdepth 1 -type f -name '*.AppImage' | wc -l)" -eq 1
+          test -s release/*.exe
+          test -s release/*.AppImage
+          (cd release && sha256sum *.exe *.AppImage > SHA256SUMS.txt)
+          ls -lh release
+      - name: Publish desktop-v0.1.0 prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/notes.txt <<'NOTES'
+          ProPeloton Manager desktop preview for Windows (x64) and Linux (x64).
+
+          Same live online multiplayer game as propelotonmanager.com: the same accounts,
+          teams, races and finance. Requires an internet connection.
+
+          Includes the creator-supplied black/yellow/white RPM logo as the app,
+          Windows installer and desktop shortcut icon. These early builds are unsigned,
+          so Windows SmartScreen may show a warning. Not a Steam release.
+          NOTES
+          if gh release view desktop-v0.1.0 >/dev/null 2>&1; then
+            gh release upload desktop-v0.1.0 release/*.exe release/*.AppImage release/SHA256SUMS.txt --clobber
+          else
+            gh release create desktop-v0.1.0 release/*.exe release/*.AppImage release/SHA256SUMS.txt \
+              --title 'ProPeloton Manager desktop preview 0.1.0' \
+              --notes-file /tmp/notes.txt \
+              --prerelease --latest=false --target "$GITHUB_SHA"
+          fi
+          gh release view desktop-v0.1.0 --json url,assets
