@@ -18,6 +18,7 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
+import PreReleaseNotice from '../components/PreReleaseNotice'
 
 type StatusType = 'success' | 'error' | 'info' | null
 
@@ -435,6 +436,10 @@ export default function RegisterPage(): JSX.Element {
             {t('register.subtitle')}
           </p>
 
+
+          {Date.now() < Date.parse('2026-12-01T06:00:00Z') ? (
+            <div className="mt-5"><PreReleaseNotice /></div>
+          ) : null}
 
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>

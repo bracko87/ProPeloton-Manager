@@ -15,6 +15,8 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router'
 import Hero from '../components/home/Hero'
+import PreReleasePopup from '../components/home/PreReleasePopup'
+import PreReleaseNotice from '../components/PreReleaseNotice'
 import HomeVideoShowcase from '../components/home/HomeVideoShowcase'
 import HomepageRaceDays, {
   type HomepageRaceDaysData,
@@ -611,6 +613,7 @@ export default function HomePage(): JSX.Element {
       id="public-homepage"
       className="min-h-screen bg-[#081224] text-white"
     >
+      {Date.now() < Date.parse('2026-12-01T06:00:00Z') ? <PreReleasePopup /> : null}
 
       <header className="border-b border-white/15">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-2">
@@ -640,6 +643,12 @@ export default function HomePage(): JSX.Element {
         </div>
       </header>
 
+
+      {Date.now() < Date.parse('2026-12-01T06:00:00Z') ? (
+        <div className="mx-auto max-w-7xl px-4 py-4 sm:px-6">
+          <PreReleaseNotice variant="dark" />
+        </div>
+      ) : null}
 
       {checkingClub && (
         <div className="border-b border-blue-700 bg-blue-950 py-2 text-center text-sm text-blue-100">

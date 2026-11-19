@@ -1,7 +1,6 @@
 /**
- * Public pre-release notice: signups are allowed during the final test,
- * but the official release has NOT happened. Show before registration
- * and on the homepage/sign-in page so no one mistakes the test for launch.
+ * Public prelaunch notice. Registration stays open while the Season 1
+ * clock is frozen; the official release is scheduled for 1 December 2026.
  */
 import React from 'react'
 import { useTranslation } from 'react-i18next'
@@ -10,60 +9,44 @@ type Copy = { title: string; description: string; accounts: string }
 
 const COPY: Record<string, Copy> = {
   en: {
-    title: 'Pre-release test — one more reset before launch',
-    description:
-      'Registration is open for testing. ProPeloton Manager will restart once more before its official release. All test-season game progress, race results, rankings, training and team finances will be reset.',
-    accounts:
-      'Your account and team identity will remain. The official release date has not been announced yet.',
+    title: "Official launch — 1 December 2026",
+    description: "Registration is open. ProPeloton Manager is reset to Season 1, January 1. The game is paused until 1 December 2026 at 07:00 (German time).",
+    accounts: "Your account and team identity are preserved. Free Premium is available now; the seven-day trial countdown starts at launch. Paid subscriptions are unchanged.",
   },
   de: {
-    title: 'Testphase — ein weiterer Neustart vor dem offiziellen Start',
-    description:
-      'Die Registrierung ist für die Testphase geöffnet. Vor der offiziellen Veröffentlichung wird ProPeloton Manager noch einmal zurückgesetzt. Spielfortschritt, Rennergebnisse, Ranglisten, Training und Teamfinanzen aus der Testphase werden zurückgesetzt.',
-    accounts:
-      'Dein Konto und die Identität deines Teams bleiben erhalten. Ein offizielles Veröffentlichungsdatum steht noch nicht fest.',
+    title: "Offizieller Start — 1. Dezember 2026",
+    description: "Die Registrierung ist geöffnet. ProPeloton Manager wurde auf Saison 1, 1. Januar, zurückgesetzt. Bis zum 1. Dezember 2026 um 07:00 Uhr (deutscher Zeit) bleibt das Spiel pausiert.",
+    accounts: "Dein Konto und dein Team bleiben erhalten. Kostenloses Premium ist jetzt verfügbar; die 7-tägige Testphase beginnt am Starttag. Bezahlte Abonnements bleiben unverändert.",
   },
-  'sr-latn': {
-    title: 'Test faza — još jedno resetovanje pre zvaničnog izlaska',
-    description:
-      'Registracija je otvorena za testiranje. ProPeloton Manager će biti resetovan još jednom pre zvaničnog izlaska. Napredak u igri, rezultati trka, rang-liste, treninzi i finansije timova iz test sezone biće resetovani.',
-    accounts:
-      'Tvoj nalog i identitet tima ostaju sačuvani. Datum zvaničnog izlaska još nije objavljen.',
+  "sr-latn": {
+    title: "Zvanični početak — 1. decembar 2026.",
+    description: "Registracija je otvorena. ProPeloton Manager je vraćen na sezonu 1, 1. januar. Igra je pauzirana do 1. decembra 2026. u 07:00 po nemačkom vremenu.",
+    accounts: "Tvoj nalog i identitet tima ostaju sačuvani. Besplatan Premium je dostupan sada; odbrojavanje probnih sedam dana počinje na dan izlaska. Plaćene pretplate ostaju nepromenjene.",
   },
   hr: {
-    title: 'Testna faza — još jedno resetiranje prije izlaska',
-    description:
-      'Registracija je otvorena za testiranje. ProPeloton Manager ponovno će se pokrenuti prije službenog izlaska. Napredak, rezultati utrka, poretci, treninzi i financije timova iz testne sezone bit će resetirani.',
-    accounts:
-      'Vaš račun i identitet tima ostat će sačuvani. Datum službenog izlaska još nije objavljen.',
+    title: "Službeni početak — 1. prosinca 2026.",
+    description: "Registracija je otvorena. ProPeloton Manager vraćen je na sezonu 1, 1. siječnja. Igra je pauzirana do 1. prosinca 2026. u 07:00 po njemačkom vremenu.",
+    accounts: "Vaš račun i identitet ekipe ostaju sačuvani. Besplatni Premium dostupan je sada; sedmodnevno probno razdoblje počinje na dan izlaska. Plaćene pretplate ostaju nepromijenjene.",
   },
   es: {
-    title: 'Prueba previa al lanzamiento — habrá un último reinicio',
-    description:
-      'El registro está abierto para las pruebas. ProPeloton Manager se reiniciará una vez más antes del lanzamiento oficial. Se restablecerán el progreso, los resultados, las clasificaciones, los entrenamientos y las finanzas de los equipos de esta temporada de prueba.',
-    accounts:
-      'Tu cuenta y la identidad de tu equipo se conservarán. Aún no se ha anunciado la fecha de lanzamiento oficial.',
+    title: "Lanzamiento oficial — 1 de diciembre de 2026",
+    description: "El registro está abierto. ProPeloton Manager se ha reiniciado en la temporada 1, 1 de enero. El juego estará pausado hasta el 1 de diciembre de 2026 a las 07:00 (hora de Alemania).",
+    accounts: "Tu cuenta y la identidad de tu equipo se conservan. Premium gratis ya está disponible; los siete días de prueba empiezan a contar desde el lanzamiento. Las suscripciones pagadas no cambian.",
   },
   fr: {
-    title: 'Phase de test — une dernière réinitialisation avant la sortie',
-    description:
-      'Les inscriptions sont ouvertes pour les tests. ProPeloton Manager sera réinitialisé une dernière fois avant sa sortie officielle. La progression, les résultats des courses, les classements, les entraînements et les finances des équipes de la saison de test seront remis à zéro.',
-    accounts:
-      'Votre compte et l’identité de votre équipe seront conservés. La date de sortie officielle n’a pas encore été annoncée.',
+    title: "Lancement officiel — 1er décembre 2026",
+    description: "Les inscriptions sont ouvertes. ProPeloton Manager a été réinitialisé à la saison 1, le 1er janvier. Le jeu reste en pause jusqu’au 1er décembre 2026 à 07 h 00 (heure allemande).",
+    accounts: "Votre compte et l’identité de votre équipe sont conservés. Premium est disponible gratuitement dès maintenant ; les sept jours d’essai commencent au lancement. Les abonnements payants restent inchangés.",
   },
   it: {
-    title: 'Fase di test — un ultimo azzeramento prima del lancio',
-    description:
-      'Le registrazioni sono aperte per i test. ProPeloton Manager verrà azzerato ancora una volta prima del lancio ufficiale. Progressi, risultati delle gare, classifiche, allenamenti e finanze delle squadre della stagione di prova verranno azzerati.',
-    accounts:
-      'Il tuo account e l’identità della squadra resteranno. La data di lancio ufficiale non è ancora stata annunciata.',
+    title: "Lancio ufficiale — 1 dicembre 2026",
+    description: "Le registrazioni sono aperte. ProPeloton Manager è stato riportato alla stagione 1, 1 gennaio. Il gioco resterà in pausa fino al 1 dicembre 2026 alle 07:00 (ora tedesca).",
+    accounts: "Il tuo account e l’identità della squadra restano invariati. Premium gratuito è già disponibile; i sette giorni di prova iniziano al lancio. Gli abbonamenti a pagamento non cambiano.",
   },
   ru: {
-    title: 'Тестовый период — ещё один сброс перед выпуском',
-    description:
-      'Регистрация открыта для тестирования. Перед официальным выпуском ProPeloton Manager будет сброшен ещё раз. Прогресс тестового сезона, результаты гонок, рейтинги, тренировки и финансы команд будут обнулены.',
-    accounts:
-      'Ваша учётная запись и название команды сохранятся. Дата официального выпуска пока не объявлена.',
+    title: "Официальный запуск — 1 декабря 2026 года",
+    description: "Регистрация открыта. ProPeloton Manager возвращён к первому сезону, 1 января. Игра приостановлена до 1 декабря 2026 года, 07:00 по германскому времени.",
+    accounts: "Ваша учётная запись и команда сохраняются. Бесплатный Premium уже доступен; отсчёт семи дней пробного периода начнётся в день запуска. Платные подписки не меняются.",
   },
 }
 
