@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
+      - 'src/pages/Home.tsx'
       - 'src/components/PreReleaseNotice.tsx'
       - 'src/pages/Login.tsx'
       - 'src/pages/Register.tsx'
@@ -37,8 +38,9 @@ jobs:
           const login=fs.readFileSync('src/pages/Login.tsx','utf8');
           const register=fs.readFileSync('src/pages/Register.tsx','utf8');
           const popup=fs.readFileSync('src/components/home/PreReleasePopup.tsx','utf8');
+          const home=fs.readFileSync('src/pages/Home.tsx','utf8');
           const bundle=fs.readFileSync('dist/main.js','utf8');
-          for (const [file,content] of [['notice',notice],['login',login],['register',register],['popup',popup],['bundle',bundle]]) {
+          for (const [file,content] of [['notice',notice],['login',login],['register',register],['popup',popup],['home',home],['bundle',bundle]]) {
             const outdated=/2026-12-01T06:00:00Z|1 December 2026|1\. Dezember 2026|1 de diciembre de 2026/g;
             const matches=[...content.matchAll(outdated)];
             if(matches.length) {
@@ -52,6 +54,7 @@ jobs:
           if(!login.includes('Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC)')) throw new Error('Login notice deadline not linked');
           if(!register.includes('Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC)')) throw new Error('Register notice deadline not linked');
           if(!popup.includes('getPreReleaseNoticeCopy(language)')) throw new Error('Popup not using shared launch copy');
+          if(!home.includes('Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC)')) throw new Error('Homepage popup expiry still uses the old release date');
           if(!bundle.includes('10 December 2026')) throw new Error('Updated launch date not bundled');
           console.log('Production bundle includes December 10 release, login, signup and popup.');
           NODE
