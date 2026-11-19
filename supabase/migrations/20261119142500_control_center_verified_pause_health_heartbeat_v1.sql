@@ -2,7 +2,7 @@
 -- The independent mobile sentinel expects an authoritative System Health
 -- snapshot at least every 15 minutes. The original deferred snapshot worker
 -- sent only on state changes; during a paused game there may be none for days.
--- Send a read-only heartbeat at most every 8 minutes *only while* the hold is
+-- Send a read-only heartbeat after at least 5 minutes *only while* the hold is
 -- verified. Regular snapshots and postlaunch behavior are unchanged.
 -- This source was applied and tested in production on 2026-11-19.
 -- Does not activate jobs or advance game time.
@@ -33,7 +33,7 @@ begin
 
   v_hold:=private.ppm_control_center_verified_launch_hold_v1();
   v_heartbeat_due:=v_hold and (
-     v_sent_at is null or v_sent_at<clock_timestamp()-interval '8 minutes'
+     v_sent_at is null or v_sent_at<clock_timestamp()-interval '5 minutes'
   );
 
   if not v_heartbeat_due and (
