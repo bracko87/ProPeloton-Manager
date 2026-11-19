@@ -189,6 +189,7 @@ export default function AdminSystemHealthPage(): JSX.Element {
       summary: next.summary ?? EMPTY_SUMMARY,
       processes: next.processes ?? [],
       incidents: next.incidents ?? [],
+      release_hold: next.release_hold ?? { active: false },
     })
     if (!silent) setLoading(false)
   }, [])
