@@ -14,7 +14,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
-import PreReleaseNotice from '../components/PreReleaseNotice'
+import PreReleaseNotice, { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
 
 type LoginLocationState = {
   passwordResetSuccess?: boolean
@@ -162,7 +162,7 @@ export default function LoginPage(): JSX.Element {
           </p>
 
 
-          {Date.now() < Date.parse('2026-12-01T06:00:00Z') ? (
+          {Date.now() < Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC) ? (
             <div className="mt-5"><PreReleaseNotice /></div>
           ) : null}
 
