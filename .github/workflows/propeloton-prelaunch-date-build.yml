@@ -1,0 +1,52 @@
+name: ProPeloton release date and registration page build
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/components/PreReleaseNotice.tsx'
+      - 'src/pages/Login.tsx'
+      - 'src/pages/Register.tsx'
+      - 'src/components/home/PreReleasePopup.tsx'
+      - '.github/workflows/propeloton-prelaunch-date-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and verify December 10 prelaunch UI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install project dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Build localized production site
+        run: npm run build
+      - name: Verify all launch notices and login/signup dates
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs=require('node:fs');
+          const notice=fs.readFileSync('src/components/PreReleaseNotice.tsx','utf8');
+          const login=fs.readFileSync('src/pages/Login.tsx','utf8');
+          const register=fs.readFileSync('src/pages/Register.tsx','utf8');
+          const popup=fs.readFileSync('src/components/home/PreReleasePopup.tsx','utf8');
+          const bundle=fs.readFileSync('dist/main.js','utf8');
+          for (const [file,content] of [['notice',notice],['login',login],['register',register],['popup',popup],['bundle',bundle]]) {
+            if (/2026-12-01T06:00:00Z|1 December 2026|1\. Dezember 2026|1 de diciembre de 2026/.test(content)) {
+              throw new Error('Outdated December 1 launch date in '+file);
+            }
+          }
+          if(!notice.includes("2026-12-10T06:00:00Z")) throw new Error('UTC release constant mismatch');
+          if(!login.includes('Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC)')) throw new Error('Login notice deadline not linked');
+          if(!register.includes('Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC)')) throw new Error('Register notice deadline not linked');
+          if(!popup.includes('getPreReleaseNoticeCopy(language)')) throw new Error('Popup not using shared launch copy');
+          if(!bundle.includes('10 December 2026')) throw new Error('Updated launch date not bundled');
+          console.log('Production bundle includes December 10 release, login, signup and popup.');
+          NODE
