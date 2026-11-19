@@ -85,6 +85,7 @@ type HealthOverview = {
   summary: HealthSummary
   processes: HealthProcess[]
   incidents: HealthIncident[]
+  release_hold?: { active: boolean; release_at?: string | null; mode?: string }
 }
 
 const EMPTY_SUMMARY: HealthSummary = {
@@ -133,8 +134,10 @@ function runStatusClass(value?: RunStatus | null): string {
   return 'text-gray-500'
 }
 
-function processState(process: HealthProcess): 'healthy' | 'warning' | 'problem' | 'unknown' {
+function processState(process: HealthProcess, verifiedReleaseHold: boolean): 'healthy' | 'warning' | 'problem' | 'paused' | 'unknown' {
+  // Real incidents take precedence; this exception applies only to server-verified prelaunch holds.
   if (process.open_incidents > 0) return 'problem'
+  if (verifiedReleaseHold && process.source_kind === 'cron' && process.cron_active === false) return 'paused'
   if (process.source_kind === 'cron' && process.cron_active === false) return 'problem'
   if (process.latest_status === 'error' || process.latest_status === 'stalled') return 'problem'
   if (process.latest_status === 'warning') return 'warning'
@@ -325,7 +328,8 @@ export default function AdminSystemHealthPage(): JSX.Element {
   }
 
   const summary = overview.summary
-  const operational = summary.open_incidents === 0
+  const verifiedReleaseHold = overview.release_hold?.active === true
+  const attentionRequired = summary.open_incidents > 0
 
   return (
     <div className="mx-auto w-full max-w-[1750px] space-y-5">
@@ -390,6 +394,18 @@ export default function AdminSystemHealthPage(): JSX.Element {
         </div>
       ) : null}
 
+      {!loading && verifiedReleaseHold ? (
+        <section role="status" className="rounded-xl border border-sky-200 bg-sky-50 px-5 py-4 text-sm leading-6 text-sky-950">
+          <strong className="block font-bold">Scheduled pre-release pause</strong>
+          <span>
+            Season 1 is paused until {formatDate(overview.release_hold?.release_at)}.
+            Gameplay jobs are intentionally disabled and configured to resume at release.
+            They appear as paused below, not as failures. Open incidents and
+            previous process errors remain visible.
+          </span>
+        </section>
+      ) : null}
+
       {loading ? (
         <div className="flex min-h-[420px] items-center justify-center rounded-2xl border border-gray-200 bg-white text-sm font-semibold text-gray-500">
           Loading system health...
@@ -397,13 +413,13 @@ export default function AdminSystemHealthPage(): JSX.Element {
       ) : (
         <>
           <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-            <article className={['flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-sm', operational ? 'border-emerald-200' : 'border-red-200'].join(' ')}>
-              <div className={['flex h-11 w-11 items-center justify-center rounded-full', operational ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'].join(' ')}>
-                {operational ? <CheckCircle2 size={23} /> : <ShieldAlert size={23} />}
+            <article className={['flex items-center gap-4 rounded-2xl border bg-white p-5 shadow-sm', attentionRequired ? 'border-red-200' : verifiedReleaseHold ? 'border-sky-200' : 'border-emerald-200'].join(' ')}>
+              <div className={['flex h-11 w-11 items-center justify-center rounded-full', attentionRequired ? 'bg-red-50 text-red-700' : verifiedReleaseHold ? 'bg-sky-50 text-sky-700' : 'bg-emerald-50 text-emerald-700'].join(' ')}>
+                {attentionRequired ? <ShieldAlert size={23} /> : verifiedReleaseHold ? <Clock3 size={23} /> : <CheckCircle2 size={23} />}
               </div>
               <div>
                 <div className="text-[11px] font-bold uppercase tracking-wider text-gray-400">Overall status</div>
-                <div className="mt-1 text-xl font-extrabold text-gray-950">{operational ? 'Operational' : 'Attention required'}</div>
+                <div className="mt-1 text-xl font-extrabold text-gray-950">{attentionRequired ? 'Attention required' : verifiedReleaseHold ? 'Paused for release' : 'Operational'}</div>
                 <div className="mt-1 text-xs text-gray-500">{summary.open_incidents} active incident{summary.open_incidents === 1 ? '' : 's'}</div>
               </div>
             </article>
@@ -474,8 +490,8 @@ export default function AdminSystemHealthPage(): JSX.Element {
                     </div>
                     <div className="divide-y divide-gray-100">
                       {overview.processes.map(process => {
-                        const state = processState(process)
-                        const dot = state === 'healthy' ? 'bg-emerald-500' : state === 'warning' ? 'bg-amber-500' : state === 'problem' ? 'bg-red-500' : 'bg-gray-300'
+                        const state = processState(process, verifiedReleaseHold)
+                        const dot = state === 'healthy' ? 'bg-emerald-500' : state === 'warning' ? 'bg-amber-500' : state === 'problem' ? 'bg-red-500' : state === 'paused' ? 'bg-sky-400' : 'bg-gray-300'
                         return (
                           <button key={process.process_key} type="button" onClick={() => { setSelectedProcessKey(process.process_key); setTab('logs') }} className="grid w-full grid-cols-[2.2fr_1fr_1fr_1.3fr_.8fr_.55fr] gap-4 px-5 py-4 text-left text-sm transition hover:bg-gray-50">
                             <span className="min-w-0">
@@ -484,7 +500,7 @@ export default function AdminSystemHealthPage(): JSX.Element {
                               {process.user_sensitive ? <em className="mt-1 inline-block text-[10px] font-bold not-italic uppercase tracking-wide text-sky-700">User-sensitive</em> : null}
                             </span>
                             <span className="text-gray-600">{process.category}</span>
-                            <span className="flex items-center gap-2 font-semibold text-gray-700"><i className={'h-2 w-2 rounded-full ' + dot} />{process.open_incidents > 0 ? 'Incident' : humanize(process.latest_status)}</span>
+                            <span className="flex items-center gap-2 font-semibold text-gray-700"><i className={'h-2 w-2 rounded-full ' + dot} />{process.open_incidents > 0 ? 'Incident' : state === 'paused' ? 'Paused for release' : humanize(process.latest_status)}</span>
                             <span className="text-gray-500">{formatDate(process.latest_started_at)}</span>
                             <span className="text-gray-500">{formatDuration(process.latest_duration_ms)}</span>
                             <span className="font-bold text-gray-700">{process.open_incidents}</span>
@@ -617,7 +633,9 @@ export default function AdminSystemHealthPage(): JSX.Element {
 
       <div className="flex items-center gap-2 text-xs text-gray-400">
         <Clock3 size={13} />
-        Automatic watchdog: every 5 minutes · Email dispatcher: every 2 minutes · Page refresh: every 30 seconds
+        {verifiedReleaseHold
+          ? 'Pre-release hold: gameplay watchdog and email dispatcher paused · Release scheduler active · Page refresh: every 30 seconds'
+          : 'Automatic watchdog: every 5 minutes · Email dispatcher: every 2 minutes · Page refresh: every 30 seconds'}
       </div>
     </div>
   )
