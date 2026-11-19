@@ -50,17 +50,20 @@ const COPY: Record<string, Copy> = {
   },
 }
 
+/** Shared translated launch copy for the homepage dialog and signup notice. */
+export function getPreReleaseNoticeCopy(language: string): Copy {
+  const normalized = (language || 'en').toLowerCase()
+  const key = normalized.startsWith('sr') ? 'sr-latn' : normalized.split('-')[0]
+  return COPY[key] || COPY.en
+}
+
 export default function PreReleaseNotice({
   variant = 'light',
 }: {
   variant?: 'light' | 'dark'
 }): JSX.Element {
   const { i18n } = useTranslation()
-  const language = (i18n.resolvedLanguage || i18n.language || 'en').toLowerCase()
-  const key = language.startsWith('sr')
-    ? 'sr-latn'
-    : language.split('-')[0]
-  const copy = COPY[key] || COPY.en
+  const copy = getPreReleaseNoticeCopy(i18n.resolvedLanguage || i18n.language || 'en')
   const dark = variant === 'dark'
 
   return (
