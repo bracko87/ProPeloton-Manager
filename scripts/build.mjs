@@ -23,12 +23,15 @@ async function publishPublicSite() {
   // advertised in the sitemap. They must exist in dist in both dev and prod;
   // without this copy, clean URLs such as /how-to-play/ return an HTTP 404.
   await cp('public', 'dist', { recursive: true, force: true })
+  // Serve the bundled favicon locally rather than an unavailable storage URL.
+  await cp('favicon.png', 'dist/favicon.png', { force: true })
 
   await Promise.all(
     PUBLIC_PAGE_ROUTES.map(route => access(`dist/${route}/index.html`)),
   )
   await Promise.all([
     access('dist/static-site.css'),
+    access('dist/favicon.png'),
     access('dist/robots.txt'),
     access('dist/sitemap.xml'),
   ])
