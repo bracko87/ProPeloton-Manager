@@ -88,6 +88,9 @@ const esbuildOpts = {
   loader: {
     '.html': 'copy',
     '.png': 'file',
+    // The owner-supplied RPM logo is checked into desktop/assets as Base64
+    // text so it can also appear on the public desktop-download section.
+    '.b64': 'text',
   },
   plugins: [
     cacheBustedIndexPlugin,
