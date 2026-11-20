@@ -36,7 +36,7 @@ test('practice reads and writes only through guest identity and isolated draft t
 })
 
 test('guest warning states session loss remains possible', () => {
-  assert.match(practice, /this practice team may not be recoverable/)
+  assert.match(practice, /browser sessions may be lost if site data is cleared/)
 })
 test.todo('staging: real anonymous guest session survives browser reload with same UUID')
 test.todo('staging: guest A cannot read or write guest B drafts under RLS')
