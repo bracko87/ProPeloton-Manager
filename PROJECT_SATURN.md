@@ -59,6 +59,14 @@ Read-only verification proves `club_roster` is a **non-updatable JOIN VIEW** (`p
 
 The latest complete source review workflow at `e52198aa3ead5b0e7465d16da67320107e00ae36` passed: **141 cases, 82 pass, 0 fail, 59 TODO integration**, including successful application build. Staging Auth/JWT and database migration execution remain pending.
 
+## SAT-01 — isolated staging readiness and lifecycle insert compatibility
+
+On 20 Nov 2026 Supabase branch inventory contained **only the production/default branch**; no separate staging database currently exists. Creating a new branch/project may carry charges, so no branch has been created and production remains untouched. A **read-only schema preflight** was added at `supabase/tests/saturn_predeploy_schema_preflight.sql` and executed successfully against the existing production schema (**21/21 checks passed**, without mutations). An additional `supabase/tests/saturn_postdeploy_authorization_audit.sql` validates the future staging RLS/grants after migrations. Neither script authorizes activation.
+
+**Fix found during the audit:** the draft lifecycle migration's `FORCE ROW LEVEL SECURITY` conflicted with the intended trusted server-side lifecycle INSERT into a table whose only user policy is self-read. The FORCE setting was removed from draft source while retaining ordinary RLS, client DML privilege revocations, authenticated self-read, and **no** browser INSERT/UPDATE/DELETE policies. The database still needs actual SECURITY DEFINER and JWT staging verification; this is not proof it works. All three GitHub Actions passed on source commit `770180b57150c59d056840baf418d116efdd9b22` (**141 total tests: 82 pass, 0 fail, 59 staging TODO**).
+
+[Staging execution matrix and blockers](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md). Public Guest Mode, the 14-day lifecycle, and real club-creation SQL have NOT been deployed; unchanged live anonymous user count: 0.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
