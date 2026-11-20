@@ -13,14 +13,14 @@ with "players/admins can use it on the deployed website."
 
 | ID | Task | Current progress |
 |---|---|---|
-| SAT-01 | Guest play | Investigating; not enabled |
-| SAT-02 | Convert guest without losing progress | Investigating; not enabled |
+| SAT-01 | Guest play | **Security foundation code-tested:** fail-closed anonymous signup gate active; playable guest sandbox not implemented |
+| SAT-02 | Convert guest without losing progress | Identity-linking architecture reviewed; same-UUID upgrade, trial/welcome reward migration and draft preservation not implemented |
 | SAT-03 | Google Sign-In | Investigating; not enabled |
 | SAT-04 | Passkeys | Backlog |
 | SAT-05 | Additional providers | Backlog |
 | SAT-06 | Optional birthday | Code-tested, eight-language build passed; live signup unverified |
 | SAT-07 | Simplified registration | **Code-tested**: manager name optional, backend generates privacy-safe UUID-derived fallback; birthday fields collapsed; benefits explained and translated (8 languages); live browser sign-up still unverified |
-| SAT-08 | Guest abuse protection | Investigating |
+| SAT-08 | Guest abuse protection | **Partial server guards live-tested:** block guest welcome coins, Premium trial, official club ownership and race applications; other abuse/RLS audits pending |
 | SAT-09 | Website analytics and Control Center | **Backend tested and admin UI code-tested**; last-event activity, five-minute navigation and three-table pageview checks; full Control Center/live-browser verification pending |
 | SAT-10 | Registration conversion | Backlog |
 | SAT-11 | Online presence | Backlog; last-five-minute navigation in SAT-09 is **not** true online presence |
@@ -83,6 +83,32 @@ Control Center** Supabase project denied access during the November 20
 reconciliation attempt. This prevents independently verifying the mobile/web
 Control Center's figures, and does **not** justify marking SAT-09 complete.
 Never change Helios or fabricate a reconciliation result to close this task.
+
+### SAT-01/02/08 server-side security milestone — 20 November 2026
+
+The feature is **not publicly enabled**, but foundational safeguards are
+deployed and source-tested:
+
+- Fail-closed private guest gate with default `enabled=false` and a
+  `BEFORE INSERT ON auth.users` trigger blocks accidental anonymous accounts.
+- The current 20-coin signup reward skips anonymous Auth users.
+- Premium onboarding returns `ineligible / guest_account` without creating
+  a trial. No email, ID or account metadata can bypass the canonical
+  `auth.users.is_anonymous` check.
+- `create_club` and direct `clubs` owner INSERT/UPDATE reject guest ownership.
+- `apply_for_race_v1` rejects guest race entry even with explicit club IDs.
+- A **temporary-table** test invoked the real anonymous signup gate, proving
+  guest INSERT rejected and ordinary INSERT accepted; no auth user was created.
+- **Production state:** 27 pre-existing accounts, 0 anonymous accounts, 21
+  owner-linked clubs; game time remains paused until 10 Dec 2026 07:00 CET.
+- [Guest safeguard build and regression checks](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44716605829).
+  [Full technical scope and incomplete conversion checklist](docs/SATURN_GUEST_MODE_SECURITY_AND_CONVERSION_2026-11-20.md).
+
+**Still missing:** isolated playable guest sandbox, draft persistence,
+same-user-ID email/Google conversion, deferred one-time welcome grant,
+rate limiting/CAPTCHA, coverage of other reward and competition RPCs,
+cross-guest RLS tests, mobile login/recovery and controlled rollout sign-off.
+SAT-01, SAT-02 and SAT-08 checkboxes remain **unchecked**.
 
 ## Safety and release rules
 
