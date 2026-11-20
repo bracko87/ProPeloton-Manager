@@ -174,6 +174,8 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
         <div className="absolute inset-0 bg-[linear-gradient(90deg,#061426_0%,rgba(6,20,38,.99)_19%,rgba(6,20,38,.90)_32%,rgba(6,20,38,.50)_46%,rgba(6,20,38,.12)_63%,rgba(6,20,38,.03)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#061426]/95 via-transparent to-[#061426]/35" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_63%_58%,transparent_28%,rgba(4,13,31,.20)_79%)]" />
+        {/* Blend out the far-right edge of the existing race photo behind the ranking panel. */}
+        <div className="absolute inset-y-0 right-0 w-[29%] bg-gradient-to-r from-transparent via-[#061426]/30 to-[#061426]/80" />
         <div className="ppm-ambient absolute -left-40 top-20 h-80 w-96 rounded-full bg-blue-600/25 blur-[100px]" />
         <div className="ppm-ambient absolute -right-20 bottom-0 h-60 w-[620px] rounded-full bg-yellow-400/25 blur-[85px]" />
         <div className="ppm-speed-line bottom-[18%] right-[-15%] w-[65%]" />
