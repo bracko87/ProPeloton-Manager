@@ -8,6 +8,7 @@ on:
       - 'tests/saturnFinancePrivilegeHardening.test.mjs'
       - 'supabase/tests/saturn*.sql'
       - 'scripts/saturn_sql_parse.py'
+      - 'scripts/saturn_frontend_finance_rpc_audit.py'
       - 'supabase/migrations/*saturn_fail_closed_real_test_team_creation*.sql'
       - 'tests/saturnTestClubCreation.test.mjs'
       - 'tests/saturnTestAiSlotPlacement.test.mjs'
@@ -71,5 +72,6 @@ jobs:
           python-version: '3.12'
       - run: python -m pip install 'pglast>=7,<9'
       - run: python scripts/saturn_sql_parse.py
+      - run: python scripts/saturn_frontend_finance_rpc_audit.py
       - run: node --test tests/saturn*.test.mjs
       - run: npm run build
