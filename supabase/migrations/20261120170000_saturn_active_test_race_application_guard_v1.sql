@@ -1,4 +1,26 @@
 -- Saturn 14-day authenticated test-account writer authorization.
+-- Test identity state is controlled by the immutable Saturn lifecycle row,
+-- NOT auth.users.is_anonymous: Google/email identity linking can set that
+-- flag to false BEFORE the verified Saturn conversion finalizer has completed.
+-- Every unconverted lifecycle row remains restricted through expiration,
+-- regardless of its current Auth label. Permanent users without a lifecycle
+-- row and fully converted Saturn players keep their existing permissions.
+create or replace function public.saturn_test_account_requires_guard_v1()
+returns boolean
+language sql stable security definer
+set search_path to ''
+as $saturn$
+  select auth.uid() is not null and exists (
+    select 1 from public.saturn_test_accounts_v1 t
+    where t.user_id=auth.uid() and t.converted_at is null
+  );
+$saturn$;
+revoke all on function public.saturn_test_account_requires_guard_v1()
+  from public, anon, authenticated;
+-- The helper only indicates whether a lifecycle row still needs conversion.
+-- Reviewed SECURITY DEFINER write RPCs call it with their owner privileges.
+-- The actual club and deadline are checked separately below.
+
 -- This helper is for reviewed SERVER RPCs only; it is not a general RLS grant.
 -- Canonical Auth user, active term and exact official club ownership required.
 create or replace function public.saturn_test_account_can_mutate_v1(p_club_id uuid)
@@ -10,7 +32,6 @@ as $saturn$
       join public.saturn_test_accounts_v1 t on t.user_id=u.id
       join public.clubs c on c.id=t.club_id
      where u.id=auth.uid()
-       and u.is_anonymous is true
        and t.club_id=p_club_id
        and c.owner_user_id=u.id
        and c.is_ai is false
@@ -52,8 +73,8 @@ begin
 
   -- Saturn: a temporary manager can apply to official races only while the
   -- test account is active AND the supplied club belongs to this same UUID.
-  -- Permanent registered players continue through the existing procedure.
-  if exists(select 1 from auth.users au where au.id=v_user_id and au.is_anonymous=true) then
+  -- Only fully converted and ordinary permanent players use the original path.
+  if public.saturn_test_account_requires_guard_v1() then
     if not public.saturn_test_account_can_mutate_v1(
       coalesce(p_club_id,public.get_my_primary_club_id())
     ) then
@@ -269,10 +290,8 @@ begin
   -- precise club attached to its own ACTIVE 14-day lifecycle. This rejects
   -- expired test users and cross-club references. Permanent-user behavior
   -- remains untouched for compatibility with existing game workflows.
-  if exists(
-    select 1 from auth.users au
-    where au.id=v_user_id and au.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_club_id) then
+  if public.saturn_test_account_requires_guard_v1()
+     and not public.saturn_test_account_can_mutate_v1(v_club_id) then
     return jsonb_build_object(
       'success',false,'error','test_account_ineligible_or_expired'
     );
