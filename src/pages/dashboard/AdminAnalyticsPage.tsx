@@ -72,6 +72,20 @@ type TrafficSourceRow = {
 }
 
 type AnalyticsDashboard = {
+  generated_at?: string
+  freshness?: {
+    last_pageview_at: string | null
+    last_session_at: string | null
+    recent_sessions_5m: number
+    recent_visitors_5m: number
+    recent_registered_5m: number
+  }
+  reconciliation?: {
+    visitor_pageviews: number
+    session_pageviews: number
+    path_pageviews: number
+    totals_match: boolean
+  }
   timezone: string
   start_date: string
   end_date: string
@@ -106,6 +120,14 @@ function shortDate(value: string): string {
     month: 'short',
     day: 'numeric',
   })
+}
+
+function formatTimestamp(value: string | null | undefined): string {
+  if (!value) return 'No navigation recorded yet'
+  const instant = new Date(value)
+  return Number.isNaN(instant.getTime())
+    ? 'Unavailable'
+    : instant.toLocaleString()
 }
 
 function SummaryCard({
@@ -286,9 +308,9 @@ export default function AdminAnalyticsPage(): JSX.Element {
       {data ? (
         <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-800">
           Reporting {data.start_date} → {data.end_date} · {data.timezone} day
-          boundaries · Last loaded from database: {lastLoadedAt
+          boundaries · Last loaded on this device: {lastLoadedAt
             ? lastLoadedAt.toLocaleTimeString()
-            : 'not yet loaded'} · Auto-refresh every 60 seconds while visible
+            : 'not yet loaded'} · Server generated: {formatTimestamp(data.generated_at)} · Auto-refresh every 60 seconds while visible
         </div>
       ) : null}
 
@@ -296,6 +318,57 @@ export default function AdminAnalyticsPage(): JSX.Element {
         <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm text-red-800">
           {error}
         </div>
+      ) : null}
+
+      {data?.freshness ? (
+        <SectionCard
+          title="Recently recorded website activity"
+          subtitle="Navigation recorded within the last 5 minutes. These are NOT live player connections; visitors who remain on a page without navigating may not appear."
+        >
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-600">Sessions · last 5 min</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900">{formatNumber(data.freshness.recent_sessions_5m)}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-600">Visitors · last 5 min</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900">{formatNumber(data.freshness.recent_visitors_5m)}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-semibold text-slate-600">Registered players · last 5 min</p>
+              <p className="mt-1 text-2xl font-extrabold text-slate-900">{formatNumber(data.freshness.recent_registered_5m)}</p>
+            </div>
+          </div>
+          <p className="mt-4 text-xs text-slate-600">
+            Last recorded page navigation: {formatTimestamp(data.freshness.last_pageview_at)}
+            {' · '}Last recorded session activity: {formatTimestamp(data.freshness.last_session_at)}
+          </p>
+        </SectionCard>
+      ) : null}
+
+      {data?.reconciliation ? (
+        <SectionCard
+          title="Tracking integrity"
+          subtitle="Independent page-view totals recorded by visitors, sessions and page paths for the selected UTC reporting period."
+        >
+          <div
+            role="status"
+            className={`rounded-xl border p-4 text-sm ${data.reconciliation.totals_match
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-900'
+              : 'border-amber-300 bg-amber-50 text-amber-950'}`}
+          >
+            <p className="font-bold">
+              {data.reconciliation.totals_match
+                ? 'Verified: the three page-view totals match.'
+                : 'Attention: page-view totals differ across tracking tables.'}
+            </p>
+            <p className="mt-2 text-xs leading-6">
+              Visitors: {formatNumber(data.reconciliation.visitor_pageviews)}
+              {' · '}Sessions: {formatNumber(data.reconciliation.session_pageviews)}
+              {' · '}Page paths: {formatNumber(data.reconciliation.path_pageviews)}
+            </p>
+          </div>
+        </SectionCard>
       ) : null}
 
       {loading && !data ? (
