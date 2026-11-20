@@ -424,8 +424,9 @@ begin
     v_source_academy:=null;
 
     if false then -- Attached U16 prospects intentionally suspended; scout unattached prospects only
-      v_target_rider.id:=null;
-      v_source_academy.id:=null;
+      -- Both whole records were already reset to NULL above. The previous
+      -- dead-branch field assignments were redundant and failed the offline
+      -- PL/pgSQL parser; omitting them does not activate attached scouting.
 
       select r.*
       into v_target_rider
