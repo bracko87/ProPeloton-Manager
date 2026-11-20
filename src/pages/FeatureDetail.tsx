@@ -23,6 +23,9 @@ export default function FeatureDetailPage(): JSX.Element {
     )
   }
 
+  // Feature banners use their own artwork as images become available.
+  const heroImage = key === 'management' ? 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Deep%20team%20management%201.png' : null
+
   const contentKey = `why.features.${key}`
   const title = t(`${contentKey}.title`)
   const description = t(`${contentKey}.description`)
@@ -53,7 +56,15 @@ export default function FeatureDetailPage(): JSX.Element {
       </header>
 
       <main>
-        <section className="border-b border-yellow-400/20 bg-[#071426] px-6 py-10 text-white sm:py-14">
+        <section
+          className="relative isolate flex min-h-[350px] items-center overflow-hidden border-b border-yellow-400/20 bg-[#071426] px-6 py-12 text-white sm:min-h-[370px] sm:py-16"
+          style={heroImage ? {
+            backgroundImage: `linear-gradient(90deg, rgba(7,20,38,0.94) 0%, rgba(7,20,38,0.81) 48%, rgba(7,20,38,0.67) 100%), url("${heroImage}")`,
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+            backgroundRepeat: 'no-repeat',
+          } : undefined}
+        >
           <div className="mx-auto max-w-[1120px]">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-slate-300 hover:text-yellow-300">
               <ArrowLeft size={16} aria-hidden="true" />{t('why.page.backToOverview')}
