@@ -109,6 +109,12 @@ The GitHub review workflow now installs `pglast` and invokes `scripts/saturn_sql
 
 GitHub's Saturn SQL audit now uses `pglast.parse_plpgsql` to parse stored function bodies as well as outer PostgreSQL statements. It caught and corrected two previously undetected issues in the rider/facility migration: an unused rider-role variable and, critically, a guest-expiration `IF EXISTS` guard mistakenly inserted **inside** an infrastructure INSERT column list. The server authorization check is now positioned correctly **before** any upgrade write, with a regression test checking ordering. Latest verified source commit `d96f9fcde7b89c1920e5601753c61a485f6ac868`: **233 SQL statements, 43 function bodies, 22 files**, 210 Saturn tests **117 passed, 0 failed, 93 staging TODO**, three GitHub workflows PASSED. All draft-only; isolated staging SQL execution and Auth/JWT/game simulation tests still needed. [Release verification matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
 
+## SAT-01 — Real test club setup: extra race-entry safety and postcreation reconciliation
+
+Live read-only club setup inspection confirmed that normal club creation already invokes starter setup and finance initialization, including a unique `finance.event_locks` bonus safeguard, but real anonymous account creation still needs staging. The draft low-tier AI-slot swap has now been strengthened to **reject AI clubs appearing in `race_team_entries`** under either owning or participating club IDs, in addition to the existing race application and legacy/v1 participant guards. Even withdrawn/completed historical entries are excluded, so onboarding never rewrites race history.
+
+Added **read-only staging SQL** `supabase/tests/saturn_guest_postcreation_reconciliation.sql`, which flags any mismatch between official owner membership, ten domestic starter riders, club and finance summary cash, one Premium entitlement and the original 168-hour Premium and 336-hour test term. No records are mutated by the audit. Latest verified source commit `1e749403890aba0281aa1cb8b964ec7f637c8971`: **234 PostgreSQL statements, 43 PL/pgSQL function bodies in 23 files**, Saturn tests **118 passed, 0 failed, 93 staging TODO**, all three workflows passed. [Staging matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
