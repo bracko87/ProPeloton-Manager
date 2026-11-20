@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, Youth Academy expiry guards
+
+- ✅ Draft 14-day lifecycle / original club guards now cover **39 reviewed player-facing mutation RPCs**: the prior 33 and six manager-initiated Youth Academy actions (race entry, race withdrawal, lineup selection, scouting, Academy budget transfer and training philosophy). The six new functions are in `supabase/migrations/20261120235700_saturn_youth_academy_player_expiry_v1.sql`. Fully converted and ordinary managers keep prior checks, and linked-but-unconverted original UUIDs remain subject to the trial expiry.
+- ✅ The separate **paid Youth Academy** eligibility check remains intact; seven-day welcome Premium does not automatically grant paid Youth Academy. Read-only Academy views and race-engine/scheduler functions are left untouched.
+- ✅ Source tests `tests/saturnYouthAcademyExpiry.test.mjs` enforce guard-before-write ordering and explicitly list remaining real-staging regressions.
+- ✅ **Last verified code commit `df2cd8cd04dd4f56b9db74408610d32221e114d9`:** **139 PASS / 0 FAIL / 114 staging TODO** (253 cases), 258 PostgreSQL statements and 54 PL/pgSQL function bodies parsed in 29 SQL files, all THREE workflows passed. 575 React source files scanned; zero direct internal finance RPC references.
+- ⬜ More player-facing mutations and anti-farming remain unaudited. No isolated staging yet, no real guest JWT, Youth paid access, Academy finances, race, read-only view or scheduler integration tests. Production guest functionality and finance permission fixes are **not deployed**.
+
+[Full staging and release blockers](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, expanded gameplay write audit
 
 - ✅ **Code-tested:** 33 selected player-facing write RPCs now have draft Saturn lifecycle/club/expiry checks (the previous 28 plus five equipment writers). Latest added: equipment default setup types, maintenance reminders, selling equipment, starting maintenance and Coins-based setup slot unlock.
