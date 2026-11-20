@@ -13,6 +13,8 @@ on:
       - 'tests/saturnTestTrialTransfersFinanceGuards.test.mjs'
       - 'tests/saturnTestTrialRidersFacilitiesFinance.test.mjs'
       - 'tests/saturnTestTrialRiderVehicleRls.test.mjs'
+      - 'tests/saturnTestRosterViewRiderSecurity.test.mjs'
+      - 'supabase/migrations/*saturn_roster_view_invoker_and_rider_update*.sql'
       - 'supabase/migrations/*saturn_expired_trial_rider_vehicle_rls*.sql'
       - 'supabase/migrations/*saturn_active_trial_riders_facilities_finance*.sql'
       - 'supabase/migrations/*saturn_active_trial_transfers_finance_guards*.sql'
