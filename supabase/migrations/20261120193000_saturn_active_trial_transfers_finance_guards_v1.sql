@@ -2,7 +2,7 @@
 -- contract and training-camp financial mutations.
 -- Draft only. No production schema change; no override of paid player logic.
 -- Requires public.saturn_test_account_can_mutate_v1(uuid).
--- Auth checks use canonical auth.users.is_anonymous and exact owning club.
+-- Auth checks use the unconverted Saturn lifecycle, even after linked identity stops being anonymous.
 -- SECURITY DEFINER functions MUST guard before writing.
 
 CREATE OR REPLACE FUNCTION public.accept_rider_transfer_offer(p_offer_id uuid)
@@ -41,10 +41,7 @@ begin
 
   -- SAT-08: enforce 14-day test expiry and exact real club ownership.
   -- Existing non-anonymous managers retain the ordinary function behavior.
-  if exists (
-    select 1 from auth.users u
-    where u.id=auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_offer.seller_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_offer.seller_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -300,10 +297,7 @@ begin
 
   -- SAT-08: enforce 14-day test expiry and exact real club ownership.
   -- Existing non-anonymous managers retain the ordinary function behavior.
-  if exists (
-    select 1 from auth.users u
-    where u.id=auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_listing.seller_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_listing.seller_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -423,10 +417,7 @@ begin
 
   -- SAT-08: enforce 14-day test expiry and exact real club ownership.
   -- Existing non-anonymous managers retain the ordinary function behavior.
-  if exists (
-    select 1 from auth.users u
-    where u.id=auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_booking.club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_booking.club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -602,10 +593,7 @@ begin
 
   -- SAT-08: enforce 14-day test expiry and exact real club ownership.
   -- Existing non-anonymous managers retain the ordinary function behavior.
-  if exists (
-    select 1 from auth.users u
-    where u.id=auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_bid.buyer_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_bid.buyer_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -937,10 +925,7 @@ begin
 
   -- SAT-08: enforce 14-day test expiry and exact real club ownership.
   -- Existing non-anonymous managers retain the ordinary function behavior.
-  if exists (
-    select 1 from auth.users u
-    where u.id=auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1((select cs.club_id from public.club_staff cs where cs.id=p_staff_id)) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1((select cs.club_id from public.club_staff cs where cs.id=p_staff_id)) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -1072,10 +1057,7 @@ begin
 
   -- SAT-08: enforce 14-day test expiry and exact real club ownership.
   -- Existing non-anonymous managers retain the ordinary function behavior.
-  if exists (
-    select 1 from auth.users u
-    where u.id=auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(p_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -1358,10 +1340,7 @@ begin
 
   -- SAT-08: enforce 14-day test expiry and exact real club ownership.
   -- Existing non-anonymous managers retain the ordinary function behavior.
-  if exists (
-    select 1 from auth.users u
-    where u.id=auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(p_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
