@@ -24,9 +24,20 @@
     "liveManagerLeagues": "Tritt gegen echte Manager an.",
     "progression": "Entwicklung",
     "progressionValue": "Turniere, Ranglisten & Belohnungen",
-    "imageAlt": "Radfahrer bei einer Bergauffahrt",
+    "imageAlt": "Radfahrer im Sprint zur Ziellinie",
     "loadingGameTime": "Spielzeit wird geladen...",
-    "season": "Saison"
+    "season": "Saison",
+    "legacyIntro": "Schreibe deine",
+    "legacyHighlight": "Radsportgeschichte.",
+    "liveSeason": "Aktuelle Saison",
+    "statusPrelaunch": "Anmeldung geöffnet",
+    "statusActive": "Läuft",
+    "liveRankings": "Aktuelle Rangliste",
+    "rankingsLoading": "Rangliste wird geladen...",
+    "rankingsEmpty": "Ranglisten erscheinen, sobald sie verfügbar sind.",
+    "pointsAbbrev": "Pkt.",
+    "slideControls": "Startseiten-Slides",
+    "slideLabel": "Folie {{number}} anzeigen"
   },
   "raceSchedule": {
     "title": "Rennplan",
