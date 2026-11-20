@@ -80,3 +80,17 @@ only**; never manipulate the production game clock.
 For each case: staging project ref, source commit SHA, test user UUID prefix
 (not full personally identifying data), timestamp, expected result, actual
 result, DB rollback evidence where relevant, and reviewer sign-off.
+
+
+## Staging billing and conversion-completion addendum
+
+Attempted to provision `saturn-14day-guest-staging` without a confirmation ID. Supabase explicitly refused with `This client needs a cost confirmation ID`. **No staging branch was created.** A cost quote requires the owner's exact Supabase organization ID and explicit approval of the quoted amount/frequency before a new branch may be provisioned. Until then only read-only schema validation and GitHub static/build checks are authorized.
+
+A dedicated source migration now adds `saturn_finalize_test_account_email_conversion_v1()`. It checks the **original** `auth.uid()` from the existing anonymous trial, canonical `auth.users.is_anonymous=false`, a confirmed email, an actual password credential, official club ownership and owner membership. It locks and marks only that same lifecycle's `converted_at`, idempotently, without restarting the original Premium term or creating new clubs, finances, user wallets or race entries. The conversion UI must receive success and the matching user ID from this RPC before claiming account conversion is complete.
+
+Further staging acceptance:
+- Email update + confirmation + password update all operate on the SAME Auth UUID.
+- Calling finalizer on an anonymous account, email-unconfirmed account, passwordless account or different original UUID must fail.
+- A converted manager may retry finalization without any additional Premium or duplicate clubs.
+- Registration after 336h must restore original assets and permit permanent gameplay without resetting standings.
+- OAuth / Google conversion is separate work and is not implemented by this password-based finalizer.
