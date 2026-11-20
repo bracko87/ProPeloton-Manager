@@ -1,6 +1,8 @@
-import React from 'react'
+/** Cinematic race schedule: real yesterday/today/tomorrow events with filter controls. */
+import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { CalendarDays, ChevronRight, Flag, Mountain } from 'lucide-react'
 
 export type HomepageRaceDayItem = {
   id: string
@@ -11,181 +13,106 @@ export type HomepageRaceDayItem = {
   countryCode?: string | null
   href?: string
 }
-
 export type HomepageRaceDaysData = {
   yesterdayRaces: HomepageRaceDayItem[]
   todayRaces: HomepageRaceDayItem[]
   tomorrowRaces: HomepageRaceDayItem[]
 }
-
-type HomepageRaceDaysProps = {
+type DayFilter = 'all' | 'yesterday' | 'today' | 'tomorrow'
+type DayGroup = {
+  key: Exclude<DayFilter, 'all'>
+  label: string
+  empty: string
+  items: HomepageRaceDayItem[]
+}
+function normalizedHref(href?: string): string | null {
+  if (!href) return null
+  return href.startsWith('#/') || href.startsWith('/') ? href : `/${href}`
+}
+function flagUrl(countryCode?: string | null): string | null {
+  const code = (countryCode || '').trim().toLowerCase()
+  return /^[a-z]{2}$/.test(code) ? `https://flagcdn.com/w40/${code}.png` : null
+}
+function RaceCard({ item }: { item: HomepageRaceDayItem }): JSX.Element {
+  const href = normalizedHref(item.href)
+  const flag = flagUrl(item.countryCode)
+  const content = (
+    <div className="group relative flex min-h-[135px] items-center gap-4 overflow-hidden rounded-2xl border border-yellow-400/25 bg-[linear-gradient(130deg,rgba(27,47,74,.96),rgba(10,25,46,.93))] p-4 shadow-[0_12px_34px_rgba(0,0,0,.28)] transition duration-300 hover:-translate-y-1 hover:border-yellow-300/85 hover:shadow-[0_6px_32px_rgba(250,204,21,.19)] sm:p-5">
+      <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-yellow-300/70 to-transparent" aria-hidden="true" />
+      <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-xl border border-yellow-400/25 bg-[radial-gradient(circle_at_30%_20%,rgba(250,204,21,.28),rgba(7,18,34,.65)_70%)] text-yellow-300" aria-hidden="true">
+        <Mountain size={37} strokeWidth={1.4} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="flex items-center gap-2">
+          {flag && <img src={flag} alt="" className="h-3.5 w-5 shrink-0 rounded-[2px] object-cover" loading="lazy" />}
+          <span className="line-clamp-2 text-base font-extrabold leading-5 text-white group-hover:text-yellow-100">{item.title}</span>
+        </span>
+        <span className="mt-2 block text-sm text-white/70">{item.subtitle}</span>
+        <span className="mt-2 block text-xs font-bold text-yellow-300">{item.dateLabel || item.timeLabel}</span>
+      </span>
+      {href && <ChevronRight size={20} className="shrink-0 text-yellow-300 transition-transform group-hover:translate-x-1" aria-hidden="true" />}
+    </div>
+  )
+  return href ? <Link to={href} className="block min-w-0">{content}</Link> : <div className="min-w-0">{content}</div>
+}
+export default function HomepageRaceDays({ data, loading = false }: {
   data: HomepageRaceDaysData | null
   loading?: boolean
-}
-
-type RaceGroup = {
-  title: string
-  items: HomepageRaceDayItem[]
-  emptyText: string
-}
-
-const BACKGROUND_IMAGE_URL =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_26_26%20PM.png'
-
-function normalizeRaceHref(value?: string): string | undefined {
-  if (!value) return undefined
-  if (value.startsWith('#/')) return value
-  if (value.startsWith('/')) return value
-
-  return `/${value}`
-}
-
-function getFlagUrl(countryCode?: string | null): string | null {
-  const code = (countryCode ?? '').trim().toLowerCase()
-
-  if (!/^[a-z]{2}$/.test(code)) return null
-
-  return `https://flagcdn.com/w40/${code}.png`
-}
-
-function RaceRow({ item }: { item: HomepageRaceDayItem }): JSX.Element {
+}): JSX.Element {
   const { t } = useTranslation('home')
-  const href = normalizeRaceHref(item.href)
-  const flagUrl = getFlagUrl(item.countryCode)
-  const dateLabel = item.dateLabel || item.timeLabel
-
-  const content = (
-    <div className="grid min-h-[46px] grid-cols-[76px_1fr] items-center rounded-lg border border-slate-200 bg-white/95 text-slate-900 shadow-sm transition hover:border-slate-300 hover:bg-white hover:shadow">
-      <div className="px-4 text-sm font-semibold text-slate-950">
-        {dateLabel}
-      </div>
-
-      <div className="min-w-0 border-l-2 border-emerald-500 px-4 py-3">
-        <div className="flex min-w-0 items-center gap-2">
-          {flagUrl && (
-            <img
-              src={flagUrl}
-              alt={t('raceSchedule.flagAlt', { country: item.countryCode ?? '' })}
-              className="h-4 w-6 shrink-0 rounded-[2px] object-cover shadow-sm"
-              loading="lazy"
-            />
-          )}
-
-          <span className="truncate text-sm font-bold text-slate-950">
-            {item.title}
-          </span>
-
-          <span className="hidden text-slate-400 sm:inline">·</span>
-
-          <span className="shrink-0 text-xs font-semibold leading-5 text-slate-600">
-            {item.subtitle}
-          </span>
-        </div>
-
-        <div className="mt-1 text-xs leading-5 text-slate-600 md:hidden">
-          {item.subtitle}
-        </div>
-      </div>
-    </div>
-  )
-
-  if (!href) return content
-
-  return (
-    <Link to={href} className="block">
-      {content}
-    </Link>
-  )
-}
-
-function RaceGroupSection({ group }: { group: RaceGroup }): JSX.Element {
-  return (
-    <div>
-      <div className="mb-3 flex items-center justify-between">
-        <h4 className="text-sm font-bold uppercase tracking-wide text-slate-950">
-          {group.title}
-        </h4>
-
-        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700">
-          {group.items.length}
-        </span>
-      </div>
-
-      <div className="space-y-2">
-        {group.items.length > 0 ? (
-          group.items.slice(0, 5).map((item) => (
-            <RaceRow key={item.id} item={item} />
-          ))
-        ) : (
-          <div className="rounded-lg border border-dashed border-slate-300 bg-white/90 px-4 py-4 text-sm text-slate-500">
-            {group.emptyText}
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-export default function HomepageRaceDays({
-  data,
-  loading = false,
-}: HomepageRaceDaysProps): JSX.Element {
-  const { t } = useTranslation('home')
-
-  const groups: RaceGroup[] = [
-    {
-      title: t('raceSchedule.yesterday'),
-      items: data?.yesterdayRaces ?? [],
-      emptyText: t('raceSchedule.emptyYesterday'),
-    },
-    {
-      title: t('raceSchedule.today'),
-      items: data?.todayRaces ?? [],
-      emptyText: t('raceSchedule.emptyToday'),
-    },
-    {
-      title: t('raceSchedule.tomorrow'),
-      items: data?.tomorrowRaces ?? [],
-      emptyText: t('raceSchedule.emptyTomorrow'),
-    },
+  const [filter, setFilter] = useState<DayFilter>('all')
+  const groups: DayGroup[] = [
+    { key: 'yesterday', label: t('raceSchedule.yesterday'), empty: t('raceSchedule.emptyYesterday'), items: data?.yesterdayRaces || [] },
+    { key: 'today', label: t('raceSchedule.today'), empty: t('raceSchedule.emptyToday'), items: data?.todayRaces || [] },
+    { key: 'tomorrow', label: t('raceSchedule.tomorrow'), empty: t('raceSchedule.emptyTomorrow'), items: data?.tomorrowRaces || [] },
   ]
-
+  const filters: Array<{ id: DayFilter; label: string }> = [
+    { id: 'all', label: t('raceSchedule.allRaces') },
+    ...groups.map(group => ({ id: group.key, label: group.label })),
+  ]
   return (
-    <section className="relative z-20 overflow-hidden border-y border-slate-200 bg-white py-8 text-slate-900 shadow-sm">
-      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-        <img
-          src={BACKGROUND_IMAGE_URL}
-          alt=""
-          className="h-full w-full object-cover"
-          style={{ opacity: 0.23 }}
-        />
-
-        <div className="absolute inset-0 bg-white/60" />
-      </div>
-
-      <div className="relative z-10 mx-auto max-w-7xl px-6">
-        <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <section className="relative z-20 overflow-hidden border-y border-yellow-400/20 bg-[#071426] py-12 text-white sm:py-16">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_75%_0%,rgba(250,204,21,.10),transparent_58%)]" aria-hidden="true" />
+      <div className="relative mx-auto max-w-[1510px] px-6 sm:px-10 lg:px-12">
+        <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <h3 className="text-2xl font-bold text-slate-950">{t('raceSchedule.title')}</h3>
-
-            <p className="mt-1 text-sm text-slate-600">
-              {t('raceSchedule.subtitle')}
-            </p>
-          </div>
-
-          {loading && (
-            <div className="text-sm font-medium text-slate-500">
-              {t('raceSchedule.loading')}
+            <div className="flex items-center gap-3">
+              <CalendarDays size={27} className="text-yellow-400" aria-hidden="true" />
+              <h2 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('raceSchedule.title')}</h2>
+              <span className="hidden h-px w-24 bg-gradient-to-r from-yellow-400 to-transparent sm:block" />
             </div>
-          )}
-        </div>
-
-        <div className="rounded-2xl border border-slate-200 bg-white/72 p-4 shadow-sm backdrop-blur-[2px]">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            {groups.map((group) => (
-              <RaceGroupSection key={group.title} group={group} />
-            ))}
+            <p className="mt-2 text-sm text-slate-300 sm:text-base">{t('raceSchedule.subtitle')}</p>
           </div>
+          <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t('raceSchedule.title')}>
+            {filters.map(item => (
+              <button key={item.id} type="button" onClick={() => setFilter(item.id)}
+                aria-pressed={filter === item.id}
+                className={`rounded-xl border px-4 py-2.5 text-sm font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400 ${filter === item.id ? 'border-yellow-300 bg-yellow-400 text-[#081224] shadow-[0_0_20px_rgba(250,204,21,.24)]' : 'border-white/25 bg-white/5 text-slate-100 hover:border-yellow-300/60 hover:bg-white/10'}`}>
+                {item.label}
+              </button>
+            ))}
+            <Link to="/dashboard/calendar" className="ml-0 inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition hover:border-yellow-300/60 hover:bg-white/10 sm:ml-2">
+              <CalendarDays size={17} aria-hidden="true" />{t('raceSchedule.fullCalendar')}<ChevronRight size={16} aria-hidden="true" />
+            </Link>
+          </div>
+        </div>
+        {loading && <p className="mt-5 text-sm text-yellow-200">{t('raceSchedule.loading')}</p>}
+        <div className={`mt-7 grid gap-5 ${filter === 'all' ? 'lg:grid-cols-3' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
+          {groups.filter(group => filter === 'all' || group.key === filter).map(group => (
+            <div key={group.key} className="min-w-0">
+              <div className="mb-3 flex items-center justify-between gap-2">
+                <h3 className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-widest text-yellow-300">
+                  <Flag size={16} aria-hidden="true" />{group.label}
+                </h3>
+                <span className="rounded-full border border-white/15 bg-white/5 px-2.5 py-0.5 text-xs font-bold text-slate-200">{group.items.length}</span>
+              </div>
+              <div className="space-y-3">
+                {group.items.length ? group.items.slice(0, filter === 'all' ? 3 : 10).map(item => <RaceCard key={item.id} item={item} />) : (
+                  <div className="rounded-2xl border border-dashed border-white/20 bg-white/5 px-5 py-8 text-sm text-slate-300">{group.empty}</div>
+                )}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
