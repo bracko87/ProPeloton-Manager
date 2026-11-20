@@ -132,8 +132,9 @@ export default function GuestPracticePage(): JSX.Element {
       </section>
       <p role="status" aria-live="polite" className="text-sm text-amber-200">{notice}</p>
       <aside className="border-t border-slate-700 pt-4 text-sm text-slate-300">
-        Guest sessions are temporary. If your browser session is lost, this practice team may not be recoverable. Account conversion is not available yet.
+        Guest sessions are temporary. If your browser session is lost, this practice team may not be recoverable. Conversion requires a verified email and remains under testing.
       </aside>
+      <Link to="/guest-convert" className="underline inline-block mr-5">Save progress with an account</Link>
       <Link to="/" className="underline inline-block">Return to homepage</Link>
     </div>
   </main>
