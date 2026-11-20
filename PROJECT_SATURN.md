@@ -93,6 +93,14 @@ The converted-team placement SQL is now hardened with a private, durable **one-t
 
 Added the **read-only staging vacancy/occupancy report** `supabase/tests/saturn_approved_vacancy_occupancy_audit.sql`, showing existing human/AI counts, hard caps, effective free places and missing/inactive cohorts. No cap records are preapproved. Verified GitHub source commit `8a98023795b826f90b07a36e16f0421bbda111b6`: **205 tests (115 passed, 0 failed, 90 staging TODO)**; all three workflows and application build passed. This is still draft only; no production schema, club, division, race or guest setting changed. Actual Supabase JWT/concurrency/race tests remain blocking.
 
+## SAT-03 — Protect converted clubs from existing global TOP-3 AI overflow
+
+A read-only live audit found that the original `trg_rebalance_top3_overflow_ai_to_pool_v1` may move unrelated AI teams after a converted human club enters WorldTeam, ProTeam or Continental. The legacy 25-club limit applies to category/region **across all world tiers**, not just the new approved tier-cap row. Live grouped counts include WorldTeam 25 and PRO_WEST 27, so a higher-tier vacancy cannot be assumed merely from a local league slot.
+
+The review-branch conversion transaction now adds a **private exact-club/source/destination/transaction ticket**, which makes only this authorized placement skip the unrelated global AI rebalance trigger. Normal player allocation/rebalancing remains unchanged. A global division advisory lock and a strict **all-world-tier incumbent count below 25**, alongside the approved tier/region capacity, prevent the conversion from exceeding that global rule. The ticket is removed in the same transaction; original club ID, assets, finances and race history remain untouched. **No live migration or team move occurred.**
+
+Verified GitHub contract/build run for `fd2a63205460814a3df2acbb7f27c797c81edc41`: **209 tests, 116 passing, 0 failing, 93 staging TODO**, all three workflows successful. Requires an isolated database and real concurrency/trigger tests before release. [Staging checklist](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
