@@ -4,6 +4,9 @@ on:
     paths:
       - 'docs/SATURN_FULL_GAME_TEST_ACCOUNT_POLICY_2026-11-20.md'
       - 'supabase/migrations/*saturn_14day*.sql'
+      - 'supabase/migrations/*saturn*.sql'
+      - 'supabase/tests/saturn*.sql'
+      - 'scripts/saturn_sql_parse.py'
       - 'supabase/migrations/*saturn_fail_closed_real_test_team_creation*.sql'
       - 'tests/saturnTestClubCreation.test.mjs'
       - 'tests/saturnTestAiSlotPlacement.test.mjs'
@@ -62,5 +65,10 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'pglast>=7,<9'
+      - run: python scripts/saturn_sql_parse.py
       - run: node --test tests/saturn*.test.mjs
       - run: npm run build
