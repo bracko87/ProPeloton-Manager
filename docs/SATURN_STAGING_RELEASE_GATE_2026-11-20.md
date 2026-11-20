@@ -163,3 +163,14 @@ The first run identified a faulty `release_rider_to_free_agents` source variable
 Verified source commit `d96f9fcde7b89c1920e5601753c61a485f6ac868`: **233 top-level SQL statements and 43 PL/pgSQL function bodies parsed in 22 Saturn SQL files**, **210 Saturn tests (117 pass, 0 fail, 93 pending integration)**, and all three GitHub workflows including application build passed.
 
 **Remaining limitation:** Offline body parsing checks grammar, NOT function execution against PostgreSQL catalog types, role grants, RLS evaluation, triggers or multiclub transactional side effects. Do not merge or deploy without real isolated Supabase staging tests. No production change occurred.
+
+
+## SAT-01 read-only real-club creation reconciliation (20 Nov 2026)
+
+A live read-only schema/trigger audit confirmed that the normal new-club setup trigger calls `apply_new_club_creation_balance_v1(new.id,false)`, while the explicit `finance_setup_new_club` path calls `finance_grant_new_club_bonus`. The bonus implementation uses a unique `finance.event_locks` record, and the subsequent starter-cash adjustment credits only a missing positive balance. These existing mechanisms should protect against duplicate initial funds, but the complete account-creation transaction **still requires staging verification** for actual bonus/Coin parity and exact money totals.
+
+**Important race safety improvement:** The lowest-tier AI-swap function now also checks `race_team_entries` by both `club_id` and `participating_club_id`, in addition to existing legacy and v1 participation tables and race applications. Any historical match is conservatively disqualifying, even if its status is completed, cancelled or withdrawn. Existing AI clubs and real race history must never be overwritten simply to onboard a test manager.
+
+Added `supabase/tests/saturn_guest_postcreation_reconciliation.sql` for **isolated staging only**. This read-only query reports every original test lifecycle's official owned club, exact owner membership, ten-rider domestic starter roster, cash versus `club_finance_summary`, one Premium welcome entitlement, original 168-hour Premium clock, 336-hour guest clock and whether an unconverted team left the amateur category. Findings are explicit integrity flags, not corrections. The audit does not create, delete or change any records.
+
+Latest verified GitHub run on commit `1e749403890aba0281aa1cb8b964ec7f637c8971`: **234 top-level PostgreSQL statements, 43 PL/pgSQL bodies in 23 SQL files**, and **211 contract test cases: 118 passed, 0 failed, 93 staging TODO**; all three GitHub workflows including frontend build passed. No production or staging data changed.
