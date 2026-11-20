@@ -5,11 +5,15 @@ on:
       - 'docs/SATURN_FULL_GAME_TEST_ACCOUNT_POLICY_2026-11-20.md'
       - 'supabase/migrations/*saturn_14day*.sql'
       - 'tests/saturnTestAccountLifecycle.test.mjs'
-      - 'tests/saturnTestTeamSignup.test.mjs'
+      - 'tests/saturnTestTeamSignup.test.mjs tests/saturnTestAccountExperience.test.mjs'
       - 'src/pages/TestTeamSignup.tsx'
       - 'src/App.tsx'
       - 'src/lib/supabase.ts'
       - 'src/components/home/Hero.tsx'
+      - 'src/pages/TestAccountRegister.tsx'
+      - 'src/pages/dashboard/ClubDashboard.tsx'
+      - 'src/components/trial/TestAccountNotice.tsx'
+      - 'tests/saturnTestAccountExperience.test.mjs'
       - '.github/workflows/saturn-full-game-test-account-review.yml'
   workflow_dispatch:
 permissions:
