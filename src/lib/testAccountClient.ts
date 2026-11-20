@@ -16,7 +16,9 @@ export const testClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     autoRefreshToken: true,
     // Manual Google identity linking returns through an OAuth URL. Process
     // that callback on the SAME persisted anonymous Auth client.
-    detectSessionInUrl: SATURN_TEST_ACCOUNTS_ENABLED,
+    detectSessionInUrl: SATURN_TEST_ACCOUNTS_ENABLED &&
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).has('saturn_google_link'),
   },
 })
 
