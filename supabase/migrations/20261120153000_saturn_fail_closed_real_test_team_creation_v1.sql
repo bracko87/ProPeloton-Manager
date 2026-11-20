@@ -139,13 +139,21 @@ begin
   -- This is the same official club schema and setup used by registered players.
   -- Every statement participates in this one transaction: rollback on failure.
   select now() into v_start;
+  v_club := gen_random_uuid();
+
+  -- Temporary ticket is private and transaction-scoped. Neither an ordinary
+  -- guest INSERT nor user metadata can authorize the guest owner exception.
+  insert into private.saturn_test_club_insert_tickets_v1(
+    transaction_id,user_id,club_id,world_tier,amateur_division
+  ) values(txid_current(),v_user,v_club,v_tier,v_division);
+
   insert into public.clubs(
-    owner_user_id,name,country_code,primary_color,secondary_color,
+    id,owner_user_id,name,country_code,primary_color,secondary_color,
     world_tier,club_tier,amateur_division,reputation,is_ai,is_active,club_type
   ) values (
-    v_user,v_name,v_country,v_primary,v_secondary,
+    v_club,v_user,v_name,v_country,v_primary,v_secondary,
     v_tier,'amateur'::public.club_tier,v_division,0,false,true,'main'
-  ) returning id into v_club;
+  );
 
   -- Live clubs carry an AFTER INSERT AI-slot assignment trigger which can
   -- replace world_tier/club_tier/division. Never silently accept a promoted
@@ -161,6 +169,9 @@ begin
   ) then
     raise exception 'Automatic AI-slot assignment did not preserve the lowest eligible league; test-team creation cancelled';
   end if;
+
+  delete from private.saturn_test_club_insert_tickets_v1
+  where transaction_id=txid_current() and user_id=v_user and club_id=v_club;
 
   insert into public.club_memberships(club_id,user_id,role)
     values(v_club,v_user,'owner');
