@@ -17,6 +17,8 @@ on:
       - 'tests/saturnStagingPreflightAudit.test.mjs'
       - 'tests/saturnTestEmailConversionFinalize.test.mjs'
       - 'tests/saturnTestGoogleConversionFinalize.test.mjs'
+      - 'tests/saturnConvertedVacancyPlacement.test.mjs'
+      - 'supabase/migrations/*saturn_converted_team_approved_vacancy*.sql'
       - 'supabase/migrations/*saturn_finalize_same_uuid_google_conversion*.sql'
       - 'supabase/migrations/*saturn_finalize_same_uuid_email_conversion*.sql'
       - 'supabase/tests/saturn_predeploy_schema_preflight.sql'
