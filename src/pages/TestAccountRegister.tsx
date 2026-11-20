@@ -58,7 +58,12 @@ export default function TestAccountRegister(): JSX.Element {
 
       const { error } = await testClient.auth.linkIdentity({
         provider: 'google',
-        options: { redirectTo: window.location.origin + '/test-account-register' },
+        options: {
+          // HashRouter callback: retain a query marker outside the hash so
+          // the test Auth client alone consumes the returned OAuth code.
+          redirectTo: window.location.origin + window.location.pathname +
+            '?saturn_google_link=1#/test-account-register',
+        },
       })
       if (error) {
         setStatus('Google identity linking could not start. Check that manual identity linking and redirect URLs are enabled.')
