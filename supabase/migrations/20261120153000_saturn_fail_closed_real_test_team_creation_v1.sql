@@ -205,8 +205,32 @@ begin
     v_start+interval '336 hours'
   );
 
-  -- No automatic Premium or welcome-coin grant here: existing entitlement
-  -- system must first be integrated and anti-farming reviewed separately.
+  -- Reuse the same normal Premium welcome-trial entitlement table read by
+  -- user_has_premium_access_v1. Never grant paid plan status or add Coins.
+  -- Hash includes a domain prefix so it cannot collide with email MD5 values.
+  -- The UNIQUE user_id prevents another first-week trial after conversion.
+  -- Additional abuse controls against fresh anonymous identities are required
+  -- before the feature can be enabled publicly.
+  insert into public.premium_welcome_trials_v1(
+    user_id,account_email_hash,started_at,expires_at
+  ) values (
+    v_user,
+    md5('saturn-anonymous-v1:'||v_user::text),
+    v_start,
+    v_start+interval '168 hours'
+  ) on conflict (user_id) do nothing;
+
+  -- A previous claim must not be reset by retrying club creation.
+  -- The authoritative entitlement must have the exact original window.
+  if not exists(
+    select 1 from public.premium_welcome_trials_v1 p
+    where p.user_id=v_user
+      and p.started_at=v_start
+      and p.expires_at=v_start+interval '168 hours'
+  ) then
+    raise exception 'Existing Premium trial cannot be restarted for the test account';
+  end if;
+
   return v_club;
 end;
 $$;
