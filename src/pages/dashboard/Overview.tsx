@@ -5729,7 +5729,7 @@ function Card({
     <div
       {...props}
       className={cn(
-        "rounded-2xl border border-slate-200 bg-white shadow-sm",
+        "ui-modern-card rounded-2xl border border-slate-200 bg-white shadow-sm",
         className,
       )}
     >
@@ -5750,7 +5750,7 @@ function SectionTitle({
   subtitle?: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4">
+    <div className="ui-modern-section-title flex items-start justify-between gap-4">
       <div>
         <h3 className="text-base font-semibold text-slate-900">{title}</h3>
         {subtitle ? (

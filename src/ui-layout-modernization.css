@@ -130,3 +130,116 @@
     background: #eef2f6;
   }
 }
+
+/* === UI & Layout Modernization V2: visible hierarchy, original content ===
+ * Intentional visual-only styling. No element is hidden or repositioned.
+ * Keeps header yellow, sidebar dark and game content light.
+ */
+.ui-modernized-shell {
+  --ui-modern-border: #d7e0ea;
+  --ui-modern-elevation: 0 2px 5px rgba(12,25,41,.04), 0 12px 32px rgba(12,25,41,.075);
+  --ui-modern-accent: #e4b72e;
+  --ui-modern-navy: #142538;
+  background: #edf1f5;
+}
+.ui-modernized-shell > div > main {
+  background:
+    radial-gradient(ellipse 70% 450px at 88% 0%, rgba(246,197,38,.085), transparent 78%),
+    linear-gradient(180deg,#edf1f5,#f3f5f8 72%);
+}
+/* Larger, unmistakably intentional panel surfaces, without changing their placement. */
+.ui-modernized-shell > div > main :is(.rounded-2xl.bg-white,.rounded-xl.bg-white,.rounded-lg.bg-white),
+.ui-modernized-shell > div > main .ui-modern-card {
+  border: 1px solid #d7e0ea;
+  border-radius: 16px;
+  background-color: #fff;
+  background-image: linear-gradient(180deg,rgba(239,244,249,.95),rgba(255,255,255,0) 72px);
+  box-shadow: 0 2px 4px rgba(15,28,45,.035),0 11px 32px rgba(15,28,45,.075),inset 0 3px 0 rgba(227,182,36,.9);
+}
+.ui-modernized-shell > div > main :is(.rounded-2xl.bg-white,.rounded-xl.bg-white,.rounded-lg.bg-white):hover,
+.ui-modernized-shell > div > main .ui-modern-card:hover {
+  border-color: #c7d4e1;
+  box-shadow: 0 3px 8px rgba(15,28,45,.04),0 16px 36px rgba(15,28,45,.10),inset 0 3px 0 #e7b729;
+}
+/* Overview's shared Card and SectionTitle primitives, no DOM rearrangement. */
+.ui-modernized-shell > div > main .ui-modern-card .ui-modern-section-title h3 {
+  color: #17283d;
+  font-size: 1.025rem;
+  font-weight: 650;
+  letter-spacing: -.015em;
+  line-height: 1.35;
+}
+.ui-modernized-shell > div > main .ui-modern-section-title p {
+  color: #67778d;
+  line-height: 1.45;
+}
+/* Top-level direct panel titles, for pages that don't use Overview components. */
+.ui-modernized-shell > div > main :is(.rounded-2xl.bg-white,.rounded-xl.bg-white) > :is(h2,h3,header) {
+  color: #17283d;
+}
+/* Softer inset informational cards — differentiates inner metrics from outer panels. */
+.ui-modernized-shell > div > main :is(.bg-slate-50,.bg-gray-50).border:not(.border-emerald-300):not(.border-green-300):not(.border-red-300):not(.border-amber-300) {
+  background: linear-gradient(155deg,#f5f8fc,#f0f4f8);
+  border-color: #dbe4ed;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.85);
+}
+/* Staff mini-panels and statistic tiles remain exactly where they were. */
+.ui-modernized-shell > div > main .ui-modern-card :is(.rounded-xl.bg-slate-50,.rounded-lg.bg-slate-50) {
+  border-color: #d7e2ee;
+  background-image: linear-gradient(160deg,#f8fafc,#f1f5fa);
+}
+/* Empty-state presentation: a quieter recessed surface, not another full card. */
+.ui-modernized-shell > div > main .border-dashed:is(.bg-slate-50,.bg-gray-50) {
+  background: repeating-linear-gradient(135deg,#f6f9fc,#f6f9fc 12px,#f3f7fa 12px,#f3f7fa 24px);
+  border-color: #cbd7e3;
+  box-shadow: inset 0 1px 3px rgba(15,35,53,.02);
+}
+/* Tables: clear headers, clean hover, existing column widths unchanged. */
+.ui-modernized-shell > div > main table thead {
+  background: linear-gradient(180deg,#eaf0f6,#f2f5f9);
+}
+.ui-modernized-shell > div > main table thead th {
+  color: #34475e;
+  border-bottom-color: #cdd9e5;
+}
+.ui-modernized-shell > div > main table tbody tr:nth-child(even) {
+  background-color: rgba(245,248,251,.58);
+}
+.ui-modernized-shell > div > main table tbody tr:hover {
+  background-color: rgba(239,245,251,.92);
+}
+/* Interactive controls: flatter and more precise, retaining native dimensions. */
+.ui-modernized-shell > div > main button.rounded-lg,
+.ui-modernized-shell > div > main button.rounded-xl {
+  border-radius: 10px;
+}
+.ui-modernized-shell > div > main button.bg-slate-900,
+.ui-modernized-shell > div > main button.bg-slate-950 {
+  background-image: linear-gradient(180deg,#1e3049,#0d1729);
+  box-shadow: 0 4px 12px rgba(9,19,33,.13);
+}
+.ui-modernized-shell > div > main :is(input,select,textarea).border {
+  background-color: #fff;
+  border-color: #cbd7e3;
+}
+/* Sidebar: keep width, all descriptions and all entries; sharpen identity. */
+.ui-modernized-shell > aside {
+  background: linear-gradient(170deg,#142234 0%,#0b1521 55%,#0b121c 100%);
+  box-shadow: inset -1px 0 0 rgba(255,255,255,.04);
+}
+.ui-modernized-shell > aside nav a[aria-current="page"],
+.ui-modernized-shell > aside nav a.bg-yellow-400\/20 {
+  background: linear-gradient(90deg,rgba(251,204,31,.21),rgba(251,204,31,.045));
+  border-color: rgba(250,204,21,.3);
+  box-shadow: inset 3px 0 0 #facc15,0 4px 12px rgba(0,0,0,.075);
+}
+/* Do not change mobile structure, preserve reduced-motion preference. */
+@media (max-width:767px) {
+  .ui-modernized-shell > div > main {
+    background: #edf1f5;
+  }
+  .ui-modernized-shell > div > main :is(.rounded-2xl.bg-white,.rounded-xl.bg-white,.rounded-lg.bg-white),
+  .ui-modernized-shell > div > main .ui-modern-card {
+    box-shadow: 0 2px 12px rgba(15,28,45,.055),inset 0 3px 0 rgba(227,182,36,.9);
+  }
+}
