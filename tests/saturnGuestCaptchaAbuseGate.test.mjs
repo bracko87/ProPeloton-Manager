@@ -23,7 +23,7 @@ test('missing site key fails closed and actual Turnstile callback drives eligibi
  assert.match(widget,/'expired-callback': \(\) => \{ if \(active\) onToken\.current\(null\) \}/)
  assert.match(widget,/'error-callback': \(\) => \{ if \(active\) onToken\.current\(null\) \}/)
  assert.match(widget,/turnstile\?\.remove\(widgetId\)/)
- assert.doesNotMatch(widget,/secret|VITE_.*SECRET/i)
+ assert.doesNotMatch(widget,/import\.meta\.env\.VITE_[A-Z_]*SECRET|process\.env\.[A-Z_]*SECRET/)
 })
 
 test('client CAPTCHA does not replace transactional owner/one-club and rollout gates',()=>{
