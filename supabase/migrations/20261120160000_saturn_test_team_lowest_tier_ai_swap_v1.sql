@@ -112,6 +112,13 @@ begin
     and c.world_tier = v_ticket.world_tier
     and c.amateur_division = v_ticket.amateur_division
     and not public.is_national_team_club_v1(c.id)
+    -- race_team_entries is a separate live application/admission dataset;
+    -- even withdrawn or completed entries make this AI slot historically
+    -- unsafe to reassign. Check both owner and participating identities.
+    and not exists (
+      select 1 from public.race_team_entries e
+      where e.club_id=c.id or e.participating_club_id=c.id
+    )
     and not exists (
       select 1 from public.race_team_applications a where a.team_id=c.id
     )
