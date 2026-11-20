@@ -5,8 +5,8 @@
  *
  * Purpose:
  * - Collect username, email, password, password confirmation, and birthday.
- * - Birthday day/month are required.
- * - Birthday year is optional.
+ * - Birthday is entirely optional; providing it grants birthday-reward eligibility.
+ * - If any birthday field is provided, month and day are required together.
  * - Birthday is sent through Supabase signup metadata.
  * - Backend trigger public.handle_new_user() stores birthday fields in profiles.
  * - Birthday cannot be changed later in the game.
@@ -268,6 +268,9 @@ export default function RegisterPage(): JSX.Element {
 
     const username = form.username.trim()
     const email = form.email.trim()
+    const birthdayProvided = Boolean(
+      form.birthdayMonth || form.birthdayDay || form.birthdayYear.trim(),
+    )
     const birthdayMonth = Number(form.birthdayMonth)
     const birthdayDay = Number(form.birthdayDay)
     const birthdayYear = parseOptionalYear(form.birthdayYear)
@@ -291,11 +294,11 @@ export default function RegisterPage(): JSX.Element {
       nextErrors.confirmPassword = t('register.passwordMismatch')
     }
 
-    if (!birthdayMonth || birthdayMonth < 1 || birthdayMonth > 12) {
+    if (birthdayProvided && (!birthdayMonth || birthdayMonth < 1 || birthdayMonth > 12)) {
       nextErrors.birthdayMonth = t('register.birthdayMonthRequired')
     }
 
-    if (!birthdayDay) {
+    if (birthdayProvided && !birthdayDay) {
       nextErrors.birthdayDay = t('register.birthdayDayRequired')
     }
 
@@ -332,9 +335,9 @@ export default function RegisterPage(): JSX.Element {
           emailRedirectTo: EMAIL_CONFIRMATION_REDIRECT_URL,
           data: {
             username,
-            birthday_month: birthdayMonth,
-            birthday_day: birthdayDay,
-            birthday_year: birthdayYear,
+            birthday_month: birthdayProvided ? birthdayMonth : null,
+            birthday_day: birthdayProvided ? birthdayDay : null,
+            birthday_year: birthdayProvided ? birthdayYear : null,
           },
         },
       })
@@ -561,6 +564,9 @@ export default function RegisterPage(): JSX.Element {
             <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
               <div className="text-sm font-semibold text-gray-900">
                 {t('register.birthday')}
+                <span className="ml-2 text-xs font-medium text-gray-600">
+                  {t('register.birthdayOptional')}
+                </span>
               </div>
 
               <p className="mt-1 text-xs leading-5 text-gray-700">
