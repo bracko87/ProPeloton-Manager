@@ -225,7 +225,7 @@ begin
     'message', 'Application submitted.'
   );
 end;
-$function$
+$function$;
 
 
 -- Also protect cancel/withdraw after trial expiry or cross-club access.
@@ -361,5 +361,5 @@ begin
     'message', 'Application cancelled.'
   );
 end;
-$function$
+$function$;
 
