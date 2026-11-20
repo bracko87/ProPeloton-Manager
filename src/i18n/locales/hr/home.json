@@ -62,7 +62,9 @@
     "emptyYesterday": "Jučer nije bilo zakazanih etapa.",
     "emptyToday": "Danas nema zakazanih etapa.",
     "emptyTomorrow": "Sutra nema zakazanih etapa.",
-    "flagAlt": "Zastava: {{country}}"
+    "flagAlt": "Zastava: {{country}}",
+    "allRaces": "Sve utrke",
+    "fullCalendar": "Cijeli kalendar"
   },
   "stats": {
     "title": "Brza statistika",
