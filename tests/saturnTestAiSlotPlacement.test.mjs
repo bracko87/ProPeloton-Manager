@@ -37,6 +37,7 @@ test('test team can replace ONLY AI in same bottom-tier regional amateur divisio
 })
 
 test('historic race participation or applications exclude an AI slot', () => {
+  assert.match(sql, /not exists \(\s*select 1 from public\.race_team_entries e\s*where e\.club_id=c\.id or e\.participating_club_id=c\.id/)
   assert.match(sql, /not exists \(\s*select 1 from public\.race_team_applications a where a\.team_id=c\.id/)
   assert.match(sql, /not exists \(\s*select 1 from public\.race_participant_teams p where p\.team_id=c\.id/)
 })
