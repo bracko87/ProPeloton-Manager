@@ -89,7 +89,7 @@ export default function HomeVideoShowcase(): JSX.Element {
             <PlayCircle aria-hidden="true" size={18} />
             {copy.eyebrow}
           </div>
-          <h2 id="ppm-home-videos-title" className="mt-2 text-3xl font-black italic tracking-tight text-white sm:text-4xl">
+          <h2 id="ppm-home-videos-title" className="mt-2 text-3xl font-semibold tracking-tight text-white sm:text-4xl">
             {copy.title}
           </h2>
           <p className="mt-3 text-base leading-7 text-white/70">{copy.description}</p>
