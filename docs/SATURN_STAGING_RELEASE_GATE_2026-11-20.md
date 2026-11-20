@@ -316,3 +316,12 @@ New `tests/saturnGuestCaptchaAbuseGate.test.mjs` checks token integration, chall
 9. Before considering PR merge, shut **staging** guest creation gates, review open defects, and request separate explicit authorization for the deployment and eventual production public activation.
 
 **Still not approved:** hourly branch cost, CAPTCHA service configuration, staging environment creation, public feature activation, production finance privilege correction. No existing production setting was modified.
+
+
+## 20 Nov 2026 — failed Supabase branch replay, deleted to stop hourly billing
+
+**Explicitly approved** branch compute rate: USD **0.01344/hour**. A temporary isolated Supabase branch named `saturn-14day-guest-staging` (`snlhnscacxsrlfpolohf`) was created after confirming that quote. Its UUID was `ac96ce94-f71b-4c0b-bb3a-b62529ca0635`. Provisioning moved from `CREATING_PROJECT` to **`MIGRATIONS_FAILED`**, while `preview_project_status` was `ACTIVE_HEALTHY`. This was not a viable staging environment: read-only queries showed **no `public.clubs` table and no `private.ppm_guest_auth_gate_v1`**, and `list_migrations` returned zero applied migrations. The branch's PostgreSQL logs showed **`query string argument of EXECUTE is null`**, near the failed replay. These logs do not yet identify the exact historical migration line.
+
+**No Saturn draft migration was applied, no guest was signed up, and no tests could run against the failed branch.** To avoid continued hourly charges, the failed branch was **deleted successfully**; a subsequent `list_branches` query returned **only the original default production branch**. Do not claim real gameplay or staging integration testing passed. Actual billing/proration is not yet verified.
+
+**New blocker:** investigate and repair the existing historical migration replay (likely null dynamic SQL in a legacy migration) on a **separately reviewed** path. Do not modify the production migration history or schema merely to make a staging branch start. Before spending on another branch, statically investigate the historical migration source / Supabase support or migration tooling, then use explicit approval for any re-provisioning cost. Alternatively evaluate an isolated local Postgres/PostgREST test setup with authentic Supabase Auth and migrations; do not claim it is equivalent without proof.
