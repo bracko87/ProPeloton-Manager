@@ -11,6 +11,8 @@ on:
       - 'tests/saturnTestTrialTrainingStaffGuards.test.mjs'
       - 'tests/saturnTestTrialEquipmentGuards.test.mjs'
       - 'tests/saturnTestTrialTransfersFinanceGuards.test.mjs'
+      - 'tests/saturnTestTrialRidersFacilitiesFinance.test.mjs'
+      - 'supabase/migrations/*saturn_active_trial_riders_facilities_finance*.sql'
       - 'supabase/migrations/*saturn_active_trial_transfers_finance_guards*.sql'
       - 'supabase/migrations/*saturn_expired_trial_transfer_camp_rls*.sql'
       - 'tests/saturnTestTrialDirectTableRls.test.mjs'
