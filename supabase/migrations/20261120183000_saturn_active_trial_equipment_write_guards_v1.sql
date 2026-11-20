@@ -1,6 +1,6 @@
 -- SAT-08: proposed guards for 6 EXISTING equipment mutation RPCs.
 -- Source-only until real test JWT and RLS staging coverage is complete.
--- Restricts ONLY canonical anonymous test users. Permanent registered users
+-- Restricts all unconverted Saturn trial identities, including linked non-anonymous Auth users. Permanent registered users
 -- continue through their unchanged equipment permissions and pricing logic.
 -- Requires public.saturn_test_account_can_mutate_v1(uuid).
 
@@ -17,8 +17,7 @@ declare
   v_current_game_date date;
 begin
   -- SAT-08: server clock and exact club check before ANY inventory mutation.
-  if exists(select 1 from auth.users u
-            where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
     and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or cannot change this club equipment'
       using errcode='42501';
@@ -120,8 +119,7 @@ declare
   v_existing_items jsonb := '[]'::jsonb;
 begin
   -- SAT-08: server clock and exact club check before ANY inventory mutation.
-  if exists(select 1 from auth.users u
-            where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
     and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or cannot change this club equipment'
       using errcode='42501';
@@ -345,8 +343,7 @@ declare
   v_result_row jsonb;
 begin
   -- SAT-08: server clock and exact club check before ANY inventory mutation.
-  if exists(select 1 from auth.users u
-            where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
     and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or cannot change this club equipment'
       using errcode='42501';
@@ -558,8 +555,7 @@ declare
   v_club_id uuid;
 begin
   -- SAT-08: server clock and exact club check before ANY inventory mutation.
-  if exists(select 1 from auth.users u
-            where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
     and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or cannot change this club equipment'
       using errcode='42501';
@@ -629,8 +625,7 @@ declare
   v_result jsonb;
 begin
   -- SAT-08: server clock and exact club check before ANY inventory mutation.
-  if exists(select 1 from auth.users u
-            where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
     and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or cannot change this club equipment'
       using errcode='42501';
@@ -732,8 +727,7 @@ declare
   v_row public.club_equipment_setup_presets;
 begin
   -- SAT-08: server clock and exact club check before ANY inventory mutation.
-  if exists(select 1 from auth.users u
-            where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
     and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or cannot change this club equipment'
       using errcode='42501';
