@@ -152,3 +152,14 @@ The Saturn workflow now installs Python `pglast` and runs `scripts/saturn_sql_pa
 On first execution this gate correctly caught **six draft files** with invalid statement boundaries: the Saturn admin analytics function (one) and five new race/training/equipment/transfer/financial RPC migrations. Some existing `pg_get_functiondef()` snapshots had no terminating semicolon, including compact `end;$function$` endings. All detected SQL termination defects were fixed on the review branch. Latest verified source commit `a17f263767f02f5b88a574d3494080816a2638b0`: **233 valid top-level PostgreSQL statements across 22 Saturn SQL files**, Saturn test suite **116 pass, 0 fail, 93 pending integration**, and all three GitHub workflows including frontend build PASS.
 
 **Limit:** This parser does NOT compile the PL/pgSQL body inside `AS $function$ ... $function$` or resolve database table/column types, triggers, SECURITY DEFINER ownership, RLS execution, Auth sessions, transaction semantics or the effect of triggers on other clubs. A complete staging database remains a release blocker. The SQL parser must remain a mandatory gate for future edits to these migration files.
+
+
+## Deeper PL/pgSQL parser verification — 20 Nov
+
+The no-cost GitHub SQL parse gate now checks not only the outer PostgreSQL statements but also **PL/pgSQL stored function bodies**, using pglast `parse_plpgsql` on each full `CREATE FUNCTION ... LANGUAGE plpgsql` statement.
+
+The first run identified a faulty `release_rider_to_free_agents` source variable definition/selection (`v_role`, an otherwise unused rider enum value), followed by a more consequential guard-placement mistake in `upgrade_club_facility`: an expiry `IF EXISTS` block had been accidentally inserted inside an `INSERT INTO public.club_infrastructure (...)` column list. Both have now been corrected in draft source. A dedicated Node regression assertion verifies that the 14-day guest expiry check executes **before** the facility write. The PL/pgSQL parse step is now a mandatory GitHub review gate.
+
+Verified source commit `d96f9fcde7b89c1920e5601753c61a485f6ac868`: **233 top-level SQL statements and 43 PL/pgSQL function bodies parsed in 22 Saturn SQL files**, **210 Saturn tests (117 pass, 0 fail, 93 pending integration)**, and all three GitHub workflows including application build passed.
+
+**Remaining limitation:** Offline body parsing checks grammar, NOT function execution against PostgreSQL catalog types, role grants, RLS evaluation, triggers or multiclub transactional side effects. Do not merge or deploy without real isolated Supabase staging tests. No production change occurred.
