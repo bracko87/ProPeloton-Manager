@@ -1,27 +1,30 @@
 /**
- * Animated public homepage hero.
- * No backend changes: preserves the server-anchored game clock, translations,
- * and the existing registration/login destinations.
+ * Cinematic public homepage hero for ProPeloton Manager.
+ * Uses the already-hosted sprint photo as a layer; all copy, cards,
+ * navigation, clock, and animations are real React/CSS elements.
  */
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { ArrowRight, Award, Bike, Clock3, Play, Trophy, Users, Zap } from 'lucide-react'
+import { Activity, ArrowRight, Bike, ChevronRight, Clock3, Play, Trophy, Users } from 'lucide-react'
 import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
+import { supabase } from '../../lib/supabase'
+import { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../PreReleaseNotice'
 
 type HeroProps = { gameTimeLabel: string }
+type RankingEntry = { id: string; name: string; points: number }
 
-const HERO_IMAGE_URL =
+const SPRINT_PHOTO_URL =
+  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_23_55%20PM.png'
+const FALLBACK_PHOTO_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/4b6fb4ca-5ab1-4fea-b645-c20802671498.png'
-const HERO_BACKGROUND_URL =
-  'https://pub-cdn.sider.ai/u/U0KAH9N4VLX/web-coder/69a48114fd11fbc8fc7d68f5/resource/ea527ef7-6896-413d-9d69-df332b440fd0.jpg'
 
-function formatGameTimeLabel(label: string, seasonLabel: string, loadingLabel: string) {
+function formatGameTimeLabel(label: string, seasonLabel: string, loadingLabel: string): string {
   if (!label) return loadingLabel
   return label.replace(/^S(\d+)\s*·/, `${seasonLabel} $1 ·`)
 }
 
-function getHomeClockLocale(language: string) {
+function getHomeClockLocale(language: string): string {
   if (language.startsWith('sr')) return 'sr-Latn-RS'
   if (language.startsWith('de')) return 'de-DE'
   if (language.startsWith('hr')) return 'hr-HR'
@@ -32,7 +35,7 @@ function getHomeClockLocale(language: string) {
   return 'en-GB'
 }
 
-function formatLiveGameClock(gameEpochMs: number, locale: string, seasonLabel: string) {
+function formatLiveGameClock(gameEpochMs: number, locale: string, seasonLabel: string): string {
   const gameDate = new Date(gameEpochMs)
   if (Number.isNaN(gameDate.getTime())) return ''
   const season = gameDate.getUTCFullYear() - 1999
@@ -50,165 +53,281 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
   const { t, i18n } = useTranslation('home')
   const clock = usePublicHomeGameClock()
   const sceneRef = useRef<HTMLDivElement>(null)
-  const [motionEnabled, setMotionEnabled] = useState(false)
+  const [slide, setSlide] = useState(0)
+  const [ranking, setRanking] = useState<RankingEntry[]>([])
+  const [rankingStatus, setRankingStatus] = useState<'loading' | 'ready' | 'empty'>('loading')
+
   const language = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase()
   const locale = getHomeClockLocale(language)
-
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const update = () => setMotionEnabled(!media.matches)
-    update()
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
-  }, [])
-
-  const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
-    if (!motionEnabled || event.pointerType === 'touch' || !sceneRef.current) return
-    const bounds = event.currentTarget.getBoundingClientRect()
-    const x = (event.clientX - bounds.left) / bounds.width - 0.5
-    const y = (event.clientY - bounds.top) / bounds.height - 0.5
-    sceneRef.current.style.setProperty('--hero-x', `${(x * 14).toFixed(1)}px`)
-    sceneRef.current.style.setProperty('--hero-y', `${(y * 10).toFixed(1)}px`)
-  }
-  const resetPointer = () => {
-    sceneRef.current?.style.setProperty('--hero-x', '0px')
-    sceneRef.current?.style.setProperty('--hero-y', '0px')
-  }
-
   const parentLabel = gameTimeLabel.trim()
   const parentLabelReady =
     parentLabel.length > 0 &&
     parentLabel !== t('status.loadingGameTime') &&
     parentLabel !== t('hero.loadingGameTime') &&
     parentLabel !== t('status.gameTimeUnavailable')
+
   const liveLabel = clock.gameEpochMs === null
     ? null
     : formatLiveGameClock(clock.gameEpochMs, locale, t('hero.season'))
   const clockLabel = liveLabel ||
-    (parentLabelReady
-      ? parentLabel
-      : clock.loading
-        ? t('hero.loadingGameTime')
-        : t('status.gameTimeUnavailable'))
-  const displayGameTime = formatGameTimeLabel(clockLabel, t('hero.season'), t('hero.loadingGameTime'))
+    (parentLabelReady ? parentLabel
+      : clock.loading ? t('hero.loadingGameTime') : t('status.gameTimeUnavailable'))
+  const displayGameTime = formatGameTimeLabel(
+    clockLabel, t('hero.season'), t('hero.loadingGameTime'),
+  )
+  const seasonNumber = clock.gameEpochMs !== null
+    ? Math.max(1, new Date(clock.gameEpochMs).getUTCFullYear() - 1999)
+    : Number(parentLabel.match(/(?:Season|Saison|Sezona|Temporada|Stagione|Сезон|S)\s*(\d+)/i)?.[1] || 1)
+  const preLaunch = Date.now() < Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC)
+
+  useEffect(() => {
+    let cancelled = false
+    const load = async () => {
+      // Same public view used by the game's team-ranking screen.
+      // Never show invented team names, positions or point totals.
+      const { data, error } = await supabase
+        .from('team_rankings_view')
+        .select('id, name, season_points')
+        .order('season_points', { ascending: false })
+        .order('name', { ascending: true })
+        .limit(3)
+      if (cancelled) return
+      if (error || !data?.length) {
+        setRanking([])
+        setRankingStatus('empty')
+        return
+      }
+      setRanking(data.map(row => ({
+        id: String(row.id),
+        name: String(row.name),
+        points: Number(row.season_points) || 0,
+      })))
+      setRankingStatus('ready')
+    }
+    void load()
+    return () => { cancelled = true }
+  }, [])
+
+  const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
+    if (event.pointerType === 'touch' ||
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
+        !sceneRef.current) return
+    const bounds = event.currentTarget.getBoundingClientRect()
+    const x = (event.clientX / 1 - bounds.left) / bounds.width - 0.5
+    const y = (event.clientY / 1 - bounds.top) / bounds.height - 0.5
+    sceneRef.current.style.setProperty('--ppm-x', `${(x * 14).toFixed(1)}px`)
+    sceneRef.current.style.setProperty('--ppm-y', `${(y * 10).toFixed(1)}px`)
+  }
+  const resetPointer = () => {
+    sceneRef.current?.style.setProperty('--ppm-x', '0px')
+    sceneRef.current?.style.setProperty('--ppm-y', '0px')
+  }
+
+  const slides = [
+    { first: t('hero.legacyIntro'), accent: t('hero.legacyHighlight'), trailing: '' },
+    { first: t('hero.titleLine2'), accent: t('hero.legacyHighlight'), trailing: '' },
+    { first: t('hero.titleLine3'), accent: t('hero.legacyHighlight'), trailing: '' },
+  ]
+  const activeSlide = slides[slide]
 
   return (
     <section
-      className="ppm-hero relative isolate w-full overflow-hidden border-b border-yellow-400/20 bg-[#061020] text-white"
+      className="ppm-cinematic relative isolate w-full overflow-hidden border-b border-[#dbaa16]/30 bg-[#061426] text-white"
       onPointerMove={onPointerMove}
       onPointerLeave={resetPointer}
       aria-label={t('hero.seasonalMultiplayer')}
     >
       <style>{`
-        .ppm-hero { min-height: 630px; }
-        .ppm-hero .ppm-scene { transform: translate3d(var(--hero-x,0px),var(--hero-y,0px),0) scale(1.035); transition: transform .4s ease-out; }
-        .ppm-hero .ppm-streak { position:absolute; height:2px; width:48%; border-radius:999px; background:linear-gradient(90deg,transparent,#facc15 55%,transparent); transform:rotate(-13deg); opacity:.6; filter:drop-shadow(0 0 9px #facc15); }
-        .ppm-hero .ppm-streak:nth-child(1) { top:24%; right:-17%; animation:ppm-speed 6s linear infinite; }
-        .ppm-hero .ppm-streak:nth-child(2) { top:67%; right:-8%; animation:ppm-speed 8s linear -2s infinite; }
-        .ppm-hero .ppm-streak:nth-child(3) { top:85%; left:-12%; animation:ppm-speed 7s linear -4s infinite; }
-        .ppm-hero .ppm-ambient { animation:ppm-breathe 5s ease-in-out infinite alternate; }
-        .ppm-hero .ppm-glass { background:linear-gradient(135deg,rgba(28,44,67,.83),rgba(9,18,33,.65)); backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:0 15px 40px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.12); }
-        .ppm-hero .ppm-cta { box-shadow:0 0 0 1px rgba(255,255,255,.25),0 0 23px rgba(250,204,21,.34); transition:transform .2s,box-shadow .2s,background .2s; }
-        .ppm-hero .ppm-cta:hover { transform:translateY(-3px); box-shadow:0 0 35px rgba(250,204,21,.58); }
-        .ppm-hero .ppm-image { animation:ppm-image-enter 1.1s ease-out both; }
-        .ppm-hero .ppm-dot { animation:ppm-pulse 2.3s ease-in-out infinite; }
-        @keyframes ppm-speed { 0% { translate:55% 0; opacity:0; } 25% { opacity:.7; } 100% { translate:-110% 0; opacity:0; } }
-        @keyframes ppm-breathe { from { opacity:.35; transform:scale(1); } to { opacity:.7; transform:scale(1.17); } }
-        @keyframes ppm-image-enter { from { opacity:0; transform:translateX(45px) scale(.98); } to { opacity:1; transform:translateX(0) scale(1); } }
-        @keyframes ppm-pulse { 50% { box-shadow:0 0 0 7px rgba(74,222,128,0); } }
-        @media (prefers-reduced-motion: reduce) {
-          .ppm-hero *, .ppm-hero *::before, .ppm-hero *::after { animation:none!important; transition:none!important; }
-          .ppm-hero .ppm-scene { transform:none!important; }
+        .ppm-cinematic { min-height:700px; }
+        .ppm-cinematic .ppm-scene {
+          transform:translate3d(var(--ppm-x,0px),var(--ppm-y,0px),0) scale(1.026);
+          transition:transform .38s ease-out;
+        }
+        .ppm-cinematic .ppm-photo { filter:saturate(1.2) contrast(1.07) brightness(.95); }
+        .ppm-cinematic .ppm-glass {
+          background:linear-gradient(130deg,rgba(31,49,74,.82),rgba(7,20,39,.76));
+          border:1px solid rgba(255,255,255,.23);
+          box-shadow:inset 0 1px rgba(255,255,255,.15),0 12px 44px rgba(0,0,0,.28);
+          backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+        }
+        .ppm-cinematic .ppm-cta {
+          box-shadow:0 0 0 2px #ffe878,0 0 28px rgba(250,204,21,.53),0 15px 40px rgba(0,0,0,.32);
+          transition:transform .25s,box-shadow .25s,background .25s;
+        }
+        .ppm-cinematic .ppm-cta:hover {
+          transform:translateY(-3px);box-shadow:0 0 0 2px #fff0a0,0 0 38px rgba(250,204,21,.82);
+        }
+        .ppm-cinematic .ppm-ambient {animation:ppm-ambient 5.6s ease-in-out infinite alternate;}
+        .ppm-cinematic .ppm-racer {animation:ppm-intro 1s cubic-bezier(.2,.8,.2,1) both;}
+        .ppm-cinematic .ppm-speed-line {
+          position:absolute;height:2px;border-radius:100%;background:linear-gradient(90deg,transparent,#ffe169,transparent);
+          box-shadow:0 0 11px #fac515;transform:rotate(-11deg);
+          animation:ppm-sweep 6.5s linear infinite;pointer-events:none;
+        }
+        .ppm-cinematic .ppm-speed-line:nth-of-type(2){animation-duration:8s;animation-delay:-3.1s;}
+        .ppm-cinematic .ppm-speed-line:nth-of-type(3){animation-duration:7s;animation-delay:-2.2s;}
+        .ppm-cinematic .ppm-cta:focus-visible,.ppm-cinematic a:focus-visible,
+        .ppm-cinematic button:focus-visible { outline:3px solid #fde047;outline-offset:4px; }
+        .ppm-cinematic .ppm-live-dot {animation:ppm-beacon 2.3s ease-in-out infinite;}
+        .ppm-cinematic .ppm-glass-hover {transition:transform .2s,border-color .2s;}
+        .ppm-cinematic .ppm-glass-hover:hover {transform:translateY(-4px);border-color:rgba(250,204,21,.7);}
+        @keyframes ppm-intro {from{opacity:0;transform:translateX(22px) scale(1.03)}to{opacity:1;transform:translateX(0) scale(1)}}
+        @keyframes ppm-ambient {from{opacity:.45;transform:scale(.92)}to{opacity:.9;transform:scale(1.12)}}
+        @keyframes ppm-sweep {0%{translate:80% 0;opacity:0}20%{opacity:.85}100%{translate:-150% 0;opacity:0}}
+        @keyframes ppm-beacon {50%{box-shadow:0 0 0 7px rgba(74,222,128,0)}}
+        @media(max-width:1023px){
+          .ppm-cinematic .ppm-photo {object-position:53% 60%;}
+          .ppm-cinematic .ppm-photo-wrap {width:100%!important;opacity:.52;}
+        }
+        @media(prefers-reduced-motion:reduce){
+          .ppm-cinematic *, .ppm-cinematic *:before, .ppm-cinematic *:after {
+            animation:none!important;transition:none!important;
+          }
+          .ppm-cinematic .ppm-scene {transform:none!important;}
         }
       `}</style>
 
+      {/* The sprint finish is a photographic background, never a static screenshot of UI. */}
       <div ref={sceneRef} className="ppm-scene pointer-events-none absolute inset-0" aria-hidden="true">
-        <img src={HERO_BACKGROUND_URL} alt="" className="h-full w-full object-cover opacity-25" />
-        <div className="absolute inset-0 bg-gradient-to-r from-[#061020] via-[#08162d]/90 to-[#07162b]/35" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#061020] via-transparent to-[#071226]/50" />
-        <div className="ppm-ambient absolute -right-28 top-20 h-[430px] w-[430px] rounded-full bg-yellow-400/20 blur-[105px]" />
-        <div className="ppm-ambient absolute -left-40 bottom-0 h-[360px] w-[360px] rounded-full bg-blue-500/20 blur-[90px]" />
-        <div className="ppm-streak" /><div className="ppm-streak" /><div className="ppm-streak" />
+        <div className="ppm-photo-wrap absolute inset-y-0 right-0 w-[78%] overflow-hidden">
+          <img
+            src={SPRINT_PHOTO_URL}
+            alt=""
+            fetchPriority="high"
+            className="ppm-photo ppm-racer h-full w-full object-cover object-[50%_54%]"
+            onError={event => {
+              if (!event.currentTarget.src.includes('4b6fb4ca-5ab1')) {
+                event.currentTarget.src = FALLBACK_PHOTO_URL
+              }
+            }}
+          />
+        </div>
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,#061426_0%,rgba(6,20,38,.99)_19%,rgba(6,20,38,.90)_32%,rgba(6,20,38,.50)_46%,rgba(6,20,38,.12)_63%,rgba(6,20,38,.03)_100%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061426]/95 via-transparent to-[#061426]/35" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_63%_58%,transparent_28%,rgba(4,13,31,.20)_79%)]" />
+        <div className="ppm-ambient absolute -left-40 top-20 h-80 w-96 rounded-full bg-blue-600/25 blur-[100px]" />
+        <div className="ppm-ambient absolute -right-20 bottom-0 h-60 w-[620px] rounded-full bg-yellow-400/25 blur-[85px]" />
+        <div className="ppm-speed-line bottom-[18%] right-[-15%] w-[65%]" />
+        <div className="ppm-speed-line bottom-[7%] left-[-15%] w-[58%]" />
+        <div className="ppm-speed-line top-[27%] right-[-12%] w-[30%]" />
+        <svg className="absolute bottom-0 left-0 h-28 w-full" viewBox="0 0 1440 110" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="ppm-race-swoosh" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0" stopColor="#facc15" stopOpacity="0" />
+              <stop offset=".36" stopColor="#facc15" stopOpacity=".95" />
+              <stop offset=".82" stopColor="#facc15" stopOpacity=".75" />
+              <stop offset="1" stopColor="#facc15" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+          <path d="M-80 106 Q350 16 680 84 T1510 6" fill="none" stroke="url(#ppm-race-swoosh)" strokeWidth="4" />
+        </svg>
       </div>
 
-      <div className="relative mx-auto grid min-h-[630px] max-w-[1440px] grid-cols-1 items-center gap-10 px-6 py-14 sm:px-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,.9fr)] lg:gap-6 lg:px-14 lg:py-20">
-        <div className="relative z-20 max-w-[740px]">
-          <div className="mb-6 inline-flex items-center gap-3 text-sm font-extrabold uppercase italic tracking-widest text-yellow-300">
-            <Bike aria-hidden="true" size={23} />
+      <div className="relative z-10 mx-auto min-h-[700px] max-w-[1510px] px-6 pb-20 pt-14 sm:px-10 lg:px-12 lg:pb-24 lg:pt-20">
+        <div className="relative max-w-[660px]">
+          <div className="mb-5 flex items-center gap-3 text-sm font-extrabold uppercase italic tracking-[.10em] text-yellow-400 sm:text-base">
+            <Bike size={24} aria-hidden="true" />
             <span>{t('hero.seasonalMultiplayer')}</span>
             <span className="hidden h-px w-20 bg-gradient-to-r from-yellow-400 to-transparent sm:block" />
           </div>
-          <h1 className="max-w-[740px] text-[clamp(2.7rem,5.1vw,5.5rem)] font-black italic leading-[1.03] tracking-[-.045em] drop-shadow-2xl">
-            <span className="block">{t('hero.titleLine1')}</span>
-            <span className="block text-yellow-400">{t('hero.titleLine2')}</span>
-            <span className="block">{t('hero.titleLine3')}</span>
+
+          <h1 className="min-h-[128px] text-[clamp(3.05rem,5.4vw,5.55rem)] font-black italic leading-[.99] tracking-[-.055em] text-white drop-shadow-[0_6px_22px_rgba(0,0,0,.5)] sm:min-h-[158px] lg:min-h-[185px]">
+            <span className="block">{activeSlide.first}</span>
+            <span className="relative block w-fit text-yellow-400">
+              {activeSlide.accent}
+              <svg className="pointer-events-none absolute -bottom-5 left-0 h-7 w-full overflow-visible" viewBox="0 0 510 32" preserveAspectRatio="none" aria-hidden="true">
+                <path d="M6 26 Q235 -9 505 19" stroke="#facc15" strokeWidth="3.5" strokeLinecap="round" fill="none" />
+              </svg>
+            </span>
           </h1>
-          <p className="mt-7 max-w-[580px] text-base leading-7 text-slate-200 sm:text-lg sm:leading-8">
+
+          <p className="mt-7 max-w-[540px] text-base leading-7 text-slate-100 sm:mt-8 sm:text-[17px] sm:leading-8">
             {t('hero.description')}
           </p>
-          <div className="mt-8 flex flex-wrap gap-4">
-            <Link to="/register" className="ppm-cta inline-flex min-h-12 items-center gap-3 rounded-xl bg-yellow-400 px-7 py-3 font-extrabold text-[#071020] hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-yellow-300">
-              <Play size={17} fill="currentColor" aria-hidden="true" /> {t('header.startPlaying')}
+
+          <div className="mt-7 flex flex-wrap items-center gap-4">
+            <Link to="/register" className="ppm-cta inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-yellow-400 px-7 py-3 text-base font-black text-[#071426] hover:bg-yellow-300 sm:text-lg">
+              <Play size={19} fill="currentColor" aria-hidden="true" />{t('header.startPlaying')}
             </Link>
-            <Link to="/login" className="ppm-glass inline-flex min-h-12 items-center gap-3 rounded-xl border border-white/25 px-7 py-3 font-bold text-white transition hover:border-yellow-400 hover:text-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-yellow-300">
+            <Link to="/login" className="ppm-glass ppm-glass-hover inline-flex min-h-[54px] items-center gap-3 rounded-xl px-7 py-3 text-base font-bold text-white sm:text-lg">
               {t('header.signIn')} <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
+        </div>
 
-          <div className="mt-10 grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <div className="ppm-glass rounded-2xl border border-yellow-400/60 p-4">
-              <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide text-yellow-300">
-                <Clock3 size={17} aria-hidden="true" />{t('hero.gameTime')}
-              </div>
-              <div className="mt-2 text-sm font-semibold leading-5 text-white"
-                data-clock-source={liveLabel ? 'server-anchored-clock' : parentLabelReady ? 'homepage-snapshot' : clock.loading ? 'pending' : 'unavailable'}>
-                {displayGameTime}
-              </div>
+        {/* Real status from the existing official launch configuration; no fake In Progress claim. */}
+        <Link to="/register" className="ppm-glass ppm-glass-hover mt-8 inline-flex max-w-full items-center gap-3 rounded-2xl px-5 py-4 lg:absolute lg:right-12 lg:top-9 lg:mt-0">
+          <span className={`ppm-live-dot h-3 w-3 shrink-0 rounded-full ${preLaunch ? 'bg-amber-400 shadow-[0_0_15px_#fbbf24]' : 'bg-green-400 shadow-[0_0_15px_#4ade80]'}`} aria-hidden="true" />
+          <span className="min-w-0">
+            <span className="block text-xs font-black uppercase italic tracking-widest text-white">{t('hero.liveSeason')}</span>
+            <span className="mt-1 block text-sm text-slate-200">{t('hero.season')} {seasonNumber} · {t(preLaunch ? 'hero.statusPrelaunch' : 'hero.statusActive')}</span>
+          </span>
+          <ChevronRight size={19} className="ml-4 shrink-0" aria-hidden="true" />
+        </Link>
+
+        <div className="relative mt-10 grid max-w-[745px] gap-3 sm:grid-cols-3 lg:mt-12">
+          <div className="ppm-glass rounded-2xl border-yellow-400/70 p-4 shadow-[0_0_20px_rgba(250,204,21,.18)]" style={{borderColor:'rgba(250,204,21,.68)'}}>
+            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-yellow-300">
+              <Clock3 size={17} aria-hidden="true" />{t('hero.gameTime')}
             </div>
-            <div className="ppm-glass rounded-2xl border border-white/15 p-4 transition-colors hover:border-yellow-400/45">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
-                <Users size={17} aria-hidden="true" />{t('hero.multiplayer')}
-              </div>
-              <div className="mt-2 text-sm font-bold text-white">{t('hero.liveManagerLeagues')}</div>
+            <div className="mt-2 text-sm font-bold leading-5 text-white" data-clock-source={liveLabel ? 'server-anchored-clock' : parentLabelReady ? 'homepage-snapshot' : clock.loading ? 'pending' : 'unavailable'}>
+              {displayGameTime}
             </div>
-            <div className="ppm-glass rounded-2xl border border-white/15 p-4 transition-colors hover:border-yellow-400/45">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-300">
-                <Trophy size={17} aria-hidden="true" />{t('hero.progression')}
-              </div>
-              <div className="mt-2 text-sm font-bold text-white">{t('hero.progressionValue')}</div>
+          </div>
+          <div className="ppm-glass ppm-glass-hover rounded-2xl p-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-100">
+              <Users size={17} aria-hidden="true" />{t('hero.multiplayer')}
             </div>
+            <div className="mt-2 text-sm font-bold leading-5 text-white">{t('hero.liveManagerLeagues')}</div>
+          </div>
+          <div className="ppm-glass ppm-glass-hover rounded-2xl p-4">
+            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-100">
+              <Trophy size={17} aria-hidden="true" />{t('hero.progression')}
+            </div>
+            <div className="mt-2 text-sm font-bold leading-5 text-white">{t('hero.progressionValue')}</div>
           </div>
         </div>
 
-        <div className="relative z-10 min-h-[340px] sm:min-h-[430px] lg:h-[580px]">
-          <div className="ppm-ambient pointer-events-none absolute inset-[12%] rounded-full bg-yellow-400/20 blur-[75px]" aria-hidden="true" />
-          <div className="ppm-image absolute inset-0 overflow-hidden rounded-[2rem] border border-white/20 shadow-[0_30px_80px_rgba(0,0,0,.45)]">
-            <img
-              src={HERO_IMAGE_URL}
-              alt={t('hero.imageAlt')}
-              className="h-full w-full object-cover object-center transition-transform duration-700 hover:scale-[1.045]"
-              fetchPriority="high"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#061020]/80 via-transparent to-[#061020]/20" aria-hidden="true" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-yellow-400 to-transparent" aria-hidden="true" />
-          </div>
-          <div className="ppm-glass absolute right-3 top-4 flex items-center gap-3 rounded-xl border border-yellow-400/40 px-4 py-3 shadow-xl sm:right-5 sm:top-6">
-            <span className="ppm-dot h-2.5 w-2.5 rounded-full bg-green-400 shadow-[0_0_15px_#4ade80]" aria-hidden="true" />
-            <span className="text-xs font-bold uppercase tracking-wider text-white">{t('hero.seasonalMultiplayer')}</span>
-            <Zap size={17} className="text-yellow-400" aria-hidden="true" />
-          </div>
-          <div className="ppm-glass absolute bottom-5 left-3 right-3 flex items-center justify-between gap-3 rounded-xl border border-white/25 px-4 py-3 sm:bottom-7 sm:left-6 sm:right-6">
-            <div className="flex items-center gap-3">
-              <Award className="text-yellow-400" size={22} aria-hidden="true" />
-              <span className="text-sm font-bold text-white">{t('hero.progressionValue')}</span>
+        {/* Authentic top-three points from the existing public team-rankings view. */}
+        <Link to="/dashboard/team-ranking" className="ppm-glass ppm-glass-hover mt-6 block w-full max-w-[330px] rounded-2xl p-4 sm:ml-auto lg:absolute lg:bottom-20 lg:right-12 lg:mt-0">
+          <div className="flex items-center justify-between gap-2 border-b border-white/15 pb-3">
+            <div className="flex items-center gap-2 text-sm font-black uppercase italic tracking-wide text-white">
+              <Activity size={19} className="text-yellow-400" aria-hidden="true" />
+              {t('hero.liveRankings')}
             </div>
-            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-white/20" aria-hidden="true">
-              <span className="block h-full w-2/3 rounded-full bg-yellow-400" />
-            </span>
+            <ChevronRight size={19} aria-hidden="true" />
           </div>
+          <div className="mt-3 min-h-[124px] space-y-2">
+            {rankingStatus === 'ready' && ranking.map((entry, index) => (
+              <div key={entry.id} className="flex items-center gap-3 text-sm">
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-black text-[#071426] ${index === 0 ? 'bg-yellow-400' : index === 1 ? 'bg-slate-300' : 'bg-amber-600'}`}>
+                  {index + 1}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-semibold text-white">{entry.name}</span>
+                <span className="shrink-0 font-bold tabular-nums text-slate-100">{entry.points.toLocaleString(locale)} {t('hero.pointsAbbrev')}</span>
+              </div>
+            ))}
+            {rankingStatus !== 'ready' && (
+              <div className="flex min-h-[120px] items-center text-sm leading-6 text-slate-200">
+                {rankingStatus === 'loading' ? t('hero.rankingsLoading') : t('hero.rankingsEmpty')}
+              </div>
+            )}
+          </div>
+        </Link>
+
+        <div className="mt-8 flex items-center justify-center gap-2 lg:absolute lg:bottom-6 lg:left-1/2 lg:mt-0 lg:-translate-x-1/2" role="group" aria-label={t('hero.slideControls')}>
+          {slides.map((_, index) => (
+            <button
+              type="button"
+              key={index}
+              aria-label={t('hero.slideLabel', { number: index + 1 })}
+              aria-pressed={index === slide}
+              onClick={() => setSlide(index)}
+              className={`h-2.5 rounded-full transition-all hover:bg-yellow-200 ${index === slide ? 'w-7 bg-yellow-400' : 'w-2.5 bg-white/65'}`}
+            />
+          ))}
         </div>
       </div>
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-yellow-400/80 to-transparent" aria-hidden="true" />
     </section>
   )
 }
