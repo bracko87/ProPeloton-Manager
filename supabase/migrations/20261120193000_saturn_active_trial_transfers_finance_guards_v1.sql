@@ -268,7 +268,7 @@ begin
     v_start.negotiation_status,
     v_start.closed_reason;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.cancel_rider_transfer_listing(p_listing_id uuid)
@@ -372,7 +372,7 @@ begin
     v_listing.status,
     v_blocked_count;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.cancel_training_camp_booking(p_booking_id uuid)
@@ -524,7 +524,7 @@ exception
   when others then
     raise exception 'cancel_training_camp_booking failed at stage [%]: %', v_stage, SQLERRM;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.confirm_unsolicited_ai_transfer_bid_v1(p_bid_id uuid)
@@ -916,7 +916,7 @@ begin
     'message', 'Premium bid converted. Rider personal-terms negotiation is now open.'
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.extend_club_staff_contract(p_staff_id uuid, p_seasons integer, p_salary_weekly integer)
@@ -1036,7 +1036,7 @@ begin
   where cs.id = p_staff_id
   limit 1;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.finance_book_training_camp(p_club_id uuid, p_camp_id uuid, p_start_date date, p_days integer, p_rider_ids uuid[], p_idempotency_key text)
