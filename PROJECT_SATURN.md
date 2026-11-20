@@ -105,6 +105,10 @@ Verified GitHub contract/build run for `fd2a63205460814a3df2acbb7f27c797c81edc41
 
 The GitHub review workflow now installs `pglast` and invokes `scripts/saturn_sql_parse.py`, which parses every Saturn migration and read-only SQL audit directly from source without touching production. On its first run it exposed **six previously untested invalid SQL migration files**, including missing semicolon terminators after function bodies. All have been repaired and the final run parsed **233 top-level PostgreSQL statements across 22 files**. Latest tested commit `a17f263767f02f5b88a574d3494080816a2638b0`: **116 passing Saturn tests, zero failing, 93 staging TODO**, all three GitHub workflows passed. This removes known top-level SQL syntax blockers; PL/pgSQL compilation, permissions, triggers and real game transaction behavior remain **untested** until isolated staging becomes available. No production SQL was deployed and no guest feature was enabled. [Staging matrix and parser limitations](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
 
+## SAT — complete offline PL/pgSQL grammar validation
+
+GitHub's Saturn SQL audit now uses `pglast.parse_plpgsql` to parse stored function bodies as well as outer PostgreSQL statements. It caught and corrected two previously undetected issues in the rider/facility migration: an unused rider-role variable and, critically, a guest-expiration `IF EXISTS` guard mistakenly inserted **inside** an infrastructure INSERT column list. The server authorization check is now positioned correctly **before** any upgrade write, with a regression test checking ordering. Latest verified source commit `d96f9fcde7b89c1920e5601753c61a485f6ac868`: **233 SQL statements, 43 function bodies, 22 files**, 210 Saturn tests **117 passed, 0 failed, 93 staging TODO**, three GitHub workflows PASSED. All draft-only; isolated staging SQL execution and Auth/JWT/game simulation tests still needed. [Release verification matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
