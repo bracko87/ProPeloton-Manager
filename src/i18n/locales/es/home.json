@@ -24,9 +24,20 @@
     "liveManagerLeagues": "Compite contra mánagers reales.",
     "progression": "Progresión",
     "progressionValue": "Competiciones, clasificaciones y recompensas",
-    "imageAlt": "Ciclistas escalando una montaña",
+    "imageAlt": "Ciclistas esprintando hacia la meta",
     "loadingGameTime": "Cargando el tiempo del juego...",
-    "season": "Temporada"
+    "season": "Temporada",
+    "legacyIntro": "Construye tu",
+    "legacyHighlight": "legado ciclista.",
+    "liveSeason": "Temporada actual",
+    "statusPrelaunch": "Inscripciones abiertas",
+    "statusActive": "En curso",
+    "liveRankings": "Clasificación en vivo",
+    "rankingsLoading": "Cargando clasificación...",
+    "rankingsEmpty": "La clasificación aparecerá cuando esté disponible.",
+    "pointsAbbrev": "pts",
+    "slideControls": "Diapositivas de inicio",
+    "slideLabel": "Mostrar diapositiva {{number}}"
   },
   "raceSchedule": {
     "title": "Calendario de carreras",
