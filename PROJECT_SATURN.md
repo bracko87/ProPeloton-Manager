@@ -41,6 +41,12 @@ On draft PR #277, test-account owner/expiry checks now also cover **seven** more
 
 [Detailed SAT-08 review](docs/SATURN_TEST_PREMIUM_EXPIRY_AUDIT_2026-11-20.md). CI was verified on source commit `b594d85f77af001b5011b3d507e5ee76ad093769`: **109 total cases, 63 passing, 0 failing, 46 TODO staging**, along with app build and two additional successful workflows. These are static and build checks only, NOT real guest end-to-end validation. All production guest gates remain OFF and no draft migrations have been deployed. Do not activate before completing the remaining mutation audit, anti-abuse work and live JWT/staging verification.
 
+## SAT-08 — Additional rider, loans, Coins and infrastructure safeguards
+
+Draft PR #277 now includes expiry and exact-club safeguards for seven further user-initiated actions: `finance_issue_emergency_loan`, `purchase_race_replay_access_v1`, `release_club_staff`, `release_owned_rider`, `release_rider_to_free_agents`, `sell_infrastructure_asset`, and `upgrade_club_facility`. Five additional existing RLS-enabled tables have restrictive INSERT/UPDATE/DELETE guard policies: `rider_contracts`, `club_riders`, `club_team_cars`, `club_team_buses`, and `club_equipment_vans`. Existing permanent-user and system behavior is preserved in the proposed SQL branches.
+
+The draft currently covers **28 selected player mutation RPCs and 19 club-linked direct-write tables**, but numerous other pathways remain unreviewed. **`public.club_roster` has no RLS while authenticated role has write privileges**; it has deliberately NOT been changed before an engine compatibility audit. This is an explicit release blocker. No public launch, production SQL deployment or real guest testing took place. Latest verified tested source commit `ce89ef7bf459bb609c274bf577e3878a75febddd`: **131 test cases (77 pass, 0 fail, 54 TODO staging)**, application build and two other workflows passed. [Details](docs/SATURN_TEST_PREMIUM_EXPIRY_AUDIT_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
