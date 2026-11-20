@@ -67,6 +67,12 @@ On 20 Nov 2026 Supabase branch inventory contained **only the production/default
 
 [Staging execution matrix and blockers](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md). Public Guest Mode, the 14-day lifecycle, and real club-creation SQL have NOT been deployed; unchanged live anonymous user count: 0.
 
+## SAT-02 — Server-confirmed identity-preserving email conversion
+
+The review branch includes `saturn_finalize_test_account_email_conversion_v1()`: after a test manager links and confirms email and sets a password using Supabase Auth, this server procedure locks the **same original UUID** lifecycle, checks the real Auth user's non-anonymous status, confirmed email, password credential, original team ownership and membership, then idempotently records `converted_at`. It does **not** create another Auth user/team, regrant Coins or reset the seven-day Premium window. The test-account conversion page now reports completion **only after** the server confirms the matching original Auth user ID and conversion success. Existing non-anonymous player workflows are unchanged in source.
+
+**Not live-tested:** Supabase Auth email confirmation flow, renewal of sessions, exact JWT mapping after transition, expired-to-registered permission restoration, Google OAuth linking, tier vacancy reassignment and production deployment. `saturn-14day-guest-staging` branch creation was attempted but Supabase required a cost-confirmation ID; no branch, charge or production changes occurred. The user must approve the quoted cost (Supabase organization ID required to obtain the quote). Latest checked source commit `d45a1ba25718fead88e5408d3bdca1b66842c5e4` passed Saturn CI: **151 cases, 86 pass, 0 fail, 65 TODO staging**, including frontend build. [Complete staging gate](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
