@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { CalendarDays, ChevronRight, Flag, Mountain } from 'lucide-react'
+import { CalendarDays, ChevronRight, Mountain } from 'lucide-react'
 
 export type HomepageRaceDayItem = {
   id: string
@@ -81,7 +81,7 @@ export default function HomepageRaceDays({ data, loading = false }: {
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-3">
-              <CalendarDays size={27} className="text-amber-600" aria-hidden="true" />
+              
               <h2 className="text-2xl font-semibold tracking-tight text-slate-950 sm:text-3xl">{t('raceSchedule.title')}</h2>
               <span className="hidden h-px w-24 bg-gradient-to-r from-amber-400 to-transparent sm:block" />
             </div>
@@ -106,7 +106,7 @@ export default function HomepageRaceDays({ data, loading = false }: {
             <div key={group.key} className="min-w-0">
               <div className="mb-3 flex items-center justify-between gap-2">
                 <h3 className="flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-amber-700">
-                  <Flag size={16} aria-hidden="true" />{group.label}
+                  {group.label}
                 </h3>
                 <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-700">{group.items.length}</span>
               </div>
