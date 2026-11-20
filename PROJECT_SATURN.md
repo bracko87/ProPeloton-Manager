@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, linked-identity security milestone
+
+- ✅ **Code-tested: 14-day expiry for the 28 selected RPCs now follows the unconverted Saturn lifecycle, not the Supabase anonymous flag.** Email/Google identity linking before final `converted_at` can no longer skip the review-branch checks merely because `is_anonymous` became false. The 20 direct-write RLS table guards reuse a helper that checks the unconverted lifecycle FIRST. Fully converted and ordinary permanent-user paths remain unchanged in the draft source.
+- ✅ Added `tests/saturnLinkedIdentityExpirySafety.test.mjs`, `tests/saturnLinkedIdentityExpiryAudit.test.mjs` and read-only staging `supabase/tests/saturn_linked_identity_expiry_audit.sql`, including explicit expired linked-but-unconverted detection.
+- ✅ **Last verified source commit `4923f123abafd9d877341daed76a16d433c38769`:** 229 test cases, **126 passed / 0 failed / 103 staging TODO**, 246 SQL statements and 43 PL/pgSQL bodies parsed in 26 files, all THREE GitHub workflows passed, 575 frontend files scanned with no direct calls to the four sensitive finance helpers.
+- ⬜ **NOT DONE:** Real guest JWT, expiry, Google/email linking and conversion, scheduled jobs, all other user mutation functions, finance grants hardening and full-game behavior still require isolated staging. Source fixes are **not deployed**; the production guest gate remains OFF.
+- ⚠️ Existing browser-executable finance primitives remain a separate live security risk; the review-only permission tightening migration must be compatibility-tested before any production change.
+
+The older dated implementation notes below are historical milestones, **not claims of live activation**. Follow this latest summary and the [staging release matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md) for outstanding work.
+
 ## 20 November 2026 owner decision — SAT-01 / SAT-02 superseding scope
 
 **Full-game 14-day test players replace the former isolated 7-day Practice League plan.** Test accounts create a real team with only a nickname, start in the lowest eligible official tier, participate in real racing/finances/staff/equipment/training and receive seven days of Premium. After 14 days account play is read-only until identity conversion. The same Auth UUID, real club ID, rider inventory, financial/competition history and assets must survive verified registration. Attempt highest eligible vacancy placement after conversion only when season/race safety permits; never displace another club. Permanent Register stays on homepage and is visible throughout trial; first-run explanation modal required.
