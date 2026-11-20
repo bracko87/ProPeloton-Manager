@@ -61,7 +61,10 @@ test('highest approved vacant target uses country region mapping, capacity locks
  assert.match(sql,/public\.safe_get_amateur_division_for_country\(v_club\.country_code\)/)
  assert.match(sql,/order by\s+case cap\.club_tier/)
  assert.match(sql,/pg_advisory_xact_lock\(hashtextextended\(/)
- assert.match(sql,/if v_occupied >= v_destination\.max_teams then continue; end if;/)
+ assert.match(sql,/if v_occupied >= v_live_max_teams then continue; end if;/)
+ assert.ok(sql.includes('select cap.max_teams into v_live_max_teams'))
+ assert.ok(sql.includes('and cap.enabled=true and cap.approved_at is not null'))
+ assert.ok(sql.includes('for update;'))
  assert.match(sql,/c\.is_active=true and c\.club_type='main'/)
  assert.match(sql,/'no_approved_higher_vacancy'/)
  assert.doesNotMatch(sql,/assign_new_club_to_ai_slot\(|delete from public\.clubs|update public\.race_|update public\.riders|update public\.premium_/)
@@ -93,3 +96,5 @@ test.todo('staging: unconverted temporary player and unrelated permanent user ca
 
 test.todo('staging: second placement request returns already_placed without jumping further')
 test.todo('staging: atomic placement and audit row roll back together on interrupted transaction')
+
+test.todo('staging: admin reducing approved cap during conversion cannot create over-cap slot')
