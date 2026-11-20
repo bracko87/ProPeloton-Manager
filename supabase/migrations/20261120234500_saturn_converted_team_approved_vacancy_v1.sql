@@ -57,6 +57,7 @@ declare
   v_original_priority integer;
   v_dest_division text;
   v_occupied integer;
+  v_live_max_teams integer;
   v_race_pending boolean := false;
 begin
   if v_uid is null then
@@ -214,13 +215,14 @@ begin
 
     -- Confirm capacity is still enabled under a row lock (admins may close
     -- allocations while the conversion is processing).
-    perform 1 from private.saturn_converted_vacancy_caps_v1 cap
+    select cap.max_teams into v_live_max_teams
+      from private.saturn_converted_vacancy_caps_v1 cap
       where cap.world_tier=v_destination.world_tier
         and cap.club_tier=v_destination.club_tier
         and cap.region_code=v_destination.region_code
-        and cap.enabled=true
+        and cap.enabled=true and cap.approved_at is not null
       for update;
-    if not found then continue; end if;
+    if not found or v_live_max_teams is null then continue; end if;
 
     select count(*) into v_occupied from public.clubs c
     where c.deleted_at is null and c.is_active=true and c.club_type='main'
@@ -233,7 +235,9 @@ begin
         when 'amateur'::public.club_tier then c.amateur_division
         else null end) = v_destination.region_code;
 
-    if v_occupied >= v_destination.max_teams then continue; end if;
+    -- Use cap as freshly read under its row lock, not a stale earlier
+    -- loop snapshot: an admin may have reduced or disabled capacity.
+    if v_occupied >= v_live_max_teams then continue; end if;
 
     -- Only club placement columns change. No season_points, original club
     -- UUID, owner, roster, money, commitments or historic race rows change.
