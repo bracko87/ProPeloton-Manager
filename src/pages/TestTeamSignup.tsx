@@ -7,6 +7,7 @@ import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { testClient, SATURN_TEST_ACCOUNTS_ENABLED as ENABLED } from '../lib/testAccountClient'
+import { SaturnGuestCaptcha, SATURN_TURNSTILE_SITE_KEY } from '../components/auth/SaturnGuestCaptcha'
 
 export default function TestTeamSignupPage(): JSX.Element {
   const navigate = useNavigate()
@@ -17,6 +18,7 @@ export default function TestTeamSignupPage(): JSX.Element {
   const [secondary, setSecondary] = useState('#111827')
   const [countries, setCountries] = useState<{ code: string; name: string }[]>([])
   const [busy, setBusy] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [error, setError] = useState('')
 
   React.useEffect(() => {
@@ -34,6 +36,12 @@ export default function TestTeamSignupPage(): JSX.Element {
   async function begin(event: React.FormEvent) {
     event.preventDefault()
     if (!ENABLED || busy) return
+    // Fail closed even if the browser attempts to submit without the widget.
+    // Supabase Auth MUST validate this token with the Turnstile secret.
+    if (!SATURN_TURNSTILE_SITE_KEY || !captchaToken) {
+      setError('Complete the security verification before creating a test team.')
+      return
+    }
     const managerName = nickname.trim()
     const teamName = team.trim()
     if (managerName.length < 3 || managerName.length > 24 ||
@@ -50,7 +58,9 @@ export default function TestTeamSignupPage(): JSX.Element {
       if (previous.user && !previous.user.is_anonymous) throw new Error('This browser already has a permanent account. Please use Register or Login.')
       if (!previous.user) {
         // Production trigger continues to reject this until explicit security sign-off.
-        const { error: signinError } = await testClient.auth.signInAnonymously()
+        const { error: signinError } = await testClient.auth.signInAnonymously({
+          options: { captchaToken },
+        })
         if (signinError) throw signinError
       }
       const { data: authenticated, error: authError } = await testClient.auth.getUser()
@@ -79,6 +89,8 @@ export default function TestTeamSignupPage(): JSX.Element {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not create the test team.')
     } finally {
+      // Tokens are short-lived and single-use: never reuse on retry.
+      setCaptchaToken(null)
       setBusy(false)
     }
   }
@@ -113,8 +125,9 @@ export default function TestTeamSignupPage(): JSX.Element {
           <label>Primary color<input type="color" className="block mt-2" value={primary} onChange={e => setPrimary(e.target.value)} /></label>
           <label>Secondary color<input type="color" className="block mt-2" value={secondary} onChange={e => setSecondary(e.target.value)} /></label>
         </div>
+        <SaturnGuestCaptcha onTokenChange={setCaptchaToken} />
         {error && <p role="alert" className="text-red-300">{error}</p>}
-        <button type="submit" disabled={busy || countries.length === 0} className="rounded-lg bg-yellow-400 text-slate-950 px-5 py-3 disabled:opacity-40">{busy ? 'Creating your team…' : 'Create team and start testing'}</button>
+        <button type="submit" disabled={busy || countries.length === 0 || !SATURN_TURNSTILE_SITE_KEY || !captchaToken} className="rounded-lg bg-yellow-400 text-slate-950 px-5 py-3 disabled:opacity-40">{busy ? 'Creating your team…' : 'Create team and start testing'}</button>
       </form>
       <p>Already decided to stay? <Link className="underline text-yellow-300" to="/register">Register a permanent account</Link></p>
       <Link className="underline" to="/">Back to homepage</Link>
