@@ -140,10 +140,10 @@ export default function HomeDesktopDownloads(): JSX.Element {
             />
           </div>
           <div className="min-w-0 max-w-2xl">
-            <p className="text-xs font-extrabold uppercase tracking-[0.19em] text-yellow-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.19em] text-yellow-400">
               {copy.eyebrow}
             </p>
-            <h2 id="ppm-desktop-download-title" className="mt-2 text-3xl font-black italic tracking-tight sm:text-4xl">
+            <h2 id="ppm-desktop-download-title" className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
               {copy.title}
             </h2>
             <p className="mt-4 text-base leading-7 text-white/75">{copy.description}</p>
@@ -154,7 +154,7 @@ export default function HomeDesktopDownloads(): JSX.Element {
         <div className="grid gap-3" aria-label={copy.title}>
           <a
             href={WINDOWS_DESKTOP_URL}
-            className="flex min-h-14 items-center gap-4 rounded-xl border border-yellow-300/30 bg-yellow-400 px-5 py-3.5 text-sm font-extrabold text-slate-950 shadow-lg transition hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
+            className="flex min-h-14 items-center gap-4 rounded-xl border border-yellow-300/30 bg-yellow-400 px-5 py-3.5 text-sm font-semibold text-slate-950 shadow-lg transition hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-300"
             aria-label={copy.windows}
           >
             <Monitor size={23} aria-hidden="true" />

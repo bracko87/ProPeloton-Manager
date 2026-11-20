@@ -624,7 +624,7 @@ export default function HomePage(): JSX.Element {
               alt="ProPeloton Manager"
               className="h-16 w-auto shrink-0 object-contain sm:h-20 lg:h-24"
             />
-            <div className="min-w-0 break-words border-l border-yellow-400/50 pl-4 text-base font-extrabold tracking-tight sm:text-xl">ProPeloton Manager</div>
+            <div className="min-w-0 break-words border-l border-yellow-400/50 pl-4 text-base font-semibold tracking-tight sm:text-xl">ProPeloton Manager</div>
           </div>
 
           <nav className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0 sm:items-center sm:justify-end sm:gap-4" aria-label={t('footer.gameAria')}>
@@ -680,7 +680,7 @@ export default function HomePage(): JSX.Element {
 
           <div className="relative z-10 mx-auto max-w-[1510px] px-6 sm:px-10 lg:px-12">
             <section>
-              <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('stats.title')}</h3>
+              <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('stats.title')}</h3>
               <p className="mt-2 text-sm text-white/70">{t('stats.subtitle')}</p>
 
               {homeSnapshotError && (
@@ -698,7 +698,7 @@ export default function HomePage(): JSX.Element {
                 ].map(([label, value]) => (
                   <div key={String(label)} className="group relative overflow-hidden rounded-2xl border border-yellow-400/20 bg-[linear-gradient(130deg,rgba(25,47,78,.89),rgba(8,25,47,.90))] p-6 shadow-[0_15px_35px_rgba(0,0,0,.24)] backdrop-blur-lg transition duration-300 hover:-translate-y-1 hover:border-yellow-400/70 hover:shadow-[0_9px_28px_rgba(250,204,21,.13)]">
                     <div className="text-xs font-bold uppercase tracking-wider text-yellow-300">{label}</div>
-                    <div className="mt-3 text-4xl font-black tabular-nums text-white">
+                    <div className="mt-3 text-4xl font-bold tabular-nums text-white">
                       {formatNumber(value, locale)}
                     </div>
                   </div>
@@ -707,7 +707,7 @@ export default function HomePage(): JSX.Element {
             </section>
 
             <section className="mt-16">
-              <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('features.title')}</h3>
+              <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('features.title')}</h3>
               <p className="mt-2 text-sm text-white/70">{t('features.subtitle')}</p>
 
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -737,10 +737,10 @@ export default function HomePage(): JSX.Element {
         <section className="border-y border-yellow-400/15 bg-[radial-gradient(ellipse_at_80%_10%,rgba(250,204,21,.10),transparent_55%),#071426] py-16 text-white">
           <div className="mx-auto max-w-7xl px-6">
             <div className="max-w-3xl">
-              <p className="text-sm font-extrabold uppercase tracking-[0.22em] text-yellow-300">
+              <p className="text-sm font-semibold uppercase tracking-[0.22em] text-yellow-300">
                 {t('guide.eyebrow')}
               </p>
-              <h2 className="mt-3 text-3xl font-black italic tracking-tight text-white md:text-4xl">
+              <h2 className="mt-3 text-3xl font-semibold tracking-tight text-white md:text-4xl">
                 {t('guide.headline')}
               </h2>
               <p className="mt-4 text-base leading-8 text-slate-200">
@@ -751,7 +751,7 @@ export default function HomePage(): JSX.Element {
             <div className="mt-8 grid gap-5 lg:grid-cols-3">
               {HOMEPAGE_GUIDE_CARDS.map(card => (
                 <article key={card.titleKey} className="rounded-2xl border border-yellow-400/20 bg-[linear-gradient(130deg,rgba(27,47,74,.92),rgba(10,25,46,.9))] p-7 shadow-[0_15px_35px_rgba(0,0,0,.27)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/70">
-                  <h3 className="text-xl font-extrabold text-yellow-100">{t(card.titleKey)}</h3>
+                  <h3 className="text-xl font-semibold text-yellow-100">{t(card.titleKey)}</h3>
                   <p className="mt-3 text-sm leading-7 text-slate-200">{t(card.textKey)}</p>
                 </article>
               ))}
@@ -765,7 +765,7 @@ export default function HomePage(): JSX.Element {
           <div className="mx-auto max-w-7xl px-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('reviews.title')}</h3>
+                <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('reviews.title')}</h3>
                 <p className="mt-2 text-sm text-white/70">{t('reviews.subtitle')}</p>
               </div>
 
@@ -949,23 +949,8 @@ export default function HomePage(): JSX.Element {
           </div>
         </section>
 
-        <section className="relative w-full overflow-hidden border-t border-yellow-400/25 bg-[#071426] py-20">
-          <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-            <img
-              src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_28_06%20PM.png"
-              alt=""
-              className="h-full w-full object-cover"
-              style={{
-                opacity: 0.2,
-                WebkitMaskImage:
-                  'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
-                maskImage:
-                  'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
-              }}
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#071426]/60 via-[#071426]/85 to-[#071426]/95" />
-          </div>
-          <div className="relative z-10"><CTA /></div>
+        <section className="border-t border-yellow-400/15 bg-[#081629] py-12 sm:py-14">
+          <CTA />
         </section>
       </main>
 

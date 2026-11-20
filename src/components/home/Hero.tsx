@@ -3,13 +3,11 @@
  * Uses the already-hosted sprint photo as a layer; all copy, cards,
  * navigation, clock, and animations are real React/CSS elements.
  */
-import React, { useRef, useState } from 'react'
+import React, { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { ArrowRight, Bike, Clock3, Play } from 'lucide-react'
-import HomeLiveRanking from './HomeLiveRanking'
+import { ArrowRight, Clock3, Play } from 'lucide-react'
 import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
-import { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../PreReleaseNotice'
 
 type HeroProps = { gameTimeLabel: string }
 
@@ -52,7 +50,6 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
   const { t, i18n } = useTranslation('home')
   const clock = usePublicHomeGameClock()
   const sceneRef = useRef<HTMLDivElement>(null)
-  const [slide, setSlide] = useState(0)
 
   const language = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase()
   const locale = getHomeClockLocale(language)
@@ -72,11 +69,6 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
   const displayGameTime = formatGameTimeLabel(
     clockLabel, t('hero.season'), t('hero.loadingGameTime'),
   )
-  const seasonNumber = clock.gameEpochMs !== null
-    ? Math.max(1, new Date(clock.gameEpochMs).getUTCFullYear() - 1999)
-    : Number(parentLabel.match(/(?:Season|Saison|Sezona|Temporada|Stagione|Сезон|S)\s*(\d+)/i)?.[1] || 1)
-  const preLaunch = Date.now() < Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC)
-
   const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType === 'touch' ||
         window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
@@ -91,13 +83,6 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
     sceneRef.current?.style.setProperty('--ppm-x', '0px')
     sceneRef.current?.style.setProperty('--ppm-y', '0px')
   }
-
-  const slides = [
-    { first: t('hero.legacyIntro'), accent: t('hero.legacyHighlight'), trailing: '' },
-    { first: t('hero.titleLine2'), accent: t('hero.legacyHighlight'), trailing: '' },
-    { first: t('hero.titleLine3'), accent: t('hero.legacyHighlight'), trailing: '' },
-  ]
-  const activeSlide = slides[slide]
 
   return (
     <section
@@ -174,7 +159,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
         <div className="absolute inset-0 bg-[linear-gradient(90deg,#061426_0%,rgba(6,20,38,.99)_19%,rgba(6,20,38,.90)_32%,rgba(6,20,38,.50)_46%,rgba(6,20,38,.12)_63%,rgba(6,20,38,.03)_100%)]" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#061426]/95 via-transparent to-[#061426]/35" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_63%_58%,transparent_28%,rgba(4,13,31,.20)_79%)]" />
-        {/* Blend out the far-right edge of the existing race photo behind the ranking panel. */}
+        {/* Soft right vignette keeps riders visible without distracting from the headline. */}
         <div className="absolute inset-y-0 right-0 w-[29%] bg-gradient-to-r from-transparent via-[#061426]/30 to-[#061426]/80" />
         <div className="ppm-ambient absolute -left-40 top-20 h-80 w-96 rounded-full bg-blue-600/25 blur-[100px]" />
         <div className="ppm-ambient absolute -right-20 bottom-0 h-60 w-[620px] rounded-full bg-yellow-400/25 blur-[85px]" />
@@ -196,16 +181,15 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
 
       <div className="relative z-10 mx-auto min-h-[700px] max-w-[1510px] px-6 pb-20 pt-14 sm:px-10 lg:px-12 lg:pb-24 lg:pt-20">
         <div className="relative max-w-[660px]">
-          <div className="mb-5 flex items-center gap-3 text-sm font-extrabold uppercase italic tracking-[.10em] text-yellow-400 sm:text-base">
-            <Bike size={24} aria-hidden="true" />
+          <div className="mb-5 flex items-center gap-3 text-sm font-semibold uppercase tracking-[.10em] text-yellow-400 sm:text-base">
             <span>{t('hero.seasonalMultiplayer')}</span>
             <span className="hidden h-px w-20 bg-gradient-to-r from-yellow-400 to-transparent sm:block" />
           </div>
 
-          <h1 className="min-h-[128px] text-[clamp(3.05rem,5.4vw,5.55rem)] font-black italic leading-[.99] tracking-[-.055em] text-white drop-shadow-[0_6px_22px_rgba(0,0,0,.5)] sm:min-h-[158px] lg:min-h-[185px]">
-            <span className="block">{activeSlide.first}</span>
+          <h1 className="min-h-[128px] text-[clamp(3rem,5.1vw,5.15rem)] font-bold leading-[1.02] tracking-[-.055em] text-white drop-shadow-[0_6px_22px_rgba(0,0,0,.5)] sm:min-h-[158px] lg:min-h-[185px]">
+            <span className="block">{t('hero.legacyIntro')}</span>
             <span className="relative block w-fit text-yellow-400">
-              {activeSlide.accent}
+              {t('hero.legacyHighlight')}
               <svg className="pointer-events-none absolute -bottom-5 left-0 h-7 w-full overflow-visible" viewBox="0 0 510 32" preserveAspectRatio="none" aria-hidden="true">
                 <path d="M6 26 Q235 -9 505 19" stroke="#facc15" strokeWidth="3.5" strokeLinecap="round" fill="none" />
               </svg>
@@ -217,41 +201,28 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
           </p>
 
           <div className="mt-7 flex flex-wrap items-center gap-4">
-            <Link to="/register" className="ppm-cta inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-yellow-400 px-7 py-3 text-base font-black text-[#071426] hover:bg-yellow-300 sm:text-lg">
+            <Link to="/register" className="ppm-cta inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-yellow-400 px-7 py-3 text-base font-semibold text-[#071426] hover:bg-yellow-300 sm:text-lg">
               <Play size={19} fill="currentColor" aria-hidden="true" />{t('header.startPlaying')}
             </Link>
-            <Link to="/login" className="ppm-glass ppm-glass-hover inline-flex min-h-[54px] items-center gap-3 rounded-xl px-7 py-3 text-base font-bold text-white sm:text-lg">
+            <Link to="/login" className="ppm-glass ppm-glass-hover inline-flex min-h-[54px] items-center gap-3 rounded-xl px-7 py-3 text-base font-semibold text-white sm:text-lg">
               {t('header.signIn')} <ArrowRight size={17} aria-hidden="true" />
             </Link>
           </div>
         </div>
 
-        {/* Preserve the server-anchored clock; remove Multiplayer and Progression. */}
+        {/* Preserve the server-anchored game clock and primary navigation. */}
         <div className="mt-10 w-full max-w-[310px] lg:mt-12">
           <div className="ppm-glass rounded-2xl p-5 shadow-[0_0_20px_rgba(250,204,21,.18)]" style={{ borderColor:'rgba(250,204,21,.72)' }}>
-            <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-yellow-300">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-yellow-300">
               <Clock3 size={17} aria-hidden="true" />{t('hero.gameTime')}
             </div>
-            <div className="mt-2 text-sm font-bold leading-6 text-white"
+            <div className="mt-2 text-sm font-medium leading-6 text-white"
               data-clock-source={liveLabel ? 'server-anchored-clock' : parentLabelReady ? 'homepage-snapshot' : clock.loading ? 'pending' : 'unavailable'}>
               {displayGameTime}
             </div>
           </div>
         </div>
-        <HomeLiveRanking seasonNumber={seasonNumber} preLaunch={preLaunch} locale={locale} />
 
-        <div className="mt-8 flex items-center justify-center gap-2 lg:absolute lg:bottom-6 lg:left-1/2 lg:mt-0 lg:-translate-x-1/2" role="group" aria-label={t('hero.slideControls')}>
-          {slides.map((_, index) => (
-            <button
-              type="button"
-              key={index}
-              aria-label={t('hero.slideLabel', { number: index + 1 })}
-              aria-pressed={index === slide}
-              onClick={() => setSlide(index)}
-              className={`h-2.5 rounded-full transition-all hover:bg-yellow-200 ${index === slide ? 'w-7 bg-yellow-400' : 'w-2.5 bg-white/65'}`}
-            />
-          ))}
-        </div>
       </div>
     </section>
   )
