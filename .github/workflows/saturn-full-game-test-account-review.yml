@@ -16,6 +16,8 @@ on:
       - 'tests/saturnTestRosterViewRiderSecurity.test.mjs'
       - 'tests/saturnStagingPreflightAudit.test.mjs'
       - 'tests/saturnTestEmailConversionFinalize.test.mjs'
+      - 'tests/saturnTestGoogleConversionFinalize.test.mjs'
+      - 'supabase/migrations/*saturn_finalize_same_uuid_google_conversion*.sql'
       - 'supabase/migrations/*saturn_finalize_same_uuid_email_conversion*.sql'
       - 'supabase/tests/saturn_predeploy_schema_preflight.sql'
       - 'supabase/tests/saturn_postdeploy_authorization_audit.sql'
