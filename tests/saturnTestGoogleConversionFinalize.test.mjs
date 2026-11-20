@@ -32,12 +32,12 @@ test('Google finalizer is idempotent and never resets financial or trial state',
 test('Google linking uses persisted original Auth client, never generic new-account OAuth', () => {
  assert.match(ui, /testClient\.auth\.linkIdentity\(\{/)
  assert.match(ui, /provider: 'google'/)
- assert.match(ui, /redirectTo: window\.location\.origin \+ '\/test-account-register'/)
+ assert.ok(ui.includes('redirectTo: window.location.origin + window.location.pathname'))
  assert.doesNotMatch(ui, /signInWithOAuth\(|signUp\(/)
  assert.match(client, /detectSessionInUrl: SATURN_TEST_ACCOUNTS_ENABLED/)
- assert.match(client, /new URLSearchParams\\(window\\.location\\.search\\)\\.has\\('saturn_google_link'\\)/)
- assert.match(gameClient, /detectSessionInUrl: !\\(import\\.meta\\.env\\.VITE_SATURN_TEST_ACCOUNTS_ENABLED/)
- assert.match(gameClient, /new URLSearchParams\\(window\\.location\\.search\\)\\.has\\('saturn_google_link'\\)/)
+ assert.ok(client.includes("new URLSearchParams(window.location.search).has('saturn_google_link')"))
+ assert.ok(gameClient.includes("detectSessionInUrl: !(import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED"))
+ assert.ok(gameClient.includes("new URLSearchParams(window.location.search).has('saturn_google_link')"))
  assert.match(client, /persistSession: true/)
 })
 
