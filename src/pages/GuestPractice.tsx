@@ -39,6 +39,7 @@ export default function GuestPracticePage(): JSX.Element {
   const [ready, setReady] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const [hasDraft, setHasDraft] = useState(false)
   const isGuest = user?.is_anonymous === true
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function GuestPracticePage(): JSX.Element {
         .maybeSingle()
       if (!active) return
       if (error) setNotice('Practice storage is not available. Changes cannot be saved.')
-      else if (data?.draft && isDraft(data.draft)) setDraft(data.draft)
+      else if (data?.draft && isDraft(data.draft)) { setDraft(data.draft); setHasDraft(true) }
       setReady(true)
     })()
     return () => { active = false }
@@ -63,10 +64,14 @@ export default function GuestPracticePage(): JSX.Element {
     if (!isGuest || !ready || busy) return
     setBusy(true)
     setNotice('')
-    const { error } = await supabase.from('saturn_guest_drafts_v1')
-      .upsert({ user_id: user.id, draft: next }, { onConflict: 'user_id' })
+    // Update only the draft column after initial insertion: never rewrite owner ID.
+    const query = supabase.from('saturn_guest_drafts_v1')
+    const { error } = hasDraft
+      ? await query.update({ draft: next }).eq('user_id', user.id)
+      : await query.insert({ user_id: user.id, draft: next })
     if (error) setNotice('Could not save your practice changes. Please try again.')
     else {
+      setHasDraft(true)
       setDraft(next)
       setNotice('Practice progress saved.')
     }
