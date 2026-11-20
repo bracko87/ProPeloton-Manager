@@ -13,6 +13,10 @@
 
 The older November 20 SAT-01/02 entries below describe the previous security implementation and are superseded where they suggest an isolated sandbox.
 
+## SAT-01 / SAT-02 progress — 20 November 2026 (new draft #277)
+
+Full-game Test Player UI code now includes: feature-gated homepage Test the Game CTA, nickname + real team creation form, separate persisted test session, 14-day lifecycle display with a one-time welcome popup, permanent Register / Keep my Team link, and same-UUID email/password conversion prototype. [Draft PR #277](https://github.com/bracko87/ProPeloton-Manager/pull/277). GitHub checks passed. **These components are NOT live or fully functional**: the dedicated authenticated server club-creation RPC does not exist; the production Auth gate still blocks guests; anonymous club/race/finance permissions and the actual Premium entitlement are not yet adapted; no real guest tests were performed. The test CTA is hidden behind a false-by-default feature flag. Never mark SAT-01/02 completed based on these code-only milestones.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
