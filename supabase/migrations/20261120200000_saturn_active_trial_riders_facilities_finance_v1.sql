@@ -410,7 +410,6 @@ declare
   v_age_years integer;
   v_overall smallint;
   v_potential smallint;
-  v_role public.rider_role;
   v_current_morale smallint;
   v_club_tier_text text;
 
@@ -458,7 +457,6 @@ begin
     public.get_age_years_on_game_date(r.birth_date),
     r.overall,
     r.potential,
-    r.role,
     r.morale,
     c.club_tier::text
   into
@@ -466,7 +464,6 @@ begin
     v_age_years,
     v_overall,
     v_potential,
-    v_role,
     v_current_morale,
     v_club_tier_text
   from public.riders r
