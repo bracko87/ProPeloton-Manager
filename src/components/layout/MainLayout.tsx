@@ -639,7 +639,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
   }, [children, isProPage])
 
   return (
-    <div className="min-h-screen flex bg-gray-100">
+    <div className="saturn-game-shell min-h-screen flex bg-gray-100">
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(value => !value)} />
 
       <div className="flex-1 flex flex-col min-w-0">
