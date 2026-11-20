@@ -4,7 +4,7 @@
  * that fades downward into dark blue.
  *
  * Purpose:
- * - Collect username, email, password, password confirmation, and birthday.
+ * - Collect email, password and confirmation; username and birthday are optional.
  * - Birthday is entirely optional; providing it grants birthday-reward eligibility.
  * - If any birthday field is provided, month and day are required together.
  * - Birthday is sent through Supabase signup metadata.
@@ -103,6 +103,7 @@ export default function RegisterPage(): JSX.Element {
   const [messageType, setMessageType] = useState<StatusType>(null)
   const [checkingEmail, setCheckingEmail] = useState(false)
   const [resendingActivation, setResendingActivation] = useState(false)
+  const [showBirthdayFields, setShowBirthdayFields] = useState(false)
 
   const birthdayYearNumber = useMemo(
     () => parseOptionalYear(form.birthdayYear),
@@ -276,8 +277,6 @@ export default function RegisterPage(): JSX.Element {
     const birthdayYear = parseOptionalYear(form.birthdayYear)
     const currentYear = new Date().getFullYear()
 
-    if (!username) nextErrors.username = t('register.usernameRequired')
-
     if (!email) {
       nextErrors.email = t('register.emailRequired')
     } else if (!isProbablyValidEmail(email)) {
@@ -317,6 +316,7 @@ export default function RegisterPage(): JSX.Element {
     }
 
     setErrors(nextErrors)
+    if (['birthdayMonth', 'birthdayDay', 'birthdayYear'].some(field => nextErrors[field])) setShowBirthdayFields(true)
     if (Object.keys(nextErrors).length > 0) return
 
     setLoading(true)
@@ -334,7 +334,7 @@ export default function RegisterPage(): JSX.Element {
         options: {
           emailRedirectTo: EMAIL_CONFIRMATION_REDIRECT_URL,
           data: {
-            username,
+            username: username || undefined,
             birthday_month: birthdayProvided ? birthdayMonth : null,
             birthday_day: birthdayProvided ? birthdayDay : null,
             birthday_year: birthdayProvided ? birthdayYear : null,
@@ -429,7 +429,7 @@ export default function RegisterPage(): JSX.Element {
       </div>
 
       {/* Registration card */}
-      <div className="relative z-10 max-w-2xl w-full bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="relative z-10 max-w-xl w-full rounded-2xl bg-white shadow-2xl overflow-hidden ring-1 ring-white/20">
         <div className="p-8">
           <h2 className="text-2xl font-bold text-gray-900">
             {t('register.title')}
@@ -438,6 +438,7 @@ export default function RegisterPage(): JSX.Element {
           <p className="mt-2 text-sm text-gray-600">
             {t('register.subtitle')}
           </p>
+          <p className="mt-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-700">{t('register.accountBenefits')}</p>
 
 
           {Date.now() < Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC) ? (
@@ -447,7 +448,7 @@ export default function RegisterPage(): JSX.Element {
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
               <label className="text-sm font-medium text-gray-700">
-                {t('register.username')}
+                {t('register.username')} <span className="ml-2 text-xs font-medium text-slate-500">{t('register.birthdayOptional')}</span>
               </label>
               <input
                 name="username"
@@ -455,9 +456,11 @@ export default function RegisterPage(): JSX.Element {
                 onChange={handleChange}
                 className="mt-1 block w-full border rounded-md px-3 py-2"
                 placeholder={t('register.managerHandle')}
+                  autoComplete="nickname"
                 disabled={loading}
               />
 
+              <p className="mt-1 text-xs text-slate-500">{t('register.usernameHelp')}</p>
               {errors.username && (
                 <div className="text-sm text-red-600 mt-1">
                   {errors.username}
@@ -561,15 +564,20 @@ export default function RegisterPage(): JSX.Element {
               </div>
             </div>
 
-            <div className="rounded-md border border-yellow-200 bg-yellow-50 p-4">
-              <div className="text-sm font-semibold text-gray-900">
-                {t('register.birthday')}
-                <span className="ml-2 text-xs font-medium text-gray-600">
-                  {t('register.birthdayOptional')}
-                </span>
-              </div>
-
-              <p className="mt-1 text-xs leading-5 text-gray-700">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+              <button type="button"
+                aria-expanded={showBirthdayFields}
+                aria-controls="register-birthday-fields"
+                onClick={() => setShowBirthdayFields(previous => !previous)}
+                className="flex w-full items-center justify-between gap-3 text-left text-sm font-semibold text-slate-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500"
+                disabled={loading}
+              >
+                <span>{t('register.birthday')} <span className="text-xs font-medium text-slate-600">· {t('register.birthdayOptional')}</span></span>
+                <span className="text-xs font-semibold text-blue-700">{showBirthdayFields ? t('register.hideOptional') : t('register.showOptional')}</span>
+              </button>
+              {showBirthdayFields ? (
+                <div id="register-birthday-fields">
+                  <p className="mt-3 text-xs leading-5 text-gray-700">
                 {t('register.birthdayHelp')}
               </p>
 
@@ -646,7 +654,8 @@ export default function RegisterPage(): JSX.Element {
                     </div>
                   )}
                 </div>
-              </div>
+                </div>
+              ) : null}
             </div>
 
             {message && (
@@ -658,10 +667,10 @@ export default function RegisterPage(): JSX.Element {
               </div>
             )}
 
-            <div className="flex items-center gap-4 mt-4">
+            <div className="mt-3 flex flex-wrap items-center gap-4 sm:gap-5">
               <button
                 type="submit"
-                className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
+                className="min-h-11 rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500 disabled:opacity-70"
                 disabled={loading || checkingEmail || resendingActivation}
               >
                 {loading
