@@ -341,7 +341,12 @@
       "u23Access": "Senior squad management is part of the core game. The optional U23 developing team requires Premium plus seasonal Coins activation (currently 100 Coins per season).",
       "academyAccess": "The optional Youth Academy requires Premium and seasonal Coins activation (currently 50 Coins per season). In-game unlock conditions also apply.",
       "coreAccess": "Core management is available without a Premium subscription. Optional advanced analytics, automated tools or staff advisory services may have separate Premium or Coins requirements.",
-      "nextFeature": "Next feature"
+      "nextFeature": "Next feature",
+      "openImage": "View full-screen image",
+      "fullscreenGallery": "Full-screen gameplay image",
+      "closeImage": "Close image",
+      "previousImage": "Previous image",
+      "nextImage": "Next image"
     }
   }
 }

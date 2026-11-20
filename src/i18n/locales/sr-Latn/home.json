@@ -341,7 +341,12 @@
       "u23Access": "Upravljanje seniorskim timom deo je osnovne igre. Opcioni U23 razvojni tim zahteva Premium i sezonsku aktivaciju pomoću Coins (trenutno 100 Coins po sezoni).",
       "academyAccess": "Opciona omladinska akademija zahteva Premium i sezonsku aktivaciju pomoću Coins (trenutno 50 Coins po sezoni). Važe i dodatni uslovi za otključavanje u igri.",
       "coreAccess": "Osnovno upravljanje dostupno je bez Premium pretplate. Opciona napredna analitika, automatizacija ili saveti osoblja mogu zahtevati Premium ili Coins.",
-      "nextFeature": "Sledeća mogućnost"
+      "nextFeature": "Sledeća mogućnost",
+      "openImage": "Prikaži sliku preko celog ekrana",
+      "fullscreenGallery": "Slika iz igre preko celog ekrana",
+      "closeImage": "Zatvori sliku",
+      "previousImage": "Prethodna slika",
+      "nextImage": "Sledeća slika"
     }
   }
 }

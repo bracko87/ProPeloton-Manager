@@ -21,3 +21,12 @@ export const FEATURE_PAID_ADDONS: Partial<Record<FeatureKey, 'u23' | 'academy'>>
 
 /** Screenshots must come from the game owner. No stock or fabricated gameplay imagery. */
 export const FEATURE_IMAGES: Partial<Record<FeatureKey, ReadonlyArray<{ src: string; alt: string }>>> = {}
+
+
+/**
+ * Optional, feature-specific header image. Add the URL supplied by the developer
+ * under its feature key when it becomes available. No placeholder stock photos.
+ * Example: management: { src: '<owner-supplied URL>', position: 'center 40%' }
+ */
+export type FeatureBackground = { src: string; position?: string }
+export const FEATURE_BACKGROUNDS: Partial<Record<FeatureKey, FeatureBackground>> = {}

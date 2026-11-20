@@ -1,9 +1,9 @@
-/** Concise homepage feature links; each opens its own dedicated information page. */
+/** Compact homepage feature links; paid-access explanations live on detail pages only. */
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { ArrowRight, Coins, Crown } from 'lucide-react'
-import { FEATURE_KEYS, FEATURE_PAID_ADDONS } from './featureCatalog'
+import { ArrowRight } from 'lucide-react'
+import { FEATURE_KEYS } from './featureCatalog'
 
 const METRICS = [
   { value: '593', key: 'races' },
@@ -15,11 +15,8 @@ export default function WhyProPeloton(): JSX.Element {
   const { t } = useTranslation('home')
 
   return (
-    <section
-      id="why-propeloton"
-      aria-labelledby="ppm-why-title"
-      className="border-y border-yellow-400/15 bg-[#071426] py-12 text-white sm:py-14"
-    >
+    <section id="why-propeloton" aria-labelledby="ppm-why-title"
+      className="border-y border-yellow-400/15 bg-[#071426] py-12 text-white sm:py-14">
       <div className="mx-auto max-w-[1510px] px-6 sm:px-10 lg:px-12">
         <div className="flex flex-col justify-between gap-5 lg:flex-row lg:items-end lg:gap-10">
           <div className="max-w-2xl">
@@ -37,38 +34,24 @@ export default function WhyProPeloton(): JSX.Element {
           </div>
         </div>
 
-        <div className="mt-8 grid items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {FEATURE_KEYS.map(key => {
-            const addon = FEATURE_PAID_ADDONS[key]
-            return (
-              <Link
-                key={key}
-                to={`/features/${key}`}
-                aria-label={`${t('why.page.moreInfo')}: ${t(`why.features.${key}.title`)}`}
-                className="group relative flex min-h-[90px] overflow-hidden rounded-xl border border-white/15 bg-[linear-gradient(130deg,rgba(25,47,78,.94),rgba(8,25,47,.94))] px-4 py-3 pr-14 text-left text-white shadow-[0_8px_24px_rgba(0,0,0,.15)] transition-colors hover:border-yellow-400/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400"
-              >
-                <span className="relative z-10 block w-[min(100%,95%)] min-w-0 self-center pr-2 transition-opacity duration-200 group-hover:opacity-95">
-                  <span className="block text-sm font-semibold leading-5">{t(`why.features.${key}.title`)}</span>
-                  <span className="mt-1 block text-xs leading-5 text-slate-300">{t(`why.features.${key}.description`)}</span>
-                  {addon && (
-                    <span className="mt-2 inline-flex flex-wrap items-center gap-2 text-[10px] font-medium text-amber-200">
-                      <span className="inline-flex items-center gap-1"><Crown size={12} aria-hidden="true" />{t('why.page.premiumBadge')}</span>
-                      <span className="inline-flex items-center gap-1"><Coins size={12} aria-hidden="true" />{t('why.page.coinsBadge')}</span>
-                    </span>
-                  )}
+        <div className="mt-7 grid items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {FEATURE_KEYS.map(key => (
+            <Link key={key} to={`/features/${key}`}
+              aria-label={`${t('why.page.moreInfo')}: ${t(`why.features.${key}.title`)}`}
+              className="group relative flex min-h-[74px] overflow-hidden rounded-xl border border-white/15 bg-[linear-gradient(130deg,rgba(25,47,78,.94),rgba(8,25,47,.94))] px-4 py-2.5 pr-12 text-left text-white shadow-[0_8px_24px_rgba(0,0,0,.15)] transition-colors hover:border-yellow-400/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400">
+              <span className="relative z-10 block min-w-0 self-center pr-2 transition-opacity duration-200 group-hover:opacity-95">
+                <span className="block text-sm font-semibold leading-5">{t(`why.features.${key}.title`)}</span>
+                <span className="mt-0.5 block text-xs leading-5 text-slate-300">{t(`why.features.${key}.description`)}</span>
+              </span>
+              <span aria-hidden="true"
+                className="absolute inset-y-0 right-0 z-20 flex w-10 flex-col items-center justify-center gap-1 overflow-hidden border-l border-white/10 bg-white/5 text-slate-200 transition-[width,background-color,color] duration-300 ease-out group-hover:w-[42%] group-hover:border-yellow-300 group-hover:bg-yellow-400 group-hover:text-slate-950 group-focus-visible:w-[42%] group-focus-visible:bg-yellow-400 group-focus-visible:text-slate-950">
+                <ArrowRight size={19} className="shrink-0 transition-transform duration-300 group-hover:scale-125 group-focus-visible:scale-125" />
+                <span className="max-w-full whitespace-nowrap text-center text-[11px] font-semibold opacity-0 transition-opacity delay-100 duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                  {t('why.page.moreInfo')}
                 </span>
-                <span
-                  aria-hidden="true"
-                  className="absolute inset-y-0 right-0 z-20 flex w-10 flex-col items-center justify-center gap-1 overflow-hidden border-l border-white/10 bg-white/5 text-slate-200 transition-[width,background-color,color] duration-300 ease-out group-hover:w-[42%] group-hover:border-yellow-300 group-hover:bg-yellow-400 group-hover:text-slate-950 group-focus-visible:w-[42%] group-focus-visible:bg-yellow-400 group-focus-visible:text-slate-950"
-                >
-                  <ArrowRight size={19} className="shrink-0 transition-transform duration-300 group-hover:scale-125 group-focus-visible:scale-125" />
-                  <span className="max-w-full whitespace-nowrap text-center text-[11px] font-semibold opacity-0 transition-opacity delay-100 duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
-                    {t('why.page.moreInfo')}
-                  </span>
-                </span>
-              </Link>
-            )
-          })}
+              </span>
+            </Link>
+          ))}
         </div>
       </div>
     </section>
