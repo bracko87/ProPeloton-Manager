@@ -24,9 +24,20 @@
     "liveManagerLeagues": "Natječi se protiv pravih menadžera.",
     "progression": "Napredak",
     "progressionValue": "Turniri, rang-liste i nagrade",
-    "imageAlt": "Biciklisti na usponu",
+    "imageAlt": "Biciklisti u sprintu prema cilju",
     "loadingGameTime": "Učitavanje vremena u igri...",
-    "season": "Sezona"
+    "season": "Sezona",
+    "legacyIntro": "Stvori svoju",
+    "legacyHighlight": "biciklističku legendu.",
+    "liveSeason": "Aktualna sezona",
+    "statusPrelaunch": "Prijave otvorene",
+    "statusActive": "U tijeku",
+    "liveRankings": "Ljestvica uživo",
+    "rankingsLoading": "Učitavanje ljestvice...",
+    "rankingsEmpty": "Ljestvica će se prikazati kada bude dostupna.",
+    "pointsAbbrev": "bod.",
+    "slideControls": "Slajdovi početne stranice",
+    "slideLabel": "Prikaži slajd {{number}}"
   },
   "raceSchedule": {
     "title": "Raspored utrka",
