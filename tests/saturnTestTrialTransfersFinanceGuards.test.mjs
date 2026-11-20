@@ -20,7 +20,7 @@ for(const [index,[name,club]] of entries.entries()){
   const end=index+1<entries.length?rpc.indexOf('CREATE OR REPLACE FUNCTION public.'+entries[index+1][0]+'('):rpc.length
   assert.ok(start>=0 && end>start,name+' source missing')
   const body=rpc.slice(start,end)
-  assert.ok(body.includes('u.id=auth.uid() and u.is_anonymous is true'))
+  assert.ok(body.includes('public.saturn_test_account_requires_guard_v1()'))
   assert.ok(body.includes('saturn_test_account_can_mutate_v1('+club+')'))
   assert.ok(body.includes("using errcode='42501'"))
   assert.ok(body.includes('Test account expired or not authorized for this club'))
