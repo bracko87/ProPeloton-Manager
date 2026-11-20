@@ -147,6 +147,21 @@ begin
     v_tier,'amateur'::public.club_tier,v_division,0,false,true,'main'
   ) returning id into v_club;
 
+  -- Live clubs carry an AFTER INSERT AI-slot assignment trigger which can
+  -- replace world_tier/club_tier/division. Never silently accept a promoted
+  -- temporary team or a mismatched region. A mismatch aborts the ENTIRE
+  -- transaction, rolling back both the player insert and AI-slot movement.
+  if not exists(
+    select 1 from public.clubs c
+    where c.id=v_club and c.owner_user_id=v_user
+      and c.world_tier=v_tier
+      and c.club_tier='amateur'::public.club_tier
+      and c.amateur_division=v_division
+      and c.is_ai is false
+  ) then
+    raise exception 'Automatic AI-slot assignment did not preserve the lowest eligible league; test-team creation cancelled';
+  end if;
+
   insert into public.club_memberships(club_id,user_id,role)
     values(v_club,v_user,'owner');
   insert into public.club_settings(club_id) values(v_club)
