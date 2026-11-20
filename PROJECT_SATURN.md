@@ -53,6 +53,12 @@ The draft currently covers **28 selected player mutation RPCs and 19 club-linked
 
 A new **unmerged, undeployed, reviewed-in-source** migration proposes `ALTER VIEW public.club_roster SET (security_invoker=true)` and a restrictive direct `riders` UPDATE owner/14-day-expiry check. The migration includes a fail-closed schema preflight. **This may change public roster display behavior**, so it must pass staging tests for national ranking, race/team pages and the player dashboard before enabling. It does NOT change the roster view into a writable table. Check [the corrected SAT-08 security audit](docs/SATURN_TEST_PREMIUM_EXPIRY_AUDIT_2026-11-20.md). Production remains unchanged.
 
+## SAT-08 — Roster view and rider-update review (20 November 2026)
+
+Read-only verification proves `club_roster` is a **non-updatable JOIN VIEW** (`pg_relation_is_updatable=0`), not the RLS-disabled writable table described previously. Both underlying base tables already use RLS; the view has `security_invoker=false`. A draft migration now proposes `security_invoker=true`, with a schema/RLS preflight and a restrictive anonymous-test-account expiry policy for direct `riders` UPDATE. There are no changes to the view definition, its outputs, or public permissions, but actual visible roster rows can change under caller RLS. National rankings, public team/rider pages, and game simulation must be staging-tested before applying. This is NOT production-deployed. The correct current draft coverage is **28 selected mutation RPCs and 20 RLS-protected underlying tables**; the view is not counted as a table.
+
+The latest complete source review workflow at `e52198aa3ead5b0e7465d16da67320107e00ae36` passed: **141 cases, 82 pass, 0 fail, 59 TODO integration**, including successful application build. Staging Auth/JWT and database migration execution remain pending.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
