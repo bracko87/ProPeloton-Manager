@@ -5,14 +5,8 @@
  */
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
-import { createClient } from '@supabase/supabase-js'
-import { SUPABASE_URL, SUPABASE_ANON_KEY, supabase } from '../lib/supabase'
-
-const ENABLED = import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true'
-const STORAGE_KEY = 'ppm-saturn-fullgame-test-session-v1'
-const testClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: { storageKey: STORAGE_KEY, persistSession: true, autoRefreshToken: true, detectSessionInUrl: false },
-})
+import { supabase } from '../lib/supabase'
+import { testClient, SATURN_TEST_ACCOUNTS_ENABLED as ENABLED } from '../lib/testAccountClient'
 
 export default function TestTeamSignupPage(): JSX.Element {
   const navigate = useNavigate()
