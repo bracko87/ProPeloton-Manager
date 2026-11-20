@@ -102,7 +102,7 @@ export default function ScreenshotGallery(): JSX.Element {
   }
 
   return (
-    <section className="relative w-full overflow-hidden border-y border-white/15 bg-[#0a1730] py-16">
+    <section className="relative w-full overflow-hidden border-y border-yellow-400/15 bg-[#071426] py-16">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <img
           src="https://pub-cdn.sider.ai/u/U0KAH9N4VLX/web-coder/69a48114fd11fbc8fc7d68f5/resource/ea527ef7-6896-413d-9d69-df332b440fd0.jpg"
@@ -117,13 +117,13 @@ export default function ScreenshotGallery(): JSX.Element {
           }}
         />
 
-        <div className="absolute inset-0 bg-gradient-to-b from-[#0a1730]/20 via-[#0a1730]/55 to-[#0a1730]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-[#071426]/55 via-[#071426]/85 to-[#071426]" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-2xl font-semibold text-white">{t('screenshots.title')}</h3>
+            <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('screenshots.title')}</h3>
 
             <p className="mt-2 max-w-2xl text-sm text-white/70">
               {t('screenshots.subtitle')}
@@ -175,7 +175,7 @@ export default function ScreenshotGallery(): JSX.Element {
               key={img.src}
               type="button"
               onClick={() => setSelectedScreenshot(img)}
-              className="overflow-hidden rounded-xl border border-white/10 bg-white/5 text-left shadow transition hover:border-yellow-400/70"
+              className="group overflow-hidden rounded-2xl border border-yellow-400/25 bg-[#14263f]/80 text-left shadow-[0_14px_35px_rgba(0,0,0,.27)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/75 hover:shadow-[0_8px_26px_rgba(250,204,21,.15)]"
             >
               <img
                 src={img.src}

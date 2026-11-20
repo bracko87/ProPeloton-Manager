@@ -37,7 +37,20 @@
     "rankingsEmpty": "Ranglisten erscheinen, sobald sie verfügbar sind.",
     "pointsAbbrev": "Pkt.",
     "slideControls": "Startseiten-Slides",
-    "slideLabel": "Folie {{number}} anzeigen"
+    "slideLabel": "Folie {{number}} anzeigen",
+    "competitionLabel": "Wettbewerb",
+    "competitionWorld": "WorldTeam-Division",
+    "competitionProWest": "ProTeam West",
+    "competitionProEast": "ProTeam Ost",
+    "competitionContEurope": "Continental Europa",
+    "competitionContAmerica": "Continental Amerika",
+    "competitionContAsia": "Continental Asien",
+    "competitionContAfrica": "Continental Afrika",
+    "competitionContOceania": "Continental Ozeanien",
+    "teamColumn": "Team",
+    "rankingScrollLabel": "Teamrangliste scrollen",
+    "rankingCount": "{{count}} von {{total}} Teams",
+    "rankingsViewAll": "Gesamte Rangliste"
   },
   "raceSchedule": {
     "title": "Rennplan",
@@ -49,7 +62,9 @@
     "emptyYesterday": "Gestern waren keine Etappen angesetzt.",
     "emptyToday": "Heute sind keine Etappen angesetzt.",
     "emptyTomorrow": "Morgen sind keine Etappen angesetzt.",
-    "flagAlt": "Flagge von {{country}}"
+    "flagAlt": "Flagge von {{country}}",
+    "allRaces": "Alle Rennen",
+    "fullCalendar": "Gesamter Kalender"
   },
   "stats": {
     "title": "Kurzstatistik",

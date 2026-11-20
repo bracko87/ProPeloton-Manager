@@ -81,7 +81,7 @@ export default function HomeVideoShowcase(): JSX.Element {
     <section
       id="home-videos"
       aria-labelledby="ppm-home-videos-title"
-      className="border-y border-white/10 bg-[#0a1730] py-14 sm:py-16"
+      className="border-y border-yellow-400/15 bg-[#071426] py-14 sm:py-16"
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6">
         <div className="mb-7 max-w-3xl">
@@ -89,7 +89,7 @@ export default function HomeVideoShowcase(): JSX.Element {
             <PlayCircle aria-hidden="true" size={18} />
             {copy.eyebrow}
           </div>
-          <h2 id="ppm-home-videos-title" className="mt-2 text-3xl font-bold text-white sm:text-4xl">
+          <h2 id="ppm-home-videos-title" className="mt-2 text-3xl font-black italic tracking-tight text-white sm:text-4xl">
             {copy.title}
           </h2>
           <p className="mt-3 text-base leading-7 text-white/70">{copy.description}</p>
@@ -98,7 +98,7 @@ export default function HomeVideoShowcase(): JSX.Element {
           {VIDEOS.map(video => (
             <article
               key={video.id}
-              className="min-w-0 overflow-hidden rounded-xl border border-white/15 bg-white/5 shadow-xl"
+              className="min-w-0 overflow-hidden rounded-2xl border border-yellow-400/25 bg-[#132941]/80 shadow-[0_16px_42px_rgba(0,0,0,.30)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/65"
             >
               <div className="relative aspect-video w-full bg-[#040d1c]">
                 <iframe

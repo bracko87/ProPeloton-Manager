@@ -37,7 +37,20 @@
     "rankingsEmpty": "Ljestvica će se prikazati kada bude dostupna.",
     "pointsAbbrev": "bod.",
     "slideControls": "Slajdovi početne stranice",
-    "slideLabel": "Prikaži slajd {{number}}"
+    "slideLabel": "Prikaži slajd {{number}}",
+    "competitionLabel": "Natjecanje",
+    "competitionWorld": "WorldTeam divizija",
+    "competitionProWest": "ProTeam Zapad",
+    "competitionProEast": "ProTeam Istok",
+    "competitionContEurope": "Kontinentalna Europa",
+    "competitionContAmerica": "Kontinentalna Amerika",
+    "competitionContAsia": "Kontinentalna Azija",
+    "competitionContAfrica": "Kontinentalna Afrika",
+    "competitionContOceania": "Kontinentalna Oceanija",
+    "teamColumn": "Ekipa",
+    "rankingScrollLabel": "Pomicanje ljestvice",
+    "rankingCount": "{{count}} od {{total}} ekipa",
+    "rankingsViewAll": "Cijela ljestvica"
   },
   "raceSchedule": {
     "title": "Raspored utrka",
@@ -49,7 +62,9 @@
     "emptyYesterday": "Jučer nije bilo zakazanih etapa.",
     "emptyToday": "Danas nema zakazanih etapa.",
     "emptyTomorrow": "Sutra nema zakazanih etapa.",
-    "flagAlt": "Zastava: {{country}}"
+    "flagAlt": "Zastava: {{country}}",
+    "allRaces": "Sve utrke",
+    "fullCalendar": "Cijeli kalendar"
   },
   "stats": {
     "title": "Brza statistika",

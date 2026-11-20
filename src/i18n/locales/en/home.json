@@ -37,7 +37,20 @@
     "rankingsEmpty": "Rankings will appear when available.",
     "pointsAbbrev": "pts",
     "slideControls": "Homepage hero slides",
-    "slideLabel": "Show slide {{number}}"
+    "slideLabel": "Show slide {{number}}",
+    "competitionLabel": "Competition",
+    "competitionWorld": "WorldTeam Division",
+    "competitionProWest": "ProTeam West",
+    "competitionProEast": "ProTeam East",
+    "competitionContEurope": "Continental Europe",
+    "competitionContAmerica": "Continental America",
+    "competitionContAsia": "Continental Asia",
+    "competitionContAfrica": "Continental Africa",
+    "competitionContOceania": "Continental Oceania",
+    "teamColumn": "Team",
+    "rankingScrollLabel": "Scroll team rankings",
+    "rankingCount": "{{count}} of {{total}} teams",
+    "rankingsViewAll": "Full ranking"
   },
   "raceSchedule": {
     "title": "Race Schedule",
@@ -49,7 +62,9 @@
     "emptyYesterday": "No stages were scheduled yesterday.",
     "emptyToday": "No stages are scheduled today.",
     "emptyTomorrow": "No stages are scheduled tomorrow.",
-    "flagAlt": "{{country}} flag"
+    "flagAlt": "{{country}} flag",
+    "allRaces": "All races",
+    "fullCalendar": "Full calendar"
   },
   "stats": {
     "title": "Quick Stats",

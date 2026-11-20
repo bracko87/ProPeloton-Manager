@@ -47,12 +47,12 @@ export default function FeatureCard({ icon, title, description }: FeatureCardPro
   const displayDescription = translation ? t(translation.descriptionKey) : description
 
   return (
-    <div className="bg-white/5 rounded-lg p-5">
+    <div className="group relative overflow-hidden rounded-2xl border border-yellow-400/25 bg-[linear-gradient(130deg,rgba(24,46,77,.92),rgba(8,25,46,.92))] p-7 shadow-[0_15px_35px_rgba(0,0,0,.26)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/70 hover:shadow-[0_9px_28px_rgba(250,204,21,.14)]">
       <div className="flex items-start gap-4">
-        <div className="text-yellow-400">{icon}</div>
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-yellow-400/35 bg-yellow-400/10 text-yellow-300">{icon}</div>
         <div>
-          <h4 className="font-semibold text-white">{displayTitle}</h4>
-          <p className="mt-1 text-sm text-white/70">{displayDescription}</p>
+          <h4 className="text-lg font-extrabold text-white">{displayTitle}</h4>
+          <p className="mt-2 text-sm leading-6 text-slate-200">{displayDescription}</p>
         </div>
       </div>
     </div>

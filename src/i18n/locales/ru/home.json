@@ -37,7 +37,20 @@
     "rankingsEmpty": "Рейтинг появится, когда данные станут доступны.",
     "pointsAbbrev": "очк.",
     "slideControls": "Слайды главной страницы",
-    "slideLabel": "Показать слайд {{number}}"
+    "slideLabel": "Показать слайд {{number}}",
+    "competitionLabel": "Соревнование",
+    "competitionWorld": "Дивизион WorldTeam",
+    "competitionProWest": "ProTeam Запад",
+    "competitionProEast": "ProTeam Восток",
+    "competitionContEurope": "Континентальная Европа",
+    "competitionContAmerica": "Континентальная Америка",
+    "competitionContAsia": "Континентальная Азия",
+    "competitionContAfrica": "Континентальная Африка",
+    "competitionContOceania": "Континентальная Океания",
+    "teamColumn": "Команда",
+    "rankingScrollLabel": "Прокрутка рейтинга",
+    "rankingCount": "{{count}} из {{total}} команд",
+    "rankingsViewAll": "Полный рейтинг"
   },
   "raceSchedule": {
     "title": "гоночный график",
@@ -49,7 +62,9 @@
     "emptyYesterday": "Вчера не было запланировано никаких этапов.",
     "emptyToday": "На сегодня не запланировано никаких этапов.",
     "emptyTomorrow": "Завтра не запланировано никаких этапов.",
-    "flagAlt": "{{country}} флаг"
+    "flagAlt": "{{country}} флаг",
+    "allRaces": "Все гонки",
+    "fullCalendar": "Полный календарь"
   },
   "stats": {
     "title": "Быстрые статуи",

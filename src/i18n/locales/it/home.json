@@ -37,7 +37,20 @@
     "rankingsEmpty": "Le classifiche appariranno quando disponibili.",
     "pointsAbbrev": "pt",
     "slideControls": "Diapositive della home",
-    "slideLabel": "Mostra diapositiva {{number}}"
+    "slideLabel": "Mostra diapositiva {{number}}",
+    "competitionLabel": "Competizione",
+    "competitionWorld": "Divisione WorldTeam",
+    "competitionProWest": "ProTeam Ovest",
+    "competitionProEast": "ProTeam Est",
+    "competitionContEurope": "Continental Europa",
+    "competitionContAmerica": "Continental America",
+    "competitionContAsia": "Continental Asia",
+    "competitionContAfrica": "Continental Africa",
+    "competitionContOceania": "Continental Oceania",
+    "teamColumn": "Squadra",
+    "rankingScrollLabel": "Scorri la classifica",
+    "rankingCount": "{{count}} di {{total}} squadre",
+    "rankingsViewAll": "Classifica completa"
   },
   "raceSchedule": {
     "title": "Calendario gare",
@@ -49,7 +62,9 @@
     "emptyYesterday": "Ieri non erano previste tappe.",
     "emptyToday": "Oggi non sono previste tappe.",
     "emptyTomorrow": "Domani non sono previste tappe.",
-    "flagAlt": "Bandiera di {{country}}"
+    "flagAlt": "Bandiera di {{country}}",
+    "allRaces": "Tutte le gare",
+    "fullCalendar": "Calendario completo"
   },
   "stats": {
     "title": "Statistiche rapide",
