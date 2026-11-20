@@ -2,6 +2,11 @@ name: Saturn 14-Day Test Account — Review
 on:
   pull_request:
     paths:
+      # New Saturn regression files and CAPTCHA must trigger CI automatically.
+      - 'tests/saturn*.test.mjs'
+      - 'src/components/auth/SaturnGuestCaptcha.tsx'
+      - 'docs/SATURN_GUEST_SIGNUP_ABUSE_GATE_2026-11-20.md'
+      - 'docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md'
       - 'docs/SATURN_FULL_GAME_TEST_ACCOUNT_POLICY_2026-11-20.md'
       - 'supabase/migrations/*saturn_14day*.sql'
       - 'supabase/migrations/*saturn*.sql'
