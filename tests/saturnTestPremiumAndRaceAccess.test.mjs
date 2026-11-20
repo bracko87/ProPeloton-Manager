@@ -43,6 +43,14 @@ test('race changes leave permanent-player application behavior unchanged', () =>
   assert.match(race, /revoke all on function public\.saturn_test_account_can_mutate_v1\(uuid\)/)
 })
 
+test('guest race withdrawal checks the same exact club and unexpired term', () => {
+  assert.match(race, /create or replace function public\\.cancel_race_application_v1/)
+  const cancelPart = race.slice(race.toLowerCase().indexOf('create or replace function public.cancel_race_application_v1'))
+  assert.match(cancelPart, /saturn_test_account_can_mutate_v1\\(v_club_id\\)/)
+  assert.match(cancelPart, /test_account_ineligible_or_expired/)
+  assert.match(cancelPart, /update public\\.race_team_entries/)
+})
+
 test.todo('staging JWT: guest owner may enter eligible official race before 336-hour expiry')
 test.todo('staging JWT: owner cannot use arbitrary p_club_id of another player')
 test.todo('staging JWT: on/after expiry all race-entry mutations are rejected')
