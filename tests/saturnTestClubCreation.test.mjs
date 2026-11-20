@@ -26,7 +26,7 @@ test('lowest current amateur tier, country mapping and server-approved division 
   assert.match(sql,/safe_get_amateur_division_for_country/)
   assert.match(sql,/select max\(c\.world_tier\)/)
   assert.match(sql,/private\.saturn_test_division_capacity_v1/)
-  assert.match(sql,/if v_current>=v_max_teams/)
+  assert.match(sql,/if v_current>v_max_teams/)
   assert.match(sql,/hashtextextended\('saturn-test-division:/)
   assert.match(sql,/c\.amateur_division=v_division/)
 })
