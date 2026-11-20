@@ -118,6 +118,11 @@ begin
     and not exists (
       select 1 from public.race_participant_teams p where p.team_id=c.id
     )
+    and not exists (
+      select 1 from public.race_participant_teams_v1 p
+      where p.club_id=c.id or p.owner_club_id=c.id
+        or p.participating_club_id=c.id
+    )
   order by coalesce(c.season_points,0),c.name,c.created_at
   limit 1 for update of c skip locked;
 
