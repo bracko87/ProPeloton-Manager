@@ -37,7 +37,20 @@
     "rankingsEmpty": "Le classement apparaîtra dès qu'il sera disponible.",
     "pointsAbbrev": "pts",
     "slideControls": "Diapositives d'accueil",
-    "slideLabel": "Afficher la diapositive {{number}}"
+    "slideLabel": "Afficher la diapositive {{number}}",
+    "competitionLabel": "Compétition",
+    "competitionWorld": "Division WorldTeam",
+    "competitionProWest": "ProTeam Ouest",
+    "competitionProEast": "ProTeam Est",
+    "competitionContEurope": "Continental Europe",
+    "competitionContAmerica": "Continental Amérique",
+    "competitionContAsia": "Continental Asie",
+    "competitionContAfrica": "Continental Afrique",
+    "competitionContOceania": "Continental Océanie",
+    "teamColumn": "Équipe",
+    "rankingScrollLabel": "Faire défiler le classement",
+    "rankingCount": "{{count}} équipes sur {{total}}",
+    "rankingsViewAll": "Classement complet"
   },
   "raceSchedule": {
     "title": "Calendrier des courses",
