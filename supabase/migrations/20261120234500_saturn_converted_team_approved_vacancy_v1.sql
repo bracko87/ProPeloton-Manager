@@ -207,6 +207,25 @@ begin
       continue;
     end if;
 
+    -- Never create an invented competition solely because an admin capacity
+    -- row was entered incorrectly. The exact category/tier/region must
+    -- already contain an active official main-club league cohort.
+    if not exists(
+      select 1 from public.clubs league
+      where league.club_type='main' and league.is_active=true
+        and league.deleted_at is null
+        and league.world_tier=v_destination.world_tier
+        and league.club_tier=v_destination.club_tier
+        and (case league.club_tier
+          when 'worldteam'::public.club_tier then '-'
+          when 'proteam'::public.club_tier then league.tier2_division
+          when 'continental'::public.club_tier then league.tier3_division
+          when 'amateur'::public.club_tier then league.amateur_division
+          else null end)=v_destination.region_code
+    ) then
+      continue;
+    end if;
+
     -- Lock each actual vacancy pool for all concurrent conversions. Capacity
     -- is a HARD ceiling: no AI swap and no incumbents are moved or deleted.
     perform pg_advisory_xact_lock(hashtextextended(
