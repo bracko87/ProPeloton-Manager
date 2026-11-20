@@ -62,7 +62,9 @@
     "emptyYesterday": "Ieri non erano previste tappe.",
     "emptyToday": "Oggi non sono previste tappe.",
     "emptyTomorrow": "Domani non sono previste tappe.",
-    "flagAlt": "Bandiera di {{country}}"
+    "flagAlt": "Bandiera di {{country}}",
+    "allRaces": "Tutte le gare",
+    "fullCalendar": "Calendario completo"
   },
   "stats": {
     "title": "Statistiche rapide",
