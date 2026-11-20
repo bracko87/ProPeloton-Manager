@@ -19,7 +19,7 @@ with "players/admins can use it on the deployed website."
 | SAT-04 | Passkeys | Backlog |
 | SAT-05 | Additional providers | Backlog |
 | SAT-06 | Optional birthday | Code-tested, eight-language build passed; live signup unverified |
-| SAT-07 | Simplified registration | Backlog |
+| SAT-07 | Simplified registration | **Code-tested**: manager name optional, backend generates stable unique fallback; birthday fields collapsed; benefits explained and translated (8 languages); live browser sign-up still unverified |
 | SAT-08 | Guest abuse protection | Investigating |
 | SAT-09 | Website analytics and Control Center | **Backend tested and admin UI code-tested**; last-event activity, five-minute navigation and three-table pageview checks; full Control Center/live-browser verification pending |
 | SAT-10 | Registration conversion | Backlog |
@@ -48,6 +48,34 @@ with "players/admins can use it on the deployed website."
   updated. **Netlify deployment and authenticated browser/GCC visual
   reconciliation are not yet proven**; do not mark SAT-09 fully done.
 
+### SAT-07 implementation evidence (20 November 2026)
+
+- `src/pages/Register.tsx` no longer requires a manually selected username.
+  On an empty username the existing `public.handle_new_user()` database trigger
+  generates a normalized unique name using the email prefix plus the new user's UUID,
+  without changing the player's identity or database schema.
+- Email, strong password, password confirmation, email activation and the
+  existing `/create-club` redirect are unchanged.
+- Birthday fields appear only if the player opens the optional details panel.
+  The current server-side reward rules remain unchanged: no birthday submitted
+  means no birthday reward.
+- Eight locale files now explain why the manager account matters, that name
+  entry is optional, and how to open or hide birthday details.
+- [Production site build passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44712274013)
+  and [Saturn registration verification passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44712274128).
+- **No new account was created.** Production Netlify deployment and a real
+  signup flow are not yet verified. SAT-07 remains unchecked until deployed
+  and checked, particularly on mobile.
+
+### SAT-09 independent Control Center check
+
+The ProPeloton **source** database is producing visitor events and the
+analytics-only delivery job has a fresh `last_sent_at`. The **separate shared
+Control Center** Supabase project denied access during the November 20
+reconciliation attempt. This prevents independently verifying the mobile/web
+Control Center's figures, and does **not** justify marking SAT-09 complete.
+Never change Helios or fabricate a reconciliation result to close this task.
+
 ## Safety and release rules
 
 - Keep the controlled ProPeloton Season 1 launch **10 December 2026 at 07:00 CET (06:00 UTC)**. Game clock must remain paused until the established release job runs; Saturn must not start it.
@@ -70,7 +98,7 @@ Complete the entire checklist **for ProPeloton Manager**. Put PR/commit, test ev
 - [ ] **SAT-04 · Medium · Passkeys.** Investigate Supabase passkey maturity and recovery; test device PIN/biometrics, device loss and cross-device flows before enabling.
 - [ ] **SAT-05 · Low · Other providers.** Apple or another provider only if player demand, account-linking safety and cost justify it.
 - [ ] **SAT-06 · High · Optional birthday.** Sign up with all birthday fields blank; no birthday reward when omitted. If provided, validate month/day/year, grant the existing annual reward only once under current rules. **Partially implemented:** ProPeloton form and eight translations updated, production build checks passed ([CI evidence](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44706496820)); still requires confirmed Netlify deployment and a real account-creation/reward negative test.
-- [ ] **SAT-07 · High · Simplify registration.** Reduce fields and friction, show guest versus permanent-account benefits, concise CTAs, mobile keyboard/tab navigation, sensible errors and accessible account recovery.
+- [ ] **SAT-07 · High · Simplify registration.** Reduce fields and friction, show guest versus permanent-account benefits, concise CTAs, mobile keyboard/tab navigation, sensible errors and accessible account recovery. **Code-tested:** username now optional (Supabase auth trigger generates a unique fallback), optional birthday folded away until requested, account benefits and labels translated across eight languages. [Registration production build passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44712274013). **Still open:** authenticated Netlify/browser verification, mobile interaction/accessibility, and eventual Guest Mode comparison.
 - [ ] **SAT-08 · High · Guest abuse prevention.** Explicit server-side gates for official races, leaderboards, sponsor/reward/coin farming, team quantity, welcome grants, Premium trials and conversion. Negative RLS tests for guest, signed-in player and administrator.
 
 ### S2 — Analytics and ProPeloton-specific Control Center (09–14)
