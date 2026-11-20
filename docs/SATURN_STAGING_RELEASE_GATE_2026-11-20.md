@@ -132,3 +132,14 @@ Concurrent capacity changes are now handled using the **fresh `max_teams` value 
 Added `supabase/tests/saturn_approved_vacancy_occupancy_audit.sql`: **READ-ONLY STAGING QUERY** showing approved/disabled capacities, active AI and human incumbents, current total occupancy, usable vacant slots, and review status. It never creates or approves slot records. Run after draft migrations and before enabling any capacity. Do not run on production: the capacity table does not exist there.
 
 **Staging cases remaining:** duplicate concurrent submissions, one-time placement retries, rollback after interrupted audit insert, administrator reducing/disabling a capacity during placement, and a capacity entry for a nonexistent region/league. These are explicit TODO checks, not completed database integration tests.
+
+
+## SAT-03 critical integration: existing TOP-3 AI overflow trigger
+
+Live read-only schema inspection identified `trg_rebalance_top3_overflow_ai_to_pool_v1` on `public.clubs`. It executes `rebalance_top3_overflow_ai_to_pool_v1` after an inserted/updated human WorldTeam, ProTeam or Continental club. That function works on **category + region across all world tiers**, with a 25-team upper boundary; it may move existing AI clubs into the reserve pool. An approved capacity **within one world tier** is therefore NOT sufficient to prove that a conversion into a top-three division won't disturb other teams.
+
+Actual snapshot: WorldTeam 25, PRO_WEST 27, PRO_EAST 20; Continental Africa 20, America 24, Asia 22, Europe 22, Oceania 24 (read-only November 20, 2026). These are changing game totals, NOT permanent approved capacity values.
+
+The proposed conversion SQL now has a **private transaction-scoped TOP-3 update ticket**, locked against the exact original user/club and verified source and destination tiers/region. Only the conversion's precise club UPDATE skips the legacy overflow trigger; every normal permanent-account onboarding or club update retains the preexisting rebalancing behavior. Before issuing a ticket, the placement RPC takes an advisory lock on the **global** category/region pool and verifies the current all-world-tier incumbent count is strictly below 25. It still applies the narrower explicitly approved per-world-tier cap. Ticket insertion, actual club update, ticket deletion and immutable successful placement audit share one transaction; any exception rolls all changes back.
+
+**Unverified staging cases:** trigger execution order, normal registered-player top-tier rebalancing remains unchanged, converted vacancy does not move AI/human clubs or rewrite historical races, global cohort counts remain bounded under parallel conversions across different world tiers, PRO_WEST over-cap remains blocked, and simulation/season movement still works. No production trigger, AI team, race or placement table was modified.
