@@ -5,6 +5,7 @@ on:
       - 'docs/SATURN_FULL_GAME_TEST_ACCOUNT_POLICY_2026-11-20.md'
       - 'supabase/migrations/*saturn_14day*.sql'
       - 'supabase/migrations/*saturn*.sql'
+      - 'tests/saturnFinancePrivilegeHardening.test.mjs'
       - 'supabase/tests/saturn*.sql'
       - 'scripts/saturn_sql_parse.py'
       - 'supabase/migrations/*saturn_fail_closed_real_test_team_creation*.sql'
