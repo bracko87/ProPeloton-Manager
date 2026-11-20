@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, AI transfer bid authorization
+
+- ✅ Draft 14-day lifecycle and owned club safeguards now cover **54 selected player-initiated write RPCs**, up from 52. New `supabase/migrations/20261120235920_saturn_ai_unsolicited_bid_expiry_and_ownership_v1.sql` adds independent buyer owner/member validation and unconverted 14-day trial checks before **any** unsolicited AI bid record, including hard-rejected bids, and before confirmation converts an accepted bid into a transfer negotiation.
+- ✅ Real ownership logic in the AI bid calculator and all normal player authorization, decision/financial pricing rules, read-only AI decision preview and scheduler have not been changed. Email/Google-linked but unconverted test accounts still follow their original 14-day trial.
+- ✅ New `tests/saturnAiUnsolicitedBidSecurity.test.mjs` adds three source tests plus five real-staging TODO cases for authorization, rejected record prevention, expired conversion, and member/owner regressions.
+- ✅ **Last verified source commit `10ba73eaca20034146bcce3a64dae6383c49b3c0`: 294 cases, 158 PASS / 0 FAIL / 136 staging TODO; 273 PostgreSQL SQL statements / 69 PL/pgSQL bodies in 33 files; all THREE GitHub workflows including app build passed.**
+- ⬜ This does not close all player/system mutation or anti-abuse coverage. Isolated staging, actual guest Auth/JWT, rate limits, transfer finance, full gameplay and conversion, and the separately existing live finance helper security issue are still unresolved. **No Saturn feature has been deployed to production; Guest Mode remains OFF.**
+
+[Full verification and release blockers](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, contract and transfer offer protections
 
 - ✅ **52 selected player-facing write RPCs** now have draft original-UUID/unconverted lifecycle/14-day expiry guards, up from 48. Added `cancel_rider_transfer_listing`, `reject_rider_transfer_offer`, `submit_contract_renewal_offer`, `withdraw_rider_transfer_offer` in `supabase/migrations/20261120235910_saturn_contract_transfer_offer_expiry_v1.sql`. The existing club ownership checks remain ahead of each trial restriction.
