@@ -14,10 +14,12 @@ export default function FeatureDetailPage(): JSX.Element {
   const pictures = key ? (FEATURE_IMAGES[key] || []) : []
   const background = key ? FEATURE_BACKGROUNDS[key] : undefined
   const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null)
+  const [galleryIndex, setGalleryIndex] = useState(0)
 
   useEffect(() => {
     window.scrollTo(0, 0)
     setActiveImageIndex(null)
+    setGalleryIndex(0)
   }, [key])
 
   useEffect(() => {
@@ -126,23 +128,47 @@ export default function FeatureDetailPage(): JSX.Element {
             <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
               <h2 className="px-6 pt-6 text-xl font-semibold">{t('why.page.gameplayImages')}</h2>
               {pictures.length ? (
-                <div className="grid gap-3 p-5">
-                  {pictures.map((picture, index) => (
+                <div className="p-5">
+                  <div className="flex items-center gap-2 sm:gap-3" aria-label={t('why.page.gameplayImages')}>
+                    {pictures.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label={t('why.page.previousImage')}
+                        onClick={() => setGalleryIndex(index => (index + pictures.length - 1) % pictures.length)}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-700 transition-colors hover:border-amber-400 hover:bg-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-500"
+                      >
+                        <ChevronLeft size={21} aria-hidden="true" />
+                      </button>
+                    )}
                     <button
-                      key={picture.src}
                       type="button"
-                      onClick={() => setActiveImageIndex(index)}
-                      aria-label={`${t('why.page.openImage')} ${index + 1}: ${picture.alt}`}
-                      className="group overflow-hidden rounded-md border border-slate-200 bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500"
+                      onClick={() => setActiveImageIndex(galleryIndex)}
+                      aria-label={`${t('why.page.openImage')} ${galleryIndex + 1}: ${pictures[galleryIndex]?.alt ?? ''}`}
+                      className="group block min-w-0 flex-1 overflow-hidden rounded-md border border-slate-200 bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500"
                     >
                       <img
-                        src={picture.src}
-                        alt={picture.alt}
+                        src={pictures[galleryIndex].src}
+                        alt={pictures[galleryIndex].alt}
                         loading="lazy"
                         className="aspect-video w-full object-contain transition-transform duration-200 group-hover:scale-[1.02]"
                       />
                     </button>
-                  ))}
+                    {pictures.length > 1 && (
+                      <button
+                        type="button"
+                        aria-label={t('why.page.nextImage')}
+                        onClick={() => setGalleryIndex(index => (index + 1) % pictures.length)}
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-100 text-slate-700 transition-colors hover:border-amber-400 hover:bg-amber-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-500"
+                      >
+                        <ChevronRight size={21} aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                  {pictures.length > 1 && (
+                    <div className="mt-3 text-center text-xs font-medium text-slate-500" aria-live="polite">
+                      {galleryIndex + 1} / {pictures.length}
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="m-5 flex aspect-video flex-col items-center justify-center gap-3 rounded-md border border-dashed border-slate-300 bg-slate-100 p-5 text-center text-slate-500">
