@@ -26,35 +26,6 @@ create policy saturn_guest_drafts_select_own_v1
 on public.saturn_guest_drafts_v1 for select to authenticated
 using (user_id = (select auth.uid()));
 
-drop policy if exists saturn_guest_drafts_insert_own_anonymous_v1 on public.saturn_guest_drafts_v1;
-create policy saturn_guest_drafts_insert_own_anonymous_v1
-on public.saturn_guest_drafts_v1 for insert to authenticated
-with check (
-  user_id = (select auth.uid())
-  and exists (
-    select 1 from auth.users au
-    where au.id = (select auth.uid()) and au.is_anonymous is true
-  )
-);
-
-drop policy if exists saturn_guest_drafts_update_own_anonymous_v1 on public.saturn_guest_drafts_v1;
-create policy saturn_guest_drafts_update_own_anonymous_v1
-on public.saturn_guest_drafts_v1 for update to authenticated
-using (
-  user_id = (select auth.uid())
-  and exists (
-    select 1 from auth.users au
-    where au.id = (select auth.uid()) and au.is_anonymous is true
-  )
-)
-with check (
-  user_id = (select auth.uid())
-  and exists (
-    select 1 from auth.users au
-    where au.id = (select auth.uid()) and au.is_anonymous is true
-  )
-);
-
 -- auth.users is not directly readable by authenticated app clients in Supabase.
 -- Use a dedicated, narrowly scoped helper to avoid client-visible auth access.
 create or replace function public.saturn_is_current_guest_v1()
@@ -70,16 +41,15 @@ $$;
 revoke all on function public.saturn_is_current_guest_v1() from public, anon;
 grant execute on function public.saturn_is_current_guest_v1() to authenticated;
 
--- Replace direct auth.users RLS checks with a definer helper, so RLS does not
--- depend on client SELECT privileges on auth.users.
-drop policy saturn_guest_drafts_insert_own_anonymous_v1 on public.saturn_guest_drafts_v1;
+-- Guest-only write policies use the narrow helper, not client auth.users access.
+drop policy if exists saturn_guest_drafts_insert_own_anonymous_v1 on public.saturn_guest_drafts_v1;
 create policy saturn_guest_drafts_insert_own_anonymous_v1
 on public.saturn_guest_drafts_v1 for insert to authenticated
 with check (
   user_id = (select auth.uid())
   and (select public.saturn_is_current_guest_v1())
 );
-drop policy saturn_guest_drafts_update_own_anonymous_v1 on public.saturn_guest_drafts_v1;
+drop policy if exists saturn_guest_drafts_update_own_anonymous_v1 on public.saturn_guest_drafts_v1;
 create policy saturn_guest_drafts_update_own_anonymous_v1
 on public.saturn_guest_drafts_v1 for update to authenticated
 using (user_id = (select auth.uid()) and (select public.saturn_is_current_guest_v1()))
