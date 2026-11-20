@@ -17,16 +17,18 @@ test('vacancies require separate private approved, disabled-by-default category/
  assert.doesNotMatch(sql,/insert into private\.saturn_converted_vacancy_caps_v1/i)
 })
 test('successful conversion placement has one permanent audit row and cannot be repeated',()=>{
- assert.match(sql,/create table if not exists private\\.saturn_converted_team_placements_v1/)
- assert.match(sql,/user_id uuid primary key references auth\\.users\\(id\\)/)
- assert.match(sql,/club_id uuid not null unique references public\\.clubs\\(id\\)/)
- assert.match(sql,/revoke all on table private\\.saturn_converted_team_placements_v1/)
- assert.match(sql,/from private\\.saturn_converted_team_placements_v1 p/)
- assert.match(sql,/'status','already_placed'/)
- assert.match(sql,/insert into private\\.saturn_converted_team_placements_v1\\(/)
- assert.match(sql,/from_club_tier,from_world_tier/)
- assert.match(sql,/to_club_tier,to_world_tier,to_region/)
- assert.match(ui, /case 'already_placed':/)
+ for(const phrase of [
+  'create table if not exists private.saturn_converted_team_placements_v1',
+  'user_id uuid primary key references auth.users(id)',
+  'club_id uuid not null unique references public.clubs(id)',
+  'revoke all on table private.saturn_converted_team_placements_v1',
+  'from private.saturn_converted_team_placements_v1 p',
+  "'status','already_placed'",
+  'insert into private.saturn_converted_team_placements_v1(',
+  'from_club_tier,from_world_tier',
+  'to_club_tier,to_world_tier,to_region'
+ ]) assert.ok(sql.includes(phrase), phrase)
+ assert.ok(ui.includes("case 'already_placed':"))
  const writePos=sql.indexOf('update public.clubs set')
  const auditPos=sql.indexOf('insert into private.saturn_converted_team_placements_v1(')
  const successPos=sql.indexOf("'placed',true,'status','moved_to_approved_vacancy'")
