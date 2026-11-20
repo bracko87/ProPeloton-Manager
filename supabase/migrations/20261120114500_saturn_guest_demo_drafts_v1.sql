@@ -21,11 +21,6 @@ grant select, insert, update (draft) on table public.saturn_guest_drafts_v1 to a
 
 -- A converted account can still read its original demo draft, allowing a
 -- future explicit migration. Only a currently anonymous owner can mutate it.
-drop policy if exists saturn_guest_drafts_select_own_v1 on public.saturn_guest_drafts_v1;
-create policy saturn_guest_drafts_select_own_v1
-on public.saturn_guest_drafts_v1 for select to authenticated
-using (user_id = (select auth.uid()));
-
 -- auth.users is not directly readable by authenticated app clients in Supabase.
 -- Use a dedicated, narrowly scoped helper to avoid client-visible auth access.
 create or replace function public.saturn_is_current_guest_v1()
@@ -41,6 +36,17 @@ $$;
 revoke all on function public.saturn_is_current_guest_v1() from public, anon;
 grant execute on function public.saturn_is_current_guest_v1() to authenticated;
 
+drop policy if exists saturn_guest_drafts_select_own_v1 on public.saturn_guest_drafts_v1;
+create policy saturn_guest_drafts_select_own_v1
+on public.saturn_guest_drafts_v1 for select to authenticated
+using (
+  user_id = (select auth.uid())
+  and (
+    not (select public.saturn_is_current_guest_v1())
+    or created_at > now() - interval '7 days'
+  )
+);
+
 -- Guest-only write policies use the narrow helper, not client auth.users access.
 drop policy if exists saturn_guest_drafts_insert_own_anonymous_v1 on public.saturn_guest_drafts_v1;
 create policy saturn_guest_drafts_insert_own_anonymous_v1
@@ -48,12 +54,13 @@ on public.saturn_guest_drafts_v1 for insert to authenticated
 with check (
   user_id = (select auth.uid())
   and (select public.saturn_is_current_guest_v1())
+  and created_at > now() - interval '7 days'
 );
 drop policy if exists saturn_guest_drafts_update_own_anonymous_v1 on public.saturn_guest_drafts_v1;
 create policy saturn_guest_drafts_update_own_anonymous_v1
 on public.saturn_guest_drafts_v1 for update to authenticated
-using (user_id = (select auth.uid()) and (select public.saturn_is_current_guest_v1()))
-with check (user_id = (select auth.uid()) and (select public.saturn_is_current_guest_v1()));
+using (user_id = (select auth.uid()) and (select public.saturn_is_current_guest_v1()) and created_at > now() - interval '7 days')
+with check (user_id = (select auth.uid()) and (select public.saturn_is_current_guest_v1()) and created_at > now() - interval '7 days');
 
 -- No DELETE privileges for players. Retention and verified conversion cleanup
 -- require a separate privileged, audited migration.
