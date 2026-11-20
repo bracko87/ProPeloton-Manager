@@ -32,6 +32,7 @@ export default function FeatureDetailPage(): JSX.Element {
     growth: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20development.png',
     calendar: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/593%20dated%20races.png',
     preparation: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Detailed%20race%20preparation.png',
+    tiers: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Four%20competition%20tiers.png',
   }
   const heroImage = heroImages[key] ?? null
 
