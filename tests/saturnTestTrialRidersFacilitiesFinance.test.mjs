@@ -24,6 +24,16 @@ for(const [i,[name,club]] of names.entries()){
    assert.ok(src.includes('Test account expired or not authorized for this club'))
  })
 }
+test('facility expiry check is before INSERT, not inside infrastructure columns',()=>{
+ const start=sql.indexOf('CREATE OR REPLACE FUNCTION public.upgrade_club_facility(')
+ assert.ok(start>=0)
+ const body=sql.slice(start)
+ const check=body.indexOf('saturn_test_account_can_mutate_v1(p_club_id)')
+ const insert=body.indexOf('insert into public.club_infrastructure (')
+ assert.ok(check>0 && insert>check,'the anonymous expiry guard must precede facility INSERT')
+ assert.doesNotMatch(body,/insert into public\\.club_infrastructure \\(\\s*-- SAT-08/)
+})
+
 test('financial and rider actions keep original paths for normal registered users',()=>{
  assert.match(sql,/public\.finance_issue_emergency_loan_non_ai_core_v1/)
  assert.match(sql,/public\.finance_spend_from_club/)
