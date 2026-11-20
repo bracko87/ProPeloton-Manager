@@ -62,7 +62,9 @@
     "emptyYesterday": "No se programaron etapas ayer.",
     "emptyToday": "No hay etapas programadas hoy.",
     "emptyTomorrow": "No hay etapas programadas para mañana.",
-    "flagAlt": "Bandera {{country}}"
+    "flagAlt": "Bandera {{country}}",
+    "allRaces": "Todas las carreras",
+    "fullCalendar": "Calendario completo"
   },
   "stats": {
     "title": "Estadísticas rápidas",
