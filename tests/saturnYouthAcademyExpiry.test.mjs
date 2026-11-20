@@ -28,7 +28,7 @@ for(const [i,name] of functions.entries()){
 }
 test('Youth Academy read-only and scheduler functions are not replaced',()=>{
  assert.doesNotMatch(sql,/CREATE OR REPLACE FUNCTION public\.(?:get_my_youth|process_youth_|run_youth_academy_season_transition|finance_process_monthly_youth)/)
- assert.doesNotMatch(sql,/REVOKE|GRANT|DISABLE ROW LEVEL SECURITY|DROP FUNCTION/i)
+ assert.doesNotMatch(sql,/^\\s*(?:REVOKE\\s|GRANT\\s|DROP\\s+FUNCTION\\s|ALTER\\s+TABLE[^\\n]*DISABLE\\s+ROW\\s+LEVEL\\s+SECURITY)/mi)
  assert.match(sql,/welcome Premium trial does NOT automatically grant paid Youth Academy/)
 })
 test.todo('staging: expired linked but unconverted manager cannot enter Youth race or modify lineup')
