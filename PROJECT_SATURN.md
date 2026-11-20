@@ -5,6 +5,49 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## Current project checklist status (20 November 2026)
+
+The checkboxes below stay unchecked until **live-verified**. Source tests and
+database checks are tracked separately so we never confuse "code is written"
+with "players/admins can use it on the deployed website."
+
+| ID | Task | Current progress |
+|---|---|---|
+| SAT-01 | Guest play | Investigating; not enabled |
+| SAT-02 | Convert guest without losing progress | Investigating; not enabled |
+| SAT-03 | Google Sign-In | Investigating; not enabled |
+| SAT-04 | Passkeys | Backlog |
+| SAT-05 | Additional providers | Backlog |
+| SAT-06 | Optional birthday | Code-tested, eight-language build passed; live signup unverified |
+| SAT-07 | Simplified registration | Backlog |
+| SAT-08 | Guest abuse protection | Investigating |
+| SAT-09 | Website analytics and Control Center | **Backend tested and admin UI code-tested**; last-event activity, five-minute navigation and three-table pageview checks; full Control Center/live-browser verification pending |
+| SAT-10 | Registration conversion | Backlog |
+| SAT-11 | Online presence | Backlog; last-five-minute navigation in SAT-09 is **not** true online presence |
+| SAT-12 | Gameplay events | Backlog |
+| SAT-13 | Economy/transaction monitoring | Backlog |
+| SAT-14 | Event/audit search | Backlog |
+| SAT-15 | PostgreSQL architecture | Backlog |
+| SAT-16 | Redis feasibility | Backlog |
+| SAT-17 | Admin security | Existing account mapping verified; one admin analytics RPC invocation privilege tightened; wider security audit pending |
+| SAT-18 | Visual polish | Backlog |
+| SAT-19 | External tests | Backlog |
+| SAT-20 | First-run guidance | Backlog |
+| SAT-21 | Unique game mechanics | Backlog |
+
+**SAT-09 change evidence (20 Nov):**
+- ProPeloton production `public.get_admin_analytics_dashboard_v1(7|30)` now
+  includes UTC server `generated_at`, last recorded page/session time,
+  5-minute navigation counts and an integrity comparison of independent
+  visitor/session/path pageview totals. An ordinary authenticated test user
+  was denied, authorized admin succeeded, and anonymous EXECUTE was revoked.
+- For **19 November UTC**, all three source tables agree on **67 pageviews**;
+  26 visitor identifiers and 29 sessions were recorded.
+- [Production build and scope/access contract CI: PASS](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44710179291).
+- Source migrations are committed. Production DB and GitHub are both
+  updated. **Netlify deployment and authenticated browser/GCC visual
+  reconciliation are not yet proven**; do not mark SAT-09 fully done.
+
 ## Safety and release rules
 
 - Keep the controlled ProPeloton Season 1 launch **10 December 2026 at 07:00 CET (06:00 UTC)**. Game clock must remain paused until the established release job runs; Saturn must not start it.
@@ -32,7 +75,7 @@ Complete the entire checklist **for ProPeloton Manager**. Put PR/commit, test ev
 
 ### S2 — Analytics and ProPeloton-specific Control Center (09–14)
 
-- [ ] **SAT-09 · High · Accurate website analytics.** Reconcile daily visitor IDs, sessions and page views end-to-end: browser event → database rows → game admin RPC → Control Center ProPeloton panel. Display UTC reporting window, last event time, last successful ingest and user-visible refresh time; no inferred visitors. **Partially repaired:** reporting-only job `gcc-live-analytics` re-enabled 20 Nov under verified launch hold, 1-minute schedule, successful remote HTTP 204, gameplay tick stays disabled. A visual Control Center reconciliation remains mandatory.
+- [ ] **SAT-09 · High · Accurate website analytics.** Reconcile daily visitor IDs, sessions and page views end-to-end: browser event → database rows → game admin RPC → Control Center ProPeloton panel. Display UTC reporting window, last event time, last successful ingest and user-visible refresh time; no inferred visitors. **Partially repaired and extended on 20 November:** reporting-only job `gcc-live-analytics` re-enabled 20 Nov under verified launch hold, 1-minute schedule, successful remote HTTP 204, gameplay tick stays disabled. A visual Control Center reconciliation remains mandatory.
 - [ ] **SAT-10 · High · Conversion funnel.** Count landing → registration opened → account created → team created → later return, with pseudonymous IDs, idempotent event tracking and meaningful conversion percentages.
 - [ ] **SAT-11 · High · Online player presence.** Explicit definitions for live authenticated **people**, active **human clubs**, **guests**, idle timeout and recent visits. Never show all registered accounts as online users.
 - [ ] **SAT-12 · Medium · Gameplay activity.** Aggregate team training, rider development, race applications, results, transfers, staff management and equipment without heavy event logging.
