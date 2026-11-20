@@ -44,7 +44,7 @@ test('race changes leave permanent-player application behavior unchanged', () =>
 })
 
 test('guest race withdrawal checks the same exact club and unexpired term', () => {
-  assert.ok(race.includes('create or replace function public.cancel_race_application_v1'))
+  assert.ok(race.toLowerCase().includes('create or replace function public.cancel_race_application_v1'))
   const cancelPart = race.slice(race.toLowerCase().indexOf('create or replace function public.cancel_race_application_v1'))
   assert.ok(cancelPart.includes('saturn_test_account_can_mutate_v1(v_club_id)'))
   assert.match(cancelPart, /test_account_ineligible_or_expired/)
