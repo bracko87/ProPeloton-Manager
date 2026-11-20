@@ -4457,6 +4457,73 @@ function ReleaseRiderModal({
   )
 }
 
+
+/** Only a local, intentionally enabled rider-profile screenshot can show this fixture.
+ * No data is inserted, updated or deleted in the game database.
+ */
+function isLocalVladimirScreenshotPreview(rider: RiderDetails | null, search: string): boolean {
+  if (!rider || typeof window === 'undefined') return false
+  if (!['localhost', '127.0.0.1'].includes(window.location.hostname)) return false
+  return new URLSearchParams(search).get('screenshotPreview') === '1' &&
+    rider.first_name.trim().toLowerCase() === 'vladimir' &&
+    /^(djordjevic|đorđević)$/i.test(rider.last_name.trim())
+}
+
+function buildLocalRiderScreenshotPreview(rider: RiderDetails, gameDate?: string | null) {
+  const date = new Date(`${String(gameDate || '2000-01-01').slice(0, 10)}T00:00:00Z`)
+  if (!Number.isFinite(date.getTime())) date.setTime(Date.UTC(2000, 0, 1))
+  const dayBefore = (days: number) => {
+    const d = new Date(date)
+    d.setUTCDate(d.getUTCDate() - days)
+    return d.toISOString().slice(0, 10)
+  }
+  const skillKeys: RiderSkillAttributeCode[] = [
+    'sprint', 'climbing', 'time_trial', 'endurance', 'flat', 'recovery',
+    'resistance', 'race_iq', 'teamwork',
+  ]
+  const skillProgressHistory: RiderSkillProgressPoint[] = Array.from({ length: 20 }, (_, i) => {
+    const skills = Object.fromEntries(skillKeys.map((key, j) => [
+      key, Math.max(1, Number(rider[key]) - Math.round((19 - i) * (.22 + .05 * (j % 3)))),
+    ])) as Record<RiderSkillAttributeCode, number>
+    return { week_start_date: dayBefore((19 - i) * 7), week_label: `Week ${i + 1}`, ...skills }
+  })
+  const points = [3, 10, 7, 19, 12, 28, 18, 34, 26, 39, 31, 46]
+  const monthlyPointsHistory: RiderMonthlyPointsRow[] = points.map((value, i) => {
+    const d = new Date(date)
+    d.setUTCDate(1)
+    d.setUTCMonth(d.getUTCMonth() - (11 - i))
+    return {
+      month_start: d.toISOString().slice(0, 10),
+      month_label: d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit', timeZone: 'UTC' }),
+      international_points: value,
+      sprint_points: Math.round(value * .35),
+      climb_points: Math.round(value * .2),
+    }
+  })
+  const recentRaces: RiderRecentRaceRow[] = [
+    { race_name: 'Demo Classic', race_date: dayBefore(5), finish_position: 2, ci_points: 40 },
+    { race_name: 'Demo Mountain Stage', race_date: dayBefore(12), finish_position: 5, ci_points: 22 },
+    { race_name: 'Demo Road Race', race_date: dayBefore(20), finish_position: 1, ci_points: 60 },
+    { race_name: 'Demo Time Trial', race_date: dayBefore(28), finish_position: 7, ci_points: 15 },
+    { race_name: 'Demo Sprint Challenge', race_date: dayBefore(35), finish_position: 3, ci_points: 30 },
+  ]
+  const recentTrainingSessions: RiderTrainingSessionPoint[] = Array.from({ length: 10 }, (_, i) => ({
+    label: `Day ${i + 1}`, value: .12 + .06 * i,
+    focus: skillKeys[i % skillKeys.length], intensity: 'normal',
+    source: 'regular_training', date: dayBefore(10 - i), participated: true,
+  }))
+  const seasonOverview: RiderSeasonOverview = { points: 167, podiums: 4, jerseys: 1 }
+  const seasonStats: RiderSeasonStatsBox = { races: 12, wins: 2, podiums: 4, top10: 9, points: 167 }
+  const careerHistory: RiderCareerHistoryRow[] = [{
+    season: 1, season_label: 'Demo season 1', team_name: 'Illustrative team',
+    points: 167, is_current_season: true,
+  }]
+  return {
+    skillProgressHistory, monthlyPointsHistory, recentRaces, recentTrainingSessions,
+    seasonOverview, seasonStats, careerHistory,
+  }
+}
+
 export default function RiderProfilePage({
   riderId,
   gameDate,
@@ -5458,6 +5525,14 @@ export default function RiderProfilePage({
     return currentSeasonRow ? [currentSeasonRow, ...filteredRows] : historyRows
   }, [currentSeasonNumber, focusedTrainingRider, historyRows, seasonOverview.points, t])
 
+  const screenshotPreviewEnabled = isLocalVladimirScreenshotPreview(selectedRider, location.search)
+  const screenshotPreview = useMemo(
+    () => screenshotPreviewEnabled && selectedRider
+      ? buildLocalRiderScreenshotPreview(selectedRider, gameDate)
+      : null,
+    [screenshotPreviewEnabled, selectedRider, gameDate],
+  )
+
   return (
     <div className="w-full">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -5888,7 +5963,12 @@ export default function RiderProfilePage({
 
           {activeTab === 'analysis' && (
             <div className="space-y-4">
-              {!isPremium ? (
+              {screenshotPreview && (
+                <div role="note" className="rounded-md border border-amber-500 bg-amber-100 px-4 py-3 text-sm font-semibold text-amber-950">
+                  DEMO SCREENSHOT PREVIEW — illustrative statistics only. No game data is changed. Remove screenshotPreview=1 from the local URL to restore real results.
+                </div>
+              )}
+              {!isPremium && !screenshotPreview ? (
                 <SectionCard title={t('ownedAnalysis.premiumCentreTitle')} subtitle={t('ownedAnalysis.premiumCentreSubtitle')}>
                   <PremiumLockedPanel title={t('ownedAnalysis.premiumCentreLockTitle')} description={t('ownedAnalysis.premiumCentreLockDescription')} />
                 </SectionCard>
@@ -5910,7 +5990,7 @@ export default function RiderProfilePage({
                       </Link>
                     </div>
                   </SectionCard>
-                  <RichRiderPerformanceAnalysisPage rider={selectedRider} analysis={performanceAnalysis} analysisLoading={performanceAnalysisLoading} analysisError={performanceAnalysisError} skillRows={skillRows} seasonOverview={seasonOverview} seasonStats={seasonStats} recentRaces={recentRaces} monthlyPointsHistory={monthlyPointsHistory} recentTrainingSessions={recentTrainingSessions} skillProgressHistory={skillProgressHistory} careerHistory={displayHistoryRows} raceSharpness={raceSharpness} profileAge={profileAge} gameDate={gameDate} />
+                  <RichRiderPerformanceAnalysisPage rider={selectedRider} analysis={performanceAnalysis} analysisLoading={performanceAnalysisLoading} analysisError={performanceAnalysisError} skillRows={skillRows} seasonOverview={screenshotPreview?.seasonOverview ?? seasonOverview} seasonStats={screenshotPreview?.seasonStats ?? seasonStats} recentRaces={screenshotPreview?.recentRaces ?? recentRaces} monthlyPointsHistory={screenshotPreview?.monthlyPointsHistory ?? monthlyPointsHistory} recentTrainingSessions={screenshotPreview?.recentTrainingSessions ?? recentTrainingSessions} skillProgressHistory={screenshotPreview?.skillProgressHistory ?? skillProgressHistory} careerHistory={screenshotPreview?.careerHistory ?? displayHistoryRows} raceSharpness={raceSharpness} profileAge={profileAge} gameDate={gameDate} />
                 </>
               )}
             </div>
