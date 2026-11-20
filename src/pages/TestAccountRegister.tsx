@@ -43,6 +43,26 @@ export default function TestAccountRegister(): JSX.Element {
     setBusy(false)
   }
 
+  async function requestApprovedPlacement(): Promise<string> {
+    // Registration never depends on a league vacancy. The server selects a
+    // reviewed, truly empty upper-tier slot, or keeps the original team.
+    const { data: placement, error } = await supabase
+      .rpc('saturn_place_converted_test_team_v1')
+    if (error) return 'Your team is registered. Division placement can be reviewed later.'
+    switch (placement?.status) {
+      case 'moved_to_approved_vacancy':
+        return 'Your team was placed in an approved ' +
+          String(placement.club_tier ?? 'higher') +
+          ' division. Your riders, finances and results remain unchanged.'
+      case 'race_commitment_pending':
+        return 'Your team remains in its current division until its ongoing race commitments finish.'
+      case 'season_transition_pending':
+        return 'Your team remains in its current division during the season transition.'
+      default:
+        return 'No approved higher-division vacancy is available. Your existing team remains unchanged.'
+    }
+  }
+
   async function linkGoogle() {
     if (busy || !user?.id || user.id !== originId || user.is_anonymous !== true) return
     setBusy(true)
@@ -115,7 +135,8 @@ export default function TestAccountRegister(): JSX.Element {
         return
       }
       await refreshUser()
-      setStatus('Google registration completed on your original account. Your riders, finances and original Premium expiry remain unchanged.')
+      const placementMessage = await requestApprovedPlacement()
+      setStatus('Google registration completed on your original account. Your original Premium expiry is preserved. ' + placementMessage)
     } catch {
       setStatus('Could not confirm Google registration; do not create another team.')
     } finally {
@@ -153,9 +174,12 @@ export default function TestAccountRegister(): JSX.Element {
         .rpc('saturn_finalize_test_account_email_conversion_v1')
       const converted = !finalizeError && result?.success === true &&
         result?.converted === true && result?.user_id === originId
-      setStatus(converted
-        ? 'Registration completed on your original account. Your team, results and original Premium expiry are preserved.'
-        : 'Your email and password are linked, but the server could not complete team registration. Keep this session and contact support; do not create a second account.')
+      if (converted) {
+        const placementMessage = await requestApprovedPlacement()
+        setStatus('Registration completed on your original account. Your original Premium expiry is preserved. ' + placementMessage)
+      } else {
+        setStatus('Your email and password are linked, but the server could not complete team registration. Keep this session and contact support; do not create a second account.')
+      }
     }
     await refreshUser()
     setBusy(false)
