@@ -18,7 +18,7 @@ for(const [i,[name,club]] of names.entries()){
    const end=i+1<names.length?sql.indexOf('CREATE OR REPLACE FUNCTION public.'+names[i+1][0]+'('):sql.length
    assert.ok(start>=0 && end>start,name+' source missing')
    const src=sql.slice(start,end)
-   assert.ok(src.includes('u.id = auth.uid() and u.is_anonymous is true'),name+' must check canonical identity')
+   assert.ok(src.includes('public.saturn_test_account_requires_guard_v1()'),name+' must restrict unconverted lifecycle regardless of Auth label')
    assert.ok(src.includes('public.saturn_test_account_can_mutate_v1('+club+')'),name+' must check exact club')
    assert.ok(src.includes("using errcode='42501'"))
    assert.ok(src.includes('Test account expired or not authorized for this club'))
