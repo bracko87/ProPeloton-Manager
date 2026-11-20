@@ -95,6 +95,9 @@ test('converted top-three assignment cannot trigger global AI overflow rebalance
   'insert into private.saturn_converted_team_update_tickets_v1(',
   'delete from private.saturn_converted_team_update_tickets_v1'
  ])assert.ok(sql.includes(phrase),phrase)
+ const top3Trigger=sql.slice(sql.indexOf('create or replace function public.trg_rebalance_top3_overflow_ai_to_pool_v1()'),sql.indexOf('-- Caller can only ask to place their OWN original trial club'))
+ assert.ok(top3Trigger.includes("if tg_op='UPDATE' then"),'OLD fields must not be read in INSERT trigger')
+ assert.ok(top3Trigger.includes("and old.owner_user_id=t.user_id"))
  const insertTicket=sql.lastIndexOf('insert into private.saturn_converted_team_update_tickets_v1(')
  const update=sql.lastIndexOf('update public.clubs set')
  const deleteTicket=sql.lastIndexOf('delete from private.saturn_converted_team_update_tickets_v1')
