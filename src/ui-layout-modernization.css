@@ -336,3 +336,61 @@
 ) {
   border-radius: var(--ui-modern-panel-radius);
 }
+
+
+/* V5 — National Ranking-style content containers only.
+   The earlier V4 radius could lose the cascade to the V2 two-class card rule.
+   Keep segmented tab wrappers and buttons exactly as the player approved them.
+   Do not change badges, rider avatars, circular indicators or header actions. */
+.ui-modernized-shell > div > main :is(
+  div.rounded.bg-white,
+  div.rounded-md.bg-white,
+  div.rounded-lg.bg-white,
+  div.rounded-xl.bg-white,
+  div.rounded-2xl.bg-white,
+  div.rounded-3xl.bg-white,
+  section.rounded.bg-white,
+  section.rounded-lg.bg-white,
+  section.rounded-xl.bg-white,
+  section.rounded-2xl.bg-white,
+  article.rounded-lg.bg-white,
+  article.rounded-xl.bg-white,
+  article.rounded-2xl.bg-white,
+  div.ui-modern-card
+):not(.inline-flex):not(.flex):not([role="tablist"]):not(:has(> button:first-child)) {
+  border-radius: 4px !important;
+}
+
+/* Inner content surfaces receive the same restrained radius, including
+   the bordered gray panels in National Ranking, Squad and Training. */
+.ui-modernized-shell > div > main :is(div,section,article):is(
+  .rounded,
+  .rounded-md,
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl
+):is(.border,.shadow,.shadow-sm,.bg-slate-50,.bg-gray-50,.bg-slate-100,.bg-gray-100):not(.inline-flex):not([role="tablist"]):not(:has(> button:first-child)) {
+  border-radius: 4px !important;
+}
+/* Specificity-safe rule for the Overview panel component (which also has
+   bg-white and border utility classes). */
+.ui-modernized-shell > div > main div.ui-modern-card {
+  border-radius: 4px !important;
+}
+
+/* Sidebar collapse arrow: no frame, border, background block or shadow.
+   Preserve its accessible label, hit target, and click handler. */
+.ui-modernized-shell > aside > button[aria-label] {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  color: #d7e1ed;
+}
+.ui-modernized-shell > aside > button[aria-label]:hover {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: #ffffff;
+}
