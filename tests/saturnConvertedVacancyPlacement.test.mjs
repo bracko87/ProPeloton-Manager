@@ -75,6 +75,32 @@ test('highest approved vacant target uses country region mapping, capacity locks
 
  assert.doesNotMatch(sql,/assign_new_club_to_ai_slot\(|delete from public\.clubs|update public\.race_|update public\.riders|update public\.premium_/)
 })
+test('converted top-three assignment cannot trigger global AI overflow rebalance',()=>{
+ for(const phrase of [
+  'create table if not exists private.saturn_converted_team_update_tickets_v1',
+  'transaction_id bigint not null',
+  'user_id uuid not null',
+  'to_region text not null',
+  'revoke all on table private.saturn_converted_team_update_tickets_v1',
+  'create or replace function public.trg_rebalance_top3_overflow_ai_to_pool_v1()',
+  't.transaction_id=txid_current()',
+  't.user_id=auth.uid()',
+  'old.club_tier=t.from_club_tier',
+  'new.club_tier=t.to_club_tier',
+  'new.world_tier=t.to_world_tier',
+  'return new;',
+  'perform public.rebalance_top3_overflow_ai_to_pool_v1(',
+  'saturn-top3-global:',
+  'if v_global_top3_occupied >= 25 then continue; end if;',
+  'insert into private.saturn_converted_team_update_tickets_v1(',
+  'delete from private.saturn_converted_team_update_tickets_v1'
+ ])assert.ok(sql.includes(phrase),phrase)
+ const insertTicket=sql.lastIndexOf('insert into private.saturn_converted_team_update_tickets_v1(')
+ const update=sql.lastIndexOf('update public.clubs set')
+ const deleteTicket=sql.lastIndexOf('delete from private.saturn_converted_team_update_tickets_v1')
+ assert.ok(insertTicket<update && update<deleteTicket)
+})
+
 test('club move changes only tier and region, never identity, points, assets or cash',()=>{
  assert.match(sql,/update public\.clubs set\s+club_tier=v_destination\.club_tier/)
  assert.match(sql,/tier2_division=case/)
@@ -117,3 +143,7 @@ test.todo('staging: atomic placement and audit row roll back together on interru
 test.todo('staging: admin reducing approved cap during conversion cannot create over-cap slot')
 
 test.todo('staging: approved cap for nonexistent league is ignored and original club retained')
+
+test.todo('staging: converted top-three vacancy does not relocate any AI club through existing overflow trigger')
+test.todo('staging: top-three 25-team cohort cap enforced across all four world tiers')
+test.todo('staging: ordinary permanent-user top-three rebalancing trigger stays unchanged')
