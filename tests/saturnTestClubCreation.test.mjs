@@ -40,7 +40,10 @@ test('real club, membership, finance and 14-day record are atomic', () => {
   assert.match(sql,/insert into public\.saturn_test_accounts_v1/)
   assert.match(sql,/interval '168 hours'/)
   assert.match(sql,/interval '336 hours'/)
-  assert.doesNotMatch(sql,/insert into public\.premium_welcome_trials|apply_coin_delta\(/)
+  assert.match(sql,/insert into public\.premium_welcome_trials_v1/)
+  assert.match(sql,/on conflict \(user_id\) do nothing/)
+  assert.match(sql,/md5\('saturn-anonymous-v1:'\|\|v_user::text\)/)
+  assert.doesNotMatch(sql,/apply_coin_delta\(/)
 })
 test('client nickname and server validation agree', () => {
   assert.match(form,/managerName\.length < 3/)
