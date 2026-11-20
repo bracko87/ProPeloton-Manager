@@ -5,6 +5,7 @@ const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8')
 const sql = read('supabase/migrations/20261120233000_saturn_finalize_same_uuid_google_conversion_v1.sql')
 const ui = read('src/pages/TestAccountRegister.tsx')
 const client = read('src/lib/testAccountClient.ts')
+const gameClient = read('src/lib/supabase.ts')
 
 test('Google finalizer requires original canonical Auth ID and linked provider identity', () => {
  assert.match(sql, /v_uid uuid := auth\.uid\(\)/)
@@ -34,6 +35,9 @@ test('Google linking uses persisted original Auth client, never generic new-acco
  assert.match(ui, /redirectTo: window\.location\.origin \+ '\/test-account-register'/)
  assert.doesNotMatch(ui, /signInWithOAuth\(|signUp\(/)
  assert.match(client, /detectSessionInUrl: SATURN_TEST_ACCOUNTS_ENABLED/)
+ assert.match(client, /new URLSearchParams\\(window\\.location\\.search\\)\\.has\\('saturn_google_link'\\)/)
+ assert.match(gameClient, /detectSessionInUrl: !\\(import\\.meta\\.env\\.VITE_SATURN_TEST_ACCOUNTS_ENABLED/)
+ assert.match(gameClient, /new URLSearchParams\\(window\\.location\\.search\\)\\.has\\('saturn_google_link'\\)/)
  assert.match(client, /persistSession: true/)
 })
 
