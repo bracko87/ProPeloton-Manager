@@ -218,6 +218,8 @@
     "status": "Статус",
     "worldChampionshipWaiting": "Отбор продолжается",
     "worldChampionshipUnavailable": "Не подтверждён",
+    "worldChampionshipMedicalHold": "Недоступен по медицинским причинам",
+    "worldChampionshipReducedFitness": "Сниженная готовность (без травмы)",
     "worldChampionshipConfirmedLabel": "Подтверждён",
     "worldChampionshipInvited": "Ожидает подтверждения",
     "worldChampionshipTbd": "Участник пока неизвестен"

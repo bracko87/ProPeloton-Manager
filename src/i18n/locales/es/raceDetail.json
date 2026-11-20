@@ -218,6 +218,8 @@
     "status": "Estado",
     "worldChampionshipWaiting": "Clasificación en curso",
     "worldChampionshipUnavailable": "No confirmado",
+    "worldChampionshipMedicalHold": "No apto por motivos médicos",
+    "worldChampionshipReducedFitness": "Forma física reducida (sin lesión)",
     "worldChampionshipConfirmedLabel": "Confirmado",
     "worldChampionshipInvited": "Pendiente de confirmación",
     "worldChampionshipTbd": "Participante aún desconocido"

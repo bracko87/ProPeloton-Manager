@@ -220,6 +220,8 @@
     "status": "Status",
     "worldChampionshipWaiting": "Kvalifikacije u toku",
     "worldChampionshipUnavailable": "Nije potvrđeno",
+    "worldChampionshipMedicalHold": "Medicinski nedostupan",
+    "worldChampionshipReducedFitness": "Smanjena spremnost (bez povrede)",
     "worldChampionshipConfirmedLabel": "Potvrđen",
     "worldChampionshipInvited": "Čeka se potvrda",
     "worldChampionshipTbd": "Učesnik još nije poznat"
