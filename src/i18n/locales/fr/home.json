@@ -24,9 +24,20 @@
     "liveManagerLeagues": "Affronte de vrais managers.",
     "progression": "Progression",
     "progressionValue": "Tournois, classements et récompenses",
-    "imageAlt": "Cyclistes grimpant une montagne",
+    "imageAlt": "Cyclistes au sprint vers la ligne d'arrivée",
     "loadingGameTime": "Chargement du temps de jeu...",
-    "season": "Saison"
+    "season": "Saison",
+    "legacyIntro": "Écris ta",
+    "legacyHighlight": "légende cycliste.",
+    "liveSeason": "Saison actuelle",
+    "statusPrelaunch": "Inscriptions ouvertes",
+    "statusActive": "En cours",
+    "liveRankings": "Classement en direct",
+    "rankingsLoading": "Chargement du classement...",
+    "rankingsEmpty": "Le classement apparaîtra dès qu'il sera disponible.",
+    "pointsAbbrev": "pts",
+    "slideControls": "Diapositives d'accueil",
+    "slideLabel": "Afficher la diapositive {{number}}"
   },
   "raceSchedule": {
     "title": "Calendrier des courses",
