@@ -45,7 +45,7 @@ begin
     p_club_id,p_reason,p_ref_id,p_idempotency_key
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.purchase_race_replay_access_v1(p_race_id uuid)
@@ -109,7 +109,7 @@ begin
 
   return public.get_race_replay_coin_access_v1(p_race_id);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.release_club_staff(p_staff_id uuid)
@@ -192,7 +192,7 @@ begin
 
   return;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.release_owned_rider(p_rider_id uuid)
@@ -392,7 +392,7 @@ begin
     v_result_expires_on_game_date,
     v_finance_tx;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.release_rider_to_free_agents(p_rider_id uuid, p_expires_in_days integer DEFAULT 14)
@@ -606,7 +606,7 @@ begin
   from public.rider_free_agents fa
   where fa.id = v_free_agent_id;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.sell_infrastructure_asset(p_asset_key text, p_asset_id uuid)
@@ -784,7 +784,7 @@ begin
     'finance_transaction_id', v_tx_id
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.upgrade_club_facility(p_club_id uuid, p_facility text)
@@ -913,6 +913,6 @@ begin
 
   return v_row;
 end;
-$function$
+$function$;
 
 
