@@ -806,7 +806,8 @@ function toStandingRows(
     const inactivity = inactivityByClubId.get(team.id)
     // Keep historical award records untouched: zero applies only to the
     // current, effective league standing while the club is inactive.
-    const inactiveForStandings = team.isActive === false || Boolean(inactivity?.status)
+    // Active AI competition clubs do not depend on manager-login inactivity.
+    const inactiveForStandings = !team.isAi && (team.isActive === false || Boolean(inactivity?.status))
 
     return {
       id: team.id,
@@ -818,7 +819,7 @@ function toStandingRows(
       raceReputationValue: inactiveForStandings ? 0 : getRaceReputationValueFromTeam(team),
       logoPath: team.logoPath ?? null,
       isActive: !inactiveForStandings,
-      publicInactivityStatus: inactivity?.status ?? null,
+      publicInactivityStatus: team.isAi ? null : inactivity?.status ?? null,
       inactivityDaysSnapshot: inactivity?.days ?? null,
       seasonEndTransitionPending: inactivity?.seasonEndTransitionPending ?? false,
     }
@@ -867,14 +868,11 @@ function applySeasonEndTieBreakers(rows: StandingRow[]): StandingRow[] {
     }))
 }
 
-function getRowClass(
+function isRelegationZone(
   row: StandingRow,
   totalRows: number,
   option: StandingOption,
-  isMyTeam: boolean,
-): string {
-  const classes = ['border-b', 'border-slate-200']
-
+): boolean {
   const relegationCountMap: Record<string, number> = {
     WORLD: 5,
     PRO_WEST: 5,
@@ -885,8 +883,17 @@ function getRowClass(
     CONTINENTAL_AFRICA: 5,
     CONTINENTAL_OCEANIA: 3,
   }
-
   const relegationCount = relegationCountMap[option.division] ?? 0
+  return relegationCount > 0 && row.position > totalRows - relegationCount
+}
+
+function getRowClass(
+  row: StandingRow,
+  totalRows: number,
+  option: StandingOption,
+  isMyTeam: boolean,
+): string {
+  const classes = ['border-b', 'border-slate-200']
 
   let isDirectPromotion = false
   let isPlayoffPromotion = false
@@ -925,7 +932,8 @@ function getRowClass(
     classes.push('bg-blue-50')
   }
 
-  if (relegationCount > 0 && row.position > totalRows - relegationCount) {
+  const isRelegation = isRelegationZone(row, totalRows, option)
+  if (isRelegation) {
     classes.push('bg-red-50')
   }
 
@@ -934,7 +942,9 @@ function getRowClass(
   }
 
   if (isMyTeam) {
-    classes.push('ring-1', 'ring-yellow-400', 'bg-yellow-50')
+    // Retain the yellow outline, but never override the relegation background.
+    classes.push('ring-1', 'ring-yellow-400')
+    if (!isRelegation) classes.push('bg-yellow-50')
   }
 
   return classes.join(' ')
@@ -1812,6 +1822,12 @@ export default function TeamRankingPage(): JSX.Element {
                         selectedStanding,
                         isMyTeam,
                       )}
+                      style={{
+                        // Inline color wins over global even/odd table striping.
+                        backgroundColor: isRelegationZone(row, selectedRows.length, selectedStanding)
+                          ? '#fef2f2'
+                          : undefined,
+                      }}
                     >
                       <td className="px-4 py-3 text-sm font-semibold text-slate-900">
                         {row.position}
