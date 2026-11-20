@@ -94,3 +94,17 @@ Further staging acceptance:
 - A converted manager may retry finalization without any additional Premium or duplicate clubs.
 - Registration after 336h must restore original assets and permit permanent gameplay without resetting standings.
 - OAuth / Google conversion is separate work and is not implemented by this password-based finalizer.
+
+
+## SAT-02 Google identity linking source milestone — not live tested
+
+Based on Supabase's current documented anonymous-upgrade flow (manual identity linking, not a new `signInWithOAuth` account), the review branch now includes:
+
+- `testClient.auth.linkIdentity({ provider: 'google', options: { redirectTo } })` on the original persistent anonymous Auth session, retaining the same `auth.uid()`.
+- A callback URL with a dedicated `saturn_google_link=1` query parameter **outside** the HashRouter `#/test-account-register` fragment. Only the persisted Saturn test client processes that tagged OAuth callback, while the ordinary in-memory game client intentionally skips it. Untagged ordinary OAuth callbacks retain normal handling.
+- A server-owned `saturn_finalize_test_account_google_conversion_v1()` that checks canonical `auth.users.is_anonymous=false`, a real linked `auth.identities.provider='google'` record with `user_id=auth.uid()`, the original 14-day test lifecycle, exact official club ownership and owner membership. Only then does it idempotently set the original `converted_at` field.
+- The UI checks the linked Google identity and matching original user UUID, finalizes over the original persistent test client and restores that same session to the game client. It reports success only after all checks complete; no new club or Premium grant occurs.
+
+**Required staging Auth setup** (do not configure in production before approval): Enable manual identity linking in Supabase Auth and configure Google OAuth with the app's exact return URL including the dedicated callback path/query pattern. Verify the redirect allowlist accepts the tagged HashRouter URL in the actual deployment, and that callback code is consumed by the persistent test client only. The generic "Sign in with Google" flow is **NOT** a permitted substitute, since that can create or select a different Auth UUID. Existing Google identities belonging to other registered accounts must be rejected safely, not silently merged.
+
+**No OAuth flow was executed against production or staging.** The source CI checks are static/build-only; replay, callback, session refresh, Auth identity creation, and completed trial conversion all remain staging TODOs.
