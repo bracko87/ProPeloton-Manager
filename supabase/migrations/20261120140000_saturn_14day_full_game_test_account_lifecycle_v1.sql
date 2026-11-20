@@ -24,7 +24,11 @@ create table if not exists public.saturn_test_accounts_v1 (
 );
 
 alter table public.saturn_test_accounts_v1 enable row level security;
-alter table public.saturn_test_accounts_v1 force row level security;
+-- Deliberately do NOT FORCE RLS here. FORCE would subject even the
+-- privileged SQL function owner to the self-read-only policy and may block
+-- its atomic lifecycle INSERT. Only approved SECURITY DEFINER server code
+-- may write; browser roles have no DML GRANT and no DML policies.
+-- RLS still applies to ordinary authenticated requests.
 
 revoke all on table public.saturn_test_accounts_v1 from public, anon, authenticated;
 grant select on table public.saturn_test_accounts_v1 to authenticated;
