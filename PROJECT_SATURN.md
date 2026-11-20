@@ -101,6 +101,10 @@ The review-branch conversion transaction now adds a **private exact-club/source/
 
 Verified GitHub contract/build run for `fd2a63205460814a3df2acbb7f27c797c81edc41`: **209 tests, 116 passing, 0 failing, 93 staging TODO**, all three workflows successful. Requires an isolated database and real concurrency/trigger tests before release. [Staging checklist](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
 
+## SAT — no-cost PostgreSQL syntax validation for every draft migration
+
+The GitHub review workflow now installs `pglast` and invokes `scripts/saturn_sql_parse.py`, which parses every Saturn migration and read-only SQL audit directly from source without touching production. On its first run it exposed **six previously untested invalid SQL migration files**, including missing semicolon terminators after function bodies. All have been repaired and the final run parsed **233 top-level PostgreSQL statements across 22 files**. Latest tested commit `a17f263767f02f5b88a574d3494080816a2638b0`: **116 passing Saturn tests, zero failing, 93 staging TODO**, all three GitHub workflows passed. This removes known top-level SQL syntax blockers; PL/pgSQL compilation, permissions, triggers and real game transaction behavior remain **untested** until isolated staging becomes available. No production SQL was deployed and no guest feature was enabled. [Staging matrix and parser limitations](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
