@@ -621,7 +621,7 @@ export default function HomePage(): JSX.Element {
         <div className="mx-auto flex max-w-[1510px] flex-col gap-2 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-10 sm:py-2 lg:px-12">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <img
-              src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png"
+              src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/transparent%20logo%20hhh.png"
               alt="ProPeloton Manager"
               className="h-16 w-auto shrink-0 object-contain sm:h-20 lg:h-24"
             />
