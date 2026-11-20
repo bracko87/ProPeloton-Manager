@@ -1,0 +1,23 @@
+name: Saturn 14-Day Test Account — Review
+on:
+  pull_request:
+    paths:
+      - 'docs/SATURN_FULL_GAME_TEST_ACCOUNT_POLICY_2026-11-20.md'
+      - 'supabase/migrations/*saturn_14day*.sql'
+      - 'tests/saturnTestAccountLifecycle.test.mjs'
+      - '.github/workflows/saturn-full-game-test-account-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/saturnTestAccountLifecycle.test.mjs
+      - run: npm run build
