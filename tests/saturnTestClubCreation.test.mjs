@@ -47,6 +47,12 @@ test('client nickname and server validation agree', () => {
   assert.match(form,/managerName\.length > 24/)
   assert.match(form,/minLength=\{3\} maxLength=\{24\}/)
 })
+test('existing AI-slot trigger cannot silently override lowest-tier placement', () => {
+  assert.match(sql, /Automatic AI-slot assignment did not preserve the lowest eligible league/)
+  assert.match(sql, /c\.world_tier=v_tier/)
+  assert.match(sql, /c\.amateur_division=v_division/)
+})
+
 test.todo('staging: missing rollout or league capacity blocks RPC without any new club')
 test.todo('staging: authorized anonymous user creates exactly one real club under concurrency')
 test.todo('staging: club financial setup matches regular registered club exactly')
