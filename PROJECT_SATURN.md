@@ -87,6 +87,12 @@ If active race applications/entries exist (legacy and v1 formats), a season tran
 
 **CI correction:** Earlier Saturn workflow used `tests/saturnTest*.test.mjs` and silently omitted a new `saturnConvertedVacancyPlacement.test.mjs` test. It now runs `tests/saturn*.test.mjs`, including all Saturn contract tests. Source commit `092b6c88d7a28631c09990caf3adc8cd124ace91` passed all three workflows; **199 test cases, 113 passed, 0 failed, 86 TODO staging**. [Staging approval matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
 
+## SAT-03 — Safer division vacancy allocation, idempotency and review
+
+The converted-team placement SQL is now hardened with a private, durable **one-time placement audit** (`saturn_converted_team_placements_v1`, unique user/club). A successful promotion can never repeat if the player retries later; no vacancy leaves the original club unchanged and permits recheck. Successful club tier update and audit insert are atomic. The per-division vacancy cap is re-read **under a row lock**, preventing outdated admin capacity values from being used after a concurrent reduction. A cap is eligible only if the destination corresponds to an **existing active official league cohort**, so configuration mistakes cannot create imaginary leagues. Human and AI incumbents remain untouched.
+
+Added the **read-only staging vacancy/occupancy report** `supabase/tests/saturn_approved_vacancy_occupancy_audit.sql`, showing existing human/AI counts, hard caps, effective free places and missing/inactive cohorts. No cap records are preapproved. Verified GitHub source commit `8a98023795b826f90b07a36e16f0421bbda111b6`: **205 tests (115 passed, 0 failed, 90 staging TODO)**; all three workflows and application build passed. This is still draft only; no production schema, club, division, race or guest setting changed. Actual Supabase JWT/concurrency/race tests remain blocking.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
