@@ -3,16 +3,15 @@
  * Uses the already-hosted sprint photo as a layer; all copy, cards,
  * navigation, clock, and animations are real React/CSS elements.
  */
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { Activity, ArrowRight, Bike, ChevronRight, Clock3, Play, Trophy, Users } from 'lucide-react'
+import { ArrowRight, Bike, Clock3, Play } from 'lucide-react'
+import HomeLiveRanking from './HomeLiveRanking'
 import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
-import { supabase } from '../../lib/supabase'
 import { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../PreReleaseNotice'
 
 type HeroProps = { gameTimeLabel: string }
-type RankingEntry = { id: string; name: string; points: number }
 
 const SPRINT_PHOTO_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_23_55%20PM.png'
@@ -54,8 +53,6 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
   const clock = usePublicHomeGameClock()
   const sceneRef = useRef<HTMLDivElement>(null)
   const [slide, setSlide] = useState(0)
-  const [ranking, setRanking] = useState<RankingEntry[]>([])
-  const [rankingStatus, setRankingStatus] = useState<'loading' | 'ready' | 'empty'>('loading')
 
   const language = String(i18n.resolvedLanguage || i18n.language || 'en').toLowerCase()
   const locale = getHomeClockLocale(language)
@@ -80,41 +77,13 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
     : Number(parentLabel.match(/(?:Season|Saison|Sezona|Temporada|Stagione|Сезон|S)\s*(\d+)/i)?.[1] || 1)
   const preLaunch = Date.now() < Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC)
 
-  useEffect(() => {
-    let cancelled = false
-    const load = async () => {
-      // Same public view used by the game's team-ranking screen.
-      // Never show invented team names, positions or point totals.
-      const { data, error } = await supabase
-        .from('team_rankings_view')
-        .select('id, name, season_points')
-        .order('season_points', { ascending: false })
-        .order('name', { ascending: true })
-        .limit(3)
-      if (cancelled) return
-      if (error || !data?.length) {
-        setRanking([])
-        setRankingStatus('empty')
-        return
-      }
-      setRanking(data.map(row => ({
-        id: String(row.id),
-        name: String(row.name),
-        points: Number(row.season_points) || 0,
-      })))
-      setRankingStatus('ready')
-    }
-    void load()
-    return () => { cancelled = true }
-  }, [])
-
   const onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
     if (event.pointerType === 'touch' ||
         window.matchMedia('(prefers-reduced-motion: reduce)').matches ||
         !sceneRef.current) return
     const bounds = event.currentTarget.getBoundingClientRect()
-    const x = (event.clientX / 1 - bounds.left) / bounds.width - 0.5
-    const y = (event.clientY / 1 - bounds.top) / bounds.height - 0.5
+    const x = (event.clientX - bounds.left) / bounds.width - 0.5
+    const y = (event.clientY - bounds.top) / bounds.height - 0.5
     sceneRef.current.style.setProperty('--ppm-x', `${(x * 14).toFixed(1)}px`)
     sceneRef.current.style.setProperty('--ppm-y', `${(y * 10).toFixed(1)}px`)
   }
@@ -143,7 +112,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
           transform:translate3d(var(--ppm-x,0px),var(--ppm-y,0px),0) scale(1.026);
           transition:transform .38s ease-out;
         }
-        .ppm-cinematic .ppm-photo { filter:saturate(1.2) contrast(1.07) brightness(.95); }
+        .ppm-cinematic .ppm-photo { filter:saturate(1.17) contrast(1.1) brightness(.94); }
         .ppm-cinematic .ppm-glass {
           background:linear-gradient(130deg,rgba(31,49,74,.82),rgba(7,20,39,.76));
           border:1px solid rgba(255,255,255,.23);
@@ -177,7 +146,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
         @keyframes ppm-beacon {50%{box-shadow:0 0 0 7px rgba(74,222,128,0)}}
         @media(max-width:1023px){
           .ppm-cinematic .ppm-photo {object-position:53% 60%;}
-          .ppm-cinematic .ppm-photo-wrap {width:100%!important;opacity:.52;}
+          .ppm-cinematic .ppm-photo-wrap {width:100%!important;opacity:.5;}
         }
         @media(prefers-reduced-motion:reduce){
           .ppm-cinematic *, .ppm-cinematic *:before, .ppm-cinematic *:after {
@@ -255,65 +224,19 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
           </div>
         </div>
 
-        {/* Real status from the existing official launch configuration; no fake In Progress claim. */}
-        <Link to="/register" className="ppm-glass ppm-glass-hover mt-8 inline-flex max-w-full items-center gap-3 rounded-2xl px-5 py-4 lg:absolute lg:right-12 lg:top-9 lg:mt-0">
-          <span className={`ppm-live-dot h-3 w-3 shrink-0 rounded-full ${preLaunch ? 'bg-amber-400 shadow-[0_0_15px_#fbbf24]' : 'bg-green-400 shadow-[0_0_15px_#4ade80]'}`} aria-hidden="true" />
-          <span className="min-w-0">
-            <span className="block text-xs font-black uppercase italic tracking-widest text-white">{t('hero.liveSeason')}</span>
-            <span className="mt-1 block text-sm text-slate-200">{t('hero.season')} {seasonNumber} · {t(preLaunch ? 'hero.statusPrelaunch' : 'hero.statusActive')}</span>
-          </span>
-          <ChevronRight size={19} className="ml-4 shrink-0" aria-hidden="true" />
-        </Link>
-
-        <div className="relative mt-10 grid max-w-[745px] gap-3 sm:grid-cols-3 lg:mt-12">
-          <div className="ppm-glass rounded-2xl border-yellow-400/70 p-4 shadow-[0_0_20px_rgba(250,204,21,.18)]" style={{borderColor:'rgba(250,204,21,.68)'}}>
+        {/* Preserve the server-anchored clock; remove Multiplayer and Progression. */}
+        <div className="mt-10 w-full max-w-[310px] lg:mt-12">
+          <div className="ppm-glass rounded-2xl p-5 shadow-[0_0_20px_rgba(250,204,21,.18)]" style={{ borderColor:'rgba(250,204,21,.72)' }}>
             <div className="flex items-center gap-2 text-xs font-extrabold uppercase tracking-wider text-yellow-300">
               <Clock3 size={17} aria-hidden="true" />{t('hero.gameTime')}
             </div>
-            <div className="mt-2 text-sm font-bold leading-5 text-white" data-clock-source={liveLabel ? 'server-anchored-clock' : parentLabelReady ? 'homepage-snapshot' : clock.loading ? 'pending' : 'unavailable'}>
+            <div className="mt-2 text-sm font-bold leading-6 text-white"
+              data-clock-source={liveLabel ? 'server-anchored-clock' : parentLabelReady ? 'homepage-snapshot' : clock.loading ? 'pending' : 'unavailable'}>
               {displayGameTime}
             </div>
           </div>
-          <div className="ppm-glass ppm-glass-hover rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-100">
-              <Users size={17} aria-hidden="true" />{t('hero.multiplayer')}
-            </div>
-            <div className="mt-2 text-sm font-bold leading-5 text-white">{t('hero.liveManagerLeagues')}</div>
-          </div>
-          <div className="ppm-glass ppm-glass-hover rounded-2xl p-4">
-            <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-100">
-              <Trophy size={17} aria-hidden="true" />{t('hero.progression')}
-            </div>
-            <div className="mt-2 text-sm font-bold leading-5 text-white">{t('hero.progressionValue')}</div>
-          </div>
         </div>
-
-        {/* Authentic top-three points from the existing public team-rankings view. */}
-        <Link to="/dashboard/team-ranking" className="ppm-glass ppm-glass-hover mt-6 block w-full max-w-[330px] rounded-2xl p-4 sm:ml-auto lg:absolute lg:bottom-20 lg:right-12 lg:mt-0">
-          <div className="flex items-center justify-between gap-2 border-b border-white/15 pb-3">
-            <div className="flex items-center gap-2 text-sm font-black uppercase italic tracking-wide text-white">
-              <Activity size={19} className="text-yellow-400" aria-hidden="true" />
-              {t('hero.liveRankings')}
-            </div>
-            <ChevronRight size={19} aria-hidden="true" />
-          </div>
-          <div className="mt-3 min-h-[124px] space-y-2">
-            {rankingStatus === 'ready' && ranking.map((entry, index) => (
-              <div key={entry.id} className="flex items-center gap-3 text-sm">
-                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg font-black text-[#071426] ${index === 0 ? 'bg-yellow-400' : index === 1 ? 'bg-slate-300' : 'bg-amber-600'}`}>
-                  {index + 1}
-                </span>
-                <span className="min-w-0 flex-1 truncate font-semibold text-white">{entry.name}</span>
-                <span className="shrink-0 font-bold tabular-nums text-slate-100">{entry.points.toLocaleString(locale)} {t('hero.pointsAbbrev')}</span>
-              </div>
-            ))}
-            {rankingStatus !== 'ready' && (
-              <div className="flex min-h-[120px] items-center text-sm leading-6 text-slate-200">
-                {rankingStatus === 'loading' ? t('hero.rankingsLoading') : t('hero.rankingsEmpty')}
-              </div>
-            )}
-          </div>
-        </Link>
+        <HomeLiveRanking seasonNumber={seasonNumber} preLaunch={preLaunch} locale={locale} />
 
         <div className="mt-8 flex items-center justify-center gap-2 lg:absolute lg:bottom-6 lg:left-1/2 lg:mt-0 lg:-translate-x-1/2" role="group" aria-label={t('hero.slideControls')}>
           {slides.map((_, index) => (
