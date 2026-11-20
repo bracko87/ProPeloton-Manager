@@ -10,6 +10,8 @@ on:
       - 'tests/saturnTestPremiumAndRaceAccess.test.mjs'
       - 'tests/saturnTestTrialTrainingStaffGuards.test.mjs'
       - 'tests/saturnTestTrialEquipmentGuards.test.mjs'
+      - 'tests/saturnTestTrialDirectTableRls.test.mjs'
+      - 'supabase/migrations/*saturn_expired_guest_direct_table_write_rls*.sql'
       - 'supabase/migrations/*saturn_active_trial_equipment_write_guards*.sql'
       - 'supabase/migrations/*saturn_active_trial_training_staff_write_guards*.sql'
       - 'supabase/migrations/*saturn_active_test_race_application_guard*.sql'
