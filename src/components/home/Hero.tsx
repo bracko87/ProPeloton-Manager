@@ -202,6 +202,11 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
             <Link to="/register" className="ppm-cta inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-yellow-400 px-7 py-3 text-base font-semibold text-[#071426] hover:bg-yellow-300 sm:text-lg">
               <Play size={19} fill="currentColor" aria-hidden="true" />{t('header.startPlaying')}
             </Link>
+            {import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' && (
+              <Link to="/test-the-game" className="ppm-glass ppm-glass-hover inline-flex min-h-[54px] items-center gap-3 rounded-xl px-7 py-3 text-base font-semibold text-white sm:text-lg">
+                Test the Game — 14 Days <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            )}
             <Link to="/login" className="ppm-glass ppm-glass-hover inline-flex min-h-[54px] items-center gap-3 rounded-xl px-7 py-3 text-base font-semibold text-white sm:text-lg">
               {t('header.signIn')} <ArrowRight size={17} aria-hidden="true" />
             </Link>
