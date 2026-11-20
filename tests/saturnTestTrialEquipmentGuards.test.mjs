@@ -21,7 +21,7 @@ for (const [index,name] of names.entries()) {
    const normalAccess=body.indexOf('v_club_id := public.equipment_assert_club_access(p_club_id)')
    assert.ok(guard>=0,name+' lacks expired test block')
    assert.ok(normalAccess===-1 || guard<normalAccess,name+' must stop before modifying equipment')
-   assert.match(body,/u\.id=auth\.uid\(\) and u\.is_anonymous is true/)
+   assert.match(body,/saturn_test_account_requires_guard_v1\(\)/)
    assert.match(body,/using errcode='42501'/)
  })
 }
