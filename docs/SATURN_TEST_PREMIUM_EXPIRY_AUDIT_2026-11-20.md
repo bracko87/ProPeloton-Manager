@@ -35,3 +35,22 @@ Review-only source migrations now add canonical anonymous Auth checks and the ex
 A separate read-only security-definer authorization helper is added to the `authenticated` RLS path as a **RESTRICTIVE** policy for INSERT, UPDATE and DELETE on nine club-linked tables: `clubs`, `club_memberships`, `club_equipment_inventory`, `club_finance_summary`, `club_infrastructure`, `club_staff`, `race_team_entries`, `rider_regular_training_daily_plans` and `rider_regular_training_management`. SELECT is deliberately untouched so the team remains visible after expiry. The predicate gives true to an existing non-anonymous manager only subject to all ordinary RLS policies; a temporary Auth identity must own the exact club and have an unexpired lifecycle. The helper is NOT an unconditional owner bypass and does NOT grant INSERT/UPDATE/DELETE by itself.
 
 **Important qualification:** These RLS barriers do not restrict writes performed by database-owner SECURITY DEFINER RPCs, so each player-facing RPC still needs its own guard. Direct writes involving other tables (transfers, pricing, sponsor offers, training camps, settings, inventory maintenance, development squads, etc.) are not all covered. Existing system/scheduler behavior under database privileges is unverified. No genuine anonymous JWT or Supabase staging integration test has yet passed. Gates remain OFF, no migration deployed, and this remains a draft PR. The upgraded CI workflow now executes the entire `tests/saturnTest*.test.mjs` suite, rather than the previous two-file subset.
+
+
+## SAT-08 incremental hardening — transfers, contracts, camp finance
+
+Added **seven** reviewed player-requested SECURITY DEFINER mutations to the draft expiry guards:
+- `accept_rider_transfer_offer` — owning seller's club
+- `cancel_rider_transfer_listing` — owning seller's club
+- `confirm_unsolicited_ai_transfer_bid_v1` — owning buyer's club
+- `extend_club_staff_contract` — club assigned to staff member
+- `finance_book_training_camp` and `finance_book_training_camp_v2` — requested owning club
+- `cancel_training_camp_booking` — club attached to selected booking
+
+Each retains its original permanent-account code and checks the canonical anonymous Auth flag, the exact owned club and the server's 14-day expiration before altering the selected state. Debug wrappers delegate to the protected underlying booking functions, but still require dedicated staging verification.
+
+A further five player-facing RLS-protected tables now have restrictive INSERT/UPDATE/DELETE policies using the previously defined active-test-owner predicate: `rider_transfer_listings`, `rider_transfer_offers`, `rider_transfer_negotiations`, `rider_unsolicited_transfer_bids`, and `training_camp_bookings`. For transfer offers and negotiations, either the matching owned seller or buyer club can satisfy the *additional* expiry predicate; the existing RLS policies still decide actual permissions. Read access is unchanged.
+
+This brings the **draft** protections to 21 selected player-facing mutation RPCs (race apply/withdraw, six training/staff, six equipment, seven additional transfer/contracts/camp operations) and 14 club-linked restrictive direct-write tables. These counts do NOT mean server-wide expiry coverage. More transfer settlement, finance posting, staff changes, sponsorship, account, youth and system-facing functions require independent assessment.
+
+**Release remains blocked:** these are source-level protections only, not deployed, not evaluated on staging guest JWTs, not tested against real money/race transactions, and not evidence that SECURITY DEFINER execution paths or all direct RLS policies are complete.
