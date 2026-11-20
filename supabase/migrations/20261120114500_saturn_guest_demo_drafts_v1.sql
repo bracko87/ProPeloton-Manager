@@ -17,7 +17,7 @@ alter table public.saturn_guest_drafts_v1 enable row level security;
 alter table public.saturn_guest_drafts_v1 force row level security;
 
 revoke all on table public.saturn_guest_drafts_v1 from public, anon, authenticated;
-grant select, insert, update (draft) on table public.saturn_guest_drafts_v1 to authenticated;
+grant select, insert (user_id, draft), update (draft) on table public.saturn_guest_drafts_v1 to authenticated;
 
 -- A converted account can still read its original demo draft, allowing a
 -- future explicit migration. Only a currently anonymous owner can mutate it.
