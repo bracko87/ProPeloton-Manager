@@ -8,10 +8,13 @@ on:
       - 'tests/saturnTestClubCreation.test.mjs'
       - 'tests/saturnTestAiSlotPlacement.test.mjs'
       - 'tests/saturnTestPremiumAndRaceAccess.test.mjs'
+      - 'tests/saturnTestTrialTrainingStaffGuards.test.mjs'
+      - 'supabase/migrations/*saturn_active_trial_training_staff_write_guards*.sql'
       - 'supabase/migrations/*saturn_active_test_race_application_guard*.sql'
       - 'supabase/migrations/*saturn_test_team_lowest_tier_ai_swap*.sql'
       - 'tests/saturnTestAccountLifecycle.test.mjs'
-      - 'tests/saturnTestTeamSignup.test.mjs tests/saturnTestAccountExperience.test.mjs'
+      - 'tests/saturnTestTeamSignup.test.mjs'
+      - 'tests/saturnTestAccountExperience.test.mjs'
       - 'src/pages/TestTeamSignup.tsx'
       - 'src/App.tsx'
       - 'src/lib/supabase.ts'
@@ -36,5 +39,5 @@ jobs:
           node-version: '22'
           cache: npm
       - run: npm ci
-      - run: node --test tests/saturnTestAccountLifecycle.test.mjs tests/saturnTestTeamSignup.test.mjs
+      - run: node --test tests/saturnTest*.test.mjs
       - run: npm run build
