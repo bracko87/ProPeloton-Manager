@@ -9,6 +9,8 @@ on:
       - 'tests/saturnTestAiSlotPlacement.test.mjs'
       - 'tests/saturnTestPremiumAndRaceAccess.test.mjs'
       - 'tests/saturnTestTrialTrainingStaffGuards.test.mjs'
+      - 'tests/saturnTestTrialEquipmentGuards.test.mjs'
+      - 'supabase/migrations/*saturn_active_trial_equipment_write_guards*.sql'
       - 'supabase/migrations/*saturn_active_trial_training_staff_write_guards*.sql'
       - 'supabase/migrations/*saturn_active_test_race_application_guard*.sql'
       - 'supabase/migrations/*saturn_test_team_lowest_tier_ai_swap*.sql'
