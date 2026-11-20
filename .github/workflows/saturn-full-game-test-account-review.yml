@@ -9,6 +9,8 @@ on:
       - 'src/pages/TestTeamSignup.tsx'
       - 'src/App.tsx'
       - 'src/lib/supabase.ts'
+      - 'src/lib/testAccountClient.ts'
+      - 'src/context/AuthProvider.tsx'
       - 'src/components/home/Hero.tsx'
       - 'src/pages/TestAccountRegister.tsx'
       - 'src/pages/dashboard/ClubDashboard.tsx'
