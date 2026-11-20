@@ -24,9 +24,20 @@
     "liveManagerLeagues": "Live manager leagues",
     "progression": "Progression",
     "progressionValue": "Tournaments, rankings & rewards",
-    "imageAlt": "Cyclists climbing a mountain",
+    "imageAlt": "Cyclists racing toward the finish line",
     "loadingGameTime": "Loading game time...",
-    "season": "Season"
+    "season": "Season",
+    "legacyIntro": "Build your",
+    "legacyHighlight": "cycling legacy.",
+    "liveSeason": "Live season",
+    "statusPrelaunch": "Registration open",
+    "statusActive": "In progress",
+    "liveRankings": "Live rankings",
+    "rankingsLoading": "Loading rankings...",
+    "rankingsEmpty": "Rankings will appear when available.",
+    "pointsAbbrev": "pts",
+    "slideControls": "Homepage hero slides",
+    "slideLabel": "Show slide {{number}}"
   },
   "raceSchedule": {
     "title": "Race Schedule",

@@ -24,9 +24,20 @@
     "liveManagerLeagues": "Sfida veri manager.",
     "progression": "Progressione",
     "progressionValue": "Tornei, classifiche e premi",
-    "imageAlt": "Ciclisti in salita su una montagna",
+    "imageAlt": "Ciclisti in volata verso il traguardo",
     "loadingGameTime": "Caricamento del tempo di gioco...",
-    "season": "Stagione"
+    "season": "Stagione",
+    "legacyIntro": "Costruisci la tua",
+    "legacyHighlight": "leggenda ciclistica.",
+    "liveSeason": "Stagione attuale",
+    "statusPrelaunch": "Iscrizioni aperte",
+    "statusActive": "In corso",
+    "liveRankings": "Classifiche live",
+    "rankingsLoading": "Caricamento classifiche...",
+    "rankingsEmpty": "Le classifiche appariranno quando disponibili.",
+    "pointsAbbrev": "pt",
+    "slideControls": "Diapositive della home",
+    "slideLabel": "Mostra diapositiva {{number}}"
   },
   "raceSchedule": {
     "title": "Calendario gare",
