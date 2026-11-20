@@ -20,7 +20,13 @@ export const FEATURE_PAID_ADDONS: Partial<Record<FeatureKey, 'u23' | 'academy'>>
 }
 
 /** Screenshots must come from the game owner. No stock or fabricated gameplay imagery. */
-export const FEATURE_IMAGES: Partial<Record<FeatureKey, ReadonlyArray<{ src: string; alt: string }>>> = {}
+export const FEATURE_IMAGES: Partial<Record<FeatureKey, ReadonlyArray<{ src: string; alt: string }>>> = {
+  management: [
+    { src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Deep%20team%20management%202.png', alt: 'Deep team management — gameplay screenshot 1' },
+    { src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Deep%20team%20management%203.png', alt: 'Deep team management — gameplay screenshot 2' },
+    { src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Deep%20team%20management%20banner.png', alt: 'Deep team management — gameplay screenshot 3' },
+  ],
+}
 
 
 /**
@@ -29,4 +35,9 @@ export const FEATURE_IMAGES: Partial<Record<FeatureKey, ReadonlyArray<{ src: str
  * Example: management: { src: '<owner-supplied URL>', position: 'center 40%' }
  */
 export type FeatureBackground = { src: string; position?: string }
-export const FEATURE_BACKGROUNDS: Partial<Record<FeatureKey, FeatureBackground>> = {}
+export const FEATURE_BACKGROUNDS: Partial<Record<FeatureKey, FeatureBackground>> = {
+  management: {
+    src: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Deep%20team%20management%201.png',
+    position: 'center',
+  },
+}
