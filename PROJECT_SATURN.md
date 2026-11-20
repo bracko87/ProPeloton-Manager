@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, isolated staging readiness and cost gate
+
+- ✅ **Verified existing database starting schema, read-only:** `supabase/tests/saturn_predeploy_schema_preflight.sql` returned **21 PASS / 0 FAIL**. No schema changes, guest accounts or clubs were created. This is NOT migration execution or guest behavior validation.
+- ✅ **Supabase branch inventory:** only production/main branch exists; no isolated Saturn staging environment currently exists. Supabase organization-specific branch quote was **0.01344/hour** (approximately 0.32256/day or 9.6768 per 30 days assuming 24-hour daily billing; quote does not guarantee a total bill). **No branch created / no cost accepted.** Obtain explicit owner approval before provisioning.
+- ✅ GitHub workflow updated to run on **all** `tests/saturn*.test.mjs` changes plus new CAPTCHA component and staging docs, avoiding silent gaps as we add new regression suites. Added `tests/saturnStagingCiReadiness.test.mjs` to check triggers and pre/postdeploy gates.
+- ✅ **Last verified CI source commit `76e6a11caf1b85cb880c0b0d3259aa0c9fa75e69`: all THREE workflows passed, 309 Saturn cases (164 PASS / 0 FAIL / 145 isolated-staging TODO), 273 SQL statements / 69 PL/pgSQL bodies parsed in 33 files, 576 frontend files scanned with no direct finance-helper calls.** Tests prove source/build contracts, not full DB runtime integration.
+- ⬜ **Now blocking live testing:** explicitly approved isolated staging branch and its hourly cost, real CAPTCHA Auth service setup and per-IP rate controls, staged SQL application and role audits, real guest/expired/OAuth JWT verification, 7/14 day economy/races, finance privilege corrections and all other player-write surfaces. Production guest Auth rollout remains OFF; no Saturn migrations deployed.
+
+[Detailed staging runbook](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, registration abuse protection
 
 - ✅ **Code-tested:** `src/components/auth/SaturnGuestCaptcha.tsx` renders a Cloudflare Turnstile challenge; `src/pages/TestTeamSignup.tsx` passes its short-lived token to Supabase `auth.signInAnonymously({ options: { captchaToken } })` and fails closed when the public site key is missing or no valid widget token exists. The widget remounts on retry, and no CAPTCHA secret is present in frontend code.
