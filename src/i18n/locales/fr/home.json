@@ -62,7 +62,9 @@
     "emptyYesterday": "Aucune étape n'a été prévue hier.",
     "emptyToday": "Aucune étape n'est prévue aujourd'hui.",
     "emptyTomorrow": "Aucune étape n'est prévue demain.",
-    "flagAlt": "Drapeau {{country}}"
+    "flagAlt": "Drapeau {{country}}",
+    "allRaces": "Toutes les courses",
+    "fullCalendar": "Calendrier complet"
   },
   "stats": {
     "title": "Statistiques rapides",
