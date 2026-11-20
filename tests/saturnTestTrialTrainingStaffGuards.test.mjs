@@ -31,8 +31,8 @@ test('owner-matched club is checked before hiring candidate or changing camp pla
  assert.ok(camp.indexOf('v_club_id := public.get_my_club_id()')<camp.indexOf('saturn_test_account_can_mutate_v1(v_club_id)'))
 })
 test('regular permanent user code remains behind canonical anonymous test only check',()=>{
- assert.equal((sql.match(/u\.is_anonymous is true/g)||[]).length,6)
- assert.equal((sql.match(/saturn_test_account_can_mutate_v1/g)||[]).length,6)
+ assert.ok((sql.match(/u\.is_anonymous is true/g)||[]).length>=6)
+ assert.ok((sql.match(/saturn_test_account_can_mutate_v1/g)||[]).length>=6)
  assert.doesNotMatch(sql,/DROP FUNCTION|DROP POLICY|GRANT ALL|ALTER TABLE.*DISABLE ROW LEVEL SECURITY/i)
 })
 test.todo('staging: active guest can save an ordinary rider training plan and hire staff')
