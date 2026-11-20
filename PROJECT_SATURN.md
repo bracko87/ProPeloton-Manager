@@ -23,6 +23,12 @@ The full-game test account branch now includes a dedicated `public.saturn_create
 
 Required before activation: canonical Auth/club trigger compatibility review; authoritative league capacity approvals; proper CAPTCHA and anonymous account quotas; all real gameplay/RLS permissions; server-wide 14-day expiry enforcement; real seven-day Premium entitlement; verified account conversion and highest eligible vacancy placement; staging race/financial test cases. [Draft PR #277](https://github.com/bracko87/ProPeloton-Manager/pull/277).
 
+## SAT-01 / SAT-08 — Premium and race-expiry code milestone
+
+The source now grants the ordinary seven-day Premium trial entitlement atomically at test-team creation using `premium_welcome_trials_v1`, without opening another paid subscription or granting Coins. The original server-clock expiry is checked and must not reset during identity conversion. Test-player access to official race applications **and withdrawals** is restricted in source to the active 14-day term and exactly the user's club. Regular registered-player logic remains unchanged. [Premium/expiry security audit](docs/SATURN_TEST_PREMIUM_EXPIRY_AUDIT_2026-11-20.md).
+
+**Not ready to release:** these changes are code-only on draft PR #277, not tested with real guest JWTs or deployed. The game has many more player-facing write APIs across squad, training, equipment, staff, finance and transfers; those still need server-side expiry restrictions. Some Premium features distinguish paid access from normal trial access. CAPTCHA/rate-limits, full onboarding checks and conversion tests remain mandatory. No guest gate should be enabled.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
