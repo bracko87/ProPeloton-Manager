@@ -12,9 +12,7 @@ import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
 type HeroProps = { gameTimeLabel: string }
 
 // Bundled locally so the hero uses the approved realistic sprint photo reliably.
-const SPRINT_PHOTO_URL = '/images/home/hero-sprint-finish-20261120.webp'
-const FALLBACK_PHOTO_URL =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/4b6fb4ca-5ab1-4fea-b645-c20802671498.png'
+const SPRINT_PHOTO_URL = '/images/home/hero-approved-sprint-20261120.jpg'
 
 function formatGameTimeLabel(label: string, seasonLabel: string, loadingLabel: string): string {
   if (!label) return loadingLabel
@@ -97,7 +95,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
           transform:translate3d(var(--ppm-x,0px),var(--ppm-y,0px),0) scale(1.026);
           transition:transform .38s ease-out;
         }
-        .ppm-cinematic .ppm-photo { filter:saturate(1.17) contrast(1.1) brightness(.94); }
+        .ppm-cinematic .ppm-photo { filter:saturate(1.06) contrast(1.05) brightness(1.02); }
         .ppm-cinematic .ppm-glass {
           background:linear-gradient(130deg,rgba(31,49,74,.82),rgba(7,20,39,.76));
           border:1px solid rgba(255,255,255,.23);
@@ -143,21 +141,16 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
 
       {/* The sprint finish is a photographic background, never a static screenshot of UI. */}
       <div ref={sceneRef} className="ppm-scene pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="ppm-photo-wrap absolute inset-0 w-full overflow-hidden">
+        <div className="ppm-photo-wrap absolute inset-y-0 right-0 w-[82%] overflow-hidden">
           <img
             src={SPRINT_PHOTO_URL}
             alt=""
             fetchPriority="high"
-            className="ppm-photo ppm-racer h-full w-full object-cover object-[50%_50%]"
-            onError={event => {
-              if (!event.currentTarget.src.includes('4b6fb4ca-5ab1')) {
-                event.currentTarget.src = FALLBACK_PHOTO_URL
-              }
-            }}
+            className="ppm-photo ppm-racer h-full w-full object-cover object-[52%_50%]"
           />
         </div>
         <div className="absolute inset-0 bg-[linear-gradient(90deg,#061426_0%,rgba(6,20,38,.99)_19%,rgba(6,20,38,.90)_32%,rgba(6,20,38,.50)_46%,rgba(6,20,38,.12)_63%,rgba(6,20,38,.03)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#061426]/95 via-transparent to-[#061426]/35" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061426]/85 via-transparent to-[#061426]/25" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_63%_58%,transparent_28%,rgba(4,13,31,.20)_79%)]" />
         <div className="ppm-ambient absolute -left-40 top-20 h-80 w-96 rounded-full bg-blue-600/25 blur-[100px]" />
         <div className="ppm-ambient absolute -right-20 bottom-0 h-60 w-[620px] rounded-full bg-yellow-400/25 blur-[85px]" />
