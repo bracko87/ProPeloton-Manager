@@ -17,6 +17,12 @@ The older November 20 SAT-01/02 entries below describe the previous security imp
 
 Full-game Test Player UI code now includes: feature-gated homepage Test the Game CTA, nickname + real team creation form, separate persisted test session, 14-day lifecycle display with a one-time welcome popup, permanent Register / Keep my Team link, and same-UUID email/password conversion prototype. [Draft PR #277](https://github.com/bracko87/ProPeloton-Manager/pull/277). GitHub checks passed. **These components are NOT live or fully functional**: the dedicated authenticated server club-creation RPC does not exist; the production Auth gate still blocks guests; anonymous club/race/finance permissions and the actual Premium entitlement are not yet adapted; no real guest tests were performed. The test CTA is hidden behind a false-by-default feature flag. Never mark SAT-01/02 completed based on these code-only milestones.
 
+## SAT-01 — guarded real club creation implementation (draft)
+
+The full-game test account branch now includes a dedicated `public.saturn_create_test_club_v1` SQL implementation that (when eventually authorized) creates one actual club, owner membership, settings, standard new-club finance records and an immutable 14-day lifecycle in a single transaction. It uses existing country-to-amateur mapping and the lowest currently active amateur tier, serializes per-account and per-region placement, and requires an administrator-approved capacity row. A second private creation gate defaults OFF and RPC EXECUTE is revoked from browser roles. **This is source code only, not applied or enabled on production, and is NOT an end-to-end working test player feature.**
+
+Required before activation: canonical Auth/club trigger compatibility review; authoritative league capacity approvals; proper CAPTCHA and anonymous account quotas; all real gameplay/RLS permissions; server-wide 14-day expiry enforcement; real seven-day Premium entitlement; verified account conversion and highest eligible vacancy placement; staging race/financial test cases. [Draft PR #277](https://github.com/bracko87/ProPeloton-Manager/pull/277).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
