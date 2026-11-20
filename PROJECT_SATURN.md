@@ -35,6 +35,12 @@ On the **unmerged** `saturn/full-game-test-accounts-v1` branch, draft SQL now en
 
 The previously incomplete Saturn workflow was fixed to run the **full test suite**. On source commit `b8a214907cc8415ec4935879d5f0e394fc859ad7`, [Saturn checks passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44741260224): **50 passing, 0 failing, 41 TODO staging tests** (91 total reported), plus successful app build and two other GitHub workflows. Production test-account Auth gate is OFF, no guest team created, SQL not deployed, and the other user projects and launch date remain untouched.
 
+## SAT-08 — Transfer and camp-finance expiration coverage (20 Nov 2026)
+
+On draft PR #277, test-account owner/expiry checks now also cover **seven** more player-facing RPCs: accepting or cancelling rider transfer activity, confirming unsolicited bids, extending staff contracts, booking training camps (two variants), and cancelling camp bookings. Corresponding restrictive INSERT/UPDATE/DELETE RLS rules cover **five** additional direct-write tables: transfer listings, offers, negotiations, unsolicited bids and training-camp bookings. This makes **21 selected player mutation RPCs** and **14 direct-write tables** proposed protected in source, but NOT every possible game operation. Existing registered-user behavior is deliberately retained.
+
+[Detailed SAT-08 review](docs/SATURN_TEST_PREMIUM_EXPIRY_AUDIT_2026-11-20.md). CI was verified on source commit `b594d85f77af001b5011b3d507e5ee76ad093769`: **109 total cases, 63 passing, 0 failing, 46 TODO staging**, along with app build and two additional successful workflows. These are static and build checks only, NOT real guest end-to-end validation. All production guest gates remain OFF and no draft migrations have been deployed. Do not activate before completing the remaining mutation audit, anti-abuse work and live JWT/staging verification.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
