@@ -5,6 +5,14 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## 20 November 2026 owner decision — SAT-01 / SAT-02 superseding scope
+
+**Full-game 14-day test players replace the former isolated 7-day Practice League plan.** Test accounts create a real team with only a nickname, start in the lowest eligible official tier, participate in real racing/finances/staff/equipment/training and receive seven days of Premium. After 14 days account play is read-only until identity conversion. The same Auth UUID, real club ID, rider inventory, financial/competition history and assets must survive verified registration. Attempt highest eligible vacancy placement after conversion only when season/race safety permits; never displace another club. Permanent Register stays on homepage and is visible throughout trial; first-run explanation modal required.
+
+[Full policy and blockers](docs/SATURN_FULL_GAME_TEST_ACCOUNT_POLICY_2026-11-20.md) · [Replacement draft PR #277](https://github.com/bracko87/ProPeloton-Manager/pull/277). The incompatible isolated 7-day practice-only PR #275 was closed unmerged. **The 14-day timebox schema and tests are code-complete, but the actual full-game guest authorization, trial Premium integration, real team creation, UI, expiry and identity conversion are NOT done or live-verified.** Production anonymous account creation remains disabled. Do not lift real club/race/reward gates until the full audit and integration tests pass.
+
+The older November 20 SAT-01/02 entries below describe the previous security implementation and are superseded where they suggest an isolated sandbox.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
