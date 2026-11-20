@@ -5,8 +5,8 @@
  */
 import React, { useEffect, useState } from 'react'
 import { Link } from 'react-router'
-import { supabase } from '../lib/supabase'
-import { useAuth } from '../context/AuthProvider'
+import { guestSupabase } from '../lib/guestSupabase'
+import type { User } from '@supabase/supabase-js'
 
 type Role = 'Sprinter' | 'Climber' | 'All-rounder'
 type Rider = { id: number; name: string; role: Role; training: number }
@@ -34,7 +34,8 @@ function isDraft(value: unknown): value is GuestDraft {
 }
 
 export default function GuestPracticePage(): JSX.Element {
-  const { user, loading } = useAuth()
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
   const [draft, setDraft] = useState<GuestDraft>(INITIAL_DRAFT)
   const [ready, setReady] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -42,12 +43,31 @@ export default function GuestPracticePage(): JSX.Element {
   const [hasDraft, setHasDraft] = useState(false)
   const isGuest = user?.is_anonymous === true
 
+  // Restore only the Saturn guest session. The official account session and
+  // its AuthProvider never receive this identity.
+  useEffect(() => {
+    let active = true
+    const { data: { subscription } } = guestSupabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (!active) return
+        setUser(session?.user?.is_anonymous === true ? session.user : null)
+        setLoading(false)
+      }
+    )
+    void guestSupabase.auth.getUser().then(({ data, error }) => {
+      if (!active) return
+      setUser(!error && data.user?.is_anonymous === true ? data.user : null)
+      setLoading(false)
+    }).catch(() => { if (active) setLoading(false) })
+    return () => { active = false; subscription.unsubscribe() }
+  }, [])
+
   useEffect(() => {
     if (loading) return
     if (!isGuest) { setReady(true); return }
     let active = true
     void (async () => {
-      const { data, error } = await supabase
+      const { data, error } = await guestSupabase
         .from('saturn_guest_drafts_v1')
         .select('draft')
         .eq('user_id', user.id)
@@ -65,7 +85,7 @@ export default function GuestPracticePage(): JSX.Element {
     setBusy(true)
     setNotice('')
     // Update only the draft column after initial insertion: never rewrite owner ID.
-    const query = supabase.from('saturn_guest_drafts_v1')
+    const query = guestSupabase.from('saturn_guest_drafts_v1')
     const { error } = hasDraft
       ? await query.update({ draft: next }).eq('user_id', user.id)
       : await query.insert({ user_id: user.id, draft: next })
