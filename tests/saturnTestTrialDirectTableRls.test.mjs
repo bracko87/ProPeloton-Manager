@@ -13,14 +13,11 @@ const tables=[
  ['rider_regular_training_daily_plans','club_id'],
  ['rider_regular_training_management','club_id'],
 ]
-test('helper requires canonical anonymous Auth and exact active owned test club',()=>{
+test('RLS helper checks unconverted lifecycle before accepting permanent Auth status',()=>{
  assert.match(sql,/from auth\.users u/)
- assert.match(sql,/u\.is_anonymous is true/)
- assert.match(sql,/t\.club_id=p_club_id/)
- assert.match(sql,/c\.owner_user_id=u\.id/)
- assert.match(sql,/t\.expires_at>now\(\)/)
- assert.match(sql,/t\.started_at<=now\(\)/)
- assert.match(sql,/t\.converted_at is null/)
+ assert.match(sql,/when public\.saturn_test_account_requires_guard_v1\(\) then/)
+ assert.match(sql,/public\.saturn_test_account_can_mutate_v1\(p_club_id\)/)
+ assert.ok(sql.indexOf('when public.saturn_test_account_requires_guard_v1() then') < sql.indexOf('u.is_anonymous is false'))
  assert.match(sql,/u\.is_anonymous is false/)
  assert.match(sql,/grant execute on function public\.saturn_trial_direct_write_allowed_v1\(uuid\)/)
 })
