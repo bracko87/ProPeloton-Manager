@@ -62,7 +62,9 @@
     "emptyYesterday": "Gestern waren keine Etappen angesetzt.",
     "emptyToday": "Heute sind keine Etappen angesetzt.",
     "emptyTomorrow": "Morgen sind keine Etappen angesetzt.",
-    "flagAlt": "Flagge von {{country}}"
+    "flagAlt": "Flagge von {{country}}",
+    "allRaces": "Alle Rennen",
+    "fullCalendar": "Gesamter Kalender"
   },
   "stats": {
     "title": "Kurzstatistik",
