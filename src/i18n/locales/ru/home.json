@@ -24,9 +24,20 @@
     "liveManagerLeagues": "Соревнуйся с реальными менеджерами.",
     "progression": "Ход осуществления",
     "progressionValue": "Турниры, ранжирование и вознаграждение",
-    "imageAlt": "Циклы, поднимающиеся на гору",
+    "imageAlt": "Велогонщики в спринте к финишу",
     "loadingGameTime": "Время игры...",
-    "season": "Сезон"
+    "season": "Сезон",
+    "legacyIntro": "Создай свою",
+    "legacyHighlight": "велосипедную легенду.",
+    "liveSeason": "Текущий сезон",
+    "statusPrelaunch": "Регистрация открыта",
+    "statusActive": "Идёт",
+    "liveRankings": "Текущий рейтинг",
+    "rankingsLoading": "Загрузка рейтинга...",
+    "rankingsEmpty": "Рейтинг появится, когда данные станут доступны.",
+    "pointsAbbrev": "очк.",
+    "slideControls": "Слайды главной страницы",
+    "slideLabel": "Показать слайд {{number}}"
   },
   "raceSchedule": {
     "title": "гоночный график",
