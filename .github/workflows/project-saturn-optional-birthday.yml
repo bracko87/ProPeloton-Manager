@@ -5,6 +5,8 @@ on:
   push:
     paths:
       - 'src/pages/Register.tsx'
+      - 'tests/saturnRegistrationUx.test.mjs'
+      - 'supabase/migrations/20261120110000_saturn_privacy_safe_generated_manager_handles.sql'
       - 'src/i18n/locales/**/auth.json'
       - '.github/workflows/project-saturn-optional-birthday.yml'
 
@@ -23,6 +25,8 @@ jobs:
           cache: npm
       - name: Install exact project dependencies
         run: npm ci --no-audit --no-fund
+      - name: Verify Saturn registration, birthday and privacy-safe handles
+        run: node --test tests/saturnRegistrationUx.test.mjs
       - name: Run complete production build and existing translation checks
         run: npm run build
       - name: Assert no birthday required when left blank
