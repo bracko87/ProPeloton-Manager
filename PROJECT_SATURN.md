@@ -19,7 +19,7 @@ with "players/admins can use it on the deployed website."
 | SAT-04 | Passkeys | Backlog |
 | SAT-05 | Additional providers | Backlog |
 | SAT-06 | Optional birthday | Code-tested, eight-language build passed; live signup unverified |
-| SAT-07 | Simplified registration | **Code-tested**: manager name optional, backend generates stable unique fallback; birthday fields collapsed; benefits explained and translated (8 languages); live browser sign-up still unverified |
+| SAT-07 | Simplified registration | **Code-tested**: manager name optional, backend generates privacy-safe UUID-derived fallback; birthday fields collapsed; benefits explained and translated (8 languages); live browser sign-up still unverified |
 | SAT-08 | Guest abuse protection | Investigating |
 | SAT-09 | Website analytics and Control Center | **Backend tested and admin UI code-tested**; last-event activity, five-minute navigation and three-table pageview checks; full Control Center/live-browser verification pending |
 | SAT-10 | Registration conversion | Backlog |
@@ -52,7 +52,7 @@ with "players/admins can use it on the deployed website."
 
 - `src/pages/Register.tsx` no longer requires a manually selected username.
   On an empty username the existing `public.handle_new_user()` database trigger
-  generates a normalized unique name using the email prefix plus the new user's UUID,
+  generates a non-identifying 24-character manager name from a stable hash of the new user's UUID,
   without changing the player's identity or database schema.
 - Email, strong password, password confirmation, email activation and the
   existing `/create-club` redirect are unchanged.
@@ -61,11 +61,19 @@ with "players/admins can use it on the deployed website."
   means no birthday reward.
 - Eight locale files now explain why the manager account matters, that name
   entry is optional, and how to open or hide birthday details.
-- [Production site build passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44712274013)
-  and [Saturn registration verification passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44712274128).
+- [Production site build passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44712274013),
+  and [expanded SAT-07 privacy, username, birthday, eight-language and production checks passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44713388407).
 - **No new account was created.** Production Netlify deployment and a real
   signup flow are not yet verified. SAT-07 remains unchecked until deployed
   and checked, particularly on mobile.
+
+**Privacy safeguard (SAT-07):** The original fallback used the email
+local part in the public username. This is replaced in the live database
+with `mgr_` plus the first 20 hexadecimal characters of a hash of the
+complete Supabase Auth UUID; a 24-character nickname is produced without
+publishing email information. Two sample UUIDs and active trigger state
+were verified read-only; existing account profiles are unchanged.
+[Committed database migration](supabase/migrations/20261120110000_saturn_privacy_safe_generated_manager_handles.sql).
 
 ### SAT-09 independent Control Center check
 
@@ -98,7 +106,7 @@ Complete the entire checklist **for ProPeloton Manager**. Put PR/commit, test ev
 - [ ] **SAT-04 · Medium · Passkeys.** Investigate Supabase passkey maturity and recovery; test device PIN/biometrics, device loss and cross-device flows before enabling.
 - [ ] **SAT-05 · Low · Other providers.** Apple or another provider only if player demand, account-linking safety and cost justify it.
 - [ ] **SAT-06 · High · Optional birthday.** Sign up with all birthday fields blank; no birthday reward when omitted. If provided, validate month/day/year, grant the existing annual reward only once under current rules. **Partially implemented:** ProPeloton form and eight translations updated, production build checks passed ([CI evidence](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44706496820)); still requires confirmed Netlify deployment and a real account-creation/reward negative test.
-- [ ] **SAT-07 · High · Simplify registration.** Reduce fields and friction, show guest versus permanent-account benefits, concise CTAs, mobile keyboard/tab navigation, sensible errors and accessible account recovery. **Code-tested:** username now optional (Supabase auth trigger generates a unique fallback), optional birthday folded away until requested, account benefits and labels translated across eight languages. [Registration production build passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44712274013). **Still open:** authenticated Netlify/browser verification, mobile interaction/accessibility, and eventual Guest Mode comparison.
+- [ ] **SAT-07 · High · Simplify registration.** Reduce fields and friction, show guest versus permanent-account benefits, concise CTAs, mobile keyboard/tab navigation, sensible errors and accessible account recovery. **Code-tested:** username now optional (Supabase auth trigger generates a non-identifying UUID-hash fallback), optional birthday folded away until requested, account benefits and labels translated across eight languages. [Registration production build passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44712274013). **Still open:** authenticated Netlify/browser verification, mobile interaction/accessibility, and eventual Guest Mode comparison.
 - [ ] **SAT-08 · High · Guest abuse prevention.** Explicit server-side gates for official races, leaderboards, sponsor/reward/coin farming, team quantity, welcome grants, Premium trials and conversion. Negative RLS tests for guest, signed-in player and administrator.
 
 ### S2 — Analytics and ProPeloton-specific Control Center (09–14)
