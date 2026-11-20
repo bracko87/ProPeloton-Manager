@@ -4,6 +4,8 @@ on:
     paths:
       - 'docs/SATURN_FULL_GAME_TEST_ACCOUNT_POLICY_2026-11-20.md'
       - 'supabase/migrations/*saturn_14day*.sql'
+      - 'supabase/migrations/*saturn_fail_closed_real_test_team_creation*.sql'
+      - 'tests/saturnTestClubCreation.test.mjs'
       - 'tests/saturnTestAccountLifecycle.test.mjs'
       - 'tests/saturnTestTeamSignup.test.mjs tests/saturnTestAccountExperience.test.mjs'
       - 'src/pages/TestTeamSignup.tsx'
