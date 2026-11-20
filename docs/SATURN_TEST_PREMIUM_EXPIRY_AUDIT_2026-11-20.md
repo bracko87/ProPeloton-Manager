@@ -23,3 +23,15 @@ The proposed `saturn_test_account_can_mutate_v1(p_club_id)` checks canonical ano
 - Use transactional tests for each category with an unexpired test Auth UUID, an expired UUID, another owner and a normal registered user; assert positive cases and fail-closed negatives.
 - Reconcile `get_my_premium_trial_onboarding_v1`, relevant paid-only vs trial feature controls, and no restart on registration; test one-time grant and conversion collision.
 - Only after the above, conduct end-to-end staging of full-game test users and approve public activation.
+
+
+## SAT-08 implementation progress — six training/staff, six equipment, nine direct tables
+
+Review-only source migrations now add canonical anonymous Auth checks and the existing active-test/owner/expiry predicate to **12 selected player mutation RPCs**:
+
+- Training and staff: clear daily override, set daily override, set rider regular training management, set coach automation, save training camp day plans, hire staff candidate.
+- Equipment: discard equipment, purchase equipment, purchase race supplies, save auto-restock settings, save default equipment setup, save equipment presets.
+
+A separate read-only security-definer authorization helper is added to the `authenticated` RLS path as a **RESTRICTIVE** policy for INSERT, UPDATE and DELETE on nine club-linked tables: `clubs`, `club_memberships`, `club_equipment_inventory`, `club_finance_summary`, `club_infrastructure`, `club_staff`, `race_team_entries`, `rider_regular_training_daily_plans` and `rider_regular_training_management`. SELECT is deliberately untouched so the team remains visible after expiry. The predicate gives true to an existing non-anonymous manager only subject to all ordinary RLS policies; a temporary Auth identity must own the exact club and have an unexpired lifecycle. The helper is NOT an unconditional owner bypass and does NOT grant INSERT/UPDATE/DELETE by itself.
+
+**Important qualification:** These RLS barriers do not restrict writes performed by database-owner SECURITY DEFINER RPCs, so each player-facing RPC still needs its own guard. Direct writes involving other tables (transfers, pricing, sponsor offers, training camps, settings, inventory maintenance, development squads, etc.) are not all covered. Existing system/scheduler behavior under database privileges is unverified. No genuine anonymous JWT or Supabase staging integration test has yet passed. Gates remain OFF, no migration deployed, and this remains a draft PR. The upgraded CI workflow now executes the entire `tests/saturnTest*.test.mjs` suite, rather than the previous two-file subset.
