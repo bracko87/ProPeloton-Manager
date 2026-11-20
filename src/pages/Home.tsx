@@ -619,11 +619,11 @@ export default function HomePage(): JSX.Element {
 
       <header className="relative border-b border-yellow-400/35 bg-[#061426] shadow-[0_1px_0_rgba(250,204,21,.18)]">
         <div className="mx-auto flex max-w-[1510px] flex-col gap-2 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-10 sm:py-2 lg:px-12">
-          <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <div className="flex min-h-16 min-w-0 items-center gap-3 sm:min-h-20 sm:gap-4 lg:min-h-24">
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/transparent%20logo%20hhh.png?v=20261120-header-2"
               alt="ProPeloton Manager"
-              className="h-16 w-auto shrink-0 object-contain sm:h-20 lg:h-24"
+              className="h-12 w-auto shrink-0 object-contain sm:h-14 lg:h-16"
             />
             <div className="min-w-0 break-words border-l border-yellow-400/50 pl-4 text-base font-semibold tracking-tight sm:text-xl">ProPeloton Manager</div>
           </div>
