@@ -51,7 +51,7 @@ export default function FeatureCard({ icon, title, description }: FeatureCardPro
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-yellow-400/35 bg-yellow-400/10 text-yellow-300">{icon}</div>
         <div>
-          <h4 className="text-lg font-extrabold text-white">{displayTitle}</h4>
+          <h4 className="text-lg font-semibold text-white">{displayTitle}</h4>
           <p className="mt-2 text-sm leading-6 text-slate-200">{displayDescription}</p>
         </div>
       </div>
