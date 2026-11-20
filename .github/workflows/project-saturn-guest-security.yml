@@ -1,0 +1,42 @@
+name: Project Saturn - guest identity and economy safety guards
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'supabase/migrations/20261120110500_saturn_guest_mode_fail_closed_auth_and_rewards_v1.sql'
+      - 'supabase/migrations/20261120113000_saturn_guest_competition_and_direct_club_guards_v1.sql'
+      - 'tests/saturnGuestSecurity.test.mjs'
+      - '.github/workflows/project-saturn-guest-security.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify fail-closed guest gates, reward and race protections
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: Install locked project dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run guest guard regression tests
+        run: node --test tests/saturnGuestSecurity.test.mjs
+      - name: Build ProPeloton production web client
+        run: npm run build
+      - name: Assert guest login is not turned on in the public UI
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const login=fs.readFileSync('src/pages/Login.tsx','utf8');
+          const register=fs.readFileSync('src/pages/Register.tsx','utf8');
+          if(login.includes('signInAnonymously(') || register.includes('signInAnonymously(')){
+            throw new Error('Guest sign-in enabled before staging and conversion tests passed');
+          }
+          console.log('Guest Mode remains unexposed in the public login and registration pages.');
+          NODE
