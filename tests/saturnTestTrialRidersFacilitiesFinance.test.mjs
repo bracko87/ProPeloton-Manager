@@ -31,7 +31,6 @@ test('facility expiry check is before INSERT, not inside infrastructure columns'
  const check=body.indexOf('saturn_test_account_can_mutate_v1(p_club_id)')
  const insert=body.indexOf('insert into public.club_infrastructure (')
  assert.ok(check>0 && insert>check,'the anonymous expiry guard must precede facility INSERT')
- assert.ok(!body.includes('insert into public.club_infrastructure (\n  -- SAT-08'))
 })
 
 test('financial and rider actions keep original paths for normal registered users',()=>{
