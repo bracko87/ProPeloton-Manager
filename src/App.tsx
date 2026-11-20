@@ -37,6 +37,7 @@ import HomePage from './pages/Home'
 import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
 import GuestPracticePage from './pages/GuestPractice'
+import GuestConvertPage from './pages/GuestConvert'
 import ForgotPasswordPage from './pages/ForgotPassword'
 import ResetPasswordPage from './pages/ResetPassword'
 import CreateClubPage from './pages/CreateClub'
@@ -418,6 +419,7 @@ export default function App(): JSX.Element {
 
           {/* Saturn guest sandbox: not linked or activated while guest gate is closed. */}
           <Route path="/guest-practice" element={<GuestPracticePage />} />
+          <Route path="/guest-convert" element={<GuestConvertPage />} />
 
           <Route
             path="/forgot-password"
