@@ -10,13 +10,26 @@ import { Link } from 'react-router'
 import type { User } from '@supabase/supabase-js'
 import { guestSupabase } from '../lib/guestSupabase'
 
+const ORIGINAL_GUEST_ID_KEY = 'ppm-saturn-original-guest-uuid-v1'
+
+function getOriginalGuestId(): string | null {
+  try {
+    const value = window.localStorage.getItem(ORIGINAL_GUEST_ID_KEY)
+    return value && /^[0-9a-f-]{36}$/i.test(value) ? value : null
+  } catch { return null }
+}
+
+function rememberOriginalGuestId(id: string): void {
+  try { window.localStorage.setItem(ORIGINAL_GUEST_ID_KEY, id) } catch { /* Browser storage may be blocked. */ }
+}
+
 function validEmail(s: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.trim())
 }
 
 export default function GuestConvertPage(): JSX.Element {
   const [user, setUser] = useState<User | null>(null)
-  const [originalId, setOriginalId] = useState<string | null>(null)
+  const [originalId, setOriginalId] = useState<string | null>(() => getOriginalGuestId())
   const [loading, setLoading] = useState(true)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -37,7 +50,10 @@ export default function GuestConvertPage(): JSX.Element {
       return
     }
     setUser(data.user)
-    if (!originalId && data.user.is_anonymous === true) setOriginalId(data.user.id)
+    if (!originalId && data.user.is_anonymous === true) {
+      setOriginalId(data.user.id)
+      rememberOriginalGuestId(data.user.id)
+    }
     if (data.user.is_anonymous === true) {
       setMessage('Your email is not yet confirmed. Open the verification email and return to this browser.')
     } else if (!data.user.email_confirmed_at || !data.user.email) {
@@ -59,7 +75,10 @@ export default function GuestConvertPage(): JSX.Element {
       if (!alive) return
       if (!error && data.user) {
         setUser(data.user)
-        if (data.user.is_anonymous === true) setOriginalId(data.user.id)
+        if (data.user.is_anonymous === true && !getOriginalGuestId()) {
+          setOriginalId(data.user.id)
+          rememberOriginalGuestId(data.user.id)
+        }
       }
       setLoading(false)
     }).catch(() => { if (alive) setLoading(false) })
