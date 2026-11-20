@@ -48,7 +48,7 @@ begin
     'generation', v_generation
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.hire_staff_candidate(p_candidate_id uuid, p_contract_days integer DEFAULT 0)
@@ -377,7 +377,7 @@ begin
     'saved_count', v_saved_count
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.set_regular_training_coach_automation_v1(p_club_id uuid, p_enabled boolean, p_manager_staff_id uuid DEFAULT NULL::uuid)
@@ -529,7 +529,7 @@ begin
     'generation', v_generation
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.set_rider_daily_training_override_v1(p_club_id uuid, p_rider_id uuid, p_plan_date date, p_focus_code text, p_intensity text)
@@ -774,7 +774,7 @@ begin
     'generation', v_generation
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.set_rider_regular_training_management_v1(p_club_id uuid, p_rider_id uuid, p_management_mode text)
@@ -882,6 +882,6 @@ begin
     'generation', v_generation
   );
 end;
-$function$
+$function$;
 
 
