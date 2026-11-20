@@ -29,6 +29,12 @@ The source now grants the ordinary seven-day Premium trial entitlement atomicall
 
 **Not ready to release:** these changes are code-only on draft PR #277, not tested with real guest JWTs or deployed. The game has many more player-facing write APIs across squad, training, equipment, staff, finance and transfers; those still need server-side expiry restrictions. Some Premium features distinguish paid access from normal trial access. CAPTCHA/rate-limits, full onboarding checks and conversion tests remain mandatory. No guest gate should be enabled.
 
+## SAT-08 — Additional 14-day expiration write controls (20 Nov 2026)
+
+On the **unmerged** `saturn/full-game-test-accounts-v1` branch, draft SQL now enforces canonical anonymous Auth, exact test-club identity and unexpired 14-day lifecycle across **12** reviewed player-facing RPCs (six rider training/staff actions and six equipment inventory/setup actions) in addition to race applications and withdrawals. Proposed restrictive RLS INSERT/UPDATE/DELETE policies cover **nine** clearly club-linked tables without removing read access. Registered players retain their existing RLS and RPC conditions. This is **not comprehensive**: transfers, other finance operations, sponsorships and further equipment/training direct writes and SECURITY DEFINER paths still require audit and tests; full server-wide expiry enforcement remains **unchecked**.
+
+The previously incomplete Saturn workflow was fixed to run the **full test suite**. On source commit `b8a214907cc8415ec4935879d5f0e394fc859ad7`, [Saturn checks passed](https://github.com/bracko87/ProPeloton-Manager/actions/runs/44741260224): **50 passing, 0 failing, 41 TODO staging tests** (91 total reported), plus successful app build and two other GitHub workflows. Production test-account Auth gate is OFF, no guest team created, SQL not deployed, and the other user projects and launch date remain untouched.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
