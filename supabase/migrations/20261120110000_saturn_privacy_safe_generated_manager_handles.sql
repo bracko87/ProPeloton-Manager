@@ -2,7 +2,7 @@
 -- Production change 20 Nov 2026: the existing signup trigger already supports
 -- an optional username, but its previous fallback exposed the local part of
 -- the player's email address. Use a non-identifying 24-character handle
--- derived from the server-issued UUID instead.
+-- derived from a stable hash of the entire server-issued UUID instead.
 -- Replaces the existing function in place; doesn't modify accounts, clubs,
 -- paid entitlements, birthdays, rewards or the game clock.
 -- Trigger and explicit nickname behavior remain unchanged.
@@ -26,7 +26,7 @@ begin
 
   if v_username is null then
     -- Saturn SAT-07: avoid exposing email prefix in public usernames.
-    v_username := 'mgr_' || left(replace(new.id::text, '-', ''), 20);
+    v_username := 'mgr_' || left(md5(new.id::text), 20);
   end if;
 
   v_username := left(
