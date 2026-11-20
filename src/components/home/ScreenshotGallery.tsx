@@ -152,7 +152,7 @@ export default function ScreenshotGallery(): JSX.Element {
               <button
                 type="button"
                 onClick={goNext}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white hover:border-yellow-400 hover:text-yellow-400"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-amber-400 hover:text-amber-700"
                 aria-label={t('screenshots.next')}
               >
                 <svg
