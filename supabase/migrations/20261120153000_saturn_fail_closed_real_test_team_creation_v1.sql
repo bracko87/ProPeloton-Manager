@@ -132,8 +132,11 @@ begin
   from public.clubs c
   where c.world_tier=v_tier and c.club_tier='amateur'::public.club_tier
     and c.amateur_division=v_division and c.is_active is true;
-  if v_current>=v_max_teams then
-    raise exception 'No free team slot in the lowest eligible division';
+  -- An AI team is exchanged for a player team, so total division occupancy
+  -- stays CONSTANT. An already-full but approved division is acceptable only
+  -- when the matching AI replacement succeeds in the INSERT trigger.
+  if v_current>v_max_teams then
+    raise exception 'Approved division capacity has already been exceeded';
   end if;
 
   -- This is the same official club schema and setup used by registered players.
