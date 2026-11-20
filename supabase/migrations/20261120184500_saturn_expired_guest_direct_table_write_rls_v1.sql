@@ -12,26 +12,19 @@ set search_path to ''
 as $saturn$
   select case
     when auth.uid() is null or p_club_id is null then false
+    -- CHECK LIFECYCLE BEFORE THE AUTH LABEL. Linking an email or Google
+    -- identity can make is_anonymous=false without finalizing Saturn's
+    -- verified conversion. An unconverted expired trial remains read-only.
+    when public.saturn_test_account_requires_guard_v1() then
+      public.saturn_test_account_can_mutate_v1(p_club_id)
+    -- The ordinary registered-user path is unchanged, including a fully
+    -- verified converted trial (converted_at IS NOT NULL). Existing
+    -- permissive club ownership policies still apply independently.
     when exists (
       select 1 from auth.users u
       where u.id=auth.uid() and u.is_anonymous is false
     ) then true
-    else exists (
-      select 1
-      from auth.users u
-      join public.saturn_test_accounts_v1 t on t.user_id=u.id
-      join public.clubs c on c.id=t.club_id
-      where u.id=auth.uid()
-        and u.is_anonymous is true
-        and t.club_id=p_club_id
-        and c.owner_user_id=u.id
-        and c.is_ai is false
-        and c.club_type='main'
-        and c.is_active is true
-        and t.converted_at is null
-        and t.started_at<=now()
-        and t.expires_at>now()
-    )
+    else false
   end;
 $saturn$;
 revoke all on function public.saturn_trial_direct_write_allowed_v1(uuid)
