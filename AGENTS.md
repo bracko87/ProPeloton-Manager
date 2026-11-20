@@ -29,6 +29,12 @@ Effective 2026-10-20; **main-only write preference updated by the owner on 2026-
 - Preserve game clock, national teams/associations, National Championships, AI teams, youth systems and established features unless a narrowly scoped change is explicitly approved.
 - Work not present on `main` is not shipped. Do not describe a successful feature-branch build or unmerged PR as a completed release.
 
+## Project Saturn — ProPeloton-only ownership
+
+- **Project Saturn applies exclusively to ProPeloton Manager**, its own Supabase project, and **ProPeloton-specific** panels/feeds in the existing Game Control Center. [Canonical 21-item checklist](PROJECT_SATURN.md) and [master tracker](https://github.com/bracko87/ProPeloton-Manager/issues/267).
+- **Project Helios applies exclusively to Tennis Legacy: Rise to Glory**. Although both projects have a similar 21-item brief, never treat their tasks as combined, reuse player data, share identity migrations, cross-apply SQL, grant cross-game admin rights or alter one game's deployment because of work on the other.
+- Tested Helios analytics/UX patterns may inform Saturn **only as references**. All Saturn implementation and acceptance tests must use ProPeloton-specific tables, routes, permissions, gameplay terminology and release gates.
+
 ## 4. Coordination and protection
 
 - This policy supersedes the 2026-10-19 staging-first instructions and the 2026-10-20 feature-PR default for this repository. **Owner preference: validated user-requested changes are integrated into `main` during the task; staging remains a backup only.**
