@@ -28,6 +28,6 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Guest security and practice contract tests
-        run: node --test tests/saturnGuestSecurity.test.mjs tests/saturnGuestDrafts.test.mjs tests/saturnGuestPractice.test.mjs tests/saturnGuestConversion.test.mjs tests/saturnGuestOnboarding.test.mjs
+        run: node --test tests/saturnGuestSecurity.test.mjs tests/saturnGuestDrafts.test.mjs tests/saturnGuestPractice.test.mjs tests/saturnGuestConversion.test.mjs tests/saturnGuestOnboarding.test.mjs tests/saturnGuestPracticePolicy.test.mjs
       - name: Production build
         run: npm run build
