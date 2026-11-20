@@ -29,6 +29,9 @@ export default function FeatureDetailPage(): JSX.Element {
     squads: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Senior,%20U23%20and%20youth%20squads.png',
     staff: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/11%20active%20staff%20roles.png',
     training: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Regular%20trainings.png',
+    growth: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20development.png',
+    calendar: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/593%20dated%20races.png',
+    preparation: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Detailed%20race%20preparation.png',
   }
   const heroImage = heroImages[key] ?? null
 
