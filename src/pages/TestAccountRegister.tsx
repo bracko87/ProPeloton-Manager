@@ -54,6 +54,8 @@ export default function TestAccountRegister(): JSX.Element {
         return 'Your team was placed in an approved ' +
           String(placement.club_tier ?? 'higher') +
           ' division. Your riders, finances and results remain unchanged.'
+      case 'already_placed':
+        return 'Your previously approved division placement is already complete. Your team remains in that division.'
       case 'race_commitment_pending':
         return 'Your team remains in its current division until its ongoing race commitments finish.'
       case 'season_transition_pending':
