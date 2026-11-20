@@ -79,6 +79,14 @@ The draft registration page now offers **Link Google to this team**, using `test
 
 **Status: source code completed, not staging validated, not deployed.** Manual identity linking and the tagged callback URL must be configured and checked in isolated staging. An already-linked Google account must never merge or replace an existing team. Latest verified CI commit `7ff4bd0a0f20bedb45b6bd6f648263aa8d826113`: **160 test cases, 90 passing, 0 failing, 70 TODO staging**, app build and all 3 workflows passed. [Staging acceptance instructions](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md). Guest Mode remains OFF.
 
+## SAT-03 — Highest approved vacant tier for converted teams (20 Nov 2026)
+
+The draft PR now includes `saturn_place_converted_test_team_v1()` and a private, **OFF-by-default**, manually approved `saturn_converted_vacancy_caps_v1` capacity table. The RPC verifies the canonical original permanent Auth UUID, `saturn_test_accounts_v1.converted_at`, unchanged original owned main club and owner membership. It evaluates available WorldTeam, ProTeam, Continental and Amateur slots in descending competition-category / ascending world-tier priority; region must match the live country-to-division mappings. Vacancies have a **hard approved capacity** and are serialized with advisory/row locks to avoid simultaneous overallocation. The function never moves existing AI or human clubs, replaces a race entrant or resets original assets, finances, points, or Premium.
+
+If active race applications/entries exist (legacy and v1 formats), a season transition is armed or there is no **approved actual empty higher slot**, placement is deferred and the club stays unchanged. After successfully finalizing email/password or Google registration, the UI calls placement as an optional step, reports the result and does not fail registration if relocation is unavailable. These remain **source-only** protections: no approved slot records exist, no production SQL was deployed and no team was moved. Real staging must verify concurrency and race/season handling.
+
+**CI correction:** Earlier Saturn workflow used `tests/saturnTest*.test.mjs` and silently omitted a new `saturnConvertedVacancyPlacement.test.mjs` test. It now runs `tests/saturn*.test.mjs`, including all Saturn contract tests. Source commit `092b6c88d7a28631c09990caf3adc8cd124ace91` passed all three workflows; **199 test cases, 113 passed, 0 failed, 86 TODO staging**. [Staging approval matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
