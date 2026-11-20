@@ -23,6 +23,23 @@ create table if not exists private.saturn_converted_vacancy_caps_v1 (
 alter table private.saturn_converted_vacancy_caps_v1 enable row level security;
 revoke all on private.saturn_converted_vacancy_caps_v1 from public,anon,authenticated;
 
+-- Durable conversion-placement audit. One successful placement per
+-- converted original team, even if a more attractive slot opens later.
+-- No browser access or updates to this record.
+create table if not exists private.saturn_converted_team_placements_v1 (
+  user_id uuid primary key references auth.users(id),
+  club_id uuid not null unique references public.clubs(id),
+  from_club_tier public.club_tier not null,
+  from_world_tier smallint not null,
+  to_club_tier public.club_tier not null,
+  to_world_tier smallint not null,
+  to_region text not null,
+  placed_at timestamptz not null default now()
+);
+alter table private.saturn_converted_team_placements_v1 enable row level security;
+revoke all on table private.saturn_converted_team_placements_v1
+  from public, anon, authenticated;
+
 -- Caller can only ask to place their OWN original trial club, after
 -- verified conversion. The function chooses destination exclusively from
 -- approved capacity and server country->regional-division mappings.
@@ -79,6 +96,17 @@ begin
   ) then
     raise exception 'Converted team ownership could not be verified'
       using errcode='42501';
+  end if;
+
+  -- Retry after a completed promotion must be safe and idempotent.
+  -- A single conversion cannot repeatedly jump higher leagues as vacancies
+  -- emerge, even from a second browser/session.
+  if exists (
+    select 1 from private.saturn_converted_team_placements_v1 p
+    where p.user_id=v_uid and p.club_id=v_club.id
+  ) then
+    return jsonb_build_object('placed',false,
+      'status','already_placed','club_id',v_club.id);
   end if;
 
   -- All applied season transitions and race participation refer to a stable
@@ -224,6 +252,16 @@ begin
     if not found then
       raise exception 'Converted club changed during placement; transaction rolled back';
     end if;
+
+    -- Successful placement and immutable audit commit atomically. A failed
+    -- insert rolls the club tier update back in the SAME transaction.
+    insert into private.saturn_converted_team_placements_v1(
+      user_id,club_id,from_club_tier,from_world_tier,
+      to_club_tier,to_world_tier,to_region
+    ) values (
+      v_uid,v_club.id,v_club.club_tier,v_club.world_tier,
+      v_destination.club_tier,v_destination.world_tier,v_dest_division
+    );
 
     return jsonb_build_object(
       'placed',true,'status','moved_to_approved_vacancy',
