@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 const read = path => readFileSync(new URL('../' + path, import.meta.url),'utf8')
 const sql = read('supabase/migrations/20261120234500_saturn_converted_team_approved_vacancy_v1.sql')
 const ui = read('src/pages/TestAccountRegister.tsx')
+const audit = read('supabase/tests/saturn_approved_vacancy_occupancy_audit.sql')
 
 test('vacancies require separate private approved, disabled-by-default category/region caps',()=>{
  assert.match(sql,/create table if not exists private\.saturn_converted_vacancy_caps_v1/)
@@ -91,6 +92,17 @@ test('email and Google conversion request optional server-assigned vacancy witho
  assert.match(ui,/No approved higher-division vacancy is available/)
  assert.ok((ui.match(/await requestApprovedPlacement\(\)/g)||[]).length===2)
 })
+test('capacity occupancy review is read-only and counts ALL human and AI teams',()=>{
+ assert.ok(audit.includes('from public.clubs c'))
+ assert.ok(audit.includes('from private.saturn_converted_vacancy_caps_v1 cap'))
+ assert.ok(audit.includes('count(*) filter (where c.is_ai=true)'))
+ assert.ok(audit.includes('count(*) filter (where c.is_ai=false)'))
+ assert.ok(audit.includes('unknown_or_empty_league'))
+ assert.ok(audit.includes('vacancy_subject_to_eligibility_and_race_checks'))
+ assert.ok(audit.includes('greatest(0,cap.max_teams-coalesce(occ.active_total,0))'))
+ assert.doesNotMatch(audit,/^\\s*(?:insert|update|delete|alter|create|drop|grant|revoke)\\s/mi)
+})
+
 test.todo('staging: registered player picks highest approved EMPTY tier/region, with no incumbent displaced')
 test.todo('staging: registration with no approved vacancies retains bottom amateur club and points')
 test.todo('staging: active/scheduled race entries block movement but final results remain intact')
