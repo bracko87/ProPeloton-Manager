@@ -1,35 +1,30 @@
-/**
- * CTA.tsx
- * Final call-to-action block encouraging users to sign up.
- */
-
+/** Public homepage's understated final call to action. */
 import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { Trophy } from 'lucide-react'
 
-/**
- * CTA
- * Prominent call-to-action with supporting text.
- */
-export default function CTA() {
+export default function CTA(): JSX.Element {
   const { t } = useTranslation('home')
 
   return (
-    <div className="mx-auto max-w-5xl rounded-[2rem] border border-yellow-400/35 bg-[#10243f]/75 px-6 py-14 text-center shadow-[0_0_55px_rgba(250,204,21,.12)] backdrop-blur-xl sm:px-12">
-      <div className="mb-5 inline-flex items-center gap-3 rounded-full border border-yellow-400/35 bg-yellow-400/10 px-4 py-2 text-yellow-300">
-        <Trophy />
-        <span className="font-medium">{t('cta.badge')}</span>
-      </div>
-
-      <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('cta.title')}</h3>
-      <p className="mt-3 text-white/85">{t('cta.body')}</p>
-
-      <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
-        <Link to="/register" className="rounded-xl bg-yellow-400 px-7 py-3 font-extrabold text-[#071426] shadow-[0_0_27px_rgba(250,204,21,.35)] transition hover:-translate-y-0.5 hover:bg-yellow-300">
+    <div className="mx-auto max-w-4xl px-6 py-4 text-center">
+      <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+        {t('cta.title')}
+      </h2>
+      <p className="mx-auto mt-3 max-w-2xl text-base leading-7 text-slate-300">
+        {t('cta.body')}
+      </p>
+      <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
+        <Link
+          to="/register"
+          className="rounded-lg bg-yellow-400 px-6 py-3 text-sm font-semibold text-slate-950 transition hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400"
+        >
           {t('cta.createClub')}
         </Link>
-        <Link to="/login" className="rounded-xl border border-white/25 bg-white/5 px-7 py-3 font-semibold text-white transition hover:border-yellow-400/60 hover:bg-white/10">
+        <Link
+          to="/login"
+          className="rounded-lg border border-white/25 bg-white/5 px-6 py-3 text-sm font-medium text-white transition hover:border-yellow-300/70 hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400"
+        >
           {t('cta.signIn')}
         </Link>
       </div>
