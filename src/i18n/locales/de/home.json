@@ -185,5 +185,87 @@
     "homepageDataUnexpected": "Die Live-Daten der Startseite wurden in einem unerwarteten Format zurückgegeben.",
     "clubStatusError": "Sie sind angemeldet, aber wir konnten den Status Ihres Clubs nicht laden. Bitte aktualisieren Sie die Seite oder versuchen Sie es erneut.",
     "clubCreationDisabled": "Die Erstellung neuer Clubs ist bis zum Start vorübergehend pausiert. Bestehende Manager können sich weiterhin anmelden."
+  },
+  "why": {
+    "eyebrow": "WARUM PROPELOTON MANAGER",
+    "title": "Viel mehr als Renntaktik.",
+    "subtitle": "Leite die ganze Radsportwelt – vom ersten Jugendtraining bis zur Meisterschaft.",
+    "races": "Terminierte Rennen",
+    "equipment": "Ausrüstungsmodelle",
+    "staff": "Aktive Personalrollen",
+    "features": {
+      "management": {
+        "title": "Umfassendes Teammanagement",
+        "description": "Steuere Entscheidungen im ganzen Verein."
+      },
+      "squads": {
+        "title": "Profis, U23 und Nachwuchs",
+        "description": "Vom Nachwuchs bis ins Profiteam."
+      },
+      "staff": {
+        "title": "11 aktive Mitarbeiterrollen",
+        "description": "Stelle dein Spezialistenteam zusammen."
+      },
+      "training": {
+        "title": "Präzises Training",
+        "description": "Trainiere neun Fähigkeiten gezielt."
+      },
+      "growth": {
+        "title": "Fahrerentwicklung",
+        "description": "Verfolge Potenzial, Form und Fortschritte."
+      },
+      "calendar": {
+        "title": "593 terminierte Rennen",
+        "description": "Plane deinen Kalender für die ganze Saison."
+      },
+      "preparation": {
+        "title": "Detaillierte Rennvorbereitung",
+        "description": "Plane Aufstellung, Taktik und Material."
+      },
+      "tiers": {
+        "title": "Vier Wettbewerbsebenen",
+        "description": "Steige durch regionale Ligen auf."
+      },
+      "equipment": {
+        "title": "170 Ausrüstungsmodelle",
+        "description": "Sechs Materialkategorien plus Rennbedarf."
+      },
+      "assets": {
+        "title": "Infrastruktur & Teamfahrzeuge",
+        "description": "Verbessere Anlagen, Teamwagen und Vans."
+      },
+      "finance": {
+        "title": "Realistische Vereinsfinanzen",
+        "description": "Plane Gehälter, Kosten, Steuern und Prämien."
+      },
+      "sponsors": {
+        "title": "Regionale Sponsoren",
+        "description": "Arbeite mit Marken und passenden Zielen."
+      },
+      "operations": {
+        "title": "Teamrichtlinien & Betrieb",
+        "description": "Steuere Wohnen, Ernährung, Erholung und Logistik."
+      },
+      "transfers": {
+        "title": "Transfers & freie Fahrer",
+        "description": "Verhandle mit Teams und verpflichte freie Fahrer."
+      },
+      "national": {
+        "title": "Nationalverbände",
+        "description": "Führe Nationalteams zu Meisterschaften."
+      },
+      "academy": {
+        "title": "Nachwuchsakademie & Rennen",
+        "description": "Fördere Talente von Anfang an."
+      },
+      "replay": {
+        "title": "Dynamische Etappenwiedergabe",
+        "description": "Verfolge das Renngeschehen live im Replay."
+      },
+      "progression": {
+        "title": "Langfristiger Saisonfortschritt",
+        "description": "Kämpfe um Aufstieg, Ranglisten und Ziele."
+      }
+    }
   }
 }

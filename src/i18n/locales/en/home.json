@@ -185,5 +185,87 @@
     "homepageDataUnexpected": "Live homepage data returned an unexpected format.",
     "clubStatusError": "You are signed in, but we could not load your club status. Please refresh or try again.",
     "clubCreationDisabled": "New club creation is currently paused ahead of launch. Existing managers can continue to sign in."
+  },
+  "why": {
+    "eyebrow": "WHY PROPELOTON MANAGER",
+    "title": "More than race day.",
+    "subtitle": "Run the whole cycling world — from the first junior training session to a championship finish.",
+    "races": "Dated races",
+    "equipment": "Equipment models",
+    "staff": "Active staff roles",
+    "features": {
+      "management": {
+        "title": "Deep team management",
+        "description": "Control decisions across your entire club."
+      },
+      "squads": {
+        "title": "Senior, U23 & youth squads",
+        "description": "Build a pathway from academy to pro racing."
+      },
+      "staff": {
+        "title": "11 active staff roles",
+        "description": "Build a specialist support team."
+      },
+      "training": {
+        "title": "Precision training",
+        "description": "Target nine skills with individual plans."
+      },
+      "growth": {
+        "title": "Rider development",
+        "description": "Follow potential, form and long-term growth."
+      },
+      "calendar": {
+        "title": "593 dated races",
+        "description": "Plan a packed season-long calendar."
+      },
+      "preparation": {
+        "title": "Detailed race preparation",
+        "description": "Select lineups, tactics and equipment setups."
+      },
+      "tiers": {
+        "title": "Four competition tiers",
+        "description": "Compete in regional divisions and rise."
+      },
+      "equipment": {
+        "title": "170 equipment models",
+        "description": "Six gear categories plus race supplies."
+      },
+      "assets": {
+        "title": "Infrastructure & race assets",
+        "description": "Upgrade facilities, team cars and vans."
+      },
+      "finance": {
+        "title": "Realistic club finances",
+        "description": "Manage salaries, expenses, taxes and rewards."
+      },
+      "sponsors": {
+        "title": "Regional sponsorship engine",
+        "description": "Negotiate brands and meaningful objectives."
+      },
+      "operations": {
+        "title": "Policies & operations",
+        "description": "Set housing, nutrition, recovery and logistics."
+      },
+      "transfers": {
+        "title": "Club deals & free agents",
+        "description": "Build your squad through both transfer paths."
+      },
+      "national": {
+        "title": "National associations",
+        "description": "Lead national teams into championships."
+      },
+      "academy": {
+        "title": "Youth academy & races",
+        "description": "Develop young talent from the first step."
+      },
+      "replay": {
+        "title": "Dynamic stage replay",
+        "description": "Follow the race action as it unfolds."
+      },
+      "progression": {
+        "title": "Season-long progression",
+        "description": "Chase promotion, rankings and long-term goals."
+      }
+    }
   }
 }

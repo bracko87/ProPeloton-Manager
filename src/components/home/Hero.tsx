@@ -12,7 +12,7 @@ import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
 type HeroProps = { gameTimeLabel: string }
 
 // Bundled locally so the hero uses the approved realistic sprint photo reliably.
-const SPRINT_PHOTO_URL = '/images/home/hero-sprint-finish.png'
+const SPRINT_PHOTO_URL = '/images/home/hero-sprint-finish-20261120.webp'
 const FALLBACK_PHOTO_URL =
   'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/4b6fb4ca-5ab1-4fea-b645-c20802671498.png'
 
@@ -143,12 +143,12 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
 
       {/* The sprint finish is a photographic background, never a static screenshot of UI. */}
       <div ref={sceneRef} className="ppm-scene pointer-events-none absolute inset-0" aria-hidden="true">
-        <div className="ppm-photo-wrap absolute inset-y-0 right-0 w-[78%] overflow-hidden">
+        <div className="ppm-photo-wrap absolute inset-0 w-full overflow-hidden">
           <img
             src={SPRINT_PHOTO_URL}
             alt=""
             fetchPriority="high"
-            className="ppm-photo ppm-racer h-full w-full object-cover object-[50%_54%]"
+            className="ppm-photo ppm-racer h-full w-full object-cover object-[50%_50%]"
             onError={event => {
               if (!event.currentTarget.src.includes('4b6fb4ca-5ab1')) {
                 event.currentTarget.src = FALLBACK_PHOTO_URL
