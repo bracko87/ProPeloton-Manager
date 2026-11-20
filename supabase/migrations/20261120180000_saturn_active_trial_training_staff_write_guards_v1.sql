@@ -260,7 +260,8 @@ begin
     v_candidate.staff_name,
     v_candidate.salary_weekly,
     v_contract_expires_at;
-end;$function$
+end;
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.save_training_camp_day_training_plans(p_booking_id uuid, p_plans jsonb)
