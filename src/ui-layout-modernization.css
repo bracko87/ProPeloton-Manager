@@ -1,3 +1,6 @@
+/* V3 visual correction (2026-11-20): remove all ornamental yellow edge strokes
+ * from dashboard cards and selected navigation. Yellow brand header retained.
+ */
 /*
  * ProPeloton Manager — UI & Layout Modernization (visual-only).
  * Scope: authenticated game shell. No navigation, data, layout or feature changes.
@@ -30,9 +33,9 @@
 }
 .ui-modernized-shell > aside nav a[aria-current="page"],
 .ui-modernized-shell > aside nav a.bg-yellow-400\/20 {
-  background: linear-gradient(90deg,rgba(250,204,21,.19),rgba(250,204,21,.07));
-  border-color: rgba(250,204,21,.24);
-  box-shadow: inset 3px 0 0 var(--ui-modern-yellow);
+  background: linear-gradient(90deg,rgba(111,133,156,.18),rgba(111,133,156,.07));
+  border-color: rgba(158,177,196,.16);
+  box-shadow: none;
 }
 
 /* Maintain the existing bright ProPeloton yellow header. */
@@ -43,7 +46,7 @@
 }
 .ui-modernized-shell > div > main {
   background:
-    radial-gradient(ellipse 70% 420px at 85% 0%, rgba(250,204,21,.07), transparent 75%),
+    radial-gradient(ellipse 70% 420px at 85% 0%, rgba(132,155,180,.055), transparent 75%),
     #eef2f6;
 }
 
@@ -82,7 +85,7 @@
 
 /* Better visual feedback without changing a single click handler. */
 .ui-modernized-shell :is(button,a,[role="button"],input,select,textarea):focus-visible {
-  outline: 2px solid #d6aa0b;
+  outline: 2px solid #64748b;
   outline-offset: 3px;
 }
 .ui-modernized-shell > div > main :is(button,a).transition:hover {
@@ -93,8 +96,8 @@
   transition: border-color .2s ease, box-shadow .2s ease;
 }
 .ui-modernized-shell > div > main :is(input,select,textarea).border:focus {
-  border-color: #dfb51b;
-  box-shadow: 0 0 0 3px rgba(250,204,21,.13);
+  border-color: #8fa2b6;
+  box-shadow: 0 0 0 3px rgba(100,116,139,.13);
 }
 
 /* More legible tabular presentation, preserving row counts and column widths. */
@@ -131,7 +134,7 @@
   }
 }
 
-/* === UI & Layout Modernization V2: visible hierarchy, original content ===
+/* === UI & Layout Modernization V3: neutral accents, original content ===
  * Intentional visual-only styling. No element is hidden or repositioned.
  * Keeps header yellow, sidebar dark and game content light.
  */
@@ -144,7 +147,7 @@
 }
 .ui-modernized-shell > div > main {
   background:
-    radial-gradient(ellipse 70% 450px at 88% 0%, rgba(246,197,38,.085), transparent 78%),
+    radial-gradient(ellipse 70% 450px at 88% 0%, rgba(127,153,178,.06), transparent 78%),
     linear-gradient(180deg,#edf1f5,#f3f5f8 72%);
 }
 /* Larger, unmistakably intentional panel surfaces, without changing their placement. */
@@ -154,12 +157,12 @@
   border-radius: 16px;
   background-color: #fff;
   background-image: linear-gradient(180deg,rgba(239,244,249,.95),rgba(255,255,255,0) 72px);
-  box-shadow: 0 2px 4px rgba(15,28,45,.035),0 11px 32px rgba(15,28,45,.075),inset 0 3px 0 rgba(227,182,36,.9);
+  box-shadow: 0 2px 4px rgba(15,28,45,.035),0 11px 32px rgba(15,28,45,.075);
 }
 .ui-modernized-shell > div > main :is(.rounded-2xl.bg-white,.rounded-xl.bg-white,.rounded-lg.bg-white):hover,
 .ui-modernized-shell > div > main .ui-modern-card:hover {
   border-color: #c7d4e1;
-  box-shadow: 0 3px 8px rgba(15,28,45,.04),0 16px 36px rgba(15,28,45,.10),inset 0 3px 0 #e7b729;
+  box-shadow: 0 3px 8px rgba(15,28,45,.04),0 16px 36px rgba(15,28,45,.10);
 }
 /* Overview's shared Card and SectionTitle primitives, no DOM rearrangement. */
 .ui-modernized-shell > div > main .ui-modern-card .ui-modern-section-title h3 {
@@ -229,9 +232,10 @@
 }
 .ui-modernized-shell > aside nav a[aria-current="page"],
 .ui-modernized-shell > aside nav a.bg-yellow-400\/20 {
-  background: linear-gradient(90deg,rgba(251,204,31,.21),rgba(251,204,31,.045));
-  border-color: rgba(250,204,21,.3);
-  box-shadow: inset 3px 0 0 #facc15,0 4px 12px rgba(0,0,0,.075);
+  background: linear-gradient(90deg,rgba(113,135,158,.25),rgba(79,98,119,.13));
+  border-color: rgba(171,190,207,.19);
+  box-shadow: 0 4px 12px rgba(0,0,0,.075);
+  color: #f8fafc;
 }
 /* Do not change mobile structure, preserve reduced-motion preference. */
 @media (max-width:767px) {
@@ -240,6 +244,6 @@
   }
   .ui-modernized-shell > div > main :is(.rounded-2xl.bg-white,.rounded-xl.bg-white,.rounded-lg.bg-white),
   .ui-modernized-shell > div > main .ui-modern-card {
-    box-shadow: 0 2px 12px rgba(15,28,45,.055),inset 0 3px 0 rgba(227,182,36,.9);
+    box-shadow: 0 2px 12px rgba(15,28,45,.055);
   }
 }
