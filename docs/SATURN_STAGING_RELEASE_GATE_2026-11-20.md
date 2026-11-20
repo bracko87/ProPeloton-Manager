@@ -281,3 +281,16 @@ Read-only production source audit established `public.calculate_ai_unsolicited_t
 New `tests/saturnAiUnsolicitedBidSecurity.test.mjs` adds three source checks and five staging TODO cases for denied expired linked identities, unauthorized buyer protection, member regression, and no phase-one money movement. Verified code commit `10ba73eaca20034146bcce3a64dae6383c49b3c0` passed all **three GitHub workflows**: 294 Saturn cases (158 PASS, 0 FAIL, 136 staging TODO); 273 statements and 69 PL/pgSQL bodies parsed in 33 Saturn SQL files; 575 frontend files scanned, zero direct calls to the four risky finance internals.
 
 **Selected guarded player mutation count: 54** (previous 52 plus these two). It is still not exhaustive. Outstanding real staging, player abuse/rate limiting, broader scheduler/payment authorization and four existing exposed finance helper permissions remain hard release blockers. Production remains unchanged.
+
+
+## SAT-ABUSE — Anonymous guest registration CAPTCHA (20 November, evening)
+
+Added `src/components/auth/SaturnGuestCaptcha.tsx` rendering Cloudflare Turnstile in explicit mode. It uses **public** `VITE_SATURN_TURNSTILE_SITE_KEY` only; verification remains in Supabase Auth, not React. `src/pages/TestTeamSignup.tsx` refuses to sign in anonymously without challenge completion and calls `testClient.auth.signInAnonymously({ options: { captchaToken } })`. Tokens are cleared after any attempted submission; a fresh widget is mounted for retry. Missing site key blocks the flow. The current production guest gate remains OFF.
+
+**Do not mark server-side anti-abuse complete.** Before enabling new anonymous identities, set up Turnstile in Supabase Authentication Bot and Abuse Protection with the **secret configured in Supabase Auth**, and configure an appropriate anonymous-signup per-IP rate limit. React validation is bypassable by directly invoking the public Supabase Auth endpoint; the backend must reject missing, invalid and replayed CAPTCHA tokens. Neither a per-user `auth.uid()` database limit nor a browser cooldown prevents a new anonymous UUID. CAPTCHA is deterrence, not guaranteed one-person-one-account.
+
+New `tests/saturnGuestCaptchaAbuseGate.test.mjs` checks token integration, challenge callbacks, fail-closed site-key gate and the existing transactional one-club/rollout checks, plus six real acceptance TODOs. Existing signup contract test now requires CAPTCHA-enabled Auth. Added explicit environment, service configuration and farming acceptance checks in `docs/SATURN_GUEST_SIGNUP_ABUSE_GATE_2026-11-20.md`.
+
+**Source CI verified at `fa4401ae941121597778f3db9946a41fc8a920bb`:** all THREE workflows including build passed; 303 test cases (**161 PASS, 0 FAIL, 142 TODO staging**); 273 SQL statements and 69 PL/pgSQL bodies parsed across 33 Saturn SQL files; 576 frontend files scanned with zero direct calls to the four finance internals.
+
+**Remaining:** configure the cloud CAPTCHA site/secret and anonymous Auth per-IP limits in *isolated staging*, verify direct API denial without a token and real browser retries, monitor repeated account issuance/initial Premium/Coin rewards, verify legitimate Google/email signup unaffected, then explicit release approval. No current production Auth config, database grants, test clubs or finance state changed.
