@@ -806,7 +806,6 @@ begin
     raise exception 'You do not own this club';
   end if;
 
-  insert into public.club_infrastructure (
   -- SAT-08: canonical temporary manager may modify only its own active
   -- 14-day team. Registered managers retain original ownership checks.
   if exists (
@@ -818,6 +817,7 @@ begin
   end if;
 
 
+  insert into public.club_infrastructure (
     club_id,
     hq_level,
     training_center_level,
