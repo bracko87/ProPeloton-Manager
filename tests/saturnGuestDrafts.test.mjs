@@ -17,7 +17,7 @@ test('row policies require the matching Auth UUID and canonical anonymous status
   assert.match(sql, /au\.is_anonymous is true/)
   assert.match(sql, /security definer/)
   assert.match(sql, /set search_path = ''/)
-  assert.match(sql, /grant select, insert, update \(draft\)/)
+  assert.match(sql, /grant select, insert \(user_id, draft\), update \(draft\)/)
   assert.doesNotMatch(sql, /grant delete/)
 })
 test('migration does not activate signup gate or seasonal clock', () => {
