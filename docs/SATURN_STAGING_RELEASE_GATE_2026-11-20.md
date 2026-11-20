@@ -108,3 +108,16 @@ Based on Supabase's current documented anonymous-upgrade flow (manual identity l
 **Required staging Auth setup** (do not configure in production before approval): Enable manual identity linking in Supabase Auth and configure Google OAuth with the app's exact return URL including the dedicated callback path/query pattern. Verify the redirect allowlist accepts the tagged HashRouter URL in the actual deployment, and that callback code is consumed by the persistent test client only. The generic "Sign in with Google" flow is **NOT** a permitted substitute, since that can create or select a different Auth UUID. Existing Google identities belonging to other registered accounts must be rejected safely, not silently merged.
 
 **No OAuth flow was executed against production or staging.** The source CI checks are static/build-only; replay, callback, session refresh, Auth identity creation, and completed trial conversion all remain staging TODOs.
+
+
+## SAT-03 conversion vacancy placement (source only)
+
+The separate, idempotent-after-success `saturn_place_converted_test_team_v1()` checks canonical permanent Auth, original `saturn_test_accounts_v1.converted_at`, exact unchanged club UUID, active non-AI ownership and original owner membership before attempting any move. It never creates a new club or changes rider contracts, results, season points, finances or Premium terms.
+
+**Capacity must be approved, not guessed.** The private `saturn_converted_vacancy_caps_v1` contains a strict `world_tier` + `club_tier` + regional code cap, `approved_at` and `enabled=false` default; **no capacities are prefilled**. Each candidate must match official country-to-ProTeam/Continental/Amateur regional functions. It checks ALL currently active AI/human clubs against the approved cap; a full division is skipped. The highest approved empty upper-tier destination is chosen first, with locks to serialize simultaneous requests. The function **does not displace any AI or human club** and leaves the current team unchanged when no approved higher vacancy exists.
+
+No placement is attempted during an armed season transition or while the same club has unresolved race applications or entries in the legacy/v1 participation systems. Race records remain attached to the same club ID; no results are deleted or rewritten. Existing permanent team creation still uses its original logic; these new restrictions are conversion-specific.
+
+The email-password and Google registration screens call the optional placement RPC **only after successful conversion finalization**. Failure or lack of vacancy never invalidates registration. Players receive a status indicating moved, pending due to race/season, or no approved higher vacancy.
+
+**Staging verification still required:** transaction/trigger/RLS compilation, upper-tier occupancy under concurrent conversions, official region eligibility, league standings/race calendars and active race handling, season reset, finance stability, and the correct division hierarchy. No approved capacity exists by default, and no production team has been moved. Full-game roll-out remains OFF.
