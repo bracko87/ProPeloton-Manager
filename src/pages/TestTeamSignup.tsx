@@ -36,7 +36,7 @@ export default function TestTeamSignupPage(): JSX.Element {
     if (!ENABLED || busy) return
     const managerName = nickname.trim()
     const teamName = team.trim()
-    if (managerName.length < 2 || managerName.length > 32 ||
+    if (managerName.length < 3 || managerName.length > 24 ||
         teamName.length < 3 || teamName.length > 40 ||
         !countries.some(c => c.code === country) || primary === secondary) {
       setError('Choose a nickname, a team name, a country and two different colors.')
@@ -46,7 +46,7 @@ export default function TestTeamSignupPage(): JSX.Element {
     setError('')
     try {
       const { data: previous, error: previousError } = await testClient.auth.getUser()
-      if (previousError && previousError.status !== 400) throw previousError
+      if (previousError && previousError.status !== 400 && previousError.status !== 401) throw previousError
       if (previous.user && !previous.user.is_anonymous) throw new Error('This browser already has a permanent account. Please use Register or Login.')
       if (!previous.user) {
         // Production trigger continues to reject this until explicit security sign-off.
@@ -98,7 +98,7 @@ export default function TestTeamSignupPage(): JSX.Element {
       <p className="text-sm text-amber-300">Your test account expires after 14 days. To keep playing, link a permanent account before or after expiry. Clearing browser data before registration may lose access.</p>
       <form onSubmit={e => void begin(e)} className="space-y-4 rounded-xl bg-slate-900 p-5">
         <label className="block text-sm" htmlFor="saturn-nickname">Manager nickname</label>
-        <input id="saturn-nickname" required minLength={2} maxLength={32} autoComplete="nickname" value={nickname}
+        <input id="saturn-nickname" required minLength={3} maxLength={24} autoComplete="nickname" value={nickname}
           onChange={e => setNickname(e.target.value)} className="w-full rounded-md bg-slate-800 p-3" />
         <label className="block text-sm" htmlFor="saturn-team">Team name</label>
         <input id="saturn-team" required minLength={3} maxLength={40} value={team}
