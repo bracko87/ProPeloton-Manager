@@ -31,3 +31,10 @@ Decision 20 November 2026. This replaces the isolated Practice League proposal. 
 The existing guest practice page, 7-day draft expiry migration and sample-rider simulation on this branch are **superseded prototype code**, not a deliverable. Do not deploy those pieces. Existing production protection against anonymous official clubs and races remains in force until a complete replacement is verified.
 
 Project Helios and the game's existing launch clock are out of scope. SAT-01, SAT-02 and SAT-08 are not complete.
+
+
+## Verified compatibility issue — AI slot assignment (20 Nov 2026)
+
+The production BEFORE INSERT guest-owned-club trigger currently rejects anonymous team owners. A separate AFTER INSERT trigger `trg_assign_new_real_club_to_ai_slot` invokes `assign_new_club_to_ai_slot(uuid)`, which chooses the **highest-tier** available AI slot first and moves that AI club into its reserve pool. This directly conflicts with the player's required lowest-tier starting place. Simply inserting an amateur team with `world_tier=4` is insufficient: the trigger may change it after insert.
+
+The new fail-closed test-team RPC checks the **actual** tier/division after trigger execution and aborts the entire transaction if it differs from the server-selected lowest eligible amateur division. This is a safety stop, not a completed fix. Before activation, implement a trigger-side test-team exception that swaps only a **matching lowest-tier regional AI slot**, without changing registered-player allocation rules, and test lock order and race/season integrity. Never disable this trigger for all players or move an AI team from a higher division just to place a guest.
