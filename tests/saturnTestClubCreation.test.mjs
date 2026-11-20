@@ -45,6 +45,24 @@ test('real club, membership, finance and 14-day record are atomic', () => {
   assert.match(sql,/md5\('saturn-anonymous-v1:'\|\|v_user::text\)/)
   assert.doesNotMatch(sql,/apply_coin_delta\(/)
 })
+test('staging post-create audit reconciles owner, domestic roster, finance and lifetime',()=>{
+ const audit=read('supabase/tests/saturn_guest_postcreation_reconciliation.sql')
+ for(const fragment of [
+  'from public.saturn_test_accounts_v1 t',
+  'public.club_memberships',
+  'public.club_riders',
+  'public.club_finance_summary',
+  'public.premium_welcome_trials_v1',
+  'incorrect_club_identity',
+  'incorrect_starter_roster',
+  'incorrect_domestic_roster',
+  'finance_balance_mismatch',
+  'missing_or_duplicate_premium_trial',
+  'premium_window_mismatch',
+  'invalid_trial_clock'
+ ]) assert.ok(audit.includes(fragment),fragment)
+ assert.doesNotMatch(audit,/^\\s*(?:insert|delete|update|alter|drop|create|grant|revoke)\\s/mi)
+})
 test('client nickname and server validation agree', () => {
   assert.match(form,/managerName\.length < 3/)
   assert.match(form,/managerName\.length > 24/)
