@@ -1,0 +1,30 @@
+name: Saturn Guest Sandbox — Draft Review
+on:
+  pull_request:
+    paths:
+      - 'src/pages/GuestPractice.tsx'
+      - 'src/lib/guestSupabase.ts'
+      - 'src/lib/supabase.ts'
+      - 'src/App.tsx'
+      - 'tests/saturnGuest*.test.mjs'
+      - 'supabase/migrations/*saturn_guest*.sql'
+      - '.github/workflows/saturn-guest-sandbox-review.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  guest-sandbox:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - name: Guest security and practice contract tests
+        run: node --test tests/saturnGuestSecurity.test.mjs tests/saturnGuestDrafts.test.mjs tests/saturnGuestPractice.test.mjs
+      - name: Production build
+        run: npm run build
