@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Activity,
   CalendarDays,
@@ -177,33 +177,49 @@ export default function AdminAnalyticsPage(): JSX.Element {
   const [data, setData] = useState<AnalyticsDashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [lastLoadedAt, setLastLoadedAt] = useState<Date | null>(null)
+  const requestSequence = useRef(0)
 
-  const loadDashboard = useCallback(async () => {
-    setLoading(true)
-    setError(null)
+  const loadDashboard = useCallback(async (silent = false) => {
+    const request = ++requestSequence.current
+    if (!silent) setLoading(true)
 
     try {
       const { data: result, error: rpcError } = await supabase.rpc(
         'get_admin_analytics_dashboard_v1',
         { p_days: period },
       )
-
+      if (request !== requestSequence.current) return
       if (rpcError) throw rpcError
+
       setData((result ?? null) as AnalyticsDashboard | null)
+      setLastLoadedAt(new Date())
+      setError(null)
     } catch (loadError: any) {
+      if (request !== requestSequence.current) return
       console.error('Failed to load admin analytics:', loadError)
-      setData(null)
       setError(
         loadError?.message ??
           'The analytics dashboard could not be loaded.',
       )
+      // Keep the last successful result visible, but mark the refresh failure.
     } finally {
-      setLoading(false)
+      if (request === requestSequence.current) setLoading(false)
     }
   }, [period])
 
   useEffect(() => {
     void loadDashboard()
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') void loadDashboard(true)
+    }
+    const interval = window.setInterval(refreshIfVisible, 60_000)
+    window.addEventListener('focus', refreshIfVisible)
+    return () => {
+      requestSequence.current += 1
+      window.clearInterval(interval)
+      window.removeEventListener('focus', refreshIfVisible)
+    }
   }, [loadDashboard])
 
   const chartData = useMemo(
@@ -270,7 +286,9 @@ export default function AdminAnalyticsPage(): JSX.Element {
       {data ? (
         <div className="rounded-xl border border-blue-100 bg-blue-50 px-4 py-3 text-xs text-blue-800">
           Reporting {data.start_date} → {data.end_date} · {data.timezone} day
-          boundaries
+          boundaries · Last loaded from database: {lastLoadedAt
+            ? lastLoadedAt.toLocaleTimeString()
+            : 'not yet loaded'} · Auto-refresh every 60 seconds while visible
         </div>
       ) : null}
 
