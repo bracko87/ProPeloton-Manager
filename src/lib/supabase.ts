@@ -36,9 +36,9 @@ const env = (import.meta as any)?.env ?? {}
  * SUPABASE_URL / SUPABASE_ANON_KEY
  * Prefer environment variables; fall back to provided defaults in this sandbox only.
  */
-const SUPABASE_URL: string =
+export const SUPABASE_URL: string =
   (env.VITE_SUPABASE_URL as string) || DEFAULT_SUPABASE_URL
-const SUPABASE_ANON_KEY: string =
+export const SUPABASE_ANON_KEY: string =
   (env.VITE_SUPABASE_ANON_KEY as string) || DEFAULT_SUPABASE_ANON_KEY
 
 const RACE_RIDER_IDENTITY_VIEW = 'race_rider_public_identity_v1'
