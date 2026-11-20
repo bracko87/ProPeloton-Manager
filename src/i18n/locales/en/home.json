@@ -199,126 +199,200 @@
         "description": "Control decisions across your entire club.",
         "details": "Assign rider roles, manage fitness and morale, and balance long-term squad building with each race. Training, staff, equipment and finances all affect your decisions.",
         "benefit": "A single cycling club is more than a race-day lineup. The linked staff, financial and sporting systems let decisions carry consequences throughout the season.",
-        "actions": "Assign roles and responsibilities|Balance form, morale and fatigue|Make long-term club decisions"
+        "actions": "Assign roles and responsibilities|Balance form, morale and fatigue|Make long-term club decisions",
+        "deepDive": "Begin with the club as one connected organisation: the sporting squad, staff, facilities, equipment inventory and finances are all managed in their own systems. Rider roles matter, but so does deciding how much to spend on support and how ambitious the race calendar should be. A balanced club can develop its talent while still preparing a competitive starting team.",
+        "tradeoff": "Improving one part of a club can make another decision harder. An expensive transfer reduces the budget for equipment or staff, while entering more races places extra demands on riders and logistics. The aim is not to maximise every number immediately; it is to build a sustainable plan and review it as the season changes.",
+        "scenario": "Imagine you have a promising climber but a limited budget. You could strengthen the climbing support roster, invest in training, or purchase equipment for upcoming mountain races. Each route serves a different timescale. The management challenge is choosing a combination that fits both your goals and the resources already available."
       },
       "squads": {
         "title": "Senior, U23 & youth squads",
         "description": "Build a pathway from academy to pro racing.",
         "details": "Manage your senior roster while developing U23 and younger talent. Build a long-term path from the youth academy toward the first team.",
         "benefit": "A strong future starts beyond the first team. Connected development squads let managers plan tomorrow's leaders while still competing today.",
-        "actions": "Build a senior team|Activate and develop a U23 programme|Follow young riders toward the senior squad"
+        "actions": "Build a senior team|Activate and develop a U23 programme|Follow young riders toward the senior squad",
+        "deepDive": "The first team is responsible for immediate results, while the U23 programme and Youth Academy provide routes for developing future riders. The squads should be considered together when planning the coming seasons: how many experienced riders are needed now, which roles lack successors, and when could a developing rider move into a more demanding competitive environment? These are related but distinct management choices.",
+        "tradeoff": "Keeping a strong senior roster does not guarantee a healthy pipeline. Investing in young riders means looking ahead to abilities and opportunities that may not deliver immediate points. The development programmes have their own availability and seasonal access conditions, so managers should consider whether they can use and support them before committing Coins.",
+        "scenario": "A senior sprinter is approaching the end of his contract. Rather than immediately searching for an expensive replacement, you could review your younger sprint prospects and decide whether the team can gradually prepare a successor. You still need enough first-team strength for the present race calendar."
       },
       "staff": {
         "title": "11 active staff roles",
         "description": "Build a specialist support team.",
         "details": "Hire specialists in coaching, scouting, medical care, nutrition and mechanics. Their expertise supports rider development, race preparation and recovery.",
         "benefit": "Your support team shapes daily preparation, not just a static bonus. Different specialist roles connect performance, rider health and operational decisions.",
-        "actions": "Recruit coaches and specialists|Use staff expertise when making plans|Balance staffing costs and benefits"
+        "actions": "Recruit coaches and specialists|Use staff expertise when making plans|Balance staffing costs and benefits",
+        "deepDive": "Specialists contribute different kinds of support. Coaches and development staff matter to rider preparation, medical personnel help manage health, and mechanics and operational roles are part of keeping a racing team ready. The active staff catalogue contains eleven roles, allowing managers to consider expertise rather than treating personnel as a single undifferentiated upgrade.",
+        "tradeoff": "Hiring staff creates a continuing salary obligation. A larger support structure is not automatically the correct choice for a small or financially constrained team. Consider where additional expertise meets a real problem: rider development, recovery, scouting or race support, and whether the improvement is worth its cost over a season.",
+        "scenario": "Suppose several riders struggle with recovery during a busy calendar. Instead of buying another expensive rider, examine the club's medical support, training choices and staff structure. Adjusting the way the existing squad is supported may address a different underlying problem from simply expanding the roster."
       },
       "training": {
         "title": "Precision training",
         "description": "Target nine skills with individual plans.",
         "details": "Set rider-specific training priorities across nine skills. Balance workload, fatigue and potential instead of giving every rider the same routine.",
         "benefit": "Individual training can reflect a rider's strengths, weaknesses and race calendar rather than relying on one plan for everyone.",
-        "actions": "Choose skill priorities|Adjust workload around races|Track development over time"
+        "actions": "Choose skill priorities|Adjust workload around races|Track development over time",
+        "deepDive": "Training is rider-specific and is built around nine attributes, including climbing, sprint, endurance, time trial, teamwork and recovery. Developing a focused speciality can help define a useful team role, while more balanced work may support flexible riders. Training decisions are connected to fatigue, race preparation and the time available between competitions.",
+        "tradeoff": "Heavy or poorly timed training can conflict with the desire to field a fresh team for important races. A good plan changes with the calendar; it does not assume every rider can train at maximum intensity every day. Managers need to distinguish long-term potential from the form required for the next start.",
+        "scenario": "A young time-trial specialist has a demanding event scheduled in several weeks. You could focus appropriate skills in the early preparation period and reduce workload closer to the race, rather than asking that rider to follow the exact training programme used by a sprinter or mountain domestique."
       },
       "growth": {
         "title": "Rider development",
         "description": "Follow potential, form and long-term growth.",
         "details": "Follow changes in rider skills, form, morale, fitness and potential over time. Choose when to specialise, recover or adapt a rider's role.",
         "benefit": "A rider's career should develop through choices and changing circumstances. Following potential, form and fitness helps managers choose when to push or protect talent.",
-        "actions": "Follow nine rider skills|Watch fatigue, morale and condition|Adapt roles as riders progress"
+        "actions": "Follow nine rider skills|Watch fatigue, morale and condition|Adapt roles as riders progress",
+        "deepDive": "Rider development is more than watching a single overall rating. Nine skills define different strengths, while morale, fatigue, condition and potential provide important context. A rider who looks modest today might become more useful with appropriate training and racing experience, while even a talented rider may need rest or a change of role.",
+        "tradeoff": "The challenge is recognising which changes are durable and which reflect current readiness. Form and fatigue can change faster than a rider's long-term abilities. Managers should avoid interpreting a short performance dip as proof that a rider has no future, or an early good result as a reason to ignore recovery.",
+        "scenario": "Consider an all-rounder whose climbing improves during the season but whose fatigue also rises. You might assign a more ambitious climbing role at a later event, while first giving the rider time to recover. Both development and short-term condition belong in that decision."
       },
       "calendar": {
         "title": "593 dated races",
         "description": "Plan a packed season-long calendar.",
         "details": "Choose from 593 currently dated races, including one-day events and stage races. Plan entries, rest days and squad availability over the season.",
         "benefit": "A large world calendar turns timing into a strategic choice. Selecting the right events matters as much as choosing the right riders.",
-        "actions": "Browse scheduled events|Coordinate lineups and rest days|Build an entire season plan"
+        "actions": "Browse scheduled events|Coordinate lineups and rest days|Build an entire season plan",
+        "deepDive": "The game world contains a broad mix of single-day races and multi-stage competitions, with 593 currently dated races in the checked calendar dataset. The calendar is not just an event list; it is the place where managers choose sporting priorities, submit eligible race entries and understand how different competitions fit together over the season.",
+        "tradeoff": "Too many starts can overextend a small squad, while too few may leave opportunities unused. Dates, participation rules, rider availability and the demands of consecutive stages must be considered before submitting a programme. National-team events also operate differently from ordinary club applications.",
+        "scenario": "Your strongest sprinter has an attractive one-day race close to the start of a difficult tour. A well-considered calendar might choose one priority, rotate the starting lineup or build in a recovery period. The decision influences both immediate results and the freshness of the squad later."
       },
       "preparation": {
         "title": "Detailed race preparation",
         "description": "Select lineups, tactics and equipment setups.",
         "details": "Choose your starters and leaders, define tactical roles and match equipment to the course. Consider terrain, fitness and race supplies before the start.",
         "benefit": "The start list is only the beginning: tactics, terrain, equipment and available supplies make pre-race choices meaningful.",
-        "actions": "Choose leaders and supporting riders|Prepare equipment for the route|Set a tactical approach before racing"
+        "actions": "Choose leaders and supporting riders|Prepare equipment for the route|Set a tactical approach before racing",
+        "deepDive": "Before a race, the manager decides who starts, who leads and how the other riders should support the plan. Rider roles, the course profile, equipment choices and available supplies all belong to preparation. A mountain stage, flat sprint and individual time trial place different demands on the same group of athletes.",
+        "tradeoff": "A strong team on paper may still be badly matched to a particular course. Using an exhausted leader or the wrong combination of supporting riders is a different mistake from lacking raw skill. Review the actual event and rider condition rather than automatically selecting the same lineup everywhere.",
+        "scenario": "A race includes steep climbs followed by a fast finish. You could select a protected climber and enough helpers to support that objective, or accept a different goal with a more balanced team. Either plan should be reflected in the selection and equipment decisions made before the start."
       },
       "tiers": {
         "title": "Four competition tiers",
         "description": "Compete in regional divisions and rise.",
         "details": "Compete across four tiers divided into leagues, divisions and regions. Fight for better rankings and promotion while protecting your place in the competition.",
         "benefit": "Competing against managers at similar competitive levels gives every season a longer story and measurable progression.",
-        "actions": "Follow divisions and regions|Fight for league points|Aim for promotion and avoid relegation"
+        "actions": "Follow divisions and regions|Fight for league points|Aim for promotion and avoid relegation",
+        "deepDive": "Clubs participate within a structured world of competition tiers, leagues, divisions and regions. That structure makes league position relevant beyond one race and gives different clubs meaningful seasonal objectives. Managers can follow their standing and consider the level of competition their club is prepared to face.",
+        "tradeoff": "Chasing the strongest possible lineup for every event is not always sustainable. A team seeking promotion may prioritise consistent scoring, while one defending its league position may take a more cautious approach. Financial capacity and squad depth influence how aggressively the club can pursue either goal.",
+        "scenario": "A newly promoted club finds that opponents are stronger across several types of terrain. You might strengthen a weak rider role, invest in development or target races where the existing squad has a better chance. League progression turns those short-term choices into a longer strategy."
       },
       "equipment": {
         "title": "170 equipment models",
         "description": "Six gear categories plus race supplies.",
         "details": "Choose frames, wheelsets, tyres, groupsets, helmets and shoes from 170 active models. Manage wear and maintenance alongside consumable race supplies.",
         "benefit": "Equipment matters beyond a simple rating. Choice, durability, maintenance and consumable stock all contribute to a prepared team.",
-        "actions": "Select from six gear categories|Maintain and replace worn equipment|Stock race-day supplies"
+        "actions": "Select from six gear categories|Maintain and replace worn equipment|Stock race-day supplies",
+        "deepDive": "The active catalogue contains 170 core models across frames, wheelsets, tyres, groupsets, helmets and shoes. Managers can select gear for their riders while also considering condition, replacement and race supplies. Equipment therefore involves both technical choice and inventory management, not a one-time purchase that can be forgotten.",
+        "tradeoff": "Buying the most expensive model is not necessarily the best allocation of a small budget. Wear, maintenance needs and the number of riders depending on an item matter alongside its suitability. You also need to reserve funds for the consumables and other preparations needed to support racing.",
+        "scenario": "Before a sequence of important events, check whether the selected riders have suitable equipment in usable condition. Spending to replace badly worn items may be more urgent than upgrading an item that is already reliable. The right decision depends on the races ahead and the inventory you own."
       },
       "assets": {
         "title": "Infrastructure & race assets",
         "description": "Upgrade facilities, team cars and vans.",
         "details": "Invest in club facilities, team cars and equipment vans. Better infrastructure and race support can improve logistics and team readiness.",
         "benefit": "An effective racing team needs facilities and vehicles behind the riders. Investing in support creates long-term operational choices.",
-        "actions": "Upgrade infrastructure|Manage team cars and equipment vans|Plan the cost of race support"
+        "actions": "Upgrade infrastructure|Manage team cars and equipment vans|Plan the cost of race support",
+        "deepDive": "Club infrastructure includes facilities and practical support assets such as team cars and equipment vans. These systems sit behind the race entry and help explain what it takes to keep a professional-style operation functioning. Acquiring or upgrading assets is a strategic spending decision, and condition or operational availability can matter as the calendar becomes more demanding.",
+        "tradeoff": "Capital spending ties up money that could also be used for transfers, wages or training. The manager has to judge when a facility or vehicle upgrade solves a real problem and when the current setup is sufficient. Building an elaborate support structure too early may leave too little budget for the riders themselves.",
+        "scenario": "Your club is planning a more ambitious race schedule, but its existing support vehicles and facilities are limited. Rather than expanding every area immediately, identify the equipment or logistical capacity most relevant to the upcoming programme and develop the infrastructure in stages."
       },
       "finance": {
         "title": "Realistic club finances",
         "description": "Manage salaries, expenses, taxes and rewards.",
         "details": "Manage sponsor income, staff salaries, transfers, equipment, operating costs and taxes. Every investment competes for the same club budget.",
         "benefit": "Successful management requires making difficult trade-offs, not just winning races. Income, salary obligations, transfers and running costs compete for the same cash.",
-        "actions": "Review income and expenses|Plan salaries and transfers|Balance investment with financial stability"
+        "actions": "Review income and expenses|Plan salaries and transfers|Balance investment with financial stability",
+        "deepDive": "Finance brings together sponsor payments, rider and staff salaries, equipment purchases, transfers, operating expenses, rewards and taxes. The club's financial position shapes nearly every sporting decision. Money earned through results and commercial agreements supports development, but the commitments made today remain relevant when the next season or transfer opportunity arrives.",
+        "tradeoff": "A manager can improve short-term competitiveness at the cost of future flexibility. High recurring wages and repeated equipment spending make it harder to respond to unexpected opportunities. The key challenge is keeping enough room in the budget for essentials while pursuing a clear sporting plan.",
+        "scenario": "A strong rider becomes available on the transfer market. Before offering a contract, compare the transfer cost and salary with expected sponsor income, essential staff, current equipment needs and planned races. A financially sensible decision may be to recruit now, negotiate differently or wait."
       },
       "sponsors": {
         "title": "Regional sponsorship engine",
         "description": "Negotiate brands and meaningful objectives.",
         "details": "Seek sponsors matched to your club and region, with objectives linked to relevant team competitions. Sponsor deals add income and sporting expectations.",
         "benefit": "Sponsorship becomes part of your sporting strategy when brands, regional fit and relevant objectives influence each agreement.",
-        "actions": "Review regional offers|Evaluate sponsor objectives|Plan results against contract expectations"
+        "actions": "Review regional offers|Evaluate sponsor objectives|Plan results against contract expectations",
+        "deepDive": "Sponsors are more than a passive number in the finance screen. Their offers and sporting objectives can reflect the club's region and the competitions in which the team participates. A manager needs to consider which commitments are realistic, how they fit the planned calendar, and what financial support the agreement offers in return.",
+        "tradeoff": "An attractive offer can still be a poor fit if its objectives push the team towards results it cannot reasonably pursue. Sponsorship therefore creates a connection between commercial planning and sporting priorities. National-team competitions are distinct from the club events used for sponsor objectives.",
+        "scenario": "Two sponsors offer different terms: one provides a stronger payment but expects demanding club results, while the other matches the races your roster already plans to enter. Choosing the better agreement means comparing the target, the likelihood of achieving it and the team's wider season plan."
       },
       "operations": {
         "title": "Policies & operations",
         "description": "Set housing, nutrition, recovery and logistics.",
         "details": "Set policies for housing, nutrition, recovery and logistics. Weigh their ongoing costs against the support and bonuses they provide to the club.",
         "benefit": "Day-to-day policies are a real management choice. Better support may help the team, but it also has an ongoing cost.",
-        "actions": "Set housing policy|Adjust nutrition and recovery|Manage logistics spending"
+        "actions": "Set housing policy|Adjust nutrition and recovery|Manage logistics spending",
+        "deepDive": "Daily club policies cover housing, nutrition, recovery and logistics. These are continuing operational choices rather than race-day tactical buttons. They give managers a way to define how much support the team receives and how much it is willing to spend on that support across the season.",
+        "tradeoff": "More support can improve the club's preparation environment, but ongoing expenses must be sustainable. Policies should be reviewed when the budget, race programme or rider needs change. A team with a packed schedule may make different choices from one focusing on a smaller number of important events.",
+        "scenario": "After committing to several consecutive races, you reconsider recovery and logistics policies. Increasing support might help a demanding programme, but only if the club can afford it without neglecting salaries, travel and supplies. The best setting is the one that fits the whole operation."
       },
       "transfers": {
         "title": "Club deals & free agents",
         "description": "Build your squad through both transfer paths.",
         "details": "Negotiate rider moves between clubs or search the free-agent market. Build a balanced roster without losing control of wages and transfer spending.",
         "benefit": "Building the right roster requires more than picking the strongest available name. Contract decisions have to fit both tactics and budget.",
-        "actions": "Negotiate transfers between teams|Explore free-agent signings|Manage the wage bill"
+        "actions": "Negotiate transfers between teams|Explore free-agent signings|Manage the wage bill",
+        "deepDive": "Squad construction includes both negotiated moves between clubs and the market for available free agents. Transfers can fill a missing speciality, add depth or begin a longer rebuilding project. The manager should examine sporting fit, current contracts, salary commitments and the balance of roles already present within the roster.",
+        "tradeoff": "A high-rated new arrival does not automatically solve the team's most important weakness. An expensive specialist may leave too little budget to support the rest of the squad, and a large group of similar riders can still lack useful helpers. Transfers work best when linked to a clear team plan.",
+        "scenario": "Your club has several strong sprinters but too few riders who can support mountain leaders. Instead of signing the highest-overall rider on the market, you could look for a capable climber or mountain domestique whose wages and availability fit the budget."
       },
       "national": {
         "title": "National associations",
         "description": "Lead national teams into championships.",
         "details": "Take part in national associations and national-team competitions. Prepare national squads for championships alongside your club responsibilities.",
         "benefit": "National competitions offer a separate challenge beyond your club's calendar. National selection and team preparation add another layer to the cycling world.",
-        "actions": "Participate in association activities|Prepare national selections|Compete in championship events"
+        "actions": "Participate in association activities|Prepare national selections|Compete in championship events",
+        "deepDive": "The national-association layer introduces national selections and championship events alongside ordinary club racing. These competitions have their own participation rules and responsibilities. They add a broader sporting context to the game without simply treating national championships as another club race that every team can enter.",
+        "tradeoff": "Club managers need to recognise the distinction between their own race commitments and national-team participation. Calendar eligibility, rider availability and event rules can differ from everyday club races. National results should not be confused with league standings or used to satisfy unrelated club sponsor objectives.",
+        "scenario": "A rider from your club is considered for a national competition at the same time as the team has important plans. Review the relevant event and selection rules rather than treating the national race as a normal application from the club calendar."
       },
       "academy": {
         "title": "Youth academy & races",
         "description": "Develop young talent from the first step.",
         "details": "Scout and train emerging riders, including youth and U23 development paths. Use youth races to build talent from the very beginning.",
         "benefit": "A youth pathway makes success possible before a rider reaches the pro roster. Scouting, early training and youth races all form part of the story.",
-        "actions": "Scout young prospects|Develop youth training programmes|Take part in youth competitions"
+        "actions": "Scout young prospects|Develop youth training programmes|Take part in youth competitions",
+        "deepDive": "The Youth Academy is an optional pathway for identifying and developing young riders before they reach senior racing. Youth competitions and training create a reason to think beyond the current first-team roster. This system complements the separate U23 programme, which represents a later stage in a rider's development.",
+        "tradeoff": "The value of an academy is long-term rather than an immediate guarantee of winning races. Access requires a seasonal Coins activation and applicable unlock conditions. Before investing, a manager should consider whether the club has the resources and willingness to follow young prospects over time.",
+        "scenario": "You plan to build a competitive team over several seasons rather than spend heavily on transfers. An academy strategy might identify promising talent early, monitor development and decide which riders deserve continued investment before any future transition into a higher category."
       },
       "replay": {
         "title": "Dynamic stage replay",
         "description": "Follow the race action as it unfolds.",
         "details": "Follow each stage through a dynamic replay, not just its finishing order. Watch the race evolve through attacks, changes in position and rider performance.",
         "benefit": "Results become easier to understand when you can follow how a stage unfolded. The dynamic replay gives each race more of a story.",
-        "actions": "Follow attacks and race movement|Review how riders performed|Understand changes during the stage"
+        "actions": "Follow attacks and race movement|Review how riders performed|Understand changes during the stage",
+        "deepDive": "The dynamic stage replay helps explain how race results developed rather than showing only the final classification. Changes in position, attacks, chasing groups and rider performance can make sense of the race after the simulation has run. It also gives managers a way to connect preparation decisions with the sporting story that followed.",
+        "tradeoff": "Not every expected result happens, even with a well-prepared team. Replaying an event can reveal whether the race changed shape, whether the original objective was appropriate and what questions to ask before the next start. It should be read as race information, not as proof that one single setting guarantees success.",
+        "scenario": "Your sprint leader finishes outside the anticipated places. Instead of checking only the finishing position, follow the stage replay and examine the race developments. The next preparation decision may involve selection, fatigue, equipment or simply a more realistic objective for that course."
       },
       "progression": {
         "title": "Season-long progression",
         "description": "Chase promotion, rankings and long-term goals.",
         "details": "Build your club over multiple seasons with rankings, league movement and long-term development. Results and management decisions shape what happens next.",
         "benefit": "The club's identity comes from many linked seasons. Rankings, division changes and evolving riders give long-term decisions lasting meaning.",
-        "actions": "Build season objectives|Chase rankings and promotion|Create a lasting club history"
+        "actions": "Build season objectives|Chase rankings and promotion|Create a lasting club history",
+        "deepDive": "ProPeloton Manager is structured around seasons in which club rankings, rider development, financial planning and league movement accumulate into a longer story. Building a club is therefore not an isolated sequence of unrelated races. Each season creates new priorities and helps define what kind of team you are developing.",
+        "tradeoff": "Short-term success and long-term stability may point in different directions. Pushing hard for points now can consume resources that would support later rider development. The manager must decide which objectives are worth pursuing today and which belong to a multi-season plan.",
+        "scenario": "A club narrowly misses promotion and enters the next season with several maturing riders. You can keep the existing strategy, target a stronger calendar or change the squad structure. Previous results help frame the choice, while the new season remains an opportunity to adapt."
+      },
+      "health": {
+        "deepDive": "Riders are affected by fatigue, fitness, injuries and sickness, and their availability can change during a racing calendar. Medical reports and support systems help managers understand when someone can train or race and when recovery should become the priority. Medical-related staff and infrastructure add another layer to the sporting decisions around readiness.",
+        "tradeoff": "Selecting a tired or unavailable rider cannot be solved simply by demanding a stronger performance. Health issues can disrupt a planned lineup, while a reasonable recovery period can protect the rest of the season. Managers need to keep alternative riders and avoid building every race plan around a single person being available.",
+        "scenario": "A key climbing leader becomes unavailable shortly before an important stage race. You could select an alternative leader, change the race objective or rest the rider while the medical situation develops. Each option affects the team differently, but none requires pretending the original injury did not happen.",
+        "title": "Rider health & medical care",
+        "description": "Manage fitness, injuries, sickness and recovery.",
+        "details": "Cycling performance depends on rider availability as well as ability. Health cases, fatigue and medical support affect whether a rider can train or start a race. Managers can review availability and plan recovery rather than relying on skill ratings alone.",
+        "benefit": "A long season can be disrupted when a key rider is injured, sick or exhausted. Understanding readiness helps a club protect its riders and choose credible alternative plans.",
+        "actions": "Review rider health and availability|Plan recovery and replacement lineups|Coordinate medical support with race commitments"
+      },
+      "multiplayer": {
+        "deepDive": "ProPeloton Manager is a shared cycling world in which human managers develop clubs and compete across a structured calendar, rankings and divisions. Teams do not make decisions in isolation: opponents also build squads, pursue results and take part in the season. AI-managed teams help populate the competitive environment where needed.",
+        "tradeoff": "A multiplayer world creates uncertainty that a private training exercise cannot provide. Other clubs may compete for similar targets or strengthen while your team is developing. A sensible strategy therefore considers both your roster's current capability and the level of opposition in the league and selected races.",
+        "scenario": "You are aiming for promotion but several rival clubs have stronger sprinters. Rather than trying to beat them at every possible event, you might target races that suit your climbers or time-trial specialists and score consistently throughout the season.",
+        "title": "Multiplayer cycling world",
+        "description": "Compete against other real club managers.",
+        "details": "Join a seasonal cycling world where clubs compete for race results, rankings and league position. Human managers develop their own teams while AI-controlled clubs help maintain the wider competition.",
+        "benefit": "A shared world gives every result a competitive context. Building a club means adapting to rivals, the level of your division and the opportunities available on the calendar.",
+        "actions": "Compete against human-controlled clubs|Track other teams and league standings|Choose goals that suit your competitive level"
       }
     },
     "showDetails": "Show more",
@@ -335,18 +409,13 @@
       "howItWorks": "How it works",
       "whyItMatters": "Why it matters",
       "whatYouCanDo": "What you can do",
-      "gameplayImages": "Gameplay screenshots",
-      "imagesComing": "Gameplay screenshots will appear here when they are provided by the developer.",
       "accessTitle": "Access and requirements",
       "u23Access": "Senior squad management is part of the core game. The optional U23 developing team requires Premium plus seasonal Coins activation (currently 100 Coins per season).",
       "academyAccess": "The optional Youth Academy requires Premium and seasonal Coins activation (currently 50 Coins per season). In-game unlock conditions also apply.",
       "coreAccess": "Core management is available without a Premium subscription. Optional advanced analytics, automated tools or staff advisory services may have separate Premium or Coins requirements.",
       "nextFeature": "Next feature",
-      "openImage": "View full-screen image",
-      "fullscreenGallery": "Full-screen gameplay image",
-      "closeImage": "Close image",
-      "previousImage": "Previous image",
-      "nextImage": "Next image"
+      "exampleTitle": "A practical example",
+      "previousFeature": "Previous feature"
     }
   }
 }
