@@ -536,7 +536,7 @@ begin
         else asked_for_more_selection
       end
     where id = v_rider.id
-    returning morale into v_rider.morale;
+    returning morale into v_new_morale;
 
     return query
     select
@@ -548,7 +548,7 @@ begin
       null::integer,
       null::integer,
       null::date,
-      v_rider.morale;
+      v_new_morale;
 
     return;
   end if;
