@@ -341,7 +341,12 @@
       "u23Access": "Die Verwaltung des Profikaders gehört zum Grundspiel. Das optionale U23-Entwicklungsteam benötigt Premium und eine saisonale Coins-Freischaltung (derzeit 100 Coins pro Saison).",
       "academyAccess": "Die optionale Nachwuchsakademie benötigt Premium und eine saisonale Coins-Freischaltung (derzeit 50 Coins pro Saison). Zusätzliche Freischaltbedingungen im Spiel gelten ebenfalls.",
       "coreAccess": "Die Kernfunktionen sind ohne Premium-Abonnement verfügbar. Optionale Analysen, Automatisierungen oder Mitarbeiterberatung können eigene Premium- oder Coins-Voraussetzungen haben.",
-      "nextFeature": "Nächste Funktion"
+      "nextFeature": "Nächste Funktion",
+      "openImage": "Bild im Vollbild anzeigen",
+      "fullscreenGallery": "Gameplay-Bild im Vollbild",
+      "closeImage": "Bild schließen",
+      "previousImage": "Vorheriges Bild",
+      "nextImage": "Nächstes Bild"
     }
   }
 }

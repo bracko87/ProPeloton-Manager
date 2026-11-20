@@ -44,6 +44,7 @@ import CreateClubPage from './pages/CreateClub'
 import AboutPage from './pages/About'
 import FeatureDetailPage from './pages/FeatureDetail'
 import HowToPlayPage from './pages/HowToPlay'
+import PublicGameGuidePage from './pages/PublicGameGuide'
 import PrivacyPolicyPage from './pages/PrivacyPolicy'
 import TermsPage from './pages/Terms'
 import RefundPolicyPage from './pages/RefundPolicy'
@@ -443,6 +444,10 @@ export default function App(): JSX.Element {
           <Route
             path="/how-to-play"
             element={<HowToPlayPage />}
+          />
+          <Route
+            path="/game-guide"
+            element={<PublicGameGuidePage />}
           />
 
           <Route

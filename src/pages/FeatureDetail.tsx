@@ -1,9 +1,9 @@
 /** Public feature detail page. Supports future owner-supplied gameplay screenshots. */
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useParams } from 'react-router'
-import { ArrowLeft, ArrowRight, Coins, Crown, Images } from 'lucide-react'
-import { FEATURE_IMAGES, FEATURE_KEYS, FEATURE_PAID_ADDONS, isFeatureKey } from '../components/home/featureCatalog'
+import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Coins, Crown, Images, X } from 'lucide-react'
+import { FEATURE_BACKGROUNDS, FEATURE_IMAGES, FEATURE_KEYS, FEATURE_PAID_ADDONS, isFeatureKey } from '../components/home/featureCatalog'
 
 const LOGO = 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png'
 
@@ -11,10 +11,30 @@ export default function FeatureDetailPage(): JSX.Element {
   const { t } = useTranslation('home')
   const { featureKey } = useParams<{ featureKey: string }>()
   const key = isFeatureKey(featureKey) ? featureKey : null
+  const pictures = key ? (FEATURE_IMAGES[key] || []) : []
+  const background = key ? FEATURE_BACKGROUNDS[key] : undefined
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null)
 
   useEffect(() => {
     window.scrollTo(0, 0)
+    setActiveImageIndex(null)
   }, [key])
+
+  useEffect(() => {
+    if (activeImageIndex === null) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setActiveImageIndex(null)
+      else if (event.key === 'ArrowRight' && pictures.length > 1) {
+        event.preventDefault()
+        setActiveImageIndex(index => index === null ? null : (index + 1) % pictures.length)
+      } else if (event.key === 'ArrowLeft' && pictures.length > 1) {
+        event.preventDefault()
+        setActiveImageIndex(index => index === null ? null : (index + pictures.length - 1) % pictures.length)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [activeImageIndex, pictures.length])
 
   if (!key) {
     return (
@@ -30,10 +50,10 @@ export default function FeatureDetailPage(): JSX.Element {
   const overview = t(`why.features.${key}.details`)
   const benefit = t(`why.features.${key}.benefit`)
   const actions = t(`why.features.${key}.actions`).split('|').map(item => item.trim()).filter(Boolean)
-  const pictures = FEATURE_IMAGES[key] || []
   const paid = FEATURE_PAID_ADDONS[key]
   const index = FEATURE_KEYS.indexOf(key)
   const nextKey = FEATURE_KEYS[(index + 1) % FEATURE_KEYS.length]
+  const activeImage = activeImageIndex === null ? null : pictures[activeImageIndex] ?? null
   const accessNote = paid === 'u23' ? t('why.page.u23Access')
     : paid === 'academy' ? t('why.page.academyAccess')
       : t('why.page.coreAccess')
@@ -54,8 +74,15 @@ export default function FeatureDetailPage(): JSX.Element {
       </header>
 
       <main>
-        <section className="bg-[#071426] px-6 pb-12 pt-10 text-white sm:pb-14 sm:pt-14">
-          <div className="mx-auto max-w-[1200px]">
+        <section className="relative isolate overflow-hidden bg-[#071426] px-6 pb-12 pt-10 text-white sm:pb-14 sm:pt-14">
+          {background?.src && (
+            <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+              <img src={background.src} alt="" className="h-full w-full object-cover" style={{ objectPosition: background.position || 'center' }} />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#071426]/90 via-[#071426]/65 to-[#071426]/25" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#071426]/45 via-transparent to-[#071426]/15" />
+            </div>
+          )}
+          <div className="relative z-10 mx-auto max-w-[1200px]">
             <Link to="/" className="inline-flex items-center gap-2 text-sm text-slate-300 underline-offset-4 hover:text-yellow-300 hover:underline">
               <ArrowLeft size={16} aria-hidden="true" /> {t('why.page.backToOverview')}
             </Link>
@@ -100,14 +127,21 @@ export default function FeatureDetailPage(): JSX.Element {
               <h2 className="px-6 pt-6 text-xl font-semibold">{t('why.page.gameplayImages')}</h2>
               {pictures.length ? (
                 <div className="grid gap-3 p-5">
-                  {pictures.map(picture => (
-                    <img
+                  {pictures.map((picture, index) => (
+                    <button
                       key={picture.src}
-                      src={picture.src}
-                      alt={picture.alt}
-                      loading="lazy"
-                      className="aspect-video w-full rounded-md border border-slate-200 bg-slate-100 object-contain"
-                    />
+                      type="button"
+                      onClick={() => setActiveImageIndex(index)}
+                      aria-label={`${t('why.page.openImage')} ${index + 1}: ${picture.alt}`}
+                      className="group overflow-hidden rounded-md border border-slate-200 bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500"
+                    >
+                      <img
+                        src={picture.src}
+                        alt={picture.alt}
+                        loading="lazy"
+                        className="aspect-video w-full object-contain transition-transform duration-200 group-hover:scale-[1.02]"
+                      />
+                    </button>
                   ))}
                 </div>
               ) : (
@@ -135,6 +169,48 @@ export default function FeatureDetailPage(): JSX.Element {
           </div>
         </section>
       </main>
+      {activeImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('why.page.fullscreenGallery')}
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-950/95 p-3 text-white sm:p-6"
+          onClick={event => {
+            if (event.target === event.currentTarget) setActiveImageIndex(null)
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => setActiveImageIndex(null)}
+            aria-label={t('why.page.closeImage')}
+            className="absolute right-4 top-4 z-20 flex h-11 w-11 items-center justify-center rounded-md border border-white/30 bg-slate-900 text-white hover:bg-slate-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-yellow-400"
+          >
+            <X size={24} aria-hidden="true" />
+          </button>
+          <div className="flex w-full max-w-[1600px] items-center justify-center gap-2 sm:gap-4">
+            {pictures.length > 1 && (
+              <button type="button" aria-label={t('why.page.previousImage')}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/25 bg-white/10 hover:bg-white/20 sm:h-12 sm:w-12"
+                onClick={() => setActiveImageIndex(index => index === null ? null : (index + pictures.length - 1) % pictures.length)}>
+                <ChevronLeft size={26} aria-hidden="true" />
+              </button>
+            )}
+            <figure className="flex min-w-0 flex-1 flex-col items-center gap-3">
+              <img src={activeImage.src} alt={activeImage.alt} className="max-h-[82vh] w-full max-w-full object-contain" />
+              <figcaption className="max-w-3xl text-center text-xs text-slate-200 sm:text-sm">
+                {activeImage.alt}{pictures.length > 1 ? ` · ${(activeImageIndex ?? 0) + 1} / ${pictures.length}` : ''}
+              </figcaption>
+            </figure>
+            {pictures.length > 1 && (
+              <button type="button" aria-label={t('why.page.nextImage')}
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-white/25 bg-white/10 hover:bg-white/20 sm:h-12 sm:w-12"
+                onClick={() => setActiveImageIndex(index => index === null ? null : (index + 1) % pictures.length)}>
+                <ChevronRight size={26} aria-hidden="true" />
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

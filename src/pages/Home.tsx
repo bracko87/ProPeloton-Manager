@@ -13,7 +13,7 @@
 
 import React, { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import Hero from '../components/home/Hero'
 import PreReleasePopup from '../components/home/PreReleasePopup'
 import { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
@@ -86,15 +86,15 @@ const SOCIAL_LINKS = {
 }
 
 const FOOTER_GAME_LINKS = [
-  { labelKey: 'footer.about', href: '/about/' },
-  { labelKey: 'footer.howToPlay', href: '/how-to-play/' },
-  { labelKey: 'footer.gameGuide', href: '/game-guide/' },
-  { labelKey: 'footer.contact', href: '/contact/' },
+  { labelKey: 'footer.about', to: '/about' },
+  { labelKey: 'footer.howToPlay', to: '/how-to-play' },
+  { labelKey: 'footer.gameGuide', to: '/game-guide' },
+  { labelKey: 'footer.contact', to: '/contact' },
 ]
 
 const FOOTER_LEGAL_LINKS = [
-  { labelKey: 'footer.privacyPolicy', href: '/privacy-policy/' },
-  { labelKey: 'footer.terms', href: '/terms/' },
+  { labelKey: 'footer.privacyPolicy', to: '/privacy-policy' },
+  { labelKey: 'footer.terms', to: '/terms' },
 ]
 
 const HOMEPAGE_GUIDE_CARDS = [
@@ -986,14 +986,14 @@ export default function HomePage(): JSX.Element {
             <div className="break-words text-sm font-semibold text-white">{t('footer.game')}</div>
             <div className="mt-3 flex flex-col">
               {FOOTER_GAME_LINKS.map(link => (
-                <a key={link.href} href={link.href} className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
+                <Link key={link.to} to={link.to} className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
                   {t(link.labelKey)}
-                </a>
+                </Link>
               ))}
-              <a href="#/login" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">{t('header.signIn')}</a>
-              <a href="#/register" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
+              <Link to="/login" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">{t('header.signIn')}</Link>
+              <Link to="/register" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
                 {t('header.startPlaying')}
-              </a>
+              </Link>
             </div>
           </nav>
 
@@ -1001,11 +1001,11 @@ export default function HomePage(): JSX.Element {
             <div className="break-words text-sm font-semibold text-white">{t('footer.legal')}</div>
             <div className="mt-3 flex flex-col">
               {FOOTER_LEGAL_LINKS.map(link => (
-                <a key={link.href} href={link.href} className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
+                <Link key={link.to} to={link.to} className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">
                   {t(link.labelKey)}
-                </a>
+                </Link>
               ))}
-              <a href="/support/" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">{t('footer.support')}</a>
+              <Link to="/support" className="flex min-h-[44px] items-center break-words text-sm text-white/70 hover:text-yellow-400">{t('footer.support')}</Link>
             </div>
           </nav>
           </div>
