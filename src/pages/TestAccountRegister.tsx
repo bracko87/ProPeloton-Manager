@@ -7,6 +7,7 @@ import React from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
+import { testClient } from '../lib/testAccountClient'
 
 const ENABLED = import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true'
 const ORIGINAL_ID_KEY = 'saturn-fullgame-conversion-uuid'
@@ -40,6 +41,81 @@ export default function TestAccountRegister(): JSX.Element {
     const { error } = await supabase.auth.updateUser({ email: email.trim() })
     setStatus(error ? 'Email linking failed. If it belongs to an existing account, contact support instead of creating another account.' : 'Check your email for a verification link, then come back to this account.')
     setBusy(false)
+  }
+
+  async function linkGoogle() {
+    if (busy || !user?.id || user.id !== originId || user.is_anonymous !== true) return
+    setBusy(true)
+    try {
+      // The persistent test Auth client owns the original session. Linking
+      // Google through signInWithOAuth would create/switch account identities.
+      const { data: original, error: authError } = await testClient.auth.getUser()
+      if (authError || !original.user || original.user.id !== originId ||
+          original.user.is_anonymous !== true) {
+        setStatus('Original test session is unavailable. Do not use normal Google sign-in to convert.')
+        return
+      }
+
+      const { error } = await testClient.auth.linkIdentity({
+        provider: 'google',
+        options: { redirectTo: window.location.origin + '/test-account-register' },
+      })
+      if (error) {
+        setStatus('Google identity linking could not start. Check that manual identity linking and redirect URLs are enabled.')
+      } else {
+        setStatus('Complete Google verification, then return here to finalize your existing team.')
+      }
+    } catch {
+      setStatus('Google linking could not be started. Your existing test team is unchanged.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function finishGoogle() {
+    if (busy || !originId) return
+    setBusy(true)
+    try {
+      // Identity verification must come from Supabase Auth, not browser state.
+      const { data: linked, error: identityError } = await testClient.auth.getUser()
+      if (identityError || linked.user?.id !== originId ||
+          linked.user.is_anonymous !== false ||
+          !linked.user.identities?.some(identity => identity.provider === 'google')) {
+        setStatus('Google has not yet been linked to your original test account. Complete linking in this browser first.')
+        return
+      }
+
+      const { data: result, error: finalizeError } = await testClient
+        .rpc('saturn_finalize_test_account_google_conversion_v1')
+      if (finalizeError || result?.success !== true ||
+          result?.converted !== true || result?.user_id !== originId ||
+          result?.provider !== 'google') {
+        setStatus('Google is linked, but the server has not confirmed team registration. Keep this session and contact support.')
+        return
+      }
+
+      // Restore the SAME linked Auth session to the main game client, which
+      // uses an in-memory session for normal gameplay.
+      const { data: session } = await testClient.auth.getSession()
+      if (!session.session || session.session.user.id !== originId) {
+        setStatus('Registration is verified, but game session restoration is pending. Please sign in with Google using this account.')
+        return
+      }
+      const { error: syncError } = await supabase.auth.setSession({
+        access_token: session.session.access_token,
+        refresh_token: session.session.refresh_token,
+      })
+      if (syncError) {
+        setStatus('Registration is verified, but the game session needs refreshing. Please log in with the linked Google account.')
+        return
+      }
+      await refreshUser()
+      setStatus('Google registration completed on your original account. Your riders, finances and original Premium expiry remain unchanged.')
+    } catch {
+      setStatus('Could not confirm Google registration; do not create another team.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   async function refresh() {
@@ -102,6 +178,17 @@ export default function TestAccountRegister(): JSX.Element {
       <input id="saturn-confirm-password" type="password" required minLength={8} autoComplete="new-password" className="w-full rounded border p-3" value={confirm} onChange={e => setConfirm(e.target.value)} />
       <button disabled={busy} className="rounded bg-amber-700 px-4 py-2 text-white">Complete registration</button>
     </form>}
+    {same && user?.is_anonymous === true && <div className="space-y-2 border-t pt-4">
+      <p className="text-sm">Or keep this exact team by linking a Google account.</p>
+      <button type="button" disabled={busy} onClick={() => void linkGoogle()}
+        className="rounded bg-amber-700 px-4 py-2 text-white">
+        Link Google to this team
+      </button>
+    </div>}
+    {same && user?.is_anonymous === false && <button type="button" disabled={busy}
+      onClick={() => void finishGoogle()} className="rounded border px-4 py-2">
+      Complete Google registration
+    </button>}
     <p role="status" aria-live="polite">{status}</p>
     <Link to="/dashboard/overview" className="underline">Return to my team</Link>
   </main>
