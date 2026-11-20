@@ -1,13 +1,9 @@
-/** Compact game differentiators, with accessible single-open feature details. */
-import React, { useState } from 'react'
+/** Concise homepage feature links; each opens its own dedicated information page. */
+import React from 'react'
 import { useTranslation } from 'react-i18next'
-import { ChevronDown } from 'lucide-react'
-
-const FEATURE_KEYS = [
-  'management', 'squads', 'staff', 'training', 'growth', 'calendar',
-  'preparation', 'tiers', 'equipment', 'assets', 'finance', 'sponsors',
-  'operations', 'transfers', 'national', 'academy', 'replay', 'progression',
-] as const
+import { Link } from 'react-router'
+import { ArrowRight, Coins, Crown } from 'lucide-react'
+import { FEATURE_KEYS, FEATURE_PAID_ADDONS } from './featureCatalog'
 
 const METRICS = [
   { value: '593', key: 'races' },
@@ -17,10 +13,10 @@ const METRICS = [
 
 export default function WhyProPeloton(): JSX.Element {
   const { t } = useTranslation('home')
-  const [expandedKey, setExpandedKey] = useState<string | null>(null)
 
   return (
     <section
+      id="why-propeloton"
       aria-labelledby="ppm-why-title"
       className="border-y border-yellow-400/15 bg-[#071426] py-12 text-white sm:py-14"
     >
@@ -40,41 +36,37 @@ export default function WhyProPeloton(): JSX.Element {
             ))}
           </div>
         </div>
-        <div className="mt-8 grid items-start gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {FEATURE_KEYS.map(key => {
-            const open = expandedKey === key
-            const label = t(`why.features.${key}.title`)
-            const detailsId = `ppm-why-details-${key}`
 
+        <div className="mt-8 grid items-stretch gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {FEATURE_KEYS.map(key => {
+            const addon = FEATURE_PAID_ADDONS[key]
             return (
-              <div
+              <Link
                 key={key}
-                className={`rounded-xl border bg-[linear-gradient(130deg,rgba(25,47,78,.94),rgba(8,25,47,.94))] px-4 py-3 shadow-[0_8px_24px_rgba(0,0,0,.15)] transition-colors ${open ? 'border-yellow-400/50' : 'border-white/15 hover:border-white/35'}`}
+                to={`/features/${key}`}
+                aria-label={`${t('why.page.moreInfo')}: ${t(`why.features.${key}.title`)}`}
+                className="group relative flex min-h-[90px] overflow-hidden rounded-xl border border-white/15 bg-[linear-gradient(130deg,rgba(25,47,78,.94),rgba(8,25,47,.94))] px-4 py-3 pr-14 text-left text-white shadow-[0_8px_24px_rgba(0,0,0,.15)] transition-colors hover:border-yellow-400/65 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400"
               >
-                <button
-                  type="button"
-                  className="relative block w-full cursor-pointer pr-6 text-left focus-visible:rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-400"
-                  onClick={() => setExpandedKey(open ? null : key)}
-                  aria-expanded={open}
-                  aria-controls={detailsId}
-                  aria-label={`${open ? t('why.hideDetails') : t('why.showDetails')}: ${label}`}
-                >
-                  <span className="block text-sm font-semibold leading-5 text-white">{label}</span>
+                <span className="relative z-10 block w-[min(100%,95%)] min-w-0 self-center pr-2 transition-opacity duration-200 group-hover:opacity-95">
+                  <span className="block text-sm font-semibold leading-5">{t(`why.features.${key}.title`)}</span>
                   <span className="mt-1 block text-xs leading-5 text-slate-300">{t(`why.features.${key}.description`)}</span>
-                  <ChevronDown
-                    size={17}
-                    aria-hidden="true"
-                    className={`absolute right-0 top-0.5 text-slate-300 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
-                  />
-                </button>
-                <div
-                  id={detailsId}
-                  hidden={!open}
-                  className="mt-3 border-t border-white/15 pt-3 text-sm leading-6 text-slate-200"
+                  {addon && (
+                    <span className="mt-2 inline-flex flex-wrap items-center gap-2 text-[10px] font-medium text-amber-200">
+                      <span className="inline-flex items-center gap-1"><Crown size={12} aria-hidden="true" />{t('why.page.premiumBadge')}</span>
+                      <span className="inline-flex items-center gap-1"><Coins size={12} aria-hidden="true" />{t('why.page.coinsBadge')}</span>
+                    </span>
+                  )}
+                </span>
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 right-0 z-20 flex w-10 flex-col items-center justify-center gap-1 overflow-hidden border-l border-white/10 bg-white/5 text-slate-200 transition-[width,background-color,color] duration-300 ease-out group-hover:w-[42%] group-hover:border-yellow-300 group-hover:bg-yellow-400 group-hover:text-slate-950 group-focus-visible:w-[42%] group-focus-visible:bg-yellow-400 group-focus-visible:text-slate-950"
                 >
-                  {t(`why.features.${key}.details`)}
-                </div>
-              </div>
+                  <ArrowRight size={19} className="shrink-0 transition-transform duration-300 group-hover:scale-125 group-focus-visible:scale-125" />
+                  <span className="max-w-full whitespace-nowrap text-center text-[11px] font-semibold opacity-0 transition-opacity delay-100 duration-200 group-hover:opacity-100 group-focus-visible:opacity-100">
+                    {t('why.page.moreInfo')}
+                  </span>
+                </span>
+              </Link>
             )
           })}
         </div>

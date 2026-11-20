@@ -42,6 +42,7 @@ import CreateClubPage from './pages/CreateClub'
 
 /* Public information pages */
 import AboutPage from './pages/About'
+import FeatureDetailPage from './pages/FeatureDetail'
 import HowToPlayPage from './pages/HowToPlay'
 import PrivacyPolicyPage from './pages/PrivacyPolicy'
 import TermsPage from './pages/Terms'
@@ -433,6 +434,10 @@ export default function App(): JSX.Element {
           <Route
             path="/about"
             element={<AboutPage />}
+          />
+          <Route
+            path="/features/:featureKey"
+            element={<FeatureDetailPage />}
           />
 
           <Route

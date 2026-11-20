@@ -197,95 +197,151 @@
       "management": {
         "title": "Deep team management",
         "description": "Control decisions across your entire club.",
-        "details": "Assign rider roles, manage fitness and morale, and balance long-term squad building with each race. Training, staff, equipment and finances all affect your decisions."
+        "details": "Assign rider roles, manage fitness and morale, and balance long-term squad building with each race. Training, staff, equipment and finances all affect your decisions.",
+        "benefit": "A single cycling club is more than a race-day lineup. The linked staff, financial and sporting systems let decisions carry consequences throughout the season.",
+        "actions": "Assign roles and responsibilities|Balance form, morale and fatigue|Make long-term club decisions"
       },
       "squads": {
         "title": "Senior, U23 & youth squads",
         "description": "Build a pathway from academy to pro racing.",
-        "details": "Manage your senior roster while developing U23 and younger talent. Build a long-term path from the youth academy toward the first team."
+        "details": "Manage your senior roster while developing U23 and younger talent. Build a long-term path from the youth academy toward the first team.",
+        "benefit": "A strong future starts beyond the first team. Connected development squads let managers plan tomorrow's leaders while still competing today.",
+        "actions": "Build a senior team|Activate and develop a U23 programme|Follow young riders toward the senior squad"
       },
       "staff": {
         "title": "11 active staff roles",
         "description": "Build a specialist support team.",
-        "details": "Hire specialists in coaching, scouting, medical care, nutrition and mechanics. Their expertise supports rider development, race preparation and recovery."
+        "details": "Hire specialists in coaching, scouting, medical care, nutrition and mechanics. Their expertise supports rider development, race preparation and recovery.",
+        "benefit": "Your support team shapes daily preparation, not just a static bonus. Different specialist roles connect performance, rider health and operational decisions.",
+        "actions": "Recruit coaches and specialists|Use staff expertise when making plans|Balance staffing costs and benefits"
       },
       "training": {
         "title": "Precision training",
         "description": "Target nine skills with individual plans.",
-        "details": "Set rider-specific training priorities across nine skills. Balance workload, fatigue and potential instead of giving every rider the same routine."
+        "details": "Set rider-specific training priorities across nine skills. Balance workload, fatigue and potential instead of giving every rider the same routine.",
+        "benefit": "Individual training can reflect a rider's strengths, weaknesses and race calendar rather than relying on one plan for everyone.",
+        "actions": "Choose skill priorities|Adjust workload around races|Track development over time"
       },
       "growth": {
         "title": "Rider development",
         "description": "Follow potential, form and long-term growth.",
-        "details": "Follow changes in rider skills, form, morale, fitness and potential over time. Choose when to specialise, recover or adapt a rider's role."
+        "details": "Follow changes in rider skills, form, morale, fitness and potential over time. Choose when to specialise, recover or adapt a rider's role.",
+        "benefit": "A rider's career should develop through choices and changing circumstances. Following potential, form and fitness helps managers choose when to push or protect talent.",
+        "actions": "Follow nine rider skills|Watch fatigue, morale and condition|Adapt roles as riders progress"
       },
       "calendar": {
         "title": "593 dated races",
         "description": "Plan a packed season-long calendar.",
-        "details": "Choose from 593 currently dated races, including one-day events and stage races. Plan entries, rest days and squad availability over the season."
+        "details": "Choose from 593 currently dated races, including one-day events and stage races. Plan entries, rest days and squad availability over the season.",
+        "benefit": "A large world calendar turns timing into a strategic choice. Selecting the right events matters as much as choosing the right riders.",
+        "actions": "Browse scheduled events|Coordinate lineups and rest days|Build an entire season plan"
       },
       "preparation": {
         "title": "Detailed race preparation",
         "description": "Select lineups, tactics and equipment setups.",
-        "details": "Choose your starters and leaders, define tactical roles and match equipment to the course. Consider terrain, fitness and race supplies before the start."
+        "details": "Choose your starters and leaders, define tactical roles and match equipment to the course. Consider terrain, fitness and race supplies before the start.",
+        "benefit": "The start list is only the beginning: tactics, terrain, equipment and available supplies make pre-race choices meaningful.",
+        "actions": "Choose leaders and supporting riders|Prepare equipment for the route|Set a tactical approach before racing"
       },
       "tiers": {
         "title": "Four competition tiers",
         "description": "Compete in regional divisions and rise.",
-        "details": "Compete across four tiers divided into leagues, divisions and regions. Fight for better rankings and promotion while protecting your place in the competition."
+        "details": "Compete across four tiers divided into leagues, divisions and regions. Fight for better rankings and promotion while protecting your place in the competition.",
+        "benefit": "Competing against managers at similar competitive levels gives every season a longer story and measurable progression.",
+        "actions": "Follow divisions and regions|Fight for league points|Aim for promotion and avoid relegation"
       },
       "equipment": {
         "title": "170 equipment models",
         "description": "Six gear categories plus race supplies.",
-        "details": "Choose frames, wheelsets, tyres, groupsets, helmets and shoes from 170 active models. Manage wear and maintenance alongside consumable race supplies."
+        "details": "Choose frames, wheelsets, tyres, groupsets, helmets and shoes from 170 active models. Manage wear and maintenance alongside consumable race supplies.",
+        "benefit": "Equipment matters beyond a simple rating. Choice, durability, maintenance and consumable stock all contribute to a prepared team.",
+        "actions": "Select from six gear categories|Maintain and replace worn equipment|Stock race-day supplies"
       },
       "assets": {
         "title": "Infrastructure & race assets",
         "description": "Upgrade facilities, team cars and vans.",
-        "details": "Invest in club facilities, team cars and equipment vans. Better infrastructure and race support can improve logistics and team readiness."
+        "details": "Invest in club facilities, team cars and equipment vans. Better infrastructure and race support can improve logistics and team readiness.",
+        "benefit": "An effective racing team needs facilities and vehicles behind the riders. Investing in support creates long-term operational choices.",
+        "actions": "Upgrade infrastructure|Manage team cars and equipment vans|Plan the cost of race support"
       },
       "finance": {
         "title": "Realistic club finances",
         "description": "Manage salaries, expenses, taxes and rewards.",
-        "details": "Manage sponsor income, staff salaries, transfers, equipment, operating costs and taxes. Every investment competes for the same club budget."
+        "details": "Manage sponsor income, staff salaries, transfers, equipment, operating costs and taxes. Every investment competes for the same club budget.",
+        "benefit": "Successful management requires making difficult trade-offs, not just winning races. Income, salary obligations, transfers and running costs compete for the same cash.",
+        "actions": "Review income and expenses|Plan salaries and transfers|Balance investment with financial stability"
       },
       "sponsors": {
         "title": "Regional sponsorship engine",
         "description": "Negotiate brands and meaningful objectives.",
-        "details": "Seek sponsors matched to your club and region, with objectives linked to relevant team competitions. Sponsor deals add income and sporting expectations."
+        "details": "Seek sponsors matched to your club and region, with objectives linked to relevant team competitions. Sponsor deals add income and sporting expectations.",
+        "benefit": "Sponsorship becomes part of your sporting strategy when brands, regional fit and relevant objectives influence each agreement.",
+        "actions": "Review regional offers|Evaluate sponsor objectives|Plan results against contract expectations"
       },
       "operations": {
         "title": "Policies & operations",
         "description": "Set housing, nutrition, recovery and logistics.",
-        "details": "Set policies for housing, nutrition, recovery and logistics. Weigh their ongoing costs against the support and bonuses they provide to the club."
+        "details": "Set policies for housing, nutrition, recovery and logistics. Weigh their ongoing costs against the support and bonuses they provide to the club.",
+        "benefit": "Day-to-day policies are a real management choice. Better support may help the team, but it also has an ongoing cost.",
+        "actions": "Set housing policy|Adjust nutrition and recovery|Manage logistics spending"
       },
       "transfers": {
         "title": "Club deals & free agents",
         "description": "Build your squad through both transfer paths.",
-        "details": "Negotiate rider moves between clubs or search the free-agent market. Build a balanced roster without losing control of wages and transfer spending."
+        "details": "Negotiate rider moves between clubs or search the free-agent market. Build a balanced roster without losing control of wages and transfer spending.",
+        "benefit": "Building the right roster requires more than picking the strongest available name. Contract decisions have to fit both tactics and budget.",
+        "actions": "Negotiate transfers between teams|Explore free-agent signings|Manage the wage bill"
       },
       "national": {
         "title": "National associations",
         "description": "Lead national teams into championships.",
-        "details": "Take part in national associations and national-team competitions. Prepare national squads for championships alongside your club responsibilities."
+        "details": "Take part in national associations and national-team competitions. Prepare national squads for championships alongside your club responsibilities.",
+        "benefit": "National competitions offer a separate challenge beyond your club's calendar. National selection and team preparation add another layer to the cycling world.",
+        "actions": "Participate in association activities|Prepare national selections|Compete in championship events"
       },
       "academy": {
         "title": "Youth academy & races",
         "description": "Develop young talent from the first step.",
-        "details": "Scout and train emerging riders, including youth and U23 development paths. Use youth races to build talent from the very beginning."
+        "details": "Scout and train emerging riders, including youth and U23 development paths. Use youth races to build talent from the very beginning.",
+        "benefit": "A youth pathway makes success possible before a rider reaches the pro roster. Scouting, early training and youth races all form part of the story.",
+        "actions": "Scout young prospects|Develop youth training programmes|Take part in youth competitions"
       },
       "replay": {
         "title": "Dynamic stage replay",
         "description": "Follow the race action as it unfolds.",
-        "details": "Follow each stage through a dynamic replay, not just its finishing order. Watch the race evolve through attacks, changes in position and rider performance."
+        "details": "Follow each stage through a dynamic replay, not just its finishing order. Watch the race evolve through attacks, changes in position and rider performance.",
+        "benefit": "Results become easier to understand when you can follow how a stage unfolded. The dynamic replay gives each race more of a story.",
+        "actions": "Follow attacks and race movement|Review how riders performed|Understand changes during the stage"
       },
       "progression": {
         "title": "Season-long progression",
         "description": "Chase promotion, rankings and long-term goals.",
-        "details": "Build your club over multiple seasons with rankings, league movement and long-term development. Results and management decisions shape what happens next."
+        "details": "Build your club over multiple seasons with rankings, league movement and long-term development. Results and management decisions shape what happens next.",
+        "benefit": "The club's identity comes from many linked seasons. Rankings, division changes and evolving riders give long-term decisions lasting meaning.",
+        "actions": "Build season objectives|Chase rankings and promotion|Create a lasting club history"
       }
     },
     "showDetails": "Show more",
-    "hideDetails": "Show less"
+    "hideDetails": "Show less",
+    "page": {
+      "moreInfo": "More info",
+      "navigation": "Feature navigation",
+      "backHome": "Home",
+      "backToOverview": "Back to homepage",
+      "notFound": "Feature not found",
+      "premiumBadge": "Premium",
+      "coinsBadge": "Coins",
+      "optionalAddon": "Optional programme",
+      "howItWorks": "How it works",
+      "whyItMatters": "Why it matters",
+      "whatYouCanDo": "What you can do",
+      "gameplayImages": "Gameplay screenshots",
+      "imagesComing": "Gameplay screenshots will appear here when they are provided by the developer.",
+      "accessTitle": "Access and requirements",
+      "u23Access": "Senior squad management is part of the core game. The optional U23 developing team requires Premium plus seasonal Coins activation (currently 100 Coins per season).",
+      "academyAccess": "The optional Youth Academy requires Premium and seasonal Coins activation (currently 50 Coins per season). In-game unlock conditions also apply.",
+      "coreAccess": "Core management is available without a Premium subscription. Optional advanced analytics, automated tools or staff advisory services may have separate Premium or Coins requirements.",
+      "nextFeature": "Next feature"
+    }
   }
 }

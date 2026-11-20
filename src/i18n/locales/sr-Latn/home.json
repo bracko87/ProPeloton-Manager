@@ -197,95 +197,151 @@
       "management": {
         "title": "Duboko upravljanje timom",
         "description": "Upravljaj svim odlukama u klubu.",
-        "details": "Određuj uloge vozača, prati formu i moral i planiraj razvoj tima. Trening, osoblje, oprema i finansije utiču na tvoje odluke."
+        "details": "Određuj uloge vozača, prati formu i moral i planiraj razvoj tima. Trening, osoblje, oprema i finansije utiču na tvoje odluke.",
+        "benefit": "Biciklistički klub je više od postave za jednu trku. Osoblje, finansije i sportske odluke povezani su tokom cele sezone.",
+        "actions": "Odredi uloge vozača|Uskladi formu, moral i umor|Planiraj dugoročni razvoj kluba"
       },
       "squads": {
         "title": "Seniori, U23 i omladinci",
         "description": "Gradi put od akademije do profesionalaca.",
-        "details": "Vodi seniorski tim i razvijaj vozače U23 i mlađe kategorije. Izgradi dugoročan put od omladinske akademije do prvog tima."
+        "details": "Vodi seniorski tim i razvijaj vozače U23 i mlađe kategorije. Izgradi dugoročan put od omladinske akademije do prvog tima.",
+        "benefit": "Budućnost kluba počinje izvan seniorskog tima. Razvojne ekipe omogućavaju stvaranje novih lidera uz takmičenje u sadašnjosti.",
+        "actions": "Sastavi seniorski tim|Aktiviraj i razvijaj U23 program|Prati mlade vozače do prvog tima"
       },
       "staff": {
         "title": "11 aktivnih uloga osoblja",
         "description": "Okupi specijalizovani stručni tim.",
-        "details": "Angažuj stručnjake za trening, skauting, medicinu, ishranu i mehaniku. Njihovo znanje pomaže razvoju, pripremi za trke i oporavku."
+        "details": "Angažuj stručnjake za trening, skauting, medicinu, ishranu i mehaniku. Njihovo znanje pomaže razvoju, pripremi za trke i oporavku.",
+        "benefit": "Stručni štab utiče na svakodnevnu pripremu, a ne samo na jedan bonus. Različite uloge povezuju učinak, zdravlje i organizaciju.",
+        "actions": "Angažuj trenere i stručnjake|Koristi znanje osoblja pri planiranju|Uskladi troškove i koristi"
       },
       "training": {
         "title": "Precizni treninzi",
         "description": "Usavršavaj devet veština kroz lične planove.",
-        "details": "Odredi individualne treninge za devet veština. Uskladi opterećenje, umor i potencijal, umesto istog plana za sve vozače."
+        "details": "Odredi individualne treninge za devet veština. Uskladi opterećenje, umor i potencijal, umesto istog plana za sve vozače.",
+        "benefit": "Individualni planovi uzimaju u obzir snage, slabosti i kalendar vozača, umesto jednog treninga za sve.",
+        "actions": "Odredi prioritete veština|Prilagodi opterećenje trkama|Prati razvoj kroz vreme"
       },
       "growth": {
         "title": "Razvoj vozača",
         "description": "Prati potencijal, formu i napredak.",
-        "details": "Prati promene veština, forme, morala, spremnosti i potencijala. Biraj kada će se vozač usavršavati, oporavljati ili menjati ulogu."
+        "details": "Prati promene veština, forme, morala, spremnosti i potencijala. Biraj kada će se vozač usavršavati, oporavljati ili menjati ulogu.",
+        "benefit": "Karijera vozača menja se odlukama i okolnostima. Potencijal, forma i spremnost pomažu da proceniš kada treba napredovati ili odmoriti.",
+        "actions": "Prati devet veština|Nadgledaj umor, moral i stanje|Prilagodi uloge tokom razvoja"
       },
       "calendar": {
         "title": "593 trke sa datumom",
         "description": "Planiraj kalendar tokom cele sezone.",
-        "details": "Biraj među 593 trke sa utvrđenim datumom, od jednodnevnih do etapnih. Planiraj prijave, odmor i sastave tokom sezone."
+        "details": "Biraj među 593 trke sa utvrđenim datumom, od jednodnevnih do etapnih. Planiraj prijave, odmor i sastave tokom sezone.",
+        "benefit": "Bogat svetski kalendar čini pravovremene odluke važnim. Izbor pravih događaja jednako je bitan kao i izbor vozača.",
+        "actions": "Pregledaj zakazane trke|Uskladi postave i odmor|Isplaniraj celu sezonu"
       },
       "preparation": {
         "title": "Detaljna priprema trka",
         "description": "Biraj postave, taktiku i opremu.",
-        "details": "Izaberi vozače i lidere, postavi taktičke uloge i prilagodi opremu stazi. Pre starta uzmi u obzir teren, formu i trkačke zalihe."
+        "details": "Izaberi vozače i lidere, postavi taktičke uloge i prilagodi opremu stazi. Pre starta uzmi u obzir teren, formu i trkačke zalihe.",
+        "benefit": "Startna lista je samo početak. Taktika, profil staze, oprema i zalihe daju smisao detaljnoj pripremi.",
+        "actions": "Izaberi lidere i pomagače|Prilagodi opremu stazi|Postavi taktiku pre starta"
       },
       "tiers": {
         "title": "Četiri takmičarska nivoa",
         "description": "Napreduj kroz regionalne divizije.",
-        "details": "Takmiči se u četiri nivoa podeljena na lige, divizije i regione. Bori se za plasman, promociju i opstanak."
+        "details": "Takmiči se u četiri nivoa podeljena na lige, divizije i regione. Bori se za plasman, promociju i opstanak.",
+        "benefit": "Takmičenja različitih nivoa daju svakoj sezoni dužu priču i merljiv napredak.",
+        "actions": "Prati divizije i regione|Osvajaj ligaške bodove|Bori se za promociju i opstanak"
       },
       "equipment": {
         "title": "170 modela opreme",
         "description": "Šest kategorija i trkačke zalihe.",
-        "details": "Biraj između 170 aktivnih modela ramova, točkova, guma, menjača, kaciga i obuće. Prati habanje, održavanje i potrošne zalihe."
+        "details": "Biraj između 170 aktivnih modela ramova, točkova, guma, menjača, kaciga i obuće. Prati habanje, održavanje i potrošne zalihe.",
+        "benefit": "Oprema nije samo jedna ocena. Izbor, trajnost, održavanje i potrošne zalihe utiču na spremnost ekipe.",
+        "actions": "Biraj između šest kategorija|Održavaj i menjaj istrošenu opremu|Pripremi trkačke zalihe"
       },
       "assets": {
         "title": "Infrastruktura i vozila",
         "description": "Unapredi objekte, timska vozila i kombije.",
-        "details": "Ulaži u klupske objekte, timska vozila i kombije za opremu. Bolja infrastruktura i podrška olakšavaju logistiku i pripremu."
+        "details": "Ulaži u klupske objekte, timska vozila i kombije za opremu. Bolja infrastruktura i podrška olakšavaju logistiku i pripremu.",
+        "benefit": "Dobar tim ima objekte i vozila koji podržavaju vozače. Ulaganje u njih donosi dugoročne operativne odluke.",
+        "actions": "Unapredi infrastrukturu|Upravljaj automobilima i kombijima|Planiraj troškove podrške"
       },
       "finance": {
         "title": "Realistične finansije",
         "description": "Vodi plate, troškove, poreze i nagrade.",
-        "details": "Upravljaj prihodima od sponzora, platama, transferima, opremom, troškovima i porezima. Svako ulaganje utiče na klupski budžet."
+        "details": "Upravljaj prihodima od sponzora, platama, transferima, opremom, troškovima i porezima. Svako ulaganje utiče na klupski budžet.",
+        "benefit": "Uspešno vođenje zahteva teške izbore. Prihodi, plate, transferi i redovni troškovi koriste isti klupski budžet.",
+        "actions": "Proveravaj prihode i rashode|Planiraj plate i transfere|Održi finansijsku stabilnost"
       },
       "sponsors": {
         "title": "Regionalni sponzori",
         "description": "Sklapaj ugovore uz smislene ciljeve.",
-        "details": "Pronađi regionalne sponzore sa ciljevima prilagođenim klubu i takmičenjima. Ugovori donose prihode i sportske obaveze."
+        "details": "Pronađi regionalne sponzore sa ciljevima prilagođenim klubu i takmičenjima. Ugovori donose prihode i sportske obaveze.",
+        "benefit": "Sponzorstvo postaje deo sportske strategije kada brendovi, regionalna povezanost i ciljevi utiču na ugovor.",
+        "actions": "Uporedi regionalne ponude|Proveri ciljeve sponzora|Planiraj rezultate prema ugovorima"
       },
       "operations": {
         "title": "Politike i operacije",
         "description": "Uredi smeštaj, ishranu, oporavak i logistiku.",
-        "details": "Postavi pravila za smeštaj, ishranu, oporavak i logistiku. Uporedi stalne troškove sa koristima i bonusima za tim."
+        "details": "Postavi pravila za smeštaj, ishranu, oporavak i logistiku. Uporedi stalne troškove sa koristima i bonusima za tim.",
+        "benefit": "Svakodnevne politike su stvarni izbori menadžera. Bolja podrška može pomoći timu, ali ima stalnu cenu.",
+        "actions": "Odredi uslove smeštaja|Prilagodi ishranu i oporavak|Kontroliši logističke troškove"
       },
       "transfers": {
         "title": "Transferi i slobodni vozači",
         "description": "Pregovaraj s timovima i dovodi slobodne vozače.",
-        "details": "Pregovaraj o prelascima vozača između klubova ili pronađi slobodne agente. Pojačaj tim uz kontrolu plata i obeštećenja."
+        "details": "Pregovaraj o prelascima vozača između klubova ili pronađi slobodne agente. Pojačaj tim uz kontrolu plata i obeštećenja.",
+        "benefit": "Za dobar sastav nije dovoljan najjači dostupni vozač. Ugovori moraju odgovarati taktici i budžetu.",
+        "actions": "Pregovaraj o transferima između klubova|Dovodi slobodne agente|Kontroliši plate"
       },
       "national": {
         "title": "Nacionalni savezi",
         "description": "Vodi reprezentacije na prvenstvima.",
-        "details": "Učestvuj u radu nacionalnih saveza i reprezentativnim takmičenjima. Pripremaj nacionalne timove za prvenstva."
+        "details": "Učestvuj u radu nacionalnih saveza i reprezentativnim takmičenjima. Pripremaj nacionalne timove za prvenstva.",
+        "benefit": "Nacionalna takmičenja donose poseban izazov van klupskog kalendara. Izbor i priprema reprezentacije proširuju svet igre.",
+        "actions": "Učestvuj u radu saveza|Pripremaj reprezentacije|Nastupaj na prvenstvima"
       },
       "academy": {
         "title": "Akademija i omladinske trke",
         "description": "Razvijaj talente od prvih koraka.",
-        "details": "Pronalazi i treniraj mlade vozače kroz omladinske i U23 programe. Omladinske trke pomažu razvoju od prvih koraka."
+        "details": "Pronalazi i treniraj mlade vozače kroz omladinske i U23 programe. Omladinske trke pomažu razvoju od prvih koraka.",
+        "benefit": "Razvoj talenta počinje pre dolaska u profesionalni tim. Skauting, rani treninzi i omladinske trke čine taj put.",
+        "actions": "Pronađi mlade talente|Organizuj omladinski trening|Učestvuj u omladinskim trkama"
       },
       "replay": {
         "title": "Dinamičan prikaz etape",
         "description": "Prati dešavanja tokom svake etape.",
-        "details": "Prati etape kroz dinamičan prikaz, a ne samo konačni rezultat. Gledaj napade, promene pozicija i učinak vozača."
+        "details": "Prati etape kroz dinamičan prikaz, a ne samo konačni rezultat. Gledaj napade, promene pozicija i učinak vozača.",
+        "benefit": "Rezultat je jasniji kada vidiš kako je etapa protekla. Dinamičan prikaz daje svakoj trci posebnu priču.",
+        "actions": "Prati napade i kretanje|Pregledaj učinak vozača|Razumi promene tokom etape"
       },
       "progression": {
         "title": "Napredak iz sezone u sezonu",
         "description": "Bori se za promociju, rang i ciljeve.",
-        "details": "Razvijaj klub kroz više sezona uz rang-liste, napredovanje i promene liga. Rezultati i menadžerske odluke oblikuju budućnost."
+        "details": "Razvijaj klub kroz više sezona uz rang-liste, napredovanje i promene liga. Rezultati i menadžerske odluke oblikuju budućnost.",
+        "benefit": "Identitet kluba gradi se kroz više sezona. Rang-liste, promene divizija i razvoj vozača daju težinu dugoročnim odlukama.",
+        "actions": "Postavi sezonske ciljeve|Bori se za rang i promociju|Gradi istoriju kluba"
       }
     },
     "showDetails": "Prikaži više",
-    "hideDetails": "Prikaži manje"
+    "hideDetails": "Prikaži manje",
+    "page": {
+      "moreInfo": "Više informacija",
+      "navigation": "Navigacija kroz mogućnosti",
+      "backHome": "Početna",
+      "backToOverview": "Nazad na početnu",
+      "notFound": "Mogućnost nije pronađena",
+      "premiumBadge": "Premium",
+      "coinsBadge": "Coins",
+      "optionalAddon": "Opcioni program",
+      "howItWorks": "Kako funkcioniše",
+      "whyItMatters": "Zašto je važno",
+      "whatYouCanDo": "Šta možeš da uradiš",
+      "gameplayImages": "Slike iz igre",
+      "imagesComing": "Ovde će biti prikazane slike iz igre kada ih autor dostavi.",
+      "accessTitle": "Pristup i uslovi",
+      "u23Access": "Upravljanje seniorskim timom deo je osnovne igre. Opcioni U23 razvojni tim zahteva Premium i sezonsku aktivaciju pomoću Coins (trenutno 100 Coins po sezoni).",
+      "academyAccess": "Opciona omladinska akademija zahteva Premium i sezonsku aktivaciju pomoću Coins (trenutno 50 Coins po sezoni). Važe i dodatni uslovi za otključavanje u igri.",
+      "coreAccess": "Osnovno upravljanje dostupno je bez Premium pretplate. Opciona napredna analitika, automatizacija ili saveti osoblja mogu zahtevati Premium ili Coins.",
+      "nextFeature": "Sledeća mogućnost"
+    }
   }
 }
