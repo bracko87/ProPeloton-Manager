@@ -982,12 +982,12 @@ export default function FirstSquadTab({
 
   const squadTableColSpan =
     activeListView === 'skills'
-      ? 12
+      ? 11
       : activeListView === 'financial'
-        ? 9
+        ? 8
         : activeListView === 'form'
-          ? 10
-          : 10
+          ? 9
+          : 9
 
   const currentViewOption =
     SQUAD_LIST_VIEW_OPTIONS.find((option) => option.value === activeListView) ??
@@ -1140,12 +1140,6 @@ export default function FirstSquadTab({
                         <th className="p-2">{t('columns.health')}</th>
                       </>
                     )}
-
-                    <th
-                      className={`p-2 text-right ${activeListView === 'skills' ? 'w-[72px]' : 'w-[90px]'}`}
-                    >
-                      {t('roster.view')}
-                    </th>
                   </tr>
                 </thead>
 
@@ -1184,7 +1178,24 @@ export default function FirstSquadTab({
                     }
 
                     return (
-                      <tr key={r.id} className="border-t align-top">
+                      <tr
+                    key={r.id}
+                    data-tutorial-target={index === 0 ? 'squad-rider-view-button' : undefined}
+                    className="border-t align-top cursor-pointer hover:bg-slate-100/70 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-slate-500"
+                    tabIndex={0}
+                    title={r.name}
+                    onClick={(event) => {
+                      if ((event.target as HTMLElement).closest('button, a, input, select, textarea, [role="button"]')) return
+                      onOpenRiderProfile(r.id)
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.target !== event.currentTarget) return
+                      if (event.key === 'Enter' || event.key === ' ') {
+                        event.preventDefault()
+                        onOpenRiderProfile(r.id)
+                      }
+                    }}
+                  >
                         <td className="p-2">{r.rowNo}</td>
 
                         <td
@@ -1258,7 +1269,8 @@ export default function FirstSquadTab({
                                     type="button"
                                     disabled={!moveState.enabled || isBusy}
                                     title={moveState.reason}
-                                    onClick={() => {
+                                    onClick={(event) => {
+                                      event.stopPropagation()
                                       if (!moveState.enabled || isBusy) return
                                       void onMoveToDevelopingTeam(r.id)
                                     }}
@@ -1364,19 +1376,6 @@ export default function FirstSquadTab({
                             </td>
                           </>
                         )}
-
-                        <td className="p-2 text-right">
-                          <button
-                            type="button"
-                            data-tutorial-target={
-                              index === 0 ? 'squad-rider-view-button' : undefined
-                            }
-                            onClick={() => onOpenRiderProfile(r.id)}
-                            className="text-sm font-medium text-yellow-600 hover:text-yellow-700"
-                          >
-                            {t('roster.view')}
-                          </button>
-                        </td>
                       </tr>
                     )
                   })}

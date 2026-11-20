@@ -394,3 +394,30 @@
   box-shadow: none;
   color: #ffffff;
 }
+
+
+/* V6 — consistent National Ranking-style controls across the game.
+ * Keep circular status indicators, rider portraits and badges untouched.
+ * Buttons, selects and other interactive fields use a clean, flat 4px corner.
+ * Remove decorative top-to-bottom gradients from interactive controls. */
+.ui-modernized-shell :is(
+  button, select, textarea,
+  input:not([type="checkbox"]):not([type="radio"]),
+  [role="combobox"], [role="listbox"], [role="menuitem"], [role="option"]
+) {
+  border-radius: 4px !important;
+  background-image: none !important;
+}
+/* Outer and inner content cards, including race stage cards. */
+.ui-modernized-shell > div > main :is(div, section, article):is(
+  .rounded, .rounded-sm, .rounded-md, .rounded-lg,
+  .rounded-xl, .rounded-2xl, .rounded-3xl, .ui-modern-card
+):not(.rounded-full) {
+  border-radius: 4px !important;
+}
+/* Keep the collapsible sidebar arrow frameless. */
+.ui-modernized-shell > aside > button[aria-label] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
