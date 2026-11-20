@@ -62,9 +62,20 @@ export default function TestAccountRegister(): JSX.Element {
     setPassword('')
     setConfirm('')
     const { data } = await supabase.auth.getUser()
-    setStatus(!error && data.user?.id === originId && data.user?.is_anonymous === false ?
-      'Permanent account verified. Your team and its original user ID have been preserved.' :
-      'Could not verify completion; your existing team has not been deleted. Contact support.')
+    if (error || data.user?.id !== originId || data.user?.is_anonymous !== false ||
+        !data.user.email || !data.user.email_confirmed_at) {
+      setStatus('Could not verify the original account after password setup. Your test team has not been deleted.')
+    } else {
+      // A new non-anonymous Auth identity alone is not a completed conversion.
+      // Mark the ORIGINAL lifecycle as converted on the server before success.
+      const { data: result, error: finalizeError } = await supabase
+        .rpc('saturn_finalize_test_account_email_conversion_v1')
+      const converted = !finalizeError && result?.success === true &&
+        result?.converted === true && result?.user_id === originId
+      setStatus(converted
+        ? 'Registration completed on your original account. Your team, results and original Premium expiry are preserved.'
+        : 'Your email and password are linked, but the server could not complete team registration. Keep this session and contact support; do not create a second account.')
+    }
     await refreshUser()
     setBusy(false)
   }
