@@ -18,7 +18,7 @@ test('all reviewed training/staff functions contain the server-side expired gues
    assert.ok(start>=0,name+' source missing')
    const end=i+1<funcs.length?sql.indexOf('CREATE OR REPLACE FUNCTION public.'+funcs[i+1]+'('):sql.length
    const body=sql.slice(start,end)
-   assert.match(body,/from auth\.users u where u\.id=auth\.uid\(\) and u\.is_anonymous is true/)
+   assert.match(body,/if public\.saturn_test_account_requires_guard_v1\(\)/)
    assert.match(body,/not public\.saturn_test_account_can_mutate_v1\(/)
    assert.match(body,/using errcode='42501'/)
    assert.match(body,/Test account expired or not eligible for this club/)
@@ -30,8 +30,8 @@ test('owner-matched club is checked before hiring candidate or changing camp pla
  assert.ok(hire.indexOf("raise exception 'Main club not found.'")<hire.indexOf('saturn_test_account_can_mutate_v1(v_club_id)'))
  assert.ok(camp.indexOf('v_club_id := public.get_my_club_id()')<camp.indexOf('saturn_test_account_can_mutate_v1(v_club_id)'))
 })
-test('regular permanent user code remains behind canonical anonymous test only check',()=>{
- assert.ok((sql.match(/u\.is_anonymous is true/g)||[]).length>=6)
+test('registered player code is skipped only for unconverted Saturn lifecycle rows',()=>{
+ assert.ok((sql.match(/saturn_test_account_requires_guard_v1/g)||[]).length>=6)
  assert.ok((sql.match(/saturn_test_account_can_mutate_v1/g)||[]).length>=6)
  assert.doesNotMatch(sql,/DROP FUNCTION|DROP POLICY|GRANT ALL|ALTER TABLE.*DISABLE ROW LEVEL SECURITY/i)
 })
