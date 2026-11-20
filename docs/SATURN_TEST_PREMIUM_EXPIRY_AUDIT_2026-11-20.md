@@ -63,3 +63,16 @@ Another seven **player-facing** reviewed SQL functions now include canonical ano
 Five additional RLS-enabled tables now have proposed **restrictive INSERT/UPDATE/DELETE** policies against expired anonymous users: `rider_contracts`, `club_riders`, `club_team_cars`, `club_team_buses`, `club_equipment_vans`. SELECT remains unaffected. **Important: live `public.club_roster` has RLS disabled despite authenticated INSERT/UPDATE/DELETE privileges.** It requires a separate migration and detailed existing-app/game-engine compatibility assessment. It is NOT included in these proposed policies.
 
 Total draft coverage becomes **28 named player-facing mutation functions** (counting 2 race, 6 training/staff, 6 equipment, 7 transfer/camp finance and 7 rider/facility/loan/Coins) and **19 club-linked restrictive RLS tables**. This is a count of source-level proposals, not proof of complete server-wide protection. It does not address other SECURITY DEFINER functions (such as scheduler finance postings) or all direct-write tables, and there have been no actual anonymous-JWT staging tests. Do not merge/deploy or enable Guest Mode without full coverage and negative tests.
+
+
+## CORRECTION — 20 Nov: `club_roster` is a VIEW, not an unprotected table
+
+A later read-only PostgreSQL metadata audit established the object's true type:
+
+- `public.club_roster` is `relkind='v'` (an ordinary **non-updatable JOIN VIEW**), with `pg_relation_is_updatable(...,true)=0` and no INSTEAD OF write triggers.
+- Its definition combines `public.club_riders` (assignments) and `public.riders` (rider data), **both already RLS-enabled**. Therefore the earlier statement that `club_roster` was an RLS-disabled directly writable table was **incorrect**. RLS cannot be applied to the VIEW itself.
+- Its existing `security_invoker=false` can instead expose the underlying data under the **VIEW OWNER** privilege context. That is the actual concern, and it must be evaluated against expected public/player roster visibility.
+
+The new draft migration `20261120213000_saturn_roster_view_invoker_and_rider_update_v1.sql` adds `ALTER VIEW public.club_roster SET (security_invoker = true)` so roster reads must satisfy the calling role's existing underlying SELECT policies. It also adds a restrictive, club/expiry-checked `UPDATE` policy on the actual `public.riders` table. A DO preflight ensures the object is still an ordinary non-updatable view and both source tables still have RLS. **This could change public roster visibility**, so public ranking, national championships, team sheets and dashboard views must undergo real staging regression before deployment. Do not change source table RLS or view definition without that verification.
+
+A related earlier source test was explicitly designed not to enable RLS on the view and remains valid; the reason for that restriction is now correctly documented. This migration is NOT deployed and has not passed real JWT or public-route staging tests.
