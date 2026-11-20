@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, registration abuse protection
+
+- ✅ **Code-tested:** `src/components/auth/SaturnGuestCaptcha.tsx` renders a Cloudflare Turnstile challenge; `src/pages/TestTeamSignup.tsx` passes its short-lived token to Supabase `auth.signInAnonymously({ options: { captchaToken } })` and fails closed when the public site key is missing or no valid widget token exists. The widget remounts on retry, and no CAPTCHA secret is present in frontend code.
+- ✅ Source tests `tests/saturnGuestCaptchaAbuseGate.test.mjs` and updated `tests/saturnTestTeamSignup.test.mjs` validate frontend token handling and preserve one-club/transaction rollout constraints.
+- ✅ Verified source commit `fa4401ae941121597778f3db9946a41fc8a920bb`: **303 tests (161 PASS / 0 FAIL / 142 staging TODO)**, 273 SQL statements / 69 PL/pgSQL bodies parsed in 33 files; **all THREE GitHub workflows passed**, 576 frontend files scanned with zero direct calls to the four sensitive finance helpers.
+- 🟡 **Anti-abuse is NOT complete:** Supabase Authentication must be configured to validate Turnstile using a server-side **secret**, with the public site key in the deployment environment. Configure and test per-IP **anonymous** Auth signup rate limits, direct API calls without CAPTCHA, replayed tokens, full-game reward/Coins farming, and normal permanent-registration regressions. Browser CAPTCHA alone is bypassable. Details in `docs/SATURN_GUEST_SIGNUP_ABUSE_GATE_2026-11-20.md`.
+- ⬜ No guest Auth/club rollout, Saturn migration or finance permission changes were deployed; Guest Mode remains OFF. Real isolated staging, database JWT, economy, OAuth conversion and complete mutation coverage still block public activation.
+
+[Current staging release gate](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, AI transfer bid authorization
 
 - ✅ Draft 14-day lifecycle and owned club safeguards now cover **54 selected player-initiated write RPCs**, up from 52. New `supabase/migrations/20261120235920_saturn_ai_unsolicited_bid_expiry_and_ownership_v1.sql` adds independent buyer owner/member validation and unconverted 14-day trial checks before **any** unsolicited AI bid record, including hard-rejected bids, and before confirmation converts an accepted bid into a transfer negotiation.
