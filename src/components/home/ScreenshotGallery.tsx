@@ -123,7 +123,7 @@ export default function ScreenshotGallery(): JSX.Element {
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('screenshots.title')}</h3>
+            <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('screenshots.title')}</h3>
 
             <p className="mt-2 max-w-2xl text-sm text-white/70">
               {t('screenshots.subtitle')}
