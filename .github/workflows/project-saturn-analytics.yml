@@ -1,0 +1,46 @@
+name: Project Saturn - analytics freshness and integrity
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/pages/dashboard/AdminAnalyticsPage.tsx'
+      - 'supabase/migrations/20261120095000_saturn_admin_analytics_freshness_and_integrity.sql'
+      - 'tests/saturnAnalyticsIntegrity.test.mjs'
+      - 'PROJECT_SATURN.md'
+      - '.github/workflows/project-saturn-analytics.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Build and verify Saturn analytics frontend & scope
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exact project dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run Saturn scope, privacy and analytics contracts
+        run: node --test tests/saturnAnalyticsIntegrity.test.mjs
+      - name: Build production web client
+        run: npm run build
+      - name: Confirm analytics features in compiled bundle
+        run: |
+          node <<'NODE'
+          const fs=require('node:fs');
+          const js=fs.readFileSync('dist/main.js','utf8');
+          for (const token of [
+            'Recently recorded website activity',
+            'Tracking integrity',
+            'These are NOT live player connections',
+            'Last recorded page navigation:'
+          ]) {
+            if(!js.includes(token)) throw new Error('Missing from production bundle: '+token)
+          }
+          console.log('Saturn SAT-09 admin dashboard is bundled.');
+          NODE
