@@ -41,6 +41,11 @@ test('historic race participation or applications exclude an AI slot', () => {
   assert.match(sql, /not exists \(\s*select 1 from public\.race_participant_teams p where p\.team_id=c\.id/)
 })
 
+test('both formats of historical race entries prevent AI-slot displacement', () => {
+  assert.match(sql, /public\\.race_participant_teams_v1 p/)
+  assert.match(sql, /p\\.club_id=c\\.id or p\\.owner_club_id=c\\.id/)
+  assert.match(sql, /p\\.participating_club_id=c\\.id/)
+})
 test('permanent team allocation remains completely unchanged', () => {
   assert.match(sql, /if not found then\s*-- Existing permanent-player allocation behavior remains exactly as is\.\s*perform public\.assign_new_club_to_ai_slot\(new\.id\)/)
   assert.doesNotMatch(sql, /create or replace function public\.assign_new_club_to_ai_slot/)
