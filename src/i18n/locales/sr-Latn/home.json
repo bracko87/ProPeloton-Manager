@@ -37,7 +37,20 @@
     "rankingsEmpty": "Rang-lista će se pojaviti kada bude dostupna.",
     "pointsAbbrev": "bod.",
     "slideControls": "Slajdovi početne stranice",
-    "slideLabel": "Prikaži slajd {{number}}"
+    "slideLabel": "Prikaži slajd {{number}}",
+    "competitionLabel": "Takmičenje",
+    "competitionWorld": "WorldTeam divizija",
+    "competitionProWest": "ProTeam Zapad",
+    "competitionProEast": "ProTeam Istok",
+    "competitionContEurope": "Kontinentalna Evropa",
+    "competitionContAmerica": "Kontinentalna Amerika",
+    "competitionContAsia": "Kontinentalna Azija",
+    "competitionContAfrica": "Kontinentalna Afrika",
+    "competitionContOceania": "Kontinentalna Okeanija",
+    "teamColumn": "Ekipa",
+    "rankingScrollLabel": "Listaj rang-listu",
+    "rankingCount": "{{count}} od {{total}} ekipa",
+    "rankingsViewAll": "Cela rang-lista"
   },
   "raceSchedule": {
     "title": "Raspored trka",
