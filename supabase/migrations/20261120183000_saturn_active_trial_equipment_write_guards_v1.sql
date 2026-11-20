@@ -89,7 +89,7 @@ begin
     'discarded_game_date', v_current_game_date
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.equipment_purchase_item(p_club_id uuid, p_catalog_item_id uuid, p_quantity integer DEFAULT 1, p_idempotency_key text DEFAULT NULL::text)
@@ -317,7 +317,7 @@ begin
     'items', v_inserted_items
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.equipment_purchase_race_supplies(p_club_id uuid, p_catalog_item_id uuid, p_quantity integer DEFAULT 1, p_idempotency_key text DEFAULT NULL::text)
@@ -545,7 +545,7 @@ begin
     'race_supply_row', v_result_row
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.equipment_save_auto_restock_rule_v1(p_club_id uuid, p_supply_key text, p_enabled boolean, p_minimum_stock integer, p_order_quantity integer)
@@ -614,7 +614,7 @@ begin
       updated_by_user_id = excluded.updated_by_user_id,
       updated_at = excluded.updated_at;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.equipment_save_default_setup(p_club_id uuid, p_frame_item_id uuid DEFAULT NULL::uuid, p_wheelset_item_id uuid DEFAULT NULL::uuid, p_tires_item_id uuid DEFAULT NULL::uuid, p_groupset_item_id uuid DEFAULT NULL::uuid, p_helmet_item_id uuid DEFAULT NULL::uuid, p_shoes_item_id uuid DEFAULT NULL::uuid)
@@ -718,7 +718,7 @@ begin
     'default_setup', v_result
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.equipment_save_setup_preset(p_club_id uuid, p_setup_slot smallint, p_setup_name text, p_frame_catalog_item_id uuid DEFAULT NULL::uuid, p_wheelset_catalog_item_id uuid DEFAULT NULL::uuid, p_tires_catalog_item_id uuid DEFAULT NULL::uuid, p_groupset_catalog_item_id uuid DEFAULT NULL::uuid, p_helmet_catalog_item_id uuid DEFAULT NULL::uuid, p_shoes_catalog_item_id uuid DEFAULT NULL::uuid)
@@ -895,6 +895,6 @@ begin
     )
   );
 end;
-$function$
+$function$;
 
 
