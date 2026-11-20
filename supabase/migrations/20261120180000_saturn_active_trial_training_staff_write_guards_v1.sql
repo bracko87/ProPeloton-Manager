@@ -15,7 +15,7 @@ declare
   v_generation jsonb;
 begin
   -- SAT-08: protect state-changing rider/coach settings at the server.
-  if exists(select 1 from auth.users u where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
      and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or not eligible for this club'
       using errcode='42501';
@@ -106,7 +106,7 @@ begin
   end if;
 
   -- SAT-08: no staff/finance mutations after a test account expires.
-  if exists(select 1 from auth.users u where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
      and not public.saturn_test_account_can_mutate_v1(v_club_id) then
     raise exception 'Test account expired or not eligible for this club'
       using errcode='42501';
@@ -291,7 +291,7 @@ begin
 
   v_club_id := public.get_my_club_id();
   -- SAT-08: only active test-account owners may mutate training camp plans.
-  if exists(select 1 from auth.users u where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
      and not public.saturn_test_account_can_mutate_v1(v_club_id) then
     raise exception 'Test account expired or not eligible for this club'
       using errcode='42501';
@@ -396,7 +396,7 @@ declare
   v_academy_level integer := 0;
 begin
   -- SAT-08: protect state-changing rider/coach settings at the server.
-  if exists(select 1 from auth.users u where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
      and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or not eligible for this club'
       using errcode='42501';
@@ -551,7 +551,7 @@ declare
   v_has_race_commitment boolean;
 begin
   -- SAT-08: protect state-changing rider/coach settings at the server.
-  if exists(select 1 from auth.users u where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
      and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or not eligible for this club'
       using errcode='42501';
@@ -788,7 +788,7 @@ declare
   v_generation jsonb;
 begin
   -- SAT-08: protect state-changing rider/coach settings at the server.
-  if exists(select 1 from auth.users u where u.id=auth.uid() and u.is_anonymous is true)
+  if public.saturn_test_account_requires_guard_v1()
      and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or not eligible for this club'
       using errcode='42501';
