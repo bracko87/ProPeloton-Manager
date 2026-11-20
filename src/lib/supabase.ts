@@ -290,7 +290,13 @@ function raceIdentityAwareFetch(
  */
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    persistSession: false
+    persistSession: false,
+    // A Google identity link must be completed by the persisted SATURN
+    // client, not this separate memory-only game client. Leave normal OAuth
+    // callbacks unchanged unless the dedicated Saturn marker is present.
+    detectSessionInUrl: !(import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' &&
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).has('saturn_google_link'))
   },
   global: {
     fetch: raceIdentityAwareFetch
