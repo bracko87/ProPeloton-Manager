@@ -288,7 +288,16 @@ CREATE OR REPLACE FUNCTION public.transfer_delete_saved_search_v1(p_saved_search
  SET search_path TO 'public', 'auth', 'pg_temp'
 AS $function$
 declare v_count integer;
-beginclub=>`\n  -- Saturn lifecycle remains unconverted until verified email/Google finalization.\n  -- Keep original owner access and independent Premium/Coins checks intact.\n  if public.saturn_test_account_requires_guard_v1()\n     and not public.saturn_test_account_can_mutate_v1(${club}) then\n    raise exception 'Test account expired or not authorized for transfer shortlist'\n      using errcode='42501';\n  end if;\n`  delete from public.transfer_saved_searches s
+begin
+  -- Trial expiry applies after email/Google linking until verified conversion.
+  -- Direct saved search deletion is a write; read-only searches stay open.
+  if public.saturn_test_account_requires_guard_v1()
+     and not public.saturn_test_account_can_mutate_v1(public.get_my_primary_club_id()) then
+    raise exception 'Test account expired or not authorized for transfer shortlist'
+      using errcode='42501';
+  end if;
+
+  delete from public.transfer_saved_searches s
   using public.clubs c
   where s.id = p_saved_search_id
     and c.id = s.club_id
