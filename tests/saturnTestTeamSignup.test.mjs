@@ -6,6 +6,8 @@ const form = read('src/pages/TestTeamSignup.tsx')
 const hero = read('src/components/home/Hero.tsx')
 const app = read('src/App.tsx')
 const official = read('src/lib/supabase.ts')
+const testClient = read('src/lib/testAccountClient.ts')
+const authProvider = read('src/context/AuthProvider.tsx')
 
 test('homepage keeps full registration and only shows Test the Game behind explicit OFF-by-default flag', () => {
   assert.match(hero, /to="\/register"/)
@@ -25,7 +27,10 @@ test('anonymous Auth only started on user submit, uses persisted separate sessio
   assert.match(form, /async function begin\(event: React\.FormEvent\)/)
   assert.match(form, /if \(!ENABLED \|\| busy\) return/)
   assert.match(form, /testClient\.auth\.signInAnonymously\(\)/)
-  assert.match(form, /storageKey: STORAGE_KEY, persistSession: true/)
+  assert.match(authProvider, /restoreTestAccountIntoGame\(\)/)
+  assert.match(testClient, /term\?\.user_id !== testUser\.user\.id/)
+  assert.match(testClient, /persistSession: true/)
+  assert.match(testClient, /storageKey: 'ppm-saturn-fullgame-test-session-v1'/)
   assert.match(official, /persistSession: false/)
 })
 test('real club is only created by a dedicated server endpoint, not direct inserts', () => {
