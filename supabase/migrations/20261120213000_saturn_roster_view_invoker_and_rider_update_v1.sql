@@ -10,6 +10,34 @@
 -- privileges, so club_riders/riders SELECT RLS applies to real player queries.
 -- Needs full staging regression for public/national/team pages BEFORE deploy.
 -- Current view definition and column list are NOT modified.
+-- Abort rather than changing an unexpected future schema, or making a
+-- non-updatable view of rider information unexpectedly writable.
+do $saturn_roster_preflight$
+begin
+  if not exists (
+    select 1 from pg_class c
+    where c.oid='public.club_roster'::regclass
+      and c.relkind='v'
+  ) then
+    raise exception 'SAT-08 expected public.club_roster to be a view';
+  end if;
+  if pg_relation_is_updatable('public.club_roster'::regclass, true) <> 0 then
+    raise exception 'SAT-08 roster view must remain non-updatable';
+  end if;
+  if not exists (
+    select 1 from pg_class c
+    where c.oid='public.club_riders'::regclass
+      and c.relkind='r' and c.relrowsecurity
+  ) or not exists (
+    select 1 from pg_class c
+    where c.oid='public.riders'::regclass
+      and c.relkind='r' and c.relrowsecurity
+  ) then
+    raise exception 'SAT-08 underlying roster tables must already enforce RLS';
+  end if;
+end;
+$saturn_roster_preflight$;
+
 alter view public.club_roster set (security_invoker = true);
 
 -- The real 'riders' table is RLS enabled and has an existing
