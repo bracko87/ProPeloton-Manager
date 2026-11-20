@@ -73,6 +73,12 @@ The review branch includes `saturn_finalize_test_account_email_conversion_v1()`:
 
 **Not live-tested:** Supabase Auth email confirmation flow, renewal of sessions, exact JWT mapping after transition, expired-to-registered permission restoration, Google OAuth linking, tier vacancy reassignment and production deployment. `saturn-14day-guest-staging` branch creation was attempted but Supabase required a cost-confirmation ID; no branch, charge or production changes occurred. The user must approve the quoted cost (Supabase organization ID required to obtain the quote). Latest checked source commit `d45a1ba25718fead88e5408d3bdca1b66842c5e4` passed Saturn CI: **151 cases, 86 pass, 0 fail, 65 TODO staging**, including frontend build. [Complete staging gate](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
 
+## SAT-02 — Same-UUID Google conversion review milestone
+
+The draft registration page now offers **Link Google to this team**, using `testClient.auth.linkIdentity({provider:'google'})` on the original persistent anonymous Auth session rather than the new-account Google login flow. A tagged OAuth callback returns to ProPeloton's **HashRouter** page while avoiding competition between the main memory-only Auth client and the persistent test client. A separate draft server finalizer checks the **canonical linked Google identity** in `auth.identities`, `auth.users.is_anonymous=false`, the unchanged original Auth UUID and actual official club ownership before marking that same lifecycle converted. This does not reset Premium or copy a team.
+
+**Status: source code completed, not staging validated, not deployed.** Manual identity linking and the tagged callback URL must be configured and checked in isolated staging. An already-linked Google account must never merge or replace an existing team. Latest verified CI commit `7ff4bd0a0f20bedb45b6bd6f648263aa8d826113`: **160 test cases, 90 passing, 0 failing, 70 TODO staging**, app build and all 3 workflows passed. [Staging acceptance instructions](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md). Guest Mode remains OFF.
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
