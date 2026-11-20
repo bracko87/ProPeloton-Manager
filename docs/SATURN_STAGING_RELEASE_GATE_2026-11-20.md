@@ -121,3 +121,14 @@ No placement is attempted during an armed season transition or while the same cl
 The email-password and Google registration screens call the optional placement RPC **only after successful conversion finalization**. Failure or lack of vacancy never invalidates registration. Players receive a status indicating moved, pending due to race/season, or no approved higher vacancy.
 
 **Staging verification still required:** transaction/trigger/RLS compilation, upper-tier occupancy under concurrent conversions, official region eligibility, league standings/race calendars and active race handling, season reset, finance stability, and the correct division hierarchy. No approved capacity exists by default, and no production team has been moved. Full-game roll-out remains OFF.
+
+
+## SAT-03 hardening update — one-time placement, admin concurrency, real league existence
+
+The approved-vacancy placement code now records every **successful** conversion placement in the private `saturn_converted_team_placements_v1` table, unique by original `user_id` and `club_id`. A repeat call returns `already_placed`, never another promotion. If no approved vacancy exists, no row is written and the manager may retry later. Tier update and audit INSERT occur in one database transaction; either both commit or both roll back.
+
+Concurrent capacity changes are now handled using the **fresh `max_teams` value selected with `FOR UPDATE`** after the per-league advisory lock, rather than the potentially stale loop snapshot. A disabled or unapproved capacity row is ignored. Before considering a destination, the function also verifies that the exact competition `club_tier` + `world_tier` + regional division has an existing active main-club cohort. A mistaken capacity record cannot manufacture a new league.
+
+Added `supabase/tests/saturn_approved_vacancy_occupancy_audit.sql`: **READ-ONLY STAGING QUERY** showing approved/disabled capacities, active AI and human incumbents, current total occupancy, usable vacant slots, and review status. It never creates or approves slot records. Run after draft migrations and before enabling any capacity. Do not run on production: the capacity table does not exist there.
+
+**Staging cases remaining:** duplicate concurrent submissions, one-time placement retries, rollback after interrupted audit insert, administrator reducing/disabling a capacity during placement, and a capacity entry for a nonexistent region/league. These are explicit TODO checks, not completed database integration tests.
