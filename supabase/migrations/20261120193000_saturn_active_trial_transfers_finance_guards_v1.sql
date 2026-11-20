@@ -1315,7 +1315,8 @@ begin
 exception
   when others then
     raise exception 'finance_book_training_camp failed at stage [%]: %', v_stage, SQLERRM;
-end;$function$
+end;
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.finance_book_training_camp_v2(p_club_id uuid, p_camp_id uuid, p_start_date date, p_days integer, p_rider_ids uuid[], p_staff_ids uuid[], p_idempotency_key text)
@@ -1734,6 +1735,7 @@ begin
 exception
   when others then
     raise exception 'finance_book_training_camp_v2 failed at stage [%]: %', v_stage, sqlerrm;
-end;$function$
+end;
+$function$;
 
 
