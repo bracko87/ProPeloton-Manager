@@ -805,6 +805,26 @@ export default function CreateClubPage(): JSX.Element {
     motto: '',
   })
 
+  // The only draft field eligible for official onboarding is the name.
+  // Riders and simulated training never become real multiplayer assets.
+  useEffect(() => {
+    if (!user?.id || user.is_anonymous === true) return
+    let active = true
+    void supabase.from('saturn_guest_drafts_v1')
+      .select('draft')
+      .eq('user_id', user.id)
+      .maybeSingle()
+      .then(({ data, error }) => {
+        if (!active || error || !data?.draft) return
+        const draft = data.draft as Record<string, unknown>
+        const candidate = typeof draft.teamName === 'string'
+          ? draft.teamName.trim().slice(0, 40) : ''
+        if (candidate.length < 3) return
+        setForm(previous => previous.name ? previous : { ...previous, name: candidate })
+      })
+    return () => { active = false }
+  }, [user?.id, user?.is_anonymous])
+
   const [countries, setCountries] = useState<CountryOption[]>([])
   const [loadingCountries, setLoadingCountries] = useState<boolean>(true)
   const [submitting, setSubmitting] = useState<boolean>(false)
