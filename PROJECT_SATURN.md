@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, expanded gameplay write audit
+
+- ✅ **Code-tested:** 33 selected player-facing write RPCs now have draft Saturn lifecycle/club/expiry checks (the previous 28 plus five equipment writers). Latest added: equipment default setup types, maintenance reminders, selling equipment, starting maintenance and Coins-based setup slot unlock.
+- ✅ **Read-only preserved:** A potential shared-helper override was reverted after identifying `equipment_assert_club_access` is used by read-only inventory, market and dashboard views. Expired test players must be able to inspect existing equipment and finances. Five specific write RPCs are instead protected individually.
+- ✅ **Database-wide discovery:** Production read-only inventory shows 353 `public` SECURITY DEFINER functions with effective authenticated EXECUTE and a *heuristic* SQL write/delegation signal. This is NOT a count of exploitable or missing guards. `supabase/tests/saturn_unreviewed_security_definer_inventory.sql` prioritizes actual player-facing finance, competition, equipment, training and internal scheduler routines for further review.
+- ✅ **Last verified source commit `1f73b3a7ab4624b8f1cda1fe92f89d745b56436b`:** 240 Saturn cases, **132 pass / 0 fail / 108 staging TODO**; 252 SQL statements / 48 PL/pgSQL bodies / 28 SQL files parsed; all three CI workflows passed.
+- ⬜ **Not deployed or live-tested:** New SQL remains in draft PR #277. Remaining game mutations, finance security and anti-abuse still incomplete. No isolated staging environment, real JWT, gameplay, or concurrency tests yet. Keep guest feature OFF in production.
+
+[Staging and full mutation-audit detail](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, linked-identity security milestone
 
 - ✅ **Code-tested: 14-day expiry for the 28 selected RPCs now follows the unconverted Saturn lifecycle, not the Supabase anonymous flag.** Email/Google identity linking before final `converted_at` can no longer skip the review-branch checks merely because `is_anonymous` became false. The 20 direct-write RLS table guards reuse a helper that checks the unconverted lifecycle FIRST. Fully converted and ordinary permanent-user paths remain unchanged in the draft source.
