@@ -1,0 +1,38 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import {readFileSync} from 'node:fs'
+const sql=readFileSync(new URL('../supabase/migrations/20261120235920_saturn_ai_unsolicited_bid_expiry_and_ownership_v1.sql',import.meta.url),'utf8')
+const beginSubmit=sql.indexOf('CREATE OR REPLACE FUNCTION public.submit_unsolicited_ai_transfer_bid_v1(')
+const beginConfirm=sql.indexOf('CREATE OR REPLACE FUNCTION public.confirm_unsolicited_ai_transfer_bid_v1(')
+test('submission checks ownership then Saturn expiry BEFORE even rejected bid persistence',()=>{
+ assert.ok(beginSubmit>0 && beginConfirm>0 && beginSubmit>beginConfirm)
+ const s=sql.slice(beginSubmit)
+ const owner=s.indexOf("raise exception 'Not allowed to bid from this club'")
+ const guard=s.indexOf('public.saturn_test_account_requires_guard_v1()')
+ const club=s.indexOf('public.saturn_test_account_can_mutate_v1(p_buyer_club_id)')
+ const decision=s.indexOf('public.calculate_ai_unsolicited_transfer_decision_v1(')
+ const rejected=s.indexOf('if v_review.hard_block then')
+ const write=s.indexOf('insert into public.rider_unsolicited_transfer_bids')
+ assert.ok(owner>0 && guard>owner && club>guard && decision>club && rejected>decision && write>rejected)
+ assert.match(s,/c\.deleted_at is null/)
+ assert.match(s,/cm\.club_id=p_buyer_club_id and cm\.user_id=v_uid/)
+ assert.doesNotMatch(s,/is_anonymous/)
+})
+test('confirmation checks existing buyer membership and Saturn expiry before negotiation write',()=>{
+ const s=sql.slice(beginConfirm,beginSubmit)
+ const owner=s.indexOf("raise exception 'Not allowed to confirm this bid'")
+ const guard=s.indexOf('public.saturn_test_account_requires_guard_v1()')
+ const club=s.indexOf('public.saturn_test_account_can_mutate_v1(v_bid.buyer_club_id)')
+ const firstWrite=Math.min(...['insert into public.rider_transfer_listings','update public.rider_unsolicited_transfer_bids'].map(k=>{const i=s.toLowerCase().indexOf(k);return i<0?Infinity:i}))
+ assert.ok(owner>0 && guard>owner && club>guard && firstWrite>club)
+ assert.match(s,/using errcode='42501'/)
+})
+test('no AI decision calculator, system engine, or payment helper overridden',()=>{
+ assert.doesNotMatch(sql,/CREATE OR REPLACE FUNCTION public\.(?:calculate_ai_unsolicited_transfer_decision_v1|process_|finance_)/)
+ assert.doesNotMatch(sql,/^\s*(?:REVOKE|GRANT|DROP|ALTER)\s/mi)
+})
+test.todo('staging: expired linked-but-unconverted manager cannot submit hard-rejected AI bid')
+test.todo('staging: expired linked-but-unconverted manager cannot confirm an accepted AI bid')
+test.todo('staging: unauthorized buyer club returns 42501 without inserted rejected bid')
+test.todo('staging: normal and fully converted owners retain bid/confirmation behavior')
+test.todo('staging: member and owner bid authorization regression, no money moved at phase one')
