@@ -71,6 +71,9 @@ security definer
 set search_path = ''
 as $saturn$
 begin
+  -- This trigger also runs on INSERT. OLD is only defined for UPDATE;
+  -- don't even evaluate its fields for normal new permanent clubs.
+  if tg_op='UPDATE' then
   if new.club_type='main'
      and new.is_ai is false
      and new.owner_user_id is not null
@@ -95,6 +98,7 @@ begin
      )
   then
     return new;
+  end if;
   end if;
 
   -- Original production trigger behavior for all other top-three human
