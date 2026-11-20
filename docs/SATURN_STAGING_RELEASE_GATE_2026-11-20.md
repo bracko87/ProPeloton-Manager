@@ -194,3 +194,20 @@ Added `scripts/saturn_frontend_finance_rpc_audit.py` to the Saturn CI workflow. 
 Added `supabase/tests/saturn_internal_finance_grants_audit.sql`, a read-only audit of the exact effective anon/authenticated/service_role EXECUTE permissions and SECURITY DEFINER status of those four routines. It was executed read-only against production: all four exist, all four have SECURITY DEFINER, and **all four still have anon=true, authenticated=true, service_role=true**. Proposed restricted grants are only in the draft migration, with source contract checks; no production grant was changed.
 
 **Staging acceptance before a live permission fix:** apply proposed REVOKE only in isolated staging, verify anon and authenticated cannot execute the four internals, service_role still can, normal team signup/bonus generates exactly one correct starting payment, and rider payroll, sponsor payouts, equipment sales, fee refunds, infrastructure, club-house rebates, loans and race engine finances all remain functional. Keep this existing production finance security exposure high priority, independent of eventual Test Player release.
+
+
+## SAT-08 critical 14-day expiry fix — linked identities before final conversion
+
+**Confirmed source-level bypass:** The existing 28 reviewed write RPC guards previously tested `auth.users.is_anonymous=true` before applying trial expiry. An anonymous player who linked Google/email **without completing the verified Saturn conversion finalizer** could have `is_anonymous=false` but `saturn_test_accounts_v1.converted_at IS NULL`, thereby bypassing the 14-day trial check. The restrictive RLS helper `saturn_trial_direct_write_allowed_v1` likewise previously allowed any non-anonymous Auth user *before* checking the Saturn term. No exploit was performed against production, and no Saturn lifecycle tables exist there.
+
+**Source fix in draft PR #277:**
+- `saturn_test_account_requires_guard_v1()`, defined in the race application guard migration, now uses the unconverted lifecycle record and original Auth UUID, regardless of whether email/Google linking changed `is_anonymous`.
+- `saturn_test_account_can_mutate_v1(p_club_id)` retains the same official club owner, main-club, active status, original trial start/end and `converted_at IS NULL` restrictions **without requiring anonymous Auth status**. Active linked-but-unconverted managers can still perform their own authorized actions while the trial is valid.
+- The 28 selected write RPCs in five migration files call `requires_guard_v1()` instead of checking `is_anonymous`.
+- The direct-table RLS helper checks unconverted lifecycle **first**, and only then falls back to the unchanged permanent Auth path (for fully converted and ordinary registered players). Existing permissive RLS remains independently required; no new club grants.
+- `supabase/tests/saturn_linked_identity_expiry_audit.sql` reports active/expired anonymous, active/expired linked-but-unconverted and fully converted identities from actual staging records. It is read-only and cannot update conversion or authorization state.
+- New source regression tests cover all 28 guarded RPCs, RLS check ordering, lifecycle ownership/expiry and the state audit.
+
+**Latest verified GitHub source commit `4923f123abafd9d877341daed76a16d433c38769`:** 246 PostgreSQL statements and 43 PL/pgSQL function bodies parsed across 26 files; **229 Saturn tests: 126 passed, 0 failed, 103 staging TODO**; all three GitHub workflows including frontend build passed. 575 React source files scanned with no direct calls to four sensitive finance internals.
+
+**Still pending in isolated staging:** Real anonymous JWT transitions to non-anonymous via verified Google/email linking before `converted_at`, active linked trial actions, expired linked trial read-only behavior across RPC and RLS, normal registered-user unaffected, finalized conversion retains club and access, rollback/concurrency, and the **remaining unreviewed game mutation surfaces**. This fix does NOT establish complete game-wide 14-day enforcement; do not enable Guest Mode in production.
