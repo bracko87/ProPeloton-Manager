@@ -25,7 +25,8 @@ test('test-player Premium is not an extra paid subscription or fresh registratio
 test('real race application authorizes only current guest owner of active test club', () => {
   assert.match(race, /create or replace function public\.saturn_test_account_can_mutate_v1/)
   assert.match(race, /from auth\.users u/)
-  assert.match(race, /u\.is_anonymous is true/)
+  assert.match(race, /create or replace function public\.saturn_test_account_requires_guard_v1/)
+  assert.match(race, /t\.user_id=auth\.uid\(\) and t\.converted_at is null/)
   assert.match(race, /t\.club_id=p_club_id/)
   assert.match(race, /c\.owner_user_id=u\.id/)
   assert.match(race, /t\.started_at <= now\(\)/)
@@ -35,7 +36,7 @@ test('real race application authorizes only current guest owner of active test c
 })
 
 test('race changes leave permanent-player application behavior unchanged', () => {
-  assert.match(race, /if exists\(select 1 from auth\.users au where au\.id=v_user_id and au\.is_anonymous=true\) then/)
+  assert.match(race, /if public\.saturn_test_account_requires_guard_v1\(\) then/)
   assert.match(race, /coalesce\(p_club_id,public\.get_my_primary_club_id\(\)\)/)
   assert.match(race, /v_club_id := p_club_id;/)
   assert.match(race, /public\.club_race_application_allowed_v1/)
