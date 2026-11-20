@@ -40,6 +40,82 @@ alter table private.saturn_converted_team_placements_v1 enable row level securit
 revoke all on table private.saturn_converted_team_placements_v1
   from public, anon, authenticated;
 
+-- A narrow, private ticket suppresses the existing global TOP-3 AI
+-- overflow rebalance trigger for exactly ONE reviewed conversion UPDATE.
+-- The placement RPC itself proves league vacancies; it must never cause
+-- unrelated historical AI clubs to move into the reserve pool.
+create table if not exists private.saturn_converted_team_update_tickets_v1 (
+  transaction_id bigint not null,
+  user_id uuid not null,
+  club_id uuid not null,
+  from_club_tier public.club_tier not null,
+  from_world_tier smallint not null,
+  to_club_tier public.club_tier not null,
+  to_world_tier smallint not null,
+  to_region text not null,
+  primary key(transaction_id,club_id)
+);
+alter table private.saturn_converted_team_update_tickets_v1
+  enable row level security;
+revoke all on table private.saturn_converted_team_update_tickets_v1
+  from public,anon,authenticated;
+
+-- Preserve normal team onboarding/rebalancing for EVERY ordinary mutation.
+-- Only a privileged Saturn transaction with the exact original owner,
+-- original/destination tier and region is exempted from this specific
+-- global rebalancing trigger.
+create or replace function public.trg_rebalance_top3_overflow_ai_to_pool_v1()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $saturn$
+begin
+  if new.club_type='main'
+     and new.is_ai is false
+     and new.owner_user_id is not null
+     and new.deleted_at is null
+     and new.club_tier in ('worldteam','proteam','continental')
+     and exists (
+       select 1 from private.saturn_converted_team_update_tickets_v1 t
+       where t.transaction_id=txid_current()
+         and t.user_id=auth.uid()
+         and t.club_id=new.id
+         and old.owner_user_id=t.user_id
+         and new.owner_user_id=t.user_id
+         and old.club_tier=t.from_club_tier
+         and old.world_tier=t.from_world_tier
+         and new.club_tier=t.to_club_tier
+         and new.world_tier=t.to_world_tier
+         and (case new.club_tier
+           when 'worldteam'::public.club_tier then '-'
+           when 'proteam'::public.club_tier then new.tier2_division
+           when 'continental'::public.club_tier then new.tier3_division
+           else null end)=t.to_region
+     )
+  then
+    return new;
+  end if;
+
+  -- Original production trigger behavior for all other top-three human
+  -- team INSERTs and tier changes.
+  if new.club_type='main'
+     and coalesce(new.is_ai,false)=false
+     and new.owner_user_id is not null
+     and new.deleted_at is null
+     and coalesce(new.inactivity_status,'active') <> 'season_end_removal_pending'
+     and new.club_tier in ('worldteam','proteam','continental')
+  then
+    perform public.rebalance_top3_overflow_ai_to_pool_v1(
+      'real_club_top3_trigger_guard'
+    );
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function public.trg_rebalance_top3_overflow_ai_to_pool_v1()
+  from public,anon,authenticated;
+
 -- Caller can only ask to place their OWN original trial club, after
 -- verified conversion. The function chooses destination exclusively from
 -- approved capacity and server country->regional-division mappings.
@@ -57,6 +133,7 @@ declare
   v_original_priority integer;
   v_dest_division text;
   v_occupied integer;
+  v_global_top3_occupied integer;
   v_live_max_teams integer;
   v_race_pending boolean := false;
 begin
@@ -232,6 +309,31 @@ begin
       'saturn-converted-slot:'||v_destination.world_tier::text||':'||
         v_destination.club_tier::text||':'||v_destination.region_code,51));
 
+    -- The legacy TOP-3 overflow rebalance groups all world tiers together
+    -- (WorldTeam globally; ProTeam/Continental by their regional code) and
+    -- automatically moves AI clubs if a cohort exceeds 25. Never cross that
+    -- hard global limit or trigger unrelated AI relocation. The advisory
+    -- lock spans ALL world tiers sharing the same division cohort.
+    if v_destination.club_tier in (
+      'worldteam'::public.club_tier,'proteam'::public.club_tier,
+      'continental'::public.club_tier
+    ) then
+      perform pg_advisory_xact_lock(hashtextextended(
+        'saturn-top3-global:'||v_destination.club_tier::text||':'||
+          v_destination.region_code,52
+      ));
+      select count(*) into v_global_top3_occupied
+      from public.clubs c
+      where c.deleted_at is null and c.club_type='main'
+        and c.club_tier=v_destination.club_tier
+        and (case c.club_tier
+          when 'worldteam'::public.club_tier then '-'
+          when 'proteam'::public.club_tier then c.tier2_division
+          when 'continental'::public.club_tier then c.tier3_division
+          else null end)=v_destination.region_code;
+      if v_global_top3_occupied >= 25 then continue; end if;
+    end if;
+
     -- Confirm capacity is still enabled under a row lock (admins may close
     -- allocations while the conversion is processing).
     select cap.max_teams into v_live_max_teams
@@ -260,6 +362,16 @@ begin
 
     -- Only club placement columns change. No season_points, original club
     -- UUID, owner, roster, money, commitments or historic race rows change.
+    -- Private ticket exists ONLY during this owner's exact conversion
+    -- update. Prevents the global rebalance trigger from touching any AI.
+    insert into private.saturn_converted_team_update_tickets_v1(
+      transaction_id,user_id,club_id,from_club_tier,from_world_tier,
+      to_club_tier,to_world_tier,to_region
+    ) values(
+      txid_current(),v_uid,v_club.id,v_club.club_tier,v_club.world_tier,
+      v_destination.club_tier,v_destination.world_tier,v_dest_division
+    );
+
     update public.clubs set
       club_tier=v_destination.club_tier,
       world_tier=v_destination.world_tier,
@@ -275,6 +387,10 @@ begin
     if not found then
       raise exception 'Converted club changed during placement; transaction rolled back';
     end if;
+
+    delete from private.saturn_converted_team_update_tickets_v1
+    where transaction_id=txid_current()
+      and user_id=v_uid and club_id=v_club.id;
 
     -- Successful placement and immutable audit commit atomically. A failed
     -- insert rolls the club tier update back in the SAME transaction.
