@@ -616,15 +616,15 @@ export default function HomePage(): JSX.Element {
     >
       {Date.now() < Date.parse(PROPELOTON_OFFICIAL_LAUNCH_AT_UTC) ? <PreReleasePopup /> : null}
 
-      <header className="border-b border-white/15">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-6 sm:py-2">
+      <header className="relative border-b border-yellow-400/35 bg-[#061426] shadow-[0_1px_0_rgba(250,204,21,.18)]">
+        <div className="mx-auto flex max-w-[1510px] flex-col gap-2 px-6 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-10 sm:py-2 lg:px-12">
           <div className="flex min-w-0 items-center gap-3 sm:gap-4">
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/5c3417dc-3924-4423-948a-745ae5902ed0.png"
               alt="ProPeloton Manager"
               className="h-16 w-auto shrink-0 object-contain sm:h-20 lg:h-24"
             />
-            <div className="min-w-0 break-words text-base font-semibold sm:text-xl">ProPeloton Manager</div>
+            <div className="min-w-0 break-words border-l border-yellow-400/50 pl-4 text-base font-extrabold tracking-tight sm:text-xl">ProPeloton Manager</div>
           </div>
 
           <nav className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:shrink-0 sm:items-center sm:justify-end sm:gap-4" aria-label={t('footer.gameAria')}>
@@ -661,7 +661,7 @@ export default function HomePage(): JSX.Element {
         <Hero gameTimeLabel={homeSnapshot?.game_time_label || gameTimeText} />
         <HomepageRaceDays data={raceDays} loading={raceDaysLoading} />
 
-        <section className="relative w-full overflow-hidden border-y border-white/15 bg-[#1a1404] py-16">
+        <section className="relative w-full overflow-hidden border-y border-yellow-400/15 bg-[#071426] py-16">
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_28_06%20PM.png"
@@ -675,12 +675,12 @@ export default function HomePage(): JSX.Element {
                   'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#2a2108]/40 via-[#081224]/80 to-[#081224]/95" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#071426]/70 via-[#071426]/95 to-[#071426]" />
           </div>
 
-          <div className="relative z-10 mx-auto max-w-7xl px-6">
+          <div className="relative z-10 mx-auto max-w-[1510px] px-6 sm:px-10 lg:px-12">
             <section>
-              <h3 className="text-2xl font-semibold">{t('stats.title')}</h3>
+              <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('stats.title')}</h3>
               <p className="mt-2 text-sm text-white/70">{t('stats.subtitle')}</p>
 
               {homeSnapshotError && (
@@ -696,9 +696,9 @@ export default function HomePage(): JSX.Element {
                   [t('stats.totalRacesTours'), homeSnapshot?.total_races],
                   [t('stats.totalStages'), homeSnapshot?.total_stages],
                 ].map(([label, value]) => (
-                  <div key={String(label)} className="rounded-md border border-white/10 bg-[#101b31]/85 p-4 backdrop-blur-sm">
-                    <div className="text-xs text-white/60">{label}</div>
-                    <div className="mt-1 text-2xl font-bold text-white">
+                  <div key={String(label)} className="group relative overflow-hidden rounded-2xl border border-yellow-400/20 bg-[linear-gradient(130deg,rgba(25,47,78,.89),rgba(8,25,47,.90))] p-6 shadow-[0_15px_35px_rgba(0,0,0,.24)] backdrop-blur-lg transition duration-300 hover:-translate-y-1 hover:border-yellow-400/70 hover:shadow-[0_9px_28px_rgba(250,204,21,.13)]">
+                    <div className="text-xs font-bold uppercase tracking-wider text-yellow-300">{label}</div>
+                    <div className="mt-3 text-4xl font-black tabular-nums text-white">
                       {formatNumber(value, locale)}
                     </div>
                   </div>
@@ -706,8 +706,8 @@ export default function HomePage(): JSX.Element {
               </div>
             </section>
 
-            <section className="mt-20">
-              <h3 className="text-2xl font-semibold">{t('features.title')}</h3>
+            <section className="mt-16">
+              <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('features.title')}</h3>
               <p className="mt-2 text-sm text-white/70">{t('features.subtitle')}</p>
 
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -734,25 +734,25 @@ export default function HomePage(): JSX.Element {
         <HomeVideoShowcase />
         <HomeDesktopDownloads />
 
-        <section className="bg-slate-50 py-16 text-slate-900">
+        <section className="border-y border-yellow-400/15 bg-[radial-gradient(ellipse_at_80%_10%,rgba(250,204,21,.10),transparent_55%),#071426] py-16 text-white">
           <div className="mx-auto max-w-7xl px-6">
             <div className="max-w-3xl">
-              <p className="text-sm font-bold uppercase tracking-[0.22em] text-yellow-700">
+              <p className="text-sm font-extrabold uppercase tracking-[0.22em] text-yellow-300">
                 {t('guide.eyebrow')}
               </p>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">
+              <h2 className="mt-3 text-3xl font-black italic tracking-tight text-white md:text-4xl">
                 {t('guide.headline')}
               </h2>
-              <p className="mt-4 text-base leading-8 text-slate-700">
+              <p className="mt-4 text-base leading-8 text-slate-200">
                 {t('guide.intro')}
               </p>
             </div>
 
             <div className="mt-8 grid gap-5 lg:grid-cols-3">
               {HOMEPAGE_GUIDE_CARDS.map(card => (
-                <article key={card.titleKey} className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                  <h3 className="text-xl font-bold text-slate-950">{t(card.titleKey)}</h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-700">{t(card.textKey)}</p>
+                <article key={card.titleKey} className="rounded-2xl border border-yellow-400/20 bg-[linear-gradient(130deg,rgba(27,47,74,.92),rgba(10,25,46,.9))] p-7 shadow-[0_15px_35px_rgba(0,0,0,.27)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/70">
+                  <h3 className="text-xl font-extrabold text-yellow-100">{t(card.titleKey)}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-200">{t(card.textKey)}</p>
                 </article>
               ))}
             </div>
@@ -761,11 +761,11 @@ export default function HomePage(): JSX.Element {
 
         <ScreenshotGallery />
 
-        <section className="py-12">
+        <section className="border-y border-yellow-400/15 bg-[#071426] py-14">
           <div className="mx-auto max-w-7xl px-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h3 className="text-2xl font-semibold">{t('reviews.title')}</h3>
+                <h3 className="text-3xl font-black italic tracking-tight text-white sm:text-4xl">{t('reviews.title')}</h3>
                 <p className="mt-2 text-sm text-white/70">{t('reviews.subtitle')}</p>
               </div>
 
@@ -796,7 +796,7 @@ export default function HomePage(): JSX.Element {
             )}
 
             {isReviewFormOpen && (
-              <form onSubmit={handleSubmitReview} className="mt-6 rounded-xl border border-white/10 bg-white/5 p-5">
+              <form onSubmit={handleSubmitReview} className="mt-6 rounded-2xl border border-yellow-400/25 bg-[#14263f]/75 p-6 shadow-xl backdrop-blur-xl">
                 <div className="grid gap-4 md:grid-cols-[1fr_1fr_160px]">
                   <label className="block">
                     <span className="text-sm font-semibold text-white">{t('reviews.name')}</span>
@@ -886,7 +886,7 @@ export default function HomePage(): JSX.Element {
             )}
 
             {!reviewsLoading && !reviewsError && activeReview && (
-              <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8">
+              <div className="mt-6 rounded-2xl border border-yellow-400/25 bg-[#14263f]/75 px-6 py-8 shadow-xl backdrop-blur-xl">
                 <div className="flex items-center justify-between gap-4">
                   <button
                     type="button"
@@ -949,7 +949,7 @@ export default function HomePage(): JSX.Element {
           </div>
         </section>
 
-        <section className="relative w-full overflow-hidden border-t border-white/15 bg-[#1a1404] py-20">
+        <section className="relative w-full overflow-hidden border-t border-yellow-400/25 bg-[#071426] py-20">
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_28_06%20PM.png"
@@ -963,13 +963,13 @@ export default function HomePage(): JSX.Element {
                   'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-[#2a2108]/30 via-[#171105]/75 to-[#081224]/90" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#071426]/60 via-[#071426]/85 to-[#071426]/95" />
           </div>
           <div className="relative z-10"><CTA /></div>
         </section>
       </main>
 
-      <footer className="border-t border-white/15 py-10">
+      <footer className="border-t border-yellow-400/20 bg-[#050f1d] py-12">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1.25fr)_minmax(0,1fr)] lg:gap-x-10">
           <div>
             <div className="text-lg font-semibold">ProPeloton Manager</div>
