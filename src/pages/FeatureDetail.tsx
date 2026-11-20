@@ -24,7 +24,13 @@ export default function FeatureDetailPage(): JSX.Element {
   }
 
   // Feature banners use their own artwork as images become available.
-  const heroImage = key === 'management' ? 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Deep%20team%20management%201.png' : null
+  const heroImages: Partial<Record<(typeof FEATURE_KEYS)[number], string>> = {
+    management: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Deep%20team%20management%201.png',
+    squads: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Senior,%20U23%20and%20youth%20squads.png',
+    staff: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/11%20active%20staff%20roles.png',
+    training: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Regular%20trainings.png',
+  }
+  const heroImage = heroImages[key] ?? null
 
   const contentKey = `why.features.${key}`
   const title = t(`${contentKey}.title`)
