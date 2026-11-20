@@ -38,3 +38,14 @@ Project Helios and the game's existing launch clock are out of scope. SAT-01, SA
 The production BEFORE INSERT guest-owned-club trigger currently rejects anonymous team owners. A separate AFTER INSERT trigger `trg_assign_new_real_club_to_ai_slot` invokes `assign_new_club_to_ai_slot(uuid)`, which chooses the **highest-tier** available AI slot first and moves that AI club into its reserve pool. This directly conflicts with the player's required lowest-tier starting place. Simply inserting an amateur team with `world_tier=4` is insufficient: the trigger may change it after insert.
 
 The new fail-closed test-team RPC checks the **actual** tier/division after trigger execution and aborts the entire transaction if it differs from the server-selected lowest eligible amateur division. This is a safety stop, not a completed fix. Before activation, implement a trigger-side test-team exception that swaps only a **matching lowest-tier regional AI slot**, without changing registered-player allocation rules, and test lock order and race/season integrity. Never disable this trigger for all players or move an AI team from a higher division just to place a guest.
+
+
+## 20 November — ticketed lowest-tier AI slot replacement source
+
+- A private, write-protected transaction ticket links the canonical anonymous user UUID, pre-generated club UUID and approved lowest-tier regional amateur division. The dedicated team creation function inserts the ticket before the official club insert and removes it in the same database transaction.
+- The existing guest ownership trigger now allows **only this ticketed INSERT** while BOTH independent rollout gates are verified and enabled. All other anonymous club ownership INSERT/UPDATE requests still fail.
+- The existing post-insert team-assignment trigger takes the unchanged original assignment path for regular registered teams. For valid ticketed test clubs it chooses only an active AI club in the exact same lowest amateur tier and geographical division, with no applications or participation in either legacy or v1 race tables.
+- Such an AI club is retained in the existing AI reserve pool rather than deleted; the new club remains in the intended lowest tier. If no safe AI club exists or if a later trigger changes the assigned tier/region, the entire test-team transaction rolls back.
+- Regional capacity is a *one-for-one swap*, so occupancy remains constant, even when the pre-approved regional capacity is full; capacities are still required and any existing overflow blocks insertion.
+- **Production remains fully protected:** no migration applied, both gates OFF, RPC EXECUTE revoked, no guest accounts created. Staging verification of race/finance/season integrity is mandatory before enabling.
+
