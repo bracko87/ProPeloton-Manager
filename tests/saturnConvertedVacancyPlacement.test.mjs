@@ -67,6 +67,11 @@ test('highest approved vacant target uses country region mapping, capacity locks
  assert.ok(sql.includes('for update;'))
  assert.match(sql,/c\.is_active=true and c\.club_type='main'/)
  assert.match(sql,/'no_approved_higher_vacancy'/)
+ assert.ok(sql.includes("league.club_type='main' and league.is_active=true"))
+ assert.ok(sql.includes("league.world_tier=v_destination.world_tier"))
+ assert.ok(sql.includes("league.club_tier=v_destination.club_tier"))
+ assert.ok(sql.includes("end)=v_destination.region_code"))
+
  assert.doesNotMatch(sql,/assign_new_club_to_ai_slot\(|delete from public\.clubs|update public\.race_|update public\.riders|update public\.premium_/)
 })
 test('club move changes only tier and region, never identity, points, assets or cash',()=>{
@@ -98,3 +103,5 @@ test.todo('staging: second placement request returns already_placed without jump
 test.todo('staging: atomic placement and audit row roll back together on interrupted transaction')
 
 test.todo('staging: admin reducing approved cap during conversion cannot create over-cap slot')
+
+test.todo('staging: approved cap for nonexistent league is ignored and original club retained')
