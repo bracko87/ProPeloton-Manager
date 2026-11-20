@@ -196,76 +196,96 @@
     "features": {
       "management": {
         "title": "Duboko upravljanje timom",
-        "description": "Upravljaj svim odlukama u klubu."
+        "description": "Upravljaj svim odlukama u klubu.",
+        "details": "Određuj uloge vozača, prati formu i moral i planiraj razvoj tima. Trening, osoblje, oprema i finansije utiču na tvoje odluke."
       },
       "squads": {
         "title": "Seniori, U23 i omladinci",
-        "description": "Gradi put od akademije do profesionalaca."
+        "description": "Gradi put od akademije do profesionalaca.",
+        "details": "Vodi seniorski tim i razvijaj vozače U23 i mlađe kategorije. Izgradi dugoročan put od omladinske akademije do prvog tima."
       },
       "staff": {
         "title": "11 aktivnih uloga osoblja",
-        "description": "Okupi specijalizovani stručni tim."
+        "description": "Okupi specijalizovani stručni tim.",
+        "details": "Angažuj stručnjake za trening, skauting, medicinu, ishranu i mehaniku. Njihovo znanje pomaže razvoju, pripremi za trke i oporavku."
       },
       "training": {
         "title": "Precizni treninzi",
-        "description": "Usavršavaj devet veština kroz lične planove."
+        "description": "Usavršavaj devet veština kroz lične planove.",
+        "details": "Odredi individualne treninge za devet veština. Uskladi opterećenje, umor i potencijal, umesto istog plana za sve vozače."
       },
       "growth": {
         "title": "Razvoj vozača",
-        "description": "Prati potencijal, formu i napredak."
+        "description": "Prati potencijal, formu i napredak.",
+        "details": "Prati promene veština, forme, morala, spremnosti i potencijala. Biraj kada će se vozač usavršavati, oporavljati ili menjati ulogu."
       },
       "calendar": {
         "title": "593 trke sa datumom",
-        "description": "Planiraj kalendar tokom cele sezone."
+        "description": "Planiraj kalendar tokom cele sezone.",
+        "details": "Biraj među 593 trke sa utvrđenim datumom, od jednodnevnih do etapnih. Planiraj prijave, odmor i sastave tokom sezone."
       },
       "preparation": {
         "title": "Detaljna priprema trka",
-        "description": "Biraj postave, taktiku i opremu."
+        "description": "Biraj postave, taktiku i opremu.",
+        "details": "Izaberi vozače i lidere, postavi taktičke uloge i prilagodi opremu stazi. Pre starta uzmi u obzir teren, formu i trkačke zalihe."
       },
       "tiers": {
         "title": "Četiri takmičarska nivoa",
-        "description": "Napreduj kroz regionalne divizije."
+        "description": "Napreduj kroz regionalne divizije.",
+        "details": "Takmiči se u četiri nivoa podeljena na lige, divizije i regione. Bori se za plasman, promociju i opstanak."
       },
       "equipment": {
         "title": "170 modela opreme",
-        "description": "Šest kategorija i trkačke zalihe."
+        "description": "Šest kategorija i trkačke zalihe.",
+        "details": "Biraj između 170 aktivnih modela ramova, točkova, guma, menjača, kaciga i obuće. Prati habanje, održavanje i potrošne zalihe."
       },
       "assets": {
         "title": "Infrastruktura i vozila",
-        "description": "Unapredi objekte, timska vozila i kombije."
+        "description": "Unapredi objekte, timska vozila i kombije.",
+        "details": "Ulaži u klupske objekte, timska vozila i kombije za opremu. Bolja infrastruktura i podrška olakšavaju logistiku i pripremu."
       },
       "finance": {
         "title": "Realistične finansije",
-        "description": "Vodi plate, troškove, poreze i nagrade."
+        "description": "Vodi plate, troškove, poreze i nagrade.",
+        "details": "Upravljaj prihodima od sponzora, platama, transferima, opremom, troškovima i porezima. Svako ulaganje utiče na klupski budžet."
       },
       "sponsors": {
         "title": "Regionalni sponzori",
-        "description": "Sklapaj ugovore uz smislene ciljeve."
+        "description": "Sklapaj ugovore uz smislene ciljeve.",
+        "details": "Pronađi regionalne sponzore sa ciljevima prilagođenim klubu i takmičenjima. Ugovori donose prihode i sportske obaveze."
       },
       "operations": {
         "title": "Politike i operacije",
-        "description": "Uredi smeštaj, ishranu, oporavak i logistiku."
+        "description": "Uredi smeštaj, ishranu, oporavak i logistiku.",
+        "details": "Postavi pravila za smeštaj, ishranu, oporavak i logistiku. Uporedi stalne troškove sa koristima i bonusima za tim."
       },
       "transfers": {
         "title": "Transferi i slobodni vozači",
-        "description": "Pregovaraj s timovima i dovodi slobodne vozače."
+        "description": "Pregovaraj s timovima i dovodi slobodne vozače.",
+        "details": "Pregovaraj o prelascima vozača između klubova ili pronađi slobodne agente. Pojačaj tim uz kontrolu plata i obeštećenja."
       },
       "national": {
         "title": "Nacionalni savezi",
-        "description": "Vodi reprezentacije na prvenstvima."
+        "description": "Vodi reprezentacije na prvenstvima.",
+        "details": "Učestvuj u radu nacionalnih saveza i reprezentativnim takmičenjima. Pripremaj nacionalne timove za prvenstva."
       },
       "academy": {
         "title": "Akademija i omladinske trke",
-        "description": "Razvijaj talente od prvih koraka."
+        "description": "Razvijaj talente od prvih koraka.",
+        "details": "Pronalazi i treniraj mlade vozače kroz omladinske i U23 programe. Omladinske trke pomažu razvoju od prvih koraka."
       },
       "replay": {
         "title": "Dinamičan prikaz etape",
-        "description": "Prati dešavanja tokom svake etape."
+        "description": "Prati dešavanja tokom svake etape.",
+        "details": "Prati etape kroz dinamičan prikaz, a ne samo konačni rezultat. Gledaj napade, promene pozicija i učinak vozača."
       },
       "progression": {
         "title": "Napredak iz sezone u sezonu",
-        "description": "Bori se za promociju, rang i ciljeve."
+        "description": "Bori se za promociju, rang i ciljeve.",
+        "details": "Razvijaj klub kroz više sezona uz rang-liste, napredovanje i promene liga. Rezultati i menadžerske odluke oblikuju budućnost."
       }
-    }
+    },
+    "showDetails": "Prikaži više",
+    "hideDetails": "Prikaži manje"
   }
 }

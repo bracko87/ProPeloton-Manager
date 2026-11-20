@@ -196,76 +196,96 @@
     "features": {
       "management": {
         "title": "Deep team management",
-        "description": "Control decisions across your entire club."
+        "description": "Control decisions across your entire club.",
+        "details": "Assign rider roles, manage fitness and morale, and balance long-term squad building with each race. Training, staff, equipment and finances all affect your decisions."
       },
       "squads": {
         "title": "Senior, U23 & youth squads",
-        "description": "Build a pathway from academy to pro racing."
+        "description": "Build a pathway from academy to pro racing.",
+        "details": "Manage your senior roster while developing U23 and younger talent. Build a long-term path from the youth academy toward the first team."
       },
       "staff": {
         "title": "11 active staff roles",
-        "description": "Build a specialist support team."
+        "description": "Build a specialist support team.",
+        "details": "Hire specialists in coaching, scouting, medical care, nutrition and mechanics. Their expertise supports rider development, race preparation and recovery."
       },
       "training": {
         "title": "Precision training",
-        "description": "Target nine skills with individual plans."
+        "description": "Target nine skills with individual plans.",
+        "details": "Set rider-specific training priorities across nine skills. Balance workload, fatigue and potential instead of giving every rider the same routine."
       },
       "growth": {
         "title": "Rider development",
-        "description": "Follow potential, form and long-term growth."
+        "description": "Follow potential, form and long-term growth.",
+        "details": "Follow changes in rider skills, form, morale, fitness and potential over time. Choose when to specialise, recover or adapt a rider's role."
       },
       "calendar": {
         "title": "593 dated races",
-        "description": "Plan a packed season-long calendar."
+        "description": "Plan a packed season-long calendar.",
+        "details": "Choose from 593 currently dated races, including one-day events and stage races. Plan entries, rest days and squad availability over the season."
       },
       "preparation": {
         "title": "Detailed race preparation",
-        "description": "Select lineups, tactics and equipment setups."
+        "description": "Select lineups, tactics and equipment setups.",
+        "details": "Choose your starters and leaders, define tactical roles and match equipment to the course. Consider terrain, fitness and race supplies before the start."
       },
       "tiers": {
         "title": "Four competition tiers",
-        "description": "Compete in regional divisions and rise."
+        "description": "Compete in regional divisions and rise.",
+        "details": "Compete across four tiers divided into leagues, divisions and regions. Fight for better rankings and promotion while protecting your place in the competition."
       },
       "equipment": {
         "title": "170 equipment models",
-        "description": "Six gear categories plus race supplies."
+        "description": "Six gear categories plus race supplies.",
+        "details": "Choose frames, wheelsets, tyres, groupsets, helmets and shoes from 170 active models. Manage wear and maintenance alongside consumable race supplies."
       },
       "assets": {
         "title": "Infrastructure & race assets",
-        "description": "Upgrade facilities, team cars and vans."
+        "description": "Upgrade facilities, team cars and vans.",
+        "details": "Invest in club facilities, team cars and equipment vans. Better infrastructure and race support can improve logistics and team readiness."
       },
       "finance": {
         "title": "Realistic club finances",
-        "description": "Manage salaries, expenses, taxes and rewards."
+        "description": "Manage salaries, expenses, taxes and rewards.",
+        "details": "Manage sponsor income, staff salaries, transfers, equipment, operating costs and taxes. Every investment competes for the same club budget."
       },
       "sponsors": {
         "title": "Regional sponsorship engine",
-        "description": "Negotiate brands and meaningful objectives."
+        "description": "Negotiate brands and meaningful objectives.",
+        "details": "Seek sponsors matched to your club and region, with objectives linked to relevant team competitions. Sponsor deals add income and sporting expectations."
       },
       "operations": {
         "title": "Policies & operations",
-        "description": "Set housing, nutrition, recovery and logistics."
+        "description": "Set housing, nutrition, recovery and logistics.",
+        "details": "Set policies for housing, nutrition, recovery and logistics. Weigh their ongoing costs against the support and bonuses they provide to the club."
       },
       "transfers": {
         "title": "Club deals & free agents",
-        "description": "Build your squad through both transfer paths."
+        "description": "Build your squad through both transfer paths.",
+        "details": "Negotiate rider moves between clubs or search the free-agent market. Build a balanced roster without losing control of wages and transfer spending."
       },
       "national": {
         "title": "National associations",
-        "description": "Lead national teams into championships."
+        "description": "Lead national teams into championships.",
+        "details": "Take part in national associations and national-team competitions. Prepare national squads for championships alongside your club responsibilities."
       },
       "academy": {
         "title": "Youth academy & races",
-        "description": "Develop young talent from the first step."
+        "description": "Develop young talent from the first step.",
+        "details": "Scout and train emerging riders, including youth and U23 development paths. Use youth races to build talent from the very beginning."
       },
       "replay": {
         "title": "Dynamic stage replay",
-        "description": "Follow the race action as it unfolds."
+        "description": "Follow the race action as it unfolds.",
+        "details": "Follow each stage through a dynamic replay, not just its finishing order. Watch the race evolve through attacks, changes in position and rider performance."
       },
       "progression": {
         "title": "Season-long progression",
-        "description": "Chase promotion, rankings and long-term goals."
+        "description": "Chase promotion, rankings and long-term goals.",
+        "details": "Build your club over multiple seasons with rankings, league movement and long-term development. Results and management decisions shape what happens next."
       }
-    }
+    },
+    "showDetails": "Show more",
+    "hideDetails": "Show less"
   }
 }

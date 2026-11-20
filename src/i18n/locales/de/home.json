@@ -196,76 +196,96 @@
     "features": {
       "management": {
         "title": "Umfassendes Teammanagement",
-        "description": "Steuere Entscheidungen im ganzen Verein."
+        "description": "Steuere Entscheidungen im ganzen Verein.",
+        "details": "Vergib Fahrerrollen, steuere Fitness und Moral und plane langfristig. Training, Personal, Material und Finanzen beeinflussen jede Entscheidung."
       },
       "squads": {
         "title": "Profis, U23 und Nachwuchs",
-        "description": "Vom Nachwuchs bis ins Profiteam."
+        "description": "Vom Nachwuchs bis ins Profiteam.",
+        "details": "Führe dein Profiteam und entwickle U23- und Nachwuchsfahrer. Baue einen langfristigen Weg von der Jugendakademie bis zur ersten Mannschaft auf."
       },
       "staff": {
         "title": "11 aktive Mitarbeiterrollen",
-        "description": "Stelle dein Spezialistenteam zusammen."
+        "description": "Stelle dein Spezialistenteam zusammen.",
+        "details": "Stelle Spezialisten für Training, Scouting, Medizin, Ernährung und Mechanik ein. Ihre Erfahrung unterstützt Entwicklung, Rennvorbereitung und Regeneration."
       },
       "training": {
         "title": "Präzises Training",
-        "description": "Trainiere neun Fähigkeiten gezielt."
+        "description": "Trainiere neun Fähigkeiten gezielt.",
+        "details": "Lege individuelle Trainingsschwerpunkte für neun Fähigkeiten fest. Berücksichtige Belastung, Müdigkeit und Potenzial statt alle gleich zu trainieren."
       },
       "growth": {
         "title": "Fahrerentwicklung",
-        "description": "Verfolge Potenzial, Form und Fortschritte."
+        "description": "Verfolge Potenzial, Form und Fortschritte.",
+        "details": "Verfolge Fähigkeiten, Form, Moral, Fitness und Potenzial deiner Fahrer. Entscheide, wann sie sich spezialisieren, erholen oder neue Rollen übernehmen."
       },
       "calendar": {
         "title": "593 terminierte Rennen",
-        "description": "Plane deinen Kalender für die ganze Saison."
+        "description": "Plane deinen Kalender für die ganze Saison.",
+        "details": "Wähle aus 593 derzeit terminierten Rennen, von Eintagesrennen bis Rundfahrten. Plane Starts, Ruhetage und verfügbare Fahrer über die Saison."
       },
       "preparation": {
         "title": "Detaillierte Rennvorbereitung",
-        "description": "Plane Aufstellung, Taktik und Material."
+        "description": "Plane Aufstellung, Taktik und Material.",
+        "details": "Bestimme Starter, Kapitäne und taktische Rollen und passe das Material an die Strecke an. Berücksichtige Profil, Fitness und Rennbedarf vor dem Start."
       },
       "tiers": {
         "title": "Vier Wettbewerbsebenen",
-        "description": "Steige durch regionale Ligen auf."
+        "description": "Steige durch regionale Ligen auf.",
+        "details": "Fahre in vier Wettbewerbsebenen mit Ligen, Divisionen und Regionen. Kämpfe um bessere Platzierungen, Aufstieg und den Klassenerhalt."
       },
       "equipment": {
         "title": "170 Ausrüstungsmodelle",
-        "description": "Sechs Materialkategorien plus Rennbedarf."
+        "description": "Sechs Materialkategorien plus Rennbedarf.",
+        "details": "Wähle aus 170 aktiven Modellen für Rahmen, Laufräder, Reifen, Schaltgruppen, Helme und Schuhe. Plane Verschleiß, Wartung und Rennverbrauchsmaterial."
       },
       "assets": {
         "title": "Infrastruktur & Teamfahrzeuge",
-        "description": "Verbessere Anlagen, Teamwagen und Vans."
+        "description": "Verbessere Anlagen, Teamwagen und Vans.",
+        "details": "Investiere in Anlagen, Teamautos und Materialtransporter. Gute Infrastruktur und Rennunterstützung verbessern Logistik und Einsatzbereitschaft."
       },
       "finance": {
         "title": "Realistische Vereinsfinanzen",
-        "description": "Plane Gehälter, Kosten, Steuern und Prämien."
+        "description": "Plane Gehälter, Kosten, Steuern und Prämien.",
+        "details": "Verwalte Sponsorengelder, Gehälter, Transfers, Material, Betriebskosten und Steuern. Jede Investition wirkt sich auf das Vereinsbudget aus."
       },
       "sponsors": {
         "title": "Regionale Sponsoren",
-        "description": "Arbeite mit Marken und passenden Zielen."
+        "description": "Arbeite mit Marken und passenden Zielen.",
+        "details": "Finde regionale Sponsoren mit Zielen, die zu deinem Team und dessen Wettbewerben passen. Verträge bringen Geld und sportliche Verpflichtungen."
       },
       "operations": {
         "title": "Teamrichtlinien & Betrieb",
-        "description": "Steuere Wohnen, Ernährung, Erholung und Logistik."
+        "description": "Steuere Wohnen, Ernährung, Erholung und Logistik.",
+        "details": "Gestalte Regeln für Unterkunft, Ernährung, Regeneration und Logistik. Wäge die laufenden Kosten gegen den Nutzen und die Boni ab."
       },
       "transfers": {
         "title": "Transfers & freie Fahrer",
-        "description": "Verhandle mit Teams und verpflichte freie Fahrer."
+        "description": "Verhandle mit Teams und verpflichte freie Fahrer.",
+        "details": "Verhandle Fahrerwechsel zwischen Vereinen oder suche vertragslose Fahrer. Stärke den Kader, ohne Gehälter und Ablösen aus dem Blick zu verlieren."
       },
       "national": {
         "title": "Nationalverbände",
-        "description": "Führe Nationalteams zu Meisterschaften."
+        "description": "Führe Nationalteams zu Meisterschaften.",
+        "details": "Wirke in nationalen Radsportverbänden und Nationalteam-Wettbewerben mit. Bereite Auswahlteams auf Meisterschaften vor."
       },
       "academy": {
         "title": "Nachwuchsakademie & Rennen",
-        "description": "Fördere Talente von Anfang an."
+        "description": "Fördere Talente von Anfang an.",
+        "details": "Scoute und trainiere Nachwuchsfahrer auf Jugend- und U23-Niveau. Nachwuchsrennen begleiten Talente vom ersten Schritt an."
       },
       "replay": {
         "title": "Dynamische Etappenwiedergabe",
-        "description": "Verfolge das Renngeschehen live im Replay."
+        "description": "Verfolge das Renngeschehen live im Replay.",
+        "details": "Verfolge jede Etappe in einer dynamischen Rennwiedergabe statt nur das Endergebnis zu lesen. Erlebe Attacken, Positionswechsel und Fahrerleistungen."
       },
       "progression": {
         "title": "Langfristiger Saisonfortschritt",
-        "description": "Kämpfe um Aufstieg, Ranglisten und Ziele."
+        "description": "Kämpfe um Aufstieg, Ranglisten und Ziele.",
+        "details": "Entwickle deinen Verein über mehrere Saisons mit Ranglisten, Auf- und Abstiegen. Resultate und Managemententscheidungen bestimmen die Zukunft."
       }
-    }
+    },
+    "showDetails": "Mehr anzeigen",
+    "hideDetails": "Weniger anzeigen"
   }
 }
