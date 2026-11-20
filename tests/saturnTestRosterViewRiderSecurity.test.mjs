@@ -10,6 +10,12 @@ test('club_roster is a read-only JOIN VIEW and should not receive table RLS',()=
  assert.doesNotMatch(sql,/alter table public\.club_roster|create policy.*on public\.club_roster/i)
  assert.doesNotMatch(sql,/drop view|create or replace view|drop table/i)
 })
+test('preflight verifies correct non-updatable view and source RLS before changing security',()=>{
+ assert.match(sql, /do \$saturn_roster_preflight\$/)
+ assert.match(sql, /pg_relation_is_updatable\('public\.club_roster'::regclass, true\) <> 0/)
+ assert.match(sql, /c\.relkind='v'/)
+ assert.match(sql, /c\.relkind='r' and c\.relrowsecurity/)
+})
 test('roster view now uses requesting player security context',()=>{
  assert.match(sql,/alter view public\.club_roster set \(security_invoker = true\)/)
  assert.doesNotMatch(sql,/security_invoker = false/)
