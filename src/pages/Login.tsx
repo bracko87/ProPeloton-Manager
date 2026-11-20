@@ -95,6 +95,16 @@ export default function LoginPage(): JSX.Element {
         return
       }
 
+      // A converted guest originally received no welcome coins. The dedicated
+      // server RPC verifies the permanent Auth identity and demo draft, then
+      // grants the normal 20 coins only if the ledger has no welcome key.
+      // Non-converted players return "ineligible" and receive nothing extra.
+      // Failures never invalidate a successful authentication.
+      const { error: claimError } = await supabase.rpc('saturn_claim_converted_guest_welcome_v1')
+      if (claimError) {
+        console.warn('Deferred guest welcome claim unavailable:', claimError.message)
+      }
+
       // Only route based on RPC result when RPC succeeds.
       const { data: clubData, error: rpcError } = await supabase.rpc('get_my_club_id')
 
