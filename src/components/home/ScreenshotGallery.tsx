@@ -102,7 +102,7 @@ export default function ScreenshotGallery(): JSX.Element {
   }
 
   return (
-    <section className="relative w-full overflow-hidden border-y border-yellow-400/15 bg-[#071426] py-16">
+    <section className="relative w-full overflow-hidden border-y border-slate-200 bg-slate-50 py-16">
       <div className="pointer-events-none absolute inset-0" aria-hidden="true">
         <img
           src="https://pub-cdn.sider.ai/u/U0KAH9N4VLX/web-coder/69a48114fd11fbc8fc7d68f5/resource/ea527ef7-6896-413d-9d69-df332b440fd0.jpg"
@@ -117,15 +117,15 @@ export default function ScreenshotGallery(): JSX.Element {
           }}
         />
 
-        <div className="absolute inset-0 bg-gradient-to-b from-[#071426]/55 via-[#071426]/85 to-[#071426]" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-slate-50/85 to-slate-50" />
       </div>
 
       <div className="relative z-10 mx-auto max-w-7xl px-6">
         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('screenshots.title')}</h3>
+            <h3 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">{t('screenshots.title')}</h3>
 
-            <p className="mt-2 max-w-2xl text-sm text-white/70">
+            <p className="mt-2 max-w-2xl text-sm text-slate-600">
               {t('screenshots.subtitle')}
             </p>
           </div>
@@ -135,7 +135,7 @@ export default function ScreenshotGallery(): JSX.Element {
               <button
                 type="button"
                 onClick={goPrevious}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white hover:border-yellow-400 hover:text-yellow-400"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-amber-400 hover:text-amber-700"
                 aria-label={t('screenshots.previous')}
               >
                 <svg
@@ -152,7 +152,7 @@ export default function ScreenshotGallery(): JSX.Element {
               <button
                 type="button"
                 onClick={goNext}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-white hover:border-yellow-400 hover:text-yellow-400"
+                className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 bg-white text-slate-700 hover:border-amber-400 hover:text-amber-700"
                 aria-label={t('screenshots.next')}
               >
                 <svg
@@ -175,7 +175,7 @@ export default function ScreenshotGallery(): JSX.Element {
               key={img.src}
               type="button"
               onClick={() => setSelectedScreenshot(img)}
-              className="group overflow-hidden rounded-2xl border border-yellow-400/25 bg-[#14263f]/80 text-left shadow-[0_14px_35px_rgba(0,0,0,.27)] transition duration-300 hover:-translate-y-1 hover:border-yellow-400/75 hover:shadow-[0_8px_26px_rgba(250,204,21,.15)]"
+              className="group overflow-hidden rounded-2xl border border-slate-200 bg-white text-left shadow-sm transition duration-300 hover:-translate-y-1 hover:border-amber-400 hover:shadow-lg"
             >
               <img
                 src={img.src}
@@ -198,7 +198,7 @@ export default function ScreenshotGallery(): JSX.Element {
                   'h-2.5 rounded-full transition-all',
                   index === page
                     ? 'w-8 bg-yellow-400'
-                    : 'w-2.5 bg-white/30 hover:bg-white/60',
+                    : 'w-2.5 bg-slate-300 hover:bg-slate-400',
                 ].join(' ')}
                 aria-label={t('screenshots.openPage', { page: index + 1 })}
               />
