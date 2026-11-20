@@ -29,3 +29,15 @@ test.todo('staging: browser anon cannot call internal bonus or credit functions 
 test.todo('staging: registered player cannot call bonus or credit to mint arbitrary money')
 test.todo('staging: internal SECURITY DEFINER club initialization grants exactly one starting bonus')
 test.todo('staging: normal signup, scheduler, sponsor and seasonal finance remain functional after privilege restrictions')
+
+test('live and staging finance permission audit is read-only and checks all effective grants',()=>{
+ const audit=read('supabase/tests/saturn_internal_finance_grants_audit.sql')
+ for(const f of internal){
+  assert.ok(audit.includes('public.'+f),'grant audit missing '+f)
+ }
+ for(const role of ['anon','authenticated','service_role']){
+  assert.ok(audit.includes("has_function_privilege('"+role+"'"),'audit missing '+role)
+ }
+ assert.ok(audit.includes('security_definer'))
+ assert.doesNotMatch(audit,/^\\s*(?:update|insert|delete|alter|create|drop|grant|revoke)\\s/mi)
+})
