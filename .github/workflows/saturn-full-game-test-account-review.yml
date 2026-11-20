@@ -6,6 +6,8 @@ on:
       - 'supabase/migrations/*saturn_14day*.sql'
       - 'supabase/migrations/*saturn_fail_closed_real_test_team_creation*.sql'
       - 'tests/saturnTestClubCreation.test.mjs'
+      - 'tests/saturnTestAiSlotPlacement.test.mjs'
+      - 'supabase/migrations/*saturn_test_team_lowest_tier_ai_swap*.sql'
       - 'tests/saturnTestAccountLifecycle.test.mjs'
       - 'tests/saturnTestTeamSignup.test.mjs tests/saturnTestAccountExperience.test.mjs'
       - 'src/pages/TestTeamSignup.tsx'
