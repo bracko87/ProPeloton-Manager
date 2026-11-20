@@ -1,7 +1,7 @@
 -- SAT-08: additional player-initiated rider, infrastructure and finance
 -- mutations. Keep production gate disabled until staging JWT validation.
 -- Preserve normal registered-user behavior and scheduler calls without a
--- canonical anonymous Auth identity; guard runs only for anonymous owners.
+-- canonical anonymous Auth identity; guard runs for any unconverted Saturn trial owner.
 
 CREATE OR REPLACE FUNCTION public.finance_issue_emergency_loan(p_club_id uuid, p_reason text, p_ref_id text DEFAULT NULL::text, p_idempotency_key text DEFAULT NULL::text)
  RETURNS jsonb
@@ -16,10 +16,7 @@ begin
   v_finance_club_id := public.finance_resolve_paying_club_id(p_club_id);
   -- SAT-08: canonical temporary manager may modify only its own active
   -- 14-day team. Registered managers retain original ownership checks.
-  if exists (
-    select 1 from auth.users u
-    where u.id = auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_finance_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_finance_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -64,10 +61,7 @@ begin
   if p_race_id is null then raise exception 'Race id is required.'; end if;
   -- SAT-08: canonical temporary manager may modify only its own active
   -- 14-day team. Registered managers retain original ownership checks.
-  if exists (
-    select 1 from auth.users u
-    where u.id = auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(public.get_my_primary_club_id()) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(public.get_my_primary_club_id()) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -155,10 +149,7 @@ begin
   v_release_cost := greatest(0, coalesce(v_staff.salary_weekly, 0) * 6);
   -- SAT-08: canonical temporary manager may modify only its own active
   -- 14-day team. Registered managers retain original ownership checks.
-  if exists (
-    select 1 from auth.users u
-    where u.id = auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_staff.club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_staff.club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -233,10 +224,7 @@ begin
   v_main_club_id := public._get_owned_main_club_id(v_uid);
   -- SAT-08: canonical temporary manager may modify only its own active
   -- 14-day team. Registered managers retain original ownership checks.
-  if exists (
-    select 1 from auth.users u
-    where u.id = auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_main_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_main_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -430,10 +418,7 @@ begin
   v_actor_club_id := public._get_owned_main_club_id(v_uid);
   -- SAT-08: canonical temporary manager may modify only its own active
   -- 14-day team. Registered managers retain original ownership checks.
-  if exists (
-    select 1 from auth.users u
-    where u.id = auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_actor_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_actor_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -628,10 +613,7 @@ begin
   v_current_game_date := public.get_current_game_date_date();
   -- SAT-08: canonical temporary manager may modify only its own active
   -- 14-day team. Registered managers retain original ownership checks.
-  if exists (
-    select 1 from auth.users u
-    where u.id = auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(v_quote.club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(v_quote.club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
@@ -808,10 +790,7 @@ begin
 
   -- SAT-08: canonical temporary manager may modify only its own active
   -- 14-day team. Registered managers retain original ownership checks.
-  if exists (
-    select 1 from auth.users u
-    where u.id = auth.uid() and u.is_anonymous is true
-  ) and not public.saturn_test_account_can_mutate_v1(p_club_id) then
+  if public.saturn_test_account_requires_guard_v1() and not public.saturn_test_account_can_mutate_v1(p_club_id) then
     raise exception 'Test account expired or not authorized for this club'
       using errcode='42501';
   end if;
