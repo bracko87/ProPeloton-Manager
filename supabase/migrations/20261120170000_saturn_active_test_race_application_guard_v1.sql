@@ -227,3 +227,139 @@ begin
 end;
 $function$
 
+
+-- Also protect cancel/withdraw after trial expiry or cross-club access.
+CREATE OR REPLACE FUNCTION public.cancel_race_application_v1(p_race_id uuid, p_club_id uuid DEFAULT NULL::uuid)
+ RETURNS jsonb
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_user_id uuid;
+  v_club_id uuid;
+  v_race record;
+  v_existing record;
+  v_deleted_riders integer := 0;
+begin
+  v_user_id := auth.uid();
+
+  if v_user_id is null then
+    return jsonb_build_object(
+      'success', false,
+      'error', 'auth_required'
+    );
+  end if;
+
+  v_club_id := p_club_id;
+
+  if v_club_id is null then
+    select public.get_my_primary_club_id()
+    into v_club_id;
+  end if;
+
+  if v_club_id is null then
+    return jsonb_build_object(
+      'success', false,
+      'error', 'club_not_found'
+    );
+  end if;
+
+  -- A temporary test manager may withdraw only an application for the
+  -- precise club attached to its own ACTIVE 14-day lifecycle. This rejects
+  -- expired test users and cross-club references. Permanent-user behavior
+  -- remains untouched for compatibility with existing game workflows.
+  if exists(
+    select 1 from auth.users au
+    where au.id=v_user_id and au.is_anonymous is true
+  ) and not public.saturn_test_account_can_mutate_v1(v_club_id) then
+    return jsonb_build_object(
+      'success',false,'error','test_account_ineligible_or_expired'
+    );
+  end if;
+
+  select *
+  into v_race
+  from public.races
+  where id = p_race_id;
+
+  if not found then
+    return jsonb_build_object(
+      'success', false,
+      'error', 'race_not_found'
+    );
+  end if;
+
+  if coalesce(v_race.status::text, 'scheduled') in ('active', 'completed', 'archived', 'cancelled') then
+    return jsonb_build_object(
+      'success', false,
+      'error', 'race_locked',
+      'race_status', v_race.status
+    );
+  end if;
+
+  perform pg_advisory_xact_lock(
+    hashtext(p_race_id::text),
+    hashtext(v_club_id::text)
+  );
+
+  select *
+  into v_existing
+  from public.race_team_entries
+  where race_id = p_race_id
+    and club_id = v_club_id
+  order by created_at desc nulls last, id desc
+  limit 1
+  for update;
+
+  if not found then
+    return jsonb_build_object(
+      'success', true,
+      'already_cancelled', true,
+      'race_id', p_race_id,
+      'club_id', v_club_id,
+      'entry_status', null,
+      'message', 'No application found.'
+    );
+  end if;
+
+  if v_existing.status not in ('applied', 'accepted') then
+    return jsonb_build_object(
+      'success', true,
+      'already_cancelled', true,
+      'race_id', p_race_id,
+      'club_id', v_club_id,
+      'entry_id', v_existing.id,
+      'entry_status', v_existing.status,
+      'message', 'Application is already not active.'
+    );
+  end if;
+
+  update public.race_team_entries
+  set
+    status = 'withdrawn',
+    decision_reason = 'Application cancelled by user',
+    withdrawn_at = now(),
+    updated_at = now()
+  where id = v_existing.id;
+
+  if to_regclass('public.race_participant_riders') is not null then
+    delete from public.race_participant_riders
+    where race_id = p_race_id
+      and team_id = v_club_id;
+
+    get diagnostics v_deleted_riders = row_count;
+  end if;
+
+  return jsonb_build_object(
+    'success', true,
+    'race_id', p_race_id,
+    'club_id', v_club_id,
+    'entry_id', v_existing.id,
+    'entry_status', 'withdrawn',
+    'deleted_riders', v_deleted_riders,
+    'message', 'Application cancelled.'
+  );
+end;
+$function$
+
