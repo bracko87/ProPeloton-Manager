@@ -121,6 +121,10 @@ Read-only production inspection found that **four existing SECURITY DEFINER fina
 
 Last fully checked source commit `276d1cfe891806647c1afb80057ccaa560e6b4f6`: **242 PostgreSQL statements / 43 PL/pgSQL bodies / 24 SQL files**, 217 Saturn test cases **120 passing, zero failing, 97 staging TODO**, all three CI workflows passed. [Finance/security blocker and staging test matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
 
+## SAT-SEC — Finance RPC dependency compatibility audit (20 November)
+
+The finance security follow-up traced the four externally callable internal finance primitives through live `pg_proc` definitions; the identified in-database callers are SECURITY DEFINER functions used by ordinary team registration, rider payroll, equipment sales, refunds, taxes, loan finance and the race engine. New CI script `scripts/saturn_frontend_finance_rpc_audit.py` scans **all 575 frontend source files** for direct calls to these four internal APIs: **0 references found**. This supports, but does not prove, safe browser-role EXECUTE revocation, since external/edge clients and runtime-generated names may be missed. New **read-only** `supabase/tests/saturn_internal_finance_grants_audit.sql` confirmed all four remain executable by both anonymous and authenticated roles in current production. Their proposed REVOKEs are still only an undeployed migration. Staging authorization and all gameplay transaction tests must pass before any live privilege change. [Full finance security review](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
