@@ -57,7 +57,7 @@ export default function FeatureDetailPage(): JSX.Element {
 
       <main>
         <section
-          className="relative isolate flex min-h-[350px] items-center overflow-hidden border-b border-yellow-400/20 bg-[#071426] px-6 py-12 text-white sm:min-h-[370px] sm:py-16"
+          className="relative isolate min-h-[350px] overflow-hidden border-b border-yellow-400/20 bg-[#071426] px-6 pb-10 pt-9 text-white sm:min-h-[370px] sm:pb-12 sm:pt-10"
           style={heroImage ? {
             backgroundImage: `linear-gradient(90deg, rgba(7,20,38,0.94) 0%, rgba(7,20,38,0.81) 48%, rgba(7,20,38,0.67) 100%), url("${heroImage}")`,
             backgroundPosition: 'center',
