@@ -294,3 +294,25 @@ New `tests/saturnGuestCaptchaAbuseGate.test.mjs` checks token integration, chall
 **Source CI verified at `fa4401ae941121597778f3db9946a41fc8a920bb`:** all THREE workflows including build passed; 303 test cases (**161 PASS, 0 FAIL, 142 TODO staging**); 273 SQL statements and 69 PL/pgSQL bodies parsed across 33 Saturn SQL files; 576 frontend files scanned with zero direct calls to the four finance internals.
 
 **Remaining:** configure the cloud CAPTCHA site/secret and anonymous Auth per-IP limits in *isolated staging*, verify direct API denial without a token and real browser retries, monitor repeated account issuance/initial Premium/Coin rewards, verify legitimate Google/email signup unaffected, then explicit release approval. No current production Auth config, database grants, test clubs or finance state changed.
+
+
+## 20 November 2026 — isolated branch availability, quote and preflight
+
+**Read-only verification performed against current production, without changes:**
+- Supabase project `okuravitxocyevkexfgi` currently lists **only the main/default production branch**; there is **no staging branch** to run actual Saturn integration tests.
+- The existing 21-check `supabase/tests/saturn_predeploy_schema_preflight.sql` was executed **read-only** and returned **21 PASS / 0 FAIL**. This confirms the current schema prerequisites only; it is **not** proof that the 33 Saturn SQL migrations compile, that JWT/RLS permissions are correct, or that gameplay works.
+- Supabase provided an organization-specific **branch compute quote of 0.01344 USD/hour** (approximately $0.32256 per day or $9.6768 for 30 days assuming the resource remains billed continuously). This is an hourly compute estimate, **not an authorized charge or total-cost guarantee**; extra usage may differ. **No branch was provisioned.** The project owner must explicitly approve the hourly rate before provisioning.
+- PR CI workflow paths were broadened to include `tests/saturn*.test.mjs`, the new CAPTCHA component and release/abuse docs so new regression files can trigger checks. Dedicated `tests/saturnStagingCiReadiness.test.mjs` verifies that trigger plus pre/post-migration safety checks.
+
+**Proposed isolation and execution order — only AFTER branch charge approval:**
+1. Create Supabase development branch and capture the new **staging project ref**, never reuse the production ref for migration/test writes.
+2. Check that **both guest rollout gates remain OFF** and the trial creation RPC has no `anon` or `authenticated` EXECUTE. Establish a staging-only environment for the React preview.
+3. Rerun all 21 preflight checks **on staging**; document any schema drift. Run Saturn migration files in chronological dependency order, separate from production.
+4. Run `supabase/tests/saturn_postdeploy_authorization_audit.sql`, RLS/role and finance grant audits; fail closed for any failed check. Check real policy behavior with dedicated staging Auth JWTs, not fake user metadata.
+5. Configure Cloudflare Turnstile **secret in staging Supabase Auth only**, site key in staging frontend, Auth CAPTCHA and per-IP rate limiting. Verify direct `/auth/v1/signup` without token fails.
+6. Stage reviewed division capacities only; explicitly enable guest Auth and test club creation in staging for a controlled test window and retain evidence of approval. Never enable either production gate.
+7. Run full account lifecycle matrix: new guest, two simultaneous team requests, legitimate Premium window at +168h, expiry at +336h, all player write restrictions plus **read-only** views, fresh Google/email link on original UUID, conversion after expiry, race and AI displacement eligibility, finances/rewards.
+8. Run game schedulers and race/season processes with separate service-role tests; verify prior standings and unaffected permanent teams. Validate no missed player-facing write surface.
+9. Before considering PR merge, shut **staging** guest creation gates, review open defects, and request separate explicit authorization for the deployment and eventual production public activation.
+
+**Still not approved:** hourly branch cost, CAPTCHA service configuration, staging environment creation, public feature activation, production finance privilege correction. No existing production setting was modified.
