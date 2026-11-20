@@ -247,3 +247,92 @@
     box-shadow: 0 2px 12px rgba(15,28,45,.055);
   }
 }
+
+
+/* === UI & Layout Modernization V4: National Ranking corner language ===
+ * Purely visual. Keep all panels and controls in their original positions.
+ * A 5px panel radius follows the restrained National Ranking page style.
+ * Inner tab buttons use 4px so the frame and selected tabs match.
+ * Circular avatars, icons, loaders, badges and progress dots are unaffected.
+ */
+.ui-modernized-shell {
+  --ui-modern-panel-radius: 5px;
+  --ui-modern-control-radius: 4px;
+}
+
+/* Existing outer and inner cards on every authenticated game page. */
+.ui-modernized-shell > div > main :is(
+  .rounded,
+  .rounded-md,
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl,
+  .ui-modern-card
+) {
+  border-radius: var(--ui-modern-panel-radius);
+}
+
+/* Navigation surfaces and square-edged, precise game controls. */
+.ui-modernized-shell > aside nav :is(a,button) {
+  border-radius: var(--ui-modern-control-radius);
+}
+.ui-modernized-shell > div > main :is(
+  button.rounded,
+  button.rounded-md,
+  button.rounded-lg,
+  button.rounded-xl,
+  button.rounded-2xl,
+  button.rounded-3xl,
+  button.rounded-full,
+  a.rounded,
+  a.rounded-md,
+  a.rounded-lg,
+  a.rounded-xl,
+  a.rounded-2xl,
+  a.rounded-full,
+  input.rounded,
+  input.rounded-md,
+  input.rounded-lg,
+  input.rounded-xl,
+  select.rounded,
+  select.rounded-md,
+  select.rounded-lg,
+  textarea.rounded-lg
+) {
+  border-radius: var(--ui-modern-control-radius);
+}
+
+/* Segmented controls such as Training's Regular Training switch:
+ * the white surrounding frame and its clickable tabs share a matching radius.
+ * Does not change flex/grid, spacing, active states or tab click behavior.
+ */
+.ui-modernized-shell > div > main :is(div,nav).inline-flex:is(
+  .rounded-full,
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl
+):has(> button) {
+  border-radius: var(--ui-modern-panel-radius);
+}
+.ui-modernized-shell > div > main :is(div,nav).inline-flex:has(> button) > button {
+  border-radius: var(--ui-modern-control-radius);
+}
+
+/* Match any input tabs rendered as button-like roles, without touching
+ * actual round markers, badges or rider portrait masks.
+ */
+.ui-modernized-shell > div > main [role="tab"].rounded-full {
+  border-radius: var(--ui-modern-control-radius);
+}
+
+/* Same panel shape for dialogs and popovers, but do not affect circles. */
+.ui-modernized-shell > div > main :is(
+  [role="dialog"].rounded-xl,
+  [role="dialog"].rounded-2xl,
+  [role="tabpanel"].rounded-xl,
+  [role="tabpanel"].rounded-2xl
+) {
+  border-radius: var(--ui-modern-panel-radius);
+}
