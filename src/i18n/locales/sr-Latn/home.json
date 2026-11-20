@@ -185,5 +185,87 @@
     "homepageDataUnexpected": "Podaci sa početne strane vraćeni su u neočekivanom formatu.",
     "clubStatusError": "Prijavljeni ste, ali nismo uspeli da učitamo status vašeg kluba. Osvežite stranicu ili pokušajte ponovo.",
     "clubCreationDisabled": "Kreiranje novih klubova je privremeno pauzirano do objavljivanja igre. Postojeći menadžeri mogu i dalje da se prijave."
+  },
+  "why": {
+    "eyebrow": "ZAŠTO PROPELOTON MANAGER",
+    "title": "Mnogo više od jedne trke.",
+    "subtitle": "Upravljaj čitavim biciklističkim svetom – od prvog treninga do šampionskog cilja.",
+    "races": "Trke sa datumom",
+    "equipment": "Modela opreme",
+    "staff": "Aktivnih uloga osoblja",
+    "features": {
+      "management": {
+        "title": "Duboko upravljanje timom",
+        "description": "Upravljaj svim odlukama u klubu."
+      },
+      "squads": {
+        "title": "Seniori, U23 i omladinci",
+        "description": "Gradi put od akademije do profesionalaca."
+      },
+      "staff": {
+        "title": "11 aktivnih uloga osoblja",
+        "description": "Okupi specijalizovani stručni tim."
+      },
+      "training": {
+        "title": "Precizni treninzi",
+        "description": "Usavršavaj devet veština kroz lične planove."
+      },
+      "growth": {
+        "title": "Razvoj vozača",
+        "description": "Prati potencijal, formu i napredak."
+      },
+      "calendar": {
+        "title": "593 trke sa datumom",
+        "description": "Planiraj kalendar tokom cele sezone."
+      },
+      "preparation": {
+        "title": "Detaljna priprema trka",
+        "description": "Biraj postave, taktiku i opremu."
+      },
+      "tiers": {
+        "title": "Četiri takmičarska nivoa",
+        "description": "Napreduj kroz regionalne divizije."
+      },
+      "equipment": {
+        "title": "170 modela opreme",
+        "description": "Šest kategorija i trkačke zalihe."
+      },
+      "assets": {
+        "title": "Infrastruktura i vozila",
+        "description": "Unapredi objekte, timska vozila i kombije."
+      },
+      "finance": {
+        "title": "Realistične finansije",
+        "description": "Vodi plate, troškove, poreze i nagrade."
+      },
+      "sponsors": {
+        "title": "Regionalni sponzori",
+        "description": "Sklapaj ugovore uz smislene ciljeve."
+      },
+      "operations": {
+        "title": "Politike i operacije",
+        "description": "Uredi smeštaj, ishranu, oporavak i logistiku."
+      },
+      "transfers": {
+        "title": "Transferi i slobodni vozači",
+        "description": "Pregovaraj s timovima i dovodi slobodne vozače."
+      },
+      "national": {
+        "title": "Nacionalni savezi",
+        "description": "Vodi reprezentacije na prvenstvima."
+      },
+      "academy": {
+        "title": "Akademija i omladinske trke",
+        "description": "Razvijaj talente od prvih koraka."
+      },
+      "replay": {
+        "title": "Dinamičan prikaz etape",
+        "description": "Prati dešavanja tokom svake etape."
+      },
+      "progression": {
+        "title": "Napredak iz sezone u sezonu",
+        "description": "Bori se za promociju, rang i ciljeve."
+      }
+    }
   }
 }

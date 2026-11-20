@@ -19,6 +19,7 @@ import PreReleasePopup from '../components/home/PreReleasePopup'
 import { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
 import HomeVideoShowcase from '../components/home/HomeVideoShowcase'
 import HomeDesktopDownloads from '../components/home/HomeDesktopDownloads'
+import WhyProPeloton from '../components/home/WhyProPeloton'
 import HomepageRaceDays, {
   type HomepageRaceDaysData,
 } from '../components/home/HomepageRaceDays'
@@ -659,32 +660,33 @@ export default function HomePage(): JSX.Element {
 
       <main>
         <Hero gameTimeLabel={homeSnapshot?.game_time_label || gameTimeText} />
+        <WhyProPeloton />
         <HomepageRaceDays data={raceDays} loading={raceDaysLoading} />
 
-        <section className="relative w-full overflow-hidden border-y border-slate-200 bg-white py-16 text-slate-900">
+        <section className="relative w-full overflow-hidden border-y border-yellow-400/15 bg-[#071426] py-16">
           <div className="pointer-events-none absolute inset-0" aria-hidden="true">
             <img
               src="https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/ChatGPT%20Image%20Mar%201,%202026,%2008_28_06%20PM.png"
               alt=""
               className="h-full w-full object-cover"
               style={{
-                opacity: 0.07,
+                opacity: 0.18,
                 WebkitMaskImage:
                   'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
                 maskImage:
                   'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.85) 55%, rgba(0,0,0,0.45) 100%)',
               }}
             />
-            <div className="absolute inset-0 bg-gradient-to-b from-white/80 via-white/90 to-white" />
+            <div className="absolute inset-0 bg-gradient-to-b from-[#071426]/70 via-[#071426]/95 to-[#071426]" />
           </div>
 
           <div className="relative z-10 mx-auto max-w-[1510px] px-6 sm:px-10 lg:px-12">
             <section>
-              <h3 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">{t('stats.title')}</h3>
-              <p className="mt-2 text-sm text-slate-600">{t('stats.subtitle')}</p>
+              <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('stats.title')}</h3>
+              <p className="mt-2 text-sm text-white/70">{t('stats.subtitle')}</p>
 
               {homeSnapshotError && (
-                <div className="mt-4 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+                <div className="mt-4 rounded-md border border-yellow-400/30 bg-yellow-400/10 px-4 py-3 text-sm text-yellow-100">
                   {homeSnapshotError}
                 </div>
               )}
@@ -696,9 +698,9 @@ export default function HomePage(): JSX.Element {
                   [t('stats.totalRacesTours'), homeSnapshot?.total_races],
                   [t('stats.totalStages'), homeSnapshot?.total_stages],
                 ].map(([label, value]) => (
-                  <div key={String(label)} className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white/90 p-6 shadow-sm backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:border-amber-400 hover:shadow-lg">
-                    <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">{label}</div>
-                    <div className="mt-3 text-4xl font-semibold tabular-nums text-slate-950">
+                  <div key={String(label)} className="group relative overflow-hidden rounded-2xl border border-yellow-400/20 bg-[linear-gradient(130deg,rgba(25,47,78,.89),rgba(8,25,47,.90))] p-6 shadow-[0_15px_35px_rgba(0,0,0,.24)] backdrop-blur-lg transition duration-300 hover:-translate-y-1 hover:border-yellow-400/70 hover:shadow-[0_9px_28px_rgba(250,204,21,.13)]">
+                    <div className="text-xs font-bold uppercase tracking-wider text-yellow-300">{label}</div>
+                    <div className="mt-3 text-4xl font-bold tabular-nums text-white">
                       {formatNumber(value, locale)}
                     </div>
                   </div>
@@ -707,8 +709,8 @@ export default function HomePage(): JSX.Element {
             </section>
 
             <section className="mt-16">
-              <h3 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">{t('features.title')}</h3>
-              <p className="mt-2 text-sm text-slate-600">{t('features.subtitle')}</p>
+              <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('features.title')}</h3>
+              <p className="mt-2 text-sm text-white/70">{t('features.subtitle')}</p>
 
               <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                 <FeatureCard
@@ -761,12 +763,12 @@ export default function HomePage(): JSX.Element {
 
         <ScreenshotGallery />
 
-        <section className="border-y border-slate-200 bg-white py-14 text-slate-900">
+        <section className="border-y border-yellow-400/15 bg-[#071426] py-14">
           <div className="mx-auto max-w-7xl px-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
               <div>
-                <h3 className="text-3xl font-semibold tracking-tight text-slate-950 sm:text-4xl">{t('reviews.title')}</h3>
-                <p className="mt-2 text-sm text-slate-600">{t('reviews.subtitle')}</p>
+                <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('reviews.title')}</h3>
+                <p className="mt-2 text-sm text-white/70">{t('reviews.subtitle')}</p>
               </div>
 
               <button
@@ -787,8 +789,8 @@ export default function HomePage(): JSX.Element {
                 className={[
                   'mt-5 rounded-xl border px-4 py-3 text-sm',
                   reviewSubmitTone === 'success'
-                    ? 'border-green-300 bg-green-50 text-green-800'
-                    : 'border-red-300 bg-red-50 text-red-700',
+                    ? 'border-green-400/30 bg-green-500/10 text-green-100'
+                    : 'border-red-400/30 bg-red-500/10 text-red-100',
                 ].join(' ')}
               >
                 {reviewSubmitMessage}
@@ -796,24 +798,24 @@ export default function HomePage(): JSX.Element {
             )}
 
             {isReviewFormOpen && (
-              <form onSubmit={handleSubmitReview} className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm">
+              <form onSubmit={handleSubmitReview} className="mt-6 rounded-2xl border border-yellow-400/25 bg-[#14263f]/75 p-6 shadow-xl backdrop-blur-xl">
                 <div className="grid gap-4 md:grid-cols-[1fr_1fr_160px]">
                   <label className="block">
-                    <span className="text-sm font-semibold text-slate-800">{t('reviews.name')}</span>
+                    <span className="text-sm font-semibold text-white">{t('reviews.name')}</span>
                     <input
                       value={reviewName}
                       onChange={event => {
                         setReviewName(event.target.value)
                         clearReviewError('name')
                       }}
-                      className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                      className="mt-1 w-full rounded-md border border-white/15 bg-[#101b31] px-3 py-2 text-white placeholder:text-white/35 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
                       placeholder={t('reviews.yourName')}
                     />
-                    {reviewErrors.name && <div className="mt-1 text-sm text-red-600">{reviewErrors.name}</div>}
+                    {reviewErrors.name && <div className="mt-1 text-sm text-red-300">{reviewErrors.name}</div>}
                   </label>
 
                   <label className="block">
-                    <span className="text-sm font-semibold text-slate-800">{t('reviews.email')}</span>
+                    <span className="text-sm font-semibold text-white">{t('reviews.email')}</span>
                     <input
                       type="email"
                       value={reviewEmail}
@@ -821,21 +823,21 @@ export default function HomePage(): JSX.Element {
                         setReviewEmail(event.target.value)
                         clearReviewError('email')
                       }}
-                      className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                      className="mt-1 w-full rounded-md border border-white/15 bg-[#101b31] px-3 py-2 text-white placeholder:text-white/35 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
                       placeholder={t('reviews.emailPlaceholder')}
                     />
-                    {reviewErrors.email && <div className="mt-1 text-sm text-red-600">{reviewErrors.email}</div>}
+                    {reviewErrors.email && <div className="mt-1 text-sm text-red-300">{reviewErrors.email}</div>}
                   </label>
 
                   <label className="block">
-                    <span className="text-sm font-semibold text-slate-800">{t('reviews.rating')}</span>
+                    <span className="text-sm font-semibold text-white">{t('reviews.rating')}</span>
                     <select
                       value={reviewRating}
                       onChange={event => {
                         setReviewRating(Number(event.target.value))
                         clearReviewError('rating')
                       }}
-                      className="mt-1 w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                      className="mt-1 w-full rounded-md border border-white/15 bg-[#101b31] px-3 py-2 text-white focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
                     >
                       <option value={5}>{t('reviews.fiveStars')}</option>
                       <option value={4}>{t('reviews.fourStars')}</option>
@@ -843,25 +845,25 @@ export default function HomePage(): JSX.Element {
                       <option value={2}>{t('reviews.twoStars')}</option>
                       <option value={1}>{t('reviews.oneStar')}</option>
                     </select>
-                    {reviewErrors.rating && <div className="mt-1 text-sm text-red-600">{reviewErrors.rating}</div>}
+                    {reviewErrors.rating && <div className="mt-1 text-sm text-red-300">{reviewErrors.rating}</div>}
                   </label>
                 </div>
 
                 <label className="mt-4 block">
-                  <span className="text-sm font-semibold text-slate-800">{t('reviews.review')}</span>
+                  <span className="text-sm font-semibold text-white">{t('reviews.review')}</span>
                   <textarea
                     value={reviewMessage}
                     onChange={event => {
                       setReviewMessage(event.target.value)
                       clearReviewError('message')
                     }}
-                    className="mt-1 min-h-[120px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-slate-900 placeholder:text-slate-400 focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-400/30"
+                    className="mt-1 min-h-[120px] w-full rounded-md border border-white/15 bg-[#101b31] px-3 py-2 text-white placeholder:text-white/35 focus:border-yellow-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/30"
                     placeholder={t('reviews.reviewPlaceholder')}
                   />
-                  {reviewErrors.message && <div className="mt-1 text-sm text-red-600">{reviewErrors.message}</div>}
+                  {reviewErrors.message && <div className="mt-1 text-sm text-red-300">{reviewErrors.message}</div>}
                 </label>
 
-                <p className="mt-3 text-xs leading-5 text-slate-500">{t('reviews.privacyNote')}</p>
+                <p className="mt-3 text-xs leading-5 text-white/55">{t('reviews.privacyNote')}</p>
 
                 <button
                   type="submit"
@@ -874,38 +876,38 @@ export default function HomePage(): JSX.Element {
             )}
 
             {reviewsLoading && (
-              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-6 py-8 text-center text-sm text-slate-600">
+              <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center text-sm text-white/65">
                 {t('reviews.loading')}
               </div>
             )}
 
             {!reviewsLoading && reviewsError && (
-              <div className="mt-6 rounded-xl border border-amber-300 bg-amber-50 px-6 py-8 text-center text-amber-800">
+              <div className="mt-6 rounded-xl border border-yellow-400/25 bg-yellow-400/10 px-6 py-8 text-center text-sm text-yellow-100">
                 {reviewsError}
               </div>
             )}
 
             {!reviewsLoading && !reviewsError && activeReview && (
-              <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 px-6 py-8 shadow-sm">
+              <div className="mt-6 rounded-2xl border border-yellow-400/25 bg-[#14263f]/75 px-6 py-8 shadow-xl backdrop-blur-xl">
                 <div className="flex items-center justify-between gap-4">
                   <button
                     type="button"
                     onClick={showPreviousReview}
                     disabled={reviews.length <= 1}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-xl text-slate-700 hover:border-amber-400 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-35"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-xl text-white/80 hover:border-yellow-400 hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-35"
                     aria-label={t('reviews.previous')}
                   >
                     ‹
                   </button>
 
                   <article className="max-w-3xl text-center">
-                    <div className="text-lg font-semibold text-amber-500">
+                    <div className="text-lg font-semibold text-yellow-300">
                       {'★'.repeat(activeRating)}
                       {'☆'.repeat(5 - activeRating)}
                     </div>
-                    <p className="mt-4 text-base leading-7 text-slate-700">“{activeReview.review_text}”</p>
-                    <div className="mt-4 text-sm font-semibold text-slate-900">{activeReview.reviewer_name}</div>
-                    <div className="mt-1 text-xs text-slate-500">
+                    <p className="mt-4 text-base leading-7 text-white/85">“{activeReview.review_text}”</p>
+                    <div className="mt-4 text-sm font-semibold text-white">{activeReview.reviewer_name}</div>
+                    <div className="mt-1 text-xs text-white/50">
                       {formatReviewDate(
                         activeReview.approved_at || activeReview.created_at,
                         locale,
@@ -913,7 +915,7 @@ export default function HomePage(): JSX.Element {
                       )}
                     </div>
                     {reviews.length > 1 && (
-                      <div className="mt-3 text-xs text-slate-500">
+                      <div className="mt-3 text-xs text-white/45">
                         {t('reviews.reviewPosition', {
                           current: activeReviewIndex + 1,
                           total: reviews.length,
@@ -926,7 +928,7 @@ export default function HomePage(): JSX.Element {
                     type="button"
                     onClick={showNextReview}
                     disabled={reviews.length <= 1}
-                    className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-300 text-xl text-slate-700 hover:border-amber-400 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-35"
+                    className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 text-xl text-white/80 hover:border-yellow-400 hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-35"
                     aria-label={t('reviews.next')}
                   >
                     ›
@@ -936,7 +938,7 @@ export default function HomePage(): JSX.Element {
             )}
 
             {!reviewsLoading && !reviewsError && !activeReview && (
-              <div className="mt-6 rounded-xl border border-slate-200 bg-slate-50 px-6 py-8 text-center">
+              <div className="mt-6 rounded-xl border border-white/10 bg-white/5 px-6 py-8 text-center">
                 <button
                   type="button"
                   onClick={() => setIsReviewFormOpen(true)}
