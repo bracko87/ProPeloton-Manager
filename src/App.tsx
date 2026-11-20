@@ -36,6 +36,7 @@ import {
 import HomePage from './pages/Home'
 import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
+import GuestPracticePage from './pages/GuestPractice'
 import ForgotPasswordPage from './pages/ForgotPassword'
 import ResetPasswordPage from './pages/ResetPassword'
 import CreateClubPage from './pages/CreateClub'
@@ -232,12 +233,13 @@ function RequireAuth({
   }
 
   if (!user) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-      />
-    )
+    return <Navigate to="/login" replace />
+  }
+
+  // Anonymous Supabase identities are authenticated at SQL-role level,
+  // but must never enter real club/dashboard routes.
+  if (user.is_anonymous === true) {
+    return <Navigate to="/guest-practice" replace />
   }
 
   return children
@@ -413,6 +415,9 @@ export default function App(): JSX.Element {
             path="/register"
             element={<RegisterPage />}
           />
+
+          {/* Saturn guest sandbox: not linked or activated while guest gate is closed. */}
+          <Route path="/guest-practice" element={<GuestPracticePage />} />
 
           <Route
             path="/forgot-password"
