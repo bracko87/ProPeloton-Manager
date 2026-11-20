@@ -14,7 +14,9 @@ export const testClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     storageKey: 'ppm-saturn-fullgame-test-session-v1',
     persistSession: true,
     autoRefreshToken: true,
-    detectSessionInUrl: false,
+    // Manual Google identity linking returns through an OAuth URL. Process
+    // that callback on the SAME persisted anonymous Auth client.
+    detectSessionInUrl: SATURN_TEST_ACCOUNTS_ENABLED,
   },
 })
 
