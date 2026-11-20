@@ -4,6 +4,8 @@ on:
     paths:
       - 'src/pages/GuestPractice.tsx'
       - 'src/pages/GuestConvert.tsx'
+      - 'src/pages/Login.tsx'
+      - 'src/pages/CreateClub.tsx'
       - 'src/lib/guestSupabase.ts'
       - 'src/lib/supabase.ts'
       - 'src/App.tsx'
@@ -26,6 +28,6 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Guest security and practice contract tests
-        run: node --test tests/saturnGuestSecurity.test.mjs tests/saturnGuestDrafts.test.mjs tests/saturnGuestPractice.test.mjs tests/saturnGuestConversion.test.mjs
+        run: node --test tests/saturnGuestSecurity.test.mjs tests/saturnGuestDrafts.test.mjs tests/saturnGuestPractice.test.mjs tests/saturnGuestConversion.test.mjs tests/saturnGuestOnboarding.test.mjs
       - name: Production build
         run: npm run build
