@@ -37,6 +37,7 @@ import HomePage from './pages/Home'
 import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
 import TestTeamSignupPage from './pages/TestTeamSignup'
+import TestAccountRegisterPage from './pages/TestAccountRegister'
 import ForgotPasswordPage from './pages/ForgotPassword'
 import ResetPasswordPage from './pages/ResetPassword'
 import CreateClubPage from './pages/CreateClub'
@@ -416,6 +417,7 @@ export default function App(): JSX.Element {
           />
 
           <Route path="/test-the-game" element={<TestTeamSignupPage />} />
+          <Route path="/test-account-register" element={<TestAccountRegisterPage />} />
 
           <Route
             path="/forgot-password"
