@@ -26,7 +26,7 @@ test('test player must create a team and nickname; no email or password requeste
 test('anonymous Auth only started on user submit, uses persisted separate session', () => {
   assert.match(form, /async function begin\(event: React\.FormEvent\)/)
   assert.match(form, /if \(!ENABLED \|\| busy\) return/)
-  assert.match(form, /testClient\.auth\.signInAnonymously\(\)/)
+  assert.match(form, /testClient\\.auth\\.signInAnonymously\\(\\{\\s*options:\\s*\\{\\s*captchaToken/)
   assert.match(authProvider, /restoreTestAccountIntoGame\(\)/)
   assert.match(testClient, /term\?\.user_id !== testUser\.user\.id/)
   assert.match(testClient, /persistSession: true/)
