@@ -65,7 +65,5 @@ begin
 end;
 $saturn$;
 
--- Internal ownership resolver; cannot be called directly from browser roles.
--- Permission tightening requires verified normal equipment UI regression.
-revoke all on function public.equipment_assert_club_access(uuid)
-from public, anon, authenticated;
+-- Keep existing EXECUTE privileges unchanged in this focused trial-guard
+-- patch. Caller compatibility and direct RPC use require separate audit.
