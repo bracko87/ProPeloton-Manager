@@ -19,6 +19,7 @@ export default function TestTeamSignupPage(): JSX.Element {
   const [countries, setCountries] = useState<{ code: string; name: string }[]>([])
   const [busy, setBusy] = useState(false)
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaAttempt, setCaptchaAttempt] = useState(0)
   const [error, setError] = useState('')
 
   React.useEffect(() => {
@@ -91,6 +92,7 @@ export default function TestTeamSignupPage(): JSX.Element {
     } finally {
       // Tokens are short-lived and single-use: never reuse on retry.
       setCaptchaToken(null)
+      setCaptchaAttempt(attempt => attempt + 1)
       setBusy(false)
     }
   }
@@ -125,7 +127,7 @@ export default function TestTeamSignupPage(): JSX.Element {
           <label>Primary color<input type="color" className="block mt-2" value={primary} onChange={e => setPrimary(e.target.value)} /></label>
           <label>Secondary color<input type="color" className="block mt-2" value={secondary} onChange={e => setSecondary(e.target.value)} /></label>
         </div>
-        <SaturnGuestCaptcha onTokenChange={setCaptchaToken} />
+        <SaturnGuestCaptcha key={captchaAttempt} onTokenChange={setCaptchaToken} />
         {error && <p role="alert" className="text-red-300">{error}</p>}
         <button type="submit" disabled={busy || countries.length === 0 || !SATURN_TURNSTILE_SITE_KEY || !captchaToken} className="rounded-lg bg-yellow-400 text-slate-950 px-5 py-3 disabled:opacity-40">{busy ? 'Creating your team…' : 'Create team and start testing'}</button>
       </form>
