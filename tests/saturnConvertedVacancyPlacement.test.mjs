@@ -16,6 +16,23 @@ test('vacancies require separate private approved, disabled-by-default category/
  assert.match(sql,/revoke all on private\.saturn_converted_vacancy_caps_v1 from public,anon,authenticated/)
  assert.doesNotMatch(sql,/insert into private\.saturn_converted_vacancy_caps_v1/i)
 })
+test('successful conversion placement has one permanent audit row and cannot be repeated',()=>{
+ assert.match(sql,/create table if not exists private\\.saturn_converted_team_placements_v1/)
+ assert.match(sql,/user_id uuid primary key references auth\\.users\\(id\\)/)
+ assert.match(sql,/club_id uuid not null unique references public\\.clubs\\(id\\)/)
+ assert.match(sql,/revoke all on table private\\.saturn_converted_team_placements_v1/)
+ assert.match(sql,/from private\\.saturn_converted_team_placements_v1 p/)
+ assert.match(sql,/'status','already_placed'/)
+ assert.match(sql,/insert into private\\.saturn_converted_team_placements_v1\\(/)
+ assert.match(sql,/from_club_tier,from_world_tier/)
+ assert.match(sql,/to_club_tier,to_world_tier,to_region/)
+ assert.match(ui, /case 'already_placed':/)
+ const writePos=sql.indexOf('update public.clubs set')
+ const auditPos=sql.indexOf('insert into private.saturn_converted_team_placements_v1(')
+ const successPos=sql.indexOf("'placed',true,'status','moved_to_approved_vacancy'")
+ assert.ok(writePos>0 && auditPos>writePos && successPos>auditPos)
+})
+
 test('original verified converted UUID and team ownership are mandatory',()=>{
  assert.match(sql,/v_uid uuid := auth\.uid\(\)/)
  assert.match(sql,/u\.id=v_uid and u\.is_anonymous is false/)
@@ -71,3 +88,6 @@ test.todo('staging: simultaneous converted managers cannot overfill a single app
 test.todo('staging: completed race history and finances are unchanged during club tier change')
 test.todo('staging: season reset blocks reassignment and preserves club/race identity')
 test.todo('staging: unconverted temporary player and unrelated permanent user cannot run promotion RPC')
+
+test.todo('staging: second placement request returns already_placed without jumping further')
+test.todo('staging: atomic placement and audit row roll back together on interrupted transaction')
