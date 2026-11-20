@@ -1,0 +1,132 @@
+/*
+ * ProPeloton Manager — UI & Layout Modernization (visual-only).
+ * Scope: authenticated game shell. No navigation, data, layout or feature changes.
+ * Revert by removing this stylesheet import and the ui-modernized-shell class.
+ */
+.ui-modernized-shell {
+  --ui-modern-ink: #111b2a;
+  --ui-modern-muted: #64748b;
+  --ui-modern-border: #dce4ed;
+  --ui-modern-yellow: #facc15;
+  --ui-modern-elevation: 0 2px 8px rgba(17,27,42,.035), 0 12px 30px rgba(17,27,42,.035);
+  background: #eef2f6;
+  color: var(--ui-modern-ink);
+}
+
+/* Preserve existing sidebar width, routes, text, collapse and sticky behavior. */
+.ui-modernized-shell > aside {
+  background: linear-gradient(172deg,#111b26 0%,#0a111b 65%,#0d1723 100%);
+  border-right: 1px solid rgba(255,255,255,.08);
+}
+.ui-modernized-shell > aside nav a,
+.ui-modernized-shell > aside nav [aria-disabled] {
+  border: 1px solid transparent;
+  transition: background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+.ui-modernized-shell > aside nav a:hover {
+  background: rgba(255,255,255,.065);
+  border-color: rgba(255,255,255,.09);
+  transform: translateX(2px);
+}
+.ui-modernized-shell > aside nav a[aria-current="page"],
+.ui-modernized-shell > aside nav a.bg-yellow-400\/20 {
+  background: linear-gradient(90deg,rgba(250,204,21,.19),rgba(250,204,21,.07));
+  border-color: rgba(250,204,21,.24);
+  box-shadow: inset 3px 0 0 var(--ui-modern-yellow);
+}
+
+/* Maintain the existing bright ProPeloton yellow header. */
+.ui-modernized-shell > div > header {
+  box-shadow: 0 2px 14px rgba(17,27,42,.07);
+  position: relative;
+  z-index: 3;
+}
+.ui-modernized-shell > div > main {
+  background:
+    radial-gradient(ellipse 70% 420px at 85% 0%, rgba(250,204,21,.07), transparent 75%),
+    #eef2f6;
+}
+
+/* Cards: better material, distinct perimeter and restrained depth, no new containers. */
+.ui-modernized-shell > div > main :is(
+  .rounded-2xl.bg-white,
+  .rounded-xl.bg-white,
+  .rounded-lg.bg-white,
+  .bg-white.rounded-2xl,
+  .bg-white.rounded-xl,
+  .bg-white.rounded-lg
+) {
+  border-color: var(--ui-modern-border);
+  box-shadow: var(--ui-modern-elevation);
+  transition: box-shadow .2s ease, border-color .2s ease;
+}
+.ui-modernized-shell > div > main :is(
+  .rounded-2xl.bg-white,
+  .rounded-xl.bg-white,
+  .rounded-lg.bg-white
+):hover {
+  border-color: #c9d5e2;
+  box-shadow: 0 2px 10px rgba(17,27,42,.04),0 18px 38px rgba(17,27,42,.07);
+}
+
+/* Nested stat/summary boxes should look intentionally inset, not compete with cards. */
+.ui-modernized-shell > div > main :is(.bg-slate-50,.bg-gray-50).border {
+  border-color: #e3e9f0;
+  background-color: #f7f9fc;
+}
+.ui-modernized-shell > div > main :is(.rounded-xl,.rounded-2xl,.rounded-lg).border-dashed {
+  border-style: dashed;
+  border-color: #cbd6e3;
+  background-color: #f6f9fc;
+}
+
+/* Better visual feedback without changing a single click handler. */
+.ui-modernized-shell :is(button,a,[role="button"],input,select,textarea):focus-visible {
+  outline: 2px solid #d6aa0b;
+  outline-offset: 3px;
+}
+.ui-modernized-shell > div > main :is(button,a).transition:hover {
+  filter: saturate(1.06);
+}
+.ui-modernized-shell > div > main :is(input,select,textarea).border {
+  border-color: #cad5e2;
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+.ui-modernized-shell > div > main :is(input,select,textarea).border:focus {
+  border-color: #dfb51b;
+  box-shadow: 0 0 0 3px rgba(250,204,21,.13);
+}
+
+/* More legible tabular presentation, preserving row counts and column widths. */
+.ui-modernized-shell > div > main table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+.ui-modernized-shell > div > main thead {
+  background: #f4f7fa;
+}
+.ui-modernized-shell > div > main thead th {
+  color: #44546a;
+  font-weight: 650;
+  letter-spacing: .015em;
+}
+.ui-modernized-shell > div > main tbody tr {
+  transition: background-color .15s ease;
+}
+.ui-modernized-shell > div > main tbody tr:hover {
+  background: rgba(226,235,244,.34);
+}
+
+/* Subtle, consistent motion; accessibility takes precedence over decoration. */
+@media (prefers-reduced-motion: reduce) {
+  .ui-modernized-shell *, .ui-modernized-shell *::before, .ui-modernized-shell *::after {
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+  }
+}
+@media (max-width: 767px) {
+  .ui-modernized-shell > aside nav a:hover { transform: none; }
+  .ui-modernized-shell > div > main {
+    background: #eef2f6;
+  }
+}
