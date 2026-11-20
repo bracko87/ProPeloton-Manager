@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, contract and transfer offer protections
+
+- ✅ **52 selected player-facing write RPCs** now have draft original-UUID/unconverted lifecycle/14-day expiry guards, up from 48. Added `cancel_rider_transfer_listing`, `reject_rider_transfer_offer`, `submit_contract_renewal_offer`, `withdraw_rider_transfer_offer` in `supabase/migrations/20261120235910_saturn_contract_transfer_offer_expiry_v1.sql`. The existing club ownership checks remain ahead of each trial restriction.
+- ✅ `tests/saturnContractTransferOfferExpiry.test.mjs` confirms four owner-before-guard-before-write source invariants and six outstanding isolated staging scenarios.
+- ✅ **Verified code commit `dda9cb6babaf0ff874bc750bc9c56aa918b60265`: 286 source cases, 155 PASS / 0 FAIL / 131 staging TODO; 271 PostgreSQL statements / 67 PL/pgSQL bodies in 32 Saturn SQL files; all THREE CI workflows passed.**
+- 🟡 A copied contract renewal `RETURNING morale INTO` record field was replaced with a scalar return target to meet offline PL/pgSQL syntax validation without intentionally changing contract outcomes; must verify in actual staging.
+- ⬜ AI unsolicited transfer-bid authorization (including early rejected-bid persistence), other staff/finance functions, registration abuse protection and full-game mutation coverage remain unverified. The existing finance permission risk is still live, and Guest Mode remains OFF with no trial migration deployed.
+
+[Detailed staging gate](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, transfer shortlist + search security
 
 - ✅ **48 selected player-facing mutation RPCs** now have source-level 14-day lifecycle/owner guards (up from 43). New migration `supabase/migrations/20261120235900_saturn_transfer_shortlist_saved_search_expiry_v1.sql` protects add-rider shortlist (including optional Coin debits), add/remove shortlist targets, save market searches and delete saved searches, including linked-but-unconverted Google/email accounts.
