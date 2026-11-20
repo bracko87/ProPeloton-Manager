@@ -654,7 +654,8 @@ export default function RegisterPage(): JSX.Element {
                     </div>
                   )}
                 </div>
-                </div>
+              </div>
+              </div>
               ) : null}
             </div>
 
