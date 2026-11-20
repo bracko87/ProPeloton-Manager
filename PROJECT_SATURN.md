@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, failed staging branch replay
+
+- ✅ Owner approved **$0.01344 per hour** branch compute quote; a temporary isolated Supabase branch was actually created. Production was NOT changed.
+- ❌ Supabase reported **`MIGRATIONS_FAILED`** while replaying existing historical migration history. Staging project `snlhnscacxsrlfpolohf` contained **zero applied migrations** and lacked `public.clubs` and the guest Auth gate. Database logs include `query string argument of EXECUTE is null`. No Saturn SQL could be deployed or tested there.
+- ✅ To avoid ongoing hourly billing, the failed staging branch was **deleted**. Subsequent branch list showed **only production/default main**. Final charge/proration not yet confirmed.
+- ⬜ **New priority blocker:** identify the specific legacy SQL migration causing null dynamic EXECUTE during branch replay, and prepare a safe migration history / staging bootstrap solution **without changing production**. Only then create another billable staging environment with explicit approval.
+- ⬜ No real Saturn database/JWT/CAPTCHA/finance/guest tests ran. The previously green **164 source tests, 0 failures** remain true only of CI, not real runtime. Guest Mode OFF, finance exposure unresolved.
+
+[Staging failure evidence and required recovery](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, isolated staging readiness and cost gate
 
 - ✅ **Verified existing database starting schema, read-only:** `supabase/tests/saturn_predeploy_schema_preflight.sql` returned **21 PASS / 0 FAIL**. No schema changes, guest accounts or clubs were created. This is NOT migration execution or guest behavior validation.
