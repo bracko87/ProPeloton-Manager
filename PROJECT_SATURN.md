@@ -5,6 +5,16 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 20 November 2026, transfer shortlist + search security
+
+- ✅ **48 selected player-facing mutation RPCs** now have source-level 14-day lifecycle/owner guards (up from 43). New migration `supabase/migrations/20261120235900_saturn_transfer_shortlist_saved_search_expiry_v1.sql` protects add-rider shortlist (including optional Coin debits), add/remove shortlist targets, save market searches and delete saved searches, including linked-but-unconverted Google/email accounts.
+- ✅ Existing owner checks and regular/fully converted manager behavior are preserved in the draft. Transfer-market read-only functions were deliberately left unchanged; a guest must still be able to browse after expiry.
+- ✅ Dedicated `tests/saturnTransferShortlistExpiry.test.mjs` covers five source-level guard-before-write checks plus five explicitly pending real staging tests.
+- ✅ **Last verified source commit `13414986cc28863b7800a2df857295746b54ecd9`: 275 Saturn cases (150 passing, 0 failing, 125 staging TODO); 267 SQL statements and 63 PL/pgSQL bodies parsed across 31 files; all three GitHub workflows passed**, 575 React files scanned for direct unsafe finance helpers (zero detected).
+- ⬜ **NOT READY:** still incomplete game-wide expiry, direct/indirect transfer/contract finance authorization, anti-abuse, real guest/Auth conversion, staging and full-game/UI tests. Production Guest Mode OFF and no migrations deployed; separately identified finance privilege exposure remains live.
+
+[Current full release gate](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, sponsorship and branding security
 
 - ✅ Draft 14-day lifecycle/own-club expiry protections now cover **43 selected player-facing write RPCs**, up from 39: `sponsor_sign_offer`, `sponsor_prepare_main_offer_deal_metadata_v1`, `sponsor_set_objective_target_v1`, and `update_club_branding_v1` were added in `supabase/migrations/20261120235800_saturn_sponsor_and_branding_write_expiry_v1.sql`. Guards run after existing club-owner authorization, before database writes; email/Google-linked but unconverted test accounts remain restricted. Ordinary and fully converted managers retain original behavior in draft source.
