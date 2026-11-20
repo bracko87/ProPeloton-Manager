@@ -18,7 +18,7 @@ targets=(
     "finance_get_or_create_club_account",
 )
 patterns=[
-    re.compile(r"\\.rpc\\s*\\(\\s*['\\\"]"+re.escape(name)+r"['\\\"]",re.I)
+    re.compile(r"\.rpc\s*\(\s*['"]"+re.escape(name)+r"['"]",re.I)
     for name in targets
 ]
 files=[p for p in front.rglob("*") if p.is_file() and p.suffix in {".ts",".tsx",".js",".jsx"}]
