@@ -115,6 +115,12 @@ Live read-only club setup inspection confirmed that normal club creation already
 
 Added **read-only staging SQL** `supabase/tests/saturn_guest_postcreation_reconciliation.sql`, which flags any mismatch between official owner membership, ten domestic starter riders, club and finance summary cash, one Premium entitlement and the original 168-hour Premium and 336-hour test term. No records are mutated by the audit. Latest verified source commit `1e749403890aba0281aa1cb8b964ec7f637c8971`: **234 PostgreSQL statements, 43 PL/pgSQL function bodies in 23 files**, Saturn tests **118 passed, 0 failed, 93 staging TODO**, all three workflows passed. [Staging matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
 
+## SAT-SEC — Critical existing finance RPC privilege exposure discovered
+
+Read-only production inspection found that **four existing SECURITY DEFINER financial helper functions** allow direct EXECUTE by both `anon` and `authenticated` browser roles: `finance_grant_new_club_bonus`, `finance_setup_new_club`, `finance_credit_to_club` and `finance_get_or_create_club_account`. The bonus allows an explicit positive amount and has no internal owner check; the credit RPC has an authorization branch that is bypassed for requests with no UID. **This is a potentially severe existing finance authorization weakness, not just a future guest-account concern.** The draft `20261120235000_saturn_internal_finance_privilege_hardening_v1.sql` removes browser EXECUTE for all four and retains service-role access. Source tests were added, but normal user and scheduler finance dependency regression is still required before deploying this revocation in production. No live permissions were changed. Prioritize an independent live finance-security remediation review rather than conflating it with Saturn's eventual guest release.
+
+Last fully checked source commit `276d1cfe891806647c1afb80057ccaa560e6b4f6`: **242 PostgreSQL statements / 43 PL/pgSQL bodies / 24 SQL files**, 217 Saturn test cases **120 passing, zero failing, 97 staging TODO**, all three CI workflows passed. [Finance/security blocker and staging test matrix](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## Current project checklist status (20 November 2026)
 
 The checkboxes below stay unchecked until **live-verified**. Source tests and
