@@ -19,8 +19,17 @@ const internal=[
  'finance_run_monthly_tax_audit_for_club(uuid,date,date,boolean)',
  'race_engine_refund_one_day_weather_cancelled_race_v1(uuid)',
  'refund_one_day_weather_cancelled_race_v2(uuid)',
+ 'finance_spend_from_club(uuid,bigint,text,text,text,jsonb)',
+ 'finance_spend_from_club_non_ai_core_v1(uuid,bigint,text,text,text,jsonb)',
+ 'finance_issue_emergency_loan(uuid,text,text,text)',
+ 'finance_liquidate_club_for_insolvency(uuid,text,text)',
+ 'finance_liquidate_club_for_insolvency_non_ai_core_v1(uuid,text,text)',
+ 'finance_ensure_mandatory_funds(uuid,bigint,text,text,text)',
+ 'finance_ensure_mandatory_funds_non_ai_core_v1(uuid,bigint,text,text,text)',
+ 'finance_process_weekly_emergency_loan_repayments()',
+ 'finance_run_due_monthly_tax_audits(boolean)',
 ]
-test('browser EXECUTE denied on all thirteen reviewed internal finance routines',()=>{
+test('browser EXECUTE denied on all twenty-two reviewed internal finance routines',()=>{
  for(const f of internal){
   const revoke='revoke all on function public.'+f+'\n  from PUBLIC, anon, authenticated;'
   assert.ok(sql.includes(revoke),'missing browser REVOKE: '+f)

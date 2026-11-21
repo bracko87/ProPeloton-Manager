@@ -73,3 +73,44 @@ revoke all on function public.refund_one_day_weather_cancelled_race_v2(uuid)
   from PUBLIC, anon, authenticated;
 grant execute on function public.refund_one_day_weather_cancelled_race_v2(uuid)
   to service_role;
+
+-- Close the upstream spending and automatic insolvency paths as well.
+-- Live catalog: each routine is executable by browser roles; all observed
+-- routine callers run under trusted postgres definer ownership; no direct
+-- scheduled cron command names these routines. Review app/Edge callers via CI.
+revoke all on function public.finance_spend_from_club(uuid,bigint,text,text,text,jsonb)
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_spend_from_club(uuid,bigint,text,text,text,jsonb)
+  to service_role;
+revoke all on function public.finance_spend_from_club_non_ai_core_v1(uuid,bigint,text,text,text,jsonb)
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_spend_from_club_non_ai_core_v1(uuid,bigint,text,text,text,jsonb)
+  to service_role;
+revoke all on function public.finance_issue_emergency_loan(uuid,text,text,text)
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_issue_emergency_loan(uuid,text,text,text)
+  to service_role;
+revoke all on function public.finance_liquidate_club_for_insolvency(uuid,text,text)
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_liquidate_club_for_insolvency(uuid,text,text)
+  to service_role;
+revoke all on function public.finance_liquidate_club_for_insolvency_non_ai_core_v1(uuid,text,text)
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_liquidate_club_for_insolvency_non_ai_core_v1(uuid,text,text)
+  to service_role;
+revoke all on function public.finance_ensure_mandatory_funds(uuid,bigint,text,text,text)
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_ensure_mandatory_funds(uuid,bigint,text,text,text)
+  to service_role;
+revoke all on function public.finance_ensure_mandatory_funds_non_ai_core_v1(uuid,bigint,text,text,text)
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_ensure_mandatory_funds_non_ai_core_v1(uuid,bigint,text,text,text)
+  to service_role;
+revoke all on function public.finance_process_weekly_emergency_loan_repayments()
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_process_weekly_emergency_loan_repayments()
+  to service_role;
+revoke all on function public.finance_run_due_monthly_tax_audits(boolean)
+  from PUBLIC, anon, authenticated;
+grant execute on function public.finance_run_due_monthly_tax_audits(boolean)
+  to service_role;

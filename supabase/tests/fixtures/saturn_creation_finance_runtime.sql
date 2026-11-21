@@ -213,6 +213,211 @@ begin
 end;
 $function$;
 
+
+-- Actual spend helper snapshots, plus signature-only insolvency stand-ins.
+create function public.finance_issue_emergency_loan(uuid,text,text,text) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_liquidate_club_for_insolvency(uuid,text,text) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_liquidate_club_for_insolvency_non_ai_core_v1(uuid,text,text) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_ensure_mandatory_funds(uuid,bigint,text,text,text) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_ensure_mandatory_funds_non_ai_core_v1(uuid,bigint,text,text,text) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_process_weekly_emergency_loan_repayments() returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_run_due_monthly_tax_audits(boolean) returns boolean language sql security definer as $fixture$select true$fixture$;
+CREATE OR REPLACE FUNCTION public.finance_spend_from_club_non_ai_core_v1(p_club_id uuid, p_amount bigint, p_type text DEFAULT 'expense'::text, p_sink_code text DEFAULT 'SINK'::text, p_idempotency_key text DEFAULT NULL::text, p_metadata jsonb DEFAULT '{}'::jsonb)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$declare
+  v_uid uuid;
+  v_role text;
+  v_internal boolean := coalesce(current_setting('finance.internal', true), '') = '1';
+  v_club_acct uuid;
+  v_sink uuid;
+  v_tx uuid;
+  v_balance bigint;
+  v_game_ts timestamptz;
+  v_game_metadata jsonb;
+  v_metadata jsonb;
+begin
+  v_uid := auth.uid();
+  v_role := current_setting('request.jwt.claim.role', true);
+
+  if v_internal and v_uid is null then
+    select c.owner_user_id
+    into v_uid
+    from public.clubs c
+    where c.id = p_club_id
+    limit 1;
+  end if;
+
+  if p_amount is null or p_amount <= 0 then
+    raise exception 'Amount must be > 0';
+  end if;
+
+  if v_uid is not null and coalesce(v_role, '') <> 'service_role' and not v_internal then
+    if not finance.can_spend_from_club(p_club_id, v_uid) then
+      raise exception 'Not allowed to spend from this club';
+    end if;
+  end if;
+
+  v_game_ts := public.get_current_game_timestamp();
+
+  v_game_metadata := jsonb_build_object(
+    'game_date',
+    jsonb_build_object(
+      'season', public.season_from_game_timestamp(v_game_ts),
+      'month', extract(month from v_game_ts at time zone 'UTC')::int,
+      'day', extract(day from v_game_ts at time zone 'UTC')::int,
+      'hour', extract(hour from v_game_ts at time zone 'UTC')::int,
+      'minute', extract(minute from v_game_ts at time zone 'UTC')::int
+    )
+  );
+
+  v_metadata := coalesce(p_metadata, '{}'::jsonb) || v_game_metadata;
+
+  perform public.finance_get_or_create_club_account(p_club_id, 'CASH', 'main');
+
+  select a.id
+  into v_club_acct
+  from finance.accounts a
+  where a.club_id = p_club_id
+    and a.currency = 'CASH'
+    and a.kind = 'main';
+
+  select a.id
+  into v_sink
+  from finance.accounts a
+  where a.system_code = p_sink_code
+    and a.currency = 'CASH'
+    and a.kind = 'main';
+
+  if v_sink is null then
+    raise exception 'Unknown sink_code: %', p_sink_code;
+  end if;
+
+  if p_idempotency_key is not null then
+    insert into finance.transactions(type, created_by, idempotency_key, metadata)
+    values (p_type, v_uid, p_idempotency_key, v_metadata)
+    on conflict (created_by, idempotency_key) do nothing
+    returning id into v_tx;
+
+    if v_tx is null then
+      select t.id
+      into v_tx
+      from finance.transactions t
+      where t.created_by is not distinct from v_uid
+        and t.idempotency_key = p_idempotency_key
+      order by t.created_at desc
+      limit 1;
+
+      if v_tx is not null then
+        return v_tx;
+      end if;
+
+      select t.id
+      into v_tx
+      from finance.transactions t
+      where t.idempotency_key = p_idempotency_key
+      order by t.created_at desc
+      limit 1;
+
+      if v_tx is not null then
+        return v_tx;
+      end if;
+    end if;
+  else
+    insert into finance.transactions(type, created_by, metadata)
+    values (p_type, v_uid, v_metadata)
+    returning id into v_tx;
+  end if;
+
+  insert into finance.account_balances(account_id, balance)
+  values (v_club_acct, 0)
+  on conflict (account_id) do nothing;
+
+  select b.balance
+  into v_balance
+  from finance.account_balances b
+  where b.account_id = v_club_acct
+  for update;
+
+  if v_balance < p_amount then
+    raise exception 'Insufficient funds: have %, need %', v_balance, p_amount;
+  end if;
+
+  insert into finance.entries(transaction_id, account_id, amount, memo)
+  values
+    (v_tx, v_club_acct, -p_amount, 'expense debit'),
+    (v_tx, v_sink,       p_amount, 'expense credit');
+
+  return v_tx;
+end;$function$;
+
+CREATE OR REPLACE FUNCTION public.finance_spend_from_club(p_club_id uuid, p_amount bigint, p_type text DEFAULT 'expense'::text, p_sink_code text DEFAULT 'SINK'::text, p_idempotency_key text DEFAULT NULL::text, p_metadata jsonb DEFAULT '{}'::jsonb)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_is_ai boolean := false;
+  v_club_acct uuid;
+  v_existing uuid;
+begin
+  select coalesce(c.is_ai,false)
+    into v_is_ai
+  from public.clubs c
+  where c.id=p_club_id;
+
+  if not v_is_ai then
+    return public.finance_spend_from_club_non_ai_core_v1(
+      p_club_id,p_amount,p_type,p_sink_code,p_idempotency_key,p_metadata
+    );
+  end if;
+
+  if p_amount is null or p_amount <= 0 then
+    raise exception 'Amount must be > 0';
+  end if;
+
+  if p_idempotency_key is not null then
+    select t.id
+      into v_existing
+    from finance.transactions t
+    where t.idempotency_key=p_idempotency_key
+    order by t.created_at desc
+    limit 1;
+
+    if v_existing is not null then
+      return public.finance_spend_from_club_non_ai_core_v1(
+        p_club_id,p_amount,p_type,p_sink_code,p_idempotency_key,p_metadata
+      );
+    end if;
+  end if;
+
+  perform public.finance_get_or_create_club_account(p_club_id,'CASH','main');
+
+  select a.id
+    into v_club_acct
+  from finance.accounts a
+  where a.club_id=p_club_id
+    and a.currency='CASH'
+    and a.kind='main'
+  limit 1;
+
+  insert into finance.account_balances(account_id,balance)
+  values (v_club_acct,0)
+  on conflict (account_id) do nothing;
+
+  update finance.account_balances
+  set balance=greatest(balance,p_amount)
+  where account_id=v_club_acct;
+
+  return public.finance_spend_from_club_non_ai_core_v1(
+    p_club_id,p_amount,p_type,p_sink_code,p_idempotency_key,p_metadata
+  );
+end;
+$function$;
+
 \ir ../../migrations/20261120235000_saturn_internal_finance_privilege_hardening_v1.sql
 
 insert into auth.users select fixture.uid(n),n<>6 from generate_series(1,8) n;
@@ -288,6 +493,31 @@ select fixture.expect_error($q$select public.refund_one_day_weather_cancelled_ra
 reset role;
 select fixture.assert_ok(has_function_privilege('service_role','public.finance_apply_club_house_tax_rebate_v1(uuid,date,date)','EXECUTE') and has_function_privilege('service_role','public.finance_charge_emergency_loan_weekly_payment(uuid,date)','EXECUTE') and has_function_privilege('service_role','public.finance_charge_race_cost(uuid,uuid,bigint,jsonb)','EXECUTE') and has_function_privilege('service_role','public.finance_create_club_house_rebate_v1(uuid,uuid,text,bigint,integer,text)','EXECUTE') and has_function_privilege('service_role','public.finance_force_transfer_club_to_club(uuid,uuid,bigint,text,text,text,jsonb)','EXECUTE') and has_function_privilege('service_role','public.finance_issue_emergency_loan_non_ai_core_v1(uuid,text,text,text)','EXECUTE') and has_function_privilege('service_role','public.finance_run_monthly_tax_audit_for_club(uuid,date,date,boolean)','EXECUTE') and has_function_privilege('service_role','public.race_engine_refund_one_day_weather_cancelled_race_v1(uuid)','EXECUTE') and has_function_privilege('service_role','public.refund_one_day_weather_cancelled_race_v2(uuid)','EXECUTE'),'service role retains all nine extended internal finance grants');
 select fixture.assert_ok((select count(*)=0 from finance.transactions) and (select count(*)=0 from finance.entries),'extended denied calls leave finance unchanged');
+
+set local role anon;
+select fixture.expect_error($q$select public.finance_spend_from_club(fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text,'{}'::jsonb)$q$,'permission denied for function','anon cannot execute finance_spend_from_club');
+select fixture.expect_error($q$select public.finance_spend_from_club_non_ai_core_v1(fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text,'{}'::jsonb)$q$,'permission denied for function','anon cannot execute finance_spend_from_club_non_ai_core_v1');
+select fixture.expect_error($q$select public.finance_issue_emergency_loan(fixture.uid(201),'fixture'::text,'fixture'::text,'fixture'::text)$q$,'permission denied for function','anon cannot execute finance_issue_emergency_loan');
+select fixture.expect_error($q$select public.finance_liquidate_club_for_insolvency(fixture.uid(201),'fixture'::text,'fixture'::text)$q$,'permission denied for function','anon cannot execute finance_liquidate_club_for_insolvency');
+select fixture.expect_error($q$select public.finance_liquidate_club_for_insolvency_non_ai_core_v1(fixture.uid(201),'fixture'::text,'fixture'::text)$q$,'permission denied for function','anon cannot execute finance_liquidate_club_for_insolvency_non_ai_core_v1');
+select fixture.expect_error($q$select public.finance_ensure_mandatory_funds(fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text)$q$,'permission denied for function','anon cannot execute finance_ensure_mandatory_funds');
+select fixture.expect_error($q$select public.finance_ensure_mandatory_funds_non_ai_core_v1(fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text)$q$,'permission denied for function','anon cannot execute finance_ensure_mandatory_funds_non_ai_core_v1');
+select fixture.expect_error($q$select public.finance_process_weekly_emergency_loan_repayments()$q$,'permission denied for function','anon cannot execute finance_process_weekly_emergency_loan_repayments');
+select fixture.expect_error($q$select public.finance_run_due_monthly_tax_audits(false)$q$,'permission denied for function','anon cannot execute finance_run_due_monthly_tax_audits');
+reset role;
+set local role authenticated;
+select fixture.expect_error($q$select public.finance_spend_from_club(fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text,'{}'::jsonb)$q$,'permission denied for function','authenticated cannot execute finance_spend_from_club');
+select fixture.expect_error($q$select public.finance_spend_from_club_non_ai_core_v1(fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text,'{}'::jsonb)$q$,'permission denied for function','authenticated cannot execute finance_spend_from_club_non_ai_core_v1');
+select fixture.expect_error($q$select public.finance_issue_emergency_loan(fixture.uid(201),'fixture'::text,'fixture'::text,'fixture'::text)$q$,'permission denied for function','authenticated cannot execute finance_issue_emergency_loan');
+select fixture.expect_error($q$select public.finance_liquidate_club_for_insolvency(fixture.uid(201),'fixture'::text,'fixture'::text)$q$,'permission denied for function','authenticated cannot execute finance_liquidate_club_for_insolvency');
+select fixture.expect_error($q$select public.finance_liquidate_club_for_insolvency_non_ai_core_v1(fixture.uid(201),'fixture'::text,'fixture'::text)$q$,'permission denied for function','authenticated cannot execute finance_liquidate_club_for_insolvency_non_ai_core_v1');
+select fixture.expect_error($q$select public.finance_ensure_mandatory_funds(fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text)$q$,'permission denied for function','authenticated cannot execute finance_ensure_mandatory_funds');
+select fixture.expect_error($q$select public.finance_ensure_mandatory_funds_non_ai_core_v1(fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text)$q$,'permission denied for function','authenticated cannot execute finance_ensure_mandatory_funds_non_ai_core_v1');
+select fixture.expect_error($q$select public.finance_process_weekly_emergency_loan_repayments()$q$,'permission denied for function','authenticated cannot execute finance_process_weekly_emergency_loan_repayments');
+select fixture.expect_error($q$select public.finance_run_due_monthly_tax_audits(false)$q$,'permission denied for function','authenticated cannot execute finance_run_due_monthly_tax_audits');
+reset role;
+select fixture.assert_ok(has_function_privilege('service_role','public.finance_spend_from_club(uuid,bigint,text,text,text,jsonb)','EXECUTE') and has_function_privilege('service_role','public.finance_spend_from_club_non_ai_core_v1(uuid,bigint,text,text,text,jsonb)','EXECUTE') and has_function_privilege('service_role','public.finance_issue_emergency_loan(uuid,text,text,text)','EXECUTE') and has_function_privilege('service_role','public.finance_liquidate_club_for_insolvency(uuid,text,text)','EXECUTE') and has_function_privilege('service_role','public.finance_liquidate_club_for_insolvency_non_ai_core_v1(uuid,text,text)','EXECUTE') and has_function_privilege('service_role','public.finance_ensure_mandatory_funds(uuid,bigint,text,text,text)','EXECUTE') and has_function_privilege('service_role','public.finance_ensure_mandatory_funds_non_ai_core_v1(uuid,bigint,text,text,text)','EXECUTE') and has_function_privilege('service_role','public.finance_process_weekly_emergency_loan_repayments()','EXECUTE') and has_function_privilege('service_role','public.finance_run_due_monthly_tax_audits(boolean)','EXECUTE'),'service role retains all nine spending and insolvency grants');
+select fixture.assert_ok((select count(*)=0 from finance.transactions) and (select count(*)=0 from finance.entries),'denied spending and insolvency calls leave finance unchanged');
 
 -- Controlled test-only grant. Never authorize this in production here.
 grant execute on function public.saturn_create_test_club_v1(text,text,text,text,text) to authenticated;

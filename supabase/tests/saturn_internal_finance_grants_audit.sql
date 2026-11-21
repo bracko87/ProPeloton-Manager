@@ -16,7 +16,16 @@ with target(name,signature) as (
    ('finance_issue_emergency_loan_non_ai_core_v1','public.finance_issue_emergency_loan_non_ai_core_v1(uuid,text,text,text)'),
    ('finance_run_monthly_tax_audit_for_club','public.finance_run_monthly_tax_audit_for_club(uuid,date,date,boolean)'),
    ('race_engine_refund_one_day_weather_cancelled_race_v1','public.race_engine_refund_one_day_weather_cancelled_race_v1(uuid)'),
-   ('refund_one_day_weather_cancelled_race_v2','public.refund_one_day_weather_cancelled_race_v2(uuid)')
+   ('refund_one_day_weather_cancelled_race_v2','public.refund_one_day_weather_cancelled_race_v2(uuid)'),
+   ('finance_spend_from_club','public.finance_spend_from_club(uuid,bigint,text,text,text,jsonb)'),
+   ('finance_spend_from_club_non_ai_core_v1','public.finance_spend_from_club_non_ai_core_v1(uuid,bigint,text,text,text,jsonb)'),
+   ('finance_issue_emergency_loan','public.finance_issue_emergency_loan(uuid,text,text,text)'),
+   ('finance_liquidate_club_for_insolvency','public.finance_liquidate_club_for_insolvency(uuid,text,text)'),
+   ('finance_liquidate_club_for_insolvency_non_ai_core_v1','public.finance_liquidate_club_for_insolvency_non_ai_core_v1(uuid,text,text)'),
+   ('finance_ensure_mandatory_funds','public.finance_ensure_mandatory_funds(uuid,bigint,text,text,text)'),
+   ('finance_ensure_mandatory_funds_non_ai_core_v1','public.finance_ensure_mandatory_funds_non_ai_core_v1(uuid,bigint,text,text,text)'),
+   ('finance_process_weekly_emergency_loan_repayments','public.finance_process_weekly_emergency_loan_repayments()'),
+   ('finance_run_due_monthly_tax_audits','public.finance_run_due_monthly_tax_audits(boolean)')
 )
 select target.name,
        target.signature,
@@ -51,7 +60,16 @@ with routines as (
     ('finance_issue_emergency_loan_non_ai_core_v1'),
     ('finance_run_monthly_tax_audit_for_club'),
     ('race_engine_refund_one_day_weather_cancelled_race_v1'),
-    ('refund_one_day_weather_cancelled_race_v2')
+    ('refund_one_day_weather_cancelled_race_v2'),
+    ('finance_spend_from_club'),
+    ('finance_spend_from_club_non_ai_core_v1'),
+    ('finance_issue_emergency_loan'),
+    ('finance_liquidate_club_for_insolvency'),
+    ('finance_liquidate_club_for_insolvency_non_ai_core_v1'),
+    ('finance_ensure_mandatory_funds'),
+    ('finance_ensure_mandatory_funds_non_ai_core_v1'),
+    ('finance_process_weekly_emergency_loan_repayments'),
+    ('finance_run_due_monthly_tax_audits')
   ) t(target)
   where strpos(lower(r.prosrc),t.target)>0 and r.proname<>t.target
 )

@@ -25,6 +25,15 @@ targets=(
     "finance_run_monthly_tax_audit_for_club",
     "race_engine_refund_one_day_weather_cancelled_race_v1",
     "refund_one_day_weather_cancelled_race_v2",
+    "finance_spend_from_club",
+    "finance_spend_from_club_non_ai_core_v1",
+    "finance_issue_emergency_loan",
+    "finance_liquidate_club_for_insolvency",
+    "finance_liquidate_club_for_insolvency_non_ai_core_v1",
+    "finance_ensure_mandatory_funds",
+    "finance_ensure_mandatory_funds_non_ai_core_v1",
+    "finance_process_weekly_emergency_loan_repayments",
+    "finance_run_due_monthly_tax_audits",
 )
 extensions={".ts",".tsx",".js",".jsx",".mjs",".cjs"}
 patterns={}
