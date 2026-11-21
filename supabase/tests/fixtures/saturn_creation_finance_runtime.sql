@@ -142,6 +142,25 @@ select fixture.assert_ok(not has_function_privilege('authenticated','public.fina
 select fixture.assert_ok(not has_function_privilege('authenticated','public.finance_get_or_create_club_account(uuid,text,text)','EXECUTE') and not has_function_privilege('anon','public.finance_get_or_create_club_account(uuid,text,text)','EXECUTE'),'direct account creation denied to browser roles');
 select fixture.assert_ok(has_function_privilege('service_role','public.finance_setup_new_club(uuid)','EXECUTE') and has_function_privilege('service_role','public.finance_credit_to_club(uuid,bigint,text,text,text,jsonb)','EXECUTE') and has_function_privilege('service_role','public.finance_grant_new_club_bonus(uuid,bigint)','EXECUTE') and has_function_privilege('service_role','public.finance_get_or_create_club_account(uuid,text,text)','EXECUTE'),'all four internal finance grants retained for service role');
 
+
+-- Actual rejected invocations under both browser roles, not merely catalog
+-- has_function_privilege checks. Synthetic club UUIDs only. Each call must
+-- fail at PostgreSQL EXECUTE authorization before entering the function.
+set local role anon;
+select fixture.expect_error($q$select public.finance_grant_new_club_bonus(fixture.uid(201),1)$q$,'permission denied for function','anon cannot execute initial bonus');
+select fixture.expect_error($q$select public.finance_setup_new_club(fixture.uid(201))$q$,'permission denied for function','anon cannot execute finance setup');
+select fixture.expect_error($q$select public.finance_credit_to_club(fixture.uid(201),1,'fixture','TREASURY','fixture-denied','{}'::jsonb)$q$,'permission denied for function','anon cannot execute internal credit');
+select fixture.expect_error($q$select public.finance_get_or_create_club_account(fixture.uid(201),'CASH','main')$q$,'permission denied for function','anon cannot execute internal account creation');
+reset role;
+set local role authenticated;
+select set_config('fixture.subject',fixture.uid(1)::text,true);
+select fixture.expect_error($q$select public.finance_grant_new_club_bonus(fixture.uid(201),1)$q$,'permission denied for function','authenticated cannot execute initial bonus');
+select fixture.expect_error($q$select public.finance_setup_new_club(fixture.uid(201))$q$,'permission denied for function','authenticated cannot execute finance setup');
+select fixture.expect_error($q$select public.finance_credit_to_club(fixture.uid(201),1,'fixture','TREASURY','fixture-denied','{}'::jsonb)$q$,'permission denied for function','authenticated cannot execute internal credit');
+select fixture.expect_error($q$select public.finance_get_or_create_club_account(fixture.uid(201),'CASH','main')$q$,'permission denied for function','authenticated cannot execute internal account creation');
+reset role;
+select fixture.assert_ok((select count(*)=0 from finance.transactions) and (select count(*)=0 from finance.entries) and (select count(*)=0 from finance.accounts where club_id is not null),'rejected browser invocations leave no finance state');
+
 -- Controlled test-only grant. Never authorize this in production here.
 grant execute on function public.saturn_create_test_club_v1(text,text,text,text,text) to authenticated;
 set local role authenticated;
