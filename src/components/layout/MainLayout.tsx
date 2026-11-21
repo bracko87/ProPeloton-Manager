@@ -79,8 +79,10 @@ const LAST_ACTIVITY_STORAGE_KEY = 'ppm-last-user-activity'
 export default function MainLayout({ children }: MainLayoutProps) {
   const { t } = useTranslation('appShell')
   const [collapsed, setCollapsed] = useState(() => {
-    try { return window.localStorage.getItem('ppm-sidebar-collapsed') === 'true' }
-    catch { return false }
+    try {
+      // First visit starts collapsed; subsequent visits respect the user's toggle.
+      return window.localStorage.getItem('ppm-sidebar-collapsed') !== 'false'
+    } catch { return true }
   })
 
   useEffect(() => {

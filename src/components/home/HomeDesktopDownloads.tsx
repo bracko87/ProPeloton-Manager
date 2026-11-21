@@ -124,10 +124,10 @@ export default function HomeDesktopDownloads(): JSX.Element {
     <section
       id="desktop-downloads"
       aria-labelledby="ppm-desktop-download-title"
-      className="relative isolate overflow-hidden border-y border-slate-200 bg-white py-14 text-slate-900 sm:py-20"
+      className="relative isolate overflow-hidden border-y border-yellow-400/20 bg-[#071426] py-14 text-white sm:py-20"
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_80%_30%,rgba(250,204,21,0.11),transparent_55%)]" aria-hidden="true" />
-      <div className="relative mx-auto grid max-w-7xl items-center gap-8 rounded-[2rem] border border-slate-200 bg-slate-50 px-6 py-9 shadow-sm sm:px-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
+      <div className="relative mx-auto grid max-w-7xl items-center gap-8 rounded-[2rem] border border-yellow-400/25 bg-[#132941]/65 px-6 py-9 shadow-[0_18px_48px_rgba(0,0,0,.26)] sm:px-10 lg:grid-cols-[1.15fr_0.85fr] lg:gap-14">
         <div className="flex items-start gap-5 sm:gap-7">
           <div className="hidden shrink-0 overflow-hidden rounded-2xl border border-yellow-400/25 bg-black p-1.5 shadow-xl sm:block">
             <img
@@ -140,15 +140,15 @@ export default function HomeDesktopDownloads(): JSX.Element {
             />
           </div>
           <div className="min-w-0 max-w-2xl">
-            <p className="text-xs font-semibold uppercase tracking-[0.19em] text-amber-700">
+            <p className="text-xs font-semibold uppercase tracking-[0.19em] text-yellow-400">
               {copy.eyebrow}
             </p>
             <h2 id="ppm-desktop-download-title" className="mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
               {copy.title}
             </h2>
-            <p className="mt-4 text-base leading-7 text-slate-700">{copy.description}</p>
-            <p className="mt-4 text-sm font-medium text-amber-800">{copy.note}</p>
-            <p className="mt-3 text-xs leading-5 text-slate-500">{copy.unsigned}</p>
+            <p className="mt-4 text-base leading-7 text-white/75">{copy.description}</p>
+            <p className="mt-4 text-sm font-medium text-yellow-100/80">{copy.note}</p>
+            <p className="mt-3 text-xs leading-5 text-white/50">{copy.unsigned}</p>
           </div>
         </div>
         <div className="grid gap-3" aria-label={copy.title}>
@@ -172,7 +172,7 @@ export default function HomeDesktopDownloads(): JSX.Element {
           </a>
           <div
             aria-disabled="true"
-            className="flex min-h-12 items-center gap-4 rounded-xl border border-slate-300 bg-slate-100 px-5 py-3 text-sm font-medium text-slate-500"
+            className="flex min-h-12 items-center gap-4 rounded-xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-medium text-white/50"
           >
             <Gamepad2 size={22} aria-hidden="true" />
             <span className="flex-1">{copy.steam}</span>

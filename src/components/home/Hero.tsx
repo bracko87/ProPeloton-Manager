@@ -12,9 +12,8 @@ import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
 type HeroProps = { gameTimeLabel: string }
 
 // Bundled locally so the hero uses the approved realistic sprint photo reliably.
-const SPRINT_PHOTO_URL = '/images/home/hero-sprint-finish.png'
-const FALLBACK_PHOTO_URL =
-  'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/4b6fb4ca-5ab1-4fea-b645-c20802671498.png'
+// Supabase public storage; verified against the live storage.objects entry.
+const SPRINT_PHOTO_URL = 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/3225c6b7-e76a-4a22-85b1-1b748b0d1ffa.png'
 
 function formatGameTimeLabel(label: string, seasonLabel: string, loadingLabel: string): string {
   if (!label) return loadingLabel
@@ -97,7 +96,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
           transform:translate3d(var(--ppm-x,0px),var(--ppm-y,0px),0) scale(1.026);
           transition:transform .38s ease-out;
         }
-        .ppm-cinematic .ppm-photo { filter:saturate(1.17) contrast(1.1) brightness(.94); }
+        .ppm-cinematic .ppm-photo { filter:saturate(1.06) contrast(1.05) brightness(1.02); }
         .ppm-cinematic .ppm-glass {
           background:linear-gradient(130deg,rgba(31,49,74,.82),rgba(7,20,39,.76));
           border:1px solid rgba(255,255,255,.23);
@@ -131,7 +130,7 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
         @keyframes ppm-beacon {50%{box-shadow:0 0 0 7px rgba(74,222,128,0)}}
         @media(max-width:1023px){
           .ppm-cinematic .ppm-photo {object-position:53% 60%;}
-          .ppm-cinematic .ppm-photo-wrap {width:100%!important;opacity:.5;}
+          .ppm-cinematic .ppm-photo-wrap {width:100%!important;opacity:.82;}
         }
         @media(prefers-reduced-motion:reduce){
           .ppm-cinematic *, .ppm-cinematic *:before, .ppm-cinematic *:after {
@@ -147,18 +146,14 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
           <img
             src={SPRINT_PHOTO_URL}
             alt=""
-            fetchPriority="high"
-            className="ppm-photo ppm-racer h-full w-full object-cover object-[50%_54%]"
-            onError={event => {
-              if (!event.currentTarget.src.includes('4b6fb4ca-5ab1')) {
-                event.currentTarget.src = FALLBACK_PHOTO_URL
-              }
-            }}
+            loading="eager"
+            decoding="async"
+            className="ppm-photo ppm-racer h-full w-full object-cover object-[52%_50%]"
           />
         </div>
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,#061426_0%,rgba(6,20,38,.99)_19%,rgba(6,20,38,.90)_32%,rgba(6,20,38,.50)_46%,rgba(6,20,38,.12)_63%,rgba(6,20,38,.03)_100%)]" />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#061426]/95 via-transparent to-[#061426]/35" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_63%_58%,transparent_28%,rgba(4,13,31,.20)_79%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,#061426_0%,rgba(6,20,38,.96)_22%,rgba(6,20,38,.78)_34%,rgba(6,20,38,.22)_53%,rgba(6,20,38,.02)_75%)]" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#061426]/60 via-transparent to-[#061426]/15" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_63%_58%,transparent_40%,rgba(4,13,31,.09)_90%)]" />
         <div className="ppm-ambient absolute -left-40 top-20 h-80 w-96 rounded-full bg-blue-600/25 blur-[100px]" />
         <div className="ppm-ambient absolute -right-20 bottom-0 h-60 w-[620px] rounded-full bg-yellow-400/25 blur-[85px]" />
         <div className="ppm-speed-line bottom-[18%] right-[-15%] w-[65%]" />

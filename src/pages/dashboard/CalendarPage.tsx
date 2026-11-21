@@ -40,26 +40,6 @@ type TrainingCampBooking = {
   camp_type_snapshot: string | null
 }
 
-type WeatherNormals = {
-  country_code: string
-  week_of_year: number
-  avg_temp_c: number | null
-  avg_min_temp_c: number | null
-  avg_max_temp_c: number | null
-  avg_precip_mm: number | null
-  avg_wind_kmh: number | null
-  p_clear: number | null
-  p_partly_cloudy: number | null
-  p_overcast: number | null
-  p_foggy: number | null
-  p_drizzle: number | null
-  p_rain: number | null
-  p_heavy_rain: number | null
-  p_sleet: number | null
-  p_snow: number | null
-  p_thunderstorm: number | null
-}
-
 type RaceApplicationStatus =
   | 'not_open'
   | 'open'
@@ -244,44 +224,6 @@ const STATUS_BADGE_STYLES: Record<string, string> = {
   completed: 'bg-gray-100 text-gray-700',
   cancelled: 'bg-red-100 text-red-700'
 }
-
-const WEATHER_LABELS: Array<{
-  key: keyof Pick<
-    WeatherNormals,
-    | 'p_clear'
-    | 'p_partly_cloudy'
-    | 'p_overcast'
-    | 'p_foggy'
-    | 'p_drizzle'
-    | 'p_rain'
-    | 'p_heavy_rain'
-    | 'p_sleet'
-    | 'p_snow'
-    | 'p_thunderstorm'
-  >
-  translationKey:
-    | 'weather.clear'
-    | 'weather.partlyCloudy'
-    | 'weather.overcast'
-    | 'weather.foggy'
-    | 'weather.drizzle'
-    | 'weather.rain'
-    | 'weather.heavyRain'
-    | 'weather.sleet'
-    | 'weather.snow'
-    | 'weather.thunderstorm'
-}> = [
-  { key: 'p_clear', translationKey: 'weather.clear' },
-  { key: 'p_partly_cloudy', translationKey: 'weather.partlyCloudy' },
-  { key: 'p_overcast', translationKey: 'weather.overcast' },
-  { key: 'p_foggy', translationKey: 'weather.foggy' },
-  { key: 'p_drizzle', translationKey: 'weather.drizzle' },
-  { key: 'p_rain', translationKey: 'weather.rain' },
-  { key: 'p_heavy_rain', translationKey: 'weather.heavyRain' },
-  { key: 'p_sleet', translationKey: 'weather.sleet' },
-  { key: 'p_snow', translationKey: 'weather.snow' },
-  { key: 'p_thunderstorm', translationKey: 'weather.thunderstorm' },
-]
 
 const FILTER_OPTIONS: Array<{
   key: keyof SeasonCalendarFilters
@@ -948,36 +890,6 @@ function isDateWithinRange(date: Date, startDate: string, endDate: string): bool
   return current >= start && current <= end
 }
 
-function getISOWeek(date: Date): number {
-  const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
-  const dayNumber = utcDate.getUTCDay() || 7
-  utcDate.setUTCDate(utcDate.getUTCDate() + 4 - dayNumber)
-  const yearStart = new Date(Date.UTC(utcDate.getUTCFullYear(), 0, 1))
-  return Math.ceil((utcDate.getTime() - yearStart.getTime() + 86400000) / 604800000)
-}
-
-function getDominantWeatherLabel(weather: WeatherNormals | null, t: CalendarT): string {
-  if (!weather) return t('weather.noData')
-
-  let bestTranslationKey: (typeof WEATHER_LABELS)[number]['translationKey'] = 'weather.clear'
-  let bestScore = -1
-
-  for (const item of WEATHER_LABELS) {
-    const score = Number(weather[item.key] ?? 0)
-    if (score > bestScore) {
-      bestScore = score
-      bestTranslationKey = item.translationKey
-    }
-  }
-
-  return t(bestTranslationKey)
-}
-
-function formatWeatherNumber(value: number | null | undefined, digits = 0): string {
-  if (value == null) return '—'
-  return Number(value).toFixed(digits)
-}
-
 function toNullableString(value: unknown): string | null {
   if (typeof value !== 'string') return null
   const trimmed = value.trim()
@@ -1035,7 +947,6 @@ export default function CalendarPage(): JSX.Element {
     SponsorObjectiveCalendarTarget[]
   >([])
 
-  const [teamWeather, setTeamWeather] = useState<WeatherNormals | null>(null)
   const [raceCalendarNotice, setRaceCalendarNotice] = useState<string | null>(null)
 
   const [tutorialLoading, setTutorialLoading] = useState(true)
@@ -1101,8 +1012,6 @@ export default function CalendarPage(): JSX.Element {
 
       try {
         let resolvedClubId: string | null = null
-        let resolvedClubCountryCode: string | null = null
-        let resolvedTeamWeather: WeatherNormals | null = null
         let resolvedRaceNotice: string | null = null
         let resolvedRaces: RaceCalendarItem[] = []
         let resolvedRaceStagesByRaceId: Record<string, RaceStageCalendarRow[]> = {}
@@ -1142,58 +1051,6 @@ export default function CalendarPage(): JSX.Element {
         const nextGameDateParts = Array.isArray(gameDatePartsRes.data)
           ? ((gameDatePartsRes.data[0] as GameDateParts | undefined) ?? null)
           : ((gameDatePartsRes.data as GameDateParts | null) ?? null)
-
-        try {
-          const clubMetaRes = await supabase
-            .from('clubs')
-            .select('country_code')
-            .eq('id', resolvedClubId)
-            .maybeSingle()
-
-          if (!clubMetaRes.error) {
-            resolvedClubCountryCode =
-              (clubMetaRes.data as { country_code?: string | null } | null)?.country_code ?? null
-          }
-        } catch {
-          resolvedClubCountryCode = null
-        }
-
-        if (resolvedClubCountryCode && nextGameDate) {
-          const resolvedWeatherWeek = getISOWeek(parseDateString(nextGameDate))
-
-          try {
-            const weatherRes = await supabase
-              .from('country_weather_weekly_normals')
-              .select(`
-                  country_code,
-                  week_of_year,
-                  avg_temp_c,
-                  avg_min_temp_c,
-                  avg_max_temp_c,
-                  avg_precip_mm,
-                  avg_wind_kmh,
-                  p_clear,
-                  p_partly_cloudy,
-                  p_overcast,
-                  p_foggy,
-                  p_drizzle,
-                  p_rain,
-                  p_heavy_rain,
-                  p_sleet,
-                  p_snow,
-                  p_thunderstorm
-                `)
-              .eq('country_code', resolvedClubCountryCode)
-              .eq('week_of_year', resolvedWeatherWeek)
-              .maybeSingle()
-
-            if (!weatherRes.error) {
-              resolvedTeamWeather = (weatherRes.data as WeatherNormals | null) ?? null
-            }
-          } catch {
-            resolvedTeamWeather = null
-          }
-        }
 
         try {
           const { data, error } = await supabase.rpc('get_race_calendar_entries_v1')
@@ -1463,7 +1320,6 @@ export default function CalendarPage(): JSX.Element {
         setCurrentGameDate(nextGameDate || null)
         setGameDateParts(nextGameDateParts)
         setBookings((bookingsRes.data ?? []) as TrainingCampBooking[])
-        setTeamWeather(resolvedTeamWeather)
         setRaces(resolvedRaces)
         setRaceStagesByRaceId(resolvedRaceStagesByRaceId)
         setSponsorObjectiveTargets(resolvedSponsorObjectiveTargets)
@@ -2163,46 +2019,6 @@ export default function CalendarPage(): JSX.Element {
           </div>
         </div>
 
-        {activeView === 'season' ? (
-          <div className="w-full xl:max-w-[380px]">
-            <div className="rounded-lg border border-sky-200 bg-sky-50 px-4 py-3">
-              <div className="text-xs font-semibold uppercase tracking-wide text-sky-700">
-                {t('weather.teamCountry')}
-              </div>
-
-              {teamWeather && gameDateParts && currentGameDate ? (
-                <div className="mt-2 space-y-1.5">
-                  <div className="text-sm font-medium text-gray-900">
-                    {t('weather.today')}:{' '}
-                    {formatGameDateDisplay(
-                      gameDateParts.season_number,
-                      gameDateParts.month_number,
-                      gameDateParts.day_number,
-                      currentGameDate,
-                      t
-                    )}
-                  </div>
-
-                  <div className="text-sm font-semibold text-gray-900">
-                    {formatWeatherNumber(teamWeather.avg_temp_c)}°C ·{' '}
-                    {getDominantWeatherLabel(teamWeather, t)}
-                  </div>
-
-                  <div className="text-xs text-gray-600">
-                    {t('weather.min')} {formatWeatherNumber(teamWeather.avg_min_temp_c)}° ·{' '}
-                    {t('weather.max')} {formatWeatherNumber(teamWeather.avg_max_temp_c)}° ·{' '}
-                    {t('weather.wind')} {formatWeatherNumber(teamWeather.avg_wind_kmh)} km/h ·{' '}
-                    {t('weather.rain')} {formatWeatherNumber(teamWeather.avg_precip_mm, 1)} mm
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-2 text-sm text-gray-600">
-                  {t('weather.noData')}
-                </div>
-              )}
-            </div>
-          </div>
-        ) : null}
       </div>
 
       {activeView === 'season' ? (

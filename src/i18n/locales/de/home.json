@@ -185,5 +185,237 @@
     "homepageDataUnexpected": "Die Live-Daten der Startseite wurden in einem unerwarteten Format zurückgegeben.",
     "clubStatusError": "Sie sind angemeldet, aber wir konnten den Status Ihres Clubs nicht laden. Bitte aktualisieren Sie die Seite oder versuchen Sie es erneut.",
     "clubCreationDisabled": "Die Erstellung neuer Clubs ist bis zum Start vorübergehend pausiert. Bestehende Manager können sich weiterhin anmelden."
+  },
+  "why": {
+    "eyebrow": "WARUM PROPELOTON MANAGER",
+    "title": "Viel mehr als Renntaktik.",
+    "subtitle": "Leite die ganze Radsportwelt – vom ersten Jugendtraining bis zur Meisterschaft.",
+    "races": "Terminierte Rennen",
+    "equipment": "Ausrüstungsmodelle",
+    "staff": "Aktive Personalrollen",
+    "features": {
+      "management": {
+        "title": "Umfassendes Teammanagement",
+        "description": "Steuere Entscheidungen im ganzen Verein.",
+        "details": "Vergib Fahrerrollen, steuere Fitness und Moral und plane langfristig. Training, Personal, Material und Finanzen beeinflussen jede Entscheidung.",
+        "benefit": "Ein Radsportverein besteht aus mehr als der Aufstellung am Renntag. Personal, Finanzen und sportliche Entscheidungen wirken über die gesamte Saison zusammen.",
+        "actions": "Fahrerrollen festlegen|Form, Moral und Müdigkeit ausbalancieren|Den Verein langfristig planen",
+        "deepDive": "Ein Verein verbindet Sport, Personal, Material und Finanzen. Du entscheidest nicht nur über eine Startaufstellung, sondern über die Rollen der Fahrer, den Einsatz des Personals, die Infrastruktur und die Saisonziele. Jede Abteilung benötigt Aufmerksamkeit; besonders wichtig ist, die sportlichen Pläne an die tatsächlich verfügbaren Mittel anzupassen.",
+        "tradeoff": "Eine Verstärkung im Kader kann Geld für Mitarbeiter oder Material binden. Viele Renneinsätze erhöhen zugleich den Druck auf Fahrer und Organisation. Deshalb zählt nicht der höchste Einzelwert, sondern ein ausgewogener Plan, der auch über die nächsten Wochen hinaus tragfähig bleibt.",
+        "scenario": "Du hast einen guten Kletterer und ein knappes Budget. Investierst du in Training, zusätzliche Helfer oder Material für die nächsten Bergetappen? Jede Option ist sinnvoll, löst aber eine andere Aufgabe. Das richtige Gleichgewicht macht den Unterschied."
+      },
+      "squads": {
+        "title": "Profis, U23 und Nachwuchs",
+        "description": "Vom Nachwuchs bis ins Profiteam.",
+        "details": "Führe dein Profiteam und entwickle U23- und Nachwuchsfahrer. Baue einen langfristigen Weg von der Jugendakademie bis zur ersten Mannschaft auf.",
+        "benefit": "Eine starke Zukunft beginnt unterhalb des Profiteams. Nachwuchskader ermöglichen es, Talente aufzubauen und zugleich heute konkurrenzfähig zu bleiben.",
+        "actions": "Profiteam zusammenstellen|U23-Programm aktivieren und entwickeln|Nachwuchs auf den Sprung zu den Profis vorbereiten",
+        "deepDive": "Die Profimannschaft übernimmt die aktuellen Rennen. U23 und Jugendakademie können dagegen Talente für die Zukunft aufbauen. Die drei Entwicklungsstufen gehören zu einer langfristigen Strategie: Wer hilft heute, welche Position braucht später einen Nachfolger und wann ist ein junger Fahrer für höhere Anforderungen bereit?",
+        "tradeoff": "Ein großer Profikader ersetzt keine Nachwuchsförderung. Diese Programme kosten gegebenenfalls saisonale Coins und haben Freischaltbedingungen. Deshalb ist entscheidend, ob du die jungen Fahrer über einen längeren Zeitraum sinnvoll betreuen kannst.",
+        "scenario": "Der Vertrag deines erfahrenen Sprinters läuft bald aus. Statt sofort teuer einzukaufen, prüfst du, ob ein Nachwuchsfahrer langfristig diese Rolle übernehmen könnte. Gleichzeitig muss die aktuelle Mannschaft weiter konkurrenzfähig bleiben."
+      },
+      "staff": {
+        "title": "11 aktive Mitarbeiterrollen",
+        "description": "Stelle dein Spezialistenteam zusammen.",
+        "details": "Stelle Spezialisten für Training, Scouting, Medizin, Ernährung und Mechanik ein. Ihre Erfahrung unterstützt Entwicklung, Rennvorbereitung und Regeneration.",
+        "benefit": "Dein Betreuerstab beeinflusst die tägliche Vorbereitung statt nur einen pauschalen Bonus. Fachkräfte verbinden Leistung, Gesundheit und Organisation.",
+        "actions": "Trainer und Spezialisten verpflichten|Fachwissen in Entscheidungen einbeziehen|Personalkosten und Nutzen abwägen",
+        "deepDive": "Dein Betreuerstab deckt verschiedene Fachgebiete ab, etwa Training, Medizin, Scouting und Mechanik. Die elf aktiven Mitarbeiterrollen machen es möglich, den Verein gezielt aufzustellen. Die Wahl hängt davon ab, ob du mehr Entwicklung, besseren Rennsupport oder eine stabilere Betreuung benötigst.",
+        "tradeoff": "Jede zusätzliche Fachkraft verursacht laufende Gehaltskosten. Ein kleiner Verein braucht nicht automatisch die größtmögliche Belegschaft. Besser ist es, dort zu investieren, wo die vorhandene Organisation eine konkrete Schwäche hat.",
+        "scenario": "Mehrere Fahrer erholen sich schlecht zwischen den Rennen. Statt den Kader sofort zu vergrößern, überprüfst du Trainingsbelastung, medizinische Betreuung und die Aufgabenverteilung im Staff."
+      },
+      "training": {
+        "title": "Präzises Training",
+        "description": "Trainiere neun Fähigkeiten gezielt.",
+        "details": "Lege individuelle Trainingsschwerpunkte für neun Fähigkeiten fest. Berücksichtige Belastung, Müdigkeit und Potenzial statt alle gleich zu trainieren.",
+        "benefit": "Individuelle Pläne berücksichtigen Stärken, Schwächen und Rennkalender, statt alle Fahrer gleich zu trainieren.",
+        "actions": "Fähigkeitsschwerpunkte wählen|Belastung rund um Rennen anpassen|Fortschritte verfolgen",
+        "deepDive": "Trainingsschwerpunkte können auf neun Fahrerfähigkeiten ausgerichtet werden. Ein Sprinter benötigt ein anderes Profil als ein Bergfahrer oder Zeitfahrspezialist. Neben den Stärken und Schwächen ist auch wichtig, wie viel Zeit bis zum nächsten geplanten Renneinsatz bleibt.",
+        "tradeoff": "Zu hohe Belastung kurz vor einem wichtigen Rennen kann der unmittelbaren Einsatzbereitschaft entgegenstehen. Ein sinnvolles Trainingsprogramm passt sich deshalb an Kalender, Müdigkeit und Entwicklungspotenzial an.",
+        "scenario": "Dein Zeitfahrspezialist hat in einigen Wochen einen wichtigen Start. Du setzt zunächst einen passenden Schwerpunkt und reduzierst die Belastung vor dem Wettbewerb, anstatt ihn wie einen Sprinter zu trainieren."
+      },
+      "growth": {
+        "title": "Fahrerentwicklung",
+        "description": "Verfolge Potenzial, Form und Fortschritte.",
+        "details": "Verfolge Fähigkeiten, Form, Moral, Fitness und Potenzial deiner Fahrer. Entscheide, wann sie sich spezialisieren, erholen oder neue Rollen übernehmen.",
+        "benefit": "Die Karriere eines Fahrers verändert sich durch Entscheidungen und Umstände. Potenzial, Form und Fitness helfen bei der richtigen Belastungssteuerung.",
+        "actions": "Neun Fähigkeiten beobachten|Müdigkeit, Moral und Zustand prüfen|Rollen im Lauf der Karriere anpassen",
+        "deepDive": "Fahrer werden nicht nur durch ihre Gesamtnote beschrieben. Neun Einzelwerte, Potenzial, Moral, Fitness und Müdigkeit zeigen unterschiedliche Seiten ihrer Entwicklung. Wer diese Faktoren getrennt betrachtet, kann Rollen verändern oder bestimmte Fähigkeiten gezielt fördern.",
+        "tradeoff": "Kurzfristige Form und langfristige Fähigkeiten sind nicht dasselbe. Ein schwaches Rennen kann an Müdigkeit liegen, während ein gutes Ergebnis noch keine dauerhafte Verbesserung beweist. Diese Unterscheidung schützt vor überstürzten Entscheidungen.",
+        "scenario": "Ein Allrounder verbessert sich am Berg, ist aber sichtbar erschöpft. Du planst später eine anspruchsvollere Rolle und gibst ihm zunächst Erholung, statt den nächsten Renneinsatz zu erzwingen."
+      },
+      "calendar": {
+        "title": "593 terminierte Rennen",
+        "description": "Plane deinen Kalender für die ganze Saison.",
+        "details": "Wähle aus 593 derzeit terminierten Rennen, von Eintagesrennen bis Rundfahrten. Plane Starts, Ruhetage und verfügbare Fahrer über die Saison.",
+        "benefit": "Ein umfangreicher Rennkalender macht das Timing zur Strategie. Die passenden Starts sind genauso wichtig wie die richtigen Fahrer.",
+        "actions": "Terminierte Rennen durchsuchen|Aufstellungen und Erholung koordinieren|Eine komplette Saison planen",
+        "deepDive": "Der Rennkalender verbindet Eintagesrennen, Rundfahrten und unterschiedliche Wettbewerbe. Im geprüften Datensatz sind 593 Rennen datiert. Du wählst passende Starts, beachtest Teilnahmebedingungen und koordinierst Fahrer, Erholung und Saisonziele.",
+        "tradeoff": "Zu viele Einsätze überfordern eine kleine Mannschaft, zu wenige lassen Möglichkeiten ungenutzt. Etappen, Sperrfristen und Nationalwettbewerbe haben eigene Anforderungen. Eine bewusste Auswahl ist daher wertvoller als die automatische Anmeldung zu allem.",
+        "scenario": "Ein wichtiges Sprintrennen liegt kurz vor einer schweren Rundfahrt. Du setzt Prioritäten, rotierst Fahrer oder schaffst eine Pause, damit die Mannschaft bei beiden Aufgaben nicht unvorbereitet antritt."
+      },
+      "preparation": {
+        "title": "Detaillierte Rennvorbereitung",
+        "description": "Plane Aufstellung, Taktik und Material.",
+        "details": "Bestimme Starter, Kapitäne und taktische Rollen und passe das Material an die Strecke an. Berücksichtige Profil, Fitness und Rennbedarf vor dem Start.",
+        "benefit": "Die Startliste ist erst der Anfang. Taktik, Streckenprofil, Material und Vorräte geben der Rennvorbereitung Gewicht.",
+        "actions": "Kapitäne und Helfer auswählen|Material zur Strecke passend wählen|Taktik vor dem Start festlegen",
+        "deepDive": "Vor einem Rennen legst du Starter, Kapitäne und unterstützende Rollen fest. Streckenprofil, Fahrerzustand, Material und Vorräte gehören zu dieser Vorbereitung. Ein flaches Sprintrennen verlangt eine andere Zusammenstellung als eine schwere Bergetappe.",
+        "tradeoff": "Die nominell stärksten Fahrer sind nicht immer die passendste Mannschaft. Ein erschöpfter Leader oder fehlende Helfer können die Planung erschweren. Die tatsächlichen Anforderungen der Strecke sollten den Ausschlag geben.",
+        "scenario": "Eine Etappe beginnt mit langen Anstiegen und endet schnell. Du entscheidest, ob der geschützte Bergfahrer oder ein ausgewogener Plan im Mittelpunkt steht und passt die Helfer entsprechend an."
+      },
+      "tiers": {
+        "title": "Vier Wettbewerbsebenen",
+        "description": "Steige durch regionale Ligen auf.",
+        "details": "Fahre in vier Wettbewerbsebenen mit Ligen, Divisionen und Regionen. Kämpfe um bessere Platzierungen, Aufstieg und den Klassenerhalt.",
+        "benefit": "Wettbewerbe auf unterschiedlichen Leistungsstufen geben jeder Saison eine längere Geschichte und messbaren Fortschritt.",
+        "actions": "Divisionen und Regionen verfolgen|Ligapunkte sammeln|Aufsteigen und Abstieg vermeiden",
+        "deepDive": "Die Wettbewerbsstruktur umfasst vier Ebenen mit Ligen, Divisionen und Regionen. Dadurch erhalten Meisterschaftsposition und sportliche Entwicklung über einzelne Rennen hinaus Bedeutung. Jeder Verein kann den Aufstieg anstreben oder sich zunächst auf Stabilität konzentrieren.",
+        "tradeoff": "Wer jeden Wettbewerb maximal angreift, riskiert knappe Reserven. Ein Aufstiegskandidat verfolgt andere Ziele als ein Verein, der sich in einer starken Liga halten muss. Kaderbreite und Finanzen bestimmen den möglichen Ehrgeiz.",
+        "scenario": "Nach einem Aufstieg triffst du auf stärkere Gegner. Vielleicht verbesserst du eine Schwachstelle im Kader oder wählst bewusst Rennen, die deinen vorhandenen Fahrern besser liegen."
+      },
+      "equipment": {
+        "title": "170 Ausrüstungsmodelle",
+        "description": "Sechs Materialkategorien plus Rennbedarf.",
+        "details": "Wähle aus 170 aktiven Modellen für Rahmen, Laufräder, Reifen, Schaltgruppen, Helme und Schuhe. Plane Verschleiß, Wartung und Rennverbrauchsmaterial.",
+        "benefit": "Material ist mehr als eine einzige Kennzahl. Auswahl, Haltbarkeit, Wartung und Verbrauchsartikel gehören zur Einsatzbereitschaft.",
+        "actions": "Ausrüstung aus sechs Kategorien wählen|Verschlissenes Material warten oder ersetzen|Rennvorräte organisieren",
+        "deepDive": "Zur Ausstattung gehören 170 aktive Modelle aus sechs Kernkategorien sowie Rennverbrauchsmaterial. Rahmen, Laufräder, Reifen, Schaltgruppen, Helme und Schuhe unterscheiden sich in Auswahl und Einsatz. Zustand und Wartung bleiben nach dem Kauf wichtig.",
+        "tradeoff": "Teures Material bringt wenig, wenn andere notwendige Ausrüstung fehlt oder stark verschlissen ist. Budget, Haltbarkeit und bevorstehende Renneinsätze müssen zusammen betrachtet werden.",
+        "scenario": "Vor mehreren wichtigen Starts kontrollierst du das vorhandene Material. Der Ersatz eines verschlissenen Teils kann sinnvoller sein als ein Upgrade eines bereits zuverlässigen Gegenstands."
+      },
+      "assets": {
+        "title": "Infrastruktur & Teamfahrzeuge",
+        "description": "Verbessere Anlagen, Teamwagen und Vans.",
+        "details": "Investiere in Anlagen, Teamautos und Materialtransporter. Gute Infrastruktur und Rennunterstützung verbessern Logistik und Einsatzbereitschaft.",
+        "benefit": "Ein erfolgreiches Team benötigt Anlagen und Fahrzeuge hinter den Fahrern. Unterstützende Infrastruktur schafft langfristige Entscheidungen.",
+        "actions": "Infrastruktur ausbauen|Teamautos und Materialtransporter verwalten|Kosten der Rennunterstützung planen",
+        "deepDive": "Zum Betrieb des Teams gehören Einrichtungen und Fahrzeuge wie Teamautos und Materialtransporter. Infrastruktur unterstützt die Rennorganisation und ist zugleich eine längerfristige Investition, die über einzelne Wettbewerbe hinaus Bestand hat.",
+        "tradeoff": "Kapital für Fahrzeuge oder Gebäude steht nicht mehr für Gehälter und Fahrerwechsel zur Verfügung. Entscheidend ist, wann die bestehende Ausstattung ausreicht und wo eine echte Grenze erreicht wird.",
+        "scenario": "Du erweiterst deinen Rennkalender und stellst fest, dass die bisherige Unterstützung knapp wird. Statt alles auf einmal zu kaufen, priorisierst du die Anlagen und Fahrzeuge, die den unmittelbar geplanten Einsätzen dienen."
+      },
+      "finance": {
+        "title": "Realistische Vereinsfinanzen",
+        "description": "Plane Gehälter, Kosten, Steuern und Prämien.",
+        "details": "Verwalte Sponsorengelder, Gehälter, Transfers, Material, Betriebskosten und Steuern. Jede Investition wirkt sich auf das Vereinsbudget aus.",
+        "benefit": "Erfolgreiches Management bedeutet schwierige Abwägungen. Einnahmen, Gehälter, Transfers und Betriebskosten beanspruchen dasselbe Budget.",
+        "actions": "Einnahmen und Ausgaben prüfen|Gehälter und Transfers kalkulieren|Investitionen mit Stabilität vereinbaren",
+        "deepDive": "Einnahmen aus Sponsoring und sportlichen Erfolgen stehen Gehältern, Transfers, Material, Steuern und laufenden Kosten gegenüber. Finanzmanagement bestimmt damit, welche sportlichen Vorhaben tatsächlich möglich sind.",
+        "tradeoff": "Hohe Verpflichtungen können die Mannschaft kurzfristig stärken, später aber jeden Spielraum nehmen. Nicht nur der Kaufpreis, sondern besonders wiederkehrende Kosten sind zu beachten.",
+        "scenario": "Ein guter Fahrer steht zum Verkauf. Du vergleichst Ablöse und Gehalt mit den geplanten Ausgaben für Staff, Ausrüstung und nächste Rennen, bevor du ein Angebot machst."
+      },
+      "sponsors": {
+        "title": "Regionale Sponsoren",
+        "description": "Arbeite mit Marken und passenden Zielen.",
+        "details": "Finde regionale Sponsoren mit Zielen, die zu deinem Team und dessen Wettbewerben passen. Verträge bringen Geld und sportliche Verpflichtungen.",
+        "benefit": "Sponsoring wird Teil der sportlichen Strategie, wenn Marken, regionale Passung und relevante Ziele die Verträge beeinflussen.",
+        "actions": "Regionale Angebote vergleichen|Sponsorenziele bewerten|Ergebnisse mit Vertragszielen abgleichen",
+        "deepDive": "Regionale Sponsoren können zum Verein und seinen sportlichen Wettbewerben passen. Ihre Angebote verbinden Einnahmen mit Zielen. Die Wahl eines Vertrags sollte deshalb zum vorgesehenen Kalender und zum Leistungsstand des Kaders passen.",
+        "tradeoff": "Eine hohe Zahlung ist nicht automatisch vorteilhaft, wenn die verlangten Ergebnisse unrealistisch sind. Nationale Auswahlwettbewerbe sind von gewöhnlichen Vereins-Sponsorenzielen getrennt.",
+        "scenario": "Zwei Partner bieten unterschiedliche Bedingungen. Einer zahlt mehr, verlangt jedoch sehr anspruchsvolle Ergebnisse. Der andere passt genau zu den Rennen, die du ohnehin bestreiten möchtest."
+      },
+      "operations": {
+        "title": "Teamrichtlinien & Betrieb",
+        "description": "Steuere Wohnen, Ernährung, Erholung und Logistik.",
+        "details": "Gestalte Regeln für Unterkunft, Ernährung, Regeneration und Logistik. Wäge die laufenden Kosten gegen den Nutzen und die Boni ab.",
+        "benefit": "Tägliche Richtlinien sind echte Managemententscheidungen. Mehr Unterstützung kann helfen, verursacht aber laufende Kosten.",
+        "actions": "Unterkunft regeln|Ernährung und Regeneration anpassen|Logistikkosten steuern",
+        "deepDive": "Vereinsrichtlinien betreffen Unterkunft, Ernährung, Regeneration und Logistik. Sie wirken über den laufenden Betrieb und helfen dabei festzulegen, welches Betreuungsniveau der Club dauerhaft tragen möchte.",
+        "tradeoff": "Mehr Unterstützung kann sinnvoll sein, erhöht aber wiederkehrende Ausgaben. Bei einem dichten Rennprogramm kann eine andere Politik passend sein als bei wenigen ausgesuchten Starts.",
+        "scenario": "Du planst mehrere Rennen direkt hintereinander und prüfst Erholung und Logistik erneut. Eine Verbesserung darf die Mittel für Löhne, Reisen und Rennausrüstung nicht gefährden."
+      },
+      "transfers": {
+        "title": "Transfers & freie Fahrer",
+        "description": "Verhandle mit Teams und verpflichte freie Fahrer.",
+        "details": "Verhandle Fahrerwechsel zwischen Vereinen oder suche vertragslose Fahrer. Stärke den Kader, ohne Gehälter und Ablösen aus dem Blick zu verlieren.",
+        "benefit": "Beim Kaderaufbau zählt mehr als der stärkste Name. Verträge müssen zur Taktik und zum Budget passen.",
+        "actions": "Transfers zwischen Vereinen verhandeln|Vertragslose Fahrer verpflichten|Gehaltsbudget kontrollieren",
+        "deepDive": "Der Transfermarkt erlaubt Verpflichtungen aus anderen Clubs und von vertragslosen Fahrern. Du kannst fehlende Rollen besetzen, die Kaderbreite erhöhen oder einen langfristigen Umbruch beginnen. Verträge und Gehälter gehören zur sportlichen Entscheidung.",
+        "tradeoff": "Ein hoher Gesamtwert sagt nicht, ob ein Spieler in die Mannschaft passt. Mehrere ähnliche Sprinter können die fehlenden Berghilfen nicht ersetzen. Auch ein günstiger Transfer kann bei hohen laufenden Gehältern teuer werden.",
+        "scenario": "Du besitzt mehrere starke Sprinter, aber kaum Kletterhelfer. Statt den nächsten Star zu holen, suchst du einen passenden Bergfahrer, dessen Gehalt zum Clubbudget passt."
+      },
+      "national": {
+        "title": "Nationalverbände",
+        "description": "Führe Nationalteams zu Meisterschaften.",
+        "details": "Wirke in nationalen Radsportverbänden und Nationalteam-Wettbewerben mit. Bereite Auswahlteams auf Meisterschaften vor.",
+        "benefit": "Nationalwettbewerbe sind eine eigene Herausforderung neben dem Vereinskalender. Auswahl und Vorbereitung erweitern die Radsportwelt.",
+        "actions": "An Verbandsaktivitäten teilnehmen|Nationalteams vorbereiten|An Meisterschaften teilnehmen",
+        "deepDive": "Nationalverbände und Meisterschaften bilden eine Ebene neben den normalen Vereinsrennen. Auswahl, Teilnahme und Vorbereitung folgen eigenen Regeln. Nationale Wettbewerbe sind deshalb keine gewöhnlichen Clubanmeldungen.",
+        "tradeoff": "Vereinskalender und Nationalmannschaft müssen getrennt betrachtet werden. Teilnahmebedingungen und Fahrerfreigaben können abweichen; nationale Resultate zählen nicht automatisch zu Club-Sponsorenzielen.",
+        "scenario": "Ein Fahrer soll für ein Nationalrennen aufgestellt werden, während dein Club einen wichtigen Start plant. Du beachtest die besonderen Regeln, statt das Ereignis wie ein weiteres Vereinsrennen zu behandeln."
+      },
+      "academy": {
+        "title": "Nachwuchsakademie & Rennen",
+        "description": "Fördere Talente von Anfang an.",
+        "details": "Scoute und trainiere Nachwuchsfahrer auf Jugend- und U23-Niveau. Nachwuchsrennen begleiten Talente vom ersten Schritt an.",
+        "benefit": "Talententwicklung beginnt, bevor ein Fahrer bei den Profis ankommt. Scouting, frühes Training und Jugendrennen sind Teil dieses Weges.",
+        "actions": "Junge Talente scouten|Jugendtraining gestalten|An Nachwuchsrennen teilnehmen",
+        "deepDive": "Die Nachwuchsakademie bietet eine optionale Möglichkeit, Talente früh zu entdecken und zu entwickeln. Jugendtraining und Nachwuchsrennen schaffen eine Perspektive, bevor ein Fahrer im Profi- oder U23-Bereich ankommt.",
+        "tradeoff": "Der Nutzen zeigt sich eher langfristig. Die Akademie benötigt eine Coins-Aktivierung je Saison und gegebenenfalls weitere Voraussetzungen. Sie sollte in die finanziellen Ziele des Vereins passen.",
+        "scenario": "Du möchtest mehrere Jahre auf junge Fahrer setzen. Statt nur fertige Profis einzukaufen, beobachtest du Nachwuchstalente und entwickelst Schritt für Schritt einen eigenen Weg nach oben."
+      },
+      "replay": {
+        "title": "Dynamische Etappenwiedergabe",
+        "description": "Verfolge das Renngeschehen live im Replay.",
+        "details": "Verfolge jede Etappe in einer dynamischen Rennwiedergabe statt nur das Endergebnis zu lesen. Erlebe Attacken, Positionswechsel und Fahrerleistungen.",
+        "benefit": "Ein Ergebnis wird verständlicher, wenn der Etappenverlauf sichtbar bleibt. Die dynamische Wiedergabe erzählt die Geschichte des Rennens.",
+        "actions": "Attacken und Rennverlauf verfolgen|Fahrerleistungen überprüfen|Veränderungen während der Etappe verstehen",
+        "deepDive": "Die dynamische Wiedergabe zeigt mehr als die Endplatzierungen: Attacken, Positionswechsel und die Entwicklung einer Etappe werden nachvollziehbar. So kannst du Rennverlauf und Vorbereitung miteinander vergleichen.",
+        "tradeoff": "Nicht jedes Ergebnis ist planbar. Die Wiedergabe erklärt den Ablauf, garantiert aber nicht, dass eine einzelne taktische Entscheidung künftig einen Sieg bewirkt.",
+        "scenario": "Dein Sprinter landet unerwartet weit hinten. Du betrachtest den Rennverlauf und prüfst anschließend Aufstellung, Müdigkeit und Zielsetzung für den nächsten Start."
+      },
+      "progression": {
+        "title": "Langfristiger Saisonfortschritt",
+        "description": "Kämpfe um Aufstieg, Ranglisten und Ziele.",
+        "details": "Entwickle deinen Verein über mehrere Saisons mit Ranglisten, Auf- und Abstiegen. Resultate und Managemententscheidungen bestimmen die Zukunft.",
+        "benefit": "Eine Vereinsidentität entsteht über viele Saisons. Ranglisten, Divisionswechsel und sich entwickelnde Fahrer machen langfristige Planung wichtig.",
+        "actions": "Saisonziele setzen|Ranglisten und Aufstieg anstreben|Vereinsgeschichte aufbauen",
+        "deepDive": "Saisonübergreifende Ranglisten, Ligawechsel und Fahrerentwicklung geben dem Verein eine langfristige Geschichte. Die Entscheidungen einer Saison beeinflussen, welche Möglichkeiten im nächsten Abschnitt sinnvoll erscheinen.",
+        "tradeoff": "Kurzfristige Punkte und langfristiges Wachstum können gegeneinanderstehen. Ein ambitionierter Renneinsatz kann Ressourcen verbrauchen, die später beim Kaderaufbau fehlen.",
+        "scenario": "Du verpasst den Aufstieg knapp. Im nächsten Jahr entscheidest du, ob du die Mannschaft verstärkst, den Kalender anders gestaltest oder auf die Entwicklung der vorhandenen Fahrer setzt."
+      },
+      "health": {
+        "deepDive": "Fitness, Müdigkeit, Verletzungen und Krankheiten beeinflussen die Einsatzbereitschaft. Medizinische Berichte, Betreuer und Infrastruktur helfen dir einzuschätzen, welche Fahrer trainieren oder starten können und wer zuerst Erholung benötigt.",
+        "tradeoff": "Ein ausgefallener Leader kann eine komplette Rennplanung verändern. Es ist oft besser, eine Alternative vorzubereiten, als einen müden oder verletzten Fahrer unbedingt einsetzen zu wollen.",
+        "scenario": "Kurz vor einer Bergrundfahrt fällt dein Kapitän aus. Du bestimmst einen anderen Leader, änderst das Ziel oder setzt auf eine Erholungsphase für den ursprünglich vorgesehenen Fahrer.",
+        "title": "Fahrergesundheit & medizinische Betreuung",
+        "description": "Steuere Fitness, Verletzungen und Regeneration.",
+        "details": "Fahrer können durch Müdigkeit, Verletzungen oder Krankheiten ausfallen. Gesundheitsberichte und medizinische Unterstützung beeinflussen die Einsatzbereitschaft für Training und Rennen. Manager müssen deshalb Gesundheit und sportliche Ziele gemeinsam planen.",
+        "benefit": "Ein Ausfall kann eine wichtige Rennplanung verändern. Wer den Zustand seiner Fahrer kennt, kann die Regeneration schützen und rechtzeitig Ersatz bestimmen.",
+        "actions": "Gesundheit und Verfügbarkeit prüfen|Regeneration und Ersatzaufstellungen planen|Medizinische Unterstützung in die Rennplanung einbeziehen"
+      },
+      "multiplayer": {
+        "deepDive": "Die Spielwelt verbindet menschliche Manager mit gemeinsamen Rennen, Ligen, Ranglisten und einem Saisonablauf. Andere Vereine stellen ihre eigenen Kader zusammen und verfolgen eigene Ziele. KI-Teams ergänzen bei Bedarf das Wettbewerbsfeld.",
+        "tradeoff": "Rivalen entwickeln sich ebenfalls weiter. Deshalb sollte deine Strategie die Stärke der Gegner ebenso berücksichtigen wie die eigenen Fähigkeiten und finanziellen Mittel.",
+        "scenario": "Mehrere Konkurrenten haben hervorragende Sprinter. Vielleicht nutzt du lieber deine stärkeren Bergfahrer, um in passenden Rennen konstant Punkte für den Aufstieg zu sammeln.",
+        "title": "Multiplayer-Radsportwelt",
+        "description": "Miss dich mit anderen echten Vereinsmanagern.",
+        "details": "Nimm an einer gemeinsamen Radsportwelt mit Rennen, Ranglisten und Ligen teil. Echte Manager entwickeln ihre Clubs, während KI-gesteuerte Mannschaften das Teilnehmerfeld ergänzen können.",
+        "benefit": "Die Konkurrenz macht Ergebnisse und Aufstiegschancen bedeutungsvoll. Du musst nicht nur deinen Kader verbessern, sondern auch die Fähigkeiten und Ziele der Gegner beachten.",
+        "actions": "Gegen andere Manager antreten|Rivalen und Ligatabellen beobachten|Ziele für das eigene Wettbewerbsniveau wählen"
+      }
+    },
+    "showDetails": "Mehr anzeigen",
+    "hideDetails": "Weniger anzeigen",
+    "page": {
+      "moreInfo": "Mehr erfahren",
+      "navigation": "Feature-Navigation",
+      "backHome": "Startseite",
+      "backToOverview": "Zurück zur Startseite",
+      "notFound": "Funktion nicht gefunden",
+      "premiumBadge": "Premium",
+      "coinsBadge": "Coins",
+      "optionalAddon": "Optionales Programm",
+      "howItWorks": "So funktioniert es",
+      "whyItMatters": "Darum ist es wichtig",
+      "whatYouCanDo": "Deine Möglichkeiten",
+      "accessTitle": "Zugang und Voraussetzungen",
+      "u23Access": "Die Verwaltung des Profikaders gehört zum Grundspiel. Das optionale U23-Entwicklungsteam benötigt Premium und eine saisonale Coins-Freischaltung (derzeit 100 Coins pro Saison).",
+      "academyAccess": "Die optionale Nachwuchsakademie benötigt Premium und eine saisonale Coins-Freischaltung (derzeit 50 Coins pro Saison). Zusätzliche Freischaltbedingungen im Spiel gelten ebenfalls.",
+      "coreAccess": "Die Kernfunktionen sind ohne Premium-Abonnement verfügbar. Optionale Analysen, Automatisierungen oder Mitarbeiterberatung können eigene Premium- oder Coins-Voraussetzungen haben.",
+      "nextFeature": "Nächste Funktion",
+      "exampleTitle": "Ein Praxisbeispiel",
+      "previousFeature": "Vorherige Funktion"
+    }
   }
 }

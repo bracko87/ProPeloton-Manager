@@ -1,3 +1,6 @@
+/* V3 visual correction (2026-11-20): remove all ornamental yellow edge strokes
+ * from dashboard cards and selected navigation. Yellow brand header retained.
+ */
 /*
  * ProPeloton Manager — UI & Layout Modernization (visual-only).
  * Scope: authenticated game shell. No navigation, data, layout or feature changes.
@@ -30,9 +33,9 @@
 }
 .ui-modernized-shell > aside nav a[aria-current="page"],
 .ui-modernized-shell > aside nav a.bg-yellow-400\/20 {
-  background: linear-gradient(90deg,rgba(250,204,21,.19),rgba(250,204,21,.07));
-  border-color: rgba(250,204,21,.24);
-  box-shadow: inset 3px 0 0 var(--ui-modern-yellow);
+  background: linear-gradient(90deg,rgba(111,133,156,.18),rgba(111,133,156,.07));
+  border-color: rgba(158,177,196,.16);
+  box-shadow: none;
 }
 
 /* Maintain the existing bright ProPeloton yellow header. */
@@ -43,7 +46,7 @@
 }
 .ui-modernized-shell > div > main {
   background:
-    radial-gradient(ellipse 70% 420px at 85% 0%, rgba(250,204,21,.07), transparent 75%),
+    radial-gradient(ellipse 70% 420px at 85% 0%, rgba(132,155,180,.055), transparent 75%),
     #eef2f6;
 }
 
@@ -82,7 +85,7 @@
 
 /* Better visual feedback without changing a single click handler. */
 .ui-modernized-shell :is(button,a,[role="button"],input,select,textarea):focus-visible {
-  outline: 2px solid #d6aa0b;
+  outline: 2px solid #64748b;
   outline-offset: 3px;
 }
 .ui-modernized-shell > div > main :is(button,a).transition:hover {
@@ -93,8 +96,8 @@
   transition: border-color .2s ease, box-shadow .2s ease;
 }
 .ui-modernized-shell > div > main :is(input,select,textarea).border:focus {
-  border-color: #dfb51b;
-  box-shadow: 0 0 0 3px rgba(250,204,21,.13);
+  border-color: #8fa2b6;
+  box-shadow: 0 0 0 3px rgba(100,116,139,.13);
 }
 
 /* More legible tabular presentation, preserving row counts and column widths. */
@@ -131,7 +134,7 @@
   }
 }
 
-/* === UI & Layout Modernization V2: visible hierarchy, original content ===
+/* === UI & Layout Modernization V3: neutral accents, original content ===
  * Intentional visual-only styling. No element is hidden or repositioned.
  * Keeps header yellow, sidebar dark and game content light.
  */
@@ -144,7 +147,7 @@
 }
 .ui-modernized-shell > div > main {
   background:
-    radial-gradient(ellipse 70% 450px at 88% 0%, rgba(246,197,38,.085), transparent 78%),
+    radial-gradient(ellipse 70% 450px at 88% 0%, rgba(127,153,178,.06), transparent 78%),
     linear-gradient(180deg,#edf1f5,#f3f5f8 72%);
 }
 /* Larger, unmistakably intentional panel surfaces, without changing their placement. */
@@ -154,12 +157,12 @@
   border-radius: 16px;
   background-color: #fff;
   background-image: linear-gradient(180deg,rgba(239,244,249,.95),rgba(255,255,255,0) 72px);
-  box-shadow: 0 2px 4px rgba(15,28,45,.035),0 11px 32px rgba(15,28,45,.075),inset 0 3px 0 rgba(227,182,36,.9);
+  box-shadow: 0 2px 4px rgba(15,28,45,.035),0 11px 32px rgba(15,28,45,.075);
 }
 .ui-modernized-shell > div > main :is(.rounded-2xl.bg-white,.rounded-xl.bg-white,.rounded-lg.bg-white):hover,
 .ui-modernized-shell > div > main .ui-modern-card:hover {
   border-color: #c7d4e1;
-  box-shadow: 0 3px 8px rgba(15,28,45,.04),0 16px 36px rgba(15,28,45,.10),inset 0 3px 0 #e7b729;
+  box-shadow: 0 3px 8px rgba(15,28,45,.04),0 16px 36px rgba(15,28,45,.10);
 }
 /* Overview's shared Card and SectionTitle primitives, no DOM rearrangement. */
 .ui-modernized-shell > div > main .ui-modern-card .ui-modern-section-title h3 {
@@ -229,9 +232,10 @@
 }
 .ui-modernized-shell > aside nav a[aria-current="page"],
 .ui-modernized-shell > aside nav a.bg-yellow-400\/20 {
-  background: linear-gradient(90deg,rgba(251,204,31,.21),rgba(251,204,31,.045));
-  border-color: rgba(250,204,21,.3);
-  box-shadow: inset 3px 0 0 #facc15,0 4px 12px rgba(0,0,0,.075);
+  background: linear-gradient(90deg,rgba(113,135,158,.25),rgba(79,98,119,.13));
+  border-color: rgba(171,190,207,.19);
+  box-shadow: 0 4px 12px rgba(0,0,0,.075);
+  color: #f8fafc;
 }
 /* Do not change mobile structure, preserve reduced-motion preference. */
 @media (max-width:767px) {
@@ -240,6 +244,194 @@
   }
   .ui-modernized-shell > div > main :is(.rounded-2xl.bg-white,.rounded-xl.bg-white,.rounded-lg.bg-white),
   .ui-modernized-shell > div > main .ui-modern-card {
-    box-shadow: 0 2px 12px rgba(15,28,45,.055),inset 0 3px 0 rgba(227,182,36,.9);
+    box-shadow: 0 2px 12px rgba(15,28,45,.055);
   }
+}
+
+
+/* === UI & Layout Modernization V4: National Ranking corner language ===
+ * Purely visual. Keep all panels and controls in their original positions.
+ * A 5px panel radius follows the restrained National Ranking page style.
+ * Inner tab buttons use 4px so the frame and selected tabs match.
+ * Circular avatars, icons, loaders, badges and progress dots are unaffected.
+ */
+.ui-modernized-shell {
+  --ui-modern-panel-radius: 5px;
+  --ui-modern-control-radius: 4px;
+}
+
+/* Existing outer and inner cards on every authenticated game page. */
+.ui-modernized-shell > div > main :is(
+  .rounded,
+  .rounded-md,
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl,
+  .ui-modern-card
+) {
+  border-radius: var(--ui-modern-panel-radius);
+}
+
+/* Navigation surfaces and square-edged, precise game controls. */
+.ui-modernized-shell > aside nav :is(a,button) {
+  border-radius: var(--ui-modern-control-radius);
+}
+.ui-modernized-shell > div > main :is(
+  button.rounded,
+  button.rounded-md,
+  button.rounded-lg,
+  button.rounded-xl,
+  button.rounded-2xl,
+  button.rounded-3xl,
+  button.rounded-full,
+  a.rounded,
+  a.rounded-md,
+  a.rounded-lg,
+  a.rounded-xl,
+  a.rounded-2xl,
+  a.rounded-full,
+  input.rounded,
+  input.rounded-md,
+  input.rounded-lg,
+  input.rounded-xl,
+  select.rounded,
+  select.rounded-md,
+  select.rounded-lg,
+  textarea.rounded-lg
+) {
+  border-radius: var(--ui-modern-control-radius);
+}
+
+/* Segmented controls such as Training's Regular Training switch:
+ * the white surrounding frame and its clickable tabs share a matching radius.
+ * Does not change flex/grid, spacing, active states or tab click behavior.
+ */
+.ui-modernized-shell > div > main :is(div,nav).inline-flex:is(
+  .rounded-full,
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl
+):has(> button) {
+  border-radius: var(--ui-modern-panel-radius);
+}
+.ui-modernized-shell > div > main :is(div,nav).inline-flex:has(> button) > button {
+  border-radius: var(--ui-modern-control-radius);
+}
+
+/* Match any input tabs rendered as button-like roles, without touching
+ * actual round markers, badges or rider portrait masks.
+ */
+.ui-modernized-shell > div > main [role="tab"].rounded-full {
+  border-radius: var(--ui-modern-control-radius);
+}
+
+/* Same panel shape for dialogs and popovers, but do not affect circles. */
+.ui-modernized-shell > div > main :is(
+  [role="dialog"].rounded-xl,
+  [role="dialog"].rounded-2xl,
+  [role="tabpanel"].rounded-xl,
+  [role="tabpanel"].rounded-2xl
+) {
+  border-radius: var(--ui-modern-panel-radius);
+}
+
+
+/* V5 — National Ranking-style content containers only.
+   The earlier V4 radius could lose the cascade to the V2 two-class card rule.
+   Keep segmented tab wrappers and buttons exactly as the player approved them.
+   Do not change badges, rider avatars, circular indicators or header actions. */
+.ui-modernized-shell > div > main :is(
+  div.rounded.bg-white,
+  div.rounded-md.bg-white,
+  div.rounded-lg.bg-white,
+  div.rounded-xl.bg-white,
+  div.rounded-2xl.bg-white,
+  div.rounded-3xl.bg-white,
+  section.rounded.bg-white,
+  section.rounded-lg.bg-white,
+  section.rounded-xl.bg-white,
+  section.rounded-2xl.bg-white,
+  article.rounded-lg.bg-white,
+  article.rounded-xl.bg-white,
+  article.rounded-2xl.bg-white,
+  div.ui-modern-card
+):not(.inline-flex):not(.flex):not([role="tablist"]):not(:has(> button:first-child)) {
+  border-radius: 4px !important;
+}
+
+/* Inner content surfaces receive the same restrained radius, including
+   the bordered gray panels in National Ranking, Squad and Training. */
+.ui-modernized-shell > div > main :is(div,section,article):is(
+  .rounded,
+  .rounded-md,
+  .rounded-lg,
+  .rounded-xl,
+  .rounded-2xl,
+  .rounded-3xl
+):is(.border,.shadow,.shadow-sm,.bg-slate-50,.bg-gray-50,.bg-slate-100,.bg-gray-100):not(.inline-flex):not([role="tablist"]):not(:has(> button:first-child)) {
+  border-radius: 4px !important;
+}
+/* Specificity-safe rule for the Overview panel component (which also has
+   bg-white and border utility classes). */
+.ui-modernized-shell > div > main div.ui-modern-card {
+  border-radius: 4px !important;
+}
+
+/* Sidebar collapse arrow: no frame, border, background block or shadow.
+   Preserve its accessible label, hit target, and click handler. */
+.ui-modernized-shell > aside > button[aria-label] {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  color: #d7e1ed;
+}
+.ui-modernized-shell > aside > button[aria-label]:hover {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: #ffffff;
+}
+
+
+/* V6 — consistent National Ranking-style controls across the game.
+ * Keep circular status indicators, rider portraits and badges untouched.
+ * Buttons, selects and other interactive fields use a clean, flat 4px corner.
+ * Remove decorative top-to-bottom gradients from interactive controls. */
+.ui-modernized-shell :is(
+  button, select, textarea,
+  input:not([type="checkbox"]):not([type="radio"]),
+  [role="combobox"], [role="listbox"], [role="menuitem"], [role="option"]
+) {
+  border-radius: 4px !important;
+  background-image: none !important;
+}
+/* Outer and inner content cards, including race stage cards. */
+.ui-modernized-shell > div > main :is(div, section, article):is(
+  .rounded, .rounded-sm, .rounded-md, .rounded-lg,
+  .rounded-xl, .rounded-2xl, .rounded-3xl, .ui-modern-card
+):not(.rounded-full) {
+  border-radius: 4px !important;
+}
+/* Keep the collapsible sidebar arrow frameless. */
+.ui-modernized-shell > aside > button[aria-label] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Black circular sidebar toggle, straddling the sidebar/header boundary. */
+.ui-modernized-shell > aside > button[aria-label] {
+  width: 32px;
+  height: 32px;
+  border-radius: 50% !important;
+  border: 1px solid rgba(255,255,255,.16) !important;
+  background: #080d14 !important;
+  box-shadow: 0 2px 7px rgba(0,0,0,.22) !important;
+  color: #fff !important;
+}
+.ui-modernized-shell > aside > button[aria-label]:hover {
+  background: #172335 !important;
 }
