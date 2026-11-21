@@ -142,3 +142,11 @@ jobs:
 
       - name: Execute Saturn team creation, finance and Premium fixture
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_creation_finance_runtime.sql
+
+      - name: Rehearse pre-guest targeted schema rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          createdb saturn_rollback_probe
+          psql -X -d saturn_rollback_probe -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_targeted_rollback_runtime.sql
+          dropdb saturn_rollback_probe
