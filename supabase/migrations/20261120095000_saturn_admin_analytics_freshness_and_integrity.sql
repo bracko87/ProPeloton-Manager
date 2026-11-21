@@ -319,7 +319,7 @@ begin
 
   return v_result;
 end;
-$function$
+$function$;
 
 
 -- Function has an administrator guard but anonymous clients should not

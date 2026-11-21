@@ -97,6 +97,14 @@ serve(async req => {
       // Empty body is valid for the normal billing portal.
     }
 
+    // SATURN: a linked identity is not permanent until conversion is finalized.
+    if (user.is_anonymous !== false) return json({ error: "Complete registration first" }, 403, origin)
+    const { data: trial, error: trialError } = await supabaseUser
+      .from("saturn_test_accounts_v1").select("converted_at").eq("user_id", user.id).maybeSingle()
+    if (trialError || (trial && !trial.converted_at)) {
+      return json({ error: "Complete registration before paid services" }, 403, origin)
+    }
+
     const {
       data: subscription,
       error: subscriptionError,
