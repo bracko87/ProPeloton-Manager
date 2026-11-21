@@ -417,7 +417,7 @@ BEGIN
 
   RETURN;
 END;
-$function$
+$function$;
 
 -- Registration rules snapshot kept identical to migration by node test.
 -- Updated Saturn product decision: no Coins, payments, U16 Academy or U23
