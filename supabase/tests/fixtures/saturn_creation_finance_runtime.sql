@@ -130,6 +130,9 @@ create trigger ppm_reject_guest_owned_clubs_v1 before insert or update of owner_
 create trigger trg_assign_new_real_club_to_ai_slot after insert on public.clubs for each row when(new.is_ai=false) execute function public.trg_assign_new_real_club_to_ai_slot();
 create trigger trg_new_club_creation_setup_v1 after insert on public.clubs for each row execute function public._clubs_after_insert_new_team_setup_v1();
 
+-- Commit only the synthetic setup so independent test sessions can see it.
+commit;
+begin;
 select fixture.assert_ok(not has_function_privilege('anon','public.saturn_create_test_club_v1(text,text,text,text,text)','EXECUTE'),'creation denied to anon by default');
 select fixture.assert_ok(not has_function_privilege('authenticated','public.saturn_create_test_club_v1(text,text,text,text,text)','EXECUTE'),'creation denied to authenticated by default');
 select fixture.assert_ok(not has_table_privilege('authenticated','private.saturn_test_club_insert_tickets_v1','INSERT'),'browser cannot forge private ticket');
@@ -234,3 +237,81 @@ reset role;
 select fixture.assert_ok((select count(*)=2 from finance.transactions),'service-role setup remains callable and idempotent');
 rollback;
 \echo 'SATURN CREATION FINANCE FIXTURE PASSED (synthetic roster/ledger dependencies; not full game)'
+
+
+-- Real parallel sessions against the same disposable fixture. The serial
+-- assertions above were rolled back, so both eligible AI slots are available.
+create extension dblink;
+update private.ppm_guest_auth_gate_v1 set enabled=true,verified_at=now();
+update private.saturn_test_club_rollout_v1 set enabled=true,verified_at=now();
+insert into private.saturn_test_division_capacity_v1 values(10,'fixture-eu',6,now());
+grant execute on function public.saturn_create_test_club_v1(text,text,text,text,text) to authenticated;
+
+-- INVOKER helper returns the actual RPC outcome, including the actual error.
+create function fixture.concurrent_create(team_name text) returns text
+language plpgsql security invoker as $$
+begin
+ return public.saturn_create_test_club_v1('Manager',team_name,'DE','#111111','#222222')::text;
+exception when others then
+ return 'ERROR: ' || sqlerrm;
+end $$;
+
+-- Require evidence of a genuinely blocked concurrent query, not merely
+-- two sequential submissions. Fail after a bounded five-second wait.
+create function fixture.await_advisory_wait(peer text) returns boolean
+language plpgsql volatile as $$
+declare i integer;
+begin
+ for i in 1..100 loop
+  perform pg_stat_clear_snapshot();
+  if exists(select 1 from pg_stat_activity where datname=current_database()
+      and application_name=peer and wait_event_type='Lock' and wait_event='advisory') then
+   return true;
+  end if;
+  perform pg_sleep(0.05);
+ end loop;
+ return false;
+end $$;
+
+-- These credentials belong ONLY to the throwaway PostgreSQL CI service.
+select dblink_connect('a','host=127.0.0.1 port=5432 dbname=saturn_bootstrap_probe user=postgres password=disposable-ci-only application_name=saturn-concurrency-a');
+select dblink_connect('b','host=127.0.0.1 port=5432 dbname=saturn_bootstrap_probe user=postgres password=disposable-ci-only application_name=saturn-concurrency-b');
+select dblink_exec('a','set statement_timeout = 20000');
+select dblink_exec('b','set statement_timeout = 20000');
+select dblink_exec('a','set role authenticated');
+select dblink_exec('b','set role authenticated');
+select dblink_exec('a',format('set fixture.subject = %L',fixture.uid(1)::text));
+select dblink_exec('b',format('set fixture.subject = %L',fixture.uid(1)::text));
+
+-- Same owner: one session holds the result uncommitted; the competing
+-- request must wait for its owner advisory lock, then reject the duplicate.
+select dblink_exec('a','begin');
+select outcome as first_outcome from dblink('a',$q$select fixture.concurrent_create('Parallel First')$q$) as t(outcome text) \gset
+select fixture.assert_ok(:'first_outcome' ~ '^[0-9a-f-]{36}$','parallel owner first request created club');
+select fixture.assert_ok(dblink_send_query('b',$q$select fixture.concurrent_create('Parallel Duplicate')$q$)=1,'parallel duplicate query submitted');
+select fixture.assert_ok(fixture.await_advisory_wait('saturn-concurrency-b'),'parallel duplicate actually waited on advisory lock');
+select dblink_exec('a','commit');
+select outcome as duplicate_outcome from dblink_get_result('b') as t(outcome text) \gset
+select fixture.assert_ok(:'duplicate_outcome'='ERROR: This player already has a team','parallel duplicate rejected after first commit');
+select * from dblink_get_result('b') as t(outcome text);
+select fixture.assert_ok((select count(*)=1 from public.clubs where owner_user_id=fixture.uid(1)) and (select count(*)=1 from public.saturn_test_accounts_v1 where user_id=fixture.uid(1)) and (select count(*)=1 from public.premium_welcome_trials_v1 where user_id=fixture.uid(1)) and (select count(*)=1 from finance.transactions),'parallel owner has exactly one club, lifecycle, Premium and ledger transaction');
+
+-- Different owners race for the last eligible AI slot in the same division.
+select dblink_exec('a',format('set fixture.subject = %L',fixture.uid(4)::text));
+select dblink_exec('b',format('set fixture.subject = %L',fixture.uid(5)::text));
+select dblink_exec('a','begin');
+select outcome as final_slot from dblink('a',$q$select fixture.concurrent_create('Final Safe Slot')$q$) as t(outcome text) \gset
+select fixture.assert_ok(:'final_slot' ~ '^[0-9a-f-]{36}$','last safe slot assigned by first transaction');
+select fixture.assert_ok(dblink_send_query('b',$q$select fixture.concurrent_create('Competing Slot')$q$)=1,'competing regional signup submitted');
+select fixture.assert_ok(fixture.await_advisory_wait('saturn-concurrency-b'),'competing regional signup actually waited on advisory lock');
+select dblink_exec('a','commit');
+select outcome as no_slot from dblink_get_result('b') as t(outcome text) \gset
+select fixture.assert_ok(:'no_slot'='ERROR: No competition-safe AI slot available in the requested lowest amateur division','competing owner rejected when no eligible slot remains');
+select * from dblink_get_result('b') as t(outcome text);
+select dblink_disconnect('a');
+select dblink_disconnect('b');
+select fixture.assert_ok((select count(*)=2 from public.saturn_test_accounts_v1) and (select count(*)=2 from public.premium_welcome_trials_v1) and (select count(*)=2 from finance.transactions) and (select count(*)=4 and sum(amount)=0 from finance.entries),'parallel allocation grants exactly two balanced starter transactions and two trials');
+select fixture.assert_ok((select count(*)=0 from public.clubs where owner_user_id=fixture.uid(5)) and (select count(*)=0 from public.saturn_test_accounts_v1 where user_id=fixture.uid(5)) and (select count(*)=0 from public.premium_welcome_trials_v1 where user_id=fixture.uid(5)),'unsuccessful concurrent player gets no partial club or entitlement');
+select fixture.assert_ok((select count(*)=6 from public.clubs where world_tier=10 and amateur_division='fixture-eu' and is_active) and (select count(*)=2 from public.clubs where id in(fixture.uid(201),fixture.uid(203)) and tier3_division='ai_pool' and is_active and is_ai) and (select count(*)=4 from public.clubs where id in(fixture.uid(202),fixture.uid(204),fixture.uid(205),fixture.uid(206)) and world_tier=10),'parallel allocation preserves division cap, active reserve AI and historical AI slots');
+select fixture.assert_ok((select count(*)=0 from private.saturn_test_club_insert_tickets_v1),'no leaked transaction tickets after concurrent requests');
+\echo 'SATURN CONCURRENCY FIXTURE PASSED (real concurrent PostgreSQL sessions; synthetic Auth and dependencies)'
