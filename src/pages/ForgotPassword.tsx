@@ -13,6 +13,7 @@ import React, { FormEvent, useState } from 'react'
 import { Link } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { useAuthCaptcha, AuthCaptcha } from '../components/auth/AuthCaptcha'
 
 function isProbablyValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim())
@@ -33,6 +34,7 @@ function getPasswordResetRedirectUrl(): string {
 export default function ForgotPasswordPage(): JSX.Element {
   const { t } = useTranslation('auth')
   const [email, setEmail] = useState('')
+  const captcha = useAuthCaptcha()
   const [status, setStatus] = useState<'idle' | 'submitting' | 'sent' | 'error'>('idle')
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
 
@@ -57,12 +59,14 @@ export default function ForgotPasswordPage(): JSX.Element {
       return
     }
 
+    if (status === 'submitting' || !captcha.ready) return
     setStatus('submitting')
     setErrorMessage(null)
 
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(nextEmail, {
         redirectTo: getPasswordResetRedirectUrl(),
+        captchaToken: captcha.consume(),
       })
 
       /**
@@ -70,6 +74,11 @@ export default function ForgotPasswordPage(): JSX.Element {
        * Do not reveal whether this email exists.
        * Even if Supabase returns an auth-level error, show the same neutral message.
        */
+      if (error?.code === 'captcha_failed') {
+        setErrorMessage('Security verification failed. Please complete a new challenge and retry.')
+        setStatus('error')
+        return
+      }
       if (error) {
         // eslint-disable-next-line no-console
         console.error('Password reset request error:', error)
@@ -83,6 +92,8 @@ export default function ForgotPasswordPage(): JSX.Element {
 
       setErrorMessage(t('forgot.networkError'))
       setStatus('error')
+    } finally {
+      captcha.reset()
     }
   }
 
@@ -153,6 +164,7 @@ export default function ForgotPasswordPage(): JSX.Element {
               />
             </div>
 
+            <AuthCaptcha captcha={captcha} />
             {status === 'sent' && (
               <div
                 className="rounded border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700"
@@ -176,7 +188,7 @@ export default function ForgotPasswordPage(): JSX.Element {
             <button
               type="submit"
               className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !captcha.ready}
             >
               {isSubmitting ? t('forgot.sending') : t('forgot.send')}
             </button>

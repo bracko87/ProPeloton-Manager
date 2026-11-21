@@ -18,6 +18,7 @@ import React, { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
+import { useAuthCaptcha, AuthCaptcha } from '../components/auth/AuthCaptcha'
 import PreReleaseNotice, { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
 
 type StatusType = 'success' | 'error' | 'info' | null
@@ -99,6 +100,7 @@ export default function RegisterPage(): JSX.Element {
 
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [loading, setLoading] = useState(false)
+  const captcha = useAuthCaptcha()
   const [message, setMessage] = useState<string | null>(null)
   const [messageType, setMessageType] = useState<StatusType>(null)
   const [checkingEmail, setCheckingEmail] = useState(false)
@@ -218,6 +220,7 @@ export default function RegisterPage(): JSX.Element {
       return nextErrors
     })
 
+    if (loading || resendingActivation || checkingEmail || !captcha.ready) return
     setResendingActivation(true)
 
     try {
@@ -226,6 +229,7 @@ export default function RegisterPage(): JSX.Element {
         email,
         options: {
           emailRedirectTo: EMAIL_CONFIRMATION_REDIRECT_URL,
+          captchaToken: captcha.consume(),
         },
       })
 
@@ -255,6 +259,7 @@ export default function RegisterPage(): JSX.Element {
       setMessage(err?.message ?? t('register.activationFailed'))
       setMessageType('error')
     } finally {
+      captcha.reset()
       setResendingActivation(false)
     }
   }
@@ -319,6 +324,7 @@ export default function RegisterPage(): JSX.Element {
     if (['birthdayMonth', 'birthdayDay', 'birthdayYear'].some(field => nextErrors[field])) setShowBirthdayFields(true)
     if (Object.keys(nextErrors).length > 0) return
 
+    if (loading || resendingActivation || checkingEmail || !captcha.ready) return
     setLoading(true)
 
     try {
@@ -333,6 +339,7 @@ export default function RegisterPage(): JSX.Element {
         password: form.password,
         options: {
           emailRedirectTo: EMAIL_CONFIRMATION_REDIRECT_URL,
+          captchaToken: captcha.consume(),
           data: {
             username: username || undefined,
             birthday_month: birthdayProvided ? birthdayMonth : null,
@@ -387,6 +394,7 @@ export default function RegisterPage(): JSX.Element {
       setMessage(err?.message ?? t('register.signupFailed'))
       setMessageType('error')
     } finally {
+      captcha.reset()
       setLoading(false)
     }
   }
@@ -505,6 +513,7 @@ export default function RegisterPage(): JSX.Element {
                     loading ||
                     checkingEmail ||
                     resendingActivation ||
+                    !captcha.ready ||
                     !form.email.trim()
                   }
                   className="text-sm font-medium text-blue-700 hover:text-blue-900 disabled:cursor-not-allowed disabled:text-gray-400"
@@ -659,6 +668,7 @@ export default function RegisterPage(): JSX.Element {
               ) : null}
             </div>
 
+            <AuthCaptcha captcha={captcha} />
             {message && (
               <div
                 className={`rounded-md px-4 py-3 text-sm font-medium ${messageStyles}`}
@@ -672,7 +682,7 @@ export default function RegisterPage(): JSX.Element {
               <button
                 type="submit"
                 className="min-h-11 rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500 disabled:opacity-70"
-                disabled={loading || checkingEmail || resendingActivation}
+                disabled={loading || checkingEmail || resendingActivation || !captcha.ready}
               >
                 {loading
                   ? t('register.creating')
