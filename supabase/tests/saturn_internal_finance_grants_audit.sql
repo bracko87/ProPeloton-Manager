@@ -7,7 +7,16 @@ with target(name,signature) as (
    ('finance_grant_new_club_bonus','public.finance_grant_new_club_bonus(uuid,bigint)'),
    ('finance_setup_new_club','public.finance_setup_new_club(uuid)'),
    ('finance_credit_to_club','public.finance_credit_to_club(uuid,bigint,text,text,text,jsonb)'),
-   ('finance_get_or_create_club_account','public.finance_get_or_create_club_account(uuid,text,text)')
+   ('finance_get_or_create_club_account','public.finance_get_or_create_club_account(uuid,text,text)'),
+   ('finance_apply_club_house_tax_rebate_v1','public.finance_apply_club_house_tax_rebate_v1(uuid,date,date)'),
+   ('finance_charge_emergency_loan_weekly_payment','public.finance_charge_emergency_loan_weekly_payment(uuid,date)'),
+   ('finance_charge_race_cost','public.finance_charge_race_cost(uuid,uuid,bigint,jsonb)'),
+   ('finance_create_club_house_rebate_v1','public.finance_create_club_house_rebate_v1(uuid,uuid,text,bigint,integer,text)'),
+   ('finance_force_transfer_club_to_club','public.finance_force_transfer_club_to_club(uuid,uuid,bigint,text,text,text,jsonb)'),
+   ('finance_issue_emergency_loan_non_ai_core_v1','public.finance_issue_emergency_loan_non_ai_core_v1(uuid,text,text,text)'),
+   ('finance_run_monthly_tax_audit_for_club','public.finance_run_monthly_tax_audit_for_club(uuid,date,date,boolean)'),
+   ('race_engine_refund_one_day_weather_cancelled_race_v1','public.race_engine_refund_one_day_weather_cancelled_race_v1(uuid)'),
+   ('refund_one_day_weather_cancelled_race_v2','public.refund_one_day_weather_cancelled_race_v2(uuid)')
 )
 select target.name,
        target.signature,
@@ -33,7 +42,16 @@ with routines as (
   select r.*,t.target
   from routines r cross join (values
     ('finance_grant_new_club_bonus'),('finance_setup_new_club'),
-    ('finance_credit_to_club'),('finance_get_or_create_club_account')
+    ('finance_credit_to_club'),('finance_get_or_create_club_account'),
+    ('finance_apply_club_house_tax_rebate_v1'),
+    ('finance_charge_emergency_loan_weekly_payment'),
+    ('finance_charge_race_cost'),
+    ('finance_create_club_house_rebate_v1'),
+    ('finance_force_transfer_club_to_club'),
+    ('finance_issue_emergency_loan_non_ai_core_v1'),
+    ('finance_run_monthly_tax_audit_for_club'),
+    ('race_engine_refund_one_day_weather_cancelled_race_v1'),
+    ('refund_one_day_weather_cancelled_race_v2')
   ) t(target)
   where strpos(lower(r.prosrc),t.target)>0 and r.proname<>t.target
 )

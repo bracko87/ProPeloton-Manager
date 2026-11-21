@@ -16,6 +16,15 @@ targets=(
     "finance_setup_new_club",
     "finance_credit_to_club",
     "finance_get_or_create_club_account",
+    "finance_apply_club_house_tax_rebate_v1",
+    "finance_charge_emergency_loan_weekly_payment",
+    "finance_charge_race_cost",
+    "finance_create_club_house_rebate_v1",
+    "finance_force_transfer_club_to_club",
+    "finance_issue_emergency_loan_non_ai_core_v1",
+    "finance_run_monthly_tax_audit_for_club",
+    "race_engine_refund_one_day_weather_cancelled_race_v1",
+    "refund_one_day_weather_cancelled_race_v2",
 )
 extensions={".ts",".tsx",".js",".jsx",".mjs",".cjs"}
 patterns={}

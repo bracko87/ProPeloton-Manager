@@ -110,6 +110,109 @@ create trigger fixture_ledger AFTER INSERT ON finance.entries FOR EACH ROW execu
 \ir ../../migrations/20261120140000_saturn_14day_full_game_test_account_lifecycle_v1.sql
 \ir ../../migrations/20261120153000_saturn_fail_closed_real_test_team_creation_v1.sql
 \ir ../../migrations/20261120160000_saturn_test_team_lowest_tier_ai_swap_v1.sql
+
+-- Signature-only stand-ins for extended internal finance EXECUTE tests.
+-- The force-transfer body is an actual production read-only snapshot.
+create function public.finance_apply_club_house_tax_rebate_v1(uuid,date,date) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_charge_emergency_loan_weekly_payment(uuid,date) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_charge_race_cost(uuid,uuid,bigint,jsonb) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_create_club_house_rebate_v1(uuid,uuid,text,bigint,integer,text) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_issue_emergency_loan_non_ai_core_v1(uuid,text,text,text) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.finance_run_monthly_tax_audit_for_club(uuid,date,date,boolean) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.race_engine_refund_one_day_weather_cancelled_race_v1(uuid) returns boolean language sql security definer as $fixture$select true$fixture$;
+create function public.refund_one_day_weather_cancelled_race_v2(uuid) returns boolean language sql security definer as $fixture$select true$fixture$;
+CREATE OR REPLACE FUNCTION public.finance_force_transfer_club_to_club(p_from_club_id uuid, p_to_club_id uuid, p_amount bigint, p_currency text DEFAULT 'CASH'::text, p_type text DEFAULT 'rider_transfer_fee_paid'::text, p_idempotency_key text DEFAULT NULL::text, p_metadata jsonb DEFAULT '{}'::jsonb)
+ RETURNS uuid
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO ''
+AS $function$
+declare
+  v_uid uuid;
+  v_from_acct uuid;
+  v_to_acct uuid;
+  v_tx uuid;
+  v_from_balance bigint;
+begin
+  v_uid := auth.uid();
+
+  if v_uid is null then
+    raise exception 'Not authenticated';
+  end if;
+
+  if p_amount is null or p_amount <= 0 then
+    raise exception 'Amount must be > 0';
+  end if;
+
+  perform public.finance_get_or_create_club_account(p_from_club_id, p_currency, 'main');
+  perform public.finance_get_or_create_club_account(p_to_club_id, p_currency, 'main');
+
+  select a.id
+  into v_from_acct
+  from finance.accounts a
+  where a.club_id = p_from_club_id
+    and a.currency = p_currency
+    and a.kind = 'main';
+
+  select a.id
+  into v_to_acct
+  from finance.accounts a
+  where a.club_id = p_to_club_id
+    and a.currency = p_currency
+    and a.kind = 'main';
+
+  if v_from_acct is null or v_to_acct is null then
+    raise exception 'Could not resolve club finance accounts';
+  end if;
+
+  if p_idempotency_key is not null then
+    insert into finance.transactions(type, created_by, idempotency_key, metadata)
+    values (p_type, v_uid, p_idempotency_key, p_metadata)
+    on conflict (created_by, idempotency_key) do nothing
+    returning id into v_tx;
+
+    if v_tx is null then
+      select t.id
+      into v_tx
+      from finance.transactions t
+      where t.created_by = v_uid
+        and t.idempotency_key = p_idempotency_key;
+
+      return v_tx;
+    end if;
+  else
+    insert into finance.transactions(type, created_by, metadata)
+    values (p_type, v_uid, p_metadata)
+    returning id into v_tx;
+  end if;
+
+  insert into finance.account_balances(account_id, balance)
+  values (v_from_acct, 0)
+  on conflict (account_id) do nothing;
+
+  insert into finance.account_balances(account_id, balance)
+  values (v_to_acct, 0)
+  on conflict (account_id) do nothing;
+
+  select ab.balance
+  into v_from_balance
+  from finance.account_balances ab
+  where ab.account_id = v_from_acct
+  for update;
+
+  if v_from_balance < p_amount then
+    raise exception 'Insufficient funds: have %, need %', v_from_balance, p_amount;
+  end if;
+
+  insert into finance.entries(transaction_id, account_id, amount, memo)
+  values
+    (v_tx, v_from_acct, -p_amount, 'rider transfer debit'),
+    (v_tx, v_to_acct,    p_amount, 'rider transfer credit');
+
+  return v_tx;
+end;
+$function$;
+
 \ir ../../migrations/20261120235000_saturn_internal_finance_privilege_hardening_v1.sql
 
 insert into auth.users select fixture.uid(n),n<>6 from generate_series(1,8) n;
@@ -160,6 +263,31 @@ select fixture.expect_error($q$select public.finance_credit_to_club(fixture.uid(
 select fixture.expect_error($q$select public.finance_get_or_create_club_account(fixture.uid(201),'CASH','main')$q$,'permission denied for function','authenticated cannot execute internal account creation');
 reset role;
 select fixture.assert_ok((select count(*)=0 from finance.transactions) and (select count(*)=0 from finance.entries) and (select count(*)=0 from finance.accounts where club_id is not null),'rejected browser invocations leave no finance state');
+
+set local role anon;
+select fixture.expect_error($q$select public.finance_apply_club_house_tax_rebate_v1(fixture.uid(201),'2000-01-01'::date,'2000-01-01'::date)$q$,'permission denied for function','anon cannot execute finance_apply_club_house_tax_rebate_v1');
+select fixture.expect_error($q$select public.finance_charge_emergency_loan_weekly_payment(fixture.uid(201),'2000-01-01'::date)$q$,'permission denied for function','anon cannot execute finance_charge_emergency_loan_weekly_payment');
+select fixture.expect_error($q$select public.finance_charge_race_cost(fixture.uid(201),fixture.uid(201),1::bigint,'{}'::jsonb)$q$,'permission denied for function','anon cannot execute finance_charge_race_cost');
+select fixture.expect_error($q$select public.finance_create_club_house_rebate_v1(fixture.uid(201),fixture.uid(201),'fixture'::text,1::bigint,1,'fixture'::text)$q$,'permission denied for function','anon cannot execute finance_create_club_house_rebate_v1');
+select fixture.expect_error($q$select public.finance_force_transfer_club_to_club(fixture.uid(201),fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text,'{}'::jsonb)$q$,'permission denied for function','anon cannot execute finance_force_transfer_club_to_club');
+select fixture.expect_error($q$select public.finance_issue_emergency_loan_non_ai_core_v1(fixture.uid(201),'fixture'::text,'fixture'::text,'fixture'::text)$q$,'permission denied for function','anon cannot execute finance_issue_emergency_loan_non_ai_core_v1');
+select fixture.expect_error($q$select public.finance_run_monthly_tax_audit_for_club(fixture.uid(201),'2000-01-01'::date,'2000-01-01'::date,false)$q$,'permission denied for function','anon cannot execute finance_run_monthly_tax_audit_for_club');
+select fixture.expect_error($q$select public.race_engine_refund_one_day_weather_cancelled_race_v1(fixture.uid(201))$q$,'permission denied for function','anon cannot execute race_engine_refund_one_day_weather_cancelled_race_v1');
+select fixture.expect_error($q$select public.refund_one_day_weather_cancelled_race_v2(fixture.uid(201))$q$,'permission denied for function','anon cannot execute refund_one_day_weather_cancelled_race_v2');
+reset role;
+set local role authenticated;
+select fixture.expect_error($q$select public.finance_apply_club_house_tax_rebate_v1(fixture.uid(201),'2000-01-01'::date,'2000-01-01'::date)$q$,'permission denied for function','authenticated cannot execute finance_apply_club_house_tax_rebate_v1');
+select fixture.expect_error($q$select public.finance_charge_emergency_loan_weekly_payment(fixture.uid(201),'2000-01-01'::date)$q$,'permission denied for function','authenticated cannot execute finance_charge_emergency_loan_weekly_payment');
+select fixture.expect_error($q$select public.finance_charge_race_cost(fixture.uid(201),fixture.uid(201),1::bigint,'{}'::jsonb)$q$,'permission denied for function','authenticated cannot execute finance_charge_race_cost');
+select fixture.expect_error($q$select public.finance_create_club_house_rebate_v1(fixture.uid(201),fixture.uid(201),'fixture'::text,1::bigint,1,'fixture'::text)$q$,'permission denied for function','authenticated cannot execute finance_create_club_house_rebate_v1');
+select fixture.expect_error($q$select public.finance_force_transfer_club_to_club(fixture.uid(201),fixture.uid(201),1::bigint,'fixture'::text,'fixture'::text,'fixture'::text,'{}'::jsonb)$q$,'permission denied for function','authenticated cannot execute finance_force_transfer_club_to_club');
+select fixture.expect_error($q$select public.finance_issue_emergency_loan_non_ai_core_v1(fixture.uid(201),'fixture'::text,'fixture'::text,'fixture'::text)$q$,'permission denied for function','authenticated cannot execute finance_issue_emergency_loan_non_ai_core_v1');
+select fixture.expect_error($q$select public.finance_run_monthly_tax_audit_for_club(fixture.uid(201),'2000-01-01'::date,'2000-01-01'::date,false)$q$,'permission denied for function','authenticated cannot execute finance_run_monthly_tax_audit_for_club');
+select fixture.expect_error($q$select public.race_engine_refund_one_day_weather_cancelled_race_v1(fixture.uid(201))$q$,'permission denied for function','authenticated cannot execute race_engine_refund_one_day_weather_cancelled_race_v1');
+select fixture.expect_error($q$select public.refund_one_day_weather_cancelled_race_v2(fixture.uid(201))$q$,'permission denied for function','authenticated cannot execute refund_one_day_weather_cancelled_race_v2');
+reset role;
+select fixture.assert_ok(has_function_privilege('service_role','public.finance_apply_club_house_tax_rebate_v1(uuid,date,date)','EXECUTE') and has_function_privilege('service_role','public.finance_charge_emergency_loan_weekly_payment(uuid,date)','EXECUTE') and has_function_privilege('service_role','public.finance_charge_race_cost(uuid,uuid,bigint,jsonb)','EXECUTE') and has_function_privilege('service_role','public.finance_create_club_house_rebate_v1(uuid,uuid,text,bigint,integer,text)','EXECUTE') and has_function_privilege('service_role','public.finance_force_transfer_club_to_club(uuid,uuid,bigint,text,text,text,jsonb)','EXECUTE') and has_function_privilege('service_role','public.finance_issue_emergency_loan_non_ai_core_v1(uuid,text,text,text)','EXECUTE') and has_function_privilege('service_role','public.finance_run_monthly_tax_audit_for_club(uuid,date,date,boolean)','EXECUTE') and has_function_privilege('service_role','public.race_engine_refund_one_day_weather_cancelled_race_v1(uuid)','EXECUTE') and has_function_privilege('service_role','public.refund_one_day_weather_cancelled_race_v2(uuid)','EXECUTE'),'service role retains all nine extended internal finance grants');
+select fixture.assert_ok((select count(*)=0 from finance.transactions) and (select count(*)=0 from finance.entries),'extended denied calls leave finance unchanged');
 
 -- Controlled test-only grant. Never authorize this in production here.
 grant execute on function public.saturn_create_test_club_v1(text,text,text,text,text) to authenticated;
