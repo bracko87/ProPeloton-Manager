@@ -2,7 +2,8 @@ import test from 'node:test'
 import assert from 'node:assert/strict'
 import {readFileSync} from 'node:fs'
 const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
-const sql=read('supabase/migrations/20261120235700_saturn_youth_academy_player_expiry_v1.sql')
+const fullSql=read('supabase/migrations/20261120235700_saturn_youth_academy_player_expiry_v1.sql')
+const [sql,registrationRules]=fullSql.split('-- Updated Saturn product decision:')
 const functions=[
  'decline_my_youth_race_invitation_v1',
  'enter_my_youth_race_v1',
@@ -34,6 +35,35 @@ test('Youth Academy read-only and scheduler functions are not replaced',()=>{
 test.todo('staging: expired linked but unconverted manager cannot enter Youth race or modify lineup')
 test.todo('staging: expired manager cannot transfer Academy budget or run Youth scouting')
 test.todo('staging: expired manager can still READ Academy calendar, history and finances')
-test.todo('staging: active unconverted manager retains only allowed paid Academy access')
+test.todo('staging: active unconverted manager cannot access Youth Academy even with paid Premium')
 test.todo('staging: ordinary/converted paid Academy owners retain writes, including correct Coins and finance')
 test.todo('staging: scheduler Academy maintenance and race processing work after migration')
+
+test('canonical registration requirement considers linked but unconverted identities',()=>{
+ assert.match(registrationRules,/u\.is_anonymous is false/)
+ assert.match(registrationRules,/t\.converted_at is null/)
+ assert.match(registrationRules,/private\.saturn_is_permanently_registered_v1\(p_user_id\)[\s\S]*public\.user_has_paid_premium_access_v1/)
+})
+test('coin ledger, wallet, developing clubs and academy enforce registration server-side',()=>{
+ for(const name of ['coin_ledger','wallet','developing_club','youth_academy']){
+  assert.match(registrationRules,new RegExp('create trigger saturn_guard_'+name+'_v1 before insert'))
+ }
+ assert.match(registrationRules,/old\.converted_at is null and new\.converted_at is not null/)
+ assert.match(registrationRules,/apply_coin_delta\(new\.user_id,20,'welcome'/)
+ assert.match(registrationRules,/'system_key','welcome_coins_v1'/)
+})
+test('restricted pages and checkout endpoints require verified permanent account',()=>{
+ const gate=read('src/components/trial/PermanentRegistrationGate.tsx')
+ assert.match(gate,/\.select\('converted_at'\)/)
+ assert.match(gate,/!error && \(!data \|\| Boolean\(data\.converted_at\)\)/)
+ const app=read('src/App.tsx')
+ for(const page of ['DevelopingTeamPage','YouthAcademyPage','YouthRaceDetailPage','YouthAcademyTeamProfilePage','YouthRiderProfilePage','InviteFriendsPage']) {
+  assert.ok(app.includes('<PermanentRegistrationGate><'+page+' />'))
+ }
+ for(const endpoint of ['create-coin-checkout','create-premium-checkout','create-premium-portal']){
+  const edge=read('supabase/functions/'+endpoint+'/index.ts')
+  assert.match(edge,/is_anonymous !== false/)
+  assert.match(edge,/trialError \|\| \(trial && !trial\.converted_at\)/)
+  assert.match(edge,/403, origin/)
+ }
+})

@@ -166,7 +166,9 @@ create function public.user_has_paid_premium_access_v1(p_user_id uuid) returns b
 create function public.get_current_season_number() returns integer language sql stable as $select 2$;
 create function public.user_has_youth_academy_access_v1(p_user_id uuid)
 returns boolean language sql stable security definer set search_path to 'public','pg_temp' as $
- select p_user_id is not null and public.user_has_paid_premium_access_v1(p_user_id)
+ select p_user_id is not null and exists(select 1 from auth.users u where u.id=p_user_id and u.is_anonymous is false)
+ and not exists(select 1 from public.saturn_test_accounts_v1 t where t.user_id=p_user_id and t.converted_at is null)
+ and public.user_has_paid_premium_access_v1(p_user_id)
  and exists(select 1 from public.clubs c join public.youth_academies a on a.club_id=c.id and a.is_active=true
  where c.owner_user_id=p_user_id and c.deleted_at is null and c.parent_club_id is null
  and coalesce(c.club_type,'main')<>'developing'
@@ -245,7 +247,13 @@ end $;
 reset role;
 insert into fixture.paid_access values(fixture.uid(1));
 set local role authenticated;
-select fixture.assert_ok(public.update_my_youth_training_philosophy_v1('development')->>'training_philosophy'='development','active paid licensed test manager can train Academy');
+do $ begin
+ perform public.update_my_youth_training_philosophy_v1('development');
+ raise exception 'FAIL: unconverted paid guest modified Academy';
+exception when others then
+ if sqlerrm not like 'Premium membership is required%' then raise; end if;
+ raise notice 'PASS: active paid unconverted guest cannot modify Academy';
+end $;
 select set_config('fixture.subject',fixture.uid(7)::text,true);
 do $ begin
  perform public.update_my_youth_training_philosophy_v1('development');
@@ -268,7 +276,7 @@ select fixture.assert_ok(public.update_my_youth_training_philosophy_v1('freshnes
 select set_config('fixture.subject',fixture.uid(4)::text,true);
 select fixture.assert_ok(public.update_my_youth_training_philosophy_v1('development')->>'training_philosophy'='development','ordinary paid licensed manager retains Academy write');
 reset role;
-select fixture.assert_ok((select count(*)=2 from public.youth_academy_settings where training_philosophy='balanced'),'expired managers did not change Academy settings');
+select fixture.assert_ok((select count(*)=3 from public.youth_academy_settings where training_philosophy='balanced'),'expired managers did not change Academy settings');
 
 rollback;
 \echo 'SATURN FIXTURE RUNTIME PASSED (not real Supabase Auth or full game)'
