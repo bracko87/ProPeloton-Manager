@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { useAuth } from '../../context/AuthProvider'
 import { supabase } from '../../lib/supabase'
 import { SATURN_TEST_ACCOUNTS_ENABLED } from '../../lib/testAccountClient'
