@@ -13,6 +13,13 @@ out="${1:-}"
 if [[ -z "$out" || -e "$out" ]]; then
   echo 'Specify a new output file outside the Git checkout.' >&2; exit 2
 fi
+# Resolve the destination parent and refuse any path inside this checkout.
+outdir="$(cd -- "$(dirname -- "$out")" && pwd -P)"
+root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+case "$outdir/" in "$root/"*) echo 'Do not write a live schema archive inside Git.' >&2; exit 2;; esac
+out="$outdir/$(basename -- "$out")"
+if [[ -e "$out" || -L "$out" ]]; then echo 'Output exists. Stop.' >&2; exit 2; fi
+export PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=120000"
 command -v pg_dump >/dev/null
 command -v psql >/dev/null
 command -v pg_restore >/dev/null
@@ -25,8 +32,7 @@ fi
 # Owner and ACL metadata are retained; do not silently change definer ownership.
 tmp="$(mktemp "${out}.partial.XXXXXX")"
 trap 'rm -f -- "$tmp"' EXIT
-PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=120000" \
-  pg_dump --format=custom --schema-only --no-password \
+pg_dump --format=custom --schema-only --no-password \
     --lock-wait-timeout=5s \
     --schema=public --schema=private --schema=finance \
     --schema=archive --schema=control_center_private --schema=v4_historical_research \
