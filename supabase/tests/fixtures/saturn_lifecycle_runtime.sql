@@ -162,10 +162,10 @@ create table public.youth_academies(id uuid primary key,club_id uuid,is_active b
 create table public.youth_academy_settings(academy_id uuid primary key,training_philosophy text,updated_at timestamptz);
 create table private.youth_effective_settings_v1(academy_id uuid,training_decider text);
 create table fixture.paid_access(user_id uuid primary key);
-create function public.user_has_paid_premium_access_v1(p_user_id uuid) returns boolean language sql stable security definer as $select exists(select 1 from fixture.paid_access where user_id=p_user_id)$;
-create function public.get_current_season_number() returns integer language sql stable as $select 2$;
+create function public.user_has_paid_premium_access_v1(p_user_id uuid) returns boolean language sql stable security definer as $$select exists(select 1 from fixture.paid_access where user_id=p_user_id)$$;
+create function public.get_current_season_number() returns integer language sql stable as $$select 2$$;
 create function public.user_has_youth_academy_access_v1(p_user_id uuid)
-returns boolean language sql stable security definer set search_path to 'public','pg_temp' as $
+returns boolean language sql stable security definer set search_path to 'public','pg_temp' as $$
  select p_user_id is not null and exists(select 1 from auth.users u where u.id=p_user_id and u.is_anonymous is false)
  and not exists(select 1 from public.saturn_test_accounts_v1 t where t.user_id=p_user_id and t.converted_at is null)
  and public.user_has_paid_premium_access_v1(p_user_id)
@@ -173,10 +173,10 @@ returns boolean language sql stable security definer set search_path to 'public'
  where c.owner_user_id=p_user_id and c.deleted_at is null and c.parent_club_id is null
  and coalesce(c.club_type,'main')<>'developing'
  and coalesce(a.renewed_through_season,a.activated_season,0)>=coalesce(public.get_current_season_number(),1));
-$;
-create function public.get_my_youth_academy_v1() returns jsonb language sql stable security definer as $
+$$;
+create function public.get_my_youth_academy_v1() returns jsonb language sql stable security definer as $$
  select jsonb_build_object('training_philosophy',s.training_philosophy) from public.youth_academy_settings s join public.youth_academies a on a.id=s.academy_id join public.clubs c on c.id=a.club_id where c.owner_user_id=auth.uid()
-$;
+$$;
 -- Exact snapshot of one draft writer; wider Academy integration remains open.
 CREATE OR REPLACE FUNCTION public.update_my_youth_training_philosophy_v1(p_training_philosophy text)
  RETURNS jsonb
@@ -237,40 +237,40 @@ select fixture.assert_ok(not public.user_has_youth_academy_access_v1(fixture.uid
 update public.youth_academies set renewed_through_season=2 where id=fixture.uid(504);
 set local role authenticated;
 select set_config('fixture.subject',fixture.uid(1)::text,true);
-do $ begin
+do $$ begin
  perform public.update_my_youth_training_philosophy_v1('development');
  raise exception 'FAIL: welcome-only manager modified Academy';
 exception when others then
  if sqlerrm not like 'Premium membership is required%' then raise; end if;
  raise notice 'PASS: welcome-only guest cannot modify Academy';
-end $;
+end $$;
 reset role;
 insert into fixture.paid_access values(fixture.uid(1));
 set local role authenticated;
-do $ begin
+do $$ begin
  perform public.update_my_youth_training_philosophy_v1('development');
  raise exception 'FAIL: unconverted paid guest modified Academy';
 exception when others then
  if sqlerrm not like 'Premium membership is required%' then raise; end if;
  raise notice 'PASS: active paid unconverted guest cannot modify Academy';
-end $;
+end $$;
 select set_config('fixture.subject',fixture.uid(7)::text,true);
-do $ begin
+do $$ begin
  perform public.update_my_youth_training_philosophy_v1('development');
  raise exception 'FAIL: expired guest modified Academy';
 exception when insufficient_privilege then
  if sqlerrm not like 'Test account expired%' then raise; end if;
  raise notice 'PASS: expired anonymous paid manager cannot modify Academy';
-end $;
+end $$;
 select fixture.assert_ok(public.get_my_youth_academy_v1()->>'training_philosophy'='balanced','expired guest retains fixture Academy read access');
 select set_config('fixture.subject',fixture.uid(8)::text,true);
-do $ begin
+do $$ begin
  perform public.update_my_youth_training_philosophy_v1('development');
  raise exception 'FAIL: expired linked manager modified Academy';
 exception when insufficient_privilege then
  if sqlerrm not like 'Test account expired%' then raise; end if;
  raise notice 'PASS: expired linked unconverted paid manager cannot modify Academy';
-end $;
+end $$;
 select set_config('fixture.subject',fixture.uid(2)::text,true);
 select fixture.assert_ok(public.update_my_youth_training_philosophy_v1('freshness')->>'training_philosophy'='freshness','converted paid licensed manager retains Academy write');
 select set_config('fixture.subject',fixture.uid(4)::text,true);
