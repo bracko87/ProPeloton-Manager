@@ -71,5 +71,18 @@ test('restricted pages and checkout endpoints require verified permanent account
 test('runtime registration guard SQL is identical to draft migration',()=>{
  const fixture=read('supabase/tests/fixtures/saturn_lifecycle_runtime.sql')
  const snapshot=fixture.split('-- Updated Saturn product decision:')[1].split('-- END SATURN REGISTRATION RULES SNAPSHOT')[0].trim()
- assert.equal(snapshot,registrationRules.trim())
+ assert.equal(snapshot,registrationRules.split('-- SATURN: scheduler compatibility with deferred Coin eligibility.')[0].trim())
+})
+
+test('scheduler preserves senior cash awards but removes guest Coins consistently',()=>{
+ const sql=registrationRules.split('-- SATURN: scheduler compatibility with deferred Coin eligibility.')[1]
+ const reward=sql.split('CREATE OR REPLACE FUNCTION public.grant_referral_paid_conversion_reward_v1')[0]
+ assert.match(reward,/not private\.saturn_is_permanently_registered_v1\(r\.owner_user_id\)/)
+ assert.match(reward,/r\.coin_total := 0/)
+ assert.match(reward,/jsonb_set\(d\.value,'\{coins\}','0'::jsonb,true\)/)
+ assert.match(reward,/if r\.cash_total > 0 then/)
+ assert.match(sql,/and private\.saturn_is_permanently_registered_v1\(p\.id\)/)
+ assert.match(sql,/if not private\.saturn_is_permanently_registered_v1\(NEW\.id\)/)
+ assert.match(sql,/reason','registration_required'/)
+ assert.match(sql,/referrer_registration_required/)
 })
