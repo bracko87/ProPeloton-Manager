@@ -373,3 +373,89 @@ Checks include independent rollout gates, revoked browser EXECUTE, service-role 
 **Important:** fixture grants for guest creation are strictly local and rollback with all test data. Actual Auth, full game database schema and genuine integration, including the original finance triggers and all normal registration callers, remain unverified. No production privilege changes or extra paid branch.
 
 **Verified result:** Source commit `b0991fce76661c47ef6ca0e9be1a370e6c894523`, Saturn CI run 44885353295, database job 136789337898: **51/51 creation/finance/Premium assertions passed, 88/88 total database fixture assertions**, all three workflows succeeded. No full staging TODO closed solely on this basis. No type of access to production changed.
+
+
+## 21 November — controlled production readiness addendum
+
+**Not permission to deploy.** Existing Supabase project and GitHub only; no
+additional local tool installation, paid branch, Docker or database reset.
+The earlier full-staging acceptance criteria remain unverified wherever
+there is no equivalent runtime or browser evidence.
+
+### Evidence as of this checkpoint
+
+- 198 isolated PostgreSQL runtime assertions, including extended finance
+  EXECUTE restrictions, passed on 3c1ac8a8300e6492be3b2e3490857f3664bfc6e0.
+  https://github.com/bracko87/ProPeloton-Manager/actions/runs/44898237522
+- All three workflows on that commit passed. Static source inspection: 588
+  frontend files and 26 repository Edge Function files; no direct/other
+  Edge references or unsafe frontend calls to the 13 listed routines.
+  Eight extra finance signatures are tested with stand-ins; the actual
+  force-transfer routine is from a read-only live snapshot. These are
+  privilege checks, not end-to-end finance business-operation tests.
+- Read-only live cron inventory: 72 jobs, seven active; none directly names
+  the nine newly restricted functions. Observed SQL callers have trusted
+  definer/owner context. This does not certify indirect wrappers, deployed
+  Edge Functions, or arbitrary dynamic calls.
+- Code backups exist. Production daily physical recovery points are visible
+  (latest 21 November 05:45:21 UTC at time of owner screenshot).
+  No restore performed. A restore rewinds later database writes and does
+  not restore Storage objects. Dashboard usage-limit warning unresolved.
+- Restricted tester allowlist and public homepage split committed
+  f33c3067ba34b5ffeb1a1b15187b6d2eefee606e; automated evidence pending.
+
+### Deployment and rollback sequence
+
+1. Verify current main HEAD versus review branch, all relevant CI and the
+   current live schema/migration history. Review remaining finance wrappers
+   and callers, including finance_spend_from_club, finance_issue_emergency_loan
+   and scheduler entrypoints, and re-check all ordinary manager paths.
+   Confirm live resource headroom and fresh recovery point. Do not proceed
+   on a stale/failed check.
+2. Capture the exact pre-change production function bodies, view options,
+   policies, triggers, effective grants and rollout configuration for every
+   object affected; retain a private targeted rollback package. The code
+   backup is not a database backup. Do not store user data or secrets.
+   This package has NOT yet been captured or rehearsed.
+3. Review ordered migration dependency plan and transaction boundaries;
+   include the relevant Edge Functions in release versioning. Apply only
+   after all preflight gates pass. Keep both private gates OFF, creation
+   EXECUTE revoked, and VITE_SATURN_TEST_ACCOUNTS_ENABLED and
+   VITE_SATURN_PUBLIC_SIGNUP_ENABLED false. Verify normal registered
+   manager functionality before enabling any guest access.
+4. Configure existing Supabase Auth anonymous signup, identity linking,
+   rate limiting, allowed redirects, and actual server-enforced CAPTCHA.
+   No credentials or secret keys should appear in code, chat, or logs.
+   Check normal email/Google registration after global Auth changes.
+   The owner may need to perform dashboard-only settings; do not count
+   these as verified until actual evidence is available.
+5. For restricted testing, enable the route only
+   (VITE_SATURN_TEST_ACCOUNTS_ENABLED=true) while
+   VITE_SATURN_PUBLIC_SIGNUP_ENABLED=false and server public_signup=false.
+   Enable the two verified server gates and grant authenticated creation
+   EXECUTE ONLY after authorization and abuse-control verification.
+   A tester completes the challenge, receives their own random UUID
+   reference, and an authorized operator inserts a short-lived approval in
+   private.saturn_approved_testers_v1. Do not request session tokens.
+   Approve a documented safe regional AI replacement capacity separately.
+   The allowlist restricts official team creation, not the Auth signup
+   endpoint itself; CAPTCHA/rate limit must protect that endpoint.
+6. Run real browser and database reconciliation for new guest team,
+   ordinary existing manager, seven-day entitlement, expired-account
+   restrictions, same-UUID email/Google conversion, deferred single 20-Coin
+   reward and protected AI/league state. Do not buy Coins or start live
+   paid transactions as part of guest testing. Use no live clock changes.
+   Explicitly record anything not tested (including real-time expiry).
+7. Public release only after owner approval and all release blockers clear:
+   separately enable server public_signup and public homepage flag. Retain
+   restricted approval capability for future rollback/testing.
+8. If a regression occurs, first close public_signup and both server
+   gates, revoke guest creation EXECUTE, hide the homepage button, and
+   capture evidence. Existing users and teams are not deleted. Restore the
+   previous frontend/Edge deployment and use the rehearsed targeted
+   rollback package where appropriate. Only if recovery cannot be targeted
+   consider full database restore with separate owner approval, a recorded
+   data-loss window and Storage implications. Never automatically restore.
+
+The draft cannot be described as production ready until the above real
+environment checks are completed. Do not expand unrelated feature scope.
