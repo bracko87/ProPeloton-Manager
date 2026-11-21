@@ -5,6 +5,15 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 21 November 2026, first PostgreSQL runtime verification
+
+- ✅ **37 runtime assertions passed** on disposable PostgreSQL 17 in GitHub Actions, job 136787953010, source commit `7318ed07f5a40d115076b43c5012ae0acff8d74f`. Five actual Saturn migration files applied against synthetic Auth/club/race fixtures; entire transaction rolled back. Tested exact 336h expiry, owner race entries/withdrawals, national race block, linked-but-unconverted expiry, own lifecycle/club reads, direct owner update/delete restriction, verified email/Google finalizers, repeat conversion, unchanged original UUID, club and deadline, ordinary manager and no-team/missing Auth rejection.
+- ✅ Fixed shared guard: unconverted trial **OR** no verified canonical permanent Auth identity requires restriction; anonymous before club creation no longer bypasses reviewed player RPCs. Null user UUID system path retained. Updated source assertion for this added guard at commit `bd11bf08cf51091ed5f2fbf1b9f989c1082776a2`.
+- ⬜ Fixture Auth accessor is simulated; real Supabase JWT/OAuth/CAPTCHA and full game schema, finance, Premium entitlement, game schedulers and all other runtime behavior not verified. All 145 full-staging TODOs remain pending. Full schema export/restore remains separate.
+- ✅ No production mutations or paid branch created. Public guest gate stays OFF.
+
+[Staging test evidence](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 21 November 2026, Windows export and schema inventory
 
 - ✅ Native Windows PostgreSQL 17 baseline exporter added at `scripts/saturn_export_staging_baseline.ps1` (no Docker), with local password prompt and schema-only archive validation.
