@@ -64,3 +64,19 @@ begin
  execute replace(v_definition, E'\nbegin\n', E'\nbegin\n  if p_module_key = ''analytics'' then\n    return control_center_private.build_admin_analytics_dashboard_snapshot_v3();\n  end if;\n');
 end;
 $patch$;
+
+-- Defense in depth: only internal privileged delivery can call the dispatcher.
+revoke all on function control_center_private.build_admin_module_snapshot(text) from public, anon, authenticated;
+
+do $verify$
+declare p jsonb;
+begin
+ p := control_center_private.build_admin_module_snapshot('analytics');
+ if p->>'schema_version' is distinct from '3' or not (p->'periods' ?& array['today','yesterday','7d','30d']) or jsonb_array_length(p->'periods'->'30d'->'daily') <> 30 then
+   raise exception 'Invalid analytics export contract';
+ end if;
+ if has_function_privilege('anon','control_center_private.build_admin_analytics_dashboard_snapshot_v3()','EXECUTE') or has_function_privilege('authenticated','control_center_private.build_admin_analytics_dashboard_snapshot_v3()','EXECUTE') or has_function_privilege('anon','control_center_private.build_admin_module_snapshot(text)','EXECUTE') or has_function_privilege('authenticated','control_center_private.build_admin_module_snapshot(text)','EXECUTE') then
+   raise exception 'Unexpected analytics permissions';
+ end if;
+end;
+$verify$;
