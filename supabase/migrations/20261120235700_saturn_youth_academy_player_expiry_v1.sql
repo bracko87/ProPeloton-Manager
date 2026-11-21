@@ -843,3 +843,117 @@ begin
 end;
 $function$;
 
+
+-- Updated Saturn product decision: no Coins, payments, U16 Academy or U23
+-- Developing Team before verified registration. Welcome Premium may still
+-- expose included non-paid tools. All restrictions survive identity linking.
+-- This is still an unshipped draft migration.
+create or replace function private.saturn_is_permanently_registered_v1(p_user_id uuid)
+returns boolean language sql stable security definer set search_path=''
+as $saturn$
+  select p_user_id is not null
+    and exists(select 1 from auth.users u where u.id=p_user_id and u.is_anonymous is false)
+    and not exists(select 1 from public.saturn_test_accounts_v1 t
+      where t.user_id=p_user_id and t.converted_at is null);
+$saturn$;
+revoke all on function private.saturn_is_permanently_registered_v1(uuid) from public,anon,authenticated;
+
+-- Existing entitlement semantics retained for permanently registered users.
+create or replace function public.user_has_youth_academy_access_v1(p_user_id uuid)
+returns boolean language sql stable security definer set search_path=''
+as $saturn$
+  select private.saturn_is_permanently_registered_v1(p_user_id)
+    and public.user_has_paid_premium_access_v1(p_user_id)
+    and exists(select 1 from public.clubs c
+      join public.youth_academies a on a.club_id=c.id and a.is_active=true
+      where c.owner_user_id=p_user_id and c.deleted_at is null
+      and c.parent_club_id is null and coalesce(c.club_type,'main')<>'developing'
+      and coalesce(a.renewed_through_season,a.activated_season,0)>=coalesce(public.get_current_season_number(),1));
+$saturn$;
+
+-- Enforce the no-Coins rule even when an internal reward/purchase routine,
+-- service or overlooked browser endpoint attempts to bypass UI controls.
+-- Zero-balance wallet initialization remains allowed.
+create or replace function private.saturn_guard_coin_ledger_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if not private.saturn_is_permanently_registered_v1(new.user_id) then
+    raise exception 'Complete registration before receiving or spending Coins' using errcode='42501';
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_guard_coin_ledger_v1() from public,anon,authenticated;
+drop trigger if exists saturn_guard_coin_ledger_v1 on public.user_coin_ledger;
+create trigger saturn_guard_coin_ledger_v1 before insert or update on public.user_coin_ledger
+for each row execute function private.saturn_guard_coin_ledger_v1();
+create or replace function private.saturn_guard_wallet_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if coalesce(new.balance,0)<>0 and not private.saturn_is_permanently_registered_v1(new.user_id) then
+    raise exception 'Complete registration before receiving or spending Coins' using errcode='42501';
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_guard_wallet_v1() from public,anon,authenticated;
+drop trigger if exists saturn_guard_wallet_v1 on public.user_wallets;
+create trigger saturn_guard_wallet_v1 before insert or update on public.user_wallets
+for each row execute function private.saturn_guard_wallet_v1();
+
+-- Prevent creation through alternate SQL paths, not just paywall buttons.
+-- Existing ordinary senior club creation and AI clubs are unaffected.
+create or replace function private.saturn_guard_developing_club_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if new.club_type='developing' and new.owner_user_id is not null
+      and not private.saturn_is_permanently_registered_v1(new.owner_user_id) then
+    raise exception 'Complete registration before developing-team activation' using errcode='42501';
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_guard_developing_club_v1() from public,anon,authenticated;
+drop trigger if exists saturn_guard_developing_club_v1 on public.clubs;
+create trigger saturn_guard_developing_club_v1 before insert or update of club_type,owner_user_id on public.clubs
+for each row execute function private.saturn_guard_developing_club_v1();
+create or replace function private.saturn_guard_youth_academy_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if exists(select 1 from public.clubs c where c.id=new.club_id and c.owner_user_id is not null
+    and not private.saturn_is_permanently_registered_v1(c.owner_user_id)) then
+    raise exception 'Complete registration before Youth Academy activation' using errcode='42501';
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_guard_youth_academy_v1() from public,anon,authenticated;
+drop trigger if exists saturn_guard_youth_academy_v1 on public.youth_academies;
+create trigger saturn_guard_youth_academy_v1 before insert or update of club_id,is_active on public.youth_academies
+for each row execute function private.saturn_guard_youth_academy_v1();
+
+-- The usual 20-Coin gift is deferred until successful permanent conversion,
+-- not awarded at anonymous signup or identity linking. Same existing
+-- idempotency key as permanent registration; retries cannot award twice.
+create or replace function private.saturn_grant_deferred_welcome_coins_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if old.converted_at is null and new.converted_at is not null then
+    if not private.saturn_is_permanently_registered_v1(new.user_id) then
+      raise exception 'Permanent registration is not verified' using errcode='42501';
+    end if;
+    perform public.apply_coin_delta(new.user_id,20,'welcome',
+      jsonb_build_object('system_key','welcome_coins_v1','category','welcome','welcome_amount',20));
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_grant_deferred_welcome_coins_v1() from public,anon,authenticated;
+drop trigger if exists saturn_grant_deferred_welcome_coins_v1 on public.saturn_test_accounts_v1;
+create trigger saturn_grant_deferred_welcome_coins_v1 after update of converted_at on public.saturn_test_accounts_v1
+for each row execute function private.saturn_grant_deferred_welcome_coins_v1();
