@@ -5,6 +5,15 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 21 November 2026, Windows export and schema inventory
+
+- ✅ Native Windows PostgreSQL 17 baseline exporter added at `scripts/saturn_export_staging_baseline.ps1` (no Docker), with local password prompt and schema-only archive validation.
+- ✅ Production read-only parity inventory ran successfully: 28 groups / 7,340 objects, including 692 app tables, 2,720 routines, 3,082 constraints, six app-owned managed Auth triggers and eleven Storage policies. Query: `supabase/tests/saturn_baseline_parity_inventory.sql`.
+- ⬜ Native archive capture requires locally authorized PostgreSQL connection, because the available Supabase connector exposes SQL queries but no pg_dump archive or direct connection credentials. No password or archive should be pasted into chat. Run the exporter in a detached worktree; retain archive locally.
+- ⬜ App schema restore, managed Auth/Storage dependency restore, isolated fixture setup, actual Saturn DB integration tests remain pending. No new paid environment or production changes.
+
+[Recovery and Windows instructions](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 21 November 2026, historical replay root cause and recovery tooling
 
 - ✅ Production migration metadata reviewed read-only: **1,125 migrations, first version 20260820065515 (phase11b_stage_rewards_each_publication)**, all statement arrays populated.
