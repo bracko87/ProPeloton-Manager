@@ -38,6 +38,7 @@ import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
 import TestTeamSignupPage from './pages/TestTeamSignup'
 import TestAccountRegisterPage from './pages/TestAccountRegister'
+import PermanentRegistrationGate from './components/trial/PermanentRegistrationGate'
 import ForgotPasswordPage from './pages/ForgotPassword'
 import ResetPasswordPage from './pages/ResetPassword'
 import CreateClubPage from './pages/CreateClub'
@@ -530,26 +531,26 @@ export default function App(): JSX.Element {
 
             <Route
               path="developing-team"
-              element={<DevelopingTeamPage />}
+              element={<PermanentRegistrationGate><DevelopingTeamPage /></PermanentRegistrationGate>}
             />
 
             <Route
               path="youth-academy"
-              element={<YouthAcademyPage />}
+              element={<PermanentRegistrationGate><YouthAcademyPage /></PermanentRegistrationGate>}
             />
 
             <Route
               path="youth-academy/races/:raceId"
-              element={<YouthRaceDetailPage />}
+              element={<PermanentRegistrationGate><YouthRaceDetailPage /></PermanentRegistrationGate>}
             />
 
             <Route
               path="youth-academy/teams/:academyId"
-              element={<YouthAcademyTeamProfilePage />}
+              element={<PermanentRegistrationGate><YouthAcademyTeamProfilePage /></PermanentRegistrationGate>}
             />
             <Route
               path="youth-academy/riders/:riderId"
-              element={<YouthRiderProfilePage />}
+              element={<PermanentRegistrationGate><YouthRiderProfilePage /></PermanentRegistrationGate>}
             />
 
             <Route
@@ -895,7 +896,7 @@ export default function App(): JSX.Element {
 
             <Route
               path="invite-friends"
-              element={<InviteFriendsPage />}
+              element={<PermanentRegistrationGate><InviteFriendsPage /></PermanentRegistrationGate>}
             />
           </Route>
 

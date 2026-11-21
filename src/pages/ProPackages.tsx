@@ -15,6 +15,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
 import appI18n from '../i18n'
 import { supabase } from '../lib/supabase'
+import PermanentRegistrationGate from '../components/trial/PermanentRegistrationGate'
 import EarnCoinsDialog, { useEarnCoinsLabel } from '@/components/rewards/EarnCoinsDialog'
 import { Coins } from 'lucide-react'
 
@@ -562,6 +563,10 @@ async function callAuthenticatedEdgeFunction<
 }
 
 export default function ProPackagesPage(): JSX.Element {
+  return <PermanentRegistrationGate><RegisteredProPackagesPage /></PermanentRegistrationGate>
+}
+
+function RegisteredProPackagesPage(): JSX.Element {
   const earnCoinsLabel = useEarnCoinsLabel()
   const [earnCoinsOpen, setEarnCoinsOpen] = useState(false)
 

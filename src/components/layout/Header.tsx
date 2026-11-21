@@ -1,3 +1,4 @@
+import { usePermanentRegistration } from '../trial/PermanentRegistrationGate'
 /**
  * Header.tsx
  * Top header inside the in-game layout.
@@ -301,6 +302,7 @@ export default function Header({
   coinBalance = 0,
 }: HeaderProps) {
   const { t } = useTranslation('navigation')
+  const permanentlyRegistered = usePermanentRegistration()
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [inboxUnreadCount, setInboxUnreadCount] = useState(0)
@@ -1153,7 +1155,7 @@ export default function Header({
           )}
         </button>
 
-        <div
+        {permanentlyRegistered && <div
           data-tutorial-target="header-coins"
           className="rounded-md border border-black/35 bg-yellow-300/70 px-3 py-1.5 text-sm font-semibold text-black min-w-[130px] text-center"
         >
@@ -1161,7 +1163,7 @@ export default function Header({
           {coinBalance === 1
             ? t('header.coin')
             : t('header.coins')}
-        </div>
+        </div>}
 
         <button
           data-tutorial-target="header-notifications"
@@ -1239,7 +1241,7 @@ export default function Header({
               </div>
 
               <div className="py-1">
-                {profileMenuItems.map(item => {
+                {profileMenuItems.filter(item => permanentlyRegistered || (item.path !== '/dashboard/pro' && item.path !== '/dashboard/invite-friends')).map(item => {
                   const isInboxItem =
                     item.path ===
                     '/dashboard/inbox'

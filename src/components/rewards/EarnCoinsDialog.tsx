@@ -1,3 +1,4 @@
+import { usePermanentRegistration } from '../trial/PermanentRegistrationGate'
 /**
  * CPX Research rewarded-survey window.
  * No survey or third-party request begins until the player opts in.
@@ -61,6 +62,7 @@ export function useEarnCoinsLabel(): string {
 export default function EarnCoinsDialog({
   open, onClose,
 }: { open: boolean; onClose: () => void }) {
+  const permanentlyRegistered = usePermanentRegistration()
   const copy = useCopy()
   const [offerUrl, setOfferUrl] = useState<string | null>(null)
   const [starting, setStarting] = useState(false)
@@ -130,7 +132,7 @@ export default function EarnCoinsDialog({
     }
   }
 
-  if (!open) return null
+  if (!open || !permanentlyRegistered) return null
 
   return (
     <div className="fixed inset-0 z-[160] flex items-center justify-center bg-black/65 p-2 sm:p-5" role="presentation">

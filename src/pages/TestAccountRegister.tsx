@@ -137,6 +137,7 @@ export default function TestAccountRegister(): JSX.Element {
         return
       }
       await refreshUser()
+      window.dispatchEvent(new Event('saturn-registration-completed'))
       const placementMessage = await requestApprovedPlacement()
       setStatus('Google registration completed on your original account. Your original Premium expiry is preserved. ' + placementMessage)
     } catch {
@@ -177,6 +178,7 @@ export default function TestAccountRegister(): JSX.Element {
       const converted = !finalizeError && result?.success === true &&
         result?.converted === true && result?.user_id === originId
       if (converted) {
+        window.dispatchEvent(new Event('saturn-registration-completed'))
         const placementMessage = await requestApprovedPlacement()
         setStatus('Registration completed on your original account. Your original Premium expiry is preserved. ' + placementMessage)
       } else {
