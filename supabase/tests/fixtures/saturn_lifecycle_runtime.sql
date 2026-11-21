@@ -573,5 +573,294 @@ insert into public.clubs(id,owner_user_id,club_type) values(fixture.uid(702),fix
 insert into public.youth_academies values(fixture.uid(702),fixture.uid(108),true,2,2);
 select fixture.assert_ok(exists(select 1 from public.clubs where id=fixture.uid(702)) and exists(select 1 from public.youth_academies where id=fixture.uid(702)),'registration guard permits existing licensed activation pathways after conversion');
 
+
+-- Season-reward scheduler fixture: actual patched coordinator, synthetic ranking,
+-- finance, notification and reward destinations. No real season is advanced.
+create role service_role nologin;
+grant usage on schema fixture,auth to service_role;
+create function auth.role() returns text language sql stable as $$select current_setting('role',true)$$;
+create table public.team_ranking_season_snapshots(season_number integer);
+insert into public.team_ranking_season_snapshots values(1);
+create table public.season_reward_guard(source_season integer primary key,granted_at timestamptz);
+create table public.club_season_reward_grants(id uuid primary key default gen_random_uuid(),source_season integer,granted_in_season integer,club_id uuid,club_tier text,division_name text,final_position integer,cash_total bigint,coin_total integer,reward_details jsonb,finance_transaction_id uuid,coin_transaction_id uuid,notification_id bigint);
+create table public.season_reward_runs(source_season integer,started_at timestamptz,finished_at timestamptz,success boolean,message text,awards_created_count integer,total_cash bigint,total_coins integer);
+create table fixture.cash_award(id uuid primary key default gen_random_uuid(),club_id uuid,cash bigint,metadata jsonb);
+create table fixture.reward_notice(id bigint generated always as identity,user_id uuid,cash bigint,coins integer,details jsonb);
+create function public.run_competition_rewards_v2(p_source_season integer,p_preview boolean)
+returns table(club_id uuid,club_name text,division text,snapshot_tier text,final_position integer,cash_total bigint,coin_total integer,reward_details jsonb,owner_user_id uuid)
+language sql stable as $$
+ select fixture.uid(100+n), 'Fixture '||n, 'Fixture division','amateur',n,1000::bigint,5,
+ '[{"code":"base","cash":1000,"coins":5},{"code":"other","cash":0,"coins":0}]'::jsonb, fixture.uid(n)
+ from unnest(array[4,6,7,8]) n
+$$;
+create function public.finance_grant_competition_reward(p_club_id uuid,p_cash bigint,p_source_season integer,p_grant_id uuid,p_metadata jsonb) returns uuid language sql as $$
+ insert into fixture.cash_award(club_id,cash,metadata) values(p_club_id,p_cash,p_metadata) returning id
+$$;
+create function public.grant_competition_reward_coins_v1(p_user_id uuid,p_coin_total integer,p_reward_grant_id uuid,p_source_season integer,p_metadata jsonb) returns uuid language plpgsql as $$
+begin
+ perform public.apply_coin_delta(p_user_id,p_coin_total,'competition_reward_coins',jsonb_build_object('system_key','fixture-season:'||p_reward_grant_id));
+ return gen_random_uuid();
+end;
+$$;
+create function public.create_competition_reward_notification_v1(p_user_id uuid,p_reward_grant_id uuid,p_source_season integer,p_granted_in_season integer,p_club_id uuid,p_club_name text,p_division text,p_snapshot_tier text,p_final_position integer,p_cash_total bigint,p_coin_total integer,p_reward_details jsonb)
+returns bigint language sql as $$
+ insert into fixture.reward_notice(user_id,cash,coins,details) values(p_user_id,p_cash_total,p_coin_total,p_reward_details) returning id
+$$;
+-- BEGIN SATURN SEASON AWARD FUNCTION SNAPSHOT
+
+CREATE OR REPLACE FUNCTION public.apply_competition_rewards_v1(p_source_season integer)
+ RETURNS TABLE(reward_grant_id uuid, club_id uuid, club_name text, division text, snapshot_tier text, final_position integer, cash_total bigint, coin_total integer, finance_transaction_id uuid, owner_user_id uuid)
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+declare
+  v_current_season integer;
+  v_granted_in_season integer;
+  v_started_at timestamptz := now();
+  v_awards_created_count integer := 0;
+  v_total_cash bigint := 0;
+  v_total_coins integer := 0;
+  v_reward_grant_id uuid;
+  v_finance_transaction_id uuid;
+  v_coin_transaction_id uuid;
+  v_notification_id bigint;
+  v_metadata jsonb;
+  r record;
+begin
+  if auth.role() <> 'service_role' then
+    raise exception 'Only service_role can apply competition rewards';
+  end if;
+
+  if p_source_season is null or p_source_season <= 0 then
+    raise exception 'p_source_season must be a positive integer';
+  end if;
+
+  if not exists (
+    select 1
+    from public.team_ranking_season_snapshots s
+    where s.season_number = p_source_season
+  ) then
+    raise exception 'No team ranking snapshot exists for season %', p_source_season;
+  end if;
+
+  if exists (
+    select 1
+    from public.season_reward_guard g
+    where g.source_season = p_source_season
+  ) then
+    raise exception 'Competition rewards already applied for source season %', p_source_season;
+  end if;
+
+  if exists (
+    select 1
+    from public.club_season_reward_grants g
+    where g.source_season = p_source_season
+  ) then
+    raise exception 'Reward grant rows already exist for source season %', p_source_season;
+  end if;
+
+  select public.get_current_season_number()
+  into v_current_season;
+
+  v_granted_in_season := greatest(coalesce(v_current_season, 0), p_source_season + 1);
+
+  if v_granted_in_season <= p_source_season then
+    raise exception
+      'Live reward apply requires current season to be after source season (source %, current/granted %)',
+      p_source_season,
+      v_granted_in_season;
+  end if;
+
+  for r in
+    select *
+    from public.run_competition_rewards_v2(p_source_season, true)
+    order by division, final_position, club_name
+  loop
+    -- A temporary manager may still earn all normal senior-team cash awards.
+    -- Suppress only Coins, including the award details, notification and totals.
+    if r.owner_user_id is not null and not private.saturn_is_permanently_registered_v1(r.owner_user_id) then
+      r.coin_total := 0;
+      select coalesce(jsonb_agg(jsonb_set(d.value,'{coins}','0'::jsonb,true) order by d.ordinality),'[]'::jsonb)
+        into r.reward_details
+      from jsonb_array_elements(coalesce(r.reward_details,'[]'::jsonb)) with ordinality as d(value,ordinality);
+    end if;
+    v_reward_grant_id := null;
+    v_finance_transaction_id := null;
+    v_coin_transaction_id := null;
+    v_notification_id := null;
+
+    insert into public.club_season_reward_grants (
+      source_season,
+      granted_in_season,
+      club_id,
+      club_tier,
+      division_name,
+      final_position,
+      cash_total,
+      coin_total,
+      reward_details
+    )
+    values (
+      p_source_season,
+      v_granted_in_season,
+      r.club_id,
+      r.snapshot_tier,
+      r.division,
+      r.final_position,
+      r.cash_total,
+      r.coin_total,
+      r.reward_details
+    )
+    returning id into v_reward_grant_id;
+
+    v_metadata :=
+      jsonb_build_object(
+        'source_season', p_source_season,
+        'granted_in_season', v_granted_in_season,
+        'reward_grant_id', v_reward_grant_id,
+        'club_id', r.club_id,
+        'club_name', r.club_name,
+        'division', r.division,
+        'snapshot_tier', r.snapshot_tier,
+        'final_position', r.final_position,
+        'cash_total', r.cash_total,
+        'coin_total', r.coin_total,
+        'reward_details', r.reward_details
+      );
+
+    if r.cash_total > 0 then
+      v_finance_transaction_id :=
+        public.finance_grant_competition_reward(
+          r.club_id,
+          r.cash_total,
+          p_source_season,
+          v_reward_grant_id,
+          v_metadata
+        );
+    end if;
+
+    if r.coin_total > 0 and r.owner_user_id is not null then
+      v_coin_transaction_id :=
+        public.grant_competition_reward_coins_v1(
+          r.owner_user_id,
+          r.coin_total,
+          v_reward_grant_id,
+          p_source_season,
+          v_metadata
+        );
+    end if;
+
+    if r.owner_user_id is not null then
+      v_notification_id :=
+        public.create_competition_reward_notification_v1(
+          r.owner_user_id,
+          v_reward_grant_id,
+          p_source_season,
+          v_granted_in_season,
+          r.club_id,
+          r.club_name,
+          r.division,
+          r.snapshot_tier,
+          r.final_position,
+          r.cash_total,
+          r.coin_total,
+          r.reward_details
+        );
+    end if;
+
+    update public.club_season_reward_grants g
+    set
+      finance_transaction_id = v_finance_transaction_id,
+      coin_transaction_id = v_coin_transaction_id,
+      notification_id = v_notification_id
+    where g.id = v_reward_grant_id;
+
+    v_awards_created_count := v_awards_created_count + 1;
+    v_total_cash := v_total_cash + r.cash_total;
+
+    if r.owner_user_id is not null then
+      v_total_coins := v_total_coins + r.coin_total;
+    end if;
+
+    reward_grant_id := v_reward_grant_id;
+    club_id := r.club_id;
+    club_name := r.club_name;
+    division := r.division;
+    snapshot_tier := r.snapshot_tier;
+    final_position := r.final_position;
+    cash_total := r.cash_total;
+    coin_total := r.coin_total;
+    finance_transaction_id := v_finance_transaction_id;
+    owner_user_id := r.owner_user_id;
+
+    return next;
+  end loop;
+
+  insert into public.season_reward_guard (
+    source_season,
+    granted_at
+  )
+  values (
+    p_source_season,
+    now()
+  );
+
+  insert into public.season_reward_runs (
+    source_season,
+    started_at,
+    finished_at,
+    success,
+    message,
+    awards_created_count,
+    total_cash,
+    total_coins
+  )
+  values (
+    p_source_season,
+    v_started_at,
+    now(),
+    true,
+    format('Competition rewards applied for season %s', p_source_season),
+    v_awards_created_count,
+    v_total_cash,
+    v_total_coins
+  );
+
+  return;
+end;
+$function$;
+
+-- END SATURN SEASON AWARD FUNCTION SNAPSHOT
+set local role authenticated;
+do $$ begin
+ perform public.apply_competition_rewards_v1(1);
+ raise exception 'FAIL: unauthorized season reward execution';
+exception when others then
+ if sqlerrm <> 'Only service_role can apply competition rewards' then raise; end if;
+ raise notice 'PASS: browser cannot execute season rewards';
+end $$;
+reset role;
+set local role service_role;
+select fixture.assert_ok(count(*)=4 and sum(cash_total)=4000 and sum(coin_total)=10,'mixed registration season rewards finish with full cash and eligible Coins only') from public.apply_competition_rewards_v1(1);
+reset role;
+select fixture.assert_ok((select count(*)=4 and sum(cash)=4000 from fixture.cash_award),'all four clubs obtain normal senior cash rewards');
+select fixture.assert_ok((select count(*)=2 and sum(coin_total)=0 and bool_and(coin_transaction_id is null) from public.club_season_reward_grants where club_id in(fixture.uid(106),fixture.uid(107))),'unconverted and expired guests record cash awards but no Coin transaction');
+select fixture.assert_ok((select count(*)=2 and sum(coin_total)=10 and bool_and(coin_transaction_id is not null) from public.club_season_reward_grants where club_id in(fixture.uid(104),fixture.uid(108))),'ordinary and converted managers retain full competition Coins');
+select fixture.assert_ok((select count(*)=2 and bool_and((reward_details->0->>'coins')::int=0) and bool_and((reward_details->0->>'cash')::int=1000) and bool_and(reward_details->1->>'code'='other') from public.club_season_reward_grants where club_id in(fixture.uid(106),fixture.uid(107))),'guest award details suppress Coins but keep cash and order');
+select fixture.assert_ok((select count(*)=2 and bool_and(coins=0 and cash=1000 and (details->0->>'coins')::int=0) from fixture.reward_notice where user_id in(fixture.uid(6),fixture.uid(7))),'guest notifications describe cash and zero Coins');
+select fixture.assert_ok((select count(*)=2 and sum(delta)=10 from public.user_coin_ledger where reason='competition_reward_coins'),'only eligible managers have actual competition Coin ledger entries');
+select fixture.assert_ok((select count(*)=1 from public.season_reward_guard where source_season=1) and (select count(*)=1 from public.season_reward_runs where success and total_cash=4000 and total_coins=10 and awards_created_count=4),'scheduler records successful season reward totals and completion guard');
+set local role service_role;
+do $$ begin
+ perform public.apply_competition_rewards_v1(1);
+ raise exception 'FAIL: duplicate season reward execution';
+exception when others then
+ if sqlerrm <> 'Competition rewards already applied for source season 1' then raise; end if;
+ raise notice 'PASS: repeated season processing cannot duplicate rewards';
+end $$;
+reset role;
+select fixture.assert_ok((select count(*)=4 from fixture.cash_award) and (select count(*)=2 from public.user_coin_ledger where reason='competition_reward_coins'),'failed replay leaves cash and Coins unchanged');
+
 rollback;
 \echo 'SATURN FIXTURE RUNTIME PASSED (not real Supabase Auth or full game)'

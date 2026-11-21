@@ -86,3 +86,10 @@ test('scheduler preserves senior cash awards but removes guest Coins consistentl
  assert.match(sql,/reason','registration_required'/)
  assert.match(sql,/referrer_registration_required/)
 })
+
+test('season award runtime coordinator matches actual draft migration',()=>{
+ const fixture=read('supabase/tests/fixtures/saturn_lifecycle_runtime.sql')
+ const actual=fullSql.split('CREATE OR REPLACE FUNCTION public.apply_competition_rewards_v1(')[1].split('CREATE OR REPLACE FUNCTION public.grant_referral_paid_conversion_reward_v1(')[0].trim()
+ const snapshot=fixture.split('-- BEGIN SATURN SEASON AWARD FUNCTION SNAPSHOT')[1].split('-- END SATURN SEASON AWARD FUNCTION SNAPSHOT')[0].trim()
+ assert.equal(snapshot,'CREATE OR REPLACE FUNCTION public.apply_competition_rewards_v1('+actual)
+})
