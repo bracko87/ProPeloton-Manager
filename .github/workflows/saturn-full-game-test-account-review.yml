@@ -139,3 +139,6 @@ jobs:
 
       - name: Execute Saturn lifecycle and authorized-write fixture in PostgreSQL
         run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_lifecycle_runtime.sql
+
+      - name: Execute Saturn team creation, finance and Premium fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_creation_finance_runtime.sql
