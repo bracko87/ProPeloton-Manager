@@ -5,6 +5,13 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 21 November 2026, creation/finance/Premium fixture milestone
+
+- ✅ Added **51 passed PostgreSQL runtime checks**, 88 total including the earlier 37 lifecycle checks. All three GitHub workflows passed at `b0991fce76661c47ef6ca0e9be1a370e6c894523`, Saturn run 44885353295, database job 136789337898.
+- ✅ Four actual Saturn creation/AI-placement/lifecycle/finance-privilege migrations executed against a disposable synthetic schema; ten exact production finance, roster initialization and Premium-reader routines included. Verified both rollout gates, eligible AI replacement, no historical AI displacement, region occupancy, owner/setup, one starting ledger transaction, duplicate/replay rejection, atomic rollback after missing profile/prior entitlement, 168h Premium boundary, paid-access fixture, normal allocator dispatch, four finance permissions revoked from browser roles but retained by service role.
+- ✅ No additional paid Supabase branch, production write or permission change. Synthetic roster generator, balance-sync trigger, regional mapping and paid access are fixture dependencies, not production parity.
+- ⬜ All 145 full staging TODOs remain pending. Real Auth/JWT, exact production schema and triggers, paid Academy entitlements, true finance caller compatibility, concurrent creation and gameplay are not yet certified. Production guest mode remains disabled; existing finance exposure is not fixed live.
+
 ## CURRENT SATURN STATUS — 21 November 2026, first PostgreSQL runtime verification
 
 - ✅ **37 runtime assertions passed** on disposable PostgreSQL 17 in GitHub Actions, job 136787953010, source commit `7318ed07f5a40d115076b43c5012ae0acff8d74f`. Five actual Saturn migration files applied against synthetic Auth/club/race fixtures; entire transaction rolled back. Tested exact 336h expiry, owner race entries/withdrawals, national race block, linked-but-unconverted expiry, own lifecycle/club reads, direct owner update/delete restriction, verified email/Google finalizers, repeat conversion, unchanged original UUID, club and deadline, ordinary manager and no-team/missing Auth rejection.
