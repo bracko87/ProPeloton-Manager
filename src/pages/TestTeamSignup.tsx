@@ -21,6 +21,7 @@ export default function TestTeamSignupPage(): JSX.Element {
   const [captchaToken, setCaptchaToken] = useState<string | null>(null)
   const [captchaAttempt, setCaptchaAttempt] = useState(0)
   const [error, setError] = useState('')
+  const [testerReference, setTesterReference] = useState<string | null>(null)
 
   React.useEffect(() => {
     if (!ENABLED) return
@@ -53,6 +54,7 @@ export default function TestTeamSignupPage(): JSX.Element {
     }
     setBusy(true)
     setError('')
+    setTesterReference(null)
     try {
       const { data: previous, error: previousError } = await testClient.auth.getUser()
       if (previousError && previousError.status !== 400 && previousError.status !== 401) throw previousError
@@ -76,7 +78,12 @@ export default function TestTeamSignupPage(): JSX.Element {
         p_primary_color: primary,
         p_secondary_color: secondary,
       })
-      if (createError || typeof clubId !== 'string') throw createError ?? new Error('Club could not be created.')
+      if (createError?.message === 'Restricted test access: approval required') {
+        setTesterReference(authenticated.user.id)
+        setError('This test is currently private. Send the tester reference below to the game administrator, then retry after approval.')
+        return
+      }
+      if (createError || typeof clubId !== 'string') throw new Error(createError?.message ?? 'Club could not be created.')
       const { data: session } = await testClient.auth.getSession()
       if (!session.session) throw new Error('Guest session unavailable after creating the club.')
       // The normal game client has no persistent session; transfer in-memory
@@ -129,6 +136,7 @@ export default function TestTeamSignupPage(): JSX.Element {
         </div>
         <SaturnGuestCaptcha key={captchaAttempt} onTokenChange={setCaptchaToken} />
         {error && <p role="alert" className="text-red-300">{error}</p>}
+        {testerReference && <p className="break-all text-sm">Tester reference: <code>{testerReference}</code></p>}
         <button type="submit" disabled={busy || countries.length === 0 || !SATURN_TURNSTILE_SITE_KEY || !captchaToken} className="rounded-lg bg-yellow-400 text-slate-950 px-5 py-3 disabled:opacity-40">{busy ? 'Creating your team…' : 'Create team and start testing'}</button>
       </form>
       <p>Already decided to stay? <Link className="underline text-yellow-300" to="/register">Register a permanent account</Link></p>

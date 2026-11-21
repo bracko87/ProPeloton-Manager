@@ -6,15 +6,31 @@
 create table if not exists private.saturn_test_club_rollout_v1 (
   id boolean primary key default true check (id),
   enabled boolean not null default false,
+  public_signup boolean not null default false,
   verified_at timestamptz,
   reason text not null default 'All gameplay RPCs and expiry enforcement must pass before activation',
   constraint saturn_club_rollout_requires_verification
     check (not enabled or verified_at is not null)
 );
+alter table private.saturn_test_club_rollout_v1
+  add column if not exists public_signup boolean not null default false;
 insert into private.saturn_test_club_rollout_v1(id,enabled)
 values(true,false) on conflict(id) do nothing;
 alter table private.saturn_test_club_rollout_v1 enable row level security;
 revoke all on private.saturn_test_club_rollout_v1 from public, anon, authenticated;
+
+-- Restricted test mode is default, even after both verified gates open.
+-- Authorize only the tester's canonical anonymous UUID, never a user-supplied
+-- claim or URL parameter. Approval expires automatically. Public activation
+-- must separately set public_signup=true at the server.
+create table if not exists private.saturn_approved_testers_v1 (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  approved_at timestamptz not null default now(),
+  approval_expires_at timestamptz not null,
+  check (approval_expires_at > approved_at)
+);
+alter table private.saturn_approved_testers_v1 enable row level security;
+revoke all on private.saturn_approved_testers_v1 from PUBLIC, anon, authenticated;
 
 -- Admin-reviewed official regional league capacities, not arbitrary client
 -- parameters. No rows are prepopulated; missing capacity blocks creation.
@@ -76,6 +92,12 @@ begin
     where u.id = v_user and u.is_anonymous is true
   ) then
     raise exception 'Only verified temporary Auth identities can create a test team';
+  end if;
+
+  if not exists(select 1 from private.saturn_test_club_rollout_v1 g where g.id and g.public_signup)
+     and not exists(select 1 from private.saturn_approved_testers_v1 a
+       where a.user_id=v_user and a.approved_at<=now() and a.approval_expires_at>now()) then
+    raise exception 'Restricted test access: approval required' using errcode='42501';
   end if;
 
   -- Serialize a user's parallel form submits and regional division allocation.

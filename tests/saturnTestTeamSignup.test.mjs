@@ -42,3 +42,13 @@ test('real club is only created by a dedicated server endpoint, not direct inser
 test.todo('staging: signInAnonymously gate remains closed until all production safety tests pass')
 test.todo('staging: dedicated create-club RPC creates exactly one lowest-tier team and trial record')
 test.todo('staging: club ID, riders, economy, training and races persist after conversion')
+
+test('restricted testing keeps public homepage button disabled and uses server UUID approval',()=>{
+ const sql=read('supabase/migrations/20261120153000_saturn_fail_closed_real_test_team_creation_v1.sql')
+ assert.match(hero,/VITE_SATURN_PUBLIC_SIGNUP_ENABLED === 'true'/)
+ assert.match(sql,/public_signup boolean not null default false/)
+ assert.match(sql,/a\.user_id=v_user and a\.approved_at<=now\(\) and a\.approval_expires_at>now\(\)/)
+ assert.match(sql,/Restricted test access: approval required/)
+ assert.match(form,/setTesterReference\(authenticated\.user\.id\)/)
+ assert.match(sql,/revoke all on private\.saturn_approved_testers_v1 from PUBLIC, anon, authenticated/)
+})
