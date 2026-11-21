@@ -67,3 +67,9 @@ test('restricted pages and checkout endpoints require verified permanent account
   assert.match(edge,/403, origin/)
  }
 })
+
+test('runtime registration guard SQL is identical to draft migration',()=>{
+ const fixture=read('supabase/tests/fixtures/saturn_lifecycle_runtime.sql')
+ const snapshot=fixture.split('-- Updated Saturn product decision:')[1].split('-- END SATURN REGISTRATION RULES SNAPSHOT')[0].trim()
+ assert.equal(snapshot,registrationRules.trim())
+})

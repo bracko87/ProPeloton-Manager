@@ -278,5 +278,300 @@ select fixture.assert_ok(public.update_my_youth_training_philosophy_v1('developm
 reset role;
 select fixture.assert_ok((select count(*)=3 from public.youth_academy_settings where training_philosophy='balanced'),'expired managers did not change Academy settings');
 
+
+-- Runtime verification of the exact registration rules from the draft migration.
+-- Existing welcome reward routine captured read-only from production; minimal
+-- synthetic wallet/ledger schema. No payments, real user records or network.
+create table public.user_wallets(user_id uuid primary key,balance integer not null,updated_at timestamptz);
+create table public.user_coin_ledger(user_id uuid,delta integer,reason text,payload_json jsonb);
+create function fixture.expect_registration_denial(cmd text, description text) returns void language plpgsql as $fixture$
+begin
+  begin
+    execute cmd;
+  exception when insufficient_privilege then
+    if sqlerrm not like 'Complete registration%' then raise; end if;
+    raise notice 'PASS: %',description;
+    return;
+  end;
+  raise exception 'FAIL: %',description;
+end;
+$fixture$;
+
+CREATE OR REPLACE FUNCTION public.apply_coin_delta(p_user_id uuid, p_delta integer, p_reason text, p_payload_json jsonb DEFAULT '{}'::jsonb)
+ RETURNS void
+ LANGUAGE plpgsql
+ SECURITY DEFINER
+ SET search_path TO 'public'
+AS $function$
+DECLARE
+  v_payload jsonb;
+  v_system_key text;
+  v_current_balance integer;
+  v_new_balance integer;
+BEGIN
+  IF p_user_id IS NULL THEN
+    RAISE EXCEPTION 'p_user_id is required';
+  END IF;
+
+  IF p_delta IS NULL THEN
+    RAISE EXCEPTION 'p_delta is required';
+  END IF;
+
+  IF p_reason IS NULL OR btrim(p_reason) = '' THEN
+    RAISE EXCEPTION 'p_reason is required';
+  END IF;
+
+  v_payload := COALESCE(
+    p_payload_json,
+    '{}'::jsonb
+  );
+
+  v_system_key := NULLIF(
+    btrim(
+      COALESCE(
+        v_payload ->> 'system_key',
+        ''
+      )
+    ),
+    ''
+  );
+
+  /*
+   * Ensure the wallet exists before locking it.
+   */
+  INSERT INTO public.user_wallets (
+    user_id,
+    balance
+  )
+  VALUES (
+    p_user_id,
+    0
+  )
+  ON CONFLICT (user_id) DO NOTHING;
+
+  /*
+   * Serialize all wallet changes for this user.
+   */
+  SELECT w.balance
+  INTO v_current_balance
+  FROM public.user_wallets w
+  WHERE w.user_id = p_user_id
+  FOR UPDATE;
+
+  IF NOT FOUND THEN
+    RAISE EXCEPTION
+      'Wallet could not be loaded for user %.',
+      p_user_id;
+  END IF;
+
+  /*
+   * Automated transactions carrying the same system key are idempotent.
+   * A repeated Stripe webhook or Premium invoice does nothing.
+   */
+  IF v_system_key IS NOT NULL
+     AND EXISTS (
+       SELECT 1
+       FROM public.user_coin_ledger l
+       WHERE l.user_id = p_user_id
+         AND l.payload_json ->> 'system_key' =
+           v_system_key
+     )
+  THEN
+    RETURN;
+  END IF;
+
+  v_new_balance :=
+    v_current_balance + p_delta;
+
+  /*
+   * Never silently clamp an insufficient debit to zero.
+   */
+  IF v_new_balance < 0 THEN
+    RAISE EXCEPTION
+      'Insufficient coins. Current balance: %, requested delta: %.',
+      v_current_balance,
+      p_delta
+      USING ERRCODE = 'P0001';
+  END IF;
+
+  /*
+   * Insert the exact applied delta.
+   * If this insert fails, the wallet is not changed.
+   */
+  INSERT INTO public.user_coin_ledger (
+    user_id,
+    delta,
+    reason,
+    payload_json
+  )
+  VALUES (
+    p_user_id,
+    p_delta,
+    btrim(p_reason),
+    v_payload
+  );
+
+  UPDATE public.user_wallets
+  SET balance = v_new_balance
+  WHERE user_id = p_user_id;
+
+  RETURN;
+END;
+$function$
+
+-- Registration rules snapshot kept identical to migration by node test.
+-- Updated Saturn product decision: no Coins, payments, U16 Academy or U23
+-- Developing Team before verified registration. Welcome Premium may still
+-- expose included non-paid tools. All restrictions survive identity linking.
+-- This is still an unshipped draft migration.
+create or replace function private.saturn_is_permanently_registered_v1(p_user_id uuid)
+returns boolean language sql stable security definer set search_path=''
+as $saturn$
+  select p_user_id is not null
+    and exists(select 1 from auth.users u where u.id=p_user_id and u.is_anonymous is false)
+    and not exists(select 1 from public.saturn_test_accounts_v1 t
+      where t.user_id=p_user_id and t.converted_at is null);
+$saturn$;
+revoke all on function private.saturn_is_permanently_registered_v1(uuid) from public,anon,authenticated;
+
+-- Existing entitlement semantics retained for permanently registered users.
+create or replace function public.user_has_youth_academy_access_v1(p_user_id uuid)
+returns boolean language sql stable security definer set search_path=''
+as $saturn$
+  select private.saturn_is_permanently_registered_v1(p_user_id)
+    and public.user_has_paid_premium_access_v1(p_user_id)
+    and exists(select 1 from public.clubs c
+      join public.youth_academies a on a.club_id=c.id and a.is_active=true
+      where c.owner_user_id=p_user_id and c.deleted_at is null
+      and c.parent_club_id is null and coalesce(c.club_type,'main')<>'developing'
+      and coalesce(a.renewed_through_season,a.activated_season,0)>=coalesce(public.get_current_season_number(),1));
+$saturn$;
+
+-- Enforce the no-Coins rule even when an internal reward/purchase routine,
+-- service or overlooked browser endpoint attempts to bypass UI controls.
+-- Zero-balance wallet initialization remains allowed.
+create or replace function private.saturn_guard_coin_ledger_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if not private.saturn_is_permanently_registered_v1(new.user_id) then
+    raise exception 'Complete registration before receiving or spending Coins' using errcode='42501';
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_guard_coin_ledger_v1() from public,anon,authenticated;
+drop trigger if exists saturn_guard_coin_ledger_v1 on public.user_coin_ledger;
+create trigger saturn_guard_coin_ledger_v1 before insert or update on public.user_coin_ledger
+for each row execute function private.saturn_guard_coin_ledger_v1();
+create or replace function private.saturn_guard_wallet_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if coalesce(new.balance,0)<>0 and not private.saturn_is_permanently_registered_v1(new.user_id) then
+    raise exception 'Complete registration before receiving or spending Coins' using errcode='42501';
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_guard_wallet_v1() from public,anon,authenticated;
+drop trigger if exists saturn_guard_wallet_v1 on public.user_wallets;
+create trigger saturn_guard_wallet_v1 before insert or update on public.user_wallets
+for each row execute function private.saturn_guard_wallet_v1();
+
+-- Prevent creation through alternate SQL paths, not just paywall buttons.
+-- Existing ordinary senior club creation and AI clubs are unaffected.
+create or replace function private.saturn_guard_developing_club_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if new.club_type='developing' and new.owner_user_id is not null
+      and not private.saturn_is_permanently_registered_v1(new.owner_user_id) then
+    raise exception 'Complete registration before developing-team activation' using errcode='42501';
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_guard_developing_club_v1() from public,anon,authenticated;
+drop trigger if exists saturn_guard_developing_club_v1 on public.clubs;
+create trigger saturn_guard_developing_club_v1 before insert or update of club_type,owner_user_id on public.clubs
+for each row execute function private.saturn_guard_developing_club_v1();
+create or replace function private.saturn_guard_youth_academy_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if exists(select 1 from public.clubs c where c.id=new.club_id and c.owner_user_id is not null
+    and not private.saturn_is_permanently_registered_v1(c.owner_user_id)) then
+    raise exception 'Complete registration before Youth Academy activation' using errcode='42501';
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_guard_youth_academy_v1() from public,anon,authenticated;
+drop trigger if exists saturn_guard_youth_academy_v1 on public.youth_academies;
+create trigger saturn_guard_youth_academy_v1 before insert or update of club_id,is_active on public.youth_academies
+for each row execute function private.saturn_guard_youth_academy_v1();
+
+-- The usual 20-Coin gift is deferred until successful permanent conversion,
+-- not awarded at anonymous signup or identity linking. Same existing
+-- idempotency key as permanent registration; retries cannot award twice.
+create or replace function private.saturn_grant_deferred_welcome_coins_v1()
+returns trigger language plpgsql security definer set search_path=''
+as $saturn$
+begin
+  if old.converted_at is null and new.converted_at is not null then
+    if not private.saturn_is_permanently_registered_v1(new.user_id) then
+      raise exception 'Permanent registration is not verified' using errcode='42501';
+    end if;
+    perform public.apply_coin_delta(new.user_id,20,'welcome',
+      jsonb_build_object('system_key','welcome_coins_v1','category','welcome','welcome_amount',20));
+  end if;
+  return new;
+end;
+$saturn$;
+revoke all on function private.saturn_grant_deferred_welcome_coins_v1() from public,anon,authenticated;
+drop trigger if exists saturn_grant_deferred_welcome_coins_v1 on public.saturn_test_accounts_v1;
+create trigger saturn_grant_deferred_welcome_coins_v1 after update of converted_at on public.saturn_test_accounts_v1
+for each row execute function private.saturn_grant_deferred_welcome_coins_v1();
+-- END SATURN REGISTRATION RULES SNAPSHOT
+
+select fixture.assert_ok(not private.saturn_is_permanently_registered_v1(fixture.uid(1)) and not private.saturn_is_permanently_registered_v1(fixture.uid(8)) and not private.saturn_is_permanently_registered_v1(fixture.uid(5)),'anonymous, linked-unconverted and pre-team users denied paid services');
+select fixture.assert_ok(private.saturn_is_permanently_registered_v1(fixture.uid(2)) and private.saturn_is_permanently_registered_v1(fixture.uid(4)),'converted and ordinary users eligible for paid services');
+select fixture.assert_ok(not private.saturn_is_permanently_registered_v1(fixture.uid(999)) and not private.saturn_is_permanently_registered_v1(null),'missing identity cannot receive paid services');
+select fixture.assert_ok(not has_function_privilege('authenticated','private.saturn_is_permanently_registered_v1(uuid)','EXECUTE'),'browser cannot execute private registration helper');
+insert into public.user_wallets(user_id,balance) values(fixture.uid(1),0),(fixture.uid(8),0),(fixture.uid(5),0);
+select fixture.expect_registration_denial($q$select public.apply_coin_delta(fixture.uid(1),20,'welcome','{"system_key":"welcome_coins_v1"}')$q$,'guest cannot receive welcome coins even via privileged reward routine');
+select fixture.expect_registration_denial($q$select public.apply_coin_delta(fixture.uid(8),20,'welcome','{"system_key":"welcome_coins_v1"}')$q$,'linked unconverted manager cannot receive welcome coins');
+select fixture.expect_registration_denial($q$insert into public.user_coin_ledger values(fixture.uid(1),-1,'purchase','{}')$q$,'guest cannot insert spending ledger entry via privileged path');
+select fixture.expect_registration_denial($q$update public.user_wallets set balance=1 where user_id=fixture.uid(1)$q$,'guest cannot obtain coins via direct wallet update');
+select fixture.expect_registration_denial($q$insert into public.user_wallets(user_id,balance) values(fixture.uid(7),20)$q$,'expired guest cannot be assigned a funded wallet');
+select fixture.expect_registration_denial($q$insert into public.clubs(id,owner_user_id,club_type) values(fixture.uid(701),fixture.uid(1),'developing')$q$,'guest cannot create developing club via privileged path');
+select fixture.expect_registration_denial($q$update public.clubs set club_type='developing' where id=fixture.uid(108)$q$,'linked unconverted manager cannot change senior club into developing club');
+select fixture.expect_registration_denial($q$insert into public.youth_academies values(fixture.uid(701),fixture.uid(101),true,2,2)$q$,'guest cannot create Academy via privileged path');
+select fixture.expect_registration_denial($q$update public.youth_academies set is_active=true where id=fixture.uid(508)$q$,'linked unconverted manager cannot activate Academy');
+select fixture.assert_ok((select count(*)=0 from public.user_coin_ledger) and (select sum(balance)=0 from public.user_wallets),'all rejected coin operations leave zero balances and no ledger rows');
+-- Link the existing identity using synthetic verified Auth data; call the actual
+-- finalizers under the browser role and exercise the deferred reward trigger.
+update auth.users set encrypted_password='fixture-password-hash' where id=fixture.uid(8);
+update auth.users set is_anonymous=false where id=fixture.uid(1);
+insert into auth.identities values(fixture.uid(1),'google');
+set local role authenticated;
+select set_config('fixture.subject',fixture.uid(8)::text,true);
+select fixture.assert_ok((public.saturn_finalize_test_account_email_conversion_v1()->>'converted')::boolean,'email conversion with deferred welcome reward succeeds');
+select fixture.assert_ok((public.saturn_finalize_test_account_email_conversion_v1()->>'converted')::boolean,'email conversion retry succeeds');
+select set_config('fixture.subject',fixture.uid(1)::text,true);
+select fixture.assert_ok((public.saturn_finalize_test_account_google_conversion_v1()->>'converted')::boolean,'Google conversion with deferred welcome reward succeeds');
+select fixture.assert_ok((public.saturn_finalize_test_account_google_conversion_v1()->>'converted')::boolean,'Google conversion retry succeeds');
+reset role;
+select fixture.assert_ok((select count(*)=2 from public.user_coin_ledger where delta=20 and reason='welcome' and payload_json->>'system_key'='welcome_coins_v1') and (select sum(balance)=40 from public.user_wallets),'exactly one 20-Coin welcome reward per converted identity');
+select fixture.assert_ok((select count(*)=2 from public.saturn_test_accounts_v1 where (user_id=fixture.uid(1) and club_id=fixture.uid(101) or user_id=fixture.uid(8) and club_id=fixture.uid(108)) and converted_at is not null and expires_at=started_at+interval '336 hours' and premium_ends_at=started_at+interval '168 hours'),'conversion preserves original club and trial periods');
+select public.apply_coin_delta(fixture.uid(1),-5,'fixture_paid_action','{"system_key":"fixture_spend"}');
+select public.apply_coin_delta(fixture.uid(4),20,'welcome','{"system_key":"welcome_coins_v1"}');
+select fixture.assert_ok((select balance=15 from public.user_wallets where user_id=fixture.uid(1)) and (select balance=20 from public.user_wallets where user_id=fixture.uid(4)),'converted user can spend and ordinary user can receive coins');
+select fixture.expect_registration_denial($q$update public.user_coin_ledger set user_id=fixture.uid(7) where user_id=fixture.uid(4)$q$,'cannot reassign an existing ledger credit to an unregistered user');
+insert into public.clubs(id,owner_user_id,club_type) values(fixture.uid(702),fixture.uid(1),'developing');
+insert into public.youth_academies values(fixture.uid(702),fixture.uid(108),true,2,2);
+select fixture.assert_ok(exists(select 1 from public.clubs where id=fixture.uid(702)) and exists(select 1 from public.youth_academies where id=fixture.uid(702)),'registration guard permits existing licensed activation pathways after conversion');
+
 rollback;
 \echo 'SATURN FIXTURE RUNTIME PASSED (not real Supabase Auth or full game)'
