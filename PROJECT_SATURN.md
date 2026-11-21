@@ -5,6 +5,17 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 21 November 2026, historical replay root cause and recovery tooling
+
+- ✅ Production migration metadata reviewed read-only: **1,125 migrations, first version 20260820065515 (phase11b_stage_rewards_each_publication)**, all statement arrays populated.
+- ✅ Exact failure identified: the very first migration patches an existing race-prize function. On an empty database its definition is NULL, SQL UNKNOWN bypasses the old guard, and dynamic EXECUTE fails. The earlier original game schema is missing from the recorded replay history.
+- ✅ Exact historical fixture saved outside deployment migrations, and a disposable PostgreSQL 17 CI job **successfully reproduced the reported error**. Normal Saturn lifecycle source CI also passed.
+- ✅ Added `scripts/saturn_export_staging_baseline.sh` to capture a current application schema-only archive via a read-only, TLS-protected DB connection. The tool retains owner/ACL metadata, refuses output inside Git, and never includes player table data. Documentation warns that managed Supabase dependencies need separate review.
+- ⬜ Current schema archive has not yet been captured/restored; compatible PostgreSQL connection and isolated restore/role/DLL parity verification are required. Do not blindly mark old migrations applied or edit production history. No new staging branch or cost incurred, no production change, Guest Mode OFF.
+- ⬜ Full Saturn integration testing remains blocked; existing finance permission concern remains unresolved.
+
+[Recovery procedure and evidence](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md).
+
 ## CURRENT SATURN STATUS — 20 November 2026, failed staging branch replay
 
 - ✅ Owner approved **$0.01344 per hour** branch compute quote; a temporary isolated Supabase branch was actually created. Production was NOT changed.
