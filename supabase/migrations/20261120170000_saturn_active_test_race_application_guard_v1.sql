@@ -10,14 +10,24 @@ returns boolean
 language sql stable security definer
 set search_path to ''
 as $saturn$
-  select auth.uid() is not null and exists (
-    select 1 from public.saturn_test_accounts_v1 t
-    where t.user_id=auth.uid() and t.converted_at is null
+  select auth.uid() is not null and (
+    -- An anonymous identity without a completed team must also fail closed.
+    -- Missing canonical Auth identity is restricted as well, not treated as
+    -- permanent. Real service/scheduler calls without a user UUID still use
+    -- their existing path.
+    not exists (
+      select 1 from auth.users u
+      where u.id=auth.uid() and u.is_anonymous is false
+    )
+    or exists (
+      select 1 from public.saturn_test_accounts_v1 t
+      where t.user_id=auth.uid() and t.converted_at is null
+    )
   );
 $saturn$;
 revoke all on function public.saturn_test_account_requires_guard_v1()
   from public, anon, authenticated;
--- The helper only indicates whether a lifecycle row still needs conversion.
+-- The helper detects incomplete trials, anonymous identities and unknown Auth IDs.
 -- Reviewed SECURITY DEFINER write RPCs call it with their owner privileges.
 -- The actual club and deadline are checked separately below.
 
