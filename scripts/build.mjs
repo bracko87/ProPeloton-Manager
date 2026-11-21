@@ -83,7 +83,20 @@ const esbuildOpts = {
   minify: isProd,
   treeShaking: true,
   // Compile-time guard: internal shadow-result injection never reaches public builds.
-  define: { __PPM_PUBLIC_PRODUCTION__: String(isProd) },
+  // The game uses esbuild IIFE bundles, not Vite. Supply only these explicit
+  // public build variables; never serialize process.env or any secret key.
+  define: {
+    __PPM_PUBLIC_PRODUCTION__: String(isProd),
+    'import.meta.env': JSON.stringify({
+      VITE_SATURN_TEST_ACCOUNTS_ENABLED: process.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' ? 'true' : 'false',
+      VITE_SATURN_PUBLIC_SIGNUP_ENABLED: process.env.VITE_SATURN_PUBLIC_SIGNUP_ENABLED === 'true' ? 'true' : 'false',
+      VITE_SATURN_TURNSTILE_SITE_KEY: process.env.VITE_SATURN_TURNSTILE_SITE_KEY?.trim() || '',
+      DEV: !isProd,
+      PROD: isProd,
+      MODE: isProd ? 'production' : 'development',
+      BASE_URL: '/',
+    }),
+  },
   jsx: 'automatic',
   loader: {
     '.html': 'copy',

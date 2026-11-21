@@ -1,0 +1,43 @@
+name: Saturn CAPTCHA production preparation
+on:
+  pull_request:
+    paths:
+      - 'src/components/auth/**'
+      - 'src/pages/Login.tsx'
+      - 'src/pages/Register.tsx'
+      - 'src/pages/ForgotPassword.tsx'
+      - 'scripts/build.mjs'
+      - 'netlify.toml'
+      - 'tests/saturnAuthCaptchaCompatibility.test.mjs'
+      - '.github/workflows/saturn-auth-captcha-production.yml'
+permissions:
+  contents: read
+jobs:
+  configured-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: node --test tests/saturnAuthCaptchaCompatibility.test.mjs
+      - name: Build with exact production public settings
+        run: |
+          set -euo pipefail
+          eval "$(python3 - <<'PY'
+          import tomllib, shlex
+          with open('netlify.toml','rb') as f: config=tomllib.load(f)
+          env=config['context']['production']['environment']
+          assert env['VITE_SATURN_TEST_ACCOUNTS_ENABLED']=='false'
+          assert env['VITE_SATURN_PUBLIC_SIGNUP_ENABLED']=='false'
+          for name in ('VITE_SATURN_TURNSTILE_SITE_KEY','VITE_SATURN_TEST_ACCOUNTS_ENABLED','VITE_SATURN_PUBLIC_SIGNUP_ENABLED'):
+              assert env[name]
+              print('export '+name+'='+shlex.quote(env[name]))
+          PY
+          )"
+          npm run build
+          grep -Fq "$VITE_SATURN_TURNSTILE_SITE_KEY" dist/main.js
+          grep -Fq 'challenges.cloudflare.com/turnstile' dist/main.js
+          echo 'PASS: configured public key and challenge loader reach built browser bundle; guest flags are OFF.'

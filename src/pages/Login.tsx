@@ -14,6 +14,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { useAuthCaptcha, AuthCaptcha } from '../components/auth/AuthCaptcha'
 import PreReleaseNotice, { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
 
 type LoginLocationState = {
@@ -33,6 +34,7 @@ export default function LoginPage(): JSX.Element {
   const [error, setError] = useState<string | null>(null)
   const [info, setInfo] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const captcha = useAuthCaptcha()
 
   useEffect(() => {
     const state = location.state as LoginLocationState
@@ -75,12 +77,14 @@ export default function LoginPage(): JSX.Element {
       return
     }
 
+    if (loading || !captcha.ready) return
     setLoading(true)
 
     try {
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: { captchaToken: captcha.consume() },
       })
 
       if (signInError) {
@@ -111,6 +115,7 @@ export default function LoginPage(): JSX.Element {
     } catch (err: any) {
       setError(err?.message ?? t('errors.signInFailed'))
     } finally {
+      captcha.reset()
       setLoading(false)
     }
   }
@@ -213,6 +218,7 @@ export default function LoginPage(): JSX.Element {
               />
             </div>
 
+            <AuthCaptcha captcha={captcha} />
             {error && <div className="text-sm text-red-600">{error}</div>}
             {info && <div className="text-sm text-gray-700">{info}</div>}
 
@@ -220,7 +226,7 @@ export default function LoginPage(): JSX.Element {
               <button
                 type="submit"
                 className="bg-yellow-400 px-6 py-2 rounded-md font-semibold disabled:opacity-70"
-                disabled={loading}
+                disabled={loading || !captcha.ready}
               >
                 {loading ? t('signingIn') : t('signIn')}
               </button>
