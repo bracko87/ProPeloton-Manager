@@ -13,14 +13,15 @@ const reviewed=[
  ['20261120200000_saturn_active_trial_riders_facilities_finance_v1.sql',7],
 ]
 
-test('unconverted Saturn lifecycle record, NOT is_anonymous, determines trial guard',()=>{
+test('unconverted lifecycle or missing/permanent-unverified Auth identity requires guard',()=>{
  const helper=race.slice(
   race.indexOf('create or replace function public.saturn_test_account_requires_guard_v1()'),
   race.indexOf('create or replace function public.saturn_test_account_can_mutate_v1(')
  )
  assert.match(helper,/from public\.saturn_test_accounts_v1 t/)
  assert.match(helper,/t\.user_id=auth\.uid\(\) and t\.converted_at is null/)
- assert.doesNotMatch(helper,/is_anonymous|raw_user_meta_data|auth\.jwt/)
+ assert.match(helper,/not exists \(\s*select 1 from auth\.users u\s*where u\.id=auth\.uid\(\) and u\.is_anonymous is false\s*\)\s*or exists \(/)
+ assert.doesNotMatch(helper,/raw_user_meta_data|auth\.jwt/)
  assert.match(helper,/security definer/)
 })
 
