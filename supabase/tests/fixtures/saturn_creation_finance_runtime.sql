@@ -334,3 +334,116 @@ select fixture.assert_ok((select count(*)=0 from public.clubs where owner_user_i
 select fixture.assert_ok((select count(*)=6 from public.clubs where world_tier=10 and amateur_division='fixture-eu' and is_active) and (select count(*)=2 from public.clubs where id in(fixture.uid(201),fixture.uid(203)) and tier3_division='ai_pool' and is_active and is_ai) and (select count(*)=4 from public.clubs where id in(fixture.uid(202),fixture.uid(204),fixture.uid(205),fixture.uid(206)) and world_tier=10),'parallel allocation preserves division cap, active reserve AI and historical AI slots');
 select fixture.assert_ok((select count(*)=0 from private.saturn_test_club_insert_tickets_v1),'no leaked transaction tickets after concurrent requests');
 \echo 'SATURN CONCURRENCY FIXTURE PASSED (real concurrent PostgreSQL sessions; synthetic Auth and dependencies)'
+
+
+-- Converted-team placement: execute the actual SAT-03 migration on the
+-- disposable committed creation fixture. Synthetic region, season and legacy
+-- rebalancer dependencies; no production schema or Auth parity claimed.
+begin;
+alter table public.clubs add column inactivity_status text default 'active';
+create table public.races(id uuid primary key,status text);
+alter table public.race_team_entries add column race_id uuid;
+alter table public.race_team_applications add column race_id uuid;
+alter table public.race_participant_teams add column race_id uuid;
+alter table public.race_participant_teams_v1 add column race_id uuid;
+create table public.season_transition_control_v1(id boolean primary key,is_armed boolean);
+insert into public.season_transition_control_v1 values(true,false);
+create function public.season_transition_guard_active_v1() returns boolean language sql stable as $$select false$$;
+create function public.get_expected_tier2_division_for_country(c text) returns text language sql stable as $$select 'fixture-pro'::text$$;
+create function public.get_expected_tier3_division_for_country(c text) returns text language sql stable as $$select 'fixture-cont'::text$$;
+create table fixture.legacy_rebalance(reason text);
+create function public.rebalance_top3_overflow_ai_to_pool_v1(reason text) returns void language sql as $$insert into fixture.legacy_rebalance values(reason)$$;
+\ir ../../migrations/20261120234500_saturn_converted_team_approved_vacancy_v1.sql
+create trigger trg_rebalance_top3_overflow_ai_to_pool_v1 after insert or update of club_tier,world_tier,tier2_division,tier3_division on public.clubs for each row execute function public.trg_rebalance_top3_overflow_ai_to_pool_v1();
+select fixture.assert_ok(not has_function_privilege('anon','public.saturn_place_converted_test_team_v1()','EXECUTE') and has_function_privilege('authenticated','public.saturn_place_converted_test_team_v1()','EXECUTE'),'placement callable only by authenticated browser role');
+select fixture.assert_ok(not has_table_privilege('authenticated','private.saturn_converted_team_update_tickets_v1','INSERT') and not has_table_privilege('authenticated','private.saturn_converted_vacancy_caps_v1','UPDATE'),'browser cannot forge placement tickets or capacities');
+set local role authenticated;
+select set_config('fixture.subject',fixture.uid(1)::text,true);
+select fixture.expect_error($q$select public.saturn_place_converted_test_team_v1()$q$,'Verify your permanent account first','anonymous test manager cannot promote');
+reset role;
+update auth.users set is_anonymous=false where id in(fixture.uid(1),fixture.uid(4));
+set local role authenticated;
+select fixture.expect_error($q$select public.saturn_place_converted_test_team_v1()$q$,'Original trial has not been permanently converted','permanent Auth alone is not enough without conversion finalization');
+reset role;
+-- These are test-only stand-ins for already verified conversion finalizers.
+update public.saturn_test_accounts_v1 set converted_at=now() where user_id in(fixture.uid(1),fixture.uid(4));
+select club_id as original_club from public.saturn_test_accounts_v1 where user_id=fixture.uid(1) \gset
+select club_id as second_club from public.saturn_test_accounts_v1 where user_id=fixture.uid(4) \gset
+set local role authenticated;
+select fixture.assert_ok(public.saturn_place_converted_test_team_v1()->>'status'='no_approved_higher_vacancy','no approved capacity leaves original club unchanged');
+select set_config('fixture.subject',fixture.uid(6)::text,true);
+select fixture.expect_error($q$select public.saturn_place_converted_test_team_v1()$q$,'Original trial has not been permanently converted','unrelated registered user has no placement');
+reset role;
+insert into public.clubs(id,name,country_code,world_tier,club_tier,is_ai,tier2_division,tier3_division)
+select fixture.uid(n),'World AI '||n,'DE',case when n=301 then 1 else 2 end,'worldteam',true,null,null from generate_series(301,325) n;
+insert into public.clubs(id,name,country_code,world_tier,club_tier,is_ai,tier2_division,tier3_division)
+values(fixture.uid(330),'Pro AI','DE',2,'proteam',true,'fixture-pro',null),
+(fixture.uid(331),'Cont AI','DE',3,'continental',true,null,'fixture-cont'),
+(fixture.uid(332),'Other Cont AI','FR',2,'continental',true,null,'wrong-region');
+insert into private.saturn_converted_vacancy_caps_v1(world_tier,club_tier,region_code,max_teams,approved_at,enabled) values
+(1,'worldteam','-',2,now(),true),
+(1,'proteam','fixture-pro',5,now(),true),
+(2,'proteam','fixture-pro',1,now(),true),
+(2,'continental','wrong-region',8,now(),true),
+(3,'continental','fixture-cont',3,now(),true);
+update public.season_transition_control_v1 set is_armed=true;
+set local role authenticated;
+select set_config('fixture.subject',fixture.uid(1)::text,true);
+select fixture.assert_ok(public.saturn_place_converted_test_team_v1()->>'status'='season_transition_pending','armed season blocks placement');
+reset role;
+update public.season_transition_control_v1 set is_armed=false;
+insert into public.races values(fixture.uid(350),'in_progress'),(fixture.uid(351),'completed');
+insert into public.race_team_entries(club_id,participating_club_id,race_id) values(null,:'original_club'::uuid,fixture.uid(350));
+set local role authenticated;
+select fixture.assert_ok(public.saturn_place_converted_test_team_v1()->>'status'='race_commitment_pending','active entry blocks placement by participating club');
+reset role;
+update public.race_team_entries set race_id=fixture.uid(351) where participating_club_id=:'original_club'::uuid;
+insert into public.race_team_applications(team_id,race_id) values(:'original_club'::uuid,fixture.uid(350));
+set local role authenticated;
+select fixture.assert_ok(public.saturn_place_converted_test_team_v1()->>'status'='race_commitment_pending','active application blocks placement');
+reset role;
+update public.race_team_applications set race_id=fixture.uid(351) where team_id=:'original_club'::uuid;
+insert into public.race_participant_teams(team_id,race_id) values(:'original_club'::uuid,fixture.uid(350));
+set local role authenticated;
+select fixture.assert_ok(public.saturn_place_converted_test_team_v1()->>'status'='race_commitment_pending','active legacy participation blocks placement');
+reset role;
+update public.race_participant_teams set race_id=fixture.uid(351) where team_id=:'original_club'::uuid;
+insert into public.race_participant_teams_v1(club_id,owner_club_id,participating_club_id,race_id) values(null,:'original_club'::uuid,null,fixture.uid(350));
+set local role authenticated;
+select fixture.assert_ok(public.saturn_place_converted_test_team_v1()->>'status'='race_commitment_pending','active v1 participation blocks placement');
+reset role;
+update public.race_participant_teams_v1 set race_id=fixture.uid(351) where owner_club_id=:'original_club'::uuid;
+-- Snapshot the complete protected rows in synthetic test data.
+create temp table before_move as select id,owner_user_id,cash_balance,season_points from public.clubs;
+create temp table before_trial as select * from public.saturn_test_accounts_v1;
+create temp table before_premium as select * from public.premium_welcome_trials_v1;
+create temp table before_roster as select * from public.club_riders;
+set local role authenticated;
+select public.saturn_place_converted_test_team_v1() as placement \gset
+select fixture.assert_ok(:'placement'::jsonb->>'status'='moved_to_approved_vacancy' and :'placement'::jsonb->>'club_id'=:'original_club' and :'placement'::jsonb->>'club_tier'='continental' and :'placement'::jsonb->>'world_tier'='3','highest valid vacancy selected; over-cap global, nonexistent, full and incorrect-region alternatives skipped');
+select fixture.assert_ok(public.saturn_place_converted_test_team_v1()->>'status'='already_placed','placement retry cannot promote again');
+reset role;
+select fixture.assert_ok((select count(*)=1 from private.saturn_converted_team_placements_v1 where user_id=fixture.uid(1) and club_id=:'original_club'::uuid),'one durable original club placement audit');
+select fixture.assert_ok((select count(*)=0 from fixture.legacy_rebalance),'exact conversion update bypasses legacy overflow trigger');
+select fixture.assert_ok((select count(*)=25 from public.clubs where club_tier='worldteam') and (select count(*)=1 from public.clubs where id=fixture.uid(330) and is_ai and is_active and club_tier='proteam') and (select count(*)=2 from public.clubs where club_tier='continental' and tier3_division='fixture-cont'),'no incumbent displaced by conversion');
+select fixture.assert_ok(not exists(select * from before_move except select id,owner_user_id,cash_balance,season_points from public.clubs) and not exists(select * from before_trial except select * from public.saturn_test_accounts_v1) and not exists(select * from before_premium except select * from public.premium_welcome_trials_v1) and not exists(select * from before_roster except select * from public.club_riders),'owner, cash, season points, Premium, original trial and roster remain unchanged');
+select fixture.assert_ok((select count(*)=1 from public.race_team_entries where participating_club_id=:'original_club'::uuid and race_id=fixture.uid(351)) and (select count(*)=1 from public.race_team_applications where team_id=:'original_club'::uuid and race_id=fixture.uid(351)) and (select count(*)=1 from public.race_participant_teams where team_id=:'original_club'::uuid and race_id=fixture.uid(351)) and (select count(*)=1 from public.race_participant_teams_v1 where owner_club_id=:'original_club'::uuid and race_id=fixture.uid(351)),'all four completed race records preserved');
+-- Force late audit failure and verify that placement and private ticket roll back.
+create function fixture.fail_placement_audit() returns trigger language plpgsql as $$begin raise exception 'fixture forced placement audit failure'; end$$;
+create trigger fixture_fail_placement before insert on private.saturn_converted_team_placements_v1 for each row execute function fixture.fail_placement_audit();
+set local role authenticated;
+select set_config('fixture.subject',fixture.uid(4)::text,true);
+select fixture.expect_error($q$select public.saturn_place_converted_test_team_v1()$q$,'fixture forced placement audit failure','late audit error rejects conversion placement');
+reset role;
+select fixture.assert_ok((select club_tier='amateur' and world_tier=10 from public.clubs where id=:'second_club'::uuid) and (select count(*)=0 from private.saturn_converted_team_placements_v1 where user_id=fixture.uid(4)) and (select count(*)=0 from private.saturn_converted_team_update_tickets_v1),'late failure rolls back tier, audit and private ticket');
+drop trigger fixture_fail_placement on private.saturn_converted_team_placements_v1;
+update private.saturn_converted_vacancy_caps_v1 set enabled=false where club_tier='continental' and region_code='fixture-cont';
+set local role authenticated;
+select fixture.assert_ok(public.saturn_place_converted_test_team_v1()->>'status'='no_approved_higher_vacancy','disabled eligible capacity prevents placement');
+reset role;
+-- An ordinary non-ticketed human update still invokes the legacy routine.
+update public.clubs set club_tier='continental',world_tier=3,tier3_division='fixture-cont',amateur_division=null where id=:'second_club'::uuid;
+select fixture.assert_ok((select count(*)=1 from fixture.legacy_rebalance),'ordinary human tier update still invokes legacy rebalance');
+select fixture.assert_ok((select count(*)=0 from private.saturn_converted_team_update_tickets_v1),'no placement tickets remain');
+rollback;
+\echo 'SATURN CONVERTED PLACEMENT FIXTURE PASSED (synthetic league/season/legacy trigger dependencies)'
