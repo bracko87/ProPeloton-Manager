@@ -13,6 +13,8 @@ on:
       - 'tests/saturnFinancePrivilegeHardening.test.mjs'
       - 'supabase/tests/saturn*.sql'
       - 'scripts/saturn_sql_parse.py'
+      - 'scripts/saturn_export_staging_baseline.sh'
+      - 'supabase/tests/fixtures/saturn_first_recorded_legacy_migration.sql'
       - 'scripts/saturn_frontend_finance_rpc_audit.py'
       - 'supabase/migrations/*saturn_fail_closed_real_test_team_creation*.sql'
       - 'tests/saturnTestClubCreation.test.mjs'
@@ -80,3 +82,44 @@ jobs:
       - run: python scripts/saturn_frontend_finance_rpc_audit.py
       - run: node --test tests/saturn*.test.mjs
       - run: npm run build
+
+  historical-bootstrap-reproduction:
+    # Disposable PostgreSQL only; no production credentials or network connection.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: saturn_bootstrap_probe
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d saturn_bootstrap_probe"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: saturn_bootstrap_probe
+      PGUSER: postgres
+      PGPASSWORD: disposable-ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate baseline exporter shell syntax
+        run: bash -n scripts/saturn_export_staging_baseline.sh
+      - name: Reproduce the exact historical missing-baseline error
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -X -At -v ON_ERROR_STOP=1 -c "select (to_regprocedure('public.generate_race_prize_awards_v1(uuid,uuid,boolean)') is null)::int" | grep -qx 1
+          result="$(mktemp)"
+          trap 'rm -f "$result"' EXIT
+          if psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_first_recorded_legacy_migration.sql >"$result" 2>&1; then
+            echo "Unexpected historical replay success"
+            exit 1
+          fi
+          grep -F 'query string argument of EXECUTE is null' "$result"
+          echo "Confirmed exact historical failure on empty PostgreSQL 17."
