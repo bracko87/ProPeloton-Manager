@@ -1,0 +1,152 @@
+name: Saturn 14-Day Test Account — Review
+on:
+  pull_request:
+    paths:
+      # New Saturn regression files and CAPTCHA must trigger CI automatically.
+      - 'tests/saturn*.test.mjs'
+      - 'src/components/auth/SaturnGuestCaptcha.tsx'
+      - 'docs/SATURN_GUEST_SIGNUP_ABUSE_GATE_2026-11-20.md'
+      - 'docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md'
+      - 'docs/SATURN_FULL_GAME_TEST_ACCOUNT_POLICY_2026-11-20.md'
+      - 'supabase/migrations/*saturn_14day*.sql'
+      - 'supabase/migrations/*saturn*.sql'
+      - 'tests/saturnFinancePrivilegeHardening.test.mjs'
+      - 'supabase/tests/saturn*.sql'
+      - 'scripts/saturn_sql_parse.py'
+      - 'scripts/saturn_export_staging_baseline.sh'
+      - 'scripts/saturn_export_staging_baseline.ps1'
+      - 'supabase/tests/fixtures/saturn*.sql'
+      - 'scripts/saturn_frontend_finance_rpc_audit.py'
+      - 'supabase/migrations/*saturn_fail_closed_real_test_team_creation*.sql'
+      - 'tests/saturnTestClubCreation.test.mjs'
+      - 'tests/saturnTestAiSlotPlacement.test.mjs'
+      - 'tests/saturnTestPremiumAndRaceAccess.test.mjs'
+      - 'tests/saturnTestTrialTrainingStaffGuards.test.mjs'
+      - 'tests/saturnTestTrialEquipmentGuards.test.mjs'
+      - 'tests/saturnTestTrialTransfersFinanceGuards.test.mjs'
+      - 'tests/saturnTestTrialRidersFacilitiesFinance.test.mjs'
+      - 'tests/saturnTestTrialRiderVehicleRls.test.mjs'
+      - 'tests/saturnTestRosterViewRiderSecurity.test.mjs'
+      - 'tests/saturnStagingPreflightAudit.test.mjs'
+      - 'tests/saturnTestEmailConversionFinalize.test.mjs'
+      - 'tests/saturnTestGoogleConversionFinalize.test.mjs'
+      - 'tests/saturnConvertedVacancyPlacement.test.mjs'
+      - 'supabase/migrations/*saturn_converted_team_approved_vacancy*.sql'
+      - 'supabase/tests/saturn_approved_vacancy_occupancy_audit.sql'
+      - 'supabase/migrations/*saturn_finalize_same_uuid_google_conversion*.sql'
+      - 'supabase/migrations/*saturn_finalize_same_uuid_email_conversion*.sql'
+      - 'supabase/tests/saturn_predeploy_schema_preflight.sql'
+      - 'supabase/tests/saturn_postdeploy_authorization_audit.sql'
+      - 'supabase/migrations/*saturn_roster_view_invoker_and_rider_update*.sql'
+      - 'supabase/migrations/*saturn_expired_trial_rider_vehicle_rls*.sql'
+      - 'supabase/migrations/*saturn_active_trial_riders_facilities_finance*.sql'
+      - 'supabase/migrations/*saturn_active_trial_transfers_finance_guards*.sql'
+      - 'supabase/migrations/*saturn_expired_trial_transfer_camp_rls*.sql'
+      - 'tests/saturnTestTrialDirectTableRls.test.mjs'
+      - 'supabase/migrations/*saturn_expired_guest_direct_table_write_rls*.sql'
+      - 'supabase/migrations/*saturn_active_trial_equipment_write_guards*.sql'
+      - 'supabase/migrations/*saturn_active_trial_training_staff_write_guards*.sql'
+      - 'supabase/migrations/*saturn_active_test_race_application_guard*.sql'
+      - 'supabase/migrations/*saturn_test_team_lowest_tier_ai_swap*.sql'
+      - 'tests/saturnTestAccountLifecycle.test.mjs'
+      - 'tests/saturnTestTeamSignup.test.mjs'
+      - 'tests/saturnTestAccountExperience.test.mjs'
+      - 'src/pages/TestTeamSignup.tsx'
+      - 'src/App.tsx'
+      - 'src/lib/supabase.ts'
+      - 'src/lib/testAccountClient.ts'
+      - 'src/context/AuthProvider.tsx'
+      - 'src/components/home/Hero.tsx'
+      - 'src/pages/TestAccountRegister.tsx'
+      - 'src/pages/dashboard/ClubDashboard.tsx'
+      - 'src/components/trial/TestAccountNotice.tsx'
+      - 'tests/saturnTestAccountExperience.test.mjs'
+      - '.github/workflows/saturn-full-game-test-account-review.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  lifecycle:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install 'pglast>=7,<9'
+      - run: python scripts/saturn_sql_parse.py
+      - run: python scripts/saturn_frontend_finance_rpc_audit.py
+      - run: node --test tests/saturn*.test.mjs
+      - run: npm run build
+
+  historical-bootstrap-reproduction:
+    # Disposable PostgreSQL only; no production credentials or network connection.
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: saturn_bootstrap_probe
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: disposable-ci-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d saturn_bootstrap_probe"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 15
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: 5432
+      PGDATABASE: saturn_bootstrap_probe
+      PGUSER: postgres
+      PGPASSWORD: disposable-ci-only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate baseline exporter shell syntax
+        run: bash -n scripts/saturn_export_staging_baseline.sh
+      - name: Parse Windows exporter using PowerShell
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $errors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile((Join-Path $PWD 'scripts/saturn_export_staging_baseline.ps1'), [ref]$tokens, [ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) {
+            $errors | ForEach-Object { Write-Error $_.Message }
+            exit 1
+          }
+          Write-Host 'PowerShell baseline exporter parses successfully.'
+
+      - name: Reproduce the exact historical missing-baseline error
+        shell: bash
+        run: |
+          set -euo pipefail
+          psql -X -At -v ON_ERROR_STOP=1 -c "select (to_regprocedure('public.generate_race_prize_awards_v1(uuid,uuid,boolean)') is null)::int" | grep -qx 1
+          result="$(mktemp)"
+          trap 'rm -f "$result"' EXIT
+          if psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_first_recorded_legacy_migration.sql >"$result" 2>&1; then
+            echo "Unexpected historical replay success"
+            exit 1
+          fi
+          grep -F 'query string argument of EXECUTE is null' "$result"
+          echo "Confirmed exact historical failure on empty PostgreSQL 17."
+
+      - name: Execute Saturn lifecycle and authorized-write fixture in PostgreSQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_lifecycle_runtime.sql
+
+      - name: Execute Saturn team creation, finance and Premium fixture
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_creation_finance_runtime.sql
+
+      - name: Rehearse pre-guest targeted schema rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          createdb saturn_rollback_probe
+          psql -X -d saturn_rollback_probe -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_targeted_rollback_runtime.sql
+          dropdb saturn_rollback_probe

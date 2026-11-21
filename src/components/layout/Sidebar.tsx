@@ -1,3 +1,4 @@
+import { usePermanentRegistration } from '../trial/PermanentRegistrationGate'
 /**
  * Sidebar.tsx
  * Retractable left navigation for the in-game dashboard.
@@ -150,6 +151,7 @@ export default function Sidebar({
 }: SidebarProps): JSX.Element {
   const { t } = useTranslation('navigation')
   const navigate = useNavigate()
+  const permanentlyRegistered = usePermanentRegistration()
   const location = useLocation()
   const [isPremium, setIsPremium] = useState<boolean | null>(null)
 
@@ -257,9 +259,8 @@ export default function Sidebar({
             const Icon = item.icon
             const active = isPathActive(location.pathname, item)
             const premiumLocked =
-              (item.to === '/dashboard/premium-center' ||
-                item.to === '/dashboard/youth-academy') &&
-              isPremium !== true
+              (item.to === '/dashboard/youth-academy' && !permanentlyRegistered) ||
+              ((item.to === '/dashboard/premium-center' || item.to === '/dashboard/youth-academy') && isPremium !== true)
 
             if (premiumLocked) {
               return (

@@ -13,6 +13,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { supabase } from '../lib/supabase'
+import { restoreTestAccountIntoGame } from '../lib/testAccountClient'
 import { changeApplicationLanguage, getApplicationLanguage } from '../i18n'
 import { isSupportedLanguage } from '../i18n/languages'
 
@@ -131,6 +132,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     let mounted = true
 
     ;(async () => {
+      // Restore only previously created full-game test identities, and only
+      // while the gated rollout is explicitly enabled. Regular users retain
+      // the original in-memory login behavior.
+      await restoreTestAccountIntoGame().catch(() => undefined)
       const { data } = await supabase.auth.getUser()
       if (!mounted) return
 
