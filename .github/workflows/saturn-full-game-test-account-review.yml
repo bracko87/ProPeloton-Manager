@@ -15,7 +15,7 @@ on:
       - 'scripts/saturn_sql_parse.py'
       - 'scripts/saturn_export_staging_baseline.sh'
       - 'scripts/saturn_export_staging_baseline.ps1'
-      - 'supabase/tests/fixtures/saturn_first_recorded_legacy_migration.sql'
+      - 'supabase/tests/fixtures/saturn*.sql'
       - 'scripts/saturn_frontend_finance_rpc_audit.py'
       - 'supabase/migrations/*saturn_fail_closed_real_test_team_creation*.sql'
       - 'tests/saturnTestClubCreation.test.mjs'
@@ -136,3 +136,6 @@ jobs:
           fi
           grep -F 'query string argument of EXECUTE is null' "$result"
           echo "Confirmed exact historical failure on empty PostgreSQL 17."
+
+      - name: Execute Saturn lifecycle and authorized-write fixture in PostgreSQL
+        run: psql -X -v ON_ERROR_STOP=1 -f supabase/tests/fixtures/saturn_lifecycle_runtime.sql
