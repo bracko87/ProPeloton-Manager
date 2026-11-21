@@ -27,3 +27,13 @@ test('password reset CAPTCHA denial is not presented as successful email deliver
  const code=read('src/pages/ForgotPassword.tsx')
  assert.match(code,/error\?\.code === 'captcha_failed'[\s\S]*?setStatus\('error'\)[\s\S]*?return/)
 })
+
+test('custom esbuild supplies only explicit public configuration and defaults guest routes off',()=>{
+ const build=read('scripts/build.mjs')
+ assert.match(build,/'import\.meta\.env': JSON.stringify\(\{/)
+ for(const name of ['TEST_ACCOUNTS_ENABLED','PUBLIC_SIGNUP_ENABLED']){
+  assert.ok(build.includes("process.env.VITE_SATURN_"+name+" === 'true' ? 'true' : 'false'"))
+ }
+ assert.match(build,/VITE_SATURN_TURNSTILE_SITE_KEY: process\.env\.VITE_SATURN_TURNSTILE_SITE_KEY/)
+ assert.doesNotMatch(build,/JSON\.stringify\(process\.env|\.\.\.process\.env/)
+})
