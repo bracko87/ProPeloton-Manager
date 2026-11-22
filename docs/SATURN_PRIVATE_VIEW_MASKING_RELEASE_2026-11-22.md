@@ -48,7 +48,7 @@ The isolated emergency restore SQL is at `supabase/rollback/SATURN_20261122_sens
 
 ## Source and verification
 
-- `supabase/migrations/20261122211500_saturn_privileged_view_private_field_masking.sql`
+- `supabase/migrations/20261122211515_saturn_privileged_view_private_field_masking.sql`
 - `supabase/tests/saturn_privileged_view_private_field_mask_verify_readonly.sql`
 - `supabase/tests/saturn_private_view_owner_guest_service_verify_readonly.sql`
 - `tests/saturnPrivateViewMasking.test.mjs`
