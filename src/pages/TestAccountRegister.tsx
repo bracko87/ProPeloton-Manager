@@ -28,7 +28,9 @@ export default function TestAccountRegister(): JSX.Element {
 
   React.useEffect(() => {
     if (!ENABLED || !user?.id || user.is_anonymous !== true) return
-    if (originId) return
+    // A previous abandoned guest session must not block this newly authenticated guest.
+    // The server still verifies same-UUID ownership before any conversion succeeds.
+    if (originId === user.id) return
     setOriginId(user.id)
     try { window.localStorage.setItem(ORIGINAL_ID_KEY, user.id) } catch { /* no storage */ }
   }, [user?.id, user?.is_anonymous, originId])

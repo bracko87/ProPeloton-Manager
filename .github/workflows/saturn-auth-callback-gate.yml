@@ -1,0 +1,37 @@
+name: Project Saturn - authentication callback and identity regression
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/App.tsx'
+      - 'src/components/auth/SignupEmailCallbackRouting.tsx'
+      - 'src/pages/TestAccountRegister.tsx'
+      - 'tests/saturnAuthCallbackRouting.test.mjs'
+      - 'tests/saturnTestEmailConversionFinalize.test.mjs'
+      - 'tests/saturnTestGoogleConversionFinalize.test.mjs'
+      - '.github/workflows/saturn-auth-callback-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Source regression and production build (no deployment)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify callback, linked identities and conversion security
+        run: |
+          node --test tests/saturnAuthCallbackRouting.test.mjs
+          node --test tests/saturnTestEmailConversionFinalize.test.mjs
+          node --test tests/saturnTestGoogleConversionFinalize.test.mjs
+          node --test tests/saturnConvertedProfileCompletion.test.mjs
+      - name: Build production frontend and verify translations
+        run: npm run build
