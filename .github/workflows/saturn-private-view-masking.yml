@@ -1,0 +1,32 @@
+name: Project Saturn - private-view masking regression (no deployment)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'supabase/migrations/20261122211500_saturn_privileged_view_private_field_masking.sql'
+      - 'supabase/tests/saturn_privileged_view_private_field_mask_verify_readonly.sql'
+      - 'tests/saturnPrivateViewMasking.test.mjs'
+      - '.github/workflows/saturn-private-view-masking.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Check SQL security contract and production frontend build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify masked views preserve public read models
+        run: |
+          node --test tests/saturnPrivateViewMasking.test.mjs
+          node --test tests/saturnSensitiveViewAuditContract.test.mjs
+      - name: Validate translations and build production bundle
+        run: npm run build
