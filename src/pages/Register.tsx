@@ -103,7 +103,6 @@ export default function RegisterPage(): JSX.Element {
   const captcha = useAuthCaptcha()
   const [message, setMessage] = useState<string | null>(null)
   const [messageType, setMessageType] = useState<StatusType>(null)
-  const [checkingEmail, setCheckingEmail] = useState(false)
   const [resendingActivation, setResendingActivation] = useState(false)
   const [showBirthdayFields, setShowBirthdayFields] = useState(false)
 
@@ -149,47 +148,8 @@ export default function RegisterPage(): JSX.Element {
     })
   }
 
-  async function checkEmailAlreadyRegistered(
-    rawEmail: string,
-    options: { blockOnError?: boolean } = {},
-  ): Promise<boolean> {
-    const emailToCheck = rawEmail.trim()
-
-    if (!emailToCheck || !isProbablyValidEmail(emailToCheck)) {
-      return false
-    }
-
-    setCheckingEmail(true)
-
-    try {
-      const { data, error } = await supabase.rpc('is_email_registered_v1', {
-        p_email: emailToCheck,
-      })
-
-      if (error) {
-        if (options.blockOnError) {
-          setMessage(t('register.verifyEmailFailed'))
-          setMessageType('error')
-          return true
-        }
-
-        return false
-      }
-
-      if (data === true) {
-        setErrors(prev => ({
-          ...prev,
-          email: t('register.emailInUse'),
-        }))
-
-        return true
-      }
-
-      return false
-    } finally {
-      setCheckingEmail(false)
-    }
-  }
+  // No public account-existence checks. Supabase Auth owns duplicate handling;
+  // callers should not be able to discover who has registered.
 
   async function handleResendActivationEmail(): Promise<void> {
     const email = form.email.trim()
@@ -220,7 +180,7 @@ export default function RegisterPage(): JSX.Element {
       return nextErrors
     })
 
-    if (loading || resendingActivation || checkingEmail || !captcha.ready) return
+    if (loading || resendingActivation || !captcha.ready) return
     setResendingActivation(true)
 
     try {
@@ -234,22 +194,19 @@ export default function RegisterPage(): JSX.Element {
       })
 
       if (error) {
-        const msg = error.message ?? t('register.activationFailed')
-
-        if (/already confirmed|email.*confirmed|user.*confirmed/i.test(msg)) {
-          setMessage(t('register.alreadyConfirmed'))
+        const msg = error.message || ''
+        // Account-specific Auth responses must not reveal whether this email
+        // already belongs to a verified, pending or missing user.
+        if (/already confirmed|email.*confirmed|user.*confirmed|not found|no user|not registered|unknown user/i.test(msg)) {
+          setMessage(t('register.activationSent'))
           setMessageType('info')
-          return
-        }
-
-        if (/rate limit|too many requests|security purposes/i.test(msg)) {
+        } else if (/rate limit|too many requests|security purposes/i.test(msg)) {
           setMessage(t('register.rateLimit'))
           setMessageType('info')
-          return
+        } else {
+          setMessage(t('register.activationFailed'))
+          setMessageType('error')
         }
-
-        setMessage(msg)
-        setMessageType('error')
         return
       }
 
@@ -324,16 +281,10 @@ export default function RegisterPage(): JSX.Element {
     if (['birthdayMonth', 'birthdayDay', 'birthdayYear'].some(field => nextErrors[field])) setShowBirthdayFields(true)
     if (Object.keys(nextErrors).length > 0) return
 
-    if (loading || resendingActivation || checkingEmail || !captcha.ready) return
+    if (loading || resendingActivation || !captcha.ready) return
     setLoading(true)
 
     try {
-      const emailIsBlocked = await checkEmailAlreadyRegistered(email, {
-        blockOnError: true,
-      })
-
-      if (emailIsBlocked) return
-
       const { data, error } = await supabase.auth.signUp({
         email,
         password: form.password,
@@ -350,23 +301,20 @@ export default function RegisterPage(): JSX.Element {
       })
 
       if (error) {
-        const msg = (error as any).message ?? t('register.signupFailed')
-
-        if (/already registered|duplicate|exists/i.test(msg)) {
-          setErrors(prev => ({
-            ...prev,
-            email: t('register.emailAlreadyRegistered'),
-          }))
+        const msg = error.message || ''
+        if (/already registered|duplicate|already exists|user.*exists/i.test(msg) ||
+            error.code === 'user_already_exists') {
+          // Identical response to a successful pending email confirmation.
+          // Never disclose whether the supplied address already has an account.
+          setMessage(t('register.accountCreatedConfirm'))
+          setMessageType('success')
         } else if (/username/i.test(msg)) {
-          setErrors(prev => ({
-            ...prev,
-            username: t('register.usernameTaken'),
-          }))
+          setErrors(prev => ({ ...prev, username: t('register.usernameTaken') }))
         } else {
-          setMessage(msg)
+          // Avoid exposing raw account state or database details in the UI.
+          setMessage(/captcha|rate limit|too many requests/i.test(msg) ? msg : t('register.signupFailed'))
           setMessageType('error')
         }
-
         return
       }
 
@@ -484,9 +432,6 @@ export default function RegisterPage(): JSX.Element {
                 name="email"
                 value={form.email}
                 onChange={handleChange}
-                onBlur={() => {
-                  if (!loading) void checkEmailAlreadyRegistered(form.email)
-                }}
                 className="mt-1 block w-full border rounded-md px-3 py-2"
                 placeholder={t('register.emailPlaceholder')}
                 type="email"
@@ -497,12 +442,6 @@ export default function RegisterPage(): JSX.Element {
                 <div className="text-sm text-red-600 mt-1">{errors.email}</div>
               )}
 
-              {checkingEmail && !errors.email && (
-                <div className="text-sm text-gray-500 mt-1">
-                  {t('register.checkingEmail')}
-                </div>
-              )}
-
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -511,7 +450,6 @@ export default function RegisterPage(): JSX.Element {
                   }}
                   disabled={
                     loading ||
-                    checkingEmail ||
                     resendingActivation ||
                     !captcha.ready ||
                     !form.email.trim()
@@ -682,15 +620,13 @@ export default function RegisterPage(): JSX.Element {
               <button
                 type="submit"
                 className="min-h-11 rounded-xl bg-yellow-400 px-6 py-3 font-bold text-slate-950 transition hover:bg-yellow-300 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-yellow-500 disabled:opacity-70"
-                disabled={loading || checkingEmail || resendingActivation || !captcha.ready}
+                disabled={loading || resendingActivation || !captcha.ready}
               >
                 {loading
                   ? t('register.creating')
-                  : checkingEmail
-                    ? t('register.checking')
-                    : resendingActivation
-                      ? t('register.pleaseWait')
-                      : t('register.createAccount')}
+                  : resendingActivation
+                    ? t('register.pleaseWait')
+                    : t('register.createAccount')}
               </button>
 
               <Link to="/login" className="text-sm text-gray-600 hover:text-gray-900">
