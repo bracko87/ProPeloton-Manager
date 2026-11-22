@@ -1,6 +1,6 @@
 -- SAT-09 EMERGENCY ROLLBACK ONLY — do not add to regular migration runner.
 -- Restores the nine public view SQL bodies captured immediately before
--- 20261122211500_saturn_privileged_view_private_field_masking.sql.
+-- 20261122211515_saturn_privileged_view_private_field_masking.sql.
 -- WARNING: Restoring removes privacy masking and REOPENS sensitive data
 -- exposure. Use only to recover from a verified production outage, ideally
 -- behind access restrictions, then deploy a corrected protection promptly.
