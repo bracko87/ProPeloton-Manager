@@ -913,6 +913,7 @@ export default function CustomizeTeamPage(): JSX.Element {
   const resolvedLogoUrl = useMemo(() => {
     if (logoPreview) return logoPreview
     if (!logoPath) return null
+    if (logoPath.startsWith('data:image/svg+xml;base64,')) return logoPath
 
     if (logoPath.startsWith('http://') || logoPath.startsWith('https://')) {
       try {

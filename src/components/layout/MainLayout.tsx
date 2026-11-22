@@ -485,7 +485,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       let logoUrl: string | null = null
 
       if (mainClub.logo_path) {
-        if (mainClub.logo_path.startsWith('http://') || mainClub.logo_path.startsWith('https://')) {
+        if (mainClub.logo_path.startsWith('data:image/svg+xml;base64,') || mainClub.logo_path.startsWith('http://') || mainClub.logo_path.startsWith('https://')) {
           logoUrl = mainClub.logo_path
         } else {
           const { data: signedData, error: signedError } = await supabase.storage

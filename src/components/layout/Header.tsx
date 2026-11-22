@@ -224,6 +224,7 @@ function resolveClubLogoUrl(
   cacheKey: number,
 ): string | null {
   if (!logoPath) return null
+  if (logoPath.startsWith('data:image/svg+xml;base64,')) return logoPath
 
   if (
     logoPath.startsWith('http://') ||
