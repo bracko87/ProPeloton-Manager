@@ -10,6 +10,7 @@ import { Outlet } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import MainLayout from '../../components/layout/MainLayout'
 import TestAccountNotice from '../../components/trial/TestAccountNotice'
+import PostConversionProfileReminder from '../../components/trial/PostConversionProfileReminder'
 import SeasonRolloverGate from '../../components/season/SeasonRolloverGate'
 import RestartTeamModal from '../../components/team/RestartTeamModal'
 import LocaleDateFormattingBridge from '../../components/i18n/LocaleDateFormattingBridge'
@@ -343,6 +344,7 @@ export default function ClubDashboard(): JSX.Element {
       <LocaleDateFormattingBridge />
       <MainLayout>
         <TestAccountNotice />
+        <PostConversionProfileReminder />
         {content}
 
         {showRestartWelcome && (

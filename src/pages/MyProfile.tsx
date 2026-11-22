@@ -109,6 +109,11 @@ export default function MyProfilePage(): JSX.Element {
   const [languageMenuOpen, setLanguageMenuOpen] = useState(false)
 
   const [profile, setProfile] = useState<ProfileRow | null>(null)
+  const [canAddBirthdayOnce, setCanAddBirthdayOnce] = useState(false)
+  const [birthdayMonthInput, setBirthdayMonthInput] = useState('')
+  const [birthdayDayInput, setBirthdayDayInput] = useState('')
+  const [birthdayYearInput, setBirthdayYearInput] = useState('')
+  const [savingBirthday, setSavingBirthday] = useState(false)
 
   const [form, setForm] = useState<ProfileForm>({
     username: '',
@@ -204,6 +209,20 @@ export default function MyProfilePage(): JSX.Element {
 
       const row = (data as ProfileRow | null) ?? null
       setProfile(row)
+      // Only registered players whose permanent account came from a trial
+      // may fill a birthday omitted during the shortened conversion flow.
+      setCanAddBirthdayOnce(false)
+      if (row && user.is_anonymous === false &&
+          !row.birthday_locked && !row.birthday_set_at &&
+          row.birthday_month == null && row.birthday_day == null &&
+          row.birthday_year == null) {
+        const { data: converted, error: convertedError } = await supabase
+          .from('saturn_test_accounts_v1')
+          .select('converted_at')
+          .eq('user_id', user.id)
+          .maybeSingle()
+        if (!convertedError && converted?.converted_at) setCanAddBirthdayOnce(true)
+      }
 
       const initialEmail = row?.email || user.email || ''
       setForm({
@@ -319,6 +338,45 @@ export default function MyProfilePage(): JSX.Element {
     }
   }
 
+
+  async function saveMissingBirthdayOnce(): Promise<void> {
+    if (!user?.id || !canAddBirthdayOnce || savingBirthday) return
+    setErrorMessage('')
+    setSuccessMessage('')
+    const month = Number(birthdayMonthInput)
+    const day = Number(birthdayDayInput)
+    const year = birthdayYearInput.trim() ? Number(birthdayYearInput) : null
+    const maxDay = month >= 1 && month <= 12
+      ? new Date(Date.UTC(year ?? 2000, month, 0)).getUTCDate() : 0
+    if (!Number.isInteger(month) || month < 1 || month > 12 ||
+        !Number.isInteger(day) || day < 1 || day > maxDay ||
+        (year !== null && (!/^\\d{4}$/.test(birthdayYearInput.trim()) ||
+         year < 1900 || year > new Date().getFullYear()))) {
+      setErrorMessage('Enter a valid birthday. Month and day are required; year is optional.')
+      return
+    }
+    setSavingBirthday(true)
+    try {
+      const { data, error } = await supabase.rpc('saturn_set_missing_birthday_once_v1', {
+        p_month: month,
+        p_day: day,
+        p_year: year,
+      })
+      if (error) throw error
+      if (!data?.saved || data?.locked !== true) throw new Error('Birthday confirmation was not received.')
+      setProfile(prev => prev ? {
+        ...prev, birthday_month: month, birthday_day: day, birthday_year: year,
+        birthday_locked: true, birthday_set_at: new Date().toISOString(),
+      } : prev)
+      setCanAddBirthdayOnce(false)
+      setSuccessMessage('Birthday saved successfully. It is now permanently locked and cannot be changed.')
+      window.dispatchEvent(new Event('saturn-profile-completion-updated'))
+    } catch (err) {
+      setErrorMessage(err instanceof Error ? err.message : 'Birthday could not be saved.')
+    } finally {
+      setSavingBirthday(false)
+    }
+  }
 
   async function handleLanguageChange(language: SupportedLanguage) {
     if (!user?.id || savingLanguage || language === currentLanguage) return
@@ -479,8 +537,50 @@ export default function MyProfilePage(): JSX.Element {
                   {birthdayLabel}
                 </div>
                 <div className="mt-1 text-xs text-gray-500">
-                  {t('profile.birthdayHelp')}
+                  {canAddBirthdayOnce
+                    ? 'Because you registered from a test account without a birthday, you may enter it once. After saving, it cannot be changed.'
+                    : t('profile.birthdayHelp')}
                 </div>
+                {canAddBirthdayOnce && (
+                  <div className="mt-3 rounded-lg border border-yellow-300 bg-yellow-50 p-3 space-y-3">
+                    <p className="text-sm font-semibold text-gray-900">Set your birthday — one time only</p>
+                    <p className="text-xs text-gray-700">Optional. Enter month and day; your birth year may be left blank. Birthday rewards are available only when a date is provided.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <label className="text-xs font-medium text-gray-800">Month
+                        <select value={birthdayMonthInput} onChange={event => { setBirthdayMonthInput(event.target.value); setBirthdayDayInput('') }}
+                          className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-2 text-sm">
+                          <option value="">Select</option>
+                          {Array.from({ length: 12 }, (_, i) => i + 1).map(month => (
+                            <option key={month} value={month}>
+                              {new Intl.DateTimeFormat(locale, { month: 'long', timeZone: 'UTC' }).format(new Date(Date.UTC(2000, month - 1, 1)))}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="text-xs font-medium text-gray-800">Day
+                        <select value={birthdayDayInput} onChange={event => setBirthdayDayInput(event.target.value)}
+                          disabled={!birthdayMonthInput}
+                          className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-2 text-sm">
+                          <option value="">Select</option>
+                          {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                            <option key={day} value={day}>{day}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="text-xs font-medium text-gray-800">Year (optional)
+                        <input type="number" min="1900" max={new Date().getFullYear()} value={birthdayYearInput}
+                          onChange={event => setBirthdayYearInput(event.target.value)}
+                          placeholder="Optional"
+                          className="mt-1 w-full rounded border border-gray-300 bg-white px-2 py-2 text-sm" />
+                      </label>
+                    </div>
+                    <button type="button" onClick={() => void saveMissingBirthdayOnce()}
+                      disabled={savingBirthday || !birthdayMonthInput || !birthdayDayInput}
+                      className="rounded bg-yellow-500 px-4 py-2 text-sm font-semibold text-gray-950 disabled:opacity-50">
+                      {savingBirthday ? 'Saving…' : 'Save birthday permanently'}
+                    </button>
+                  </div>
+                )}
               </div>
 
               <label className="block">

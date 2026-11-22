@@ -1,0 +1,28 @@
+import test from 'node:test'
+import assert from 'node:assert/strict'
+import { readFileSync } from 'node:fs'
+const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
+test('birthday fill is only for registered converted guests and one time',()=>{
+ const sql=read('supabase/migrations/20261122195000_saturn_converted_guest_birthday_once_v1.sql')
+ assert.match(sql,/t\.converted_at is not null/)
+ assert.match(sql,/u\.is_anonymous is false/)
+ assert.match(sql,/from public\.profiles where id=v_uid for update/)
+ assert.match(sql,/birthday_locked is false and birthday_month is null/)
+ assert.match(sql,/revoke all on function public\.saturn_set_missing_birthday_once_v1/)
+ const profile=read('src/pages/MyProfile.tsx')
+ assert.match(profile,/!row\.birthday_locked/)
+ assert.match(profile,/converted\?\.converted_at/)
+ assert.match(profile,/saturn_set_missing_birthday_once_v1/)
+ assert.match(profile,/Save birthday permanently/)
+ assert.doesNotMatch(profile,/\.upsert\(payload[\s\S]*birthday_month:/)
+})
+test('only converted guest with missing details sees one-time nonblocking reminder and page links',()=>{
+ const component=read('src/components/trial/PostConversionProfileReminder.tsx')
+ assert.match(component,/if \(trialError \|\| !converted\?\.converted_at/)
+ assert.match(component,/saturn_test_accounts_v1/)
+ assert.match(component,/ppm-converted-profile-reminder-v1:/)
+ assert.match(component,/\/dashboard\/my-profile/)
+ assert.match(component,/\/dashboard\/customize-team/)
+ assert.match(component,/I'll do this later/)
+ assert.match(read('src/pages/dashboard/ClubDashboard.tsx'),/<PostConversionProfileReminder \/>/)
+})
