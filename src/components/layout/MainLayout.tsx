@@ -78,17 +78,9 @@ const LAST_ACTIVITY_STORAGE_KEY = 'ppm-last-user-activity'
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const { t } = useTranslation('appShell')
-  const [collapsed, setCollapsed] = useState(() => {
-    try {
-      // First visit starts collapsed; subsequent visits respect the user's toggle.
-      return window.localStorage.getItem('ppm-sidebar-collapsed') !== 'false'
-    } catch { return true }
-  })
-
-  useEffect(() => {
-    try { window.localStorage.setItem('ppm-sidebar-collapsed', String(collapsed)) }
-    catch { /* Browser storage may be disabled. */ }
-  }, [collapsed])
+  // Every dashboard entry starts collapsed, for permanent and guest accounts.
+  // Manual toggles apply only to this mounted dashboard, not future logins.
+  const [collapsed, setCollapsed] = useState(true)
   const [coinBalance, setCoinBalance] = useState(0)
 
   /*
@@ -572,6 +564,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
       data: { subscription: authSubscription },
     } = supabase.auth.onAuthStateChange(event => {
       if (event === 'SIGNED_OUT') {
+        setCollapsed(true)
         /*
          * Invalidate requests still running for the old session.
          */
