@@ -29,6 +29,12 @@ as $function$
   select coalesce((auth.jwt()->>'role' = 'service_role'), false)
     or (
       auth.uid() is not null
+      and not exists (
+        select 1 from public.saturn_test_accounts_v1 t
+        where t.user_id = auth.uid()
+          and t.converted_at is null
+          and (t.expires_at is null or t.expires_at <= now())
+      )
       and exists (
         select 1
         from public.clubs c
@@ -62,6 +68,12 @@ as $function$
   select coalesce((auth.jwt()->>'role' = 'service_role'), false)
     or (
       auth.uid() is not null
+      and not exists (
+        select 1 from public.saturn_test_accounts_v1 t
+        where t.user_id = auth.uid()
+          and t.converted_at is null
+          and (t.expires_at is null or t.expires_at <= now())
+      )
       and exists (
         select 1
         from public.club_riders cr
