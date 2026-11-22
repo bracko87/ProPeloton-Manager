@@ -200,7 +200,7 @@ begin
 
     select string_agg(
       case when a.attname=any(v_sensitive)
-        then format('CASE WHEN saturn_acl.permitted THEN src.%1$I ELSE NULL END AS %1$I',a.attname)
+        then format('CAST(CASE WHEN saturn_acl.permitted THEN src.%1$I ELSE NULL END AS %2$s) AS %1$I',a.attname,format_type(a.atttypid,a.atttypmod))
         else format('src.%1$I AS %1$I',a.attname)
       end, ', ' order by a.attnum
     )
