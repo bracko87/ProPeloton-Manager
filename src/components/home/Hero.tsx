@@ -53,19 +53,19 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
   const { user, loading: authLoading } = useAuth()
   const guestCandidate = SATURN_TEST_ACCOUNTS_ENABLED && !!user?.id &&
     (user.is_anonymous === true || (SATURN_GUEST_AUTH_MODE && hasSavedGuestSession()))
-  const [guestTeam, setGuestTeam] = useState<{ userId: string; status: 'ready' | 'incomplete' | 'error' } | null>(null)
+  const [guestTeam, setGuestTeam] = useState<{ userId: string; status: 'ready' | 'expired' | 'incomplete' | 'error' } | null>(null)
   useEffect(() => {
     let active = true
     if (!guestCandidate || authLoading) { setGuestTeam(null); return }
     const userId = user.id
     setGuestTeam(null)
     void supabase.from('saturn_test_accounts_v1')
-      .select('user_id,club_id,converted_at')
+      .select('user_id,club_id,converted_at,expires_at')
       .eq('user_id', userId).maybeSingle()
       .then(({ data, error }) => {
         if (!active) return
         setGuestTeam({ userId, status: error ? 'error' :
-          data?.user_id === userId && data.club_id && !data.converted_at ? 'ready' : 'incomplete' })
+          data?.user_id === userId && data.club_id && !data.converted_at ? (Date.parse(data.expires_at) <= Date.now() ? 'expired' : 'ready') : 'incomplete' })
       })
       .catch(() => { if (active) setGuestTeam({ userId, status: 'error' }) })
     return () => { active = false }
@@ -228,6 +228,11 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
             {canResumeGuest && (
               <Link to="/test-the-game?resume=1" className="inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-red-600 px-7 py-3 text-base font-semibold text-white hover:bg-red-700 sm:text-lg">
                 Continue Test Game <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            )}
+            {guestStatus === 'expired' && (
+              <Link to="/test-account-expired" className="inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-slate-700 px-7 py-3 text-base font-semibold text-white">
+                Test Period Ended
               </Link>
             )}
             {!canResumeGuest && canCheckSavedGuest && (

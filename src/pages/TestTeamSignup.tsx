@@ -45,11 +45,11 @@ export default function TestTeamSignupPage(): JSX.Element {
         if (!active) return
         if (previous.user) {
           const { data: term, error: termError } = await testClient.from('saturn_test_accounts_v1')
-            .select('user_id,club_id,converted_at').eq('user_id', previous.user.id).maybeSingle()
+            .select('user_id,club_id,converted_at,expires_at').eq('user_id', previous.user.id).maybeSingle()
           if (!active) return
           if (termError) throw termError
           if (term?.user_id === previous.user.id && term.club_id) {
-            navigate('/dashboard/overview', { replace: true }); return
+            navigate(!term.converted_at && Date.parse(term.expires_at) <= Date.now() ? '/test-account-expired' : '/dashboard/overview', { replace: true }); return
           }
         } else if (resumeOnly) {
           setError('No valid saved test session was found in this browser. If you already registered, use regular Sign In. Do not create another team to recover an old one.')
@@ -158,7 +158,7 @@ export default function TestTeamSignupPage(): JSX.Element {
     <div className="mx-auto max-w-xl space-y-5">
       <h1 className="text-3xl font-semibold">Test ProPeloton for 14 days</h1>
       <p>Build a real cycling team and play the full management game. No email or password is required until you decide to register. Your first seven days include the Premium trial.</p>
-      <p className="text-sm text-amber-300">Your test account expires after 14 days. To keep playing, link a permanent account before or after expiry. You can leave and continue on this same browser without a password. Do not clear browser data or use a shared/private browser before registration; anyone using this browser can resume the test team.</p>
+      <p className="text-sm text-amber-300">Your test account expires after 14 days. Register before the end of day 14 to keep your team. Unregistered teams are removed on day 15. You can leave and continue on this same browser without a password. Do not clear browser data or use a shared/private browser before registration; anyone using this browser can resume the test team.</p>
       <form onSubmit={e => void begin(e)} className="space-y-4 rounded-xl bg-slate-900 p-5">
         <label className="block text-sm" htmlFor="saturn-nickname">Manager nickname</label>
         <input id="saturn-nickname" required minLength={3} maxLength={24} autoComplete="nickname" value={nickname}

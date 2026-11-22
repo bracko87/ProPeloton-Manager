@@ -55,15 +55,15 @@ export default function TestAccountNotice(): JSX.Element | null {
     <div role="status" className="flex flex-wrap items-center justify-between gap-3 border-b border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
       <div>
         <strong>{expired ? 'Your test period has ended' : `Test account · ${daysLeft} day(s) remaining`}</strong>
-        <span className="ml-3">{expired ? 'Register to continue playing and keep your team.' : currentTime < premiumEndsAt ? 'Your seven-day Premium trial is in its introductory period.' : 'You can continue testing the standard game until your test period ends.'}</span>
+        <span className="ml-3">{expired ? 'Your registration deadline has passed. Your unregistered team is scheduled for removal.' : currentTime < premiumEndsAt ? 'Your seven-day Premium trial is in its introductory period.' : 'You can continue testing the standard game until your test period ends.'}</span>
       </div>
-      <Link to="/test-account-register" className="rounded-lg bg-amber-800 px-4 py-2 text-white font-semibold">Register / Keep my team</Link>
+      {!expired && <Link to="/test-account-register" className="rounded-lg bg-amber-800 px-4 py-2 text-white font-semibold">Register / Keep my team</Link>}
     </div>
-    {showWelcome && <div className="fixed inset-0 z-[110] grid place-items-center bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-labelledby="saturn-guest-welcome-title">
+    {showWelcome && !expired && <div className="fixed inset-0 z-[110] grid place-items-center bg-slate-950/80 p-4" role="dialog" aria-modal="true" aria-labelledby="saturn-guest-welcome-title">
       <div className="w-full max-w-md rounded-xl bg-white p-7 text-slate-900 space-y-4">
         <h2 id="saturn-guest-welcome-title" className="text-xl font-semibold">Welcome to your 14-day test account</h2>
         <p>Explore the real cycling management game. The first seven days include the Premium trial. Your temporary access ends after 14 days.</p>
-        <p>Register any time to keep your team, riders, equipment, finances and race results.</p>
+        <p>Register before the 14-day deadline to keep your team, riders, equipment, finances and race results. Unregistered teams are removed on day 15.</p>
         <div className="flex justify-end gap-3">
           <button type="button" onClick={() => setShowWelcome(false)} className="rounded-lg border px-4 py-2">Continue testing</button>
           <Link to="/test-account-register" className="rounded-lg bg-amber-700 px-4 py-2 text-white">Register now</Link>

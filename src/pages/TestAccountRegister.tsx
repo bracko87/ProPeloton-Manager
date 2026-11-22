@@ -192,7 +192,7 @@ export default function TestAccountRegister(): JSX.Element {
   return <SaturnPage className="p-6 sm:p-10">
     <section className="mx-auto max-w-xl space-y-5 rounded-xl bg-slate-900 p-6 sm:p-8">
     <h1 className="text-3xl font-semibold">Keep your cycling team</h1>
-    <p>Register this same account to retain your riders, equipment, finances and race history. Your trial Premium expiration does not restart.</p>
+    <p>Complete registration before the 14-day deadline to retain your riders, equipment, finances and race history. After the deadline your test team cannot be recovered. Your trial Premium expiration does not restart.</p>
     <p className="text-sm text-amber-300">Keep this browser session available until verification finishes. Do not use the normal new-account registration form to convert an existing test account.</p>
     {!same && <p role="alert">We cannot verify your original test identity. Contact support before continuing.</p>}
     {same && user?.is_anonymous === true && <form onSubmit={e => void addEmail(e)} className="space-y-3">

@@ -35,6 +35,7 @@ import {
 
 import { SATURN_GUEST_AUTH_MODE, openRegularAuth } from './lib/guestSession'
 import HomePage from './pages/Home'
+import TestAccountExpiry, { RequireUnexpiredTestAccount } from './components/trial/TestAccountExpiry'
 import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
 import TestTeamSignupPage from './pages/TestTeamSignup'
@@ -426,7 +427,8 @@ export default function App(): JSX.Element {
           />
 
           <Route path="/test-the-game" element={<TestTeamSignupPage />} />
-          <Route path="/test-account-register" element={<TestAccountRegisterPage />} />
+          <Route path="/test-account-register" element={<RequireUnexpiredTestAccount><TestAccountRegisterPage /></RequireUnexpiredTestAccount>} />
+          <Route path="/test-account-expired" element={<TestAccountExpiry />} />
 
           <Route
             path="/forgot-password"
@@ -509,9 +511,9 @@ export default function App(): JSX.Element {
             path="/dashboard"
             element={
               <RequireAuth>
-                <RequireClub>
+                <RequireUnexpiredTestAccount><RequireClub>
                   <ClubDashboard />
-                </RequireClub>
+                </RequireClub></RequireUnexpiredTestAccount>
               </RequireAuth>
             }
           >

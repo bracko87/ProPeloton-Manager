@@ -11,10 +11,10 @@ Decision 20 November 2026. This replaces the isolated Practice League proposal. 
 - Use all regular management systems: real riders, training, staff, equipment, finances, transfers, races and ranking, subject to the time limit and security rules. NO isolated three-rider Practice League should be released.
 - Start anonymous test teams in the **lowest eligible official tier**. They participate in real competitions while active.
 - Show a one-time modal explaining the account is temporary, a continuously visible **Register / Keep my Team** control throughout the game and a clear expiration banner or modal.
-- At expiry, **block all writes and new applications server-side**, but keep account/team/read-only history accessible for conversion. Never delete a team during an active race or rewrite historical results.
+- At expiry, **block writes, new applications and further conversion server-side**. On day 15 archive the unconverted team, revoke anonymous sessions, release riders/staff, and restore a safe existing regional AI reserve. Preserve historical results. If a race is already active or due, defer physical retirement until it is safe; access and conversion still end at the deadline.
 - Email/password or Google conversion must link to the **same Auth UUID and official club**, retaining riders, money, staff, equipment, training, competition results, ranking points and Premium trial clock. No second club, wallet, Premium trial or welcome gift.
 - After conversion, server tries to assign **the highest eligible free division slot** atomically, with no displacement, no mid-event reassignment and no retroactive race/points changes. If none is available, the team stays in its current tier until a safe vacancy or season boundary.
-- Long-expired test teams need separate end-of-season AI takeover / retention rules; no automatic deletion on day 15.
+- The separate real-time day-15 worker checks eligibility every 15 minutes. Registered teams and regular 90-day inactivity rules are unchanged. No post-expiry grace period.
 
 ## Backend work needed (NOT DONE)
 
