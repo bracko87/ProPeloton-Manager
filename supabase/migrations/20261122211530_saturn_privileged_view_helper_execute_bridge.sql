@@ -5,6 +5,6 @@
 -- remains without USAGE for anon/authenticated, so direct API calls are blocked.
 -- New installations also get these grants directly from 20261122211500.
 grant execute on function private.saturn_can_view_club_private_v1(uuid)
-  to anon, authenticated;
+  to anon, authenticated, service_role;
 grant execute on function private.saturn_can_view_rider_private_v1(uuid)
-  to anon, authenticated;
+  to anon, authenticated, service_role;
