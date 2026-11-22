@@ -38,6 +38,9 @@ test('SAT-09 uses JWT ownership, not authenticated role alone', () => {
   assert.match(sql, /security definer\s+set search_path = ''/gi)
   assert.match(sql, /revoke all on function private\.saturn_can_view_club_private_v1/)
   assert.match(sql, /revoke all on function private\.saturn_can_view_rider_private_v1/)
+  assert.match(sql, /grant execute on function private\.saturn_can_view_club_private_v1\(uuid\)/)
+  assert.match(sql, /grant execute on function private\.saturn_can_view_rider_private_v1\(uuid\)/)
+  assert.doesNotMatch(sql, /grant usage on schema private to anon|grant usage on schema private to authenticated/i)
   assert.doesNotMatch(sql, /grant\s+select\s+on\s+public\.(riders|club_finance_summary)\s+to\s+anon/i)
 })
 
