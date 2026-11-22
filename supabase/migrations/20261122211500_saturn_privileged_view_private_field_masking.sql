@@ -48,6 +48,11 @@ as $function$
 $function$;
 revoke all on function private.saturn_can_view_club_private_v1(uuid)
   from public, anon, authenticated;
+-- View functions check EXECUTE as the querying role even with a definer view.
+-- Permit boolean-only execution, but retain the private schema's no-USAGE gate
+-- and explicit JWT ownership checks. This is not a public Data API endpoint.
+grant execute on function private.saturn_can_view_club_private_v1(uuid)
+  to anon, authenticated;
 
 create or replace function private.saturn_can_view_rider_private_v1(p_rider_id uuid)
 returns boolean
@@ -77,6 +82,8 @@ as $function$
 $function$;
 revoke all on function private.saturn_can_view_rider_private_v1(uuid)
   from public, anon, authenticated;
+grant execute on function private.saturn_can_view_rider_private_v1(uuid)
+  to anon, authenticated;
 
 do $do$
 declare
