@@ -22,7 +22,7 @@ test('SAT-09 exact fields masked inside the current API view names, not only hid
   assert.match(sql, /pg_get_viewdef\(c\.oid,\s*true\)/i)
   assert.match(sql, /order by a\.attnum/i)
   assert.match(sql, /CASE WHEN saturn_acl\.permitted THEN src\./)
-  assert.match(sql, /ELSE NULL END AS/)
+  assert.match(sql, /ELSE NULL END AS %2\$s\) AS/)\n  assert.match(sql, /format_type\(a\.atttypid,a\.atttypmod\)/)
   assert.match(sql, /v_count <> cardinality\(v_sensitive\)/)
   assert.match(sql, /private\.saturn_sensitive_view_originals_20261122/)
   assert.match(sql, /refusing double wrapping/i)
