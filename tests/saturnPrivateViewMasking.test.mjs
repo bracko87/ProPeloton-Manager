@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 
 const read = path => readFileSync(new URL('../' + path, import.meta.url), 'utf8')
-const sql = read('supabase/migrations/20261122211500_saturn_privileged_view_private_field_masking.sql')
+const sql = read('supabase/migrations/20261122211515_saturn_privileged_view_private_field_masking.sql')
 
 test('SAT-09 exact fields masked inside the current API view names, not only hidden in React', () => {
   const views = [
@@ -43,11 +43,11 @@ test('SAT-09 uses JWT ownership, not authenticated role alone', () => {
   assert.match(sql, /grant execute on function private\.saturn_can_view_club_private_v1\(uuid\)/)
   assert.match(sql, /grant execute on function private\.saturn_can_view_rider_private_v1\(uuid\)/)
   assert.equal((sql.match(/to anon, authenticated, service_role;/g) || []).length, 2)
-  const expiredGuard = read('supabase/migrations/20261122211700_saturn_expired_guest_private_view_guard.sql')
+  const expiredGuard = read('supabase/migrations/20261122212006_saturn_expired_guest_private_view_guard.sql')
   assert.equal((expiredGuard.match(/t\.expires_at <= now\(\)/g) || []).length, 2)
-  const serviceBridge = read('supabase/migrations/20261122211600_saturn_privileged_view_service_role_bridge.sql')
+  const serviceBridge = read('supabase/migrations/20261122211719_saturn_privileged_view_service_role_bridge.sql')
   assert.match(serviceBridge, /to service_role;/)
-  const legacyBridge = read('supabase/migrations/20261122211530_saturn_privileged_view_helper_execute_bridge.sql')
+  const legacyBridge = read('supabase/migrations/20261122211531_saturn_privileged_view_helper_execute_bridge.sql')
   assert.equal((legacyBridge.match(/to anon, authenticated, service_role;/g) || []).length, 2)
   assert.doesNotMatch(sql, /grant usage on schema private to anon|grant usage on schema private to authenticated/i)
   assert.doesNotMatch(sql, /grant\s+select\s+on\s+public\.(riders|club_finance_summary)\s+to\s+anon/i)
