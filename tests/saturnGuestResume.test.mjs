@@ -42,3 +42,17 @@ test('guest leave is local navigation, all common logout controls use it',()=>{
  assert.match(read('src/components/home/Hero.tsx'),/Continue Test Game/)
  assert.match(read('src/pages/Login.tsx'),/Continue Test Game/)
 })
+
+test('homepage verifies a real guest team before Continue, and does not send guests through the regular creation gate',()=> {
+ const read=p=>readFileSync(new URL('../'+p,import.meta.url),'utf8')
+ const hero=read('src/components/home/Hero.tsx')
+ const home=read('src/pages/Home.tsx')
+ const signup=read('src/pages/TestTeamSignup.tsx')
+ assert.match(hero,/\.from\('saturn_test_accounts_v1'\)/)
+ assert.match(hero,/data\?\.user_id === userId && data\.club_id && !data\.converted_at/)
+ assert.match(hero,/const canResumeGuest = guestStatus === 'ready'/)
+ assert.match(hero,/hasUnfinishedGuest \|\|/)
+ assert.match(home,/if \(!user \|\| user\.is_anonymous === true/)
+ assert.match(home,/'is_current_user_club_creation_allowed_v1'/)
+ assert.match(signup,/Finish or start a test team/)
+})

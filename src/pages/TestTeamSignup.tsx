@@ -94,7 +94,7 @@ export default function TestTeamSignupPage(): JSX.Element {
     setTesterReference(null)
     try {
       const { data: previous, error: previousError } = await testClient.auth.getUser()
-      if (previousError && previousError.status !== 400 && previousError.status !== 401) throw previousError
+      if (previousError && previousError.name !== 'AuthSessionMissingError' && previousError.status !== 400 && previousError.status !== 401) throw previousError
       if (previous.user && !previous.user.is_anonymous) throw new Error('This browser already has a permanent account. Please use Register or Login.')
       if (!previous.user) {
         // Production trigger continues to reject this until explicit security sign-off.
@@ -148,7 +148,9 @@ export default function TestTeamSignupPage(): JSX.Element {
   </SaturnPage>
   if (resumeOnly) return <SaturnPage className="p-8"><div className="mx-auto max-w-xl space-y-4">
     <h1 className="text-2xl font-semibold">Continue Test Game</h1>
-    <p role="alert">{error || 'No created test team was found in this browser.'}</p>
+    <p role="alert">{error || 'You have a test login, but have not created a test team yet.'}</p>
+    <Link to="/test-the-game" className="inline-flex rounded-lg bg-yellow-400 text-slate-950 px-5 py-3">Finish or start a test team</Link>
+    <p className="text-sm text-amber-200">If your earlier anonymous session was revoked, starting another test team will not restore the old one. A new team still requires the server's testing approval.</p>
     <Link to="/login" className="text-yellow-300 underline">Regular Sign In</Link>
     <p><Link to="/" className="underline">Back to homepage</Link></p>
   </div></SaturnPage>

@@ -28,6 +28,7 @@ import ScreenshotGallery from '../components/home/ScreenshotGallery'
 import CTA from '../components/home/CTA'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
+import { SATURN_GUEST_AUTH_MODE, hasSavedGuestSession } from '../lib/guestSession'
 
 type HomeSnapshot = {
   game_time_label: string
@@ -467,7 +468,10 @@ export default function HomePage(): JSX.Element {
 
     if (loading) return
 
-    if (!user) {
+    // Guests stay on the homepage after Leave Test Game. Anonymous identities
+    // without a completed club must never enter the regular onboarding gate.
+    if (!user || user.is_anonymous === true ||
+      (SATURN_GUEST_AUTH_MODE && hasSavedGuestSession())) {
       setCheckingClub(false)
       setClubError(null)
       return
@@ -488,7 +492,7 @@ export default function HomePage(): JSX.Element {
 
       if (!data) {
         const { data: canCreateClub, error: exceptionError } = await supabase.rpc(
-          'is_current_user_club_creation_exception_v1',
+          'is_current_user_club_creation_allowed_v1',
         )
 
         if (!isMounted) return

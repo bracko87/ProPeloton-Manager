@@ -3,10 +3,11 @@
  * Uses the already-hosted sprint photo as a layer; all copy, cards,
  * navigation, clock, and animations are real React/CSS elements.
  */
-import React, { useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
-import { hasSavedGuestSession, SATURN_TEST_ACCOUNTS_ENABLED } from '../../lib/guestSession'
+import { hasSavedGuestSession, SATURN_GUEST_AUTH_MODE, SATURN_TEST_ACCOUNTS_ENABLED } from '../../lib/guestSession'
+import { supabase } from '../../lib/supabase'
 import { useAuth } from '../../context/AuthProvider'
 import { ArrowRight, Clock3, Play } from 'lucide-react'
 import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
@@ -49,8 +50,31 @@ function formatLiveGameClock(gameEpochMs: number, locale: string, seasonLabel: s
 
 export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
   const { t, i18n } = useTranslation('home')
-  const { user } = useAuth()
-  const canResumeGuest = SATURN_TEST_ACCOUNTS_ENABLED && (user?.is_anonymous === true || hasSavedGuestSession())
+  const { user, loading: authLoading } = useAuth()
+  const guestCandidate = SATURN_TEST_ACCOUNTS_ENABLED && !!user?.id &&
+    (user.is_anonymous === true || (SATURN_GUEST_AUTH_MODE && hasSavedGuestSession()))
+  const [guestTeam, setGuestTeam] = useState<{ userId: string; status: 'ready' | 'incomplete' | 'error' } | null>(null)
+  useEffect(() => {
+    let active = true
+    if (!guestCandidate || authLoading) { setGuestTeam(null); return }
+    const userId = user.id
+    setGuestTeam(null)
+    void supabase.from('saturn_test_accounts_v1')
+      .select('user_id,club_id,converted_at')
+      .eq('user_id', userId).maybeSingle()
+      .then(({ data, error }) => {
+        if (!active) return
+        setGuestTeam({ userId, status: error ? 'error' :
+          data?.user_id === userId && data.club_id && !data.converted_at ? 'ready' : 'incomplete' })
+      })
+      .catch(() => { if (active) setGuestTeam({ userId, status: 'error' }) })
+    return () => { active = false }
+  }, [guestCandidate, user?.id, authLoading])
+  const guestStatus = guestCandidate && guestTeam?.userId === user?.id ? guestTeam.status : null
+  const canResumeGuest = guestStatus === 'ready'
+  const hasUnfinishedGuest = guestStatus === 'incomplete' && user?.is_anonymous === true
+  const canCheckSavedGuest = SATURN_TEST_ACCOUNTS_ENABLED && !authLoading &&
+    ((!user && hasSavedGuestSession()) || guestStatus === 'error')
   const clock = usePublicHomeGameClock()
   const sceneRef = useRef<HTMLDivElement>(null)
 
@@ -206,8 +230,14 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
                 Continue Test Game <ArrowRight size={17} aria-hidden="true" />
               </Link>
             )}
-            {!canResumeGuest && import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' &&
-              import.meta.env.VITE_SATURN_PUBLIC_SIGNUP_ENABLED === 'true' && (
+            {!canResumeGuest && canCheckSavedGuest && (
+              <Link to="/test-the-game?resume=1" className="inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-red-600 px-7 py-3 text-base font-semibold text-white hover:bg-red-700 sm:text-lg">
+                Check Test Game <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            )}
+            {!canResumeGuest && !canCheckSavedGuest && !authLoading &&
+              import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' &&
+              (hasUnfinishedGuest || (!user && import.meta.env.VITE_SATURN_PUBLIC_SIGNUP_ENABLED === 'true')) && (
               <Link to="/test-the-game" className="inline-flex min-h-[54px] items-center gap-3 rounded-xl border border-red-400 bg-red-600 px-7 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 sm:text-lg">
                 Test the Game <ArrowRight size={17} aria-hidden="true" />
               </Link>
