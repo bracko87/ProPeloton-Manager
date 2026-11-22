@@ -3,7 +3,7 @@
 **Date:** 22 November 2026  
 **Game:** ProPeloton Manager; Supabase production project `okuravitxocyevkexfgi`  
 **Scope:** PostgreSQL views exposed through PostgREST to `anon` and `authenticated`.  
-**State:** **Confirmed exposure / not yet remediated.** All checks below were read-only; **do not apply an untested blanket REVOKE or `security_invoker` alteration in production**.
+**Original audit state (before SAT-09):** **Confirmed exposure / not yet remediated.**\n\n> **Update later on 22 November:** Nine direct public views have now been masked at the database layer, with owner, guest, anonymous and service-role read-only checks passing. See [live SAT-09 release verification](SATURN_PRIVATE_VIEW_MASKING_RELEASE_2026-11-22.md). The counts below are the historical **pre-fix** evidence. Other privileged views/RPCs remain under review; real browser-JWT verification is still pending.\n All checks below were read-only; **do not apply an untested blanket REVOKE or `security_invoker` alteration in production**.
 
 ## 1. Reproducible evidence (counts only, no account or rider values)
 
