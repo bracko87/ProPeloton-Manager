@@ -1,0 +1,34 @@
+name: Project Saturn - signup email privacy (source and build gate)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/pages/Register.tsx'
+      - 'src/i18n/locales/**/auth.json'
+      - 'supabase/migrations/20261122210000_saturn_email_lookup_privacy_compat_v1.sql'
+      - 'tests/saturnSignupEmailPrivacy.test.mjs'
+      - 'tests/saturnRegistrationUx.test.mjs'
+      - 'tests/saturnAuthCaptchaCompatibility.test.mjs'
+      - '.github/workflows/saturn-signup-email-privacy-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Confirm signup privacy, CAPTCHA, birthday and production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Run source privacy and existing signup regression tests
+        run: |
+          node --test tests/saturnSignupEmailPrivacy.test.mjs tests/saturnRegistrationUx.test.mjs tests/saturnAuthCaptchaCompatibility.test.mjs
+      - name: Build production frontend and validate translations
+        run: npm run build
