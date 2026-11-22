@@ -37,6 +37,7 @@ import { SATURN_GUEST_AUTH_MODE, openRegularAuth } from './lib/guestSession'
 import HomePage from './pages/Home'
 import TestAccountExpiry, { RequireUnexpiredTestAccount } from './components/trial/TestAccountExpiry'
 import LoginPage from './pages/Login'
+import SignupEmailCallbackRouting from './components/auth/SignupEmailCallbackRouting'
 import RegisterPage from './pages/Register'
 import TestTeamSignupPage from './pages/TestTeamSignup'
 import TestAccountRegisterPage from './pages/TestAccountRegister'
@@ -406,6 +407,7 @@ export default function App(): JSX.Element {
     <AuthProvider>
       <HashRouter>
         <CyclingSeasonWindowBoundary>
+        <SignupEmailCallbackRouting />
         <SiteAnalyticsTracker />
         <LocaleDateFormattingBridge />
         <FeatureTutorialHost />
