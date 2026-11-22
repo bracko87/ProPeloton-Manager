@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Verify your email | ProPeloton Manager</title></head>
+<body style="margin:0;background:#edf1f5;font-family:Arial,Helvetica,sans-serif;color:#122033">
+<table width="100%" role="presentation" cellpadding="0" cellspacing="0" style="background:#edf1f5"><tr><td align="center" style="padding:32px 12px">
+<table width="600" role="presentation" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;border:1px solid #dbe2ea;border-radius:12px;overflow:hidden">
+<tr><td style="background:#0b192d;color:white;padding:25px 28px;border-bottom:5px solid #ffcc00"><div style="font-size:23px;font-weight:bold"><span style="color:#ffcc00">PPM</span> &nbsp; ProPeloton Manager</div><div style="font-size:12px;margin-top:6px;letter-spacing:1px;color:#cbd5e1">BUILD YOUR CYCLING LEGACY</div></td></tr>
+<tr><td style="padding:32px 28px;font-size:16px;line-height:1.65">
+{{ if .Email }}
+<h1 style="font-size:25px;line-height:1.25;margin-top:0">Confirm your email address change</h1>
+<p>We received a request to update the email address associated with your ProPeloton Manager account.</p>
+<p>Confirm the requested change using the secure button below.</p>
+{{ else }}
+<h1 style="font-size:25px;line-height:1.25;margin-top:0">Keep your cycling team</h1>
+<p>You're one step closer to becoming a registered ProPeloton Manager.</p>
+<p>Verify your email address, then return to the game to set your password and complete registration. Your existing team, riders, equipment and progress will be preserved.</p>
+{{ end }}
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:26px 0"><tr><td bgcolor="#ffcc00" style="border-radius:7px"><a href="{{ .ConfirmationURL }}" style="display:inline-block;padding:15px 24px;color:#0b192d;text-decoration:none;font-weight:bold">Verify my email address</a></td></tr></table>
+<p style="font-size:13px;color:#475569">If you did not request this, you can ignore this email. For your security, do not forward the verification link.</p>
+<p style="font-size:13px;color:#475569">If the button doesn't work, copy this link into the browser where you started registration:<br><a href="{{ .ConfirmationURL }}" style="word-break:break-all;color:#234b82">{{ .ConfirmationURL }}</a></p>
+</td></tr><tr><td style="padding:20px 28px;background:#f6f8fa;border-top:1px solid #dbe2ea;font-size:12px;color:#475569">ProPeloton Manager · Next Quest Studio<br><a href="https://propelotonmanager.com" style="color:#234b82">propelotonmanager.com</a><br>This is an automated account security email.</td></tr>
+</table></td></tr></table></body></html>

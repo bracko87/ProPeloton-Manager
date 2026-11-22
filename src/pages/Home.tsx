@@ -468,6 +468,18 @@ export default function HomePage(): JSX.Element {
 
     if (loading) return
 
+    // Email confirmation can return to the site root when the auth provider
+    // consumes the hash or falls back to Site URL. Only the original browser
+    // identity may resume conversion; never send unrelated players there.
+    if (SATURN_GUEST_AUTH_MODE && user?.id && hasSavedGuestSession()) {
+      let originalId: string | null = null
+      try { originalId = window.localStorage.getItem('saturn-fullgame-conversion-uuid') } catch {}
+      if (originalId === user.id && (user.is_anonymous === false || new URLSearchParams(window.location.search).has('saturn_email_link'))) {
+        navigate('/test-account-register', { replace: true })
+        return
+      }
+    }
+
     // Guests stay on the homepage after Leave Test Game. Anonymous identities
     // without a completed club must never enter the regular onboarding gate.
     if (!user || user.is_anonymous === true ||

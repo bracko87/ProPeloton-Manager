@@ -118,7 +118,7 @@ test('email and Google conversion request optional server-assigned vacancy witho
  assert.match(ui,/'moved_to_approved_vacancy'/)
  assert.match(ui,/'race_commitment_pending'/)
  assert.match(ui,/'season_transition_pending'/)
- assert.match(ui,/No approved higher-division vacancy is available/)
+ assert.match(ui,/No competition-safe higher AI slot or regional reserve is available/)
  assert.ok((ui.match(/await requestApprovedPlacement\(\)/g)||[]).length===2)
 })
 test('capacity occupancy review is read-only and counts ALL human and AI teams',()=>{

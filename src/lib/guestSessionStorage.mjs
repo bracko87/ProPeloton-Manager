@@ -55,6 +55,7 @@ export function shouldUseGuestAuth(href, hasSavedSession, enabled) {
   if (url.searchParams.has('saturn_regular')) return false
   return url.searchParams.has('saturn_guest') ||
     url.searchParams.has('saturn_google_link') ||
+    url.searchParams.has('saturn_email_link') ||
     /^#\/(test-the-game|test-account-register)(\?|$)/.test(url.hash) ||
     hasSavedSession
 }
