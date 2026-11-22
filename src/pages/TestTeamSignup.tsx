@@ -4,6 +4,7 @@
  * must create club + lifecycle in ONE authorized transaction.
  */
 import React, { useState } from 'react'
+import SaturnPage from '../components/trial/SaturnPage'
 import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { testClient, SATURN_TEST_ACCOUNTS_ENABLED as ENABLED } from '../lib/testAccountClient'
@@ -104,15 +105,15 @@ export default function TestTeamSignupPage(): JSX.Element {
     }
   }
 
-  if (!ENABLED) return <main className="min-h-screen bg-slate-950 text-white p-8">
+  if (!ENABLED) return <SaturnPage className="p-8">
     <div className="max-w-xl mx-auto mt-16 space-y-4">
       <h1 className="text-3xl">Test Player Mode is coming soon</h1>
       <p>We are finalizing safeguards for fourteen days of real game access and the first seven days of Premium. Regular registration is available.</p>
       <Link to="/register" className="inline-flex rounded-lg bg-yellow-400 text-slate-950 px-5 py-3">Register normally</Link>
     </div>
-  </main>
+  </SaturnPage>
 
-  return <main className="min-h-screen bg-slate-950 text-slate-100 p-6 sm:p-12">
+  return <SaturnPage className="p-6 sm:p-12">
     <div className="mx-auto max-w-xl space-y-5">
       <h1 className="text-3xl font-semibold">Test ProPeloton for 14 days</h1>
       <p>Build a real cycling team and play the full management game. No email or password is required until you decide to register. Your first seven days include the Premium trial.</p>
@@ -142,5 +143,5 @@ export default function TestTeamSignupPage(): JSX.Element {
       <p>Already decided to stay? <Link className="underline text-yellow-300" to="/register">Register a permanent account</Link></p>
       <Link className="underline" to="/">Back to homepage</Link>
     </div>
-  </main>
+  </SaturnPage>
 }
