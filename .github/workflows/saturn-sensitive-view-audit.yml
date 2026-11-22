@@ -1,0 +1,30 @@
+name: Project Saturn - sensitive-view audit contract (no deployment)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'docs/SATURN_SENSITIVE_VIEW_PRIVACY_AUDIT_2026-11-22.md'
+      - 'supabase/tests/saturn_sensitive_view_privilege_audit_readonly.sql'
+      - 'tests/saturnSensitiveViewAuditContract.test.mjs'
+      - '.github/workflows/saturn-sensitive-view-audit.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    name: Verify read-only audit contract and existing production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install reproducible dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify audited sensitive views and no mutating statements
+        run: node --test tests/saturnSensitiveViewAuditContract.test.mjs
+      - name: Verify production build without deploying
+        run: npm run build
