@@ -38,6 +38,7 @@ import ProPackagesPage from '../../pages/ProPackages'
 import WelcomePremiumTrial from '@/components/premium/WelcomePremiumTrial'
 import { getMyClubContext } from '@/lib/clubContext'
 import { supabase } from '@/lib/supabase'
+import { leaveGameSession } from '@/lib/testAccountClient'
 
 interface MainLayoutProps {
   children?: React.ReactNode
@@ -239,7 +240,7 @@ export default function MainLayout({ children }: MainLayoutProps) {
 
   const handleLogoutAndHome = useCallback(async () => {
     try {
-      await supabase.auth.signOut()
+      await leaveGameSession()
     } finally {
       clearMainClubStorage()
 

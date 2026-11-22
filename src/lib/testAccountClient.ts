@@ -1,46 +1,29 @@
-/**
- * SAT-01 scoped persistent Supabase session for full-game test accounts.
- * Never enabled unless VITE_SATURN_TEST_ACCOUNTS_ENABLED is explicitly true.
- * The regular player client is unaffected while the rollout flag is false.
- */
-import { createClient } from '@supabase/supabase-js'
-import { SUPABASE_URL, SUPABASE_ANON_KEY, supabase } from './supabase'
-
-export const SATURN_TEST_ACCOUNTS_ENABLED =
-  import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true'
-
-export const testClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storageKey: 'ppm-saturn-fullgame-test-session-v1',
-    persistSession: true,
-    autoRefreshToken: true,
-    // Manual Google identity linking returns through an OAuth URL. Process
-    // that callback on the SAME persisted anonymous Auth client.
-    detectSessionInUrl: SATURN_TEST_ACCOUNTS_ENABLED &&
-      typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).has('saturn_google_link'),
-  },
-})
+/** One Auth client per page. Guest mode uses the dedicated persisted storage;
+ * regular players keep the original memory-only client. No token handoffs. */
+import { supabase } from './supabase'
+import { SATURN_GUEST_AUTH_MODE, SATURN_TEST_ACCOUNTS_ENABLED, guestSessionStorage, hasSavedGuestSession } from './guestSession'
+export { SATURN_TEST_ACCOUNTS_ENABLED }
+export const testClient = supabase
 
 export async function restoreTestAccountIntoGame(): Promise<void> {
-  if (!SATURN_TEST_ACCOUNTS_ENABLED) return
-  const { data: current } = await supabase.auth.getUser()
-  if (current.user) return
+  if (!SATURN_GUEST_AUTH_MODE) return
+  const { data: verified, error } = await supabase.auth.getUser()
+  if (error || !verified.user || verified.user.is_anonymous) return
+  const { data: term } = await supabase.from('saturn_test_accounts_v1')
+    .select('user_id,converted_at').eq('user_id', verified.user.id).maybeSingle()
+  if (term?.user_id === verified.user.id && term.converted_at) guestSessionStorage.finishConversion(verified.user.id)
+}
 
-  const { data: testUser, error: testError } = await testClient.auth.getUser()
-  if (testError || !testUser.user) return
+export function finishTestSessionPersistence(userId: string): void {
+  if (SATURN_GUEST_AUTH_MODE) guestSessionStorage.finishConversion(userId)
+}
 
-  const { data: term, error: termError } = await testClient
-    .from('saturn_test_accounts_v1')
-    .select('user_id')
-    .eq('user_id', testUser.user.id)
-    .maybeSingle()
-
-  if (termError || term?.user_id !== testUser.user.id) return
-  const { data: persisted } = await testClient.auth.getSession()
-  if (!persisted.session) return
-  await supabase.auth.setSession({
-    access_token: persisted.session.access_token,
-    refresh_token: persisted.session.refresh_token,
-  })
+/** Leaving a trial is not a real logout: anonymous credentials cannot be recreated.
+ * Regular or fully converted accounts still revoke their ordinary session. */
+export async function leaveGameSession(): Promise<void> {
+  if (SATURN_GUEST_AUTH_MODE) {
+    const { data } = await supabase.auth.getSession()
+    if (data.session?.user.is_anonymous || hasSavedGuestSession()) return
+  }
+  await supabase.auth.signOut()
 }

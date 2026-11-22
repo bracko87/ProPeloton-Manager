@@ -54,6 +54,9 @@ import {
   Settings,
 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { leaveGameSession } from '@/lib/testAccountClient'
+import { useAuth } from '@/context/AuthProvider'
+import { SATURN_GUEST_AUTH_MODE, hasSavedGuestSession } from '@/lib/guestSession'
 import {
   canReceiveNotificationItem,
   readNotificationPreferences,
@@ -303,6 +306,8 @@ export default function Header({
   coinBalance = 0,
 }: HeaderProps) {
   const { t } = useTranslation('navigation')
+  const { user } = useAuth()
+  const guestExit = SATURN_GUEST_AUTH_MODE && (user?.is_anonymous === true || hasSavedGuestSession())
   const permanentlyRegistered = usePermanentRegistration()
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
@@ -615,7 +620,7 @@ export default function Header({
       return
     }
 
-    await supabase.auth.signOut()
+    await leaveGameSession()
 
     if (typeof window !== 'undefined') {
       window.location.href = '/'
@@ -1258,7 +1263,7 @@ export default function Header({
                         }}
                         className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50"
                       >
-                        {t(item.labelKey)}
+                        {guestExit ? 'Leave Test Game' : t(item.labelKey)}
                       </button>
                     )
                   }

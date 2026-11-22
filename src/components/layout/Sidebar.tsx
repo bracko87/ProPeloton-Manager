@@ -27,6 +27,9 @@ import {
   ChevronRight,
 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
+import { leaveGameSession } from '../../lib/testAccountClient'
+import { useAuth } from '../../context/AuthProvider'
+import { SATURN_GUEST_AUTH_MODE, hasSavedGuestSession } from '../../lib/guestSession'
 import BugReportButton from '../dashboard/BugReportButton'
 
 interface SidebarProps {
@@ -150,6 +153,8 @@ export default function Sidebar({
   onToggle,
 }: SidebarProps): JSX.Element {
   const { t } = useTranslation('navigation')
+  const { user } = useAuth()
+  const guestExit = SATURN_GUEST_AUTH_MODE && (user?.is_anonymous === true || hasSavedGuestSession())
   const navigate = useNavigate()
   const permanentlyRegistered = usePermanentRegistration()
   const location = useLocation()
@@ -196,7 +201,7 @@ export default function Sidebar({
     : location.pathname
 
   const signOut = async (): Promise<void> => {
-    await supabase.auth.signOut()
+    await leaveGameSession()
     navigate('/')
   }
 
@@ -320,7 +325,7 @@ export default function Sidebar({
             onClick={() => {
               void signOut()
             }}
-            aria-label={t('signOut')}
+            aria-label={guestExit ? 'Leave Test Game' : t('signOut')}
             className={`w-full rounded-md font-semibold transition-colors ${
               collapsed
                 ? 'flex items-center justify-center px-3 py-3 bg-yellow-400 text-black hover:bg-yellow-300'
@@ -328,7 +333,7 @@ export default function Sidebar({
             }`}
           >
             <LogOut size={16} />
-            {!collapsed && <span>{t('signOut')}</span>}
+            {!collapsed && <span>{guestExit ? 'Leave Test Game' : t('signOut')}</span>}
           </button>
 
           <BugReportButton

@@ -6,6 +6,8 @@
 import React, { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router'
+import { hasSavedGuestSession, SATURN_TEST_ACCOUNTS_ENABLED } from '../../lib/guestSession'
+import { useAuth } from '../../context/AuthProvider'
 import { ArrowRight, Clock3, Play } from 'lucide-react'
 import { usePublicHomeGameClock } from '../../hooks/usePublicHomeGameClock'
 
@@ -47,6 +49,8 @@ function formatLiveGameClock(gameEpochMs: number, locale: string, seasonLabel: s
 
 export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
   const { t, i18n } = useTranslation('home')
+  const { user } = useAuth()
+  const canResumeGuest = SATURN_TEST_ACCOUNTS_ENABLED && (user?.is_anonymous === true || hasSavedGuestSession())
   const clock = usePublicHomeGameClock()
   const sceneRef = useRef<HTMLDivElement>(null)
 
@@ -197,7 +201,12 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
             <Link to="/register" className="ppm-cta inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-yellow-400 px-7 py-3 text-base font-semibold text-[#071426] hover:bg-yellow-300 sm:text-lg">
               <Play size={19} fill="currentColor" aria-hidden="true" />{t('header.startPlaying')}
             </Link>
-            {import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' &&
+            {canResumeGuest && (
+              <Link to="/test-the-game?resume=1" className="inline-flex min-h-[54px] items-center gap-3 rounded-xl bg-red-600 px-7 py-3 text-base font-semibold text-white hover:bg-red-700 sm:text-lg">
+                Continue Test Game <ArrowRight size={17} aria-hidden="true" />
+              </Link>
+            )}
+            {!canResumeGuest && import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' &&
               import.meta.env.VITE_SATURN_PUBLIC_SIGNUP_ENABLED === 'true' && (
               <Link to="/test-the-game" className="inline-flex min-h-[54px] items-center gap-3 rounded-xl border border-red-400 bg-red-600 px-7 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 sm:text-lg">
                 Test the Game <ArrowRight size={17} aria-hidden="true" />

@@ -8,7 +8,7 @@ import SaturnPage from '../components/trial/SaturnPage'
 import { Link } from 'react-router'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
-import { testClient } from '../lib/testAccountClient'
+import { testClient, finishTestSessionPersistence } from '../lib/testAccountClient'
 
 const ENABLED = import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true'
 const ORIGINAL_ID_KEY = 'saturn-fullgame-conversion-uuid'
@@ -122,21 +122,14 @@ export default function TestAccountRegister(): JSX.Element {
         return
       }
 
-      // Restore the SAME linked Auth session to the main game client, which
-      // uses an in-memory session for normal gameplay.
+      // One client retains the SAME linked Auth session; no refresh-token handoff.
       const { data: session } = await testClient.auth.getSession()
       if (!session.session || session.session.user.id !== originId) {
         setStatus('Registration is verified, but game session restoration is pending. Please sign in with Google using this account.')
         return
       }
-      const { error: syncError } = await supabase.auth.setSession({
-        access_token: session.session.access_token,
-        refresh_token: session.session.refresh_token,
-      })
-      if (syncError) {
-        setStatus('Registration is verified, but the game session needs refreshing. Please log in with the linked Google account.')
-        return
-      }
+      finishTestSessionPersistence(originId)
+      window.localStorage.removeItem(ORIGINAL_ID_KEY)
       await refreshUser()
       window.dispatchEvent(new Event('saturn-registration-completed'))
       const placementMessage = await requestApprovedPlacement()
@@ -179,6 +172,8 @@ export default function TestAccountRegister(): JSX.Element {
       const converted = !finalizeError && result?.success === true &&
         result?.converted === true && result?.user_id === originId
       if (converted) {
+        finishTestSessionPersistence(originId)
+        window.localStorage.removeItem(ORIGINAL_ID_KEY)
         window.dispatchEvent(new Event('saturn-registration-completed'))
         const placementMessage = await requestApprovedPlacement()
         setStatus('Registration completed on your original account. Your original Premium expiry is preserved. ' + placementMessage)

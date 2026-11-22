@@ -13,6 +13,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js'
+import { SATURN_GUEST_AUTH_MODE, GUEST_SESSION_KEY, guestSessionStorage } from './guestSession'
 
 /**
  * Default Supabase project configuration.
@@ -290,13 +291,14 @@ function raceIdentityAwareFetch(
  */
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
-    persistSession: false,
-    // A Google identity link must be completed by the persisted SATURN
-    // client, not this separate memory-only game client. Leave normal OAuth
-    // callbacks unchanged unless the dedicated Saturn marker is present.
-    detectSessionInUrl: !(import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' &&
-      typeof window !== 'undefined' &&
-      new URLSearchParams(window.location.search).has('saturn_google_link'))
+    ...(SATURN_GUEST_AUTH_MODE ? {
+      persistSession: true,
+      storageKey: GUEST_SESSION_KEY,
+      storage: guestSessionStorage,
+      autoRefreshToken: true,
+    } : { persistSession: false }),
+    // One Auth client consumes redirect credentials and refreshes tokens.
+    detectSessionInUrl: true
   },
   global: {
     fetch: raceIdentityAwareFetch

@@ -33,6 +33,7 @@ import {
   Routes,
 } from 'react-router'
 
+import { SATURN_GUEST_AUTH_MODE, openRegularAuth } from './lib/guestSession'
 import HomePage from './pages/Home'
 import LoginPage from './pages/Login'
 import RegisterPage from './pages/Register'
@@ -222,6 +223,11 @@ function GuardErrorScreen({
  * RequireAuth
  * Ensures a user is authenticated; otherwise redirects to /login.
  */
+function RegularAuthPage({ children }: GuardProps): JSX.Element {
+  useEffect(() => { if (SATURN_GUEST_AUTH_MODE) openRegularAuth() }, [])
+  return SATURN_GUEST_AUTH_MODE ? <LoadingScreen label="Opening regular sign in..." /> : children
+}
+
 function RequireAuth({
   children,
 }: GuardProps): JSX.Element | null {
@@ -368,7 +374,7 @@ function RequireClub({
   if (!hasClub) {
     return (
       <Navigate
-        to="/create-club"
+        to={user?.is_anonymous === true ? "/test-the-game" : "/create-club"}
         replace
       />
     )
@@ -411,12 +417,12 @@ export default function App(): JSX.Element {
 
           <Route
             path="/login"
-            element={<LoginPage />}
+            element={<RegularAuthPage><LoginPage /></RegularAuthPage>}
           />
 
           <Route
             path="/register"
-            element={<RegisterPage />}
+            element={<RegularAuthPage><RegisterPage /></RegularAuthPage>}
           />
 
           <Route path="/test-the-game" element={<TestTeamSignupPage />} />
@@ -424,12 +430,12 @@ export default function App(): JSX.Element {
 
           <Route
             path="/forgot-password"
-            element={<ForgotPasswordPage />}
+            element={<RegularAuthPage><ForgotPasswordPage /></RegularAuthPage>}
           />
 
           <Route
             path="/reset-password"
-            element={<ResetPasswordPage />}
+            element={<RegularAuthPage><ResetPasswordPage /></RegularAuthPage>}
           />
 
           <Route

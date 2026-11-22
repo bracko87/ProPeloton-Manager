@@ -34,11 +34,10 @@ test('Google linking uses persisted original Auth client, never generic new-acco
  assert.match(ui, /provider: 'google'/)
  assert.ok(ui.includes('redirectTo: window.location.origin + window.location.pathname'))
  assert.doesNotMatch(ui, /signInWithOAuth\(|signUp\(/)
- assert.match(client, /detectSessionInUrl: SATURN_TEST_ACCOUNTS_ENABLED/)
- assert.ok(client.includes("new URLSearchParams(window.location.search).has('saturn_google_link')"))
- assert.ok(gameClient.includes("detectSessionInUrl: !(import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED"))
- assert.ok(gameClient.includes("new URLSearchParams(window.location.search).has('saturn_google_link')"))
- assert.match(client, /persistSession: true/)
+ assert.match(client, /export const testClient = supabase/)
+ assert.match(gameClient, /detectSessionInUrl: true/)
+ assert.match(gameClient, /persistSession: true/)
+ assert.match(gameClient, /persistSession: false/)
 })
 
 test('Google registration success requires provider, UUID and server confirmation', () => {
@@ -49,7 +48,8 @@ test('Google registration success requires provider, UUID and server confirmatio
  assert.match(ui, /result\?\.user_id !== originId/)
  assert.match(ui, /result\?\.provider !== 'google'/)
  assert.match(ui, /session\.session\.user\.id !== originId/)
- assert.match(ui, /await supabase\.auth\.setSession/)
+ assert.doesNotMatch(ui, /await supabase\.auth\.setSession/)
+ assert.match(ui, /finishTestSessionPersistence\(originId\)/)
  assert.match(ui, /Google registration completed on your original account/)
 })
 

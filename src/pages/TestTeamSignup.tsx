@@ -8,10 +8,17 @@ import SaturnPage from '../components/trial/SaturnPage'
 import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { testClient, SATURN_TEST_ACCOUNTS_ENABLED as ENABLED } from '../lib/testAccountClient'
+import { SATURN_GUEST_AUTH_MODE, canPersistGuestSession, openGuestAuth } from '../lib/guestSession'
+import { useAuth } from '../context/AuthProvider'
+import { useLocation } from 'react-router'
 import { SaturnGuestCaptcha, SATURN_TURNSTILE_SITE_KEY } from '../components/auth/SaturnGuestCaptcha'
 
 export default function TestTeamSignupPage(): JSX.Element {
   const navigate = useNavigate()
+  const location = useLocation()
+  const { user, loading } = useAuth()
+  const resumeOnly = new URLSearchParams(location.search).get('resume') === '1'
+  const [checkingSession, setCheckingSession] = useState(true)
   const [nickname, setNickname] = useState('')
   const [team, setTeam] = useState('')
   const [country, setCountry] = useState('')
@@ -25,8 +32,34 @@ export default function TestTeamSignupPage(): JSX.Element {
   const [testerReference, setTesterReference] = useState<string | null>(null)
 
   React.useEffect(() => {
-    if (!ENABLED) return
+    if (!ENABLED || loading) return
+    if (!SATURN_GUEST_AUTH_MODE) {
+      if (!user) openGuestAuth()
+      else setCheckingSession(false)
+      return
+    }
     let active = true
+    void (async () => {
+      try {
+        const { data: previous, error: sessionError } = await testClient.auth.getUser()
+        if (!active) return
+        if (previous.user) {
+          const { data: term, error: termError } = await testClient.from('saturn_test_accounts_v1')
+            .select('user_id,club_id,converted_at').eq('user_id', previous.user.id).maybeSingle()
+          if (!active) return
+          if (termError) throw termError
+          if (term?.user_id === previous.user.id && term.club_id) {
+            navigate('/dashboard/overview', { replace: true }); return
+          }
+        } else if (resumeOnly) {
+          setError('No valid saved test session was found in this browser. If you already registered, use regular Sign In. Do not create another team to recover an old one.')
+        } else if (sessionError && sessionError.status !== 400 && sessionError.status !== 401) {
+          // An absent session is expected for a first guest; transient failures are not.
+          if (sessionError.name !== 'AuthSessionMissingError') throw sessionError
+        }
+      } catch { if (active) setError('Could not verify your saved test session. Please try again shortly.') }
+      finally { if (active) setCheckingSession(false) }
+    })()
     void supabase.from('countries').select('code, name').eq('is_selectable', true)
       .order('name', { ascending: true }).then(({ data, error: loadError }) => {
         if (!active) return
@@ -34,11 +67,14 @@ export default function TestTeamSignupPage(): JSX.Element {
         else setCountries(data ?? [])
       })
     return () => { active = false }
-  }, [])
+  }, [loading, user?.id, resumeOnly, navigate])
 
   async function begin(event: React.FormEvent) {
     event.preventDefault()
-    if (!ENABLED || busy) return
+    if (!ENABLED || busy || checkingSession || resumeOnly || !SATURN_GUEST_AUTH_MODE) return
+    if (!canPersistGuestSession()) {
+      setError('Allow browser storage before starting a test team, so you can return later.'); return
+    }
     // Fail closed even if the browser attempts to submit without the widget.
     // Supabase Auth MUST validate this token with the Turnstile secret.
     if (!SATURN_TURNSTILE_SITE_KEY || !captchaToken) {
@@ -86,14 +122,7 @@ export default function TestTeamSignupPage(): JSX.Element {
       }
       if (createError || typeof clubId !== 'string') throw new Error(createError?.message ?? 'Club could not be created.')
       const { data: session } = await testClient.auth.getSession()
-      if (!session.session) throw new Error('Guest session unavailable after creating the club.')
-      // The normal game client has no persistent session; transfer in-memory
-      // ONLY after the server confirms the official team was created.
-      const { error: transferError } = await supabase.auth.setSession({
-        access_token: session.session.access_token,
-        refresh_token: session.session.refresh_token,
-      })
-      if (transferError) throw transferError
+      if (!session.session || session.session.user.id !== authenticated.user.id) throw new Error('Guest session unavailable after creating the club.')
       navigate('/dashboard/overview', { replace: true })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Could not create the test team.')
@@ -113,11 +142,21 @@ export default function TestTeamSignupPage(): JSX.Element {
     </div>
   </SaturnPage>
 
+  if (loading || checkingSession) return <SaturnPage className="p-8"><p>Checking your saved test team…</p></SaturnPage>
+  if (!SATURN_GUEST_AUTH_MODE || (user && user.is_anonymous === false)) return <SaturnPage className="p-8">
+    <div className="mx-auto max-w-xl space-y-4"><p>You are already signed in.</p><Link to="/dashboard/overview" className="text-yellow-300 underline">Return to my team</Link></div>
+  </SaturnPage>
+  if (resumeOnly) return <SaturnPage className="p-8"><div className="mx-auto max-w-xl space-y-4">
+    <h1 className="text-2xl font-semibold">Continue Test Game</h1>
+    <p role="alert">{error || 'No created test team was found in this browser.'}</p>
+    <Link to="/login" className="text-yellow-300 underline">Regular Sign In</Link>
+    <p><Link to="/" className="underline">Back to homepage</Link></p>
+  </div></SaturnPage>
   return <SaturnPage className="p-6 sm:p-12">
     <div className="mx-auto max-w-xl space-y-5">
       <h1 className="text-3xl font-semibold">Test ProPeloton for 14 days</h1>
       <p>Build a real cycling team and play the full management game. No email or password is required until you decide to register. Your first seven days include the Premium trial.</p>
-      <p className="text-sm text-amber-300">Your test account expires after 14 days. To keep playing, link a permanent account before or after expiry. Clearing browser data before registration may lose access.</p>
+      <p className="text-sm text-amber-300">Your test account expires after 14 days. To keep playing, link a permanent account before or after expiry. You can leave and continue on this same browser without a password. Do not clear browser data or use a shared/private browser before registration; anyone using this browser can resume the test team.</p>
       <form onSubmit={e => void begin(e)} className="space-y-4 rounded-xl bg-slate-900 p-5">
         <label className="block text-sm" htmlFor="saturn-nickname">Manager nickname</label>
         <input id="saturn-nickname" required minLength={3} maxLength={24} autoComplete="nickname" value={nickname}

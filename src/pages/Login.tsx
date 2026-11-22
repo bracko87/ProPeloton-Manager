@@ -14,6 +14,7 @@ import React, { useEffect, useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
+import { SATURN_TEST_ACCOUNTS_ENABLED } from '../lib/guestSession'
 import { useAuthCaptcha, AuthCaptcha } from '../components/auth/AuthCaptcha'
 import PreReleaseNotice, { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
 
@@ -171,6 +172,7 @@ export default function LoginPage(): JSX.Element {
             <div className="mt-5"><PreReleaseNotice /></div>
           ) : null}
 
+          {SATURN_TEST_ACCOUNTS_ENABLED && <Link to="/test-the-game?resume=1" className="mt-5 block rounded-md border border-red-600 px-4 py-3 text-center font-semibold text-red-700 hover:bg-red-50">Continue Test Game</Link>}
           <form onSubmit={handleSubmit} className="mt-6 grid grid-cols-1 gap-4">
             <div>
               <label htmlFor="email" className="text-sm font-medium text-gray-700">

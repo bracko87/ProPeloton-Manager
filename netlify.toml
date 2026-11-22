@@ -6,7 +6,7 @@
 # This deployment is for ordinary login/registration CAPTCHA compatibility.
 [context.production.environment]
   VITE_SATURN_TURNSTILE_SITE_KEY = "0x4AAAAAAGMF-dcu2xEPNvrp"
-  VITE_SATURN_TEST_ACCOUNTS_ENABLED = "false"
+  VITE_SATURN_TEST_ACCOUNTS_ENABLED = "true"
   VITE_SATURN_PUBLIC_SIGNUP_ENABLED = "false"
 
 [functions]
