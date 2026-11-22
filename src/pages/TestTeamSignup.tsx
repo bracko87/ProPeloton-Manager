@@ -126,11 +126,23 @@ export default function TestTeamSignupPage(): JSX.Element {
         <input id="saturn-team" required minLength={3} maxLength={40} value={team}
           onChange={e => setTeam(e.target.value)} className="w-full rounded-md bg-slate-800 p-3" />
         <label className="block text-sm" htmlFor="saturn-country">Team country</label>
-        <select id="saturn-country" required value={country} onChange={e => setCountry(e.target.value)}
-          className="w-full rounded-md bg-slate-800 p-3">
-          <option value="">Choose a country</option>
-          {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
-        </select>
+        <div className="relative">
+          {country && /^[A-Za-z]{2}$/.test(country) && (
+            <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 left-3 flex items-center">
+              <span className="relative flex h-4 w-6 items-center justify-center overflow-hidden rounded-sm bg-slate-700 text-[10px] text-slate-100">
+                <span>{country.toUpperCase()}</span>
+                <img key={country} src={`https://flagcdn.com/w40/${country.toLowerCase()}.png`} alt=""
+                  className="absolute inset-0 h-full w-full object-cover"
+                  onError={e => { e.currentTarget.style.display = 'none' }} />
+              </span>
+            </span>
+          )}
+          <select id="saturn-country" required value={country} onChange={e => setCountry(e.target.value)}
+            className={`w-full rounded-md bg-slate-800 py-3 pr-3 ${country ? 'pl-12' : 'pl-3'}`}>
+            <option value="">Choose a country</option>
+            {countries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
+          </select>
+        </div>
         <div className="flex gap-6">
           <label>Primary color<input type="color" className="block mt-2" value={primary} onChange={e => setPrimary(e.target.value)} /></label>
           <label>Secondary color<input type="color" className="block mt-2" value={secondary} onChange={e => setSecondary(e.target.value)} /></label>

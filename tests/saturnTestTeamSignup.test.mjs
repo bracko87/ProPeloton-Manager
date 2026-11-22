@@ -52,3 +52,11 @@ test('restricted testing keeps public homepage button disabled and uses server U
  assert.match(form,/setTesterReference\(authenticated\.user\.id\)/)
  assert.match(sql,/revoke all on private\.saturn_approved_testers_v1 from PUBLIC, anon, authenticated/)
 })
+
+
+test('selected country displays a small flag without changing its submitted code', () => {
+  assert.ok(form.includes('https://flagcdn.com/w40/\${country.toLowerCase()}.png'))
+  assert.match(form, /<img key=\{country\}/)
+  assert.match(form, /id="saturn-country" required value=\{country\}/)
+  assert.match(form, /p_country_code: country/)
+})
