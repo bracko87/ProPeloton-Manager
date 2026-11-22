@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'supabase/migrations/20261122211500_saturn_privileged_view_private_field_masking.sql'
+      - 'supabase/migrations/20261122211515_saturn_privileged_view_private_field_masking.sql'
       - 'supabase/tests/saturn_privileged_view_private_field_mask_verify_readonly.sql'
       - 'tests/saturnPrivateViewMasking.test.mjs'
       - '.github/workflows/saturn-private-view-masking.yml'
