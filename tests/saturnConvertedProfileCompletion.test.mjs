@@ -14,7 +14,8 @@ test('birthday fill is only for registered converted guests and one time',()=>{
  assert.match(profile,/converted\?\.converted_at/)
  assert.match(profile,/saturn_set_missing_birthday_once_v1/)
  assert.match(profile,/Save birthday permanently/)
- assert.doesNotMatch(profile,/\.upsert\(payload[\s\S]*birthday_month:/)
+ const normalSavePayload = profile.slice(profile.indexOf('const payload = {'),profile.indexOf('const { data: savedProfile, error: profileError }'))
+ assert.doesNotMatch(normalSavePayload,/birthday_month|birthday_day|birthday_year|birthday_locked/)
 })
 test('only converted guest with missing details sees one-time nonblocking reminder and page links',()=>{
  const component=read('src/components/trial/PostConversionProfileReminder.tsx')

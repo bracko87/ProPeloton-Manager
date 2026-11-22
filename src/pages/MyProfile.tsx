@@ -350,7 +350,7 @@ export default function MyProfilePage(): JSX.Element {
       ? new Date(Date.UTC(year ?? 2000, month, 0)).getUTCDate() : 0
     if (!Number.isInteger(month) || month < 1 || month > 12 ||
         !Number.isInteger(day) || day < 1 || day > maxDay ||
-        (year !== null && (!/^\\d{4}$/.test(birthdayYearInput.trim()) ||
+        (year !== null && (!/^\d{4}$/.test(birthdayYearInput.trim()) ||
          year < 1900 || year > new Date().getFullYear()))) {
       setErrorMessage('Enter a valid birthday. Month and day are required; year is optional.')
       return
