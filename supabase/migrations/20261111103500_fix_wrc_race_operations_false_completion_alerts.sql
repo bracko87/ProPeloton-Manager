@@ -10,6 +10,7 @@ DO $race_ops_fix$
 DECLARE
   v_source text;
   v_needle text := 'case when r.category in (''WNQ'',''WNF'') then false else coalesce(cr.ranking_points_enabled, true) end as ranking_points_enabled';
+  v_baseline text := 'coalesce(cr.ranking_points_enabled, true) as ranking_points_enabled';
   v_corrected text := 'case when r.category in (''WNQ'',''WNF'',''WRC'') then false else coalesce(cr.ranking_points_enabled, true) end as ranking_points_enabled';
 BEGIN
   SELECT pg_get_functiondef(p.oid) INTO v_source
@@ -24,11 +25,16 @@ BEGIN
   IF strpos(v_source,v_corrected)>0 THEN
     RETURN;
   END IF;
-  IF strpos(v_source,v_needle)=0
-    OR (length(v_source)-length(replace(v_source,v_needle,'')))/length(v_needle)<>1 THEN
+  IF strpos(v_source,v_needle)>0
+    AND (length(v_source)-length(replace(v_source,v_needle,'')))/length(v_needle)=1 THEN
+    EXECUTE replace(v_source,v_needle,v_corrected);
+  ELSIF strpos(v_source,v_baseline)>0
+    AND (length(v_source)-length(replace(v_source,v_baseline,'')))/length(v_baseline)=1 THEN
+    -- Original September fresh baseline predates the WNQ/WNF special case.
+    -- Apply the exact production WRC/WNQ/WNF exclusion without broad edits.
+    EXECUTE replace(v_source,v_baseline,v_corrected);
+  ELSE
     RAISE EXCEPTION 'Unexpected Race Operations function version. Review required before changing live monitoring.';
   END IF;
-
-  EXECUTE replace(v_source,v_needle,v_corrected);
 END
 $race_ops_fix$;
