@@ -139,6 +139,25 @@ DECLARE
   v_bad_point public.race_stage_points%rowtype;
   v_record_count int;
 BEGIN
+  -- These three data repairs refer to fixed live Season 2 entities.
+  -- Fresh installs have none of them. Keep the general function/trigger
+  -- hardening above, but do not synthesize historical clubs or stage records.
+  -- If any target exists, preserve the original protected-window and strict
+  -- three-part audit; partial live data must still fail closed.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.clubs
+    WHERE (name='Turkish Airlines Ankara Pro Racing' AND country_code='TR')
+       OR (name='DB Pro Team' AND country_code='DE')
+       OR (name='BK Novi Beograd' AND country_code='RS')
+  ) AND NOT EXISTS (
+    SELECT 1 FROM public.races r
+    JOIN public.race_stages s ON s.race_id=r.id
+    WHERE r.name='Piastowskie Grody Tour'
+      AND s.stage_date='2001-05-12'::date AND s.stage_number=1
+  ) THEN
+    RAISE NOTICE 'Skipping specific Season 2 Control Center data repair: historical fixtures absent';
+    RETURN;
+  END IF;
   PERFORM pg_advisory_xact_lock(hashtextextended('cycling_control_center_2026_11_12',0));
   IF public.get_current_season_number()<>2
      OR (SELECT phase FROM public.cycling_season_window_v1 WHERE id=true)<>'migration'
