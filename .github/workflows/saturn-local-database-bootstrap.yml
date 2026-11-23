@@ -66,6 +66,14 @@ jobs:
           else:
               assert '[db]' in c
               c = c.replace('[db]', '[db]\nmajor_version = 17', 1)
+          # Current CLI requires an explicit import_map setting for
+          # legacy Edge Functions. This is CI-local compatibility only.
+          for mapping in Path('supabase/functions').glob('*/import_map.json'):
+              name = mapping.parent.name
+              section = f'[functions.{name}]'
+              if section not in c:
+                  c += chr(10) + section + chr(10)
+                  c += f'import_map = "./functions/{name}/import_map.json"' + chr(10)
           p.write_text(c)
           assert 'major_version = 17' in c
           PY
