@@ -13,16 +13,19 @@ param(
 $ErrorActionPreference = 'Stop'
 $dump = Get-Command pg_dump -ErrorAction SilentlyContinue
 $restore = Get-Command pg_restore -ErrorAction SilentlyContinue
-if (-not $dump -or -not $restore) {
+$psql = Get-Command psql -ErrorAction SilentlyContinue
+if (-not $dump -or -not $restore -or -not $psql) {
     $bin = Join-Path $env:ProgramFiles 'PostgreSQL\17\bin'
     $dumpPath = Join-Path $bin 'pg_dump.exe'
     $restorePath = Join-Path $bin 'pg_restore.exe'
-    if (-not (Test-Path -LiteralPath $dumpPath) -or -not (Test-Path -LiteralPath $restorePath)) {
+    $psqlPath = Join-Path $bin 'psql.exe'
+    if (-not (Test-Path -LiteralPath $dumpPath) -or -not (Test-Path -LiteralPath $restorePath) -or -not (Test-Path -LiteralPath $psqlPath)) {
         throw 'Install PostgreSQL 17 command-line tools, then retry. Docker is not required.'
     }
 } else {
     $dumpPath = $dump.Source
     $restorePath = $restore.Source
+    $psqlPath = $psql.Source
 }
 if ((& $dumpPath --version) -notmatch 'pg_dump \(PostgreSQL\) 17\.') {
     throw 'Use the PostgreSQL 17 client tools for this baseline.'
@@ -51,7 +54,10 @@ while ($null -ne $check) {
 $stamp = [DateTime]::UtcNow.ToString('yyyyMMdd-HHmmss')
 $final = Join-Path $target "saturn-schema-$stamp.dump"
 $partial = "$final.partial"
-if ((Test-Path -LiteralPath $final) -or (Test-Path -LiteralPath $partial)) {
+$hookFinal = "$final.auth-hooks.txt"
+$hookPartial = "$hookFinal.partial"
+if ((Test-Path -LiteralPath $final) -or (Test-Path -LiteralPath $partial) -or
+    (Test-Path -LiteralPath $hookFinal) -or (Test-Path -LiteralPath $hookPartial)) {
     throw 'The output already exists. Stop.'
 }
 $oldOptions = $env:PGOPTIONS
@@ -75,8 +81,23 @@ try {
     if ($toc | Where-Object { $_ -match ' (TABLE DATA|SEQUENCE SET|BLOB DATA) ' }) {
         throw 'Unexpected data entries; schema-only requirement failed.'
     }
+    # The schema-only dump excludes triggers ON managed auth tables.
+    # Capture a read-only app hook inventory separately for human review.
+    # Never apply this inventory automatically in a staging database.
+    $inventorySql = Join-Path $repoRoot 'supabase/tests/saturn_managed_auth_hooks_readonly.sql'
+    if (-not (Test-Path -LiteralPath $inventorySql)) {
+        throw 'Update the repository: missing Auth hook inventory SQL.'
+    }
+    $hooks = & $psqlPath --host=$DbHost --port=$DbPort --username=$DbUser --dbname=$DbName --password --no-psqlrc --no-align --tuples-only --set=ON_ERROR_STOP=1 --file=$inventorySql
+    if ($LASTEXITCODE -ne 0) { throw 'Could not inspect the protected Auth hook inventory.' }
+    $hooks | Set-Content -LiteralPath $hookPartial -Encoding UTF8
+    if (-not (Select-String -LiteralPath $hookPartial -Pattern 'ppm_prevent_unverified_guest_signup_v1' -Quiet)) {
+        throw 'Protected guest-signup Auth trigger not found in source.'
+    }
+    Move-Item -LiteralPath $hookPartial -Destination $hookFinal
     Move-Item -LiteralPath $partial -Destination $final
     Write-Host ('BASELINE_OK: ' + $final)
+    Write-Host ('AUTH_HOOKS_INVENTORY: ' + $hookFinal)
     Write-Host ('Bytes: ' + (Get-Item -LiteralPath $final).Length)
     Write-Host 'Keep this archive private. Do not upload it to Git or chat.'
 } finally {
@@ -84,4 +105,5 @@ try {
     $env:PGSSLMODE = $oldSslMode
     $env:PGPASSWORD = $oldPgPassword
     if (Test-Path -LiteralPath $partial) { Remove-Item -LiteralPath $partial -Force }
+    if (Test-Path -LiteralPath $hookPartial) { Remove-Item -LiteralPath $hookPartial -Force }
 }
