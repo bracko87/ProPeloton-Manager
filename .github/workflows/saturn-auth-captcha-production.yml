@@ -1,43 +1,75 @@
-name: Saturn CAPTCHA production preparation
+name: Saturn production CAPTCHA and public guest-mode build guard (no deploy)
+
+# This verifies public frontend configuration only. Actual CAPTCHA token
+# rejection must also be tested against the Supabase Auth service in staging.
 on:
-  pull_request:
+  push:
+    branches: [main]
     paths:
       - 'src/components/auth/**'
+      - 'src/pages/TestTeamSignup.tsx'
       - 'src/pages/Login.tsx'
       - 'src/pages/Register.tsx'
       - 'src/pages/ForgotPassword.tsx'
       - 'scripts/build.mjs'
       - 'netlify.toml'
       - 'tests/saturnAuthCaptchaCompatibility.test.mjs'
+      - 'tests/saturnGuestCaptchaAbuseGate.test.mjs'
       - '.github/workflows/saturn-auth-captcha-production.yml'
+  pull_request:
+    paths:
+      - 'src/components/auth/**'
+      - 'src/pages/TestTeamSignup.tsx'
+      - 'src/pages/Login.tsx'
+      - 'src/pages/Register.tsx'
+      - 'src/pages/ForgotPassword.tsx'
+      - 'scripts/build.mjs'
+      - 'netlify.toml'
+      - 'tests/saturnAuthCaptchaCompatibility.test.mjs'
+      - 'tests/saturnGuestCaptchaAbuseGate.test.mjs'
+      - '.github/workflows/saturn-auth-captcha-production.yml'
+  workflow_dispatch:
+
 permissions:
   contents: read
+
 jobs:
   configured-build:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
           cache: npm
-      - run: npm ci
-      - run: node --test tests/saturnAuthCaptchaCompatibility.test.mjs
-      - name: Build with exact production public settings
+      - run: npm ci --no-audit --no-fund
+      - name: Check regular login and guest CAPTCHA fail-closed source
+        run: |
+          node --test \
+            tests/saturnAuthCaptchaCompatibility.test.mjs \
+            tests/saturnGuestCaptchaAbuseGate.test.mjs
+      - name: Build using actual public production configuration
+        shell: bash
         run: |
           set -euo pipefail
           eval "$(python3 - <<'PY'
           import tomllib, shlex
-          with open('netlify.toml','rb') as f: config=tomllib.load(f)
+          with open('netlify.toml','rb') as f:
+              config=tomllib.load(f)
           env=config['context']['production']['environment']
-          assert env['VITE_SATURN_TEST_ACCOUNTS_ENABLED']=='false'
-          assert env['VITE_SATURN_PUBLIC_SIGNUP_ENABLED']=='false'
+          assert env['VITE_SATURN_TEST_ACCOUNTS_ENABLED']=='true', 'Test the Game must remain visible'
+          assert env['VITE_SATURN_PUBLIC_SIGNUP_ENABLED']=='true', 'Public Guest Mode must remain enabled'
           for name in ('VITE_SATURN_TURNSTILE_SITE_KEY','VITE_SATURN_TEST_ACCOUNTS_ENABLED','VITE_SATURN_PUBLIC_SIGNUP_ENABLED'):
-              assert env[name]
+              assert env[name], 'Missing '+name
               print('export '+name+'='+shlex.quote(env[name]))
           PY
           )"
           npm run build
+          test -s dist/index.html
+          test -s dist/main.js
           grep -Fq "$VITE_SATURN_TURNSTILE_SITE_KEY" dist/main.js
           grep -Fq 'challenges.cloudflare.com/turnstile' dist/main.js
-          echo 'PASS: configured public key and challenge loader reach built browser bundle; guest flags are OFF.'
+          grep -Fq 'signInAnonymously' dist/main.js
+          echo 'PASS: public Guest Mode, Test the Game and CAPTCHA widget are bundled.'
+          echo 'Not a backend CAPTCHA enforcement test; server-side Auth negative tests remain pending.'
