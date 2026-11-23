@@ -557,25 +557,45 @@ $function$;
 
 
 
--- Targeted correction is limited to the unstarted future Stage 8 ITT.
--- A time check remains visible in route markers but must never award sprint points.
-DO $guard$
+-- Historical Poyang Stage 8 was a specific live-world correction. A fresh
+-- installation has no matching stage: keep generic fixes above, skip only
+-- this targeted historical edit. If the stage exists, retain strict guards.
+DO $poyang$
 BEGIN
- IF NOT EXISTS (SELECT 1 FROM public.race_stages WHERE id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid AND stage_date > public.get_current_game_date_date() AND stage_format='individual_time_trial')
-    OR EXISTS (SELECT 1 FROM public.race_stage_authoritative_runs WHERE stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid)
-    OR EXISTS (SELECT 1 FROM public.race_stage_simulation_runs WHERE stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid)
-    OR EXISTS (SELECT 1 FROM public.race_stage_point_results WHERE stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid)
- THEN
-    RAISE EXCEPTION 'Poyang Stage 8 is missing, already started, or no longer in the future; refusing to change race data';
- END IF;
- IF NOT EXISTS (SELECT 1 FROM public.race_stage_points
-                WHERE id='dcfd287e-3bf2-4b3e-8b00-72089b0c9c16'::uuid
-                  AND stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
-                  AND point_type='INTERMEDIATE_SPRINT' AND km_from_start=7)
- THEN
-    RAISE EXCEPTION 'The expected false Poyang ITT sprint scoring point was not found; refusing partial repair';
- END IF;
-END $guard$;
+  IF NOT EXISTS (
+    SELECT 1 FROM public.race_stages
+    WHERE id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
+  ) THEN
+    RAISE NOTICE 'Skipping historical Poyang Stage 8 correction: target stage absent';
+  ELSE
+    IF NOT EXISTS (
+      SELECT 1 FROM public.race_stages
+      WHERE id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
+        AND stage_date > public.get_current_game_date_date()
+        AND stage_format='individual_time_trial'
+    )
+      OR EXISTS (
+        SELECT 1 FROM public.race_stage_authoritative_runs
+        WHERE stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.race_stage_simulation_runs
+        WHERE stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
+      )
+      OR EXISTS (
+        SELECT 1 FROM public.race_stage_point_results
+        WHERE stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
+      ) THEN
+      RAISE EXCEPTION 'Poyang Stage 8 is already started or no longer in the future; refusing to change race data';
+    END IF;
+    IF NOT EXISTS (
+      SELECT 1 FROM public.race_stage_points
+      WHERE id='dcfd287e-3bf2-4b3e-8b00-72089b0c9c16'::uuid
+        AND stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
+        AND point_type='INTERMEDIATE_SPRINT' AND km_from_start=7
+    ) THEN
+      RAISE EXCEPTION 'The expected false Poyang ITT sprint scoring point was not found; refusing partial repair';
+    END IF;
 
 UPDATE public.race_stages
 SET intermediate_sprints_json='[]'::jsonb
@@ -597,9 +617,7 @@ DELETE FROM public.race_stage_points
 WHERE id='dcfd287e-3bf2-4b3e-8b00-72089b0c9c16'::uuid
   AND stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid;
 
-DO $verify$
-BEGIN
- IF EXISTS (SELECT 1 FROM public.race_stage_points WHERE stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
+IF EXISTS (SELECT 1 FROM public.race_stage_points WHERE stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
                AND point_type IN ('INTERMEDIATE_SPRINT','BONUS_SPRINT'))
  OR EXISTS (SELECT 1 FROM public.race_stage_profile_details d
             WHERE d.stage_id='89dd20b4-9d3c-46bd-a16d-5e9e9768d028'::uuid
@@ -607,4 +625,6 @@ BEGIN
                    (SELECT 1 FROM jsonb_array_elements(d.route_markers) m
                      WHERE m->>'label'='Time check' AND m->>'type'<>'time_check')))
  THEN RAISE EXCEPTION 'Post-correction Poyang Stage 8 scorepoint/marker verification failed'; END IF;
-END $verify$;
+  END IF;
+END;
+$poyang$;
