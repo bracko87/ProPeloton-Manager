@@ -7,10 +7,10 @@
  * Conversion callbacks use separate tagged URLs; never handle them here.
  */
 import React from 'react'
-import { useNavigate } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { useAuth } from '../../context/AuthProvider'
 import { supabase } from '../../lib/supabase'
-import { readGoogleOAuthIntent } from '../../lib/googleOAuth'
+import { clearGoogleOAuthIntent, readGoogleOAuthIntent } from '../../lib/googleOAuth'
 
 export default function SignupEmailCallbackRouting(): JSX.Element | null {
   const { user, loading } = useAuth()
@@ -55,6 +55,8 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
         setError(true)
         return
       }
+      if (googleIntent?.kind === 'regular') clearGoogleOAuthIntent()
+      setError(false)
       navigate(data ? '/dashboard/overview' : '/create-club', { replace: true })
     })()
 
@@ -69,6 +71,10 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
       identity or team status. Your existing team has not been changed.
       Return to the same browser session and retry, or contact support
       before creating another team.
+      <div className="mt-3 flex flex-wrap gap-3">
+        <Link to="/login" className="rounded-lg bg-yellow-400 px-3 py-2 font-semibold text-slate-950">Return to sign in</Link>
+        <Link to="/test-account-register" className="rounded-lg border border-slate-300 px-3 py-2">Recover my guest team</Link>
+      </div>
     </div>
   )
 }
