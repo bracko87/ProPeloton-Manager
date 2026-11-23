@@ -20,6 +20,20 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
   const navigate = useNavigate()
   const [error, setError] = React.useState(false)
 
+  // The OAuth/email callback is a *pathname* but game navigation uses hashes.
+  // If it remains /create-club, this callback effect can run again when the
+  // router navigates and bounce every side-menu click back to Overview.
+  // Change only browser history (NO hard reload: normal login is memory-only)
+  // once a verified user/club route is known, then navigate via HashRouter.
+  const normalizeVerifiedCallbackPath = () => {
+    if (window.location.pathname.replace(/\\/+$/, '') !== '/create-club') return
+    window.history.replaceState(
+      window.history.state,
+      '',
+      window.location.origin + '/' + window.location.hash,
+    )
+  }
+
   React.useEffect(() => {
     if (window.location.pathname.replace(/\/+$/, '') !== '/create-club') return
     if (loading) return
@@ -33,6 +47,7 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
         setError(true)
         return
       }
+      normalizeVerifiedCallbackPath()
       navigate('/test-account-register', { replace: true })
       return
     }
@@ -47,7 +62,8 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
       try { originalGuestId = window.localStorage.getItem('saturn-fullgame-conversion-uuid') }
       catch { /* restricted browser storage */ }
       if (originalGuestId && originalGuestId === user.id) {
-        navigate('/test-account-register', { replace: true })
+        normalizeVerifiedCallbackPath()
+      navigate('/test-account-register', { replace: true })
         return
       }
     }
@@ -75,6 +91,7 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
       }
       if (googleIntent?.kind === 'regular') clearGoogleOAuthIntent()
       setError(false)
+      normalizeVerifiedCallbackPath()
       navigate(data ? '/dashboard/overview' : '/create-club', { replace: true })
     })()
 
