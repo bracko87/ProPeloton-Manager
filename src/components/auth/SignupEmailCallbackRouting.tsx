@@ -37,6 +37,21 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
       return
     }
 
+    // If the browser kept a matching unfinished guest-conversion marker but
+    // its short-lived OAuth intent expired, still route the SAME verified
+    // Google-linked UUID to the protected conversion screen. Never silently
+    // treat a half-converted guest as an ordinary new manager.
+    if (!googleIntent && user?.is_anonymous === false &&
+        user.identities?.some(identity => identity.provider === 'google')) {
+      let originalGuestId: string | null = null
+      try { originalGuestId = window.localStorage.getItem('saturn-fullgame-conversion-uuid') }
+      catch { /* restricted browser storage */ }
+      if (originalGuestId && originalGuestId === user.id) {
+        navigate('/test-account-register', { replace: true })
+        return
+      }
+    }
+
     // Email verification and permanent Google sign-in return through the
     // existing /create-club allowlisted URL. Supabase validates the session
     // before any team route is selected.
