@@ -348,7 +348,7 @@ export default function AdminRaceOperationsPage(): JSX.Element {
     try {
       const [refreshResult, youthHealthResult] = await Promise.all([
         supabase.rpc('admin_refresh_race_operations_v1'),
-        supabase.rpc('monitor_youth_competition_health_v1'),
+        supabase.rpc('admin_monitor_youth_competition_health_v1'),
       ])
 
       if (refreshResult.error) throw refreshResult.error
