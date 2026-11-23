@@ -77,7 +77,8 @@
     "totalTeams": "Total Teams",
     "totalRacesTours": "Total Races & Tours",
     "totalStages": "Total Stages",
-    "onlineUsers": "Online Users"
+    "onlineUsers": "Online Users",
+    "totalPlayerAccounts": "Total Player Accounts"
   },
   "features": {
     "title": "Core Features",
