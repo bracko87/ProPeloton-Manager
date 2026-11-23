@@ -7,6 +7,7 @@ const sql=readFileSync(new URL(
 test('one-off December release reschedule requires original release control',()=>{
  assert.match(sql,/if not exists \(\s*select 1 from private\.ppm_december_2026_release_control_v1 where id=true/i)
  assert.match(sql,/raise exception 'Partial release records exist without the release control'/)
+ assert.match(sql,/premium_trial_launch_v1 where id=true and launched_at in \(v_old,v_new\)/)
  assert.match(sql,/Skipping one-time December release reschedule: no prior schedule on fresh install/)
  assert.match(sql,/raise exception 'Release schedule unexpectedly changed; refusing to overwrite'/)
  assert.match(sql,/raise exception 'Launch function copy changed unexpectedly'/)
