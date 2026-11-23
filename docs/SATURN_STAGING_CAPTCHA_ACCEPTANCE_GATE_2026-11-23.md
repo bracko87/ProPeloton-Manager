@@ -23,10 +23,12 @@ The script refuses the production project ref **even when the operator acknowled
 
 **Important:** A fresh valid-token success, token replay, expiration, supported hostname and NAT/rate-limit behaviors require additional actual staging browser tests. They are not proven by the negative harness.
 
-## Environment / cost blocker
+## Environment / migration bootstrap blocker
 
-Supabase's branch tool requires explicit cost approval. At the time of this checkpoint the project-specific quoted rate for an isolated branch was **USD $0.01344 per hour**, recurring while running. The initial branch creation was refused because the cost confirmation ID was not supplied. The branch has **not** been created, no cost has been approved and no staging credentials are stored in the repository.
+The owner approved a temporary Supabase branch at USD $0.01344/hour on 23 November. A cost confirmation was obtained and staging branch `saturn-security-staging-20261123` (`lypyyvgyfdhxceorwcyj`) was created without player data.
 
-After the owner explicitly approves the cost, create the staging branch, confirm its ref is not production, configure server-side Cloudflare Turnstile and appropriate test hostnames, then run the staging-only negative test. Finish disposable expired-guest tests there (day 7/14/15, linked-but-unconverted, conversion, AI reserve and race results preservation). Production Auth settings require separate operator verification at [Supabase Authentication → Bot and Abuse Protection](https://supabase.com/dashboard/project/okuravitxocyevkexfgi/auth/providers), since the connected SQL/API tools do not expose the Auth CAPTCHA secret or enforcement toggle.
+**The deployment FAILED during production migration replay.** The first historical migration tried to patch missing `generate_race_prize_awards_v1` and `universal_race_stage_finalize_v1` definitions on the empty branch. The branch had 0 public application tables and 0 applied migrations. The production migration history starts in August 2026, ahead of the September 29 fresh-install baseline in GitHub, so this direct branching method cannot reconstruct the schema.
 
-Do **not** change the production game's clock, payouts, club ownership, registration availability, or expiration timestamps to simulate these tests.
+The failed staging branch **was deleted successfully** and the branch inventory was checked to confirm only the main production branch remains. No additional hourly charges should accrue after deletion. The negative CAPTCHA harness did not run against a live staging game.
+
+See [the verified root cause and repair path](./SATURN_STAGING_BRANCH_BOOTSTRAP_BLOCKER_2026-11-23.md). Repair reproducible schema bootstrap in a disposable environment before creating another hourly-billed branch. No production migration history or existing player data was modified.
