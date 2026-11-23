@@ -60,7 +60,7 @@ jobs:
           test -f supabase/config.toml
           # Match production's PostgreSQL major version in local Docker.
           sed -i -E 's/major_version = "[0-9]+"/major_version = "17"/' supabase/config.toml
-          grep -Eq '^major_version = "17"$' supabase/config.toml
+          grep -Eq '^[[:space:]]*major_version[[:space:]]*=[[:space:]]*"17"' supabase/config.toml
       - name: Rebuild clean local schema from tracked migrations
         shell: bash
         run: |
