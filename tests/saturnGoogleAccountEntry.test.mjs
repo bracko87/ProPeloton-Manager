@@ -24,7 +24,11 @@ test('both normal auth screens offer one shared Google sign-in / new account ent
 
 test('guest team identity is never replaced by generic Google sign-in', () => {
   assert.match(googleEntry, /current\?\.is_anonymous === true/)
-  assert.match(googleEntry, /SATURN_GUEST_AUTH_MODE && hasSavedGuestSession\(\)/)
+  assert.match(googleEntry, /if \(hasSavedGuestSession\(\)\)/)
+  assert.match(googleEntry, /destination\.pathname = '\/'/)
+  assert.match(googleEntry, /destination\.searchParams\.set\('saturn_guest', '1'\)/)
+  assert.match(googleEntry, /destination\.hash = '#\/test-account-register'/)
+  assert.match(googleEntry, /window\.location\.replace\(destination\.toString\(\)\)/)
   assert.match(googleEntry, /navigate\('\/test-account-register'\)/)
   assert.match(conversion, /testClient\.auth\.linkIdentity\(\{/)
   assert.doesNotMatch(conversion, /signInWithOAuth\(|auth\.signUp\(/)
@@ -41,6 +45,8 @@ test('OAuth return goes through existing allowlisted callback and never creates 
   assert.match(callback, /user\.id !== googleIntent\.userId/)
   assert.match(callback, /identity\.provider === 'google'/)
   assert.match(callback, /navigate\('\/test-account-register', \{ replace: true \}\)/)
+  assert.match(callback, /originalGuestId === user\.id/)
+  assert.match(callback, /saturn-fullgame-conversion-uuid/)
   assert.match(callback, /supabase\.rpc\('get_my_club_id'\)/)
   assert.doesNotMatch(callback, /\.insert\(|\.upsert\(|\.signUp\(/)
 })
