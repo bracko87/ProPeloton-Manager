@@ -1,6 +1,7 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
 import { readFileSync } from 'node:fs'
 
 const path = new URL('../scripts/saturn-verify-staging-auth-captcha.mjs', import.meta.url)
@@ -18,7 +19,7 @@ function runWith(overrides = {}) {
     SATURN_ACK_NONPROD_AUTH_MUTATIONS: '',
     ...overrides,
   }
-  return spawnSync(process.execPath, [path.pathname], {
+  return spawnSync(process.execPath, [fileURLToPath(path)], {
     env, encoding: 'utf8', timeout: 15000,
   })
 }
