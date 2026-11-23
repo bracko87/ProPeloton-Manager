@@ -29,3 +29,16 @@ test('SAT-12 verifies internal callers without running payments or taxes', () =>
   assert.match(verification, /has_function_privilege\('service_role'/)
   assert.doesNotMatch(verification.replace(/^--.*$/gm,''), /\b(?:call|perform|insert|update|delete|alter|drop|truncate|grant|revoke)\b/i)
 })
+
+
+test('SAT-12B sponsor signing requires a real identity and exact club owner', () => {
+  const patch = read('supabase/migrations/20261123084732_saturn_sponsor_signing_strict_identity_ownership_v1.sql')
+  assert.match(patch, /to_regprocedure\('public\.sponsor_sign_offer\(uuid\)'\)/)
+  assert.match(patch, /p\.prosecdef and p\.proowner='postgres'::regrole/)
+  assert.match(patch, /v_offer\.owner_user_id is distinct from auth\.uid\(\)/)
+  assert.match(patch, /auth\.uid\(\) is null/)
+  assert.match(patch, /coalesce\(auth\.role\(\), ''\) <> 'service_role'/)
+  assert.match(patch, /\/ length\(v_old\) <> 1/)
+  assert.match(patch, /v_definition := replace\(v_definition,v_old,v_new\)/)
+  assert.doesNotMatch(patch, /(?:^|\n)\s*(?:insert|update|delete|drop|truncate)\s+/im)
+})
