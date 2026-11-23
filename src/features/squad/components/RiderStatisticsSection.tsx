@@ -30,6 +30,27 @@ export type RiderStatsRow = {
   season_points_climbing: number
 }
 
+/**
+ * Aggregates for the *whole filtered rider set* must not interpret RLS-masked
+ * values as zero, or silently average only the owner's visible records.
+ * A genuine numeric zero remains valid; missing any value hides the summary.
+ */
+type PrivateRiderMetric = 'overall' | 'fatigue' | 'market_value' | 'salary'
+
+function completePrivateRiderMetricTotal(
+  riders: RiderStatsRow[],
+  metric: PrivateRiderMetric,
+): number | null {
+  if (
+    riders.length === 0 ||
+    riders.some(rider => typeof rider[metric] !== 'number' || !Number.isFinite(rider[metric]))
+  ) {
+    return null
+  }
+
+  return riders.reduce((total, rider) => total + Number(rider[metric]), 0)
+}
+
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
@@ -434,6 +455,13 @@ export default function RiderStatisticsSection({
     label: formatRiderRoleLabel(item.label),
   }))
 
+  // Exact abilities, fatigue, salaries and valuations are private for rival
+  // riders. Never include a masked value as 0 in public population summaries.
+  const overallTotal = completePrivateRiderMetricTotal(filteredRiders, 'overall')
+  const fatigueTotal = completePrivateRiderMetricTotal(filteredRiders, 'fatigue')
+  const marketValueTotal = completePrivateRiderMetricTotal(filteredRiders, 'market_value')
+  const salaryTotal = completePrivateRiderMetricTotal(filteredRiders, 'salary')
+
   return (
     <div className="space-y-6">
       <TextSubTabs
@@ -748,45 +776,22 @@ export default function RiderStatisticsSection({
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <KpiCard
               label={t('riders.averageOverall')}
-              value={
-                filteredRiders.length
-                  ? (
-                      filteredRiders.reduce((sum, row) => sum + (row.overall ?? 0), 0) /
-                      filteredRiders.length
-                    ).toFixed(1)
-                  : '—'
-              }
+              value={overallTotal !== null ? (overallTotal / filteredRiders.length).toFixed(1) : '—'}
             />
 
             <KpiCard
               label={t('riders.averageFatigue')}
-              value={
-                filteredRiders.length
-                  ? (
-                      filteredRiders.reduce((sum, row) => sum + (row.fatigue ?? 0), 0) /
-                      filteredRiders.length
-                    ).toFixed(1)
-                  : '—'
-              }
+              value={fatigueTotal !== null ? (fatigueTotal / filteredRiders.length).toFixed(1) : '—'}
             />
 
             <KpiCard
               label={t('riders.totalMarketValue')}
-              value={moneyFormatter.format(filteredRiders.reduce((sum, row) => sum + (row.market_value ?? 0), 0))}
+              value={marketValueTotal !== null ? moneyFormatter.format(marketValueTotal) : '—'}
             />
 
             <KpiCard
               label={t('riders.averageSalary')}
-              value={
-                filteredRiders.length
-                  ? moneyFormatter.format(
-                      Math.round(
-                        filteredRiders.reduce((sum, row) => sum + (row.salary ?? 0), 0) /
-                          filteredRiders.length
-                      )
-                    )
-                  : '—'
-              }
+              value={salaryTotal !== null ? moneyFormatter.format(Math.round(salaryTotal / filteredRiders.length)) : '—'}
             />
           </div>
 
@@ -809,7 +814,7 @@ export default function RiderStatisticsSection({
               title={t('riders.topValueSalary')}
               subtitle={t('riders.topValueSalarySubtitle')}
             >
-              {filteredRiders.length === 0 ? (
+              {marketValueTotal === null || salaryTotal === null ? (
                 <EmptyState
                   title={t('riders.noFinanceData')}
                   description={t('riders.noFinanceDescription')}
@@ -817,7 +822,7 @@ export default function RiderStatisticsSection({
               ) : (
                 <div className="space-y-3">
                   {[...filteredRiders]
-                    .sort((a, b) => (b.market_value ?? 0) - (a.market_value ?? 0))
+                    .sort((a, b) => Number(b.market_value) - Number(a.market_value))
                     .slice(0, 6)
                     .map(row => (
                       <div
@@ -844,10 +849,10 @@ export default function RiderStatisticsSection({
 
                         <div className="text-right">
                           <div className="font-semibold text-slate-900">
-                            {moneyFormatter.format(row.market_value ?? 0)}
+                            {moneyFormatter.format(Number(row.market_value))}
                           </div>
                           <div className="text-xs text-slate-500">
-                            Salary: {moneyFormatter.format(row.salary ?? 0)}
+                            Salary: {moneyFormatter.format(Number(row.salary))}
                           </div>
                         </div>
                       </div>
