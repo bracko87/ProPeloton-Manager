@@ -9,9 +9,9 @@ const official = read('src/lib/supabase.ts')
 const testClient = read('src/lib/testAccountClient.ts')
 const authProvider = read('src/context/AuthProvider.tsx')
 
-test('homepage keeps full registration and only shows Test the Game behind explicit OFF-by-default flag', () => {
+test('homepage offers registration and Guest Mode when the test feature is enabled', () => {
   assert.match(hero, /to="\/register"/)
-  assert.match(hero, /VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true'/)
+  assert.match(hero, /SATURN_TEST_ACCOUNTS_ENABLED &&/)
   assert.match(hero, /to="\/test-the-game"/)
   assert.match(app, /path="\/test-the-game" element=\{<TestTeamSignupPage \/>\}/)
   assert.match(form, /if \(!ENABLED\) return/)
@@ -39,18 +39,25 @@ test('real club is only created by a dedicated server endpoint, not direct inser
   assert.match(form, /testClient\.auth\.getSession\(\)/)
   assert.doesNotMatch(form, /supabase\.auth\.setSession/)
 })
-test.todo('staging: signInAnonymously gate remains closed until all production safety tests pass')
+test.todo('staging: verify production Auth CAPTCHA enforcement and anonymous sign-in rate limits')
 test.todo('staging: dedicated create-club RPC creates exactly one lowest-tier team and trial record')
 test.todo('staging: club ID, riders, economy, training and races persist after conversion')
 
-test('restricted testing keeps public homepage button disabled and uses server UUID approval',()=>{
- const sql=read('supabase/migrations/20261120153000_saturn_fail_closed_real_test_team_creation_v1.sql')
- assert.match(hero,/VITE_SATURN_PUBLIC_SIGNUP_ENABLED === 'true'/)
- assert.match(sql,/public_signup boolean not null default false/)
- assert.match(sql,/a\.user_id=v_user and a\.approved_at<=now\(\) and a\.approval_expires_at>now\(\)/)
- assert.match(sql,/Restricted test access: approval required/)
- assert.match(form,/setTesterReference\(authenticated\.user\.id\)/)
- assert.match(sql,/revoke all on private\.saturn_approved_testers_v1 from PUBLIC, anon, authenticated/)
+test('production public Guest Mode stays enabled without removing server safeguards', () => {
+ const sql = read('supabase/migrations/20261120153000_saturn_fail_closed_real_test_team_creation_v1.sql')
+ const production = read('netlify.toml')
+ assert.match(production, /VITE_SATURN_TEST_ACCOUNTS_ENABLED = "true"/)
+ assert.match(production, /VITE_SATURN_PUBLIC_SIGNUP_ENABLED = "true"/)
+ assert.match(hero, /SATURN_TEST_ACCOUNTS_ENABLED &&/)
+ assert.doesNotMatch(hero, /VITE_SATURN_PUBLIC_SIGNUP_ENABLED/)
+ assert.doesNotMatch(form, /Test-team registration is currently limited to approved testers/)
+ assert.match(sql, /private\.ppm_guest_auth_gate_v1/)
+ assert.match(sql, /private\.saturn_test_club_rollout_v1/)
+ assert.match(sql, /u\.is_anonymous is true/)
+ assert.match(sql, /a\.user_id=v_user and a\.approved_at<=now\(\) and a\.approval_expires_at>now\(\)/)
+ assert.match(sql, /Restricted test access: approval required/)
+ assert.match(form, /setTesterReference\(authenticated\.user\.id\)/)
+ assert.match(sql, /revoke all on private\.saturn_approved_testers_v1 from PUBLIC, anon, authenticated/)
 })
 
 
