@@ -241,8 +241,8 @@ export default function Hero({ gameTimeLabel }: HeroProps): JSX.Element {
               </Link>
             )}
             {!canResumeGuest && !canCheckSavedGuest && !authLoading &&
-              import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true' &&
-              (hasUnfinishedGuest || (!user && import.meta.env.VITE_SATURN_PUBLIC_SIGNUP_ENABLED === 'true')) && (
+              SATURN_TEST_ACCOUNTS_ENABLED &&
+              (hasUnfinishedGuest || !user) && (
               <Link to="/test-the-game" className="inline-flex min-h-[54px] items-center gap-3 rounded-xl border border-red-400 bg-red-600 px-7 py-3 text-base font-semibold text-white transition-colors hover:bg-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-400 sm:text-lg">
                 Test the Game <ArrowRight size={17} aria-hidden="true" />
               </Link>
