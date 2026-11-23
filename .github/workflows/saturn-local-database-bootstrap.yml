@@ -50,6 +50,12 @@ jobs:
         run: |
           set -euo pipefail
           supabase --version
+          # Repository history contains a tracked CLI project-ref pointing to
+          # production. Remove it ONLY in this disposable GitHub runner so no
+          # local test can inherit a remote project association.
+          rm -rf supabase/.temp
+          test ! -e supabase/.temp/project-ref
+          test -z "${SUPABASE_ACCESS_TOKEN:-}"
           supabase init --force
           test -f supabase/config.toml
           # Match production's PostgreSQL major version in local Docker.
