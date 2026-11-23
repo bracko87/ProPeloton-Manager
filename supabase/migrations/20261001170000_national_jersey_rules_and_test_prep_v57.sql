@@ -21,15 +21,18 @@ AS $function$
   );
 $function$;
 
+-- Historical production-only preview fixture. On a fresh install the
+-- referenced event and association might not exist. Preserve the preview
+-- in an established game without creating phantom event/association rows.
 insert into private.national_race_preparation_test_overrides(
   event_id,association_id,enabled,note
 )
-values(
-  '5a1a5892-773a-47b4-9915-7327272ca0b5',
-  'e8f0e27a-a203-4ed4-9c4e-ba91ea41c18f',
-  true,
+select e.id,a.id,true,
   'Temporary Albania Group A Day 1 Race Preparation preview requested 2026-10-01.'
-)
+from public.nations_group_events e
+join public.national_associations a
+  on a.id='e8f0e27a-a203-4ed4-9c4e-ba91ea41c18f'::uuid
+where e.id='5a1a5892-773a-47b4-9915-7327272ca0b5'::uuid
 on conflict(event_id) do update
 set association_id=excluded.association_id,
     enabled=true,
