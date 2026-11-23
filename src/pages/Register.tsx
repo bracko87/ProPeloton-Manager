@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { supabase } from '../lib/supabase'
 import { useAuthCaptcha, AuthCaptcha } from '../components/auth/AuthCaptcha'
+import GoogleAuthEntry from '../components/auth/GoogleAuthEntry'
 import PreReleaseNotice, { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
 
 type StatusType = 'success' | 'error' | 'info' | null
@@ -638,6 +639,7 @@ export default function RegisterPage(): JSX.Element {
               </Link>
             </div>
           </form>
+          <GoogleAuthEntry purpose="register" />
         </div>
       </div>
     </div>
