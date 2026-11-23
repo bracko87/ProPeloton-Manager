@@ -306,6 +306,8 @@ declare
   v_missing integer;
   v_i integer;
   v_country_code text;
+  v_attempt integer;
+  v_inserted boolean;
   v_generated integer:=0;
   v_roles text[];
 begin
@@ -332,10 +334,26 @@ begin
 
     if v_missing>0 then
       for v_i in 1..v_missing loop
-        v_country_code:=public.staff_market_pick_country_for_generation();
-        perform public.insert_generated_staff_candidate(
-          v_role,v_country_code,null
-        );
+        v_inserted:=false;
+        -- Random names and salaries have a finite domain. Retain the unique
+        -- profile constraint and retry a collision rather than failing seeding.
+        for v_attempt in 1..20 loop
+          begin
+            v_country_code:=public.staff_market_pick_country_for_generation();
+            perform public.insert_generated_staff_candidate(
+              v_role,v_country_code,null
+            );
+            v_inserted:=true;
+            exit;
+          exception when unique_violation then
+            -- The attempted row is rolled back by the exception subtransaction.
+            -- Regenerate a fresh identity and profile on the next attempt.
+            null;
+          end;
+        end loop;
+        if not v_inserted then
+          raise exception 'Staff market: unable to generate unique candidate for % after 20 attempts', v_role;
+        end if;
         v_generated:=v_generated+1;
       end loop;
     end if;
