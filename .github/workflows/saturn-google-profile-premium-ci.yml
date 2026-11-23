@@ -1,0 +1,53 @@
+name: Saturn Google profile and seven-day Premium (no deploy)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/components/trial/PostConversionProfileReminder.tsx'
+      - 'src/pages/MyProfile.tsx'
+      - 'src/components/layout/Header.tsx'
+      - 'src/i18n/locales/**/proPackages.json'
+      - 'supabase/migrations/20261123143900_saturn_google_profile_birthday_and_trial_window_v1.sql'
+      - 'tests/saturnGoogleProfileReminderAndSevenDayTrial.test.mjs'
+      - '.github/workflows/saturn-google-profile-premium-ci.yml'
+  pull_request:
+    paths:
+      - 'src/components/trial/PostConversionProfileReminder.tsx'
+      - 'src/pages/MyProfile.tsx'
+      - 'src/components/layout/Header.tsx'
+      - 'src/i18n/locales/**/proPackages.json'
+      - 'supabase/migrations/20261123143900_saturn_google_profile_birthday_and_trial_window_v1.sql'
+      - 'tests/saturnGoogleProfileReminderAndSevenDayTrial.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Run Google onboarding and trial regression checks
+        run: |
+          node --test \
+            tests/saturnGoogleProfileReminderAndSevenDayTrial.test.mjs \
+            tests/saturnGoogleAccountEntry.test.mjs \
+            tests/saturnTestEmailConversionFinalize.test.mjs
+      - name: Validate all translations and build production bundle
+        run: npm run build
+      - name: Verify compiled prelaunch Premium label and profile reminder
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          grep -Fq 'Premium trial:' dist/main.js
+          grep -Fq 'get_my_premium_trial_schedule_v1' dist/main.js
+          echo 'Verified new Google signup reminder and 7-day trial label. No deploy triggered.'
