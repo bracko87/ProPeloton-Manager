@@ -1,0 +1,62 @@
+name: Saturn public Guest Mode availability (no deploy)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'netlify.toml'
+      - 'src/components/home/Hero.tsx'
+      - 'src/pages/TestTeamSignup.tsx'
+      - 'tests/saturnTestTeamSignup.test.mjs'
+      - 'tests/saturnTestAccountExperience.test.mjs'
+      - 'tests/saturnGuestCaptchaAbuseGate.test.mjs'
+      - '.github/workflows/saturn-public-guest-mode-availability.yml'
+  pull_request:
+    paths:
+      - 'netlify.toml'
+      - 'src/components/home/Hero.tsx'
+      - 'src/pages/TestTeamSignup.tsx'
+      - 'tests/saturnTestTeamSignup.test.mjs'
+      - 'tests/saturnTestAccountExperience.test.mjs'
+      - 'tests/saturnGuestCaptchaAbuseGate.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keep-public-guest-mode:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Ensure public Guest Mode is intentionally enabled
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, tomllib
+          with open("netlify.toml", "rb") as f:
+              settings = tomllib.load(f)["context"]["production"]["environment"]
+          assert settings["VITE_SATURN_TEST_ACCOUNTS_ENABLED"] == "true"
+          assert settings["VITE_SATURN_PUBLIC_SIGNUP_ENABLED"] == "true"
+          assert settings["VITE_SATURN_TURNSTILE_SITE_KEY"]
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
+              for key in ["VITE_SATURN_TEST_ACCOUNTS_ENABLED", "VITE_SATURN_PUBLIC_SIGNUP_ENABLED", "VITE_SATURN_TURNSTILE_SITE_KEY"]:
+                  print(f"{key}={settings[key]}", file=output)
+          PY
+      - name: Run guest access and CAPTCHA source regressions
+        run: node --test tests/saturnTestTeamSignup.test.mjs tests/saturnGuestCaptchaAbuseGate.test.mjs tests/saturnTestAccountExperience.test.mjs
+      - name: Validate translations and compile published source
+        run: npm run build
+      - name: Verify compiled Guest Mode entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          grep -Fq 'Test the Game' dist/main.js
+          echo 'Guest Mode CTA is present; this workflow never deploys production.'
