@@ -9,6 +9,7 @@ import { Link } from 'react-router'
 import { useAuth } from '../context/AuthProvider'
 import { supabase } from '../lib/supabase'
 import { testClient, finishTestSessionPersistence } from '../lib/testAccountClient'
+import { clearGoogleOAuthIntent, googleOAuthRedirect, readGoogleOAuthIntent, saveGoogleOAuthIntent } from '../lib/googleOAuth'
 
 const ENABLED = import.meta.env.VITE_SATURN_TEST_ACCOUNTS_ENABLED === 'true'
 const ORIGINAL_ID_KEY = 'saturn-fullgame-conversion-uuid'
@@ -87,21 +88,25 @@ export default function TestAccountRegister(): JSX.Element {
         return
       }
 
+      // Use the existing /create-club URL allowed for email confirmations.
+      // The pending guest UUID is kept only in this browser tab; the server
+      // confirms identity ownership on return, before changing registration.
+      if (!saveGoogleOAuthIntent({ kind: 'guest_link', userId: originId })) {
+        setStatus('Google linking needs session storage in this browser tab. Your team is unchanged.')
+        return
+      }
       const { error } = await testClient.auth.linkIdentity({
         provider: 'google',
-        options: {
-          // HashRouter callback: retain a query marker outside the hash so
-          // the test Auth client alone consumes the returned OAuth code.
-          redirectTo: window.location.origin + window.location.pathname +
-            '?saturn_google_link=1#/test-account-register',
-        },
+        options: { redirectTo: googleOAuthRedirect() },
       })
       if (error) {
-        setStatus('Google identity linking could not start. Check that manual identity linking and redirect URLs are enabled.')
+        clearGoogleOAuthIntent()
+        setStatus('Google identity linking could not start. Ask the administrator to enable Google sign-in and Allow manual linking in Supabase Auth. Your team is unchanged.')
       } else {
-        setStatus('Complete Google verification, then return here to finalize your existing team.')
+        setStatus('Complete Google verification, then return to this browser tab to keep your team.')
       }
     } catch {
+      clearGoogleOAuthIntent()
       setStatus('Google linking could not be started. Your existing test team is unchanged.')
     } finally {
       setBusy(false)
@@ -137,6 +142,7 @@ export default function TestAccountRegister(): JSX.Element {
         return
       }
       finishTestSessionPersistence(originId)
+      clearGoogleOAuthIntent()
       window.localStorage.removeItem(ORIGINAL_ID_KEY)
       await refreshUser()
       window.dispatchEvent(new Event('saturn-registration-completed'))
@@ -148,6 +154,20 @@ export default function TestAccountRegister(): JSX.Element {
       setBusy(false)
     }
   }
+
+  // Returning from Google's OAuth screen completes the SAME original team
+  // automatically after Auth has verified the linked Google identity.
+  const googleFinalizationStarted = React.useRef(false)
+  React.useEffect(() => {
+    const pending = readGoogleOAuthIntent()
+    if (googleFinalizationStarted.current || loading || busy || success ||
+        pending?.kind !== 'guest_link' || !originId ||
+        pending.userId !== originId || user?.id !== originId ||
+        user.is_anonymous !== false ||
+        !user.identities?.some(identity => identity.provider === 'google')) return
+    googleFinalizationStarted.current = true
+    void finishGoogle()
+  }, [loading, busy, success, originId, user?.id, user?.is_anonymous, user?.identities])
 
   async function refresh() {
     await refreshUser()
