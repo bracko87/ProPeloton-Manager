@@ -3,14 +3,17 @@
 do $$
 declare v_jobid bigint;
 begin
-  select jobid into strict v_jobid
+  -- Local fresh installs may carry this job in an inactive state.
+  -- Do not activate it: the scheduler must remain under release control.
+  select jobid into v_jobid
   from cron.job
-  where jobname='forward-daily-automation-every-minute'
-    and active;
-  perform cron.alter_job(
-    job_id=>v_jobid,
-    schedule=>'*/5 * * * *',
-    command=>'select public.process_forward_daily_automation_safe_v2();'
-  );
+  where jobname='forward-daily-automation-every-minute';
+  if v_jobid is not null then
+    perform cron.alter_job(
+      job_id=>v_jobid,
+      schedule=>'*/5 * * * *',
+      command=>'select public.process_forward_daily_automation_safe_v2();'
+    );
+  end if;
 end;
 $$;
