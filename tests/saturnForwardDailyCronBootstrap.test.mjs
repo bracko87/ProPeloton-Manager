@@ -12,3 +12,13 @@ test('inactive forward-daily cron prerequisite exists before historical clock mi
   assert.match(sql,/'\*\/5 \* \* \* \*'/)
   assert.match(sql,/cron\.alter_job\(v_id, active := false\)/)
 })
+
+test('later forward-daily backlog migration does not require an active cron job',()=>{
+  const later = readFileSync(new URL(
+    '../supabase/migrations/20261009061000_forward_daily_backlog_wait_for_tick.sql',
+    import.meta.url),'utf8')
+  assert.match(later,/where jobname='forward-daily-automation-every-minute'/)
+  assert.match(later,/if v_jobid is not null then/)
+  assert.doesNotMatch(later,/into strict v_jobid/i)
+  assert.doesNotMatch(later,/where jobname='forward-daily-automation-every-minute'\s+and active/i)
+})
