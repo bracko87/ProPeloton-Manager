@@ -193,4 +193,17 @@ begin
   end if;
 end
 $migration$;
-select public.monitor_youth_competition_health_v1();
+-- Health monitoring references race runtime columns added in later migrations.
+-- Defer the first invocation on a fresh schema until the column exists.
+do $migration$
+begin
+  if exists (
+    select 1 from information_schema.columns
+    where table_schema='public'
+      and table_name='youth_races'
+      and column_name='planned_start_hour_number'
+  ) then
+    perform public.monitor_youth_competition_health_v1();
+  end if;
+end
+$migration$;
