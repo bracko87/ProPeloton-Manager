@@ -9,6 +9,8 @@ on:
       - 'tests/saturnMigrationChainIntegrity.test.mjs'
       - 'tests/saturnNationalEquipmentBaselineSeed.test.mjs'
       - 'supabase/migrations/20260929211000_baseline_17_nations_runtime_seed.sql'
+      - 'supabase/migrations/20260930185828_nations_stable_groups_capacity_v46.sql'
+      - 'tests/saturnWorldNationsFunctionTerminator.test.mjs'
       - 'supabase/baseline_reproducibility_smoke.sql'
   workflow_dispatch:
 
@@ -24,7 +26,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs
+      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs
       - run: node scripts/saturn-check-migration-chain.mjs
       - name: Paid branch replay remains explicitly blocked
         shell: bash
