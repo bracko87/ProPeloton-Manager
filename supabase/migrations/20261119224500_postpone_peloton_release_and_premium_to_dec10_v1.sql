@@ -23,7 +23,7 @@ begin
   if not exists (
     select 1 from private.ppm_december_2026_release_control_v1 where id=true
   ) then
-    if exists (select 1 from public.premium_trial_launch_v1 where id=true)
+    if exists (select 1 from public.premium_trial_launch_v1 where id=true and launched_at in (v_old,v_new))
        or exists (
          select 1 from public.premium_welcome_trials_v1
          where started_at in (v_old,v_new)
