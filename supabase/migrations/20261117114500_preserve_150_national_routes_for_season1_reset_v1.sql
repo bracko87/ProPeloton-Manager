@@ -52,7 +52,15 @@ BEGIN
    public.national_championship_source_stage_eligible_v1(source_stage_id,country_code))
  INTO n,valid_n
  FROM private.game_world_reset_s1_national_route_baseline_v1;
- IF n<>150 OR valid_n<>150 THEN
+ -- A fresh standalone database has no historic Season 2 editions to
+ -- preserve. Keep the exact 150-country gate whenever any source material
+ -- exists; the actual reset execution function remains strictly protected.
+ IF n=0 AND NOT EXISTS (
+   SELECT 1 FROM public.national_championship_editions
+   WHERE season_number=2
+ ) THEN
+   RAISE NOTICE 'No legacy S2 national route source map to capture on fresh install';
+ ELSIF n<>150 OR valid_n<>150 THEN
    RAISE EXCEPTION 'Season 1 national source map incomplete: %, eligible %',n,valid_n;
  END IF;
 END $verify$;
