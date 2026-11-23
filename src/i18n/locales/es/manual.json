@@ -568,7 +568,7 @@
         "Los bidónes utilizan 1-4 por ciclista en la configuración de la etapa. Son consumibles de un solo uso y soportan el control de la hidratación y la fatiga.",
         "Los Gels de energía utilizan 0-4 por ciclista. Soportan resistencia y eficiencia de esfuerzo final. No hay beneficio adicional después de cuatro geles por ciclista.",
         "Los paquetes de nutrición utilizan 0-2 por ciclista. Soportan estabilidad de resistencia y recuperación post-etapa. Las etapas largas sin nutrición pueden aumentar la presión de fatiga.",
-        "Race Jersey Complete is strongly recommended in Stage Plans. A shortage never blocks participation: riders without a usable kit race in normal team clothing and the team receives a proportional performance penalty.",
+        "Se recomienda encarecidamente disponer de un kit completo de maillot de carrera en los Stage Plans. La falta de equipación nunca impide participar: los ciclistas sin un kit utilizable compiten con la ropa habitual del equipo y reciben una penalización proporcional al rendimiento.",
         "Las chaquetas de lluvia son opcionales, pero resultan útiles con tiempo húmedo o frío. Los suministros duraderos que ya no tengan usos disponibles no pueden utilizarse.",
         "Las carreras de etapa consumen rápidamente suministros porque se utilizan cantidades por ciclista por etapa."
       ],
@@ -2022,7 +2022,7 @@
         "Los bidónes soportan el control de la hidratación y la fatiga. Un Stage Plan por debajo del mínimo requerido de hidratación puede aumentar la presión de fatiga.",
         "Energy Gels soporta la resistencia y la eficiencia del esfuerzo final. Más que la tapa útil no crea beneficios extra.",
         "Los paquetes nutricionales apoyan la estabilidad y recuperación de la resistencia, especialmente en etapas largas y carreras de etapas.",
-        "Race Jersey Complete is strongly recommended. A shortage does not block a stage or remove the team from the race; riders without a kit compete in normal team clothing and the team receives the proportional jersey-shortage performance penalty.",
+        "Se recomienda encarecidamente disponer de un kit completo de maillot de carrera. La falta de equipación no bloquea una etapa ni excluye al equipo de la carrera: los ciclistas sin kit compiten con la ropa habitual y se aplica una penalización proporcional al rendimiento.",
         "Las chaquetas de lluvia no son obligatorias en todas las etapas, pero se vuelven valiosas en clima frío/húmedo. El juego debe tratar las unidades de suministro duradero desgastadas como inutilizables.",
         "Las carreras de etapa multiplican el consumo porque los suministros se calculan por ciclista por etapa. Una población que parece grande para una carrera de un día puede ser demasiado pequeña para una carrera de siete etapas."
       ],
@@ -3337,7 +3337,7 @@
       ],
       "tips": [
         "Elige corredores para el recorrido, no solo por su valoración general.",
-        "Llega a las carreras importantes con fatiga controlada y Planes de Etapa completos."
+        "Llega a las carreras importantes con fatiga controlada y Stage Plans completos."
       ],
       "relatedLinks": [
         {
