@@ -18,6 +18,26 @@ DECLARE
  rec record;
  v_pairs integer;
 BEGIN
+  -- The four replacements are an existing-world correction, not seed data.
+  -- Skip only if none of their old or new club identities exists. Partial
+  -- historical state still reaches the strict four-pair verification below.
+  IF NOT EXISTS (
+    SELECT 1 FROM public.clubs
+    WHERE id IN (
+      'e752a999-df0d-41c6-a6f9-01aedb6e2a57'::uuid,
+      '3eb1ca2e-0b65-41c9-9793-ce3d2539410e'::uuid,
+      'd41bca67-63dc-449c-b79f-786d83304ce8'::uuid,
+      'a0e5d05f-08c9-4f39-8687-d7e6ba023ad4'::uuid,
+      'c4ca3d49-4d8d-4342-bea3-1a412f43494b'::uuid,
+      '944c5db7-b6ac-4dd2-b0cf-361d8809d81c'::uuid,
+      '21b1485a-7977-467a-86bb-705b6419281b'::uuid,
+      'efaafbba-f8a7-482f-8e8e-0a4b48d4f0a7'::uuid
+    )
+  ) THEN
+    RAISE NOTICE 'Skipping historical four-slot player replacement on fresh install';
+    RETURN;
+  END IF;
+
   SELECT count(*) INTO v_pairs FROM (
     VALUES
       ('e752a999-df0d-41c6-a6f9-01aedb6e2a57'::uuid,'3eb1ca2e-0b65-41c9-9793-ce3d2539410e'::uuid),
