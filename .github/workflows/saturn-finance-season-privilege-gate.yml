@@ -1,0 +1,33 @@
+name: Project Saturn - finance and season privileged RPC hardening
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'supabase/migrations/20261123084033_saturn_restrict_remaining_internal_finance_season_process_v1.sql'
+      - 'supabase/tests/saturn_internal_finance_season_rpc_permissions_readonly.sql'
+      - 'tests/saturnInternalFinanceSeasonPermissions.test.mjs'
+      - '.github/workflows/saturn-finance-season-privilege-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Check exact 24 RPC permissions and production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked packages
+        run: npm ci --no-audit --no-fund
+      - name: Test privilege safety and source agreement
+        run: |
+          node --test tests/saturnInternalFinanceSeasonPermissions.test.mjs
+          node --test tests/saturnInternalRpcPermissions.test.mjs
+          node --test tests/saturnGlobalProcessorRpcPermissions.test.mjs
+      - name: Translation validation and production build (no deployment)
+        run: npm run build
