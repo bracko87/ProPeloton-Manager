@@ -30,10 +30,27 @@ test('SAT-13 preserves the existing monitor and adds a fail-closed admin wrapper
   assert.doesNotMatch(migration, /select public\.monitor_youth_competition_health_v1\(/i)
 })
 
-test('SAT-13 old direct monitor is explicitly tracked as an incomplete cutover, not reported secured', () => {
+test('SAT-13 raw legacy monitors are explicitly revoked while the admin wrapper remains', () => {
   const notes = read('docs/SATURN_ADMIN_YOUTH_HEALTH_CUTOVER_2026-11-23.md')
-  assert.match(notes, /legacy monitor remains callable/i)
-  assert.match(notes, /do not revoke/i)
-  assert.match(notes, /browser/i)
-  assert.match(notes, /cron/i)
+  const legacyClosure = read('supabase/migrations/20261123121513_saturn_close_legacy_public_youth_competition_monitor_v1.sql')
+  const rawClosure = read('supabase/migrations/20261123121812_saturn_restrict_raw_system_health_watchdogs_v1.sql')
+  assert.match(legacyClosure, /REVOKE ALL ON FUNCTION public\.monitor_youth_competition_health_v1\(\)/i)
+  assert.match(legacyClosure, /FROM PUBLIC, anon, authenticated/i)
+  assert.match(notes, /Database direct-execution cutover complete/i)
+  assert.match(notes, /live administrator browser regression still pending/i)
+  const expected = [
+    'run_system_health_watchdog_v1',
+    'monitor_youth_academy_full_health_v1',
+    'monitor_special_infrastructure_health_v1',
+    'monitor_youth_core_health_v1',
+    'monitor_youth_staff_responsibilities_health_v1',
+    'monitor_youth_scouting_recruitment_health_v1',
+    'monitor_youth_finance_health_v1',
+    'monitor_youth_rankings_health_v1',
+    'monitor_youth_lifecycle_health_v1',
+  ]
+  for (const name of expected) {
+    assert.ok(rawClosure.includes(`REVOKE ALL ON FUNCTION public.${name}()`), name)
+  }
+  assert.match(rawClosure, /FROM PUBLIC, anon, authenticated/i)
 })
