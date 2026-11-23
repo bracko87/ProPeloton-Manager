@@ -59,8 +59,73 @@ jobs:
           supabase init --force
           test -f supabase/config.toml
           # Match production's PostgreSQL major version in local Docker.
-          sed -i -E 's/major_version = "[0-9]+"/major_version = "17"/' supabase/config.toml
-          grep -Eq '^[[:space:]]*major_version[[:space:]]*=[[:space:]]*"17"' supabase/config.toml
+          # Supabase CLI 3.x emits an INTEGER (major_version = 17),
+          # while older configs may use a quoted string. Handle both.
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          path = Path('supabase/config.toml')
+          source = path.read_text()
+          pattern = r'(?m)^(\s*major_version\s*=).*
+      - name: Rebuild clean local schema from tracked migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Supabase CLI starts its own local Docker stack and applies the
+          # repository migrations. It NEVER connects to remote Supabase.
+          timeout 25m supabase start --debug
+      - name: Verify complete local baseline with existing smoke assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+          # CLI-local credentials only; never any production database key.
+          PGPASSWORD=postgres psql -X -v ON_ERROR_STOP=1 \
+            -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -f supabase/baseline_reproducibility_smoke.sql
+          echo 'PASS: local baseline rebuilt and smoke assertions completed'
+      - name: Stop isolated local Supabase stack
+        if: always()
+        shell: bash
+        run: supabase stop --no-backup || true
+
+          if re.search(pattern, source):
+              source = re.sub(pattern, r'\g<1> 17', source, count=1)
+          elif '[db]' in source:
+              source = source.replace('[db]', '[db]\nmajor_version = 17', 1)
+          else:
+              raise SystemExit('No [db] configuration; abort local bootstrap')
+          path.write_text(source)
+          assert re.search(r'(?m)^\s*major_version\s*=\s*17\s*
+      - name: Rebuild clean local schema from tracked migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Supabase CLI starts its own local Docker stack and applies the
+          # repository migrations. It NEVER connects to remote Supabase.
+          timeout 25m supabase start --debug
+      - name: Verify complete local baseline with existing smoke assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+          # CLI-local credentials only; never any production database key.
+          PGPASSWORD=postgres psql -X -v ON_ERROR_STOP=1 \
+            -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -f supabase/baseline_reproducibility_smoke.sql
+          echo 'PASS: local baseline rebuilt and smoke assertions completed'
+      - name: Stop isolated local Supabase stack
+        if: always()
+        shell: bash
+        run: supabase stop --no-backup || true
+, source)
+          PY
       - name: Rebuild clean local schema from tracked migrations
         shell: bash
         run: |
