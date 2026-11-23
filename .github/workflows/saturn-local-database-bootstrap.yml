@@ -7,6 +7,8 @@ on:
       - '.github/workflows/saturn-local-database-bootstrap.yml'
       - 'scripts/saturn-check-migration-chain.mjs'
       - 'tests/saturnMigrationChainIntegrity.test.mjs'
+      - 'tests/saturnNationalEquipmentBaselineSeed.test.mjs'
+      - 'supabase/migrations/20260929211000_baseline_17_nations_runtime_seed.sql'
       - 'supabase/baseline_reproducibility_smoke.sql'
   workflow_dispatch:
 
@@ -22,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs
+      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs
       - run: node scripts/saturn-check-migration-chain.mjs
       - name: Paid branch replay remains explicitly blocked
         shell: bash
