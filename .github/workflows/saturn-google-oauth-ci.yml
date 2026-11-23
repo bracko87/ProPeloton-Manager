@@ -1,0 +1,65 @@
+name: Saturn Google account entry (no deploy)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/pages/Login.tsx'
+      - 'src/pages/Register.tsx'
+      - 'src/pages/TestAccountRegister.tsx'
+      - 'src/components/auth/GoogleAuthEntry.tsx'
+      - 'src/components/auth/SignupEmailCallbackRouting.tsx'
+      - 'src/lib/regularAuthStorage.ts'
+      - 'src/lib/googleOAuth.ts'
+      - 'src/lib/supabase.ts'
+      - 'src/i18n/locales/**/auth.json'
+      - 'tests/saturnGoogleAccountEntry.test.mjs'
+      - 'tests/saturnTestGoogleConversionFinalize.test.mjs'
+      - '.github/workflows/saturn-google-oauth-ci.yml'
+  pull_request:
+    paths:
+      - 'src/pages/Login.tsx'
+      - 'src/pages/Register.tsx'
+      - 'src/pages/TestAccountRegister.tsx'
+      - 'src/components/auth/GoogleAuthEntry.tsx'
+      - 'src/components/auth/SignupEmailCallbackRouting.tsx'
+      - 'src/lib/regularAuthStorage.ts'
+      - 'src/lib/googleOAuth.ts'
+      - 'src/lib/supabase.ts'
+      - 'src/i18n/locales/**/auth.json'
+      - 'tests/saturnGoogleAccountEntry.test.mjs'
+      - 'tests/saturnTestGoogleConversionFinalize.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Check Google login and same-UUID guest linking
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Check Google, guest and email conversion safety
+        run: |
+          node --test \
+            tests/saturnGoogleAccountEntry.test.mjs \
+            tests/saturnTestGoogleConversionFinalize.test.mjs \
+            tests/saturnTestEmailConversionFinalize.test.mjs \
+            tests/saturnTestAccountExperience.test.mjs
+      - name: Validate translations and compile frontend
+        run: npm run build
+      - name: Ensure Google UI is in compiled output
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          grep -Fq 'Continue with Google' dist/main.js
+          grep -Fq 'Link Google to this team' dist/main.js
+          echo 'Google auth source verified. No Netlify deployment triggered.'
