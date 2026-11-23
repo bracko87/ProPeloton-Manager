@@ -11,12 +11,17 @@ BEGIN
  IF v_src IS NULL OR
    (length(v_src)-length(replace(v_src,'amateur_division=public.safe_get_amateur_division_for_country(c.country_code)','')))/length('amateur_division=public.safe_get_amateur_division_for_country(c.country_code)')<>1
  THEN RAISE EXCEPTION 'Rebalance function baseline differs; refusing replacement'; END IF;
- IF NOT EXISTS(
+ -- The specific Season 1 reference club may be absent on fresh installs.
+ -- If it exists, require the exact expected historical state and fail closed.
+ IF EXISTS (
+  SELECT 1 FROM public.clubs c
+  WHERE c.id='6add0111-bec8-4ca6-b379-3fd8cb45f322'::uuid
+ ) AND NOT EXISTS(
   SELECT 1 FROM public.clubs c
   WHERE c.id='6add0111-bec8-4ca6-b379-3fd8cb45f322'::uuid
   AND c.club_tier='amateur' AND c.amateur_division='INTERNATIONAL'
   AND public.is_nonclub_national_ranking_identity_v1(c.id)
   AND public.safe_get_amateur_division_for_country(c.country_code) IS NULL
- ) THEN RAISE EXCEPTION 'Expected unmapped technical national team not found'; END IF;
+ ) THEN RAISE EXCEPTION 'Expected unmapped technical national team has unexpected state'; END IF;
  EXECUTE replace(v_src,'amateur_division=public.safe_get_amateur_division_for_country(c.country_code)','amateur_division=coalesce(public.safe_get_amateur_division_for_country(c.country_code),c.amateur_division)');
 END $guard$;
