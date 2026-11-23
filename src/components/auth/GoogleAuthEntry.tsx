@@ -41,6 +41,7 @@ export default function GoogleAuthEntry({ purpose }: { purpose: 'login' | 'regis
         // saved anonymous session. Switch to guest mode before linking so
         // that the original UUID/team cannot be silently abandoned.
         const destination = new URL(window.location.href)
+        destination.pathname = '/'
         destination.searchParams.delete('saturn_regular')
         destination.searchParams.set('saturn_guest', '1')
         destination.hash = '#/test-account-register'
