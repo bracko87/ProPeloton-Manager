@@ -14,6 +14,7 @@
 
 import { createClient } from '@supabase/supabase-js'
 import { SATURN_GUEST_AUTH_MODE, GUEST_SESSION_KEY, guestSessionStorage } from './guestSession'
+import { regularAuthStorage } from './regularAuthStorage'
 
 /**
  * Default Supabase project configuration.
@@ -296,7 +297,14 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       storageKey: GUEST_SESSION_KEY,
       storage: guestSessionStorage,
       autoRefreshToken: true,
-    } : { persistSession: false }),
+    } : {
+      // Keep normal sessions memory-only. Only the PKCE code verifier survives
+      // Google's full-page round trip in sessionStorage.
+      persistSession: true,
+      storage: regularAuthStorage,
+      autoRefreshToken: true,
+    }),
+    flowType: 'pkce',
     // One Auth client consumes redirect credentials and refreshes tokens.
     detectSessionInUrl: true
   },
