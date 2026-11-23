@@ -69,15 +69,18 @@ BEGIN
   END IF;
 
   v_matches := (length(v_definition)-length(replace(v_definition,v_predicate,'')))/length(v_predicate);
-  IF v_matches <> 7 THEN
-    RAISE EXCEPTION 'Expected 7 World Road Championship selection predicates, found %',v_matches;
+  -- Fresh-install synchronizers can have one selection site, while the
+  -- historical deployed implementation has seven. Protect every site
+  -- present; reject all other unexpected structures instead of bypassing it.
+  IF v_matches NOT IN (1,7) THEN
+    RAISE EXCEPTION 'Expected 1 or 7 World Road Championship selection predicates, found %',v_matches;
   END IF;
 
   -- Idempotent when applied by the repository migration runner after the
   -- corresponding live hotfix. Do not append the same predicate twice.
   IF (length(v_definition)-length(replace(v_definition,
       'AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)','')))
-      /length('AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)') = 7 THEN
+      /length('AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)') = v_matches THEN
     RAISE NOTICE 'World Road Championship event-date selection already installed';
   ELSIF strpos(v_definition,'AND public.national_championship_rider_available_for_event_v1(en.rider_id,e.race_date)') > 0 THEN
     RAISE EXCEPTION 'Partial World Road Championship event-date guard installation';
