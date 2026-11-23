@@ -1,0 +1,81 @@
+name: Saturn isolated migration bootstrap reproducibility (local only)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/saturn-local-database-bootstrap.yml'
+      - 'scripts/saturn-check-migration-chain.mjs'
+      - 'tests/saturnMigrationChainIntegrity.test.mjs'
+      - 'supabase/baseline_reproducibility_smoke.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  migration-identity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs
+      - run: node scripts/saturn-check-migration-chain.mjs
+      - name: Prove paid-branch guard refuses historical production replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          if node scripts/saturn-check-migration-chain.mjs --require-branch-safe; then
+            echo 'ERROR: incompatible production migration history was incorrectly approved'
+            exit 1
+          fi
+          echo 'PASS: incompatible direct paid branching is refused'
+
+  local-supabase-bootstrap:
+    needs: migration-identity
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    # No access tokens, production credentials, DB_PASSWORD, or remote project
+    # ref are supplied. Everything here is temporary in local Docker only.
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Initialize local-only CLI project
+        shell: bash
+        run: |
+          set -euo pipefail
+          supabase --version
+          supabase init --force
+          test -f supabase/config.toml
+          # Match production's PostgreSQL major version in local Docker.
+          sed -i -E 's/major_version = "[0-9]+"/major_version = "17"/' supabase/config.toml
+          grep -Eq '^major_version = "17"$' supabase/config.toml
+      - name: Rebuild clean local schema from tracked migrations
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Supabase CLI starts its own local Docker stack and applies the
+          # repository migrations. It NEVER connects to remote Supabase.
+          timeout 25m supabase start --debug
+      - name: Verify complete local baseline with existing smoke assertions
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq postgresql-client
+          fi
+          # CLI-local credentials only; never any production database key.
+          PGPASSWORD=postgres psql -X -v ON_ERROR_STOP=1 \
+            -h 127.0.0.1 -p 54322 -U postgres -d postgres \
+            -f supabase/baseline_reproducibility_smoke.sql
+          echo 'PASS: local baseline rebuilt and smoke assertions completed'
+      - name: Stop isolated local Supabase stack
+        if: always()
+        shell: bash
+        run: supabase stop --no-backup || true
