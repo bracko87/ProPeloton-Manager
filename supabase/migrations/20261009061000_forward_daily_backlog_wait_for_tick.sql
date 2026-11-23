@@ -39,13 +39,17 @@ begin
 end;
 $function$;
 
-do $$
+do $
 declare v_jobid bigint;
 begin
-  select jobid into strict v_jobid
+  -- The fresh-install prerequisite is intentionally inactive, as it is in
+  -- the verified production configuration. Adjust cadence without turning
+  -- it on or requiring active=true during historical schema replay.
+  select jobid into v_jobid
   from cron.job
-  where jobname='forward-daily-automation-every-minute'
-    and active;
-  perform cron.alter_job(job_id=>v_jobid,schedule=>'*/5 * * * *');
+  where jobname='forward-daily-automation-every-minute';
+  if v_jobid is not null then
+    perform cron.alter_job(job_id=>v_jobid,schedule=>'*/5 * * * *');
+  end if;
 end;
-$$;
+$;
