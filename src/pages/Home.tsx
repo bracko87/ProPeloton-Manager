@@ -34,6 +34,7 @@ type HomeSnapshot = {
   game_time_label: string
   active_managers: number
   online_users: number
+  total_player_accounts: number
   total_teams: number
   total_races: number
   total_stages: number
@@ -43,6 +44,7 @@ type RawHomeSnapshot = {
   game_time_label?: unknown
   active_managers?: unknown
   online_users?: unknown
+  total_player_accounts?: unknown
   total_teams?: unknown
   total_races?: unknown
   total_stages?: unknown
@@ -204,6 +206,7 @@ function normalizeHomeSnapshot(
         : loadingGameTimeLabel,
     active_managers: toNumber(row.active_managers),
     online_users: toNumber(row.online_users),
+    total_player_accounts: toNumber(row.total_player_accounts),
     total_teams: toNumber(row.total_teams),
     total_races: toNumber(row.total_races),
     total_stages: toNumber(row.total_stages),
@@ -707,9 +710,10 @@ export default function HomePage(): JSX.Element {
                 </div>
               )}
 
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
                 {[
                   [t('stats.onlineUsers'), homeSnapshot?.online_users],
+                  [t('stats.totalPlayerAccounts'), homeSnapshot?.total_player_accounts],
                   [t('stats.totalTeams'), homeSnapshot?.total_teams],
                   [t('stats.totalRacesTours'), homeSnapshot?.total_races],
                   [t('stats.totalStages'), homeSnapshot?.total_stages],
