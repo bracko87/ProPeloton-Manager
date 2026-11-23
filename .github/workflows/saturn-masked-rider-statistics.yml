@@ -1,0 +1,31 @@
+name: Project Saturn - masked rider statistics presentation
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/features/squad/components/RiderStatisticsSection.tsx'
+      - 'src/components/riders/RiderProfileModal.tsx'
+      - 'src/pages/dashboard/riders/RiderProfilePublicPage.tsx'
+      - 'tests/saturnRiderStatisticsPrivateValueDisplay.test.mjs'
+      - '.github/workflows/saturn-masked-rider-statistics.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Validate masked statistics, genuine zeros and production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Test real private metric aggregate helper and null-safe UI
+        run: node --test tests/saturnRiderStatisticsPrivateValueDisplay.test.mjs
+      - name: Build production application (no deployment)
+        run: npm run build
