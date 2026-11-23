@@ -34,6 +34,24 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci --no-audit --no-fund
+      - name: Load public production build flags from Netlify config
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, tomllib
+          with open("netlify.toml", "rb") as file:
+              flags = tomllib.load(file)["context"]["production"]["environment"]
+          with open(os.environ["GITHUB_ENV"], "a", encoding="utf-8") as output:
+              for key in (
+                  "VITE_SATURN_TEST_ACCOUNTS_ENABLED",
+                  "VITE_SATURN_PUBLIC_SIGNUP_ENABLED",
+                  "VITE_SATURN_TURNSTILE_SITE_KEY",
+              ):
+                  value = str(flags[key])
+                  if "\\n" in value or "\\r" in value:
+                      raise ValueError("Multiline public build variable")
+                  output.write(f"{key}={value}\\n")
+          PY
       - name: Verify complete Saturn security and guest conversion
         shell: bash
         run: |
@@ -62,6 +80,20 @@ jobs:
           PY
       - name: Validate production bundle without deployment
         run: npm run build
+      - name: Verify compiled homepage contains controlled test entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -Fq 'Test the Game' dist/main.js
+          test -s dist/index.html
+          echo "Homepage test entry present in production bundle"
+      - name: Archive verified build for inspection (not a Netlify release)
+        uses: actions/upload-artifact@v4
+        with:
+          name: propeloton-saturn-verified-static-build
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
       - name: Require existing Netlify credential
         shell: bash
         run: |
