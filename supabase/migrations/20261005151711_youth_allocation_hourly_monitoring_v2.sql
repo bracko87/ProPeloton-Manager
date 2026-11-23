@@ -183,5 +183,14 @@ begin
 end;
 $function$;
 
-select public.process_youth_team_allocations_v2(public.get_current_game_date_date());
+-- The invitation-sync helper is first installed in the later 15:50 migration.
+-- On fresh installs, defer this bootstrap invocation until that dependency exists.
+-- The allocation routine itself is retained and subsequently replaced by later versions.
+do $migration$
+begin
+  if to_regprocedure('public.sync_youth_scheduled_race_invitations_v2(integer)') is not null then
+    perform public.process_youth_team_allocations_v2(public.get_current_game_date_date());
+  end if;
+end
+$migration$;
 select public.monitor_youth_competition_health_v1();
