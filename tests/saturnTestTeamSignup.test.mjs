@@ -31,7 +31,15 @@ test('anonymous Auth only started on user submit, uses one scoped persistent ses
   assert.match(testClient, /export const testClient = supabase/)
   assert.match(official, /persistSession: true/)
   assert.match(official, /storageKey: GUEST_SESSION_KEY/)
-  assert.match(official, /persistSession: false/)
+  // Regular Supabase sessions remain in volatile memory. Only short-lived
+  // PKCE code verifiers are tab-scoped for Google redirects.
+  assert.match(official, /storage: regularAuthStorage/)
+  const storage = read('src/lib/regularAuthStorage.ts')
+  assert.match(storage, /const pending = new Map/)
+  assert.match(storage, /key.includes\('-code-verifier'\)/)
+  assert.match(storage, /window.sessionStorage/)
+  assert.doesNotMatch(storage, /window.localStorage/)
+  assert.match(storage, /if \(verifierKey\(key\)\)/)
 })
 test('real club is only created by a dedicated server endpoint, not direct inserts', () => {
   assert.match(form, /testClient\.rpc\('saturn_create_test_club_v1'/)
