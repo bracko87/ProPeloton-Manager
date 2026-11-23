@@ -4,7 +4,10 @@
  * route after confirmation. Reconcile the confirmed Auth session and move to
  * the actual hash route without changing the production Auth allowlist.
  *
- * Conversion callbacks use separate tagged URLs; never handle them here.
+ * Google OAuth returns through this same known-allowlisted /create-club
+ * callback. For a guest link we verify the ORIGINAL UUID and route to the
+ * in-place conversion finalizer; for regular Google sign-in we lookup the
+ * existing manager club, never create a duplicate one.
  */
 import React from 'react'
 import { Link, useNavigate } from 'react-router'
