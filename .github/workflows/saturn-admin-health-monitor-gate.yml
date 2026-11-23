@@ -1,0 +1,33 @@
+name: Project Saturn - protected Control Center health monitor
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'src/pages/dashboard/AdminRaceOperationsPage.tsx'
+      - 'supabase/migrations/20261123090605_saturn_admin_only_youth_competition_health_wrapper_v1.sql'
+      - 'docs/SATURN_ADMIN_YOUTH_HEALTH_CUTOVER_2026-11-23.md'
+      - 'tests/saturnAdminYouthHealthGuard.test.mjs'
+      - '.github/workflows/saturn-admin-health-monitor-gate.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Check admin-only monitor wrapper, masked stats and production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify protected admin route and safe masking
+        run: |
+          node --test tests/saturnAdminYouthHealthGuard.test.mjs
+          node --test tests/saturnRiderStatisticsPrivateValueDisplay.test.mjs
+      - name: Build production application without deploying
+        run: npm run build
