@@ -19,6 +19,8 @@ on:
       - 'supabase/migrations/20261001170000_national_jersey_rules_and_test_prep_v57.sql'
       - 'tests/saturnFreshInstallNationsFixture.test.mjs'
       - 'tests/saturnNationalChampionshipHelperBootstrap.test.mjs'
+      - 'tests/saturnFreshInstallClubCreationException.test.mjs'
+      - 'supabase/migrations/20261002134500_single_club_creation_test_exception_v1.sql'
       - 'supabase/migrations/20261001173000_national_championship_confirmation_helper_bootstrap_v1.sql'
       - 'supabase/migrations/20261001173500_skip_missing_route_national_championships_in_lifecycle_v1.sql'
       - 'supabase/migrations/20261002002500_midseason_national_shadow_fastpath_v4.sql'
@@ -42,7 +44,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs tests/saturnNationalChampionshipHelperBootstrap.test.mjs
+      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs tests/saturnNationalChampionshipHelperBootstrap.test.mjs tests/saturnFreshInstallClubCreationException.test.mjs
       - run: node scripts/saturn-check-migration-chain.mjs
       - run: node scripts/saturn-audit-sql-terminators.mjs
       - name: Paid branch replay remains explicitly blocked
