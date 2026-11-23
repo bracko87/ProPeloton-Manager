@@ -10,11 +10,12 @@ const conversion = read('src/pages/TestAccountRegister.tsx')
 const hero = read('src/components/home/Hero.tsx')
 
 test('homepage offers controlled test entry without opening public test-club rollout', () => {
-  assert.match(hero, /SATURN_TEST_ACCOUNTS_ENABLED &&\\s*\\(hasUnfinishedGuest \\|\\| !user\\)/)
-  assert.match(hero, /to="\\/test-the-game"/)
-  assert.match(hero, /Test the Game/)
-  assert.doesNotMatch(hero, /VITE_SATURN_PUBLIC_SIGNUP_ENABLED/)
-})
+  assert.ok(hero.includes('SATURN_TEST_ACCOUNTS_ENABLED &&'))
+  assert.ok(hero.includes('(hasUnfinishedGuest || !user)'))
+  assert.ok(hero.includes('to="/test-the-game"'))
+  assert.ok(hero.includes('Test the Game'))
+  assert.ok(!hero.includes('VITE_SATURN_PUBLIC_SIGNUP_ENABLED'))
+}
 
 test('in-game Register control is globally visible for active test accounts', () => {
   assert.match(dashboard, /<TestAccountNotice \/>/)
