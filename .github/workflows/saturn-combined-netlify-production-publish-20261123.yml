@@ -1,0 +1,152 @@
+name: Saturn - single combined verified Netlify release
+
+# First addition to main initiates one linked build. Later code changes do not
+# trigger this workflow automatically; manual operator dispatch remains possible.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/saturn-combined-netlify-production-publish-20261123.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: saturn-combined-prod-release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Verify Saturn then request one linked Netlify main build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify complete Saturn security and guest conversion
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/saturnRiderStatisticsPrivateValueDisplay.test.mjs \
+            tests/saturnAdminYouthHealthGuard.test.mjs \
+            tests/saturnTestAccountExperience.test.mjs \
+            tests/saturnPrivateViewMasking.test.mjs \
+            tests/saturnSponsorTaxRpcPermissions.test.mjs \
+            tests/saturnInternalRpcPermissions.test.mjs \
+            tests/saturnGlobalProcessorRpcPermissions.test.mjs \
+            tests/saturnInternalFinanceSeasonPermissions.test.mjs
+          grep -Fq "admin_monitor_youth_competition_health_v1" src/pages/dashboard/AdminRaceOperationsPage.tsx
+          grep -Fq "marketValueTotal === null || salaryTotal === null" src/features/squad/components/RiderStatisticsSection.tsx
+      - name: Verify intended production flags before publishing
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import tomllib
+          with open("netlify.toml","rb") as f:
+              env=tomllib.load(f)["context"]["production"]["environment"]
+          assert env["VITE_SATURN_TEST_ACCOUNTS_ENABLED"]=="true", "Guest Mode unexpectedly disabled"
+          assert env["VITE_SATURN_PUBLIC_SIGNUP_ENABLED"]=="false", "Public signup unexpectedly enabled"
+          assert env["VITE_SATURN_TURNSTILE_SITE_KEY"].startswith("0x"), "Turnstile key missing"
+          print("Verified guest/registration production flags")
+          PY
+      - name: Validate production bundle without deployment
+        run: npm run build
+      - name: Require existing Netlify credential
+        shell: bash
+        run: |
+          if [ -z "${NETLIFY_AUTH_TOKEN:-}" ]; then
+            echo "::error::No NETLIFY_AUTH_TOKEN in repository secrets; production unchanged."
+            exit 1
+          fi
+      - name: Verify linked project, avoid duplicate build and publish
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${NETLIFY_SITE_ID:-propelotonmanager.com}"
+          curl --fail --silent --show-error --max-time 30 \
+            -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+            "https://api.netlify.com/api/v1/sites/$TARGET" \
+            -o "$RUNNER_TEMP/approved-site.json"
+          node - <<'JS'
+          const fs=require('fs');
+          const site=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/approved-site.json','utf8'));
+          const domains=[site.custom_domain,site.url,site.ssl_url].filter(Boolean).map(v=>{
+            try { return new URL(v).hostname.toLowerCase(); }
+            catch { return String(v).toLowerCase(); }
+          });
+          if(!domains.some(d=>['propelotonmanager.com','www.propelotonmanager.com'].includes(d)))
+            throw Error('Netlify custom domain mismatch; refusing deploy');
+          const b=site.build_settings||{};
+          const repo=String(b.repo_url||'').toLowerCase()
+            .replace(/git@github\.com:/,'github.com/').replace(/\.git$/,'');
+          if(!repo.includes('github.com/bracko87/propeloton-manager')||b.repo_branch!=='main')
+            throw Error('Netlify is not linked to approved ProPeloton Manager main branch');
+          console.log('Approved linked Netlify production site and main source');
+          JS
+          curl --fail --silent --show-error --max-time 30 \
+            -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+            "https://api.netlify.com/api/v1/sites/$TARGET/deploys?per_page=20" \
+            -o "$RUNNER_TEMP/recent-deploys.json"
+          if node - <<'JS'
+          const fs=require('fs');
+          const rows=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/recent-deploys.json','utf8'));
+          const same=rows.find(d=>String(d.commit_ref||'').toLowerCase()===process.env.GITHUB_SHA.toLowerCase()
+             && ['ready','building','enqueued','new','processing','preparing'].includes(d.state));
+          if(!same) process.exit(1);
+          console.log('Same-commit deploy already exists:',same.id,'state:',same.state);
+          JS
+          then
+            echo "Skipped duplicate build"
+          else
+            curl --fail --silent --show-error --max-time 30 -X POST \
+              -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+              -H "Content-Type: application/json" \
+              "https://api.netlify.com/api/v1/sites/$TARGET/builds" \
+              -o "$RUNNER_TEMP/netlify-request.json"
+            node - <<'JS'
+          const fs=require('fs');
+          const result=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/netlify-request.json','utf8'));
+          if(!result.id&&!result.deploy_id) throw Error('Netlify build request not accepted');
+          console.log('One linked production build accepted:',result.id||result.deploy_id);
+          console.log('This is not proof of live publication; deployment status must be checked.');
+          JS
+          fi
+      - name: Verify exact-commit production deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET="${NETLIFY_SITE_ID:-propelotonmanager.com}"
+          for i in $(seq 1 45); do
+            curl --fail --silent --show-error --max-time 25 \
+              -H "Authorization: Bearer $NETLIFY_AUTH_TOKEN" \
+              "https://api.netlify.com/api/v1/sites/$TARGET/deploys?per_page=25" \
+              -o "$RUNNER_TEMP/deploy-check.json"
+            if node - <<'JS'
+          const fs=require('fs');
+          const rows=JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP+'/deploy-check.json','utf8'));
+          const sha=process.env.GITHUB_SHA.toLowerCase();
+          const ready=rows.find(d=>String(d.commit_ref||'').toLowerCase()===sha
+            && d.state==='ready'
+            && (!d.context||d.context==='production')
+            && (!d.branch||d.branch==='main'));
+          if(!ready)process.exit(1);
+          console.log('Verified Netlify ready deployment:',ready.id,'commit:',sha.slice(0,12));
+          JS
+            then
+              exit 0
+            fi
+            sleep 12
+          done
+          echo "::error::No ready Netlify deploy for this exact commit yet. Production must not be claimed live."
+          exit 1
