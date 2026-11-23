@@ -17,9 +17,13 @@ test('birthday fill is only for registered converted guests and one time',()=>{
  const normalSavePayload = profile.slice(profile.indexOf('const payload = {'),profile.indexOf('const { data: savedProfile, error: profileError }'))
  assert.doesNotMatch(normalSavePayload,/birthday_month|birthday_day|birthday_year|birthday_locked/)
 })
-test('only converted guest with missing details sees one-time nonblocking reminder and page links',()=>{
+test('converted guest or direct Google signup with missing details sees one-time nonblocking reminder and page links',()=>{
  const component=read('src/components/trial/PostConversionProfileReminder.tsx')
- assert.match(component,/if \(trialError \|\| !converted\?\.converted_at/)
+ assert.match(component,/trialError && !isDirectGoogleSignup/)
+ assert.match(component,/converted\?\.converted_at \? converted\.club_id : null/)
+ assert.match(component,/!convertedClubId && !isDirectGoogleSignup/)
+ assert.match(component,/user\.app_metadata\?\.provider === 'google'/)
+ assert.match(component,/source: convertedClubId \? 'converted_guest' : 'direct_google'/)
  assert.match(component,/saturn_test_accounts_v1/)
  assert.match(component,/ppm-converted-profile-reminder-v1:/)
  assert.match(component,/\/dashboard\/my-profile/)
