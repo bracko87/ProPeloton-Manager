@@ -77,7 +77,8 @@
     "totalTeams": "Ukupno timova",
     "totalRacesTours": "Ukupno utrka i tura",
     "totalStages": "Ukupno etapa",
-    "onlineUsers": "Korisnici na mreži"
+    "onlineUsers": "Korisnici na mreži",
+    "totalPlayerAccounts": "Ukupno računa igrača"
   },
   "features": {
     "title": "Glavne funkcije",
