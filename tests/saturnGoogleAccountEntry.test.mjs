@@ -47,7 +47,7 @@ test('OAuth return goes through existing allowlisted callback and never creates 
 
 test('ordinary Google PKCE stores only verifier across redirect; guest email flow remains intact', () => {
   assert.match(storage, /key\.includes\('-code-verifier'\)/)
-  assert.match(storage, /sessionStorage\?\.setItem\(key, value\)/)
+  assert.match(storage, /verifierStorage\(\)\?\.setItem\(key, value\)/)
   assert.match(storage, /return pending\.get\(key\) \?\? null/)
   assert.match(client, /flowType: SATURN_GUEST_AUTH_MODE \? 'implicit' : 'pkce'/)
   assert.match(client, /storage: guestSessionStorage/)
