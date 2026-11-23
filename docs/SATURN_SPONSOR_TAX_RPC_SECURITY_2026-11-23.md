@@ -22,6 +22,12 @@
 
 **Live read-only role verification:** both functions deny anonymous and ordinary authenticated execution; both continue to allow service-role execution.
 
+## Related user-facing sponsor signing hardening
+
+A follow-up audit discovered that `public.sponsor_sign_offer(uuid)` had the same `if auth.uid() is not null` condition. Unlike the internal ledger helpers, this API must remain callable by authorized club owners. Applied migration `20261123084732_saturn_sponsor_signing_strict_identity_ownership_v1.sql` changes only that ownership predicate to explicitly reject missing user identity and mismatched club ownership, while preserving the `service_role` exception. It uses a fail-closed one-occurrence check against the exact existing SQL definition before replacing the function body, preserving all other sponsor business logic. The production read-only catalogue check confirms that the strict predicate is present, the old bypass is absent, and the existing callable owner-facing API is still available.
+
+No sponsor offers were signed during the audit. Testing with a real authenticated owner and a rival manager is still required; a source/metadata test alone is not end-to-end authorization verification.
+
 ## Validation and remaining gates
 
 - Source regression: `tests/saturnSponsorTaxRpcPermissions.test.mjs`
