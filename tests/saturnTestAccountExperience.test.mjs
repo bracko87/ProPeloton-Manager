@@ -7,6 +7,15 @@ const dashboard = read('src/pages/dashboard/ClubDashboard.tsx')
 const notice = read('src/components/trial/TestAccountNotice.tsx')
 const conversion = read('src/pages/TestAccountRegister.tsx')
 
+const hero = read('src/components/home/Hero.tsx')
+
+test('homepage offers controlled test entry without opening public test-club rollout', () => {
+  assert.match(hero, /SATURN_TEST_ACCOUNTS_ENABLED &&\\s*\\(hasUnfinishedGuest \\|\\| !user\\)/)
+  assert.match(hero, /to="\\/test-the-game"/)
+  assert.match(hero, /Test the Game/)
+  assert.doesNotMatch(hero, /VITE_SATURN_PUBLIC_SIGNUP_ENABLED/)
+})
+
 test('in-game Register control is globally visible for active test accounts', () => {
   assert.match(dashboard, /<TestAccountNotice \/>/)
   assert.match(notice, /Register \/ Keep my team/)
