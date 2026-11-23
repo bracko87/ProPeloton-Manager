@@ -1,0 +1,46 @@
+name: Saturn guest-inclusive online analytics (no deploy)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/pages/dashboard/AdminAnalyticsPage.tsx'
+      - 'src/components/analytics/SiteAnalyticsTracker.tsx'
+      - 'supabase/migrations/20261123150500_saturn_admin_online_guest_presence_breakdown_v1.sql'
+      - 'tests/saturnAdminOnlineGuestPresence.test.mjs'
+      - '.github/workflows/saturn-admin-online-guest-presence-ci.yml'
+  pull_request:
+    paths:
+      - 'src/pages/dashboard/AdminAnalyticsPage.tsx'
+      - 'src/components/analytics/SiteAnalyticsTracker.tsx'
+      - 'supabase/migrations/20261123150500_saturn_admin_online_guest_presence_breakdown_v1.sql'
+      - 'tests/saturnAdminOnlineGuestPresence.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Check admin-only presence reporting
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Verify guest and permanent online reporting
+        run: node --test tests/saturnAdminOnlineGuestPresence.test.mjs tests/homepageOnlinePresence.test.mjs tests/saturnAnalyticsIntegrity.test.mjs
+      - name: Verify all locale resources and production bundle
+        run: npm run build
+      - name: Confirm admin online report was compiled
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          grep -Fq 'get_admin_online_presence_breakdown_v1' dist/main.js
+          grep -Fq 'Guests / unfinished trials' dist/main.js
+          echo 'No Netlify deployment performed'
