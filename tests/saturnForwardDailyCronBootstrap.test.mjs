@@ -22,3 +22,12 @@ test('later forward-daily backlog migration does not require an active cron job'
   assert.doesNotMatch(later,/into strict v_jobid/i)
   assert.doesNotMatch(later,/where jobname='forward-daily-automation-every-minute'\s+and active/i)
 })
+
+test('later forward-daily migration uses complete PostgreSQL DO delimiters',()=>{
+  const sql=readFileSync(new URL(
+    '../supabase/migrations/20261009061000_forward_daily_backlog_wait_for_tick.sql',
+    import.meta.url),'utf8')
+  const body=sql.slice(sql.lastIndexOf('do '))
+  assert.ok(body.startsWith('do '+String.fromCharCode(36).repeat(2)+'\\n'))
+  assert.ok(body.trimEnd().endsWith(String.fromCharCode(36).repeat(2)+';'))
+})
