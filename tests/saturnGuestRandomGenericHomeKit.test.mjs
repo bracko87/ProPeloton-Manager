@@ -10,7 +10,7 @@ const createClub = read('src/pages/CreateClub.tsx')
 test('new Saturn guest club receives saved home jersey from existing generic pool', () => {
   assert.match(migration, /after insert on public\.saturn_test_accounts_v1/)
   assert.match(migration, /private\.saturn_assign_missing_home_kit_v1\(\)/)
-  assert.match(migration, /'AI Teams Kits\//)
+  assert.ok(migration.includes('AI Teams Kits/[Gg]enkit'))
   assert.match(migration, /\[Gg\]enkit/)
   assert.match(migration, /order by random\(\)/i)
   assert.match(migration, /insert into public\.team_kits\(team_id, name, config, updated_at\)/)
