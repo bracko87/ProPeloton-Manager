@@ -31,3 +31,13 @@ test('later forward-daily migration uses complete PostgreSQL DO delimiters',()=>
   assert.ok(body.startsWith('do '+String.fromCharCode(36).repeat(2)+String.fromCharCode(10)))
   assert.ok(body.trimEnd().endsWith(String.fromCharCode(36).repeat(2)+';'))
 })
+
+test('single-statement forward-daily cron migration preserves inactive scheduler',()=>{
+  const sql=readFileSync(new URL(
+    '../supabase/migrations/20261009062000_forward_daily_single_statement_cron.sql',
+    import.meta.url),'utf8')
+  assert.match(sql,/if v_jobid is not null then/)
+  assert.match(sql,/command=>'select public\.process_forward_daily_automation_safe_v2\(\);'/)
+  assert.doesNotMatch(sql,/into strict v_jobid/i)
+  assert.doesNotMatch(sql,/and active;/i)
+})
