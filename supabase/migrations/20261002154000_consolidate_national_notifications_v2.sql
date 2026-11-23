@@ -3,6 +3,18 @@
 -- Existing historical notifications keep their old type rows for display, but
 -- old type codes are inactive aliases for future creation.
 
+-- Fresh-install safety: older seed rows specify notification type IDs explicitly.
+-- Advance the owned sequence without decreasing an already higher sequence value.
+-- Never rewrite historical IDs, which existing notifications may reference.
+select setval(
+  'public.notification_types_id_seq'::regclass,
+  greatest(
+    (select coalesce(max(id), 1) from public.notification_types),
+    (select last_value from public.notification_types_id_seq)
+  ),
+  true
+);
+
 insert into public.notification_types(
   code,name,source,icon_name,priority,is_active,preference_group,default_image_url
 )
