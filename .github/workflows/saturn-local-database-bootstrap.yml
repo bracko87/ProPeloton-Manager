@@ -16,6 +16,8 @@ on:
       - 'supabase/migrations/20261001073328_national_association_next_season_hosting_v48.sql'
       - 'supabase/migrations/20261001073402_control_center_world_nations_hosts_v48.sql'
       - 'supabase/migrations/20261001153500_unified_race_preparation_national_events_v55.sql'
+      - 'supabase/migrations/20261001170000_national_jersey_rules_and_test_prep_v57.sql'
+      - 'tests/saturnFreshInstallNationsFixture.test.mjs'
       - 'supabase/migrations/20261002002500_midseason_national_shadow_fastpath_v4.sql'
       - 'supabase/migrations/20261112171000_world_road_championship_real_startlist_integrity_v1.sql'
       - 'supabase/migrations/20261112174500_national_championship_all_seasons_route_preflight_v1.sql'
@@ -37,7 +39,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs
+      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs
       - run: node scripts/saturn-check-migration-chain.mjs
       - run: node scripts/saturn-audit-sql-terminators.mjs
       - name: Paid branch replay remains explicitly blocked
