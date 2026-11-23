@@ -48,9 +48,9 @@ jobs:
                   "VITE_SATURN_TURNSTILE_SITE_KEY",
               ):
                   value = str(flags[key])
-                  if "\\n" in value or "\\r" in value:
+                  if chr(10) in value or chr(13) in value:
                       raise ValueError("Multiline public build variable")
-                  output.write(f"{key}={value}\\n")
+                  print(f"{key}={value}", file=output)
           PY
       - name: Verify complete Saturn security and guest conversion
         shell: bash
