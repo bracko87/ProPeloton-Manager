@@ -36,12 +36,14 @@ on:
       - 'tests/saturnCountryCatalogBootstrap.test.mjs'
       - 'tests/saturnForwardDailyCronBootstrap.test.mjs'
       - 'tests/saturnHistoricalPoyangStageGuard.test.mjs'
+      - 'tests/saturnHistoricalAiNationalBrandingGuard.test.mjs'
       - 'tests/saturnRaceSchedulerSafeCronBootstrap.test.mjs'
       - 'supabase/migrations/20261009055000_accelerated_race_scheduler_cadence.sql'
       - 'supabase/migrations/20261008154500_forward_daily_cron_fresh_install_v1.sql'
       - 'supabase/migrations/20261009061000_forward_daily_backlog_wait_for_tick.sql'
       - 'supabase/migrations/20261009062000_forward_daily_single_statement_cron.sql'
       - 'supabase/migrations/20261014054032_guard_time_checks_from_sprint_scoring.sql'
+      - 'supabase/migrations/20261019113500_restore_original_ai_national_pool_branding_v1.sql'
       - 'supabase/migrations/20261007133000_country_catalog_fresh_install_v1.sql'
       - 'supabase/migrations/20261007140000_race_category_rules_fresh_install_v1.sql'
       - 'supabase/migrations/20261007134000_american_samoa_country_reference_v1.sql'
@@ -80,7 +82,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs tests/saturnNationalChampionshipHelperBootstrap.test.mjs tests/saturnFreshInstallClubCreationException.test.mjs tests/saturnNotificationTypeSequenceBootstrap.test.mjs tests/saturnYouthAcademyCountrySeed.test.mjs tests/saturnStaffMarketCollisionRetry.test.mjs tests/saturnYouthStaffSalaryCollision.test.mjs tests/saturnYouthAllocationBootstrapDependency.test.mjs tests/saturnYouthRaceStagesFoundation.test.mjs tests/saturnYouthRaceRuntimeCoordinator.test.mjs tests/saturnYouthStageRuntimeHelpers.test.mjs tests/saturnYouthRegionalDivisionBootstrap.test.mjs tests/saturnYouthTeamPointsBootstrap.test.mjs tests/saturnYouthGuardFunctionScan.test.mjs tests/saturnAmericanSamoaRaceCountry.test.mjs tests/saturnRaceCategoryRuleSeed.test.mjs tests/saturnCountryCatalogBootstrap.test.mjs tests/saturnForwardDailyCronBootstrap.test.mjs tests/saturnHistoricalPoyangStageGuard.test.mjs tests/saturnRaceSchedulerSafeCronBootstrap.test.mjs
+      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs tests/saturnNationalChampionshipHelperBootstrap.test.mjs tests/saturnFreshInstallClubCreationException.test.mjs tests/saturnNotificationTypeSequenceBootstrap.test.mjs tests/saturnYouthAcademyCountrySeed.test.mjs tests/saturnStaffMarketCollisionRetry.test.mjs tests/saturnYouthStaffSalaryCollision.test.mjs tests/saturnYouthAllocationBootstrapDependency.test.mjs tests/saturnYouthRaceStagesFoundation.test.mjs tests/saturnYouthRaceRuntimeCoordinator.test.mjs tests/saturnYouthStageRuntimeHelpers.test.mjs tests/saturnYouthRegionalDivisionBootstrap.test.mjs tests/saturnYouthTeamPointsBootstrap.test.mjs tests/saturnYouthGuardFunctionScan.test.mjs tests/saturnAmericanSamoaRaceCountry.test.mjs tests/saturnRaceCategoryRuleSeed.test.mjs tests/saturnCountryCatalogBootstrap.test.mjs tests/saturnForwardDailyCronBootstrap.test.mjs tests/saturnHistoricalPoyangStageGuard.test.mjs tests/saturnHistoricalAiNationalBrandingGuard.test.mjs tests/saturnRaceSchedulerSafeCronBootstrap.test.mjs
       - run: node scripts/saturn-check-migration-chain.mjs
       - run: node scripts/saturn-audit-sql-terminators.mjs
       - name: Paid branch replay remains explicitly blocked
