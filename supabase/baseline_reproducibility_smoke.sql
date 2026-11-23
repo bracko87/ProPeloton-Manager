@@ -40,8 +40,8 @@ begin
     raise exception 'Baseline smoke failed: standard National Team cars are missing.';
   end if;
 
-  if coalesce(jsonb_array_length(public.get_national_team_standard_package_v1()->'equipment'),0) <> 18 then
-    raise exception 'Baseline smoke failed: standard National Team equipment is incomplete.';
+  if coalesce(jsonb_array_length(public.get_national_team_standard_package_v1()->'equipment'),0) <> 54 then
+    raise exception 'Baseline smoke failed: standard National Team equipment must include all 54 choices (three per equipment category and specialization).';
   end if;
 
   if not exists (
