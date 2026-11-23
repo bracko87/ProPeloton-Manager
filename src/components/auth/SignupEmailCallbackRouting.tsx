@@ -26,7 +26,7 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
   // Change only browser history (NO hard reload: normal login is memory-only)
   // once a verified user/club route is known, then navigate via HashRouter.
   const normalizeVerifiedCallbackPath = () => {
-    if (window.location.pathname.replace(/\\/+$/, '') !== '/create-club') return
+    if (window.location.pathname !== '/create-club' && window.location.pathname !== '/create-club/') return
     window.history.replaceState(
       window.history.state,
       '',
