@@ -1,0 +1,45 @@
+name: Saturn Google navigation and promotion ledger (no deploy)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/components/auth/SignupEmailCallbackRouting.tsx'
+      - 'src/components/auth/GoogleAuthEntry.tsx'
+      - 'supabase/migrations/20261123133800_saturn_promotion_balance_and_same_rider_skills_once_v1.sql'
+      - 'tests/saturnGoogleNavigationAndPromotion.test.mjs'
+      - '.github/workflows/saturn-google-navigation-and-promotion-ci.yml'
+  pull_request:
+    paths:
+      - 'src/components/auth/SignupEmailCallbackRouting.tsx'
+      - 'src/components/auth/GoogleAuthEntry.tsx'
+      - 'supabase/migrations/20261123133800_saturn_promotion_balance_and_same_rider_skills_once_v1.sql'
+      - 'tests/saturnGoogleNavigationAndPromotion.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Test Google callback navigation and promotion security
+        run: node --test tests/saturnGoogleNavigationAndPromotion.test.mjs tests/saturnGoogleAccountEntry.test.mjs tests/saturnTestEmailConversionFinalize.test.mjs tests/saturnTestGoogleConversionFinalize.test.mjs
+      - name: Validate translations and compile production frontend
+        run: npm run build
+      - name: Check compiled Google and dashboard assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          grep -Fq 'Continue with Google' dist/main.js
+          grep -Fq 'window.history.replaceState' dist/main.js
+          echo 'No deploy. Database change was applied separately and verified in production.'
