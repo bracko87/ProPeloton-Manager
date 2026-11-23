@@ -16,6 +16,7 @@ import { useTranslation } from 'react-i18next'
 import { supabase } from '../lib/supabase'
 import { SATURN_TEST_ACCOUNTS_ENABLED } from '../lib/guestSession'
 import { useAuthCaptcha, AuthCaptcha } from '../components/auth/AuthCaptcha'
+import GoogleAuthEntry from '../components/auth/GoogleAuthEntry'
 import PreReleaseNotice, { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotice'
 
 type LoginLocationState = {
@@ -248,6 +249,7 @@ export default function LoginPage(): JSX.Element {
               </Link>
             </div>
           </form>
+          <GoogleAuthEntry purpose="login" />
         </div>
       </div>
     </div>
