@@ -347,6 +347,7 @@ export default function Header({
   const [identityRefreshKey, setIdentityRefreshKey] = useState(0)
   const [isPremium, setIsPremium] = useState(false)
   const [premiumTrialDaysLeft, setPremiumTrialDaysLeft] = useState<number | null>(null)
+  const [premiumTrialStartsAtLaunch, setPremiumTrialStartsAtLaunch] = useState(false)
   const [isPremiumStatusLoading, setIsPremiumStatusLoading] =
     useState(true)
 
@@ -809,6 +810,7 @@ export default function Header({
       )
       setIsPremium(false)
       setPremiumTrialDaysLeft(null)
+      setPremiumTrialStartsAtLaunch(false)
       setIsPremiumStatusLoading(false)
       return
     }
@@ -816,6 +818,7 @@ export default function Header({
     if (typeof data === 'boolean') {
       setIsPremium(data)
       setPremiumTrialDaysLeft(null)
+      setPremiumTrialStartsAtLaunch(false)
       setIsPremiumStatusLoading(false)
       return
     }
@@ -848,14 +851,28 @@ export default function Header({
         (hasActiveStripeStatus && hasCurrentAccessUntil),
     )
 
+    // The server schedules the seven-day welcome trial from launch.
+    // Before launch, access_until is ~24 days away, but the actual trial
+    // length is seven days. Never label pre-launch access as a 24-day trial.
+    let trialStartsAtLaunch = false
+    let trialDaysRemaining: number | null = null
+    if (resolvedIsPremium && row?.stripe_status === 'free_trial' && hasCurrentAccessUntil) {
+      const { data: schedule, error: scheduleError } = await supabase.rpc('get_my_premium_trial_schedule_v1')
+      const dates = !scheduleError && schedule && typeof schedule === 'object' ? schedule as {
+        started_at?: string | null
+        expires_at?: string | null
+      } : null
+      const startedMs = dates?.started_at ? Date.parse(dates.started_at) : Number.NaN
+      const expiresMs = dates?.expires_at ? Date.parse(dates.expires_at) : accessUntilMs
+      trialStartsAtLaunch = Number.isFinite(startedMs) && startedMs > Date.now()
+      // A user's trial can never display more days than its recorded duration;
+      // when start is in the future show the seven-day entitlement at launch.
+      const remainingMs = Math.max(0, expiresMs - Math.max(Date.now(), Number.isFinite(startedMs) ? startedMs : Date.now()))
+      trialDaysRemaining = Math.max(1, Math.min(7, Math.ceil(remainingMs / 86400000)))
+    }
     setIsPremium(resolvedIsPremium)
-    setPremiumTrialDaysLeft(
-      resolvedIsPremium &&
-      row?.stripe_status === 'free_trial' &&
-      hasCurrentAccessUntil
-        ? Math.max(1, Math.ceil((accessUntilMs - Date.now()) / 86400000))
-        : null
-    )
+    setPremiumTrialDaysLeft(trialDaysRemaining)
+    setPremiumTrialStartsAtLaunch(trialStartsAtLaunch)
     setIsPremiumStatusLoading(false)
   }, [])
 
@@ -1153,7 +1170,9 @@ export default function Header({
             <>
               <Crown size={15} aria-hidden="true" />
               <span>{premiumTrialDaysLeft !== null
-                ? t('trial.countdown', { ns: 'proPackages', count: premiumTrialDaysLeft })
+                ? premiumTrialStartsAtLaunch
+                  ? t('trial.scheduledCountdown', { ns: 'proPackages', count: premiumTrialDaysLeft })
+                  : t('trial.countdown', { ns: 'proPackages', count: premiumTrialDaysLeft })
                 : t('header.premium')}</span>
             </>
           ) : (
