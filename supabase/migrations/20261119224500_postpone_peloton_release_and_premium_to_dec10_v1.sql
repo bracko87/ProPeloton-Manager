@@ -17,6 +17,23 @@ declare
   v_old_message text:='ProPeloton Manager officially released on 1 December 2026 at 07:00 CET.';
   v_new_message text:='ProPeloton Manager officially released on 10 December 2026 at 07:00 CET.';
 begin
+  -- This migration only RESCHEDULES an already-approved historical release.
+  -- A fresh installation intentionally has no release-control row or launch
+  -- cron. Do not invent one or rewrite premium trials in that environment.
+  if not exists (
+    select 1 from private.ppm_december_2026_release_control_v1 where id=true
+  ) then
+    if exists (select 1 from public.premium_trial_launch_v1 where id=true)
+       or exists (
+         select 1 from public.premium_welcome_trials_v1
+         where started_at in (v_old,v_new)
+       ) then
+      raise exception 'Partial release records exist without the release control';
+    end if;
+    raise notice 'Skipping one-time December release reschedule: no prior schedule on fresh install';
+    return;
+  end if;
+
   perform pg_advisory_xact_lock(hashtext('ppm-december-2026-release-v1')::bigint);
   select release_at,status,launched_at into v_current,v_status,v_published
   from private.ppm_december_2026_release_control_v1 where id=true for update;
