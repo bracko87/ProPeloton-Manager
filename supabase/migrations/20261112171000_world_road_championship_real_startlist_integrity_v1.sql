@@ -62,7 +62,7 @@ begin
     'universal_hierarchy_policy','worldteam_proteam_continental_amateur_v1'
   );
 end;
-$function$
+$function$;
 
 -- Source: public.universal_race_stage_get_calculation_payload_full_v1(uuid)
 CREATE OR REPLACE FUNCTION public.universal_race_stage_get_calculation_payload_full_v1(p_stage_id uuid)
@@ -368,7 +368,7 @@ begin
     )
   );
 end;
-$function$
+$function$;
 
 -- Source: public.world_road_championship_process_results_base_v1()
 CREATE OR REPLACE FUNCTION public.world_road_championship_process_results_base_v1()

@@ -62,8 +62,8 @@ begin
     'request_id',v_request_id,
     'prelaunch_hold',v_hold
   );
-end
-$function$
+end;
+$function$;
 
 
 revoke all on function control_center_private.flush_system_health_snapshot_v1()

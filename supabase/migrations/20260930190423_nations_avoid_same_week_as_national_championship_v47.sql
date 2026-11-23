@@ -46,7 +46,7 @@ AS $function$
         )
       )
   );
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.schedule_nations_edition_v1(p_edition_id uuid)
@@ -194,7 +194,7 @@ begin
     'rounds', v_schedule
   );
 end;
-$function$
+$function$;
 
 
 do $$

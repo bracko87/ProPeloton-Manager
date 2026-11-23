@@ -727,7 +727,7 @@ begin
     'team_count',v_team_count
   );
 end;
-$function$
+$function$;
 
 
 create or replace function private.shadow_complete_national_championship_stage_v1(
@@ -1501,7 +1501,7 @@ begin
     'live_game_state_after',v_live_state_after
   );
 end;
-$function$
+$function$;
 
 
 revoke all on function private.run_midseason_national_migration_shadow_v4(date) from public;

@@ -25,7 +25,7 @@ AS $function$
      and g.season_number=1 and g.month_number=1 and g.day_number=1
      and g.hour_number=1 and g.minute_number=0
  )
-$function$
+$function$;
 
 
 revoke all on function private.ppm_control_center_verified_launch_hold_v1() from public,anon,authenticated;
@@ -189,7 +189,7 @@ begin
 
   return v_request_id;
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION control_center_private.build_admin_module_snapshot(p_module_key text)
@@ -217,8 +217,8 @@ begin
   end if;
 
   return control_center_private.build_admin_module_snapshot_legacy_v48(p_module_key);
-end
-$function$
+end;
+$function$;
 
 
 revoke all on function control_center_private.build_admin_module_snapshot(text) from public,anon,authenticated;

@@ -58,7 +58,7 @@ SELECT EXISTS (
         <=coalesce(s.distance_km,0)*cfg.preferred_route_elevation_per_km_max
     )
 );
-$function$
+$function$;
 
 -- public.national_championship_route_preflight_v1(integer)
 CREATE OR REPLACE FUNCTION public.national_championship_route_preflight_v1(p_season_number integer)
@@ -109,7 +109,7 @@ SELECT jsonb_build_object(
  ) ORDER BY country_code) FILTER(WHERE reason IS NOT NULL),'[]'::jsonb)
 )
 FROM checked;
-$function$
+$function$;
 
 -- public.national_championship_require_route_before_lock_v1()
 CREATE OR REPLACE FUNCTION public.national_championship_require_route_before_lock_v1()
@@ -143,8 +143,8 @@ BEGIN
     END IF;
   END IF;
   RETURN NEW;
-END
-$function$
+end;
+$function$;
 
 -- public.process_championship_calendar_draw_v1()
 CREATE OR REPLACE FUNCTION public.process_championship_calendar_draw_v1()
@@ -356,7 +356,7 @@ begin
     'health',v_health
   );
 end;
-$function$
+$function$;
 
 -- Protect every new schedule lock, including non-calendar-draw callers.
 DROP TRIGGER IF EXISTS national_championship_require_route_before_lock_v1

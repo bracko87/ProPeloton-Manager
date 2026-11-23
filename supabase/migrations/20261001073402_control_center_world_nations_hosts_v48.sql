@@ -105,7 +105,7 @@ AS $function$
       ) x
     ),'[]'::jsonb)
   );
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION control_center_private.build_admin_module_snapshot(p_module_key text)
@@ -121,7 +121,7 @@ begin
 
   return control_center_private.build_admin_module_snapshot_legacy_v48(p_module_key);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION control_center_private.admin_module_status(p_module_key text)
@@ -145,7 +145,7 @@ begin
 
   return control_center_private.admin_module_status_legacy_v48(p_module_key);
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION control_center_private.push_admin_modules_safety()

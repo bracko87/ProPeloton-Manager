@@ -48,8 +48,8 @@ begin
   group by t.created_at,t.id,t.type,tt.name,tt.category,t.metadata
   order by t.created_at desc
   limit greatest(p_limit,1);
-end
-$function$
+end;
+$function$;
 
 
 revoke all on function public.finance_get_club_statement_admin(uuid,integer,timestamptz)
