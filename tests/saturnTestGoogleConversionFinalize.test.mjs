@@ -32,12 +32,16 @@ test('Google finalizer is idempotent and never resets financial or trial state',
 test('Google linking uses persisted original Auth client, never generic new-account OAuth', () => {
  assert.match(ui, /testClient\.auth\.linkIdentity\(\{/)
  assert.match(ui, /provider: 'google'/)
- assert.ok(ui.includes('redirectTo: window.location.origin + window.location.pathname'))
+ assert.match(ui, /redirectTo: googleOAuthRedirect\(\)/)
+ assert.match(ui, /saveGoogleOAuthIntent\(\{ kind: 'guest_link', userId: originId \}\)/)
+ assert.match(ui, /clearGoogleOAuthIntent\(\)/)
  assert.doesNotMatch(ui, /signInWithOAuth\(|signUp\(/)
  assert.match(client, /export const testClient = supabase/)
  assert.match(gameClient, /detectSessionInUrl: true/)
  assert.match(gameClient, /persistSession: true/)
- assert.match(gameClient, /persistSession: false/)
+ assert.match(gameClient, /flowType: SATURN_GUEST_AUTH_MODE \? 'implicit' : 'pkce'/)
+ assert.match(gameClient, /storage: regularAuthStorage/)
+ assert.match(gameClient, /storage: guestSessionStorage/)
 })
 
 test('Google registration success requires provider, UUID and server confirmation', () => {
