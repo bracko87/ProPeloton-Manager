@@ -322,6 +322,7 @@
     "continueFree": "Nastavi besplatno",
     "viewPro": "Pregledaj Pro pakete",
     "countdown": "Premium proba: još {{count}} dana",
+    "scheduledCountdown": "Premium probno razdoblje: {{count}} dana od početka igre",
     "freeTrialStatus": "Besplatno Premium probno razdoblje",
     "accessUntil": "Besplatan Premium pristup traje do {{date}}. Pretplata i plaćanje nisu aktivirani.",
     "subscriptionOffer": "Sviđa vam se Premium? Odaberite plaćeni paket ispod kako biste zadržali dodatne mogućnosti."
