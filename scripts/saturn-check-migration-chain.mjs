@@ -7,6 +7,7 @@
  * preview branch; --require-branch-safe deliberately fails in that case.
  */
 import { readdirSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const ROOT = fileURLToPath(new URL('../supabase/migrations/', import.meta.url))
@@ -55,7 +56,7 @@ export function analyzeMigrationFilenames(files, productionFirst = PRODUCTION_FI
   }
 }
 
-if (process.argv[1] && fileURLToPath(import.meta.url) === fileURLToPath(new URL('file://' + process.argv[1]))) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
   const report = analyzeMigrationFilenames(readdirSync(ROOT))
   console.log(JSON.stringify(report, null, 2))
   if (report.errors.length) process.exitCode = 1
