@@ -12,6 +12,16 @@ on:
       - 'supabase/migrations/20260930185828_nations_stable_groups_capacity_v46.sql'
       - 'tests/saturnWorldNationsFunctionTerminator.test.mjs'
       - 'scripts/saturn-audit-sql-terminators.mjs'
+      - 'supabase/migrations/20260930190423_nations_avoid_same_week_as_national_championship_v47.sql'
+      - 'supabase/migrations/20261001073328_national_association_next_season_hosting_v48.sql'
+      - 'supabase/migrations/20261001073402_control_center_world_nations_hosts_v48.sql'
+      - 'supabase/migrations/20261001153500_unified_race_preparation_national_events_v55.sql'
+      - 'supabase/migrations/20261002002500_midseason_national_shadow_fastpath_v4.sql'
+      - 'supabase/migrations/20261112171000_world_road_championship_real_startlist_integrity_v1.sql'
+      - 'supabase/migrations/20261112174500_national_championship_all_seasons_route_preflight_v1.sql'
+      - 'supabase/migrations/20261119115500_secure_admin_finance_statement_rpc_v1.sql'
+      - 'supabase/migrations/20261119135500_control_center_verified_release_hold_reporting_v1.sql'
+      - 'supabase/migrations/20261119142500_control_center_verified_pause_health_heartbeat_v1.sql'
       - 'supabase/baseline_reproducibility_smoke.sql'
   workflow_dispatch:
 
