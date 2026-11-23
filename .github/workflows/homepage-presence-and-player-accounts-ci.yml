@@ -1,0 +1,49 @@
+name: Homepage online players and guest accounts (no deploy)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/components/analytics/SiteAnalyticsTracker.tsx'
+      - 'src/pages/Home.tsx'
+      - 'src/i18n/locales/**/home.json'
+      - 'supabase/migrations/20261123110440_homepage_online_player_presence_and_guest_account_totals_v1.sql'
+      - 'tests/homepageOnlinePresence.test.mjs'
+      - '.github/workflows/homepage-presence-and-player-accounts-ci.yml'
+  pull_request:
+    paths:
+      - 'src/components/analytics/SiteAnalyticsTracker.tsx'
+      - 'src/pages/Home.tsx'
+      - 'src/i18n/locales/**/home.json'
+      - 'supabase/migrations/20261123110440_homepage_online_player_presence_and_guest_account_totals_v1.sql'
+      - 'tests/homepageOnlinePresence.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Check guest presence and frontend build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Verify online/account tracking contract
+        run: node --test tests/homepageOnlinePresence.test.mjs
+      - name: Validate eight languages and build
+        run: npm run build
+      - name: Verify player presence was compiled
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s dist/index.html
+          grep -Fq 'touch_online_player_v1' dist/main.js
+          grep -Fq 'Total Player Accounts' dist/main.js
+          echo "Checked compiled homepage presence; no Netlify deploy was triggered."
