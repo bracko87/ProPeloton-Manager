@@ -1,5 +1,11 @@
 name: Saturn 14-Day Test Account — Review
 on:
+  push:
+    paths:
+      - 'tests/saturn*.test.mjs'
+      - 'supabase/migrations/*saturn*.sql'
+      - 'supabase/baseline_reproducibility_smoke.sql'
+      - '.github/workflows/saturn-full-game-test-account-review.yml'
   pull_request:
     paths:
       # New Saturn regression files and CAPTCHA must trigger CI automatically.
