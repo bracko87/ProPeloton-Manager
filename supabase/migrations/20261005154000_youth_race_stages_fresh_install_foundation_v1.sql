@@ -30,3 +30,12 @@ create index if not exists youth_race_stages_race_date_idx
 -- do not make the underlying relation directly available to game clients.
 alter table public.youth_race_stages enable row level security;
 revoke all on public.youth_race_stages from anon, authenticated;
+
+-- The same stage-runtime contract also reads/writes race-level start-time
+-- assignment fields.  Earlier Youth race foundations lack these columns.
+alter table public.youth_races
+  add column if not exists start_time_region_code text,
+  add column if not exists planned_start_hour_number smallint,
+  add column if not exists planned_start_minute smallint,
+  add column if not exists planned_start_time_label text,
+  add column if not exists planned_start_assigned_at timestamptz;
