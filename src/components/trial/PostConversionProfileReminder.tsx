@@ -1,4 +1,4 @@
-/** Optional, non-blocking conversion completion reminder; never shown to normal registrants. */
+/** Non-blocking one-time setup reminder after guest conversion or direct Google signup. */
 import React from 'react'
 import { Link } from 'react-router'
 import { useAuth } from '../../context/AuthProvider'
@@ -10,6 +10,7 @@ type Missing = {
   birthday: boolean
   jersey: boolean
   logo: boolean
+  source: 'converted_guest' | 'direct_google'
 }
 
 const REMINDER_KEY_PREFIX = 'ppm-converted-profile-reminder-v1:'
@@ -26,6 +27,9 @@ export default function PostConversionProfileReminder(): JSX.Element | null {
       return
     }
     const userId = user.id
+    // A Google-created account has its first verified Google provider already
+    // in Supabase Auth, unlike an older email account that links Google later.
+    const isDirectGoogleSignup = user.app_metadata?.provider === 'google'
     let active = true
     const key = REMINDER_KEY_PREFIX + userId
     const inspect = async () => {
@@ -33,12 +37,25 @@ export default function PostConversionProfileReminder(): JSX.Element | null {
         .from('saturn_test_accounts_v1')
         .select('club_id,converted_at')
         .eq('user_id', userId).maybeSingle()
-      if (trialError || !converted?.converted_at || !converted.club_id || !active) return
+      if (!active || trialError) return
+      const convertedClubId = converted?.converted_at ? converted.club_id : null
+      if (!convertedClubId && !isDirectGoogleSignup) return
+
+      // Google signups do not have a Saturn guest-lifecycle row. Discover the
+      // REAL owner club only through the existing authenticated server RPC;
+      // do not create or claim a club from the UI.
+      let clubId: string | null = convertedClubId
+      if (!clubId) {
+        const { data: ownedClubId, error: clubError } = await supabase.rpc('get_my_club_id')
+        if (!active || clubError || typeof ownedClubId !== 'string') return
+        clubId = ownedClubId
+      }
+      if (!clubId) return
 
       const [profileResult, clubResult, kitResult] = await Promise.all([
         supabase.from('profiles').select('username,first_name,last_name,city,country,birthday_month,birthday_day,birthday_locked').eq('id',userId).maybeSingle(),
-        supabase.from('clubs').select('id,name,logo_path').eq('id',converted.club_id).maybeSingle(),
-        supabase.from('team_kits').select('id,config').eq('team_id',converted.club_id).eq('name','home').maybeSingle(),
+        supabase.from('clubs').select('id,name,logo_path').eq('id',clubId).maybeSingle(),
+        supabase.from('team_kits').select('id,config').eq('team_id',clubId).eq('name','home').maybeSingle(),
       ])
       if (!active || profileResult.error || clubResult.error || kitResult.error ||
           !profileResult.data || !clubResult.data) return
@@ -46,11 +63,12 @@ export default function PostConversionProfileReminder(): JSX.Element | null {
       const club = clubResult.data
       const status: Missing = {
         name: club.name,
-        personal: !profile.username || !profile.first_name || !profile.last_name || !profile.city || !profile.country,
+        personal: !profile.username || /^mgr_[a-f0-9]{20}$/i.test(profile.username) || !profile.first_name || !profile.last_name || !profile.city || !profile.country,
         birthday: (!profile.birthday_locked && (profile.birthday_month == null || profile.birthday_day == null)),
         jersey: !kitResult.data?.config,
         logo: !club.logo_path || club.logo_path.startsWith('data:image/svg+xml;base64,') ||
           club.logo_path.startsWith('generated/base-'),
+        source: convertedClubId ? 'converted_guest' : 'direct_google',
       }
       if (!status.personal && !status.birthday && !status.jersey && !status.logo) return
       if (!active) return
@@ -85,7 +103,7 @@ export default function PostConversionProfileReminder(): JSX.Element | null {
             aria-label="Close setup reminder" onClick={dismiss}>✕</button>
         </div>
         <div className="space-y-4 px-6 py-5 text-sm text-gray-700">
-          <p>Your team <strong>{missing.name}</strong> is registered. Some optional personal and team details were skipped when you converted your test account. You can complete them now or later.</p>
+          <p>Your team <strong>{missing.name}</strong> is registered. {missing.source === 'direct_google' ? 'Some optional details were skipped when you created your account with Google.' : 'Some optional details were skipped when you converted your guest account.'} You can complete them now or later.</p>
           <div className="space-y-3">
             <div className="rounded-xl border border-gray-200 p-4">
               <h3 className="font-semibold text-gray-950">Manager details</h3>
