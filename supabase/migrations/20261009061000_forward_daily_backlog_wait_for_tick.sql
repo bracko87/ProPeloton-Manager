@@ -39,7 +39,7 @@ begin
 end;
 $function$;
 
-do $
+do $$
 declare v_jobid bigint;
 begin
   -- The fresh-install prerequisite is intentionally inactive, as it is in
@@ -52,4 +52,4 @@ begin
     perform cron.alter_job(job_id=>v_jobid,schedule=>'*/5 * * * *');
   end if;
 end;
-$;
+$$;
