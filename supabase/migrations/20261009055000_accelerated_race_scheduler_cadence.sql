@@ -21,7 +21,17 @@ begin
     );
   end loop;
 
+  -- Isolated fresh installations have neither legacy cron identity.
+  -- Do not create a fake runner that points to a production Edge Function or
+  -- requires production Vault secrets. Scheduler setup belongs to isolated staging.
+  -- Fail closed when only part of an existing scheduler pair is configured.
   if (select count(*) from cron.job
+      where jobname in (
+        'race-engine-due-stage-watchdog-v1',
+        'universal-race-stage-runner-supabase-v1'
+      )) = 0 then
+    raise notice 'Race scheduler cron cadence deferred: no legacy jobs on fresh install';
+  elsif (select count(*) from cron.job
       where jobname in (
         'race-engine-due-stage-watchdog-v1',
         'universal-race-stage-runner-supabase-v1'
