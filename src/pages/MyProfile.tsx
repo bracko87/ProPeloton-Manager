@@ -209,8 +209,9 @@ export default function MyProfilePage(): JSX.Element {
 
       const row = (data as ProfileRow | null) ?? null
       setProfile(row)
-      // Only registered players whose permanent account came from a trial
-      // may fill a birthday omitted during the shortened conversion flow.
+      // Converted guests and newly created Google accounts could not provide
+      // their optional birthday during the conversion/OAuth flow.
+      // The server validates identity and irreversibly locks the first save.
       setCanAddBirthdayOnce(false)
       if (row && user.is_anonymous === false &&
           !row.birthday_locked && !row.birthday_set_at &&
@@ -221,7 +222,8 @@ export default function MyProfilePage(): JSX.Element {
           .select('converted_at')
           .eq('user_id', user.id)
           .maybeSingle()
-        if (!convertedError && converted?.converted_at) setCanAddBirthdayOnce(true)
+        if ((!convertedError && converted?.converted_at) ||
+            user.app_metadata?.provider === 'google') setCanAddBirthdayOnce(true)
       }
 
       const initialEmail = row?.email || user.email || ''
@@ -538,7 +540,7 @@ export default function MyProfilePage(): JSX.Element {
                 </div>
                 <div className="mt-1 text-xs text-gray-500">
                   {canAddBirthdayOnce
-                    ? 'Because you registered from a test account without a birthday, you may enter it once. After saving, it cannot be changed.'
+                    ? 'You skipped the optional birthday when registering or converting your account. You can enter it once; after saving, it cannot be changed.'
                     : t('profile.birthdayHelp')}
                 </div>
                 {canAddBirthdayOnce && (
