@@ -304,7 +304,9 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       storage: regularAuthStorage,
       autoRefreshToken: true,
     }),
-    flowType: 'pkce',
+    // Preserve the already-verified anonymous/email conversion flow. The
+    // ordinary Google login client uses PKCE and a tab-scoped verifier.
+    flowType: SATURN_GUEST_AUTH_MODE ? 'implicit' : 'pkce',
     // One Auth client consumes redirect credentials and refreshes tokens.
     detectSessionInUrl: true
   },
