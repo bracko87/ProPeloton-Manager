@@ -175,7 +175,7 @@ begin
     end;
   end loop;
 end;
-$function$
+$function$;
 
 
 select control_center_private.request_admin_module_snapshot('world-nations-hosts',0);
