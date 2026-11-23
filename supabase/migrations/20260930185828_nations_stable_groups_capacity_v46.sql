@@ -51,7 +51,7 @@ begin
     'rounds',v_rounds
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.rebuild_planned_nations_structure_v1(p_edition_id uuid)
@@ -441,7 +441,7 @@ begin
     'plan',v_plan
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION private.sync_nations_open_field_draw_v1(p_edition_id uuid)
@@ -605,5 +605,5 @@ begin
     'structure',v_rebuild
   );
 end;
-$function$
+$function$;
 
