@@ -20,7 +20,7 @@ test('Youth race stages exist before downstream schema changes', () => {
   }
   assert.match(sql, /enable row level security/i)
   assert.match(sql, /revoke all on public\.youth_race_stages from anon, authenticated/i)
-  assert.match(sql, /alter table public\\.youth_races/i)
+  assert.match(sql, /alter table public\.youth_races/i)
   for (const field of ['start_time_region_code','planned_start_hour_number',
     'planned_start_minute','planned_start_time_label','planned_start_assigned_at']) {
     assert.match(sql, new RegExp('add column if not exists ' + field + '\\b'))
