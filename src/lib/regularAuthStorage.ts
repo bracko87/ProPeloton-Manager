@@ -7,7 +7,8 @@
 const pending = new Map<string, string>()
 
 function verifierKey(key: string): boolean {
-  return key.endsWith('-code-verifier')
+  // Supabase may suffix the verifier key with a per-flow ID.
+  return key.includes('-code-verifier')
 }
 
 function verifierStorage(): Storage | null {
