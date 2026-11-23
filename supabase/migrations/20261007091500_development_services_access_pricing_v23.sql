@@ -352,6 +352,7 @@ begin
     from pg_proc p
     join pg_namespace n on n.oid = p.pronamespace
     where n.nspname in ('public', 'private')
+      and p.prokind = 'f' -- pg_get_functiondef does not support aggregate definitions
       and p.proname not in (
         'get_my_youth_academy_v1',
         'get_my_youth_academy_base_v23',
