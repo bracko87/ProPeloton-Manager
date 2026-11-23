@@ -13,11 +13,13 @@ alter table public.club_creation_test_exceptions enable row level security;
 
 revoke all on table public.club_creation_test_exceptions from anon, authenticated;
 
+-- This historical exception applies only to an existing testing profile.
+-- Fresh installations do not contain this production-era account.
 insert into public.club_creation_test_exceptions(user_id,reason)
-values(
-  '13747fea-414a-4fa6-87c6-c5e47de373d5'::uuid,
+select p.id,
   'Single testing exception for Soda_Meckel while public club creation is disabled.'
-)
+from public.profiles p
+where p.id='13747fea-414a-4fa6-87c6-c5e47de373d5'::uuid
 on conflict(user_id) do update
 set reason=excluded.reason,
     revoked_at=null;
