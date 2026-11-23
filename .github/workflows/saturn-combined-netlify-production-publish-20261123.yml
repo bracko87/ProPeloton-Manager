@@ -74,7 +74,7 @@ jobs:
           with open("netlify.toml","rb") as f:
               env=tomllib.load(f)["context"]["production"]["environment"]
           assert env["VITE_SATURN_TEST_ACCOUNTS_ENABLED"]=="true", "Guest Mode unexpectedly disabled"
-          assert env["VITE_SATURN_PUBLIC_SIGNUP_ENABLED"]=="false", "Public signup unexpectedly enabled"
+          assert env["VITE_SATURN_PUBLIC_SIGNUP_ENABLED"]=="true", "Public Guest Mode unexpectedly disabled"
           assert env["VITE_SATURN_TURNSTILE_SITE_KEY"].startswith("0x"), "Turnstile key missing"
           print("Verified guest/registration production flags")
           PY
