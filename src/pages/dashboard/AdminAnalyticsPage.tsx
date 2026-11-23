@@ -361,7 +361,7 @@ export default function AdminAnalyticsPage(): JSX.Element {
               <p className="mt-1 text-2xl font-extrabold text-slate-900">{formatNumber(data.freshness.recent_visitors_5m)}</p>
             </div>
             <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-semibold text-slate-600">Registered players · last 5 min</p>
+              <p className="text-xs font-semibold text-slate-600">Signed-in players (including guests) · last 5 min</p>
               <p className="mt-1 text-2xl font-extrabold text-slate-900">{formatNumber(data.freshness.recent_registered_5m)}</p>
             </div>
           </div>
@@ -462,40 +462,40 @@ export default function AdminAnalyticsPage(): JSX.Element {
               icon={Activity}
             />
             <SummaryCard
-              title="Active Registered Users"
+              title="Active Signed-In Users"
               value={summary.registered_active_users}
               icon={Users}
             />
             <SummaryCard
-              title="New Registrations"
+              title="New Auth Accounts"
               value={summary.new_registrations}
               icon={UserPlus}
             />
             <SummaryCard
-              title="Total Registered Accounts"
+              title="Total Player Accounts"
               value={summary.total_registered_accounts}
               icon={Users}
             />
             <SummaryCard
               title="DAU"
               value={summary.dau}
-              subtitle="Registered users active today"
+              subtitle="Signed-in activity, including guests"
               icon={CalendarDays}
             />
             <SummaryCard
               title="WAU"
               value={summary.wau}
-              subtitle="Registered users active in 7 days"
+              subtitle="Signed-in activity, including guests"
               icon={CalendarDays}
             />
             <SummaryCard
               title="MAU"
               value={summary.mau}
-              subtitle="Registered users active in 30 days"
+              subtitle="Signed-in activity, including guests"
               icon={CalendarDays}
             />
             <SummaryCard
-              title="Anonymous Visitors"
+              title="Unidentified Visitors"
               value={summary.anonymous_visitors}
               icon={Globe2}
             />
@@ -503,7 +503,7 @@ export default function AdminAnalyticsPage(): JSX.Element {
 
           <SectionCard
             title="Daily Traffic"
-            subtitle="Unique visitors, registered active users and new registrations"
+            subtitle="Unique visitors, signed-in activity (including guests) and newly created Auth accounts"
           >
             {chartData.length === 0 ? (
               <EmptyState>No daily analytics yet.</EmptyState>
@@ -541,7 +541,7 @@ export default function AdminAnalyticsPage(): JSX.Element {
                     <Line
                       type="monotone"
                       dataKey="active_registered_users"
-                      name="Registered active users"
+                      name="Signed-in active users"
                       stroke="#2563eb"
                       strokeWidth={2}
                       dot={false}
