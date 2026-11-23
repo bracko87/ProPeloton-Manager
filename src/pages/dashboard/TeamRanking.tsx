@@ -887,6 +887,35 @@ function isRelegationZone(
   return relegationCount > 0 && row.position > totalRows - relegationCount
 }
 
+// Zone colors must override the table's alternating row backgrounds.
+function getStandingZoneColor(
+  row: StandingRow,
+  totalRows: number,
+  option: StandingOption,
+  isMyTeam: boolean,
+): string | undefined {
+  if (isRelegationZone(row, totalRows, option)) return '#fef2f2'
+
+  if (option.type === 'TIER2' || option.type === 'TIER3') {
+    if (row.position === 1) return '#f0fdf4'
+    if (row.position >= 2 && row.position <= 4) return '#eff6ff'
+  }
+
+  if (option.type === 'AMATEUR') {
+    if (option.division === 'OCEANIA') {
+      if (row.position >= 1 && row.position <= 3) return '#f0fdf4'
+    } else if (isEuropeanAmateurDivision(option.division)) {
+      if (row.position === 1) return '#f0fdf4'
+      if (row.position >= 2 && row.position <= 3) return '#eff6ff'
+    } else {
+      if (row.position === 1) return '#f0fdf4'
+      if (row.position >= 2 && row.position <= 4) return '#eff6ff'
+    }
+  }
+
+  return isMyTeam ? '#fefce8' : undefined
+}
+
 function getRowClass(
   row: StandingRow,
   totalRows: number,
@@ -1823,10 +1852,13 @@ export default function TeamRankingPage(): JSX.Element {
                         isMyTeam,
                       )}
                       style={{
-                        // Inline color wins over global even/odd table striping.
-                        backgroundColor: isRelegationZone(row, selectedRows.length, selectedStanding)
-                          ? '#fef2f2'
-                          : undefined,
+                        // Promotion/playoff/relegation coloring takes priority over zebra stripes.
+                        backgroundColor: getStandingZoneColor(
+                          row,
+                          selectedRows.length,
+                          selectedStanding,
+                          isMyTeam,
+                        ),
                       }}
                     >
                       <td className="px-4 py-3 text-sm font-semibold text-slate-900">
