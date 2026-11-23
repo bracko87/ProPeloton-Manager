@@ -1,0 +1,50 @@
+name: Saturn private schema-only staging export safeguards (no deploy)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'scripts/saturn_export_staging_baseline.sh'
+      - 'scripts/saturn_export_staging_baseline.ps1'
+      - 'supabase/tests/saturn_managed_auth_hooks_readonly.sql'
+      - 'tests/saturnSchemaOnlyStagingExportSafety.test.mjs'
+      - '.github/workflows/saturn-staging-schema-export-safety.yml'
+  pull_request:
+    paths:
+      - 'scripts/saturn_export_staging_baseline.sh'
+      - 'scripts/saturn_export_staging_baseline.ps1'
+      - 'supabase/tests/saturn_managed_auth_hooks_readonly.sql'
+      - 'tests/saturnSchemaOnlyStagingExportSafety.test.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate schema-only and read-only export behavior
+        run: node --test tests/saturnSchemaOnlyStagingExportSafety.test.mjs
+      - name: Validate Bash exporter syntax
+        run: bash -n scripts/saturn_export_staging_baseline.sh
+      - name: Validate Windows PowerShell exporter syntax without executing it
+        shell: pwsh
+        run: |
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            'scripts/saturn_export_staging_baseline.ps1',
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | Format-List | Out-String | Write-Error
+            exit 1
+          }
+          Write-Host 'PowerShell syntax valid. No production DB connection made.'
