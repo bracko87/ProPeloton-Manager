@@ -71,6 +71,16 @@ type TrafficSourceRow = {
   unique_visitors: number
 }
 
+type OnlinePresence = {
+  generated_at: string
+  window_seconds: number
+  online_total: number
+  online_guest: number
+  online_registered: number
+  online_converted_guest: number
+  last_presence_at: string | null
+}
+
 type AnalyticsDashboard = {
   generated_at?: string
   freshness?: {
@@ -199,6 +209,8 @@ export default function AdminAnalyticsPage(): JSX.Element {
   const [data, setData] = useState<AnalyticsDashboard | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [onlinePresence, setOnlinePresence] = useState<OnlinePresence | null>(null)
+  const [onlinePresenceError, setOnlinePresenceError] = useState<string | null>(null)
   const [lastLoadedAt, setLastLoadedAt] = useState<Date | null>(null)
   const requestSequence = useRef(0)
 
@@ -217,6 +229,20 @@ export default function AdminAnalyticsPage(): JSX.Element {
       setData((result ?? null) as AnalyticsDashboard | null)
       setLastLoadedAt(new Date())
       setError(null)
+
+      // Presence uses a distinct three-minute Auth heartbeat, not pageview
+      // analytics. A failed protected RPC must never display fake zeroes.
+      const { data: presence, error: presenceError } = await supabase.rpc(
+        'get_admin_online_presence_breakdown_v1',
+      )
+      if (request !== requestSequence.current) return
+      if (presenceError || !presence || typeof presence !== 'object') {
+        setOnlinePresence(null)
+        setOnlinePresenceError('Online account activity is temporarily unavailable.')
+      } else {
+        setOnlinePresence(presence as OnlinePresence)
+        setOnlinePresenceError(null)
+      }
     } catch (loadError: any) {
       if (request !== requestSequence.current) return
       console.error('Failed to load admin analytics:', loadError)
@@ -343,6 +369,48 @@ export default function AdminAnalyticsPage(): JSX.Element {
             Last recorded page navigation: {formatTimestamp(data.freshness.last_pageview_at)}
             {' · '}Last recorded session activity: {formatTimestamp(data.freshness.last_session_at)}
           </p>
+        </SectionCard>
+      ) : null}
+
+      {onlinePresence ? (
+        <SectionCard
+          title="Online managers · last 3 minutes"
+          subtitle="Signed-in activity from visible browser tabs. Includes guest accounts without an email. This is recent heartbeat activity, not a guaranteed live socket connection."
+        >
+          <div className="grid gap-3 sm:grid-cols-3">
+            <SummaryCard
+              title="Online accounts"
+              value={onlinePresence.online_total}
+              subtitle="Guest + permanent"
+              icon={Users}
+            />
+            <SummaryCard
+              title="Guests / unfinished trials"
+              value={onlinePresence.online_guest}
+              subtitle="Anonymous or not yet converted"
+              icon={Activity}
+            />
+            <SummaryCard
+              title="Permanent accounts"
+              value={onlinePresence.online_registered}
+              subtitle="Includes converted guest accounts"
+              icon={UserPlus}
+            />
+          </div>
+          <p className="mt-4 text-xs text-slate-600">
+            Converted guests online: {formatNumber(onlinePresence.online_converted_guest)}
+            {' · '}Last recorded heartbeat: {onlinePresence.last_presence_at
+              ? formatTimestamp(onlinePresence.last_presence_at)
+              : 'None in this 3-minute window'}
+            {' · '}Generated: {formatTimestamp(onlinePresence.generated_at)}
+          </p>
+        </SectionCard>
+      ) : onlinePresenceError ? (
+        <SectionCard
+          title="Online managers · last 3 minutes"
+          subtitle="Recently active guest and registered managers."
+        >
+          <EmptyState>{onlinePresenceError}</EmptyState>
         </SectionCard>
       ) : null}
 
