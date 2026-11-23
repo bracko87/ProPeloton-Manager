@@ -120,6 +120,18 @@ GRANT EXECUTE ON FUNCTION private.game_world_reset_restore_s1_national_world_v1(
 -- club, unapproved nationality or missing live owned club.
 DO $check$
 BEGIN
+ -- This assertion validates a captured 499-club production reset snapshot.
+ -- On a fresh database with no reset snapshot and no live owned clubs, only
+ -- install the guarded reset function above. Any partial/real snapshot keeps
+ -- the full historical failure conditions below.
+ IF (SELECT count(*) FROM public.game_world_reset_s1_competition_baseline_v1)=0
+   AND NOT EXISTS (
+     SELECT 1 FROM public.clubs c
+     WHERE c.owner_user_id IS NOT NULL AND c.deleted_at IS NULL
+   ) THEN
+   RAISE NOTICE 'Skipping S1 restart snapshot verification: no historical player baseline';
+   RETURN;
+ END IF;
  IF (SELECT count(*) FROM public.game_world_reset_s1_competition_baseline_v1)<>499
  OR EXISTS(SELECT 1 FROM public.game_world_reset_s1_competition_baseline_v1 b JOIN public.clubs c ON c.id=b.club_id WHERE c.deleted_at IS NOT NULL OR (c.owner_user_id IS NULL AND c.is_ai=false))
  OR EXISTS(SELECT 1 FROM public.game_world_reset_s1_competition_baseline_v1 b WHERE NOT EXISTS(SELECT 1 FROM private.game_world_reset_national_countries_v1 t WHERE t.country_code=b.country_code))
