@@ -131,5 +131,37 @@ export default function SiteAnalyticsTracker(): null {
     }
   }, [loading, location.pathname, user?.id])
 
+  // Online presence is separate from navigation analytics: heartbeats must not
+  // increase pageviews or sessions. Supabase Auth guest users have a real user
+  // ID even when they have no email, so they use the same protected endpoint.
+  useEffect(() => {
+    if (loading || !user?.id || typeof window === 'undefined') return
+    if (!PRODUCTION_HOSTS.has(window.location.hostname.toLowerCase())) return
+
+    let stopped = false
+    const touchPresence = () => {
+      if (stopped || document.visibilityState !== 'visible') return
+      void supabase.rpc('touch_online_player_v1').then(({ error }) => {
+        if (!stopped && error) console.warn('Online presence update failed:', error.message)
+      }).catch(error => {
+        if (!stopped) console.warn('Online presence update failed:', error)
+      })
+    }
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') touchPresence()
+    }
+
+    touchPresence()
+    const timer = window.setInterval(touchPresence, 60_000)
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', touchPresence)
+    return () => {
+      stopped = true
+      window.clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', touchPresence)
+    }
+  }, [loading, user?.id])
+
   return null
 }
