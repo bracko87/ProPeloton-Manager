@@ -21,6 +21,17 @@ declare
   v_jersey_url text;
   v_prefix text := 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/';
 begin
+  -- No production-era AI clubs exist in a fresh isolated database. This is
+  -- a one-time repair of existing legacy identities, not a club generator.
+  -- If any legacy AI clubs exist, keep every original strict verification.
+  if not exists (
+    select 1 from public.clubs c
+    where c.is_ai is true and c.created_at < '2026-09-29'::timestamptz
+  ) then
+    raise notice 'Skipping legacy AI national branding restoration: no legacy AI clubs';
+    return;
+  end if;
+
   for v in
     select * from (values
       ('AU','Australia National Team','AI Teams Logo/Australia National.png','AI Teams Kits/Australia National.png'),
