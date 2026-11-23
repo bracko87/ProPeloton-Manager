@@ -1,7 +1,7 @@
 /**
- * SAT-01: full-game temporary team onboarding, behind an OFF-by-default flag.
- * This form never writes real clubs directly. The future dedicated server RPC
- * must create club + lifecycle in ONE authorized transaction.
+ * SAT-01: full-game temporary team onboarding.
+ * This form never writes real clubs directly. The server RPC creates the
+ * official club and 14-day lifecycle in one authorized transaction.
  */
 import React, { useState } from 'react'
 import SaturnPage from '../components/trial/SaturnPage'
@@ -97,7 +97,7 @@ export default function TestTeamSignupPage(): JSX.Element {
       if (previousError && previousError.name !== 'AuthSessionMissingError' && previousError.status !== 400 && previousError.status !== 401) throw previousError
       if (previous.user && !previous.user.is_anonymous) throw new Error('This browser already has a permanent account. Please use Register or Login.')
       if (!previous.user) {
-        // Production trigger continues to reject this until explicit security sign-off.
+        // Supabase Auth validates the fresh CAPTCHA token before anonymous sign-in.
         const { error: signinError } = await testClient.auth.signInAnonymously({
           options: { captchaToken },
         })
@@ -117,7 +117,7 @@ export default function TestTeamSignupPage(): JSX.Element {
       })
       if (createError?.message === 'Restricted test access: approval required') {
         setTesterReference(authenticated.user.id)
-        setError('This test is currently private. Send the tester reference below to the game administrator, then retry after approval.')
+        setError('Guest registration is temporarily restricted by the server. Contact support with the reference below if this continues.')
         return
       }
       if (createError || typeof clubId !== 'string') throw new Error(createError?.message ?? 'Club could not be created.')
@@ -158,11 +158,6 @@ export default function TestTeamSignupPage(): JSX.Element {
     <div className="mx-auto max-w-xl space-y-5">
       <h1 className="text-3xl font-semibold">Test ProPeloton for 14 days</h1>
       <p>Build a real cycling team and play the full management game. No email or password is required until you decide to register. Your first seven days include the Premium trial.</p>
-      {import.meta.env.VITE_SATURN_PUBLIC_SIGNUP_ENABLED !== 'true' && (
-        <p role="note" className="rounded-lg border border-amber-400/40 bg-amber-400/10 px-4 py-3 text-sm text-amber-100">
-          Test-team registration is currently limited to approved testers. You can request approval using the tester reference shown after attempting to create a team. Regular account registration remains available.
-        </p>
-      )}
       <p className="text-sm text-amber-300">Your test account expires after 14 days. Register before the end of day 14 to keep your team. Unregistered teams are removed on day 15. You can leave and continue on this same browser without a password. Do not clear browser data or use a shared/private browser before registration; anyone using this browser can resume the test team.</p>
       <form onSubmit={e => void begin(e)} className="space-y-4 rounded-xl bg-slate-900 p-5">
         <label className="block text-sm" htmlFor="saturn-nickname">Manager nickname</label>
