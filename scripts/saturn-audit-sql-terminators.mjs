@@ -13,7 +13,7 @@ import { fileURLToPath } from 'node:url'
 const folder = fileURLToPath(new URL('../supabase/migrations/', import.meta.url))
 const suspicious = []
 let files = 0
-const newStatement = /^(?:CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE|TRIGGER|VIEW|TABLE|INDEX)|ALTER\s+|GRANT\s+|REVOKE\s+|COMMENT\s+|DROP\s+|DO\s+\$|SELECT\\s+|WITH\\s+|INSERT\\s+INTO\\s+|UPDATE\\s+|DELETE\\s+FROM\\s+)/i
+const newStatement = /^(?:CREATE\s+(?:OR\s+REPLACE\s+)?(?:FUNCTION|PROCEDURE|TRIGGER|VIEW|TABLE|INDEX)|ALTER\s+|GRANT\s+|REVOKE\s+|COMMENT\s+|DROP\s+|DO\s+\$|SELECT\s+|WITH\s+|INSERT\s+INTO\s+|UPDATE\s+|DELETE\s+FROM\s+)/i
 
 for (const file of readdirSync(folder).filter(name => name.endsWith('.sql')).sort()) {
   files++
