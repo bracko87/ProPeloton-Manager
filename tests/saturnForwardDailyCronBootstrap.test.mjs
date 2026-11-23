@@ -28,6 +28,6 @@ test('later forward-daily migration uses complete PostgreSQL DO delimiters',()=>
     '../supabase/migrations/20261009061000_forward_daily_backlog_wait_for_tick.sql',
     import.meta.url),'utf8')
   const body=sql.slice(sql.lastIndexOf('do '))
-  assert.ok(body.startsWith('do '+String.fromCharCode(36).repeat(2)+'\\n'))
+  assert.ok(body.startsWith('do '+String.fromCharCode(36).repeat(2)+String.fromCharCode(10)))
   assert.ok(body.trimEnd().endsWith(String.fromCharCode(36).repeat(2)+';'))
 })
