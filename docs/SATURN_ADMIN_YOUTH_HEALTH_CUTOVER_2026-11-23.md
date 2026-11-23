@@ -1,36 +1,29 @@
-# SAT-13 — Admin-only youth competition health monitoring cutover
+# SAT-13 — Admin-only health-monitoring cutover
 
-**Date:** 23 November 2026. **State: Stage 1 complete in production; full cutover NOT complete.**
+**Date:** 23 November 2026. **State: Database direct-execution cutover complete; live administrator browser regression still pending.**
 
-## Confirmed problem
+## Problem and fix
 
-`public.monitor_youth_competition_health_v1()` is a publicly executable `SECURITY DEFINER` RPC with no user/admin guard. Its `private.youth_watchdog_finish_v1` dependency writes business-check logs and can create or resolve Control Center incidents. That means ordinary visitors could trigger the monitoring operation through the Data API.
+The original `public.monitor_youth_competition_health_v1()` is a `SECURITY DEFINER` function that can write business-check and Control Center incident records. It previously allowed `anon` and `authenticated` roles to invoke it directly. This was an unnecessary public execution path.
 
-The existing `src/pages/dashboard/AdminRaceOperationsPage.tsx` calls this monitor directly with the browser user's Supabase credentials, so revoking `authenticated` access abruptly would break that page. Two internal definer callers (`monitor_youth_academy_full_health_v1` and `run_hourly_game_processors_v1`) also call the original monitor.
+The older frontend invoked the original monitor directly. The updated `AdminRaceOperationsPage.tsx`, including GitHub revision `c80fc35`, instead calls `public.admin_monitor_youth_competition_health_v1()`. The replacement checks `auth.uid()` and `public.is_app_admin_v1()` before performing any monitoring. An anonymous or non-admin caller must be rejected.
 
-## Stage 1: additive, non-breaking replacement — completed
+## Production migrations applied
 
-Migration `supabase/migrations/20261123090605_saturn_admin_only_youth_competition_health_wrapper_v1.sql` adds `public.admin_monitor_youth_competition_health_v1()`:
+1. `20261123090605_saturn_admin_only_youth_competition_health_wrapper_v1.sql` created the protected admin-facing RPC and updated the source UI to use it.
+2. `20261123121513_saturn_close_legacy_public_youth_competition_monitor_v1.sql` revoked the original endpoint from `PUBLIC`, `anon` and `authenticated`.
+3. `20261123121812_saturn_restrict_raw_system_health_watchdogs_v1.sql` revoked the same direct browser privileges from the unguarded raw global health watchdog, the full youth watchdog, the special-infrastructure watchdog, and seven additional raw youth checkers.
 
-- Before the existing monitor runs, checks that `auth.uid()` is non-null and `public.is_app_admin_v1()` is true.
-- Returns `42501` for other users.
-- New wrapper is callable through PostgREST by `authenticated` only; `anon` and `service_role` have no direct grant. Internal service/cron jobs still use the original RPC.
-- Preserves the monitor's JSON response and business logic; **no health-monitoring job was executed** as part of the migration.
+**Verified in production:** all 10 raw monitor functions reject direct `anon` and `authenticated` execution by privilege inspection, while retaining `service_role`. The administrator wrapper is `authenticated`-callable with an internal administrator check, and rejects `anon`. Internal callers and wrappers are owned by `postgres` and execute as `SECURITY DEFINER`; the protected `run_system_health_watchdog_guarded_v2` is service-role-only.
 
-Frontend source is updated to call the new wrapper in `AdminRaceOperationsPage.tsx`. Existing users' currently deployed browser bundle still invokes the legacy function until a future Netlify deploy.
+The administrator System Health UI reads `get_admin_system_health_overview_v1`, `get_admin_system_incidents_v1` and `get_admin_system_runs_v1`, rather than invoking the raw health processors. The Race Operations UI uses the protected wrapper.
 
-**Verification:** catalog reads confirmed the wrapper is `SECURITY DEFINER`, anonymous EXECUTE is false, and the owner/admin check precedes the original monitor call. In a read-only SQL transaction with the `authenticated` role but no JWT, the wrapper returned expected `42501 Administrator access required`, before running the original monitor.
+## Safety and remaining checks
 
-## Stage 2: coordinated cutover — NOT done
+- No player finances, riders, teams, game clock, Premium, guest access gates or cron job states were changed by the monitoring cutover.
+- The game remains paused; do not resume the watchdog or game clock as a test.
+- The actual admin browser refresh still needs testing with a real admin session and a verified current browser bundle. Old cached frontend code calling the now-closed endpoint can fail until cache refresh.
+- The raw health processors may have other old integrations outside the repository. Those must be treated as obsolete; never grant them public execute again to handle an old client.
+- Keep public Guest Mode enabled as expressly requested by the owner, subject to separate abuse protections.
 
-**Legacy monitor remains callable** by anonymous and ordinary authenticated callers. This stage has **not** closed that direct vulnerability, and the remaining `monitor_youth_*` RPCs also require classification. Do not mark SAT-13 fully protected.
-
-1. Include the frontend change in the next combined Netlify release; do not trigger a separate paid deploy solely for this change.
-2. Use a real administrator browser session to verify the Control Center Race Operations refresh and youth-health panel still work, and a regular manager/anonymous session to confirm the wrapper denies access.
-3. Examine old cached browser bundles and external integrations. **Do not revoke** the old `monitor_youth_competition_health_v1` function prematurely; that would break older UIs still calling it.
-4. After the documented grace period, atomically revoke direct `EXECUTE` on the original monitor from `PUBLIC`, `anon` and `authenticated`, preserving `service_role`, definer-function and scheduled `postgres` callers. Recheck the 2 internal definer callers; verify the next intentional game-clock resume and watchdog/incident logs. The paused game must not be unpaused for this check.
-5. Audit `monitor_youth_academy_full_health_v1` and seven other `monitor_youth_*` functions, which are also broadly callable and may write via watchdog completion. Guard the exposed call graph, not just the one RPC used by the admin UI.
-
-**No production player/finance/game-clock records have been changed**, and no Netlify deployment was triggered.
-
-This follow-up belongs to [GitHub security issue #299](https://github.com/bracko87/ProPeloton-Manager/issues/299).
+Follow-up: [SAT-13 security issue #299](https://github.com/bracko87/ProPeloton-Manager/issues/299).
