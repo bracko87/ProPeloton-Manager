@@ -955,10 +955,19 @@ begin
   foreach v_role in array array['youth_academy_director','u16_head_coach','youth_scout']
   loop
     for v_i in 1..18 loop
-      select country_code into v_country
-      from public.first_names_master
-      where country_code is not null
+      -- Use only countries present in the authoritative FK table.
+      -- Legacy name dictionaries may contain country codes not seeded on a fresh install.
+      select f.country_code into v_country
+      from public.first_names_master f
+      join public.countries c on c.code=f.country_code
+      where f.country_code is not null
       order by random() limit 1;
+
+      if v_country is null then
+        -- No eligible country has been seeded yet; avoid invalid FK inserts.
+        -- A later staff-pool refresh can populate candidates when countries exist.
+        exit;
+      end if;
 
       select first_name into v_first
       from public.first_names_master
@@ -985,7 +994,7 @@ begin
       values(
         v_role,'youth_development',
         trim(coalesce(v_first,'Alex')||' '||coalesce(v_last,'Staff')),
-        coalesce(v_first,'Alex'),coalesce(v_last,'Staff'),coalesce(v_country,'GB'),
+        coalesce(v_first,'Alex'),coalesce(v_last,'Staff'),v_country,
         v_expertise,v_experience,v_potential,v_leadership,v_efficiency,v_loyalty,
         public.calculate_staff_weekly_salary(
           v_role,v_expertise,v_experience,v_potential,v_leadership,v_efficiency,v_loyalty,'youth'
