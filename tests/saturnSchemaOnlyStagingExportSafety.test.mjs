@@ -25,7 +25,7 @@ test('Windows staging archive captures managed Auth hook inventory privately', (
   assert.ok(powershell.includes('saturn_managed_auth_hooks_readonly.sql'))
   assert.ok(powershell.includes('ppm_prevent_unverified_guest_signup_v1'))
   assert.ok(powershell.includes('AUTH_HOOKS_INVENTORY'))
-  assert.ok(powershell.includes('Do not apply this inventory automatically'))
+  assert.ok(powershell.includes('Never apply this inventory automatically'))
   assert.doesNotMatch(powershell,/&\s*\$restorePath\s+--dbname\b|--data-only/)
 })
 
