@@ -77,7 +77,8 @@
     "totalTeams": "Всего групп",
     "totalRacesTours": "Общее число рас и экскурсий",
     "totalStages": "Всего этапов",
-    "onlineUsers": "Пользователи онлайн"
+    "onlineUsers": "Пользователи онлайн",
+    "totalPlayerAccounts": "Всего аккаунтов игроков"
   },
   "features": {
     "title": "Основные характеристики",
