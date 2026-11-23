@@ -322,6 +322,7 @@
     "continueFree": "Seguir gratis",
     "viewPro": "Ver paquetes Pro",
     "countdown": "Prueba Premium: quedan {{count}} días",
+    "scheduledCountdown": "Prueba Premium: {{count}} días desde el lanzamiento",
     "freeTrialStatus": "Prueba Premium gratuita",
     "accessUntil": "Tu acceso gratuito termina el {{date}}. No se ha creado ninguna suscripción ni pago.",
     "subscriptionOffer": "¿Te gusta Premium? Elige uno de los paquetes de pago para mantener las funciones extra después de la prueba."
