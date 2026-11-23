@@ -18,7 +18,9 @@ outdir="$(cd -- "$(dirname -- "$out")" && pwd -P)"
 root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
 case "$outdir/" in "$root/"*) echo 'Do not write a live schema archive inside Git.' >&2; exit 2;; esac
 out="$outdir/$(basename -- "$out")"
-if [[ -e "$out" || -L "$out" ]]; then echo 'Output exists. Stop.' >&2; exit 2; fi
+if [[ -e "$out" || -L "$out" || -e "${out}.auth-hooks.txt" || -L "${out}.auth-hooks.txt" ]]; then
+  echo 'Output or companion hook inventory already exists. Stop.' >&2; exit 2
+fi
 export PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=120000"
 command -v pg_dump >/dev/null
 command -v psql >/dev/null
@@ -31,13 +33,24 @@ fi
 # managed schemas need a separate reviewed inventory and restore step.
 # Owner and ACL metadata are retained; do not silently change definer ownership.
 tmp="$(mktemp "${out}.partial.XXXXXX")"
-trap 'rm -f -- "$tmp"' EXIT
+tmp_hooks="$(mktemp "${out}.auth-hooks.partial.XXXXXX")"
+trap 'rm -f -- "$tmp" "$tmp_hooks"' EXIT
 pg_dump --format=custom --schema-only --no-password \
     --lock-wait-timeout=5s \
     --schema=public --schema=private --schema=finance \
     --schema=archive --schema=control_center_private --schema=v4_historical_research \
     --file="$tmp"
 pg_restore --list "$tmp" >/dev/null
+# Export only application triggers defined ON managed Auth tables. They are
+# deliberately excluded from schema-only application schema dumps. This is
+# an inventory for review, NEVER an automatically executed restore script.
+psql -X -At -v ON_ERROR_STOP=1 \
+  -f "$root/supabase/tests/saturn_managed_auth_hooks_readonly.sql" > "$tmp_hooks"
+if ! grep -Fq 'ppm_prevent_unverified_guest_signup_v1' "$tmp_hooks"; then
+  echo 'Expected protected Auth guest signup hook is missing; review source.' >&2
+  exit 3
+fi
+mv -- "$tmp_hooks" "${out}.auth-hooks.txt"
 mv -- "$tmp" "$out"
 trap - EXIT
-echo 'Schema-only archive captured. Keep confidential. No restore performed.'
+echo 'Schema-only archive and Auth hook inventory captured privately. No restore performed.'
