@@ -22,9 +22,11 @@ test('introductory popup explains terms without generating duplicate accounts', 
   assert.doesNotMatch(notice, /signUp|signInAnonymously|apply_coin_delta|\.insert\(/)
 })
 test('conversion links current anonymous auth identity instead of signing up a new user', () => {
-  assert.match(app, /path="\/test-account-register" element=\{<TestAccountRegisterPage \/>\}/)
-  assert.match(conversion, /supabase\.auth\.updateUser\(\{ email: email\.trim\(\) \}\)/)
+  assert.match(app, /path="\/test-account-register" element=\{<RequireUnexpiredTestAccount><TestAccountRegisterPage \/><\/RequireUnexpiredTestAccount>\}/)
+  assert.match(conversion, /supabase\.auth\.updateUser\(\{ email: email\.trim\(\) \},\s*\{[\s\S]*?emailRedirectTo:/)
   assert.match(conversion, /supabase\.auth\.updateUser\(\{ password \}\)/)
+  assert.match(conversion, /testClient\.auth\.linkIdentity\(\{/)
+  assert.match(conversion, /original\.user\.id !== originId/)
   assert.match(conversion, /data\.user\?\.id !== originId/)
   assert.match(conversion, /result\?\.user_id === originId/)
   assert.match(conversion, /!user\.email_confirmed_at/)
