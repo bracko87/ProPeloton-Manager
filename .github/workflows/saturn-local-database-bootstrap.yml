@@ -24,6 +24,8 @@ on:
       - 'tests/saturnYouthAcademyCountrySeed.test.mjs'
       - 'tests/saturnStaffMarketCollisionRetry.test.mjs'
       - 'tests/saturnYouthStaffSalaryCollision.test.mjs'
+      - 'tests/saturnYouthAllocationBootstrapDependency.test.mjs'
+      - 'supabase/migrations/20261005151711_youth_allocation_hourly_monitoring_v2.sql'
       - 'supabase/migrations/20261004221000_youth_staff_career_courses_payroll_v1.sql'
       - 'supabase/migrations/20261004202500_youth_staff_market_expansion_v1.sql'
       - 'supabase/migrations/20261002173500_youth_academy_phase1_core_v1.sql'
@@ -52,7 +54,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs tests/saturnNationalChampionshipHelperBootstrap.test.mjs tests/saturnFreshInstallClubCreationException.test.mjs tests/saturnNotificationTypeSequenceBootstrap.test.mjs tests/saturnYouthAcademyCountrySeed.test.mjs tests/saturnStaffMarketCollisionRetry.test.mjs tests/saturnYouthStaffSalaryCollision.test.mjs
+      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs tests/saturnNationalChampionshipHelperBootstrap.test.mjs tests/saturnFreshInstallClubCreationException.test.mjs tests/saturnNotificationTypeSequenceBootstrap.test.mjs tests/saturnYouthAcademyCountrySeed.test.mjs tests/saturnStaffMarketCollisionRetry.test.mjs tests/saturnYouthStaffSalaryCollision.test.mjs tests/saturnYouthAllocationBootstrapDependency.test.mjs
       - run: node scripts/saturn-check-migration-chain.mjs
       - run: node scripts/saturn-audit-sql-terminators.mjs
       - name: Paid branch replay remains explicitly blocked
