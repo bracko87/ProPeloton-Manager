@@ -10,6 +10,7 @@ import React from 'react'
 import { useNavigate } from 'react-router'
 import { useAuth } from '../../context/AuthProvider'
 import { supabase } from '../../lib/supabase'
+import { readGoogleOAuthIntent } from '../../lib/googleOAuth'
 
 export default function SignupEmailCallbackRouting(): JSX.Element | null {
   const { user, loading } = useAuth()
@@ -20,10 +21,28 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
     if (window.location.pathname.replace(/\/+$/, '') !== '/create-club') return
     if (loading) return
 
-    // Confirmation from another browser may not restore a session. Let the
-    // player sign in normally; never create a new account or club here.
+    const googleIntent = readGoogleOAuthIntent()
+    if (googleIntent?.kind === 'guest_link') {
+      // Supabase must link Google to the SAME original guest UUID. Never let
+      // an OAuth return switch identities or create a second team.
+      if (!user || user.id !== googleIntent.userId ||
+          !user.identities?.some(identity => identity.provider === 'google')) {
+        setError(true)
+        return
+      }
+      navigate('/test-account-register', { replace: true })
+      return
+    }
+
+    // Email verification and permanent Google sign-in return through the
+    // existing /create-club allowlisted URL. Supabase validates the session
+    // before any team route is selected.
     if (!user || user.is_anonymous === true || !user.email_confirmed_at) {
-      navigate('/login', { replace: true })
+      if (googleIntent?.kind === 'regular') {
+        setError(true)
+      } else {
+        navigate('/login', { replace: true })
+      }
       return
     }
 
@@ -46,8 +65,10 @@ export default function SignupEmailCallbackRouting(): JSX.Element | null {
 
   return (
     <div role="alert" className="fixed inset-x-4 top-4 z-[200] mx-auto max-w-lg rounded-lg border border-amber-300 bg-white p-4 text-sm text-slate-900 shadow-lg">
-      Your email is confirmed, but we could not check your team status.
-      Please reload the page or contact support before creating another team.
+      Authentication returned, but we could not safely verify your manager
+      identity or team status. Your existing team has not been changed.
+      Return to the same browser session and retry, or contact support
+      before creating another team.
     </div>
   )
 }
