@@ -481,13 +481,45 @@ before insert or update of role_type,expertise,experience,potential,leadership,e
 on public.staff_candidates
 for each row execute function private.trg_normalize_youth_staff_candidate_salary_v1();
 
-update public.staff_candidates sc
-set salary_weekly=public.calculate_staff_weekly_salary(
-  sc.role_type,sc.expertise,sc.experience,sc.potential,
-  sc.leadership,sc.efficiency,sc.loyalty,'youth'
-)
-where sc.is_available=true
-  and sc.role_type in ('youth_academy_director','u16_head_coach','youth_scout');
+-- Historical random candidates can have distinct old salaries but identical
+-- recalculated salaries. Preserve the unique staff profile index and the
+-- authoritative new salary; distinguish only the colliding specialization.
+do $migration$
+declare
+  v_candidate record;
+begin
+  for v_candidate in
+    select id, role_type, expertise, experience, potential,
+           leadership, efficiency, loyalty
+    from public.staff_candidates
+    where is_available=true
+      and role_type in ('youth_academy_director','u16_head_coach','youth_scout')
+    order by id
+  loop
+    begin
+      update public.staff_candidates sc
+      set salary_weekly=public.calculate_staff_weekly_salary(
+        v_candidate.role_type,v_candidate.expertise,v_candidate.experience,
+        v_candidate.potential,v_candidate.leadership,v_candidate.efficiency,
+        v_candidate.loyalty,'youth'
+      )
+      where sc.id=v_candidate.id;
+    exception when unique_violation then
+      -- Names and roles are unchanged; the stable suffix makes a colliding
+      -- market specialization unique without deleting or merging candidates.
+      update public.staff_candidates sc
+      set specialization=coalesce(sc.specialization,'General') || ' (' ||
+                         left(sc.id::text,8) || ')',
+          salary_weekly=public.calculate_staff_weekly_salary(
+            v_candidate.role_type,v_candidate.expertise,v_candidate.experience,
+            v_candidate.potential,v_candidate.leadership,v_candidate.efficiency,
+            v_candidate.loyalty,'youth'
+          )
+      where sc.id=v_candidate.id;
+    end;
+  end loop;
+end
+$migration$;
 
 create or replace function public.get_club_staff_weekly_wages(p_club_id uuid)
 returns table(staff_count integer,total_wages bigint)
