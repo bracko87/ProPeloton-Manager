@@ -136,7 +136,6 @@ begin
 
   return jsonb_build_object('season_number',v_season,'races_prepared',v_count);
 end;
-$function$
-
+$function$;
 
 select public.ensure_youth_race_runtime_for_season_v1(public.get_current_season_number());
