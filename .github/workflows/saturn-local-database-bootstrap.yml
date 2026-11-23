@@ -31,6 +31,8 @@ on:
       - 'tests/saturnYouthRegionalDivisionBootstrap.test.mjs'
       - 'tests/saturnYouthTeamPointsBootstrap.test.mjs'
       - 'tests/saturnYouthGuardFunctionScan.test.mjs'
+      - 'tests/saturnAmericanSamoaRaceCountry.test.mjs'
+      - 'supabase/migrations/20261007134000_american_samoa_country_reference_v1.sql'
       - 'supabase/migrations/20261007091500_development_services_access_pricing_v23.sql'
       - 'supabase/migrations/20261006122500_youth_team_ranking_points_fresh_install_v1.sql'
       - 'supabase/migrations/20261005155950_youth_regional_division_bootstrap_v1.sql'
@@ -66,7 +68,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs tests/saturnNationalChampionshipHelperBootstrap.test.mjs tests/saturnFreshInstallClubCreationException.test.mjs tests/saturnNotificationTypeSequenceBootstrap.test.mjs tests/saturnYouthAcademyCountrySeed.test.mjs tests/saturnStaffMarketCollisionRetry.test.mjs tests/saturnYouthStaffSalaryCollision.test.mjs tests/saturnYouthAllocationBootstrapDependency.test.mjs tests/saturnYouthRaceStagesFoundation.test.mjs tests/saturnYouthRaceRuntimeCoordinator.test.mjs tests/saturnYouthStageRuntimeHelpers.test.mjs tests/saturnYouthRegionalDivisionBootstrap.test.mjs tests/saturnYouthTeamPointsBootstrap.test.mjs tests/saturnYouthGuardFunctionScan.test.mjs
+      - run: node --test tests/saturnMigrationChainIntegrity.test.mjs tests/saturnNationalEquipmentBaselineSeed.test.mjs tests/saturnWorldNationsFunctionTerminator.test.mjs tests/saturnFreshInstallNationsFixture.test.mjs tests/saturnNationalChampionshipHelperBootstrap.test.mjs tests/saturnFreshInstallClubCreationException.test.mjs tests/saturnNotificationTypeSequenceBootstrap.test.mjs tests/saturnYouthAcademyCountrySeed.test.mjs tests/saturnStaffMarketCollisionRetry.test.mjs tests/saturnYouthStaffSalaryCollision.test.mjs tests/saturnYouthAllocationBootstrapDependency.test.mjs tests/saturnYouthRaceStagesFoundation.test.mjs tests/saturnYouthRaceRuntimeCoordinator.test.mjs tests/saturnYouthStageRuntimeHelpers.test.mjs tests/saturnYouthRegionalDivisionBootstrap.test.mjs tests/saturnYouthTeamPointsBootstrap.test.mjs tests/saturnYouthGuardFunctionScan.test.mjs tests/saturnAmericanSamoaRaceCountry.test.mjs
       - run: node scripts/saturn-check-migration-chain.mjs
       - run: node scripts/saturn-audit-sql-terminators.mjs
       - name: Paid branch replay remains explicitly blocked
