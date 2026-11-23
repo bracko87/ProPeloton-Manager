@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../../context/AuthProvider'
 import { supabase } from '../../lib/supabase'
-import { SATURN_GUEST_AUTH_MODE, hasSavedGuestSession } from '../../lib/guestSession'
+import { hasSavedGuestSession } from '../../lib/guestSession'
 import {
   clearGoogleOAuthIntent, googleOAuthRedirect, saveGoogleOAuthIntent,
 } from '../../lib/googleOAuth'
@@ -35,8 +35,19 @@ export default function GoogleAuthEntry({ purpose }: { purpose: 'login' | 'regis
         return
       }
       const current = data.user ?? user
-      if (current?.is_anonymous === true || (SATURN_GUEST_AUTH_MODE && hasSavedGuestSession())) {
-        // Protect the exact team, riders, wallet and Premium trial.
+      if (hasSavedGuestSession()) {
+        // A user may have reached the ordinary sign-in page using
+        // ?saturn_regular=1. Its in-memory Auth client does NOT load the
+        // saved anonymous session. Switch to guest mode before linking so
+        // that the original UUID/team cannot be silently abandoned.
+        const destination = new URL(window.location.href)
+        destination.searchParams.delete('saturn_regular')
+        destination.searchParams.set('saturn_guest', '1')
+        destination.hash = '#/test-account-register'
+        window.location.replace(destination.toString())
+        return
+      }
+      if (current?.is_anonymous === true) {
         navigate('/test-account-register')
         return
       }
