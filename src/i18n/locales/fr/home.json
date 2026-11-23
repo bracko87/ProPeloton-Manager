@@ -77,7 +77,8 @@
     "totalTeams": "Total des équipes",
     "totalRacesTours": "Total des courses et tours",
     "totalStages": "Total des étapes",
-    "onlineUsers": "Utilisateurs en ligne"
+    "onlineUsers": "Utilisateurs en ligne",
+    "totalPlayerAccounts": "Total des comptes joueurs"
   },
   "features": {
     "title": "Fonctionnalités principales",
