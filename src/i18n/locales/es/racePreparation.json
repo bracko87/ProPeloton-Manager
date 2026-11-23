@@ -647,7 +647,7 @@
     "readyToSubmit": "El plan de carrera está listo para enviarse.",
     "completeSelection": "Selecciona los ciclistas necesarios antes de enviar.",
     "loadRacePlanFailed": "No se pudo cargar el plan nacional de carrera.",
-    "submittedStageReady": "Plan de carrera enviado. Ya están disponibles los planes de etapa.",
+    "submittedStageReady": "Race Plan enviado. Los Stage Plans ya están disponibles.",
     "draftSaved": "Borrador del plan guardado.",
     "saveRacePlanFailed": "No se pudo guardar el plan de la selección nacional.",
     "submitRacePlanFailed": "No se pudo enviar el plan del Campeonato Nacional.",
