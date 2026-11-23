@@ -1,0 +1,49 @@
+name: Saturn final security audit (no deploy)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tests/saturnAdminYouthHealthGuard.test.mjs'
+      - 'tests/saturnGuestRandomGenericHomeKit.test.mjs'
+      - 'tests/saturnTestAccountExperience.test.mjs'
+      - 'supabase/migrations/20261123121513_saturn_close_legacy_public_youth_competition_monitor_v1.sql'
+      - 'supabase/migrations/20261123121812_saturn_restrict_raw_system_health_watchdogs_v1.sql'
+      - 'docs/SATURN_ADMIN_YOUTH_HEALTH_CUTOVER_2026-11-23.md'
+      - 'docs/SATURN_FINAL_RELEASE_AUDIT_2026-11-23.md'
+      - '.github/workflows/saturn-final-security-audit-ci.yml'
+  pull_request:
+    paths:
+      - 'tests/saturnAdminYouthHealthGuard.test.mjs'
+      - 'tests/saturnGuestRandomGenericHomeKit.test.mjs'
+      - 'supabase/migrations/20261123121513_saturn_close_legacy_public_youth_competition_monitor_v1.sql'
+      - 'supabase/migrations/20261123121812_saturn_restrict_raw_system_health_watchdogs_v1.sql'
+      - 'docs/SATURN_ADMIN_YOUTH_HEALTH_CUTOVER_2026-11-23.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  regression:
+    name: Verify monitoring lockdown and guest conversion source
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install exact dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Check Saturn monitor, account and kit regressions
+        run: |
+          node --test \
+            tests/saturnAdminYouthHealthGuard.test.mjs \
+            tests/saturnTestAccountExperience.test.mjs \
+            tests/saturnGuestRandomGenericHomeKit.test.mjs
+      - name: Validate source translations and production build
+        run: npm run build
+      - name: Confirm compiled frontend exists
+        run: test -s dist/index.html
