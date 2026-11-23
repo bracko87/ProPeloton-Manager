@@ -37,7 +37,7 @@ export default function PostConversionProfileReminder(): JSX.Element | null {
         .from('saturn_test_accounts_v1')
         .select('club_id,converted_at')
         .eq('user_id', userId).maybeSingle()
-      if (!active || trialError) return
+      if (!active || (trialError && !isDirectGoogleSignup)) return
       const convertedClubId = converted?.converted_at ? converted.club_id : null
       if (!convertedClubId && !isDirectGoogleSignup) return
 
