@@ -111,4 +111,38 @@ begin
 end;
 $function$;
 
+-- The stage-by-stage helper is defined above.  This season-level coordinator
+-- was absent from the fresh migration chain even though the following call
+-- and later invitation-sync routines require it.
+create or replace function public.ensure_youth_race_runtime_for_season_v1(
+  p_season integer default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path=public,private,pg_temp
+as $function$
+declare
+  v_season integer:=coalesce(p_season,public.get_current_season_number());
+  v_race record;
+  v_races integer:=0;
+  v_stages integer:=0;
+  v_result jsonb;
+begin
+  for v_race in
+    select id
+    from public.youth_races
+    where season_number=v_season
+      and status='scheduled'
+    order by race_date,id
+  loop
+    v_result:=private.ensure_youth_race_runtime_v1(v_race.id);
+    v_races:=v_races+1;
+    v_stages:=v_stages+coalesce((v_result->>'stages')::integer,0);
+  end loop;
+  return jsonb_build_object('season_number',v_season,
+    'races_processed',v_races,'stages_prepared',v_stages);
+end;
+$function$;
+
 select public.ensure_youth_race_runtime_for_season_v1(public.get_current_season_number());
