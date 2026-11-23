@@ -5,6 +5,14 @@
 
 **Objective:** Complete, verify and professionally release all 21 ProPeloton Manager improvements—secure access, meaningful live analytics, authentic gameplay, modern navigation and clear first-time player onboarding. A source-code change or passing CI is not equivalent to a deployed and tested player experience.
 
+## CURRENT SATURN STATUS — 23 November 2026, clean database and broad CI milestone
+
+- ✅ **Full isolated Supabase database migration replay AND baseline smoke passed**: [GitHub Actions run #45253387980](https://github.com/bracko87/ProPeloton-Manager/actions/runs/45253387980), commit `89356f83903da61ed934f57c7ba883a0755c56ae`. The final smoke asserts all **54** national equipment choices, the 10 National Team cars, Nations runtime definitions/configuration, operational health and Nations scheduling.
+- ✅ **Broader Saturn review passed**: [GitHub Actions run #45254270098](https://github.com/bracko87/ProPeloton-Manager/actions/runs/45254270098), commit `9ded761894603d25a379b575311fbc41287400aa`. Both lifecycle (Saturn source/test suite, SQL parser, finance audit, production web build) and historical-bootstrap-reproduction (disposable PostgreSQL 17 runtime fixtures) passed.
+- ✅ Historical migrations were repaired for fresh-install compatibility and deterministic replay without changing production; production function/table references used only READ-ONLY SQL introspection. All disposable GitHub CI infrastructure was cleaned up.
+- ⬜ **NOT release certified:** No isolated real Supabase Auth/JWT/CAPTCHA staging environment or actual browser account test has been completed. Critical remaining checks include CAPTCHA enforcement and rate limits, anonymous guest creation and AI replacement, one 7-day Premium term, day-14/day-15 expiry/retirement, same-UUID Google/email conversion, RLS/privileged RPC access and normal-player regression. Local CI/fixture checks cannot replace these real-environment acceptance tests.
+- ⬜ A separate Supabase staging branch/project is not provisioned and must not be created without the owner's explicit billing approval. **Do not deploy Saturn migrations or enable guest gates in production** based on the current green CI alone. Existing [staging checklist](docs/SATURN_STAGING_RELEASE_GATE_2026-11-20.md) and [security issues](https://github.com/bracko87/ProPeloton-Manager/issues/299) remain open.
+
 ## CURRENT SATURN STATUS — 21 November 2026, creation/finance/Premium fixture milestone
 
 - ✅ Added **51 passed PostgreSQL runtime checks**, 88 total including the earlier 37 lifecycle checks. All three GitHub workflows passed at `b0991fce76661c47ef6ca0e9be1a370e6c894523`, Saturn run 44885353295, database job 136789337898.
