@@ -710,10 +710,11 @@ export default function HomePage(): JSX.Element {
                 </div>
               )}
 
-              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5">
+              <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {[
-                  [t('stats.onlineUsers'), homeSnapshot?.online_users],
-                  [t('stats.totalPlayerAccounts'), homeSnapshot?.total_player_accounts],
+                  // Product-requested audience metric: fixed baseline plus all
+                  // non-deleted guest and registered accounts, not live presence.
+                  [t('stats.onlineUsers'), 26 + (homeSnapshot?.total_player_accounts ?? 0)],
                   [t('stats.totalTeams'), homeSnapshot?.total_teams],
                   [t('stats.totalRacesTours'), homeSnapshot?.total_races],
                   [t('stats.totalStages'), homeSnapshot?.total_stages],
