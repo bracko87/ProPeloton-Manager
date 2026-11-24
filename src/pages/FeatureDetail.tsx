@@ -33,6 +33,10 @@ export default function FeatureDetailPage(): JSX.Element {
     calendar: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/593%20dated%20races.png',
     preparation: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Detailed%20race%20preparation.png',
     tiers: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Four%20competition%20tiers.png',
+    equipment: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/170%20equipment%20models.png',
+    assets: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastreacure%20and%20assets.png',
+    finance: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Realistic%20club%20finances.png',
+    sponsors: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Regional%20sponsorship%20engine.png',
   }
   const heroImage = heroImages[key] ?? null
 
