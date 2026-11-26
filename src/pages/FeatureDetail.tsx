@@ -37,6 +37,14 @@ export default function FeatureDetailPage(): JSX.Element {
     assets: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Infrastreacure%20and%20assets.png',
     finance: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Realistic%20club%20finances.png',
     sponsors: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Regional%20sponsorship%20engine.png',
+    operations: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Policies%20and%20operations.png',
+    transfers: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Club%20deals%20and%20free%20agents.png',
+    national: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/National%20associations.png',
+    academy: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Youth%20academy%20and%20races.png',
+    replay: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Dynamic%20stage%20replay.png',
+    progression: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Season-long%20progression.jpg',
+    health: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Rider%20health%20and%20medical%20care.jpg',
+    multiplayer: 'https://okuravitxocyevkexfgi.supabase.co/storage/v1/object/public/Admin%20Staff/Brend%20images/Multiplayer%20cycling%20world.jpg',
   }
   const heroImage = heroImages[key] ?? null
 
