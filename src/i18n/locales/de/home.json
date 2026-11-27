@@ -418,5 +418,11 @@
       "exampleTitle": "Ein Praxisbeispiel",
       "previousFeature": "Vorherige Funktion"
     }
+  },
+  "discordCommunity": {
+    "eyebrow": "Offizielle Community",
+    "title": "ProPeloton Manager Discord",
+    "description": "Tritt unserer offiziellen Discord-Community bei, diskutiere Radsportteams, Rennen und Taktiken, stelle Fragen, melde Fehler, teile Ideen und verfolge die Spielentwicklung.",
+    "join": "ProPeloton Manager Discord beitreten"
   }
 }

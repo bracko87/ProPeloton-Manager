@@ -248,6 +248,7 @@ for (const relativePath of premiumSourceFiles) {
 // identifiers (e.g. {{coins}}, not {{Coins}}). Check affected UI surfaces
 // in every locale, and reject any poisoned interpolation across the site.
 const guardedTranslations = {
+  home: ['discordCommunity.eyebrow', 'discordCommunity.title', 'discordCommunity.description', 'discordCommunity.join'],
   finance: [
     'overview.season',
     'overview.seasonPeriod',

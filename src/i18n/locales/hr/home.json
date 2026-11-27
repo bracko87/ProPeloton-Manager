@@ -186,5 +186,11 @@
     "homepageDataUnexpected": "Podaci sa početne strane vraćeni su u neočekivanom formatu.",
     "clubStatusError": "Prijavljeni ste, ali nismo uspeli da učitamo status vašeg kluba. Osvežite stranicu ili pokušajte ponovno.",
     "clubCreationDisabled": "Kreiranje novih klubova je privremeno pauzirano do objave igre. Postojeći menadžeri mogu i dalje da se prijave."
+  },
+  "discordCommunity": {
+    "eyebrow": "Službena zajednica",
+    "title": "ProPeloton Manager Discord",
+    "description": "Pridruži se našoj službenoj Discord zajednici, razgovaraj o biciklističkim ekipama, utrkama i taktici, postavljaj pitanja, prijavljuj pogreške, dijeli ideje i prati razvoj igre.",
+    "join": "Pridruži se ProPeloton Manager Discordu"
   }
 }

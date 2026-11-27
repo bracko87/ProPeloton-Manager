@@ -418,5 +418,11 @@
       "exampleTitle": "Praktičan primer",
       "previousFeature": "Prethodna mogućnost"
     }
+  },
+  "discordCommunity": {
+    "eyebrow": "Zvanična zajednica",
+    "title": "ProPeloton Manager Discord",
+    "description": "Pridruži se našoj zvaničnoj Discord zajednici, razgovaraj o biciklističkim ekipama, trkama i taktici, postavljaj pitanja, prijavljuj greške, deli ideje i prati razvoj igre.",
+    "join": "Pridruži se ProPeloton Manager Discordu"
   }
 }

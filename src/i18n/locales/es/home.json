@@ -186,5 +186,11 @@
     "homepageDataUnexpected": "Los datos de la página web en vivo devolvieron un formato inesperado.",
     "clubStatusError": "Has iniciado sesión, pero no hemos podido cargar el estado de tu club. Actualiza la página o inténtalo de nuevo.",
     "clubCreationDisabled": "La creación de nuevos clubes está pausada antes del lanzamiento. Los mánagers existentes pueden seguir iniciando sesión."
+  },
+  "discordCommunity": {
+    "eyebrow": "Comunidad oficial",
+    "title": "Discord de ProPeloton Manager",
+    "description": "Únete a nuestra comunidad oficial en Discord para hablar de equipos ciclistas, carreras y tácticas, hacer preguntas, informar de errores, compartir ideas y seguir el desarrollo del juego.",
+    "join": "Únete al Discord de ProPeloton Manager"
   }
 }

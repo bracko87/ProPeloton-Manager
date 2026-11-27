@@ -20,6 +20,7 @@ import { PROPELOTON_OFFICIAL_LAUNCH_AT_UTC } from '../components/PreReleaseNotic
 import HomeVideoShowcase from '../components/home/HomeVideoShowcase'
 import HomeDesktopDownloads from '../components/home/HomeDesktopDownloads'
 import WhyProPeloton from '../components/home/WhyProPeloton'
+import HomeDiscord from '../components/home/HomeDiscord'
 import HomepageRaceDays, {
   type HomepageRaceDaysData,
 } from '../components/home/HomepageRaceDays'
@@ -728,8 +729,14 @@ export default function HomePage(): JSX.Element {
                 ))}
               </div>
             </section>
+          </div>
+        </section>
 
-            <section className="mt-16">
+        <HomeDiscord inviteUrl={DISCORD_INVITE_URL} />
+
+        <section className="w-full bg-[#071426] py-16">
+          <div className="mx-auto max-w-[1510px] px-6 sm:px-10 lg:px-12">
+            <section>
               <h3 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">{t('features.title')}</h3>
               <p className="mt-2 text-sm text-white/70">{t('features.subtitle')}</p>
 

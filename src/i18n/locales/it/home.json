@@ -186,5 +186,11 @@
     "homepageDataUnexpected": "I dati in tempo reale della homepage hanno restituito un formato inatteso.",
     "clubStatusError": "Hai effettuato l'accesso, ma non siamo riusciti a caricare lo stato del tuo club. Aggiorna la pagina o riprova.",
     "clubCreationDisabled": "La creazione di nuovi club è temporaneamente sospesa prima del lancio. I manager esistenti possono continuare ad accedere."
+  },
+  "discordCommunity": {
+    "eyebrow": "Comunità ufficiale",
+    "title": "Discord di ProPeloton Manager",
+    "description": "Unisciti alla nostra comunità ufficiale su Discord per discutere squadre ciclistiche, corse e tattiche, fare domande, segnalare errori, condividere idee e seguire lo sviluppo del gioco.",
+    "join": "Unisciti al Discord di ProPeloton Manager"
   }
 }

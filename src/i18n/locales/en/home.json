@@ -418,5 +418,11 @@
       "exampleTitle": "A practical example",
       "previousFeature": "Previous feature"
     }
+  },
+  "discordCommunity": {
+    "eyebrow": "Official community",
+    "title": "ProPeloton Manager Discord",
+    "description": "Join our official Discord community to discuss cycling teams, races and tactics, ask questions, report bugs, share ideas and follow game development.",
+    "join": "Join ProPeloton Manager Discord"
   }
 }
